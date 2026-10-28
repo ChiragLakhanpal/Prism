@@ -542,14 +542,23 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   // Every number in the sentence matched the section, inside its quote.
   await expect(sentence.locator("[data-num]")).toHaveText(["67.00", "67.00", "80.00"]);
   await sentence.locator("[data-num]").last().hover();
-  await expect(page.getByRole("tooltip")).toHaveText("Matches the section Project Development Objective Indicators of the status report for P130164.");
-  // DESIGN.md section 3: Roboto Mono for IDs, in the tooltip as in the Asked line above it.
+  // An answer's number is the Number tooltip's Plain variant (ticket 96): what it matched and where that came from, and
+  // no action line, because the marker beside the sentence opens the source.
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
+    "Matches the section Project Development Objective Indicators of the status report for P130164.",
+  );
+  await expect(page.getByRole("tooltip").locator("[data-num-from]")).toHaveText(
+    "From the Implementation Status and Results Report for P130164 of February 22, 2014.",
+  );
+  await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveCount(0);
+  // DESIGN.md section 3: Roboto Mono for IDs, in the tooltip as in the Asked line above it: in its What line and in its
+  // From line (ticket 96).
   const tipFaces = await page.getByRole("tooltip").evaluate((tip) =>
     Array.from(tip.querySelectorAll("*"))
       .filter((child) => child.children.length === 0 && child.textContent === "P130164")
       .map((child) => getComputedStyle(child).fontFamily.split(",")[0].replaceAll('"', "")),
   );
-  expect(tipFaces).toEqual(["Roboto Mono"]);
+  expect(tipFaces).toEqual(["Roboto Mono", "Roboto Mono"]);
 
   await isrMarker.click();
   const tabs = drawer(page).getByRole("tab");
@@ -761,14 +770,17 @@ test("a number's tooltip names the paragraph it was quoted from, and a date's na
   await landed(page);
 
   await panel(page).locator("[data-sentence-text='0'] [data-num]").first().hover();
-  await expect(page.getByRole("tooltip")).toHaveText("Matches paragraph 54 of the completion report for P130164.");
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("Matches paragraph 54 of the completion report for P130164.");
+  await expect(page.getByRole("tooltip").locator("[data-num-from]")).toHaveText(
+    "From the Implementation Completion and Results Report for P130164 of October 10, 2019.",
+  );
   await page.mouse.move(5, 880);
   await expect(page.getByRole("tooltip")).toHaveCount(0);
 
   const date = panel(page).locator("[data-sentence-text='2'] [data-num]");
   await expect(date).toHaveText("October 10, 2019");
   await date.hover();
-  await expect(page.getByRole("tooltip")).toHaveText("Matches the date of the completion report for P130164.");
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("Matches the date of the completion report for P130164.");
 });
 
 test("Close the answer closes the panel and its drawer, and returns focus to the box without opening its list until you ask for it", async ({ page }) => {

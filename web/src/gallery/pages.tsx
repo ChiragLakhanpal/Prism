@@ -953,7 +953,7 @@ export const PAGES: GalleryPage[] = [
         title: t.checkable,
         body: (
           <p className="text-body">
-            <Num part={31} whole={37} check={{ tooltip: sample.numTooltip }} />
+            <Num part={31} whole={37} check={{ tooltip: sample.numTooltip, from: sample.numFrom }} />
           </p>
         ),
       },

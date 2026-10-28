@@ -418,7 +418,7 @@ test("Show the table lists every item in arrow-key order, under its caption", as
   await open(page, "/projects/P130164/timeline", 1024);
   await page.locator("[data-timeline-finding]").getByRole("button", { name: "Two" }).focus();
   const tip = page.getByRole("tooltip");
-  await expect(tip).toContainText("Counted by the disagreement check for this project.");
+  await expect(tip).toContainText("Pairs of this project's reports that disagree.");
   const [finding, shown] = [(await page.locator("[data-timeline-finding]").boundingBox())!, (await tip.boundingBox())!];
   expect(shown.y + shown.height <= finding.y || shown.y >= finding.y + finding.height).toBe(true);
 

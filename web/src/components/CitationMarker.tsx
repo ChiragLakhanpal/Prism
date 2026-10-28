@@ -90,7 +90,7 @@ export function CitationMarker({
       {WORD_JOINER}
       {preview ? (
         // The marker whose source the drawer shows in full opens no card beside it.
-        <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]" quiet={active && Boolean(drawerId)}>
+        <Tooltip trigger={marker} width="w-[min(22.5rem,calc(100vw-3.5rem))]" card quiet={active && Boolean(drawerId)}>
           {preview}
         </Tooltip>
       ) : (

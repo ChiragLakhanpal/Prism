@@ -9,6 +9,7 @@
 // details on its chart all use it, so they wrap a reference the same way.
 import { Fragment } from "react";
 import { cx } from "../lib/cx";
+import { Fill, Joined } from "./Fill";
 
 export function MonoWords({
   text,
@@ -33,4 +34,12 @@ export function MonoWords({
       </span>
     </Fragment>
   ));
+}
+
+// One sentence that ends with a list of STEP references, each set by MonoWords with the full stop kept in the last
+// one's box, so it never starts a line: "The activities I counted: KE-NWWDA-229129-CW-RFB and KE-NWWDA-541062-CW-RFQ."
+// A count word's tooltip says what it counts this way (DESIGN.md section 5, Number tooltip; ticket 96).
+export function ListedRefs({ template, refs, end }: { template: string; refs: string[]; end: string }) {
+  const items = refs.map((ref, index) => <MonoWords key={ref} text={ref} after={index === refs.length - 1 ? end : ""} />);
+  return <Fill template={template} slots={{ refs: <Joined items={items} /> }} />;
 }

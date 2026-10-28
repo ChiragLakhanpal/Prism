@@ -926,7 +926,10 @@ test("a later plan's check names the saved baseline and who saved it, gives both
   );
   // The baseline's days explain themselves, as the first delay's do.
   await page.locator("#KE-NWWDA-229129-CW-RFB [data-baseline-delay] button[data-num]").focus();
-  await expect(page.getByRole("tooltip")).toContainText("Planned date in the baseline, the plan of July 21, 2025");
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
+    "Days between its planned signing date in the baseline, the plan of July 21, 2025, and Contract signed.",
+  );
+  await expect(page.getByRole("tooltip").locator("[data-num-from]")).toHaveText(/^From my check of this plan, as of /);
 
   await panel.getByRole("button", { name: "Make this plan the baseline" }).click();
   const confirm = panel.locator("[data-baseline-confirm]");

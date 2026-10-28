@@ -105,7 +105,7 @@ function CellSentences({
           <Fragment key={sentence.index}>
             {index > 0 && " "}
             <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
-              {sentenceText(sentence, evidence, () => undefined)}
+              {sentenceText(sentence, evidence, undefined)}
               {footnote && (
                 <CitationMarker
                   n={footnote.number}

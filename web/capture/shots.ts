@@ -713,6 +713,9 @@ const ANSWER_SHOTS: Shot[] = [
   answerShot("answer--all-checks-passed", "ask-p130164-rebidding.sse", { act: askInBox() }),
   answerShot("answer--hover-marker", ANSWER, { full: false, widths: WIDE, act: then(askInBox(), hover(marker)) }),
   answerShot("answer--focus-marker", ANSWER, { full: false, act: then(askInBox(), focus(marker)) }),
+  // A number's and a date's Number tooltip in an answer: what each matched, and where that came from (ticket 96).
+  answerShot("answer--num-hover", ANSWER, { full: false, widths: WIDE, act: then(askInBox(), hover("[data-answer-panel] [data-sentence-text='0'] [data-num]")) }),
+  answerShot("answer--date-hover", ANSWER, { full: false, widths: WIDE, act: then(askInBox(), hover("[data-answer-panel] [data-sentence-text='2'] [data-num]")) }),
   answerShot("answer--drawer", ANSWER, { full: false, act: then(askInBox(), click(marker)) }),
   answerShot("answer--drawer-visited", ANSWER, { full: false, act: then(askInBox(), click(marker), async (page) => {
     await page.keyboard.press("Escape");
@@ -1423,6 +1426,14 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package--moved", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "6") }),
   packageShot("package--hover-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: hoverDot(20) }),
   packageShot("package--focus-dot", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[data-dot-target='0']") }),
+  // The Number tooltip of "49" in the finding, under the whole finding and left aligned with the number (ticket 96).
+  packageShot("package--hover-num-finding", comparables(COMPARABLES), {
+    widths: wideAndNarrow,
+    act: then(
+      (page) => page.locator("[data-past-range] [data-finding]").evaluate((finding) => finding.scrollIntoView({ block: "center" })),
+      hover("[data-past-range] [data-finding] button[data-num] >> nth=1"),
+    ),
+  }),
   packageShot("package--focus-slider", comparables(COMPARABLES), { widths: wideAndNarrow, act: focus("[role=slider]") }),
   packageShot("package--invalid", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "90") }),
   // 1280 px is a page area where the workspace keeps to columns 1 to 8 and the table's frame is under

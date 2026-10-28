@@ -97,7 +97,9 @@ export type RangeMark = {
   beyond?: boolean;
   // The dot's accessible name, from the copy file.
   name: string;
-  tip: { header: string; mono: boolean; number: string; line: string };
+  // The tooltip (DESIGN.md, Number tooltip, Dot variant): its reference, its months, one sentence, and where it came
+  // from; openHint, the chart's, is its action line.
+  tip: { header: string; mono: boolean; number: string; line: string; from?: string };
 };
 
 export type RangeStats = { q25: number | null; q50: number | null; q75: number | null; q80: number | null };
@@ -659,8 +661,15 @@ export function RangeChart({
   const apex = useRef<{ x: number; y: number } | null>(null);
   const dotRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const tipRef = useRef<HTMLDivElement>(null);
-  const shown = focused ?? hover;
-  const tipFor = shown !== null && shown !== dismissed && dots[shown] ? dots[shown] : null;
+  // Whichever came last leads: the pointer moving onto a dot other than the focused one shows that dot, and focus moving
+  // to a dot shows the focused one. Escape on the focused dot hides it until the focus leaves it or moves on, even
+  // while the pointer shows other dots (ticket 60, through ticket 96).
+  const [pointerLed, setPointerLed] = useState(false);
+  const [focusEscaped, setFocusEscaped] = useState(false);
+  const pointerShows = focused === null || pointerLed;
+  const shown = pointerLed && hover !== null ? hover : (focused ?? hover);
+  const hidden = (index: number) => index === dismissed || (index === focused && focusEscaped);
+  const tipFor = shown !== null && !hidden(shown) && dots[shown] ? dots[shown] : null;
   // The tooltip's size, and the room above the chart inside its card (the closest section), which the
   // tooltip may use: it sits above its dot whenever it fits inside the card.
   const [tipBox, setTipBox] = useState({ w: 0, h: 0, room: 0 });
@@ -740,11 +749,15 @@ export function RangeChart({
       apex.current = { x: px, y: py };
       setHover(found);
       setDismissed(null);
+      setPointerLed(found !== focused);
       // A click on a dot opens its records; a tap shows its details, whose button opens them, since dots
       // are too small and close to tap one by one (the 15 brief, section 3).
       // The press keeps the browser from moving focus, so focus goes into the drawer, as a keyboard's Enter sends it.
       if (onOpen && event.pointerType === "mouse" && dotRefs.current[found]) {
         event.preventDefault();
+        // The drawer beside the page shows the package the tooltip named, so the tooltip goes until the pointer visits
+        // another dot, and no longer covers the key (ticket 60, through ticket 96).
+        setDismissed(found);
         onOpen(dots[found].key, dotRefs.current[found]!);
       }
     } else if (event.pointerType !== "mouse") {
@@ -782,13 +795,14 @@ export function RangeChart({
     if (shown !== null) {
       // A dot waiting for its 100 ms rest doesn't take the tooltip back after Escape.
       clearTimeout(restTimer.current);
-      setDismissed(shown);
+      if (shown === focused) setFocusEscaped(true);
+      else setDismissed(shown);
       event.preventDefault();
     }
   };
 
   // Escape hides a tooltip the pointer opened, wherever focus is (WCAG 1.4.13).
-  const hovered = focused === null && hover !== null && hover !== dismissed ? hover : null;
+  const hovered = pointerShows && hover !== null && hover !== dismissed ? hover : null;
   useEffect(() => {
     if (hovered === null) return;
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -963,10 +977,10 @@ export function RangeChart({
   const dropPrev = prevTick !== null && x(prevTick) + (widths.tickPrev ?? 0) / 2 > x(lastTick) - (widths.tickLast ?? 0) - 8;
 
   // The tooltip covers no dot, so the pointer can move onto it and keep it (WCAG 1.4.13) and can still
-  // reach every other dot: it sits above every dot within reach of its width when that fits inside the
-  // card, and below them all otherwise.
+  // reach every other dot: it sits above every dot in the lane when that fits inside the card, and below
+  // them all otherwise (DESIGN.md, Number tooltip, Dot variant).
   const tipLeft = tipFor ? clamp(tipFor.cx - tipBox.w / 2, 0, width - tipBox.w) : 0;
-  const underTip = tipFor ? dots.filter((dot) => dot.cx + HIT >= tipLeft && dot.cx - HIT <= tipLeft + tipBox.w).map((dot) => dot.cy) : [];
+  const underTip = tipFor ? dots.map((dot) => dot.cy) : [];
   const above = tipFor ? Math.min(tipFor.cy, ...underTip) - layout.r - TIP_GAP - tipBox.h : 0;
   const tipTop = tipFor ? (above >= -tipBox.room ? above : Math.max(tipFor.cy, ...underTip) + layout.r + TIP_GAP) : 0;
   // The band between a hovered dot and its tooltip (the safe-zone pattern menus use, as Floating UI's
@@ -976,7 +990,7 @@ export function RangeChart({
   // along the dots leaves it within 8 px.
   const tipAbove = tipFor !== null && tipTop < tipFor.cy;
   const inBand = (px: number, py: number) => {
-    if (!tipFor || hover === null || focused !== null || tipFor.key !== dots[hover]?.key || tipBox.w === 0) return false;
+    if (!tipFor || hover === null || !pointerShows || tipFor.key !== dots[hover]?.key || tipBox.w === 0) return false;
     const a = apex.current ?? { x: tipFor.cx, y: tipFor.cy };
     const nearY = tipAbove ? tipTop + tipBox.h : tipTop;
     const span = nearY - a.y;
@@ -997,6 +1011,7 @@ export function RangeChart({
         restTimer.current = setTimeout(() => {
           apex.current = { x: px, y: py };
           setDismissed(null);
+          setPointerLed(found !== focused);
           setHover(found);
         }, 100);
       }
@@ -1004,7 +1019,10 @@ export function RangeChart({
     }
     if (found !== null) {
       clearTimeout(hideTimer.current);
-      if (found !== hover) setDismissed(null);
+      if (found !== hover) {
+        setDismissed(null);
+        setPointerLed(found !== focused);
+      }
       apex.current = { x: px, y: py };
       setHover(found);
     } else if (hover !== null) {
@@ -1155,7 +1173,7 @@ export function RangeChart({
               <circle key="opened" data-opened-ring cx={dot.cx} cy={dot.cy} r={drawnR(dot.key) + 3} fill="none" strokeWidth={2} className="stroke-info-icon" />
             ))}
         {/* The hovered dot's ring, drawn after every dot so the dots stacked around it never hide part of it. */}
-        {hover !== null && focused === null && dots[hover] && (
+        {hover !== null && pointerShows && dots[hover] && (
           <circle data-hover-ring cx={dots[hover].cx} cy={dots[hover].cy} r={drawnR(dots[hover].key) + 2} fill="none" strokeWidth={2} className="stroke-chart-grey500" />
         )}
 
@@ -1422,8 +1440,13 @@ export function RangeChart({
               setFocused(index);
               setActive(index);
               setDismissed(null);
+              setFocusEscaped(false);
+              setPointerLed(false);
             }}
-            onBlur={() => setFocused(null)}
+            onBlur={() => {
+              setFocused(null);
+              setFocusEscaped(false);
+            }}
             // An ::after pads the dot to a 24 px target, the 12 px around its centre the pointer answers within.
             className="absolute rounded-full after:absolute after:-inset-2 after:content-['']"
             style={{ left: dot.cx - layout.r, top: dot.cy - layout.r, width: 2 * layout.r, height: 2 * layout.r }}
@@ -1449,17 +1472,19 @@ export function RangeChart({
             const { px, py } = local(event);
             track(px, py);
           }}
-          // Its width is its content's, up to 240 px, so it never shrinks to the room left of the chart's edge.
-          className="absolute z-10 w-max max-w-[240px] animate-fade-in cursor-text select-text rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
-          style={{ left: tipLeft, top: tipTop, fontSize: type.s }}
+          // The Number tooltip's own look and parts (DESIGN.md section 5, Dot tooltip; ticket 96): its width is its
+          // content's, up to the tooltip width or the chart's, so it never shrinks to the room left of the chart's edge.
+          className="absolute z-10 w-max max-w-[min(var(--tooltip-width),100%)] animate-fade-in cursor-text select-text rounded-sm border border-line bg-surface px-3 py-2 text-ink shadow-popover"
+          style={{ left: tipLeft, top: tipTop }}
         >
           {/* A STEP reference breaks at its spaces first, as everywhere on the page (MonoWords). */}
-          <p className="font-semibold text-chart-text">{tipFor.tip.mono ? <MonoWords text={tipFor.tip.header} /> : tipFor.tip.header}</p>
-          <p className="font-bold text-chart-text tabular-nums" style={{ fontSize: type.m }}>
-            {tipFor.tip.number}
+          <p className="text-caption font-medium text-ink">
+            {tipFor.tip.mono ? <MonoWords text={tipFor.tip.header} /> : tipFor.tip.header}
           </p>
-          <p className="text-chart-text-subtle">{tipFor.tip.line}</p>
-          {onOpen && openHint && !tapped && <p className="mt-1 text-chart-text-subtle">{openHint}</p>}
+          <p className="text-body font-bold text-ink tabular-nums">{tipFor.tip.number}</p>
+          <p className="text-small text-ink">{tipFor.tip.line}</p>
+          {tipFor.tip.from && <p className="mt-1 text-caption text-ink-muted">{tipFor.tip.from}</p>}
+          {onOpen && openHint && !tapped && <p className="mt-1 text-caption font-semibold text-ink-heading">{openHint}</p>}
           {/* The tooltip is hidden from screen readers, so its button leaves the tab order: a keyboard opens
               the focused dot with Enter, and the table twin's buttons are the full-size way in. */}
           {onOpen && openLabel && tapped && shown !== null && (

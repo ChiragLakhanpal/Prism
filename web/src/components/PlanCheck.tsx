@@ -25,7 +25,9 @@ import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
 import { useShows, type View } from "../lib/view";
-import { Num } from "./Num";
+import { ListedRefs } from "./MonoWords";
+import { Num, type NumCheck } from "./Num";
+import { checkFrom, FromLine, planFrom } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
@@ -50,22 +52,16 @@ const whole = (value: number) => formatNumber(value, { compact: false });
 const amount = (text: string) => formatNumber(Number(text), { decimals: 2, compact: false });
 const day = (iso: string) => <Num date={iso} />;
 
-// A number's tooltip: what it is and the values it comes from, one per line.
-function Explain({ lines }: { lines: [ReactNode, ReactNode][] }) {
-  return (
-    <dl className="flex flex-col gap-1" data-numbers>
-      {lines.map(([label, value], index) => (
-        <div key={index}>
-          <dt className="font-semibold">{label}</dt>
-          <dd>{value}</dd>
-        </div>
-      ))}
-    </dl>
-  );
+// A number's tooltip (DESIGN.md, Number tooltip): what it is, in one sentence of its own, and where it came from: the
+// plan row for a value the row holds, or my check of this plan on its as-of date for the days it worked out from more
+// than one record. None opens anything yet, so none has an action line.
+function checked(result: CheckedPlan, what: ReactNode, from: "plan" | "check" = "check"): NumCheck {
+  const words = from === "plan" ? planFrom(result.plan.implementing_agency, result.plan.plan_date) : checkFrom(result.as_of);
+  return { tooltip: what, from: <FromLine words={words} /> };
 }
 
-function Days({ days, lines }: { days: number; lines: [ReactNode, ReactNode][] }) {
-  return <Num value={days} options={{ compact: false }} check={{ tooltip: <Explain lines={lines} /> }} />;
+function Days({ days, check }: { days: number; check: NumCheck }) {
+  return <Num value={days} options={{ compact: false }} check={check} />;
 }
 
 // The delay from the baseline (ticket 21), the sentence that follows a reason's first sentence when a
@@ -77,28 +73,30 @@ function BaselineSentence({ reason, result, kind }: { reason: Reason; result: Ch
   const e = words.explain;
   const days = found.days ?? 0;
   const planned = found.planned_on;
-  const lines = (to: [ReactNode, ReactNode]): [ReactNode, ReactNode][] => [
-    [<Fill template={kind === "signing" ? e.baselineSigning : e.baselineCompletion} slots={{ plan: day(found.plan_date) }} />, planned ? day(planned) : ""],
-    to,
-    [e.daysBetween, whole(days)],
-  ];
-  const daysNum = (to: [ReactNode, ReactNode]) => <Days days={days} lines={lines(to)} />;
+  const plan = { plan: <span className="whitespace-nowrap">{formatDate(found.plan_date)}</span> };
+  const daysNum = (template: string) => <Days days={days} check={checked(result, <Fill template={template} slots={plan} />)} />;
   let sentence: ReactNode = null;
   switch (found.state) {
     case "late":
     case "early":
       sentence = (
-        <Fill
-          template={b[found.state](days)}
-          slots={{ days: daysNum([e.signed, day(reason.signed_on!)]), date: planned ? day(planned) : "" }}
-        />
+        <Fill template={b[found.state](days)} slots={{ days: daysNum(e.baselineSigningDays), date: planned ? day(planned) : "" }} />
       );
       break;
     case "on_date":
       sentence = b.on_date;
       break;
     case "past":
-      sentence = <Fill template={b.past(days)} slots={{ date: planned ? day(planned) : "", days: daysNum([e.asOf, day(result.as_of)]), as_of: day(result.as_of) }} />;
+      sentence = (
+        <Fill
+          template={b.past(days)}
+          slots={{
+            date: planned ? day(planned) : "",
+            days: daysNum(kind === "signing" ? e.baselinePastSigning : e.baselinePastCompletion),
+            as_of: day(result.as_of),
+          }}
+        />
+      );
       break;
     case "ahead":
       sentence = <Fill template={b.ahead} slots={{ date: planned ? day(planned) : "" }} />;
@@ -122,19 +120,6 @@ function BaselineSentence({ reason, result, kind }: { reason: Reason; result: Ch
 function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan }) {
   const r = words.reason;
   const e = words.explain;
-  const closingLines = (days: number): [ReactNode, ReactNode][] => [
-    // check_plan gives the record's date with every closing date; without one, the line gives the date alone.
-    [
-      e.closing,
-      result.project.record_date ? (
-        <Fill template={e.closingRecord} slots={{ date: day(reason.closing_date!), record: day(result.project.record_date) }} />
-      ) : (
-        day(reason.closing_date!)
-      ),
-    ],
-    [e.asOf, day(result.as_of)],
-    [e.daysBetween, whole(days)],
-  ];
   switch (reason.code) {
     case "completion_passed_no_contract":
       return (
@@ -154,7 +139,7 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       );
     case "pending_near_closing": {
       const days = reason.days_to_close!;
-      return <Fill template={r.pending_near_closing(days)} slots={{ days: <Days days={days} lines={closingLines(days)} /> }} />;
+      return <Fill template={r.pending_near_closing(days)} slots={{ days: <Days days={days} check={checked(result, e.closingDays)} /> }} />;
     }
     case "pending_on_closing_day":
       return <>{r.pending_on_closing_day}</>;
@@ -162,36 +147,13 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       return <Fill template={r.pending_after_closing} slots={{ date: day(reason.closing_date!) }} />;
     case "signed_late_over_estimate":
     case "signed_over_estimate": {
-      const ratio = (
-        <Num
-          value={reason.ratio!}
-          options={{ compact: false }}
-          check={{
-            tooltip: (
-              <Explain
-                lines={[
-                  [e.actual, amount(reason.actual_amount_usd!)],
-                  [e.estimated, amount(reason.estimated_amount_usd!)],
-                  [e.divided, reason.ratio_exact],
-                ]}
-              />
-            ),
-          }}
-        />
-      );
+      // The ratio's tooltip names no number the page does not show: the row's amounts are in its own columns, and the
+      // tool's unrounded ratio is not given.
+      const ratio = <Num value={reason.ratio!} options={{ compact: false }} check={checked(result, e.ratio, "plan")} />;
       const slots: Record<string, ReactNode> = { date: day(reason.signed_on!), actual: amount(reason.actual_amount_usd!), ratio };
       if (reason.code === "signed_over_estimate") return <Fill template={r.signed_over_estimate} slots={slots} />;
       const days = reason.days_late!;
-      slots.days = (
-        <Days
-          days={days}
-          lines={[
-            [e.firstPlannedSigning, <Fill template={e.inPlanOf} slots={{ date: day(reason.planned_signing_on!), plan: day(reason.planned_signing_plan_date!) }} />],
-            [e.signed, day(reason.signed_on!)],
-            [e.daysBetween, whole(days)],
-          ]}
-        />
-      );
+      slots.days = <Days days={days} check={checked(result, e.signingDays)} />;
       // With a baseline, the first delay is named as from the first published planned date, and the
       // delay from the baseline follows it (the 21 brief, section 5.3).
       if (reason.baseline) {
@@ -261,18 +223,10 @@ function methodText(row: Activity): ReactNode {
   return <MethodText method={row.method} approach={row.market_approach} />;
 }
 
-// The rows a mark's count word counts, for its tooltip.
-function Counted({ rows }: { rows: Activity[] }) {
-  return (
-    <div>
-      <p className="font-semibold">{words.explain.counted}</p>
-      <ul className="mt-1 font-mono">
-        {rows.map((row) => (
-          <li key={row.activity_reference_no}>{row.activity_reference_no}</li>
-        ))}
-      </ul>
-    </div>
-  );
+// The rows a mark's count word counts, for its tooltip: one sentence that says what it counts, by its mark, and lists
+// their references.
+function Counted({ rows, mark }: { rows: Activity[]; mark: Mark }) {
+  return <ListedRefs template={words.explain.countedBy[mark]} refs={rows.map((row) => row.activity_reference_no)} end={words.explain.countedEnd} />;
 }
 
 function Finding({ result }: { result: CheckedPlan }) {
@@ -282,7 +236,7 @@ function Finding({ result }: { result: CheckedPlan }) {
     <Num
       count={count}
       capital={capital}
-      check={{ tooltip: <Counted rows={result.rows.filter((row) => row.marks.some((m) => m.mark === mark))} /> }}
+      check={checked(result, <Counted mark={mark} rows={result.rows.filter((row) => row.marks.some((m) => m.mark === mark))} />)}
     />
   );
   // In the public view of a project still under way the server sent no signal, and the finding says why (ticket 40).
@@ -732,7 +686,8 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
         <div data-finding-block className={cx(reveal && "animate-reveal")}>
           {/* Strata's own words open with its byline, 8 px above them (ticket 111). */}
           <Byline kind="found" />
-          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-h2 text-pretty text-ink-heading focus:outline-none">
+          {/* The page's finding: a count word's tooltip opens under all of it (DESIGN.md, Number tooltip). */}
+          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-h2 text-pretty text-ink-heading focus:outline-none" data-finding>
             <Finding result={result} />
           </h2>
           <div className="mt-2">

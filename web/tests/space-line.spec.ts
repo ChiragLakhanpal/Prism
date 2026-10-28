@@ -10,7 +10,7 @@ import { expect, mockApi, recorded, test } from "./mocked";
 const PACKAGE = "KE-NWWDA-541055-CW-RFB";
 const MOWI = "KE-MOWI-47509-CW-RFB";
 const DRAFT = "/drafts/draft-0001";
-const PACKAGE_LINE = "Select a dot on the chart, an underlined number or a numbered source, and its records open here.";
+const PACKAGE_LINE = "Select a dot on the chart or a numbered source, and its records open here.";
 const DRAFT_LINE = "Select a numbered source, and its record opens here.";
 
 // At 1440 px beside the 64 px rail the frame is 1376 px: 40 px margins leave 1296 px, whose 12 columns of 78.67 px and

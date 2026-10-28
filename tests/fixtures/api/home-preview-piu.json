@@ -127,7 +127,8 @@
             "text": " is still pending in the plan, "
           },
           {
-            "number": 3
+            "number": 3,
+            "what": "daysToClose"
           },
           {
             "text": " days before the project closes on "

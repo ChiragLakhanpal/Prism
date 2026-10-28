@@ -36,6 +36,7 @@ import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
+import { FromLine, modelFrom, recordsFrom, settingsFrom, testsFrom } from "./NumFrom";
 import { ReasonGroup } from "./ReasonsList";
 import { Skeleton, SkeletonLine } from "./Skeleton";
 import { Source } from "./Source";
@@ -164,12 +165,18 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
     setFocusFirst(true);
   };
   const different = result.denominator_reason !== null;
-  const count = (value: number, tooltip: string) => <Num value={value} options={{ compact: false }} check={{ tooltip, onOpen: n > 0 ? toRows : undefined }} />;
-  const nNum = count(n, words.tips.n);
-  const mNum = count(m, different ? words.tips.mOther : words.tips.m);
+  // Each count comes from every record set the tool read (a package canceled in the Procurement Plan comes from the
+  // plan's rows, in Documents & Reports) and, when any was advertised again, opens the list below (ticket 96).
+  const records = recordsFrom(result.sources, result.records_through, result.sources.map((source) => source.key));
+  const count = (value: number, tooltip: string, act: string) => {
+    const base = { tooltip, from: records ? <FromLine words={records} /> : undefined };
+    return <Num value={value} options={{ compact: false }} check={n > 0 ? { ...base, act, opens: "rows", onOpen: toRows } : base} />;
+  };
+  const nNum = count(n, words.tips.n, words.tips.nAct);
+  const mNum = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct);
   const sentence =
     n === 0 ? (
-      <Fill template={words.countNone} slots={{ m: count(m, different ? words.tips.mOther : words.tips.m) }} />
+      <Fill template={words.countNone} slots={{ m: mNum }} />
     ) : n === m ? (
       <Fill template={words.countAll} slots={{ m: mNum }} />
     ) : n === 1 ? (
@@ -259,8 +266,9 @@ function ModelLines({ model }: { model: RebidModel }) {
   const track = model.track_record;
   const baseline = track ? (words.baselines[track.baseline_code] ?? words.baselines.comparables_rate) : words.baselines.comparables_rate;
   if (model.shown && track) {
-    const k = <Num value={model.in10!} options={{ compact: false }} check={{ tooltip: <Fill template={words.tips.k} slots={{ date: model.score_date ? formatDate(model.score_date) : "" }} /> }} />;
-    const tip = <Fill template={words.tips.track} slots={{ date: formatDate(track.run_date) }} />;
+    const scored = model.score_date ? <FromLine words={modelFrom(model.score_date)} /> : undefined;
+    const k = <Num value={model.in10!} options={{ compact: false }} check={{ tooltip: words.tips.k, from: scored }} />;
+    const tip = { tooltip: words.tips.track, from: <FromLine words={testsFrom(track.run_date)} /> };
     return (
       <>
         <p className="mt-2 max-w-prose text-body text-ink" data-rebid-model>
@@ -270,7 +278,7 @@ function ModelLines({ model }: { model: RebidModel }) {
           <Fill
             template={words.track}
             slots={{
-              n: <Num value={track.n_test} options={{ compact: false }} check={{ tooltip: tip }} inCaption />,
+              n: <Num value={track.n_test} options={{ compact: false }} check={tip} inCaption />,
               year: <Num year={track.test_year} />,
               baseline,
             }}
@@ -280,14 +288,16 @@ function ModelLines({ model }: { model: RebidModel }) {
     );
   }
   const reason = model.not_shown_reason ?? "no_results";
-  const tip = track ? <Fill template={words.tips.track} slots={{ date: formatDate(track.run_date) }} /> : null;
+  const tip = track ? { tooltip: words.tips.track, from: <FromLine words={testsFrom(track.run_date)} /> } : null;
+  // The smallest count the model gives an estimate from is one of my settings, as the scored run used it.
+  const setting = model.score_date ? <FromLine words={settingsFrom(model.score_date)} /> : undefined;
   return (
     <p className="mt-2 max-w-prose text-body text-ink" data-rebid-model-off={reason}>
       <Fill
         template={words.off[reason] ?? words.off.no_results}
         slots={{
-          min: <Num value={model.min_comparables} options={{ compact: false }} check={{ tooltip: words.tips.min }} />,
-          n: track ? <Num value={track.n_test} options={{ compact: false }} check={{ tooltip: tip }} /> : "",
+          min: <Num value={model.min_comparables} options={{ compact: false }} check={{ tooltip: words.tips.min, from: setting }} />,
+          n: track && tip ? <Num value={track.n_test} options={{ compact: false }} check={tip} /> : "",
           year: track ? <Num year={track.test_year} /> : "",
           baseline,
         }}

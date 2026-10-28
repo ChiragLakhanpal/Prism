@@ -104,6 +104,19 @@ def test_the_first_two_lines_are_the_wireframes_real_lines_from_the_nwwda_plan_o
     assert first["source"]["date"] == value("plan-2026-10-09-disclosed").isoformat()
 
 
+def test_each_number_in_a_line_names_what_it_is_and_a_rounded_amount_carries_the_plan_rows_own_value(story):
+    """Ticket 96: a number's tooltip says what the number is, and a rounded amount's gives the record's own unrounded
+    value (DESIGN.md, Signal line), so the server says which value each number in a line is."""
+    first, second, third = lines(story.home().json(), "activity")[:3]
+    numbers = lambda line: [segment for segment in line["segments"] if "written" in segment or "number" in segment]
+
+    assert numbers(first) == [{"written": "1.23", "what": "millions",
+                               "exact": f"{value('plan-541055-estimated'):,.2f}"}]
+    assert numbers(second) == [{"written": f"{value('plan-229129-actual'):,.2f}", "what": "actual"},
+                               {"written": f"{value('plan-229129-estimated'):,.0f}", "what": "estimated"}]
+    assert [segment["what"] for segment in numbers(third)] == ["daysToClose"]
+
+
 def test_each_activity_page_the_lines_open_answers_for_its_activity(story):
     for line in lines(story.home().json(), "activity"):
         reference = line["action"]["href"].rsplit("/", 1)[1]

@@ -231,9 +231,12 @@ def _subject(row: dict, project: dict, first: bool, own: bool) -> list[dict]:
     estimate = row.get("estimated_amount_usd")
     if estimate in (None, ""):
         return fill(line["introNoEstimate"], slots)
+    # Each number names the value it is, for its tooltip (ticket 96), and an amount in millions carries the plan row's
+    # own Estimated Amount (US$) to the cent, which the tooltip gives (DESIGN.md, Signal line).
     if Decimal(str(estimate)) >= MILLION:
-        return fill(line["intro"], {**slots, "millions": {"written": row["estimated_millions"]}})
-    return fill(line["introFull"], {**slots, "amount": {"written": written(estimate)}})
+        exact = f"{Decimal(str(estimate)):,.2f}"
+        return fill(line["intro"], {**slots, "millions": {"written": row["estimated_millions"], "what": "millions", "exact": exact}})
+    return fill(line["introFull"], {**slots, "amount": {"written": written(estimate), "what": "estimated"}})
 
 
 def _predicate(code: str, reason: dict) -> list[dict]:
@@ -245,11 +248,12 @@ def _predicate(code: str, reason: dict) -> list[dict]:
             out += fill(line["closed" if closed else "closes"], {"date": _date(reason["closing_date"])})
         return out
     if code in ("signed_over_estimate", "signed_late_over_estimate"):
-        return fill(line[code], {"actual": {"written": written(reason["actual_amount_usd"])},
-                                 "estimated": {"written": written(reason["estimated_amount_usd"])}})
+        return fill(line[code], {"actual": {"written": written(reason["actual_amount_usd"]), "what": "actual"},
+                                 "estimated": {"written": written(reason["estimated_amount_usd"]), "what": "estimated"}})
     if code == "pending_near_closing":
         days = int(reason["days_to_close"])
-        return fill(form(line[code], days), {"days": {"number": days}, "date": _date(reason["closing_date"])})
+        return fill(form(line[code], days), {"days": {"number": days, "what": "daysToClose"},
+                                             "date": _date(reason["closing_date"])})
     if code == "pending_after_closing":
         return fill(line[code], {"date": _date(reason["closing_date"])})
     return fill(line[code], {})

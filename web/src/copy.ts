@@ -1078,7 +1078,7 @@ export const copy = {
     // The space line (ticket 110): what columns 9 to 12 are for while no drawer is open, on the pages that keep them
     // free for the drawer.
     spaceHint: {
-      package: "Select a dot on the chart, an underlined number or a numbered source, and its records open here.",
+      package: "Select a dot on the chart or a numbered source, and its records open here.",
       draft: "Select a numbered source, and its record opens here.",
     },
     eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
@@ -1396,7 +1396,19 @@ export const copy = {
     // Templates for Fill, so the project ID or the reference is set in Roboto Mono.
     numTooltip: "Matches paragraph {para} of the {kind} for {pid}.",
     numTooltipSection: "Matches the section {section} of the {kind} for {pid}.",
-    numTooltipRecord: "Matches the {kind} record {reference}.",
+    // The reference ends the sentence, so its full stop stays in the reference's last box (MonoWords).
+    numTooltipRecord: "Matches the {kind} record {reference}",
+    numTooltipRecordEnd: ".",
+    // What a number's tooltip calls a record whose kind's own name already says "record" or reads as a heading
+    // ("Project record", "Loan history of"), by its table, so the sentence never says "record record" (ticket 96).
+    numTooltipKinds: {
+      "strata.gold.project": "Project",
+      "strata.gold.project_closing_date": "Loan history",
+      "strata.gold.ieg_rating": "IEG rating",
+      "strata.gold.project_isr_rating": "ISR rating",
+      "strata.silver.isr_ratings": "ISR rating",
+      "strata.ops.plan_baselines": "Baseline",
+    } as Record<string, string>,
     // A date a passage backs because it is its report's date, not because the paragraph holds it.
     numTooltipReportDate: "Matches the date of the {kind} for {pid}.",
     // What a number's tooltip calls each kind of document, by its short name.
@@ -2160,8 +2172,9 @@ export const copy = {
     // A Moved cell when either date is missing: empty on screen, and this for a screen reader.
     notMeasured: "Not measured",
     movedDays: (days: string, later: boolean) => `${days} days ${later ? "later" : "earlier"}`,
-    explainMoved: "Was {was} in the plan of {prev}. Now {now} in the plan of {plan}. Days between them: {days}.",
-    explainAmount: "Was US${was} in the plan of {prev}. Now US${now} in the plan of {plan}.",
+    // What a change's number is, in its tooltip (ticket 96), which comes from the two plans (num.from.plans).
+    explainMoved: "Days between the step's planned dates in the two plans.",
+    explainAmount: "The change in Estimated Amount (US$) from the earlier plan to this one.",
     cell: {
       added: "Added in this version",
       redated: "Re-dated in this version",
@@ -2604,21 +2617,25 @@ export const copy = {
     // Under the narration's step once the check has taken two seconds (ticket 111). It gives no timer and no
     // duration, since a duration on screen is a number no tool returned; Data readiness says the same of its measures.
     databaseStarting: "The database may be starting up, so this can take longer.",
-    // What each number in a reason or the finding is, in its tooltip.
+    // What each number in a reason or the finding is, in its tooltip (ticket 96; DESIGN.md, Number tooltip): one
+    // sentence for each number, naming no number the page does not show. Where it came from is num.from.
     explain: {
-      firstPlannedSigning: "Planned signing date, as first published",
-      inPlanOf: "{date}, in the plan of {plan}",
-      signed: "Contract signed",
-      daysBetween: "Days between them",
-      actual: "Actual Amount (US$)",
-      estimated: "Estimated Amount (US$)",
-      divided: "Actual divided by estimated",
-      closing: "Project closing date",
-      closingRecord: "{date}, from the projects API record of {record}",
-      asOf: "Checked as of",
-      counted: "The activities I counted:",
-      baselineSigning: "Planned date in the baseline, the plan of {plan}",
-      baselineCompletion: "Planned completion in the baseline, the plan of {plan}",
+      signingDays: "Days between its planned signing date, as first published, and Contract signed.",
+      ratio: "Actual Amount (US$) divided by Estimated Amount (US$), from the same plan row.",
+      closingDays: "Days from my check's date to the project's closing date.",
+      baselineSigningDays: "Days between its planned signing date in the baseline, the plan of {plan}, and Contract signed.",
+      baselinePastSigning: "Days from its planned signing date in the baseline, the plan of {plan}, to my check's date.",
+      baselinePastCompletion: "Days from its planned completion in the baseline, the plan of {plan}, to my check's date.",
+      // A draft's lede counts the activities it holds notes on. Each count word's tooltip is one sentence that lists the
+      // STEP references it counts, its full stop kept with the last one (ticket 96).
+      counted: "The activities I counted: {refs}",
+      // The finding's count words, by the mark each counts.
+      countedBy: {
+        needs_a_look: "The activities that need a look: {refs}",
+        watch: "The activities worth watching: {refs}",
+        data_note: "The activities with data notes: {refs}",
+      },
+      countedEnd: ".",
     },
     // One sentence per reason code check_plan returns (config/tools.toml, [tools.check_plan.result]).
     reason: {
@@ -3789,26 +3806,29 @@ export const copy = {
       groupHelp: "Use the arrow keys to move between packages. Press Escape to hide the details.",
       // Where a dot opens its package's records in the evidence drawer (ticket 15).
       groupHelpOpen: "Use the arrow keys to move between packages. Press Enter to open a package's records, or Escape to hide the details.",
-      openHint: "Press Enter or click to open its records.",
+      // A dot's action line (num.act), the last line of its tooltip and of its name.
+      openHint: "Select to see its records.",
       openRecords: "Open its records",
       // Where a quantile dot lists the packages it stands for in the evidence drawer (ticket 15).
       groupHelpOpenDots:
         "Use the arrow keys to move between dots. Press Enter to list the packages a dot stands for, or Escape to hide the details.",
-      openHintDots: "Press Enter or click to list the packages it stands for.",
+      openHintDots: "Select to list the packages it stands for.",
       openDots: "List its packages",
-      dotSigned: (ref: string, country: string, months: string, date: string, index: string, total: string) =>
-        `${ref}, ${country}. Signed after ${months} months, on ${date}. Dot ${index} of ${total}.`,
-      dotOpen: (ref: string, country: string, months: string, index: string, total: string) =>
-        `${ref}, ${country}. Still open after ${months} months. Dot ${index} of ${total}.`,
+      // A dot's name says what its tooltip shows, which screen readers do not hear: its reference, its months, then
+      // the tooltip's sentence, where it came from and what Enter does (said), then its place among the dots.
+      dotName: (ref: string, months: string, said: string, index: string, total: string) =>
+        `${ref}, ${months} months. ${said} Dot ${index} of ${total}.`,
       dotQuantile: (k: string, total: string, months: string) =>
         `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. This one is at ${months} months.`,
       dotQuantileOpen: (k: string, total: string, months: string) =>
         `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
       tipMonths: (months: string) => `${months} months`,
       tipPast: (months: string) => `Past ${months} months`,
-      // The country leads, as it follows the reference in the dot's name, so the notice is not read as published there.
-      tipSigned: (signed: string, notice: string, country: string) => `${country}. Signed ${signed}. Its notice was published ${notice}.`,
-      tipOpen: (notice: string, country: string) => `${country}. Still open. Its notice was published ${notice}.`,
+      // A dot's sentence, with its dates in full (DESIGN.md section 7, rule 13). The country leads, as it follows the
+      // reference and months in the dot's name, so the notice is not read as published there.
+      tipSigned: (country: string, notice: string, signed: string) =>
+        `${country}. Its notice was published ${notice}, and its contract was signed ${signed}.`,
+      tipOpen: (country: string, notice: string) => `${country}. Its notice was published ${notice}, and the records I hold show no signed contract.`,
       tipQuantile: (k: string) => `Dot ${k} of 20`,
       tipQuantileLine: (total: string) => `Each dot is 1 in 20 of the ${total} comparable packages.`,
       tipQuantileOpen: "Too many of these packages are still open to place this dot.",
@@ -3839,14 +3859,30 @@ export const copy = {
       altCanceledCounted: (count: number, text: string) =>
         count === 1 ? "I counted the one canceled package as still open." : `I counted the ${text} canceled packages as still open.`,
     },
-    // What each checkable number counts, in its tooltip.
+    // What each checkable number is, in its tooltip (DESIGN.md, Number tooltip; ticket 96): one sentence for each
+    // number, so two numbers in one sentence never share one unless they come from the same record and open the
+    // same thing. Where it came from and what a click does are num.from and num.act.
     explain: {
-      counts: (plan: string, total: string, open: string) =>
-        `Packages signed in ${plan} months or less, out of all ${total}, including the ${open} still open. Select to see the rows.`,
-      quantiles: (total: string, open: string) =>
-        `Worked out from all ${total} comparable packages, with the ${open} still open counted as not signed yet. This is the Kaplan-Meier method. Select to see the rows.`,
-      plan: (agency: string, date: string) => `From the planned dates in the ${agency} plan of ${date}.`,
-      coverage: "Counted from the records behind this section. Data readiness lists them by source.",
+      within: (plan: string) => `Comparable packages signed within ${plan} months of their notice.`,
+      total: (open: number, openWord: string) =>
+        open === 0
+          ? "All comparable packages in the past range."
+          : open === 1
+            ? "All comparable packages in the past range, including the one still open."
+            : `All comparable packages in the past range, including the ${openWord} still open.`,
+      // The "about {in10} in 10" share in the finding.
+      share: (plan: string) => `About how many of every 10 comparable packages were signed within ${plan} months.`,
+      plan: "The plan's months from notice to signed contract.",
+      // The middle half's two ends, the middle one and the 8-in-10 point, each counting the packages still open as
+      // not signed yet, which openCounted says after it.
+      middle: (total: string) => `Where the middle half of the ${total} packages starts and ends.`,
+      median: "The middle package's months.",
+      in10: "The months by which 8 in 10 packages were signed.",
+      openCounted: (open: number, openWord: string) =>
+        open === 1 ? "I counted the one still open as not signed yet." : `I counted the ${openWord} still open as not signed yet.`,
+      coverage: "Comparable packages I used, out of all that matched the criteria.",
+      // When none of them could be measured: the count of past packages that matched.
+      matched: "Past packages that matched the criteria.",
     },
     // The table twin under the chart.
     table: {
@@ -3931,15 +3967,30 @@ export const copy = {
       size_larger: "this package is larger than {k} of the {n} comparable packages",
       size_smaller: "this package is smaller than {k} of the {n} comparable packages",
     },
+    // What each number is, in its tooltip; the act keys are what a click opens (ticket 96, num.act's form).
     explain: {
-      estimate: (date: string) =>
-        `My time estimate for this package, from the model scored on ${date}. Select to see how it did on packages it had not seen.`,
+      // The time estimate's middle half and its 8-in-10 point, from the model (num.from.model).
+      estimateMiddle: "Where the middle half of my time estimate for this package starts and ends.",
+      estimateIn10: "The months by which my time estimate puts 8 in 10 packages like this one.",
+      // While comparing: the time estimate with the option pressed.
+      estimateMiddleWith: "Where the middle half of my time estimate with this option starts and ends.",
+      estimateIn10With: "The months by which my time estimate with this option puts 8 in 10 packages like this one.",
+      estimateAct: "Select to see how it did on packages it had not seen.",
       diff: "The difference between my time estimate's middle and the past range's middle, worked out by the tool.",
+      diffAct: "Select to see the time estimate table.",
       size_larger: (n: string) =>
-        `Comparable packages whose signed contracts add up to less than this package's estimated amount, out of all ${n}. Select to see them.`,
+        `Comparable packages whose signed contracts add up to less than this package's estimated amount, out of all ${n}.`,
       size_smaller: (n: string) =>
-        `Comparable packages whose signed contracts add up to more than this package's estimated amount, out of all ${n}. Select to see them.`,
-      track: (year: string) => `From my backtest for ${year}. Select to see every test year.`,
+        `Comparable packages whose signed contracts add up to more than this package's estimated amount, out of all ${n}.`,
+      sizeAct: "Select to see the comparable packages.",
+      // The track record's numbers, each its own, from the backtest (num.from.backtest).
+      trackN: "The packages from that year that my model had not seen, which I tested it on.",
+      trackYear: "The year of the packages I tested my model on.",
+      trackM: "Of those, the packages that finished inside my 8-in-10 range.",
+      trackExpected: "How many of those a well-sized 8-in-10 range catches.",
+      trackMisses: "Of those, the packages that finished outside my 8-in-10 range.",
+      trackLate: "Of those outside it, the packages that ran late.",
+      trackAct: "Select to see every test year.",
       planDate: (n: string, year: string, k: string) =>
         `In my backtest of ${n} packages from ${year} that I had not seen, ${k} ran longer than this point of their own time estimate.`,
     },
@@ -4095,7 +4146,8 @@ export const copy = {
       not: (option: string) => `Did not go with ${option}.`,
       unknown: (lever: string) => `No record of ${lever}.`,
     },
-    explainCount: (option: string, n: string) => `Comparable packages that went with ${option}, out of all ${n}. Select to see them.`,
+    explainCount: (option: string, n: string) => `Comparable packages that went with ${option}, out of all ${n}.`,
+    explainCountAct: "Select to list them.",
     announce: {
       pressed: (option: string, k: string, n: string, w25: string, w75: string, b25: string, b75: string) =>
         `Comparing with ${option}. ${k} of ${n} comparable packages went with it. Middle half ${w25} to ${w75} months, against ${b25} to ${b75} as described.`,
@@ -4465,10 +4517,14 @@ export const copy = {
     pillNameAfter: (docType: string, date: string, opened: boolean) => `, ${docType}, ${date}${opened ? ", opened" : ""}`,
     pillsLabel: "Sources",
     numTips: {
-      k: (k: string) => `Completion reports for projects with comparable packages that raised this risk. Select to see the ${k}.`,
-      tie: (k: string) => `Each of these risks came up in ${k} completion reports. Select a row's count to see its reports.`,
-      m: (m: string) => `Completion reports of projects with comparable packages that I read. Select to see all ${m}.`,
-      counted: "Counted from the records behind this section. Data readiness lists them by source.",
+      k: "Completion reports for projects with comparable packages that raised this risk.",
+      kAct: (k: string) => `Select to see the ${k}.`,
+      tie: (k: string) => `Each of these risks came up in ${k} completion reports.`,
+      m: "Completion reports of projects with comparable packages that I read.",
+      mAct: (m: string) => `Select to see all ${m}.`,
+      // The coverage line's two counts, each its own sentence (ticket 96). The counts of projects left out are plain.
+      coverageM: "Projects with comparable packages whose completion reports I read.",
+      coverageP: "All projects with comparable packages, whether or not I could read a completion report for them.",
     },
     removed: {
       none: "I removed no risks.",
@@ -4703,23 +4759,28 @@ export const copy = {
     // aboutIn10 or aboutHalf.
     tips: {
       dateDelay:
-        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after the date first planned for it. I added {days} days to the plan's date. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after the date first planned for it. I added {days} days to the plan's date.",
       dateBefore:
-        "For {longer} of {n} comparable packages, {about}, {step} came less than {days} days ahead of the date first planned for it. I counted {days} days back from the plan's date. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came less than {days} days ahead of the date first planned for it. I counted {days} days back from the plan's date.",
       dateDuration:
-        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I added {days} days to the date of {previous}. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I added {days} days to the date of {previous}.",
       dateUndated:
-        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. Add the date of {first} above, and I'll date this step. Select to see the {n} packages.",
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. Add the date of {first} above, and I'll date this step.",
       // The days of a step that needs an earlier step's date.
       daysNeedsEarlier:
-        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I have no date for {previous} to count from. Select to see the {n} packages.",
-      count: (phrase: string) => `Comparable packages whose published plans recorded ${phrase}. Select to see them.`,
-      longest: "Of the {m} comparable packages whose plans recorded every step up to the signed contract, {stage} ran longest in {n}. Select to see them.",
+        "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I have no date for {previous} to count from.",
+      count: (phrase: string) => `Comparable packages whose published plans recorded ${phrase}.`,
+      longest: "Of the {m} comparable packages whose plans recorded every step up to the signed contract, {stage} ran longest in {n}.",
+      // What a click on a date or a count opens: the comparable packages behind it, in the drawer (ticket 96).
+      act: "Select to see the {n} packages.",
+      listAct: "Select to list them.",
+      // The track record's count: what it counts, then the From line names the backtest (ticket 96).
       track:
-        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}. Run {run}.",
-      trackNoRun:
-        "From the backtest for {year}: I dated the steps that plans published before {year} had planned for {year}, using only records public before {year}.",
-      counted: "Counted from the records behind this section. Data readiness lists them by source.",
+        "Steps planned for {year} that came on or before my date, when I dated them using only records public before {year}. Run {run}.",
+      trackNoRun: "Steps planned for {year} that came on or before my date, when I dated them using only records public before {year}.",
+      // The coverage line's two counts, each its own sentence (ticket 96). The counts left out are plain text.
+      used: "Comparable packages whose plans dated these steps.",
+      total: "All comparable packages for this package.",
     },
     // The evidence drawer's two lists (the 27 brief, section 7.6).
     drawer: {
@@ -4875,11 +4936,15 @@ export const copy = {
     tryAgain: "Try again",
     // What each number counts, in its tooltip (the 28 brief, section 7.5).
     tips: {
-      n: "Packages I counted as advertised again. Select to see each one and its reason.",
-      m: "The comparable packages in the past range above. Select to see the ones advertised again.",
-      mOther: "The comparable packages I counted for this. Select to see the ones advertised again.",
-      k: "From my rebidding model, scored on {date} and rounded to the nearest 1 in 10.",
-      track: "From my model's saved test results of {date}.",
+      n: "Comparable packages advertised again, canceled packages included.",
+      m: "The comparable packages in the past range above.",
+      mOther: "The comparable packages I counted for this.",
+      // What a click on either count opens: the list below, by reason (ticket 96).
+      nAct: "Select to see each one and its reason.",
+      mAct: "Select to see the ones advertised again.",
+      // What the model's numbers are; where each came from is its From line (ticket 96).
+      k: "How many in 10 packages like this one my model expects to be advertised again, rounded to the nearest 1 in 10.",
+      track: "The packages I tested my model on, which it had not seen.",
       min: "The smallest number of comparable packages I give an estimate from.",
     },
     // The evidence drawer opened from a row: the row's line as the claim, and its records as tabs.
@@ -4916,7 +4981,9 @@ export const copy = {
     tryAgain: "Try again",
     code: "If it fails again, quote this code: {code}",
     loading: "Loading the check of your qualification criteria.",
-    nTooltip: "Comparable packages whose notices published their qualification criteria. Select to see them.",
+    nTooltip: "Comparable packages whose notices published their qualification criteria.",
+    // What a click on a count in this section opens, in the drawer or below it (ticket 96).
+    listAct: "Select to list them.",
     intro:
       "Paste the qualification criteria from the bidding document. I break them into items, such as similar experience and average annual turnover, and compare each item with the {n} comparable packages whose criteria are public. The rejected bids, the cost estimate and the lessons below don't need your text.",
     introOne:
@@ -5031,11 +5098,14 @@ export const copy = {
         "I found no qualification criteria in your text. Paste the part of the bidding document that sets them, such as the experience, turnover, equipment and key staff that bidders need.",
       error: "I couldn't compare your qualification criteria just now. Your text is saved.",
       // Num hover text (the 31 brief, section 6.10).
-      statedTooltip: (phrase: string) => `Comparable notices that set ${phrase}. Select to see each one and what it asked for.`,
-      sameOrLessTooltip: (phrase: string) => `Notices that asked for the same as you or less on ${phrase}. Select to see them.`,
-      moreTooltip: (phrase: string) => `Notices that asked for more than you on ${phrase}. Select to see them.`,
+      statedTooltip: (phrase: string) => `Comparable notices that set ${phrase}.`,
+      sameOrLessTooltip: (phrase: string) => `Notices that asked for the same as you or less on ${phrase}.`,
+      moreTooltip: (phrase: string) => `Notices that asked for more than you on ${phrase}.`,
       differentTooltip: (phrase: string) =>
-        `Notices that set ${phrase} in a way I can't put in order with yours, such as more contracts of a smaller size. Select to see them.`,
+        `Notices that set ${phrase} in a way I can't put in order with yours, such as more contracts of a smaller size.`,
+      // What a click on an item's count opens: its notices, in the drawer (ticket 96).
+      statedAct: "Select to see each one and what it asked for.",
+      listAct: "Select to list them.",
       // A count's accessible name: the visible count plus its meaning.
       statedName: (count: string, phrase: string) => `${count} comparable notices set ${phrase}`,
       sameOrLessName: (count: string, phrase: string) => `${count} notices asked for the same or less on ${phrase}`,
@@ -5071,7 +5141,8 @@ export const copy = {
       sourceAsOf: "{sources}. Records as of {asOf}.",
       error: "I couldn't load the rejected bids just now.",
       openRecords: (ref: string) => `Open the records for ${ref}`,
-      countTooltip: "Comparable packages with an award notice in the records. Select to see the ones with rejected bids.",
+      countTooltip: "Comparable packages with an award notice in the records.",
+      countAct: "Select to see the ones with rejected bids.",
       // A marker's source, in its accessible name (brief 28's record form): "Source 3: Award notice OP00125282, April 14, 2021".
       markerSource: (id: string, date: string) => `Award notice ${id}, ${date}`,
       markerSourceUndated: (id: string) => `Award notice ${id}`,
@@ -5167,7 +5238,8 @@ export const copy = {
     dotName: (ref: string, diff: string) => `${ref}, signed ${diff} its cost estimate`,
     alt: "One dot for each of {m} comparable packages, placed by how far its signed amount was from its own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altMiddle: "The middle half ran from {q25} to {q75}, and the middle package was {q50}.",
-    countTooltip: "Comparable packages with both a cost estimate and a signed contract. Select to see the table.",
+    countTooltip: "Comparable packages with both a cost estimate and a signed contract.",
+    countAct: "Select to see the table.",
     error: "I couldn't load the cost comparison just now.",
     // The drawer's view of one comparable package's cost records (the 31 brief, section 6.11 E).
     drawer: {
@@ -5678,26 +5750,26 @@ export const copy = {
         "person who runs Strata.",
       tryAgain: "Try again",
     },
-    // Each number's tooltip and the window a click opens (the 16 brief, section 5.8).
+    // Each number's tooltip and the window a click opens (the 16 brief, section 5.8). The tooltip's first part says what
+    // the number is; when it was measured is its From line (num.from.measures) and what a click opens is its action
+    // line (num.act.measure), as for every number (DESIGN.md section 5, Number tooltip; ticket 96).
     number: {
-      ratio: (part: string, whole: string, noun: string, date: string) => `${part} of ${whole} ${noun}. Measured ${date}.`,
-      count: (count: string, noun: string, date: string) => `${count} ${noun}. Measured ${date}.`,
-      day: (day: string, date: string) => `The latest data are from ${day}. Measured ${date}.`,
+      ratio: (part: string, whole: string, noun: string) => `${part} of ${whole} ${noun}.`,
+      count: (count: string, noun: string) => `${count} ${noun}.`,
+      day: (day: string) => `The latest data are from ${day}.`,
       // A shortfall: how many of the whole lack what the gap names.
-      missing: (part: string, whole: string, noun: string, lack: string, date: string) =>
-        `${part} of ${whole} ${noun} lack ${lack}. Measured ${date}.`,
-      missingOne: (part: string, whole: string, noun: string, lack: string, date: string) =>
-        `${part} of ${whole} ${noun} lacks ${lack}. Measured ${date}.`,
+      missing: (part: string, whole: string, noun: string, lack: string) => `${part} of ${whole} ${noun} lack ${lack}.`,
+      missingOne: (part: string, whole: string, noun: string, lack: string) => `${part} of ${whole} ${noun} lacks ${lack}.`,
       // A Read well shortfall lacks nothing the registry names, so it says what went wrong, as the
       // gap's sentence does: "30 of 175 body pages I couldn't read without errors."
-      unread: (part: string, whole: string, noun: string, date: string) =>
-        `${part} of ${whole} ${noun} I couldn't read without errors. Measured ${date}.`,
-      kinds: "Counted from the table of what you can ask, below.",
-      sources: "Counted from the rows of the Sources table below.",
-      moreGaps: "Counted from the gaps listed under Sources, below.",
+      unread: (part: string, whole: string, noun: string) => `${part} of ${whole} ${noun} I couldn't read without errors.`,
+      // What a count in a sentence counts, when the page's own tables list it (ticket 96).
+      kinds: "The kinds of question in the table below.",
+      sources: "The sources in the Sources table below.",
+      moreGaps: "The gaps listed under Sources, below.",
       // A fix's project count that no measure counted: the projects whose rows fall short.
-      projects: (count: string, date: string) => `The records behind this gap come from ${count} projects. Measured ${date}.`,
-      projectsOne: (count: string, date: string) => `The records behind this gap come from ${count} project. Measured ${date}.`,
+      projects: (count: string) => `The records behind this gap come from ${count} projects.`,
+      projectsOne: (count: string) => `The records behind this gap come from ${count} project.`,
       // A number the reader clicked that is neither the measure's count nor its denominator.
       missingLabel: "Missing",
       days: "Days late",
@@ -6703,11 +6775,18 @@ export const copy = {
       `In the project's reports, {count} ${one ? "paragraph" : "paragraphs"} appeared together with ${many ? "its contracts" : "the contract"}.`,
     leadNoParagraphs: "No paragraph from the project's reports appeared together with the contract.",
     leadNoParagraphsMany: "No paragraph from the project's reports appeared together with its contracts.",
-    // The tooltips on the lead's numbers: where each came from.
-    fromRecord: (kind: string, reference: string) => `From the ${kind} ${reference}.`,
-    fromAwardNotice: (id: string) => `From award notice ${id}.`,
-    fromParagraphs: "From the links I scored between the contract and the project's reports.",
-    recordKind: { estimated: "Procurement Plan row", advertised: "notice", signed: "contract", award_notice: "award notice" } as Record<string, string>,
+    // The tooltips on the lead's numbers: what each is (ticket 96). Where each came from is its From line, which names
+    // its record by num.from.named, or the plan by num.from.plan.
+    tips: {
+      estimated: "The activity's Estimated Amount in its Procurement Plan row.",
+      advertised: "The day its notice was published.",
+      signed: "The day its contract was signed.",
+      amount: "The amount of its signed contract.",
+      bids: "The bids its award notice listed.",
+      proposals: "The proposals its award notice listed.",
+      paragraphs: "Paragraphs in the project's reports that appeared together with the contract.",
+    },
+    recordKind: { advertised: "notice", signed: "contract", award_notice: "award notice" } as Record<string, string>,
     loading: "Loading this activity.",
     stillLoading: "Still loading this activity.",
     error: "I couldn't load this activity. The data service didn't answer.",
@@ -7502,9 +7581,11 @@ export const copy = {
       n === 1
         ? "I left out {n} rating or date that I read from this project's documents, because I couldn't find its words on the cited page."
         : "I left out {n} ratings or dates that I read from this project's documents, because I couldn't find their words on the cited pages.",
-    abstentionCheck: "Counted by the disagreement check for this project.",
-    // The title's count: where it came from, and that it opens the table.
-    findingCheck: "Counted by the disagreement check for this project. Select it to show the table.",
+    // What each count is; its From line names the project's documents (ticket 96).
+    abstentionCheck: "Ratings and dates from this project's documents that I left out.",
+    // The title's count: what it counts, and that it opens the table.
+    findingCheck: "Pairs of this project's reports that disagree.",
+    findingCheckAct: "Select to see the table.",
     // Under the title, which already says what failed: what is missing until then, true of the chart and the list.
     // Without the check, no ISR is a side of a disagreement, so only the newest ISR keeps its own mark.
     failed: "Until I can, the timeline shows no rating bands, no dashed lines and only the newest ISR.",
@@ -8722,6 +8803,25 @@ export const copy = {
       drafts: "Drafts waiting for you to check",
       behind: "Activities behind their planned dates",
     },
+    // What each number on Home is, in its tooltip (ticket 96; DESIGN.md, Number tooltip). counts: a briefing count
+    // word, by the kind the server names; the rest: a line's number, by the value the server says it is.
+    tips: {
+      counts: {
+        plans: "Procurement Plans disclosed in that time.",
+        look: "Activities that need a look.",
+        watch: "Activities worth watching.",
+        projects: "Projects with a new signal.",
+        lessonsChanged: "Lessons that changed.",
+        lessonsRetired: "Lessons that were retired.",
+        drafts: "Drafts waiting for you to check.",
+        behind: "Activities behind their planned dates.",
+      } as Record<string, string>,
+      // A rounded amount gives the plan row's own value (DESIGN.md, Signal line).
+      millions: (exact: string) => `The plan row's Estimated Amount (US$) is ${exact}. This line gives it in millions.`,
+      estimated: "The plan row's Estimated Amount (US$).",
+      actual: "The plan row's Actual Amount (US$).",
+      daysToClose: "Days from my check to the project's closing date.",
+    },
     // The server's sentences (src/strata/server/home.py). {count} is a count word the server chose, from num.words.
     server: {
       window: "the past {window} days",
@@ -8871,5 +8971,59 @@ export const copy = {
     percentAbove: (n: string) => `${n} percent above`,
     percentBelow: (n: string) => `${n} percent below`,
     percentAtZero: "0 percent above",
+    // The number tooltip (DESIGN.md section 5, Number tooltip; ticket 96). from: where a number came from, with its
+    // date, one template per kind of number. act: what a click does, in words that name what opens, shown only when a
+    // click does it.
+    from: {
+      // The past range, its dots and Advertised again: the record sets the tool counted, and the date they run through.
+      records: "From {sources}, through {date}.",
+      // A plan row's own value, such as the plan's months or a row's amount.
+      plan: "From the {agency} plan of {date}.",
+      // The plan check's counts and its days to closing.
+      check: "From my check of this plan, as of {date}.",
+      // Home's briefing and its lines.
+      home: "From my checks on {date}.",
+      // A change between two versions of a plan.
+      plans: "From the plans of {was} and {date}.",
+      // A data readiness measure, and a count of the rows the page shows from the measures.
+      measures: "From my measures on {date}.",
+      // One of my own settings, such as the layout parser's page limit, as the measured run used it.
+      settings: "From the settings I used on {date}.",
+      // A record named by its kind and reference, such as a notice on the activity page.
+      named: "From the {kind} {reference}, public since {date}.",
+      // The report paragraphs that appeared together with a contract: the links I scored.
+      links: "From the links I scored between the contract and the project's reports, through {date}.",
+      // The time estimate, and its track record.
+      model: "From my model scored on {date}.",
+      backtest: "From my backtest for {year}.",
+      // A number a checked sentence quotes from a document, or matches in a record.
+      document: "From the {doc} for {pid} of {date}.",
+      record: "From its record, public since {date}.",
+      // The risks' counts: the completion reports of projects with comparable packages.
+      reports: "From the completion reports I read, through {date}.",
+      // The rebidding model's saved test results.
+      tests: "From my model's saved test results of {date}.",
+      // A count or difference the time estimate worked out for this package: the comparables it compared, as of the day.
+      estimate: "From my time estimate, as of {date}.",
+    },
+    // The record sets a From line names, by their key in config/sources.toml, in a short form; a source with none here
+    // goes by its dataset name.
+    sources: {
+      notices: "Procurement Notices",
+      awards: "Contract Awards",
+      documents: "Documents & Reports",
+    } as Record<string, string>,
+    act: {
+      // Rows: the table of every comparable package.
+      all: (total: string) => `Select to see all ${total}.`,
+      // Record: the record a number comes from, in the evidence drawer.
+      planRow: "Select to see the plan row.",
+      record: "Select to see the record.",
+      records: "Select to see its records.",
+      // Window: what a count word counts, or how a measure was measured.
+      list: "Select to list them.",
+      listOne: "Select to list it.",
+      measure: "Select to see how I measured it.",
+    },
   },
 } as const;

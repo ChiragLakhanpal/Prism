@@ -322,6 +322,21 @@
   }
 }
 
+/* A tooltip, a number's or a marker's (DESIGN.md section 5, Number tooltip; ticket 96): it fades and grows from 0.97
+   out of the side that touches its trigger over 160 ms, where Radix says that side is, and one opened by keyboard
+   focus, while another is open or less than 300 ms after another closed appears at once (data-instant). */
+@utility tip-in {
+  transform-origin: var(--radix-popover-content-transform-origin);
+  transition: opacity var(--motion-popover) var(--ease-out), scale var(--motion-popover) var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    scale: 0.97;
+  }
+  &[data-instant] {
+    transition: none;
+  }
+}
+
 /* A primary or secondary button pressed (DESIGN.md section 4, Motion): it eases to 0.98 over 120 ms. The
    transition is set only on :active, so the release snaps back at once, and a button that cannot act does
    not move. Under reduced motion it does not scale at all. */

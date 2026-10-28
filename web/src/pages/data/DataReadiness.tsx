@@ -13,6 +13,7 @@ import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";
 import { MeasureNum } from "../../components/MeasureNum";
+import { FromLine, measuresFrom } from "../../components/NumFrom";
 import { DefinitionWindow } from "../../components/Term";
 import { Num, numText } from "../../components/Num";
 import { ReadinessTable, type ReadinessColumn, type ReadinessRow } from "../../components/ReadinessTable";
@@ -335,7 +336,8 @@ function kindRows(kinds: Kind[], measures: Measures): ReadinessRow[] {
           <div className="flex flex-col gap-1">
             {kind.holds_back.map((sentence, index) => (
               <p key={index}>
-                <Sentence segments={sentence} measures={measures} about={words.number.moreGaps} />
+                {/* inText: a number keeps the line's own height, so a row's lines keep one pitch (ticket 96). */}
+                <Sentence segments={sentence} measures={measures} about={words.number.moreGaps} inText />
               </p>
             ))}
           </div>
@@ -466,13 +468,14 @@ function projectCount(fix: Fix, measures: Measures): ReactNode {
       />
     );
   }
-  const date = numText({ date: measures.rows[fix.row].measured_on, style: "table", today: measures.asOf });
-  // In words from one to nine, as in any sentence (DESIGN.md section 7, rule 12).
+  // In words from one to nine, as in any sentence (DESIGN.md section 7, rule 12). It opens nothing, so its tooltip has no
+  // action line (ticket 59).
   const count = numText({ count: fix.projects });
   return (
     <MeasureNum
       value={{ count: fix.projects }}
-      tooltip={fix.projects === 1 ? words.number.projectsOne(count, date) : words.number.projects(count, date)}
+      tooltip={fix.projects === 1 ? words.number.projectsOne(count) : words.number.projects(count)}
+      from={<FromLine words={measuresFrom(measures.rows[fix.row].measured_on)} />}
     />
   );
 }
@@ -495,7 +498,7 @@ function Fixes({ fixes, measures, shortfalls, shown }: { fixes: Fix[]; measures:
               </span>
               <div>
                 <p className="text-body">
-                  <Sentence segments={fix.sentence} measures={measures} />
+                  <Sentence segments={fix.sentence} measures={measures} inText />
                 </p>
                 <p className="text-small" data-numbers>
                   <Template
@@ -838,8 +841,10 @@ function render(
     lead: (
       <>
         {result.headline ? (
-          <p className="text-lead text-pretty text-ink-heading" data-headline>
-            <Sentence segments={result.headline.segments} measures={measures} about={result.filter.sources ? words.number.sources : undefined} />
+          // The headline is the page's finding, so a number's tooltip opens under the whole of it (DESIGN.md, Number
+          // tooltip; ticket 96).
+          <p className="text-lead text-pretty text-ink-heading" data-headline data-finding>
+            <Sentence segments={result.headline.segments} measures={measures} about={result.filter.sources ? words.number.sources : undefined} inText />
           </p>
         ) : result.headline_abstention ? (
           <p className="text-lead text-pretty text-ink-heading" data-headline>

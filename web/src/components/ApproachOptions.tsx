@@ -16,6 +16,7 @@ import { Button } from "./Button";
 import { CollapsedSection, type CollapsedState } from "./CollapsedSection";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
+import { fromLine, recordsFrom } from "./NumFrom";
 import { Source } from "./Source";
 import type { EstimateState } from "./TimeEstimate";
 import { months1 } from "./TimeEstimate";
@@ -87,6 +88,10 @@ function KOfN({ approach, n, index, comparables }: { approach: Approach; n: numb
               options={{ compact: false }}
               check={{
                 tooltip: what.explainCount(option, formatNumber(n, { compact: false })),
+                // Counted from the comparable packages' records, as the past range's numbers are.
+                from: fromLine(recordsFrom(comparables.sources, comparables.records_through)),
+                act: what.explainCountAct,
+                opens: "record",
                 onOpen: () => {
                   const button = anchor.current?.querySelector("button");
                   if (button) openWentWith(comparables, { key: `approach-${index}`, k: approach.k, n, matching_ids: approach.matching_ids }, option, button);

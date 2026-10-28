@@ -250,9 +250,11 @@ test("a number explains itself on focus, and What Strata found opens its definit
 
   await days.focus();
   const tip = page.getByRole("tooltip");
-  await expect(tip).toContainText("Planned signing date, as first published");
-  await expect(tip).toContainText("July 1, 2021, in the plan of April 21, 2021");
-  await expect(tip).toContainText("Days between them186");
+  // What the number is, and where it came from (DESIGN.md, Number tooltip; ticket 96). The planned date it counts from
+  // is not on the page, so the tooltip names it without its date; it opens nothing yet, so it has no action line.
+  await expect(tip.locator("[data-num-what]")).toHaveText("Days between its planned signing date, as first published, and Contract signed.");
+  await expect(tip.locator("[data-num-from]")).toHaveText("From my check of this plan, as of October 22, 2026.");
+  await expect(tip.locator("[data-num-act]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(tip).toHaveCount(0);
   await expect(days).toBeFocused();
@@ -281,7 +283,7 @@ test("tabbing onto a number opens its tooltip, which stays open while it has foc
   await page.keyboard.press("Tab");
 
   await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();
-  await expect(page.getByRole("tooltip")).toContainText("The activities I counted:KE-NWWDA-541055-CW-RFB");
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activities that need a look: KE-NWWDA-541055-CW-RFB.");
 });
 
 test("a link whose hash names a folded activity opens the fold and focuses that activity", async ({ page }) => {

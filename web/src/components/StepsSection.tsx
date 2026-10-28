@@ -48,6 +48,7 @@ import { Button } from "./Button";
 import { CollapsedSection } from "./CollapsedSection";
 import { Fill, Joined } from "./Fill";
 import { Num, NumLines, type NumCheck } from "./Num";
+import { backtestFrom, FromLine, recordsFrom } from "./NumFrom";
 import { SegmentedControl } from "./SegmentedControl";
 import { Source } from "./Source";
 import { DefinitionWindow } from "./Term";
@@ -102,7 +103,7 @@ function dayCaption(point: StepPoint, previous: StepEntry | null): ReactNode {
 
 // ── The summary line ─────────────────────────────────────────────────────
 
-function Summary({ dates, packageKey, onOpen }: { dates: StepDates; packageKey: string; onOpen: Opener }) {
+function Summary({ dates, packageKey, onOpen, from }: { dates: StepDates; packageKey: string; onOpen: Opener; from: ReactNode }) {
   const family = stepFamily(dates.family);
   if (!family) {
     return <>{dates.family_reason === "method_not_listed" && dates.method ? words.summaryNotListed(dates.method) : words.summaryNoFamily}</>;
@@ -153,6 +154,9 @@ function Summary({ dates, packageKey, onOpen }: { dates: StepDates; packageKey: 
                   show="count"
                   check={{
                     tooltip: <Fill template={words.tips.longest} slots={{ m: number(longest.m), n: number(longest.n), stage: stage.toLowerCase() }} />,
+                    from,
+                    act: words.tips.listAct,
+                    opens: "record",
                     onOpen: (element) => onOpen(longestListId(packageKey), element),
                   }}
                 />
@@ -299,15 +303,25 @@ export type Row = {
   entry: StepEntry;
   previous: StepEntry | null;
   listId: string;
+  // Where the step's date and count came from: the record sets the tool read, through the date they run to (ticket 96).
+  from?: ReactNode;
 };
 
-function rowsOf(dates: StepDates, family: StepFamily, packageKey: string): Row[] {
+function rowsOf(dates: StepDates, family: StepFamily, packageKey: string, from: ReactNode): Row[] {
   return dates.steps.map((step, index) => ({
     step,
     entry: familyStep(family, step.step_key) ?? { key: step.step_key, label: step.step_key, step_name: step.step_key, phrase: step.step_key, stage: null },
     previous: index > 0 ? familyStep(family, dates.steps[index - 1].step_key) : null,
     listId: stepListId(packageKey, step.step_key),
+    from,
   }));
+}
+
+// The From line of every count and date in the section: the record sets the tool counted the comparable packages'
+// steps from, as its coverage line names them, through the date its records run to.
+function stepsFrom(result: StepsResult, dates: StepDates): ReactNode {
+  const words = recordsFrom(result.sources, result.records_through, dates.coverage.sources);
+  return words ? <FromLine words={words} /> : undefined;
 }
 
 function Abstention({ children, days }: { children: ReactNode; days?: ReactNode }) {
@@ -346,7 +360,13 @@ export function dateCheck(point: StepPoint, row: Row, family: StepFamily, onOpen
           : point.days_relation === "before_plan"
             ? words.tips.dateBefore
             : words.tips.dateDelay;
-  return { tooltip: <Fill template={tip} slots={slots} />, onOpen: (element) => onOpen(row.listId, element) };
+  return {
+    tooltip: <Fill template={tip} slots={slots} />,
+    from: row.from,
+    act: <Fill template={words.tips.act} slots={{ n: slots.n }} />,
+    opens: "record",
+    onOpen: (element) => onOpen(row.listId, element),
+  };
 }
 
 // Why a step has no date, in its own row.
@@ -450,7 +470,9 @@ function PlanDate({ step }: { step: StepDate }) {
   );
 }
 
-function Comparables({ row, onOpen }: { row: Row; onOpen: Opener }) {
+// side: in the narrow list a count's tooltip opens above it, over its own row, so it never covers the next row's count
+// (ticket 96).
+function Comparables({ row, onOpen, side }: { row: Row; onOpen: Opener; side?: "top" }) {
   const { step, entry } = row;
   if (step.is_anchor) return <span className="text-small text-ink-muted">{words.comparablesStart}</span>;
   const n = step.comparables_n ?? 0;
@@ -464,7 +486,11 @@ function Comparables({ row, onOpen }: { row: Row; onOpen: Opener }) {
       className="-mx-3 px-3 text-small"
       check={{
         tooltip: words.tips.count(entry.phrase),
+        from: row.from,
+        act: words.tips.listAct,
+        opens: "record",
         name: words.countName(String(n), entry.label),
+        side,
         onOpen: (element) => onOpen(row.listId, element),
       }}
     />
@@ -510,9 +536,11 @@ type Body = {
   captionId: string;
   // The date the records run to, by which a still-open comparable had not reached a step.
   recordsDate: string;
+  // Where the section's counts came from (ticket 96).
+  from: ReactNode;
 };
 
-function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOpen, slow, caption, recordsDate }: Body) {
+function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOpen, slow, caption, recordsDate, from }: Body) {
   const dating = !dates.abstain_all;
   const plan = kind === "step";
   const widths = plan ? (dating ? ["32%", "24%", "26%", "18%"] : ["44%", "32%", "24%"]) : dating ? ["40%", "36%", "24%"] : ["70%", "30%"];
@@ -559,7 +587,7 @@ function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOp
             {/* Each cell's first line sits on one baseline: the label, the plan's date and the planned date. */}
             <th scope="row" className="px-3 py-3 text-left align-baseline font-normal">
               <StepLabel row={row} />
-              {dating && dates.longest?.step_key === row.step.step_key && <LongestMark dates={dates} family={family} packageKey={packageKey} onOpen={onOpen} />}
+              {dating && dates.longest?.step_key === row.step.step_key && <LongestMark dates={dates} family={family} packageKey={packageKey} onOpen={onOpen} from={from} />}
             </th>
             {plan && (
               <td className="px-3 py-3 align-baseline">
@@ -582,7 +610,7 @@ function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOp
 }
 
 // "Ran longest in {n} of {m}" under the longest stage's label: the same count, tooltip and list as the summary's.
-function LongestMark({ dates, family, packageKey, onOpen }: { dates: StepDates; family: StepFamily; packageKey: string; onOpen: Opener }) {
+function LongestMark({ dates, family, packageKey, onOpen, from }: { dates: StepDates; family: StepFamily; packageKey: string; onOpen: Opener; from: ReactNode }) {
   const longest = dates.longest!;
   const stage = familyStep(family, longest.step_key)?.stage ?? "";
   return (
@@ -598,6 +626,9 @@ function LongestMark({ dates, family, packageKey, onOpen }: { dates: StepDates; 
               inCaption
               check={{
                 tooltip: <Fill template={words.tips.longest} slots={{ m: number(longest.m), n: number(longest.n), stage: stage.toLowerCase() }} />,
+                from,
+                act: words.tips.listAct,
+                opens: "record",
                 onOpen: (element) => onOpen(longestListId(packageKey), element),
               }}
             />
@@ -608,7 +639,7 @@ function LongestMark({ dates, family, packageKey, onOpen }: { dates: StepDates; 
   );
 }
 
-function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpen, slow, caption, captionId, recordsDate }: Body) {
+function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpen, slow, caption, captionId, recordsDate, from }: Body) {
   const dating = !dates.abstain_all;
   const label = "text-caption text-ink-muted";
   return (
@@ -621,7 +652,7 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
         <li key={row.step.step_key} data-step-item={row.step.step_key} className={cx("border-b border-line py-3", openId === row.listId && "bg-tint")}>
           <h3 className="text-small font-semibold text-ink-heading">{row.entry.label}</h3>
           <p className="text-caption text-ink-muted">{words.inStep(row.entry.step_name)}</p>
-          {dating && dates.longest?.step_key === row.step.step_key && <LongestMark dates={dates} family={family} packageKey={packageKey} onOpen={onOpen} />}
+          {dating && dates.longest?.step_key === row.step.step_key && <LongestMark dates={dates} family={family} packageKey={packageKey} onOpen={onOpen} from={from} />}
           {/* Every item's label column is two fifths of the list and never under 7rem, so the labels line up from step
               to step and never print over a value; a long value, such as "30 days after the issued bidding
               document", wraps inside its own column, right-aligned. */}
@@ -647,7 +678,7 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
             )}
             <dt className={label}>{words.columns.comparables}</dt>
             <dd className="text-right">
-              <Comparables row={row} onOpen={onOpen} />
+              <Comparables row={row} onOpen={onOpen} side="top" />
             </dd>
           </dl>
         </li>
@@ -724,7 +755,7 @@ function Caption({ dates, family, rows, choice, onOpen }: { dates: StepDates; fa
   );
 }
 
-function Notes({ dates, family, choice, kind, result, asOf }: { dates: StepDates; family: StepFamily; choice: Choice; kind: "step" | "planned"; result: StepsResult; asOf: string | null }) {
+function Notes({ dates, family, choice, kind, result, asOf, from }: { dates: StepDates; family: StepFamily; choice: Choice; kind: "step" | "planned"; result: StepsResult; asOf: string | null; from: ReactNode }) {
   const track = dates.abstain_all ? null : dates.track_record?.[choice] ?? null;
   const trackTip = track && (
     <Fill
@@ -732,10 +763,14 @@ function Notes({ dates, family, choice, kind, result, asOf }: { dates: StepDates
       slots={{ year: <Num year={track.year} />, run: <span className="font-mono">{track.run_id}</span> }}
     />
   );
-  const counted = { tooltip: words.tips.counted };
   const coverage = dates.coverage;
   const link = <TextLink href={dataReadinessHref(coverage.sources, "estimate_time")}>{words.coverageLink}</TextLink>;
-  const covered = (value: number) => <Num value={value} options={{ compact: false }} check={counted} inCaption />;
+  // The comparable packages used and all of them each say what they count (ticket 96). The counts of those left out are
+  // plain text, because the sentence already says what each counts.
+  const counted = (value: number, tooltip: string) => <Num value={value} options={{ compact: false }} check={{ tooltip, from }} inCaption />;
+  const used = counted(coverage.used, words.tips.used);
+  const total = counted(coverage.total, words.tips.total);
+  const plain = (value: number) => <Num value={value} options={{ compact: false }} />;
   const date = asOf ?? result.records_through;
   return (
     <div className="mt-4 flex max-w-prose flex-col gap-2 text-caption text-ink-muted" data-step-notes>
@@ -753,7 +788,7 @@ function Notes({ dates, family, choice, kind, result, asOf }: { dates: StepDates
                   value={track.inside}
                   options={{ compact: false }}
                   inCaption
-                  check={{ tooltip: trackTip }}
+                  check={{ tooltip: trackTip, from: <FromLine words={backtestFrom(String(track.year))} /> }}
                 />
               ),
               catch: number(track.catch_in10),
@@ -771,17 +806,12 @@ function Notes({ dates, family, choice, kind, result, asOf }: { dates: StepDates
             {(coverage.other_family ?? 0) > 0 ? (
               <Fill
                 template={coverage.missing > 0 ? words.coverageOtherFamilyAndMissing : words.coverageOtherFamily}
-                slots={{
-                  used: covered(coverage.used),
-                  total: covered(coverage.total),
-                  other: covered(coverage.other_family ?? 0),
-                  missing: covered(coverage.missing),
-                }}
+                slots={{ used, total, other: plain(coverage.other_family ?? 0), missing: plain(coverage.missing) }}
               />
             ) : coverage.missing > 0 ? (
-              <Fill template={words.coverage} slots={{ used: covered(coverage.used), total: covered(coverage.total), missing: covered(coverage.missing) }} />
+              <Fill template={words.coverage} slots={{ used, total, missing: plain(coverage.missing) }} />
             ) : (
-              <Fill template={words.coverageAll} slots={{ total: covered(coverage.total) }} />
+              <Fill template={words.coverageAll} slots={{ total }} />
             )}{" "}
           </>
         )}
@@ -847,6 +877,7 @@ export function StepsView({
   const result = state.status === "ready" ? state.result : null;
   const dates = result?.step_dates ?? null;
   const family = stepFamily(dates?.family);
+  const from = result && dates ? stepsFrom(result, dates) : undefined;
   let summary: ReactNode = null;
   let error: ReactNode = null;
   if (state.status === "error") {
@@ -873,9 +904,9 @@ export function StepsView({
       </Alert>
     );
   } else if (dates) {
-    summary = <Summary dates={dates} packageKey={packageKey} onOpen={onOpen} />;
+    summary = <Summary dates={dates} packageKey={packageKey} onOpen={onOpen} from={from} />;
   }
-  const rows = dates && family ? rowsOf(dates, family, packageKey) : [];
+  const rows = dates && family ? rowsOf(dates, family, packageKey, from) : [];
   // No step has a date or days in either choice: the choice and the start date would change nothing, so the section
   // offers neither and says why no step is dated.
   const controls = dates !== null && !dates.abstain_all && !dates.none_dated;
@@ -920,6 +951,7 @@ export function StepsView({
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={`${captionId}-wide`}
               recordsDate={result.as_of}
+              from={from}
             />
           </div>
           <div className="@md/page:hidden">
@@ -927,10 +959,11 @@ export function StepsView({
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={captionId}
               recordsDate={result.as_of}
+              from={from}
             />
           </div>
         </div>
-        <Notes dates={dates} family={family} choice={choice} kind={kind} result={result} asOf={asOf} />
+        <Notes dates={dates} family={family} choice={choice} kind={kind} result={result} asOf={asOf} from={from} />
       </div>
     ) : null;
   return (
@@ -1082,7 +1115,7 @@ export function StepsSection({
   const captionFor = (result: StepsResult, next: Choice) => {
     const dates = result.step_dates;
     const family = stepFamily(dates?.family);
-    return dates && family ? captionText(dates, family, rowsOf(dates, family, packageKey), next) : "";
+    return dates && family ? captionText(dates, family, rowsOf(dates, family, packageKey, undefined), next) : "";
   };
 
   // Section 1's "Dates I draft for this package" (ticket 26) sets the same stored choice: one made there shows here.

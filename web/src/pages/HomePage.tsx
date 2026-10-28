@@ -21,12 +21,13 @@ import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";
 import { Tag } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
-import { Num } from "../components/Num";
+import { MeasureNum } from "../components/MeasureNum";
+import { Num, type NumCheck } from "../components/Num";
+import { FromLine, homeFrom, planFrom } from "../components/NumFrom";
 import { ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
-import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { postJson } from "../lib/api";
@@ -54,7 +55,18 @@ const short = (iso: string) => formatDate(iso, { style: "short" });
 
 // ── The server's sentences ───────────────────────────────────────────────
 
-function Segments({ segments, popover }: { segments: HomeSegment[]; popover?: (segment: Extract<HomeSegment, { count: number }>) => ReactNode }) {
+type Valued = Extract<HomeSegment, { written: string }> | Extract<HomeSegment, { number: number }>;
+
+function Segments({
+  segments,
+  popover,
+  check,
+}: {
+  segments: HomeSegment[];
+  popover?: (segment: Extract<HomeSegment, { count: number }>) => ReactNode;
+  // A line's amount or number that names the value it is explains itself and opens its record (ticket 96).
+  check?: (segment: Valued) => NumCheck | undefined;
+}) {
   return (
     <>
       {segments.map((segment, index) => (
@@ -78,9 +90,9 @@ function Segments({ segments, popover }: { segments: HomeSegment[]; popover?: (s
           ) : "pid" in segment ? (
             <ProjectId pid={segment.pid} />
           ) : "written" in segment ? (
-            <Num written={segment.written} />
+            <Num written={segment.written} check={check?.(segment)} />
           ) : (
-            <Num value={segment.number} options={{ compact: false }} />
+            <Num value={segment.number} options={{ compact: false }} check={check?.(segment)} />
           )}
         </Fragment>
       ))}
@@ -161,13 +173,38 @@ function countWindow(answer: HomeAnswer) {
         </ul>
       );
     }
+    // Its tooltip says what it counts, that it comes from my checks on the day they ran, and that a click lists them
+    // (DESIGN.md, Number tooltip, Window variant).
     return (
       <span data-count-kind={kind} data-count={segment.count}>
-        <DefinitionWindow label={segment.word} title={title}>
-          {items}
-        </DefinitionWindow>
+        <MeasureNum
+          value={{ written: segment.word }}
+          tooltip={words.tips.counts[kind] ?? title}
+          from={<FromLine words={homeFrom(answer.worth.checked_on)} />}
+          act={segment.count === 1 ? copy.num.act.listOne : copy.num.act.list}
+          measure={{ title, definition: items }}
+          inText
+        />
       </span>
     );
+  };
+}
+
+// A line's amount or number: what it is, the plan it comes from, and a click that opens the plan row (ticket 96). An
+// amount in millions gives the plan row's own value. The days to closing were counted by my checks from the project's
+// closing date, which the plan row does not hold, so they open nothing, as on the plan check.
+function lineCheck(line: HomeLine, checkedOn: string) {
+  const source = line.source;
+  if (source.kind !== "plan" || !source.agency || !source.date) return () => undefined;
+  const plan = <FromLine words={planFrom(source.agency, source.date)} />;
+  const open = (element: HTMLElement) => openEvidence(source.evidence_id, { serial: null, sentence: null, marker: element, runId: null });
+  return (segment: Valued): NumCheck | undefined => {
+    if (!segment.what) return undefined;
+    const t = words.tips;
+    const what =
+      segment.what === "millions" && "exact" in segment && segment.exact ? t.millions(segment.exact) : segment.what === "millions" ? t.estimated : t[segment.what];
+    if (segment.what === "daysToClose") return { tooltip: what, from: <FromLine words={homeFrom(checkedOn)} /> };
+    return { tooltip: what, from: plan, act: copy.num.act.planRow, opens: "record", onOpen: open };
   };
 }
 
@@ -196,7 +233,8 @@ function Briefing({ answer }: { answer: HomeAnswer | null }) {
       <span className="block text-small font-semibold text-ink-muted">{line}</span>
       <span className="sr-only">{words.dateLineEnd}</span>
       {answer ? (
-        <span className="mt-2 block text-lead text-pretty text-ink-heading">
+        // The page's finding: a count word's tooltip opens under all of it (DESIGN.md, Number tooltip).
+        <span className="mt-2 block text-lead text-pretty text-ink-heading" data-finding>
           {answer.briefing.sentences.map((sentence, index) => (
             <Fragment key={index}>
               {index > 0 && " "}
@@ -369,7 +407,7 @@ function sourceName(line: HomeLine): string {
   }
 }
 
-function Line({ line, n, hidden }: { line: HomeLine; n: number; hidden: boolean }) {
+function Line({ line, n, hidden, checkedOn }: { line: HomeLine; n: number; hidden: boolean; checkedOn: string }) {
   const action = (words.worth.actions as Record<string, string>)[line.action.key] ?? words.publicView.action;
   const badge = BADGES[line.status];
   return (
@@ -392,7 +430,7 @@ function Line({ line, n, hidden }: { line: HomeLine; n: number; hidden: boolean 
         </TextLink>
       </div>
       <p className="mt-2 max-w-[72ch] text-body text-pretty text-ink">
-        <Segments segments={line.segments} />{" "}
+        <Segments segments={line.segments} check={lineCheck(line, checkedOn)} />{" "}
         <CitationMarker
           n={n}
           source={sourceName(line)}
@@ -423,7 +461,7 @@ function WorthKnowing({ answer }: { answer: HomeAnswer }) {
       {worth.lines.length > 0 ? (
         <ul className="mt-4">
           {worth.lines.map((line, index) => (
-            <Line key={line.id} line={line} n={index + 1} hidden={!open && index >= worth.fold_after} />
+            <Line key={line.id} line={line} n={index + 1} hidden={!open && index >= worth.fold_after} checkedOn={worth.checked_on} />
           ))}
         </ul>
       ) : (

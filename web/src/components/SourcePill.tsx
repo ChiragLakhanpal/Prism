@@ -115,7 +115,7 @@ export function SourcePill({
   );
   // A pill whose source the drawer shows in full opens no card beside it.
   return (
-    <Tooltip trigger={pill} width="w-[min(22.5rem,calc(100vw-3.5rem))]" quiet={active}>
+    <Tooltip trigger={pill} width="w-[min(22.5rem,calc(100vw-3.5rem))]" quiet={active} card>
       <PillCard source={source} />
     </Tooltip>
   );

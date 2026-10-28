@@ -1,8 +1,10 @@
 // Num: every number Strata shows. It writes the number by DESIGN.md sections 6 and 7 (through
 // web/src/lib/format.ts), with tabular numerals, so a ratio under 20 cases can never become a
-// percentage. A number with a check is a button with a dotted underline: hover or focus shows
-// where it came from, and a click opens its rows or its definition (DESIGN.md section 1:
-// every number ends with a source).
+// percentage. A number with a check is a button with a dotted underline: hover or focus shows its
+// tooltip (DESIGN.md section 5, Number tooltip; ticket 96), which says what the number is, where it
+// came from with its date, and what a click does, the last only when a click does it (DESIGN.md
+// section 1: every number ends with a source). A number with no tooltip and nothing to open is
+// plain text with no underline.
 import type { ReactNode } from "react";
 import { cx } from "../lib/cx";
 import {
@@ -34,18 +36,30 @@ export type NumValue =
   // that rounding, so it is shown as written (ticket 14).
   | { written: string };
 
+// What a click on a number opens (DESIGN.md, Number tooltip's variants): the rows it counts, the one record it
+// comes from in the evidence drawer, or its window.
+export type NumOpens = "rows" | "record" | "window";
+
 export type NumCheck = {
-  // What a tooltip says about where the number came from, from the copy file and the tool.
+  // What the number is: one sentence from the copy file for this number alone, filled with the tool's own values.
+  // Two numbers in one sentence share one only when they come from the same record and open the same thing.
   tooltip: ReactNode;
-  // Opens the rows behind the number, or its definition, with the number as the opener focus goes back to.
-  onOpen?: (element: HTMLElement) => void;
+  // Where it came from, with its date: a num.from template.
+  from?: ReactNode;
   // Numbers inside an answer leave the tab order to the citation markers beside them.
   tabStop?: boolean;
   // A name that says more than the number, starting with it: "1 of 1 completion reports, for {risk}" (ticket 30).
   name?: string;
   // Where its tooltip opens: below the number unless it would cover text that must stay in view (ticket 23).
   side?: "top" | "bottom";
-};
+} & (
+  // A number that opens nothing has no action line.
+  | { onOpen?: undefined; act?: undefined; opens?: undefined }
+  // A click opens the rows behind the number, its record or its window, with the number as the opener focus goes back
+  // to; act says so in words that name what opens (num.act), so a number never opens something its tooltip does not
+  // promise, and opens names the kind of thing it is.
+  | { onOpen: (element: HTMLElement) => void; act: ReactNode; opens: NumOpens }
+);
 
 export function numText(num: NumValue): string {
   if ("written" in num) return num.written;
@@ -73,6 +87,27 @@ function written(num: NumValue, text: string): ReactNode {
     <>
       <span className="whitespace-nowrap">{text.slice(0, text.length - frequency.length).trimEnd()}</span>{" "}
       <span className="whitespace-nowrap">{frequency}</span>
+    </>
+  );
+}
+
+// The number tooltip's three parts (DESIGN.md section 5, Number tooltip; ticket 96), each on its own line: what the
+// number is (small, ink), where it came from with its date (caption, ink-muted), and what a click does (caption 600,
+// ink-heading), the last only when a click does it. MeasureNum's tooltip has the same parts.
+export function NumTip({ what, from, act }: { what: ReactNode; from?: ReactNode; act?: ReactNode }) {
+  return (
+    <>
+      <div data-num-what>{what}</div>
+      {from && (
+        <div data-num-from className="mt-1 text-caption text-ink-muted">
+          {from}
+        </div>
+      )}
+      {act && (
+        <div data-num-act className="mt-1 text-caption font-semibold text-ink-heading">
+          {act}
+        </div>
+      )}
     </>
   );
 }
@@ -106,6 +141,8 @@ export function NumLines({
           type="button"
           data-num
           data-num-lines
+          data-num-click={check.onOpen ? "" : undefined}
+          data-num-opens={check.onOpen ? check.opens : undefined}
           tabIndex={check.tabStop === false ? -1 : undefined}
           aria-label={check.name}
           onClick={check.onOpen && ((event) => check.onOpen!(event.currentTarget))}
@@ -118,7 +155,7 @@ export function NumLines({
       }
       side={check.side}
     >
-      {check.tooltip}
+      <NumTip what={check.tooltip} from={check.from} act={check.onOpen ? check.act : undefined} />
     </Tooltip>
   );
 }
@@ -145,6 +182,8 @@ export function Num({ check, className, inCaption = false, ...num }: NumValue & 
         <button
           type="button"
           data-num
+          data-num-click={check.onOpen ? "" : undefined}
+          data-num-opens={check.onOpen ? check.opens : undefined}
           tabIndex={check.tabStop === false ? -1 : undefined}
           aria-label={check.name}
           onClick={check.onOpen && ((event) => check.onOpen!(event.currentTarget))}
@@ -162,7 +201,7 @@ export function Num({ check, className, inCaption = false, ...num }: NumValue & 
       }
       side={check.side}
     >
-      {check.tooltip}
+      <NumTip what={check.tooltip} from={check.from} act={check.onOpen ? check.act : undefined} />
     </Tooltip>
   );
 }

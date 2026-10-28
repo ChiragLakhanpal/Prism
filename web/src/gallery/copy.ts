@@ -1011,6 +1011,8 @@ export const galleryCopy = {
     error: "Your account can't read the data I hold yet, so ask the person who shared Strata with you for access.",
     neutral: "I removed one sentence because no record supports its number.",
     numTooltip: "Matches paragraph 54 of the completion report for P000000.",
+    // Its From line (DESIGN.md section 5, Number tooltip; ticket 96).
+    numFrom: "From the Implementation Completion and Results Report for P000000 of October 10, 2019.",
     term: "Comparable",
     measureTitle: "Linked to a project",
     measureBody: "The share of contract awards that carry a project ID I can join on.",
