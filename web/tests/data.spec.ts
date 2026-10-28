@@ -489,7 +489,7 @@ for (const [name, path, answer] of SWEPT) {
     expect(count).toBeGreaterThan(10);
     for (let index = 0; index < count; index += 1) {
       const number = numbers.nth(index);
-      const key = `${await number.getAttribute("data-source")}/${await number.getAttribute("data-measure")}`;
+      const key = `${await number.getAttribute("data-measure-source")}/${await number.getAttribute("data-measure")}`;
       // The hardest documents' numbers come from the shelf's outcomes, not a registry; web/tests/shelf.spec.ts
       // checks their windows.
       if (key.startsWith("documents/stress_shelf_")) continue;

@@ -14,8 +14,16 @@ import yaml
 
 REPO = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO / "ops" / "app"))
+sys.path.insert(0, str(REPO / "ops" / "bundle" / "tests"))
 
 import deploy_app  # noqa: E402
+from workspace_fakes import (  # noqa: E402
+    FREE_DAILY_LIMIT,
+    STATE_METHODS,
+    STOPPED_BY_THE_WORKSPACE,
+    USUAL_CAUSE,
+    WorkspaceStateFake,
+)
 
 PROBE = "Strata day-one probe app"
 PRINCIPAL = "6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5"
@@ -30,19 +38,15 @@ JUDGE = {"AZURE_OPENAI_ENDPOINT": "https://wb-strata.openai.azure.com/openai/dep
          "AZURE_OPENAI_API_KEY": "not-a-real-key"}
 
 
-class FakeWorkspace:
-    def __init__(self, app=None, secrets=None, compute=None, warehouse="RUNNING", warehouse_answer=None,
-                 deployments=()):
+class FakeWorkspace(WorkspaceStateFake):
+    def __init__(self, app=None, secrets=None, deployments=(), **state):
         self.apps = {} if app is None else {"strata": dict(app)}
         self.uploaded, self.deployed, self.configured, self.statements, self.started = {}, [], [], [], []
         self.secrets = dict(secrets or {})  # the secret scope, by (scope, key)
         self.written = []  # each put_secret call's (scope, key)
         self.databases = []
-        # Ticket 81: the App's compute as apps get gives it, when a test sets it, and the env file's SQL warehouse, which
-        # answers a start with warehouse_answer when a test sets it.
-        self.compute = compute
-        self.warehouse = {"id": "wh-1", "state": warehouse, "message": ""}
-        self.warehouse_answer, self.warehouse_starts = warehouse_answer, 0
+        # Ticket 81: the App's compute and the env file's SQL warehouse (workspace_fakes.py).
+        self.hold_state(**state)
         # The app's deployments, as apps list-deployments gives them. Each deploy registers one that succeeded, made at
         # the workspace's clock.
         self.registered = [dict(deployment) for deployment in deployments]
@@ -50,24 +54,6 @@ class FakeWorkspace:
 
     def deployments(self, name):
         return [dict(deployment) for deployment in self.registered]
-
-    def app_compute(self, name):
-        if name not in self.apps:
-            return None
-        if self.compute:
-            return dict(self.compute)
-        running = self.apps[name]["running"]
-        return {"state": "ACTIVE" if running else "STOPPED",
-                "message": "App compute is running." if running else "App compute is stopped."}
-
-    def warehouse_state(self):
-        return dict(self.warehouse)
-
-    def start_warehouse(self):
-        self.warehouse_starts += 1
-        if self.warehouse_answer:
-            raise RuntimeError(self.warehouse_answer)
-        self.warehouse["state"] = "RUNNING"
 
     def app_state_database(self, instance):
         self.databases.append(instance)
@@ -86,7 +72,7 @@ class FakeWorkspace:
         self.configured.append((name, description, resources, scopes))
         self.apps[name]["description"] = description
 
-    def start(self, name):
+    def app_started(self, name):
         self.started.append(name)
         self.apps[name]["running"] = True
 
@@ -142,6 +128,11 @@ def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_p
     assert workspace.deployed == [("strata", "/Workspace/Users/owner@example.org/strata-app")]
     assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
     assert "The app existed before this deploy." not in out  # a first deploy has no old sessions to warn about
+    # Step 6 names the lesson review record's tables (ticket 29) and the retrieval loop's (ticket 32) that it grants.
+    assert ("6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to "
+            "strata.ops, with the lesson review record (lesson_review_acts, lesson_review_items, lesson_versions, "
+            "lesson_sources, lesson_review_notes and lesson_version_tags) and the retrieval loop's record "
+            "(candidate_labels, label_decisions, answer_citations, retrieval_grades and retrieval_queries).\n") in out
 
 
 def test_the_plan_names_from_the_repo_alone_what_a_first_deploy_makes(tmp_path, capsys):
@@ -596,7 +587,7 @@ def test_the_live_workspace_lists_the_scope_s_keys_and_never_their_values():
     live.w = SimpleNamespace(secrets=Secrets())
 
     assert live.secret_keys("strata") == [APPINSIGHTS, "FOUNDRY_CLIENT_ID"]
-    called = {name for name in vars(FakeWorkspace) if not name.startswith("_")}
+    called = {name for name in vars(FakeWorkspace) if not name.startswith("_")} - {"app_started"} | STATE_METHODS
     assert called <= {name for name in vars(app_live.LiveApps) if not name.startswith("_")}
 
 
@@ -607,26 +598,48 @@ def test_the_live_workspace_lists_the_scope_s_keys_and_never_their_values():
 # a refused statement's message.
 STRATA_APP = {"description": deploy_app.DESCRIPTION, "source": "/Workspace/Users/owner@example.org/strata-app",
               "url": "https://strata-1.aws.databricksapps.com", "principal": PRINCIPAL, "running": False}
-# What apps get strata answered at 13:01 UTC on October 26, 2026 (docs/workspace-catchup.md, ticket 06).
-STOPPED_BY_THE_WORKSPACE = {"state": "STOPPED", "message": "App compute was stopped due to workspace or account status."}
 
 
-def test_an_app_whose_compute_the_workspace_stopped_stops_the_deploy_before_step_1_with_one_sentence(tmp_path, capsys):
-    workspace = FakeWorkspace(app=STRATA_APP, compute=STOPPED_BY_THE_WORKSPACE)
+def test_an_app_whose_compute_the_workspace_stopped_and_will_not_start_stops_the_deploy_before_step_1(tmp_path, capsys):
+    """The Apps API's answer to a start on a stopped workspace was not recorded, so the warehouses' answer of October 25
+    stands in for it."""
+    workspace = FakeWorkspace(app=STRATA_APP, compute=STOPPED_BY_THE_WORKSPACE, app_answer=FREE_DAILY_LIMIT)
 
     code, out = deploy(workspace, tmp_path, capsys)
 
     assert code == 2
     assert out.splitlines() == [
         "I changed nothing, because the app strata's compute is STOPPED with the message \"App compute was stopped due "
-        "to workspace or account status.\", which on Free Edition usually means the workspace reached its daily compute "
-        "limit."]
+        "to workspace or account status.\" and would not start when I asked, saying \"Sorry, cannot run the resource "
+        f"because you have hit your free daily limit. Please come back again tomorrow.\", {USUAL_CAUSE}"]
     assert workspace.uploaded == {} and workspace.configured == [] and workspace.deployed == []
     assert workspace.statements == [] and workspace.written == [] and workspace.started == []
 
 
-# What databricks warehouses start answered at 10:33 UTC on October 25, 2026 (docs/workspace-catchup.md, ticket 11).
-FREE_DAILY_LIMIT = "Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow."
+def test_an_app_whose_compute_the_workspace_stopped_is_started_first_and_the_deploy_goes_on(tmp_path, capsys):
+    """apps get may keep the message "due to workspace or account status" after the workspace runs again, so the
+    deploy asks the App to start, as it asks the warehouse, and refuses only when it will not (ticket 81's review,
+    follow-up 1)."""
+    workspace = FakeWorkspace(app=STRATA_APP, compute=STOPPED_BY_THE_WORKSPACE)
+
+    code, out = deploy(workspace, tmp_path, capsys)
+
+    assert code == 0, out
+    assert workspace.started == ["strata"]
+    assert out.splitlines()[0] == "1. Building the web app."
+
+
+def test_a_workspace_state_the_deploy_cannot_read_stops_it_before_step_1_with_one_sentence(tmp_path, capsys):
+    """Ticket 81's review, follow-up 2: a failed read said a Python traceback."""
+    workspace = FakeWorkspace(app=STRATA_APP, warehouse_answer=RuntimeError("HTTP Error 503: Service Unavailable"))
+
+    code, out = deploy(workspace, tmp_path, capsys)
+
+    assert code == 2
+    assert out.splitlines() == [
+        "I changed nothing, because I could not read the app's compute or the SQL warehouse's state: RuntimeError: "
+        "HTTP Error 503: Service Unavailable."]
+    assert workspace.uploaded == {} and workspace.deployed == [] and workspace.statements == []
 
 
 def test_a_stopped_warehouse_that_will_not_start_stops_the_deploy_before_step_1_with_one_sentence(tmp_path, capsys):
@@ -637,8 +650,7 @@ def test_a_stopped_warehouse_that_will_not_start_stops_the_deploy_before_step_1_
     assert code == 2
     assert out.splitlines() == [
         "I changed nothing, because the SQL warehouse wh-1 is STOPPED and would not start when I asked, saying \"Sorry, "
-        "cannot run the resource because you have hit your free daily limit. Please come back again tomorrow.\", which "
-        "on Free Edition usually means the workspace reached its daily compute limit."]
+        f"cannot run the resource because you have hit your free daily limit. Please come back again tomorrow.\", {USUAL_CAUSE}"]
     assert workspace.warehouse_starts == 1
     assert workspace.uploaded == {} and workspace.configured == [] and workspace.deployed == []
     assert workspace.statements == [] and workspace.written == [] and workspace.started == []
@@ -690,6 +702,36 @@ def test_a_step_5_that_registers_no_new_deployment_fails_there_and_names_the_new
     assert workspace.statements == []
 
 
+def test_a_step_5_on_an_app_that_lists_no_deployment_at_all_fails_there_and_says_so(tmp_path, capsys):
+    """Ticket 81's review, follow-up 4."""
+    workspace = RegistersNothing(app=STRATA_APP | {"running": True})
+
+    code, out = deploy_at(workspace, tmp_path, capsys, now=lambda: RUN_STARTED)
+
+    assert code == 1
+    assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines() == [
+        "The app strata lists no deployment at all, so step 5 registered nothing. I stopped here and granted nothing."]
+    assert workspace.statements == []
+
+
+@pytest.mark.parametrize(("made", "said"), [
+    # This computer's clock runs 10 minutes ahead of the workspace's, so the deployment was made "before" the run.
+    (lambda: RUN_STARTED - dt.timedelta(minutes=5, seconds=29),
+     "   The deployment 01f0b2deploy0001, made at 14:49:33 UTC on October 26, 2026, succeeded."),
+    # The Apps API gave the new deployment no create_time.
+    (lambda: None, "   The deployment 01f0b2deploy0001 succeeded.")], ids=["clock-ahead", "no-create-time"])
+def test_step_5_counts_as_new_any_deployment_it_did_not_list_before_the_deploy_call(tmp_path, capsys, made, said):
+    """Ticket 81's review, follow-up 3: step 5 compared this computer's clock with the workspace's, so a clock 10
+    minutes ahead failed a good deploy, and a deployment with no create_time read as none at all."""
+    workspace = FakeWorkspace(app=STRATA_APP | {"running": True}, deployments=[BEFORE_THE_RUN])
+    workspace.clock = made
+
+    code, out = deploy_at(workspace, tmp_path, capsys, now=lambda: RUN_STARTED + dt.timedelta(minutes=10))
+
+    assert code == 0, out
+    assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines()[0] == said
+
+
 def test_after_step_5_the_deploy_names_the_new_deployment_that_succeeded(tmp_path, capsys):
     workspace = FakeWorkspace(app=STRATA_APP | {"running": True}, deployments=[BEFORE_THE_RUN])
     workspace.clock = lambda: RUN_STARTED + dt.timedelta(minutes=4, seconds=31)
@@ -730,7 +772,9 @@ COLD_START = "01f1d20184b11f5b827aae9cfa5088b4"
 
 
 class StillInProgress(FakeWorkspace):
-    """Step 5's deployment shows IN_PROGRESS for the first `reads` reads of the app's deployments, then SUCCEEDED."""
+    """Step 5's deployment shows IN_PROGRESS for the first `reads` reads of the app's deployments after the deploy call,
+    then SUCCEEDED. The read just before the deploy call, which lists the deployments that are not new, is not
+    counted."""
 
     def __init__(self, reads, **kwargs):
         super().__init__(**kwargs)
@@ -743,6 +787,8 @@ class StillInProgress(FakeWorkspace):
         return self.apps[name]["url"]
 
     def deployments(self, name):
+        if not self.deployed:
+            return super().deployments(name)
         self.reads += 1
         if self.reads > self.reads_left:
             self.registered[-1] |= {"state": "SUCCEEDED", "message": "App started successfully"}
@@ -884,4 +930,5 @@ def test_the_readme_s_deploy_section_says_what_the_deploy_checks_first_and_after
 
     assert "Before step 1, it reads the app's compute and the SQL warehouse's state through the SDK" in first
     assert "uploads nothing and exits 2" in first and "daily compute limit" in first
-    assert "unless a deployment made since the run started has the state SUCCEEDED" in step_5
+    assert "the app will not start when asked" in first and "cannot read the state at all" in first
+    assert "unless a deployment it did not list just before the deploy call has the state SUCCEEDED" in step_5

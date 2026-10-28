@@ -8,7 +8,10 @@ ticket 66).
 
 So this test reads the code without running it. It starts where the App starts the server and follows every import
 through src/strata/, at the top of a module or inside a function, and every strata module that a string names, such
-as uvicorn's "strata.server.settings:app_from_env" and each adapter or writer a config registry names. Each package
+as uvicorn's "strata.server.settings:app_from_env" and each adapter or writer a config registry names. An
+importlib.import_module call with a computed name can import a module no import statement names, so each such place
+is pinned in COMPUTED below with the modules it can import and how this test reaches them (ticket 88's review). Each
+package
 from outside the standard library that it reaches must be in requirements.txt, unless LEFT_OUT below lists it with
 the places that import it, which the App never runs, and why. Nothing is imported from src/strata, and nothing
 touches the network.
@@ -41,6 +44,7 @@ PACKAGES = {
     "PIL": "pillow",
     "yaml": "pyyaml",
     "opentelemetry": "opentelemetry-api",
+    "opentelemetry.sdk": "opentelemetry-sdk",
     "fpdf": "fpdf2",
     "azure.monitor": "azure-monitor-opentelemetry",
     "databricks.sdk": "databricks-sdk",
@@ -54,7 +58,9 @@ LEFT_OUT = {
                "DuckDB is this computer's engine, for the gate, the fixture build and scripts/dev. On the App the "
                "server reads the SQL warehouse as the viewer and keeps its own state in Lakebase."),
     "xgboost": (("strata.estimates.time_estimate:XGBoostAFT", "strata.estimates.time_estimate:TimeEstimateModel.from_state",
-                 "strata.estimates.rebidding_model:RebiddingModel", "strata.estimates.rebidding_model:fit_gbm_model"),
+                 "strata.estimates.rebidding_model:RebiddingModel.chances",
+                 "strata.estimates.rebidding_model:RebiddingModel.from_state",
+                 "strata.estimates.rebidding_model:fit_gbm_model"),
                 "The nightly job trains and scores with XGBoost. The App reads a model's trees from XGBoost's JSON "
                 "with the portable learner (src/strata/estimates/portable.py), and only the nightly score task asks "
                 "from_state for learner='xgboost'."),
@@ -74,6 +80,23 @@ LEFT_OUT = {
     "httpx": (("strata.agent.scripted:stream_text", "strata.agent.scripted:failed_stream_text"),
               "The scripted agent's recording command drives the server inside its own process with httpx. The App "
               "never runs that command."),
+}
+
+
+# The places that call importlib.import_module with a name computed when they run, each with the modules it can import
+# and how this test follows them. A config file that names a module as a string is followed already (reached() reads
+# every strata name in config/*.toml); a module named in parts is listed here. Keep this list short. A source whose
+# silver_transform is a .sql file runs it as SQL, so only a bare name is a module.
+SILVER_TRANSFORMS = tuple(sorted({f"strata.lakehouse.silver.{source['silver_transform']}"
+                                  for source in tomllib.loads((REPO / "config" / "sources.toml").read_text())["sources"]
+                                  .values() if source.get("silver_transform", "").isidentifier()}))
+COMPUTED = {
+    "strata.tools.registry:_adapter": ((), "Each tool's adapter, which config/tools.toml names as module:function."),
+    "strata.drafts.runtime:writer_module": ((), "Each draft kind's writer, which config/drafts.toml names."),
+    "strata.drafts.runtime:function": ((), "A draft kind's functions, which config/drafts.toml names as "
+                                           "module:function."),
+    "strata.lakehouse.silver:transform": (SILVER_TRANSFORMS, "The module in src/strata/lakehouse/silver/ that "
+                                          "config/sources.toml names for each source by its last part alone."),
 }
 
 
@@ -105,6 +128,36 @@ def _type_checking(node: ast.stmt) -> bool:
     return isinstance(node, ast.If) and getattr(test, "id", getattr(test, "attr", None)) == "TYPE_CHECKING"
 
 
+def _import_call(node: ast.AST) -> ast.expr | None:
+    """The name an importlib.import_module or __import__ call imports, or None for any other node."""
+    if not isinstance(node, ast.Call) or not node.args:
+        return None
+    func = node.func
+    called = func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", None)
+    return node.args[0] if called in ("import_module", "__import__") else None
+
+
+def computed(path: Path) -> tuple[list[str], list[str]]:
+    """The places in a file that import a module by a name computed when they run, and the names its constant
+    import_module calls give, each place as in read()."""
+    places, constants = [], []
+
+    def visit(node: ast.AST, place: str) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                visit(child, f"{place}.{child.name}" if place else child.name)
+                continue
+            name = _import_call(child)
+            if isinstance(name, ast.Constant) and isinstance(name.value, str):
+                constants.append(name.value)
+            elif name is not None:
+                places.append(place)
+            visit(child, place)
+
+    visit(ast.parse(path.read_text()), "")
+    return places, constants
+
+
 def read(path: Path) -> tuple[list[tuple[str, str]], set[str]]:
     """A file's imports and the strata modules its strings name. Each import is (place, imported name), where place
     is the function or class around the import, or '' at the top. A from-import gives the module and each name after
@@ -130,6 +183,7 @@ def read(path: Path) -> tuple[list[tuple[str, str]], set[str]]:
                     visit(getattr(node, block, ()), place)
 
     visit(ast.parse(text).body, "")
+    found.extend(("", name) for name in computed(path)[1])
     return found, named(QUOTED.findall(text))
 
 
@@ -155,7 +209,8 @@ def reached() -> dict[str, dict[str, str]]:
     by_config = set().union(*(named(toml_strings(tomllib.loads(path.read_text())))
                               for path in (REPO / "config").glob("*.toml")))
     came_from: dict[str, str | None] = {}
-    todo = deque((module, None) for module in (*STARTS, *sorted(by_config)))
+    by_parts = {module for modules, _why in COMPUTED.values() for module in modules}
+    todo = deque((module, None) for module in (*STARTS, *sorted(by_config), *sorted(by_parts)))
     packages: dict[str, dict[str, str]] = {}
 
     def chain(module: str) -> str:
@@ -231,3 +286,22 @@ def test_each_package_left_out_of_the_app_is_imported_at_the_places_named_and_is
         for place in places:
             assert any(_covers(place, site) for site in packages.get(name, {})), \
                 f"{place} no longer imports {name}; take it out of LEFT_OUT"
+
+
+def test_every_import_with_a_computed_name_is_pinned_with_the_modules_it_can_import():
+    """A computed name is one this test cannot read, so a new one must say here what it imports (ticket 88's review,
+    follow-up 1). src/strata/lakehouse/silver/__init__.py imports each source's transform by its last part."""
+    found = set()
+    for path in sorted((SRC / "strata").rglob("*.py")):
+        module = ".".join(path.relative_to(SRC).with_suffix("").parts).removesuffix(".__init__")
+        found.update(f"{module}:{place}" if place else module for place in computed(path)[0])
+
+    assert found == set(COMPUTED)
+    assert "strata.lakehouse.silver.notices" in SILVER_TRANSFORMS
+    assert all(source(module) for module in SILVER_TRANSFORMS)
+
+
+def test_an_opentelemetry_sdk_import_is_named_for_its_own_package():
+    """ticket 88's review, follow-up 2: every opentelemetry submodule counted as opentelemetry-api."""
+    assert package("opentelemetry.sdk.trace") == "opentelemetry-sdk"
+    assert package("opentelemetry.trace") == "opentelemetry-api"

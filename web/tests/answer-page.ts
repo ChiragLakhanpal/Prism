@@ -47,7 +47,7 @@ export async function open(
   return seen;
 }
 
-export const box = (page: Page) => page.locator("[data-box-band]").getByRole("combobox");
+export const box = (page: Page) => page.locator("[data-box-slot]").getByRole("combobox");
 export const panel = (page: Page) => page.getByRole("region", { name: "Answer" });
 export const drawer = (page: Page) => page.getByRole("dialog");
 export const marker = (page: Page, n: number) => panel(page).locator(`[data-citation="${n}"]`).first();

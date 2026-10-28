@@ -14,7 +14,7 @@
 // Passage reports (/lessons/reports, /lessons/reports/:groupId) and Judging (/lessons/judging,
 // /lessons/judging/:queryId).
 import type { copy } from "./copy";
-import type { Section } from "./components/TopNav";
+import type { Section } from "./components/sections";
 
 export type PageKey = keyof typeof copy.pages;
 

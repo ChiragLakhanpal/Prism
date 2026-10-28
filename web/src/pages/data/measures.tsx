@@ -71,8 +71,8 @@ function measureWindow(
   ];
   const counted = { source: row.source_key, measure: row.measure };
   if (own) return { title: own.title, definition: own.definition, rows, counted };
-  // A measure that fills no column, such as a check or a fix's own measure, has its own words, so
-  // its window never borrows a column's name and definition (design review r5 B1).
+  // A measure that fills no column, such as a check, a fix's own measure or a kind's Ready for measure, has its
+  // own words, so its window never borrows a column's name and definition (design review r5 B1).
   const words_ = words.measureWindows[row.measure];
   if (words_) return { title: words_.title, definition: words_.definition, rows, counted };
   if (column === null) return { title: words.fixes.title, definition: words.fixes.caption, rows, counted };

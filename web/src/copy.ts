@@ -5649,9 +5649,9 @@ export const copy = {
       noneKnownOne: "I don't have a fix to suggest for this source.",
     },
     // The window a number opens, by its measure, for each measure that fills no column of the
-    // Sources table: a source's checks and the measures behind its fixes (config/sources.toml). A
-    // number from a column's measure opens that column's window instead. web/tests/lint.spec.ts
-    // fails when a check or a fix's own measure has no entry here.
+    // Sources table: a source's checks and the measures behind its fixes (config/sources.toml), and a
+    // kind's Ready for measure (config/tools.toml). A number from a column's measure opens that
+    // column's window instead. web/tests/lint.spec.ts fails when any of these has no entry here.
     measureWindows: {
       // The quote check on proposed lessons (ticket 29), which Lessons > Waiting for review links to.
       lessons_verified: {

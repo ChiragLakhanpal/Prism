@@ -74,7 +74,7 @@ const typeOf = (element: Locator) =>
 
 // The bottom of the element, from the top of the page, and the top of the box floating at the window's foot.
 const bottomOf = (element: Locator) => element.evaluate((found) => found.getBoundingClientRect().bottom + window.scrollY);
-const boxTop = (page: Page) => page.locator("[data-box-band] form").evaluate((form) => form.getBoundingClientRect().top + window.scrollY);
+const boxTop = (page: Page) => page.locator("[data-box-slot] form").evaluate((form) => form.getBoundingClientRect().top + window.scrollY);
 
 test("the h1 is the date line in label over the briefing in the finding style, inside the first screen at 390 by 844 and 1024 by 768, and a first run's sentences are in lead", async ({ page }) => {
   for (const [width, height, finding] of [[390, 844, "24px/32px 300"], [1024, 768, "28px/36px 300"]] as const) {

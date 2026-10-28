@@ -181,10 +181,12 @@ export function startPlanning(sentence: string, read = true): string {
           update(key, (now) => ({ ...now, form: data.form as PackageForm }));
         } else if (event.type === "step") {
           const step = data as unknown as PlanStep;
+          // A compare step that is done still has its comparables event to come, so only one that failed ends the
+          // wait; otherwise the page would read the comparables a second time (ticket 15's verification round 3, V2).
           update(key, (now) => ({
             ...now,
             steps: [...now.steps.filter((one) => one.id !== step.id), step],
-            compared: now.compared || (step.id === "compare" && step.status !== "running"),
+            compared: now.compared || (step.id === "compare" && step.status === "failed"),
           }));
         } else if (event.type === "package") {
           const pkg = data.package as PlannedPackage;

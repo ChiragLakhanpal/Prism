@@ -1960,8 +1960,8 @@ export const SHOTS: Shot[] = [
   { name: "navigation--menu-row-hover", path: "/gallery/navigation?menu=open", widths: NARROW, act: hover("[data-sidebar] [data-nav-item=drafts]") },
   // Ticket 93: the box in the bar, the stamp at the sidebar's foot (the Menu sheet's below 1024 px), and the fixture's
   // longest reference in the box's chip at 390 px.
-  { name: "navigation--focus-box", path: "/gallery/navigation", act: focus("[data-box-band] input") },
-  { name: "navigation--hover-box", path: "/gallery/navigation", act: hover("[data-box-band] [data-focus-ring]") },
+  { name: "navigation--focus-box", path: "/gallery/navigation", act: focus("[data-box-slot] input") },
+  { name: "navigation--hover-box", path: "/gallery/navigation", act: hover("[data-box-slot] [data-focus-ring]") },
   { name: "navigation--focus-stamp", path: "/gallery/navigation?sidebar=open", widths: WIDE, act: focus("[data-sidebar] [data-stamp] a") },
   { name: "navigation--hover-stamp", path: "/gallery/navigation?sidebar=open", widths: WIDE, act: hover("[data-sidebar] [data-stamp] a") },
   { name: "navigation--long-chip", path: "/gallery/navigation?scope=KE-UASIN%20GISHU%20COUNTY-571338-CW-RFB", widths: [390] },
@@ -2025,7 +2025,7 @@ export const SHOTS: Shot[] = [
   app("app--view-public", "/lessons?view=public"),
   app("app--asof", "/lessons?asof=2016-08-26"),
   app("app--asof-unreadable", "/lessons?asof=last-tuesday"),
-  app("app--box-with-text", "/", { }, { act: type("[data-box-band] input", "P130164"), api: { ...app("x", "/").api, ...BOX_API } }),
+  app("app--box-with-text", "/", { }, { act: type("[data-box-slot] input", "P130164"), api: { ...app("x", "/").api, ...BOX_API } }),
   app("app--view-open", "/", {}, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
   app("app--view-error", "/", { me: { status: 502, body: '{"detail":"Bad Gateway"}' } }, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),
   app("app--menu-open", "/lessons", {}, { widths: NARROW, act: click("[aria-controls][aria-expanded]:not([aria-haspopup])") }),

@@ -7,7 +7,7 @@
 // at most once a minute, and a retry says "Reading the data date" at once. A 401 or a 403 also
 // puts an error alert above the title (web/src/App.tsx). The alert stays while a retry reads, so
 // a screen reader does not hear it again and the page does not shift.
-import type { Freshness } from "../components/BoxBand";
+import type { Freshness } from "../components/OneBox";
 import { ApiError, getJson } from "./api";
 import { formatDate } from "./format";
 import { createStore } from "./store";

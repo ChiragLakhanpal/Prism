@@ -108,13 +108,13 @@ test("the bar is one 56 px navy row with no box at every width, and the box floa
     await expect(pill, `${width} px`).toBeVisible({ visible: width >= 768 });
     if (width >= 1024) expect(Math.round(width - ((await pill.boundingBox())!.x + (await pill.boundingBox())!.width)), `${width} px`).toBe(24);
 
-    const box = await at("[data-box-band] form > [data-focus-ring]");
+    const box = await at("[data-box-slot] form > [data-focus-ring]");
     const column = await at("[data-page-column]");
     expect(Math.round(box.width), `${width} px: the box's width`).toBe(width >= 1024 ? 640 : width - 32);
     expect(Math.abs(box.x + box.width / 2 - (column.x + column.width / 2)), `${width} px: centered in the page column`).toBeLessThanOrEqual(0.5);
     expect(Math.round(height - (box.y + box.height)), `${width} px: 16 px above the window's bottom edge`).toBe(16);
     expect(
-      await page.locator("[data-box-band] form > [data-focus-ring]").evaluate((el) => {
+      await page.locator("[data-box-slot] form > [data-focus-ring]").evaluate((el) => {
         const style = getComputedStyle(el);
         // The shadows the box draws, leaving out the empty ones Tailwind composes with them.
         const shadows = style.boxShadow.split(/,\s*(?![^()]*\))/).filter((shadow) => !shadow.startsWith("rgba(0, 0, 0, 0)"));
@@ -130,13 +130,13 @@ test("the bar is one 56 px navy row with no box at every width, and the box floa
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
   expect((await at("[data-nav-bar]")).y).toBe(0);
-  expect(Math.round(900 - ((await at("[data-box-band] form")).y + 40))).toBe(16);
+  expect(Math.round(900 - ((await at("[data-box-slot] form")).y + 40))).toBe(16);
   // Below 1024 px the bar scrolls away with the page, so a phone keeps its screen for the page.
   await page.setViewportSize({ width: 800, height: 900 });
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
   expect((await at("[data-nav-bar]")).y).toBeLessThan(0);
-  expect(Math.round(900 - ((await at("[data-box-band] form")).y + 40))).toBe(16);
+  expect(Math.round(900 - ((await at("[data-box-slot] form")).y + 40))).toBe(16);
 });
 
 // Ticket 93 (DESIGN.md section 10): the focused skip link shows below the bar, over the page, so it covers neither the
@@ -691,7 +691,7 @@ test("/ closes an open Menu and focuses the box", async ({ page }) => {
   await page.keyboard.press("/");
 
   await expect(page.getByRole("button", { name: "Menu", exact: true })).toHaveAttribute("aria-expanded", "false");
-  await expect(page.locator("[data-box-band]").getByRole("combobox")).toBeFocused();
+  await expect(page.locator("[data-box-slot]").getByRole("combobox")).toBeFocused();
 });
 
 // Ticket 94: the page's margin follows the window, never the page area, so opening the evidence drawer narrows the
@@ -721,7 +721,7 @@ for (const width of [1440, 1024]) {
       const beside = (await h1.boundingBox())!.x;
       // Ticket 113: the box centers in the page column the drawer narrowed, and covers no part of the drawer.
       if (width === 1440) {
-        const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+        const box = (await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!;
         const column = (await page.locator("[data-page-column]").boundingBox())!;
         const pane = (await drawer.boundingBox())!;
         expect(column.width, `${name}: the narrowed page column`).toBeLessThan(1440 - 64);
@@ -851,7 +851,7 @@ test("Packages, Projects, Lessons, Drafts and Data each say what the tab is for 
 // the sidebar's foot, or low in the evidence drawer, which both stick at the window's foot, never scrolls the page.
 test("Tab down the sidebar to its foot, or focus low in the evidence drawer, leaves the page where it was", async ({ page }) => {
   await openAnswerPage(page);
-  await expect(page.locator("[data-box-band]")).toBeVisible();
+  await expect(page.locator("[data-box-slot]")).toBeVisible();
   await page.locator("a[href='/drafts']").first().focus();
   const toggle = page.locator("[data-sidebar-toggle]");
   for (let press = 0; press < 6 && !(await toggle.evaluate((el) => el === document.activeElement)); press++) {

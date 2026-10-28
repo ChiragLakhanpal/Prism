@@ -8,11 +8,11 @@
 // takes all 12 columns at every width, as its screen does, and puts the list after it.
 import { useState, type ReactNode } from "react";
 import logo from "../assets/world-bank-logo.svg";
-import { OneBox } from "../components/BoxBand";
+import { OneBox } from "../components/OneBox";
 import { Frame } from "../components/Frame";
-import { subItemsFor, type SubItems } from "../components/sections";
+import { subItemsFor, type Section, type SubItems } from "../components/sections";
 import { Sidebar, type Rest } from "../components/Sidebar";
-import { STAFF_MODE, TopNav, type NavMode, type Section, type Viewer } from "../components/TopNav";
+import { STAFF_MODE, TopNav, type NavMode, type Viewer } from "../components/TopNav";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
@@ -59,7 +59,7 @@ export function sampleMode(pill: string | null): NavMode {
 // (ticket 99), and a sample of what the Lessons ticket adds.
 const SAMPLE_SUB_ITEMS: SubItems = {
   ...subItemsFor(true),
-  lessons: [{ page: "lessonsQueue", label: copy.pages.lessonReview.title, href: "/lessons/review" }],
+  lessons: [{ pageKey: "lessonsQueue", label: copy.pages.lessonReview.title, href: "/lessons/review" }],
 };
 
 // Each section's own page, which the gallery's sample page stands for, so the current item reads as that page.
@@ -108,7 +108,7 @@ export function GalleryFrame({
         <Sidebar
           mode={mode}
           viewer={viewer}
-          current={current}
+          currentKey={current}
           pathname={pathname}
           subItems={subs ? SAMPLE_SUB_ITEMS : undefined}
           freshness={{ status: "ready", date }}

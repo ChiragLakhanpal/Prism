@@ -165,7 +165,7 @@ for (const width of [1440, 390]) {
             window.scrollTo(0, document.documentElement.scrollHeight);
             requestAnimationFrame(() =>
               requestAnimationFrame(() => {
-                const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+                const box = document.querySelector("[data-box-slot] form > [data-focus-ring]")!.getBoundingClientRect();
                 done(Math.round(document.querySelector("[data-grade-bar]")!.getBoundingClientRect().top - box.bottom));
               }),
             );

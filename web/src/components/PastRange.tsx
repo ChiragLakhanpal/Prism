@@ -357,7 +357,7 @@ function Ready({
       return (
         <NoChart title={copy.packageWorkspace.section.noneFound}>
           <p className="mt-4">
-            <TextLink href={readinessHref(result)}>{words.empty.noneLink}</TextLink>
+            <TextLink href={dataReadinessHref(result.sources.map((source) => source.key), result.tool)}>{words.empty.noneLink}</TextLink>
           </p>
         </NoChart>
       );
@@ -368,7 +368,7 @@ function Ready({
           <Looked result={result} />
         </p>
         <p className="mt-4">
-          <TextLink href={readinessHref(result)}>{words.empty.noneLink}</TextLink>
+          <TextLink href={dataReadinessHref(result.sources.map((source) => source.key), result.tool)}>{words.empty.noneLink}</TextLink>
         </p>
       </NoChart>
     );
@@ -399,13 +399,6 @@ function NoChart({ title, children }: { title: ReactNode; children: ReactNode })
 // The plan check with this package's row in view, as the "In the plan" fact links it.
 export const planCheckHref = (pkg: { project_id: string; step_reference: string; plan: { agency_id: string; plan_date: string } }) =>
   `/projects/${pkg.project_id}/procurement/${pkg.plan.agency_id}/${pkg.plan.plan_date}#${encodeURIComponent(pkg.step_reference)}`;
-
-// Data readiness, showing only the sources behind the answer and naming the tool that wrote the line.
-const readinessHref = (result: ComparablesResult) =>
-  dataReadinessHref(
-    result.sources.map((source) => source.key),
-    result.tool,
-  );
 
 // The criteria the tool used, as phrases: the fields compared, and the others in a second sentence.
 function criteriaParts(result: ComparablesResult, form: "note" | "empty") {
@@ -496,7 +489,7 @@ function Unmeasured({ result }: { result: ComparablesResult }) {
   return (
     <p data-coverage-line className="text-small text-ink">
       <Fill template={words.empty.unmeasuredOf} slots={{ matched, gaps: <Joined items={gapsOf(result)} /> }} />{" "}
-      <TextLink href={readinessHref(result)}>{copy.coverage.link}</TextLink>
+      <TextLink href={dataReadinessHref(result.sources.map((source) => source.key), result.tool)}>{copy.coverage.link}</TextLink>
     </p>
   );
 }
@@ -518,7 +511,7 @@ function Coverage({ result, check, linked = true }: { result: ComparablesResult;
           </>
         ) : undefined
       }
-      href={linked ? readinessHref(result) : undefined}
+      href={linked ? dataReadinessHref(result.sources.map((source) => source.key), result.tool) : undefined}
     />
   );
 }
@@ -901,22 +894,27 @@ function Populated({
             readout={readout}
             readoutLines={readoutLines}
             readoutWidest={readoutWidest}
-            keySigned={quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed))}
-            keyHollow={open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(whole(open))) : null}
             keyLead={Boolean(quantile)}
-            laneLabel={c.lane}
-            planLabel={c.plan}
-            middleLabel={
-              range?.q25 != null && range.q75 != null && range.q50 != null
-                ? c.middle(months1(range.q25), months1(range.q75), months1(range.q50))
-                : null
-            }
-            in10Label={range?.q80 != null ? c.in10(months1(range.q80)) : null}
-            axisLastLabel={c.axisLast(whole(axis.max))}
-            alt={altParts.join(" ")}
-            groupName={quantile ? c.groupDots(whole(total)) : c.group(whole(total))}
-            groupHelp={opening ? (quantile ? c.groupHelpOpenDots : c.groupHelpOpen) : c.groupHelp}
-            sliderName={c.slider}
+            labels={{
+              lane: c.lane,
+              keySigned: quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed)),
+              keyHollow: open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(whole(open))) : null,
+              plan: c.plan,
+              middle:
+                range?.q25 != null && range.q75 != null && range.q50 != null
+                  ? c.middle(months1(range.q25), months1(range.q75), months1(range.q50))
+                  : null,
+              in10: range?.q80 != null ? c.in10(months1(range.q80)) : null,
+              axisLast: c.axisLast(whole(axis.max)),
+              alt: altParts.join(" "),
+              group: quantile ? c.groupDots(whole(total)) : c.group(whole(total)),
+              groupHelp: opening ? (quantile ? c.groupHelpOpenDots : c.groupHelpOpen) : c.groupHelp,
+              slider: c.slider,
+              openHint: quantile ? c.openHintDots : c.openHint,
+              open: quantile ? c.openDots : c.openRecords,
+              lane2: copy.timeEstimate.lane,
+              lane2Short: copy.timeEstimate.laneShort,
+            }}
             valueText={valueText}
             onPlan={onPlan}
             onOpen={
@@ -931,11 +929,7 @@ function Populated({
                 : undefined
             }
             opened={opening?.opened ?? null}
-            openHint={quantile ? c.openHintDots : c.openHint}
-            openLabel={quantile ? c.openDots : c.openRecords}
             lane2={estimate ? lane2For(estimate, comparison) : undefined}
-            lane2Label={copy.timeEstimate.lane}
-            lane2LabelShort={copy.timeEstimate.laneShort}
             matching={comparison && !quantile ? new Set(comparison.matching_ids) : null}
             compareKey={
               comparison

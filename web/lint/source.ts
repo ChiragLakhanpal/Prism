@@ -177,14 +177,28 @@ export function literalText(source: string, file: string): Found[] {
       case "Literal":
         return isString(node) && isCopyProp(prop) ? [{ offset: node.start, text: node.value as string }] : [];
       case "TemplateLiteral": {
+        // The text between the slots, and whatever each slot holds, such as `${"Opened"}` (ticket 02's review, round 10).
         const text = (node.quasis as Node[]).map((quasi) => (quasi.value as { raw: string }).raw).join("");
-        return isCopyProp(prop) ? [{ offset: node.start, text }] : [];
+        return [
+          ...(isCopyProp(prop) ? [{ offset: node.start, text }] : []),
+          ...(node.expressions as Node[]).flatMap((slot) => strings(slot, prop, seen)),
+        ];
       }
       case "JSXExpressionContainer":
       case "ParenthesizedExpression":
       case "TSAsExpression":
       case "TSSatisfiesExpression":
+      case "TSNonNullExpression":
         return strings(node.expression as Node, prop, seen);
+      case "CallExpression": {
+        // "Opened ".concat(state): the string and each argument, judged as + judges its pieces. Any other call returns
+        // something that is not text.
+        const callee = node.callee as Node;
+        const concat = callee.type === "MemberExpression" && !callee.computed && (callee.property as Node).name === "concat";
+        return concat
+          ? [...strings(callee.object as Node, prop, seen), ...(node.arguments as Node[]).flatMap((argument) => strings(argument, prop, seen))]
+          : [];
+      }
       case "ConditionalExpression":
         return [...strings(node.consequent as Node, prop, seen), ...strings(node.alternate as Node, prop, seen)];
       case "LogicalExpression":
@@ -270,11 +284,15 @@ export function literalText(source: string, file: string): Found[] {
         if (hasWords(text.text)) found.push({ ...text, where: "spreads a prop with" });
       }
     }
-    // document.title = "..." or el.textContent = "...": words written into the page directly.
+    // document.title = "...", el.textContent = "..." or el["textContent"] = "...": words written into the page directly.
     if (node.type === "AssignmentExpression" && (node.left as Node).type === "MemberExpression") {
       const target = node.left as Node;
       const property = target.property as Node;
-      const name = !target.computed && property.type === "Identifier" ? (property.name as string) : null;
+      const name = !target.computed && property.type === "Identifier"
+        ? (property.name as string)
+        : target.computed && isString(property)
+          ? (property.value as string)
+          : null;
       if (name !== null && DOM_TEXT_PROPERTIES.has(name)) {
         for (const text of strings(node.right as Node, "children")) {
           if (hasWords(text.text)) found.push({ ...text, where: `writes ${name}` });
@@ -341,8 +359,9 @@ export function retiredClasses(source: string, file: string): Found[] {
     const chartLabel = names.some((name) => utility(name) === UPPERCASE_ONLY_WITH);
     for (const name of names) {
       const used = utility(name);
-      if (used === "uppercase" && !chartLabel) found.push({ offset: node.start, text: name, where: UPPERCASE_ONLY_WITH });
-      if (used in RETIRED_CLASSES) found.push({ offset: node.start, text: name, where: RETIRED_CLASSES[used] });
+      if (capitals(used) && !chartLabel) found.push({ offset: node.start, text: name, where: UPPERCASE_ONLY_WITH });
+      // An object's own keys only, so a class such as "constructor" is never read as retired (ticket 90's review).
+      if (Object.hasOwn(RETIRED_CLASSES, used)) found.push({ offset: node.start, text: name, where: RETIRED_CLASSES[used] });
     }
   });
   return found;
@@ -369,7 +388,19 @@ export function rawHoverClasses(source: string, file: string): Found[] {
   return found;
 }
 
-// A class name without its variants or its important mark: "md:!uppercase" is "uppercase".
+// A class name without its variants or its important mark, before or after it: "md:!uppercase" and "uppercase!" are
+// "uppercase". The variants end at the last colon outside brackets, so "[text-transform:uppercase]" stays whole.
 function utility(name: string): string {
-  return name.slice(name.lastIndexOf(":") + 1).replace(/^!/, "");
+  let depth = 0;
+  let cut = -1;
+  for (let index = 0; index < name.length; index += 1) {
+    const character = name[index];
+    if (character === "[" || character === "(") depth += 1;
+    else if (character === "]" || character === ")") depth -= 1;
+    else if (character === ":" && depth === 0) cut = index;
+  }
+  return name.slice(cut + 1).replace(/^!/, "").replace(/!$/, "");
 }
+
+// Capitals, written as Tailwind's utility or as an arbitrary property (ticket 90's review, follow-up 2).
+const capitals = (used: string) => used === "uppercase" || /^\[text-transform:\s*uppercase\]$/i.test(used);

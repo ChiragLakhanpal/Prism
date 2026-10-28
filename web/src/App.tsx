@@ -21,9 +21,9 @@ import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
 import { AlertSlot } from "./components/PageAlert";
 import { RETURNING } from "./components/Popover";
-import { subItemsFor } from "./components/sections";
+import { SECTIONS, subItemsFor, type Section } from "./components/sections";
 import { Sidebar } from "./components/Sidebar";
-import { SECTIONS, TopNav, type NavMode, type Section, type Viewer } from "./components/TopNav";
+import { TopNav, type NavMode, type Viewer } from "./components/TopNav";
 import { ViewBanner } from "./components/ViewBanner";
 import { copy } from "./copy";
 import { answer, ask, earlier, removedScopes } from "./lib/answer";
@@ -424,7 +424,7 @@ export function App() {
         <Sidebar
           mode={navMode}
           viewer={who}
-          current={match.key === "home" ? "home" : match.section}
+          currentKey={match.key === "home" ? "home" : match.section}
           pathname={here.pathname}
           freshness={freshness}
           // World Bank staff open Following from Projects (ticket 37); a preview, and everyone else, All projects.
@@ -472,8 +472,10 @@ export function App() {
           document.body,
         )}
         {/* The page's alert slot (ticket 94): always in the page, above the answer and the page's head, so a page whose
-            one read failed puts its error alert here (PageAlert.tsx); it takes no room while it is empty. */}
-        <div ref={setAlertSlot} data-alert-slot className="col-span-12 mb-6 flex flex-col gap-2 empty:hidden @md/page:col-span-8">
+            one read failed puts its error alert here (PageAlert.tsx); it takes no room while it holds no alert. A page's
+            alerts go into a box of their own at its end, which React keeps last, so a frame alert that comes later still
+            lands above them (ticket 94's review, F7). */}
+        <div data-alert-slot className="col-span-12 mb-6 hidden flex-col gap-2 has-[>:not([data-page-alerts]:empty)]:flex @md/page:col-span-8">
           {slot.errors.map((alert) => (
             <Alert key={alert.text} state={alert.state} live="alert">
               {alert.text}
@@ -496,6 +498,7 @@ export function App() {
               {alert.text}
             </Alert>
           ))}
+          <div ref={setAlertSlot} data-page-alerts className="contents" />
         </div>
         {answerPanel && !answerInPage && <div className="col-span-12 @lg/page:col-span-8">{answerPanel}</div>}
         {/* Each page lays itself out on the same 12 columns: most keep to columns 1 to 8, and a

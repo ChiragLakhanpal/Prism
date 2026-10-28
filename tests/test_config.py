@@ -461,6 +461,16 @@ def test_swapping_the_layout_parser_is_one_line(tmp_path):
     assert list(config.load_models(path)) == list(config.ROLES)
 
 
+@pytest.mark.parametrize("index", ["gold.passage_index", "strata.gold.passage.index", "strata..passage_index"])
+def test_a_search_index_that_is_not_catalog_schema_and_name_is_refused_with_a_sentence(tmp_path, index):
+    """catalog.build, the deploy's step 2 and the table sizes measure split it in three, so a two-part name failed each
+    with "not enough values to unpack" (ticket 87's review, follow-up 2)."""
+    path = copy("models.toml", tmp_path, old='index = "strata.gold.passage_index"', new=f'index = "{index}"')
+
+    with pytest.raises(ConfigError, match=r"In models\.toml, search\.index must be a catalog, a schema and a name"):
+        config.load_search(path)
+
+
 def test_a_model_file_missing_a_role_is_refused(tmp_path):
     path = copy("models.toml", tmp_path, old="[roles.batch]", new="[roles.bulk]")
 

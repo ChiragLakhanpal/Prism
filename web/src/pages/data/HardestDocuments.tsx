@@ -94,15 +94,13 @@ function of(count: number, total: number) {
   return { share: { count, denominator: total, share_percent: null, share_bound: null, in_ten: null, in_ten_exact: null }, style: "table" as const };
 }
 
-// An entry that a rule fills at run time, rather than one that names its document.
-const RULES = new Set(["longest_pad", "over_parser_limit"]);
-
 function documentCell(entry: ShelfEntry, asOf: string): { header: ReactNode; caption: ReactNode; lang?: string } {
   const document = entry.document;
   if (!document) {
     // Before the reading, a rule's entry says when I choose its document; after a reading that found
-    // none, it says nothing more, so no line contradicts the note beside it (design review r2 P5).
-    const rule = RULES.has(entry.kind);
+    // none, it says nothing more, so no line contradicts the note beside it (design review r2 P5). Whether a rule
+    // fills the entry is the slice file's to say (entry.rule; ticket 18's review round 3, P10).
+    const rule = entry.rule !== null;
     return {
       header: words.entries[entry.kind],
       caption:

@@ -16,7 +16,8 @@ import { DOTTED_UNDERLINE, Tooltip } from "./Popover";
 import { DEFINITION_WINDOW, DefinitionContent, type DefinitionRows } from "./Term";
 
 // counted names the measure behind the window, by its source and its name in strata.ops.data_readiness,
-// on the number as data-source and data-measure, so a test can check each window against the registries.
+// on the number as data-measure-source and data-measure, so a test can check each window against the registries
+// (named apart from the source line's data-source, ticket 16's review round 8, P3).
 export type Measure = { title: ReactNode; definition: ReactNode; rows?: DefinitionRows; counted?: { source: string; measure: string } };
 
 export function MeasureNum({
@@ -52,7 +53,7 @@ export function MeasureNum({
       data-num
       data-num-click={measure ? "" : undefined}
       data-num-opens={measure ? "window" : undefined}
-      data-source={measure?.counted?.source}
+      data-measure-source={measure?.counted?.source}
       data-measure={measure?.counted?.measure}
       aria-haspopup={measure ? "dialog" : undefined}
       aria-expanded={measure ? open : undefined}

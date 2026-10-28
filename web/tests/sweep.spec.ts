@@ -136,7 +136,7 @@ async function deckOnlyRoutes(): Promise<[string, string, Record<string, Answer>
     ["/packages/check", "[data-upload-card]", { ...officer, "/api/uploads/form": await file("uploads-form-officer.json") }],
     ["/packages/uploads/upl-000000000001", "[data-upload-check-page=ready]", { ...officer, "/api/uploads/upl-000000000001": await file("upload-check-nwwda.json") }],
     // A reload of the reading page goes to the Packages tab.
-    ["/packages/new", "[data-box-band] [data-placeholder]", { "/api/planned-packages": await file("planned-packages-empty.json") }],
+    ["/packages/new", "[data-box-slot] [data-placeholder]", { "/api/planned-packages": await file("planned-packages-empty.json") }],
     [`/packages/${PLANNED}`, "[data-planned-package]:not([data-planned-package=loading])", {
       [`/api/planned-packages/${PLANNED}`]: await file("planned-package-rural-roads.json"),
       [`/api/planned-packages/${PLANNED}/risks`]: await file("risks-planned-rural-roads.json"),

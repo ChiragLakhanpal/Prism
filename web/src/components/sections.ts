@@ -28,17 +28,17 @@ export const HOME_ITEM = { href: "/", icon: House };
 // A section's own page, shown as an indented item under the section while it is current (Following and All projects
 // under Projects, the reviewer pages under Lessons, Data's pages under Data). The tab tickets fill these; a page the
 // applied view hides (config/roles.toml, GET /api/me's hidden) is left out.
-export type SubItem = { page: PageKey; label: string; href: string };
+export type SubItem = { pageKey: PageKey; label: string; href: string };
 export type SubItems = Partial<Record<Section, SubItem[]>>;
 
 // The sub-items each section has, in order (ticket 99 fills Projects'). A page for World Bank staff alone (staff) shows
 // only to them in their own view, as Following does; the views' hidden pages (config/roles.toml) are left out by the
 // sidebar. Adding a section's page is one entry here and its word in copy.nav.sub.
-type SubEntry = { page: keyof typeof copy.nav.sub & PageKey; href: string; staff?: boolean };
+type SubEntry = { pageKey: keyof typeof copy.nav.sub & PageKey; href: string; staff?: boolean };
 const SUB_ENTRIES: Partial<Record<Section, SubEntry[]>> = {
   projects: [
-    { page: "following", href: FOLLOWING_HREF, staff: true },
-    { page: "projects", href: "/projects" },
+    { pageKey: "following", href: FOLLOWING_HREF, staff: true },
+    { pageKey: "projects", href: "/projects" },
   ],
 };
 
@@ -47,7 +47,7 @@ export function subItemsFor(staff: boolean): SubItems {
   return Object.fromEntries(
     Object.entries(SUB_ENTRIES).map(([section, entries]) => [
       section,
-      entries.filter((entry) => staff || !entry.staff).map(({ page, href }) => ({ page, href, label: copy.nav.sub[page] })),
+      entries.filter((entry) => staff || !entry.staff).map(({ pageKey, href }) => ({ pageKey, href, label: copy.nav.sub[pageKey] })),
     ]),
   );
 }

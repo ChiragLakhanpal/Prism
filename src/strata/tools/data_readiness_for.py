@@ -575,7 +575,9 @@ def shelf(page: Page, in_view: set[str], filtered: bool) -> tuple[list[dict], di
         if filtered and row_id not in in_view:
             continue
         found = outcomes.get(item.key)
-        entry = {"key": item.key, "kind": item.kind, "position": position, "row_id": row_id,
+        # rule: the slice file's rule that picks the entry's document at run time, or None for one that names its
+        # document, so the page reads it here rather than keeping its own list (ticket 18's review round 3, P10).
+        entry = {"key": item.key, "kind": item.kind, "rule": item.rule, "position": position, "row_id": row_id,
                  "state": "not_read" if found is None else found["state"], "project_id": item.project_id,
                  "document": None, "part": item.part, "language": item.language, "hard_page": None,
                  "parser_row": None, "outcome_row": None, "read_pages_row": None, "longest_row": None,

@@ -59,7 +59,7 @@ async function serve(page: Page, answers: Record<string, Answer>) {
 
 const stream = async (name: string): Promise<Answer> => ({ body: await recorded(name), type: "text/event-stream" });
 
-const box = (page: Page) => page.locator("[data-box-band]").getByRole("combobox");
+const box = (page: Page) => page.locator("[data-box-slot]").getByRole("combobox");
 const options = (page: Page) => page.getByRole("listbox", { name: "What Enter will do" }).getByRole("option");
 const card = (page: Page) => page.locator("[data-criteria-card]");
 const group = (page: Page, name: string) => card(page).getByRole("group", { name });
@@ -118,6 +118,9 @@ test("the sentence yields the wireframe's chips: four under What with one guess,
   await expect(card(page).locator("[data-instruction]")).toHaveText("Choose any part to change it. One guess to check.");
   // One POST planned the package; nothing else made one.
   expect(asked.filter((request) => request.method() === "POST" && new URL(request.url()).pathname === "/api/planned-packages")).toHaveLength(1);
+  // Section 1 draws the comparables the stream sent, and asks for none itself (ticket 15's verification round 3, V2).
+  await expect(page.locator("[data-past-range]")).not.toHaveAttribute("data-past-range", /loading|error/);
+  expect(asked.filter((request) => new URL(request.url()).pathname === "/api/comparables")).toEqual([]);
 });
 
 test("free text lists Plan a package second, and Enter asks instead, so no package is made until the person chooses it", async ({ page }) => {
@@ -187,7 +190,7 @@ test("a reload of the reading page goes to the Packages tab with the box in plan
 
   await expect(page).toHaveURL("/packages");
   await expect(box(page)).toBeFocused();
-  await expect(page.locator("[data-box-band] [data-placeholder]")).toHaveText("Describe the package in one sentence");
+  await expect(page.locator("[data-box-slot] [data-placeholder]")).toHaveText("Describe the package in one sentence");
   await expect(box(page)).toHaveAccessibleDescription(
     "Say what is being bought, where, and about how much. For example: rural roads, Kenya, about US$15 million.",
   );
@@ -824,7 +827,7 @@ test("the Packages tab's buttons put the one box into plan mode or check mode an
 
   await page.getByRole("button", { name: "Plan a package" }).click();
   await expect(box(page)).toBeFocused();
-  await expect(page.locator("[data-box-band] [data-placeholder]")).toHaveText("Describe the package in one sentence");
+  await expect(page.locator("[data-box-slot] [data-placeholder]")).toHaveText("Describe the package in one sentence");
   await page.keyboard.type(SENTENCE);
   await expect(options(page).first()).toHaveAccessibleName(/^Plan a package from this sentence/);
   await expect(options(page).first()).toHaveAttribute("aria-selected", "true");
@@ -833,7 +836,7 @@ test("the Packages tab's buttons put the one box into plan mode or check mode an
 
   await page.getByRole("button", { name: "Check a plan" }).click();
   await expect(box(page)).toBeFocused();
-  await expect(page.locator("[data-box-band] [data-placeholder]")).toHaveText("Type a project ID, such as P156634");
+  await expect(page.locator("[data-box-slot] [data-placeholder]")).toHaveText("Type a project ID, such as P156634");
   await page.keyboard.type("P156634");
   await expect(options(page).first()).toHaveAccessibleName(/^Check the Northern Water Works Development Agency plan of October 9, 2026/);
   await page.keyboard.press("Enter");

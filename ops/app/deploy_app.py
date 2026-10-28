@@ -12,7 +12,9 @@ It needs npm, which builds the web app. Before step 1, it reads the app's comput
 through the SDK, with no SQL (ops/bundle/workspace_state.py, ticket 81). When the workspace stopped the app's compute
 ("due to workspace or account status"), or the warehouse is stopped and will not start when asked, it prints one
 sentence that names the state and exits 2 without uploading. On Free Edition the usual cause is the workspace's daily
-compute limit. Then it does these things, in order:
+compute limit. It asks an app the workspace stopped to start first, and refuses only when it will not, as it does the
+warehouse; when it cannot read the state at all, it says so in one sentence and exits 2. Then it does these things, in
+order:
 
 1. It builds the web app into web/dist (npm --prefix web run build).
 2. It finds the app that ops/dayone/dayone.toml names (names.app), or makes it. It replaces the
@@ -34,9 +36,9 @@ compute limit. Then it does these things, in order:
 4. It uploads the app, laid out as in the repo: app.yaml and the lean requirements.txt from
    ops/app, src/strata, config and web/dist, to the folder strata-app in your workspace folder.
 5. It deploys the app, starting it first if it is stopped, and waits for it. Then it reads the app's deployments
-   (apps list-deployments) and stops with exit 1 unless one made since the run started has the state SUCCEEDED,
-   naming the deployment and its time: on October 26, 2026 the deploy call came back on a stopped workspace with no
-   deployment registered. While that deployment shows IN_PROGRESS, as it may after the app's compute starts cold, it
+   (apps list-deployments) and stops with exit 1 unless one it did not list just before the deploy call has the state
+   SUCCEEDED, naming the deployment and its time: on October 26, 2026 the deploy call came back on a stopped workspace
+   with no deployment registered. While that deployment shows IN_PROGRESS, as it may after the app's compute starts cold, it
    reads the deployments again every 10 seconds, for up to 20 minutes, before it stops (October 27, 2026).
 6. It grants the app's own service principal what the server needs to write usage events, agent
    runs, opened sources, drafts, decisions and labels on supplier pairs, and the lesson review record,
@@ -328,6 +330,12 @@ def write_secrets(scope: str, keys: list[str]) -> str:
     return f"Write {'it' if len(keys) == 1 else 'them'} with {commands}, then deploy again."
 
 
+def and_list(items: Collection[str]) -> str:
+    """"a, b and c"."""
+    *rest, last = items
+    return f"{', '.join(rest)} and {last}" if rest else last
+
+
 def at(moment: dt.datetime) -> str:
     """A time as the deploy says it, such as "14:55:02 UTC on October 26, 2026"."""
     moment = moment.astimezone(dt.UTC)
@@ -343,43 +351,54 @@ STEP_5_POLL_SECONDS = 10
 STEP_5_WAIT_MINUTES = 20
 
 
-def registered(name: str, found: list[dict], started: dt.datetime) -> tuple[bool, str]:
+def newest_first(found: list[dict]) -> list[dict]:
+    """Deployments by their creation time, newest first, with one the Apps API gave no time first of all."""
+    latest = dt.datetime.max.replace(tzinfo=dt.UTC)
+    return sorted(found, key=lambda deployment: deployment.get("created") or latest, reverse=True)
+
+
+def made(deployment: dict) -> str:
+    """", made at 14:59:33 UTC on October 26, 2026," for a deployment the Apps API gave a time, or nothing."""
+    return f", made at {at(deployment['created'])}," if deployment.get("created") else ""
+
+
+def registered(name: str, found: list[dict], listed: Collection[str], started: dt.datetime) -> tuple[bool, str]:
     """Whether step 5 registered a deployment that succeeded, and the sentence that says so, from the app's
-    deployments as apps list-deployments gives them. Only a deployment made since the run started counts: on a stopped
-    workspace the deploy call came back with nothing registered (October 26, 2026, ticket 81)."""
-    dated = sorted((deployment for deployment in found if deployment.get("created")),
-                   key=lambda deployment: deployment["created"], reverse=True)
-    new = [deployment for deployment in dated if deployment["created"] >= started]
+    deployments as apps list-deployments gives them. Only a deployment whose id was not listed just before the deploy
+    call counts: on a stopped workspace the deploy call came back with nothing registered (October 26, 2026, ticket
+    81). The ids, not this computer's clock, tell a new one, so a clock ahead of the workspace's, or a deployment with
+    no creation time, does not fail a good deploy (ticket 81's review, follow-up 3); the time is only for the sentence."""
+    new = newest_first([deployment for deployment in found if deployment["id"] not in listed])
     succeeded = [deployment for deployment in new if deployment["state"] == "SUCCEEDED"]
     if succeeded:
-        return True, f"   The deployment {succeeded[0]['id']}, made at {at(succeeded[0]['created'])}, succeeded."
+        return True, f"   The deployment {succeeded[0]['id']}{made(succeeded[0])} succeeded."
     if new:
         newest = new[0]
         said = f" with the message \"{' '.join(newest['message'].split())}\"" if newest.get("message") else ""
-        return False, (f"Step 5's deployment {newest['id']}, made at {at(newest['created'])}, has the state "
+        return False, (f"Step 5's deployment {newest['id']}{made(newest)} has the state "
                        f"{newest['state']}{said}. {STOPPED_AT_STEP_5}")
-    if not dated:
+    if not found:
         return False, f"The app {name} lists no deployment at all, so step 5 registered nothing. {STOPPED_AT_STEP_5}"
-    newest = dated[0]
+    newest = newest_first(found)[0]
     return False, (f"The app {name} has no deployment made since this run started at {at(started)}, so step 5 "
-                   f"registered nothing. Its newest deployment is {newest['id']}, made at {at(newest['created'])}, "
-                   f"with the state {newest['state']}. {STOPPED_AT_STEP_5}")
+                   f"registered nothing. Its newest deployment is {newest['id']}{made(newest)} with the state "
+                   f"{newest['state']}. {STOPPED_AT_STEP_5}")
 
 
-def in_progress(found: list[dict], started: dt.datetime) -> dict | None:
-    """Step 5's newest deployment when it is still in progress and none made since the run started has succeeded."""
-    new = sorted((deployment for deployment in found if deployment.get("created") and deployment["created"] >= started),
-                 key=lambda deployment: deployment["created"], reverse=True)
+def in_progress(found: list[dict], listed: Collection[str]) -> dict | None:
+    """Step 5's newest deployment when it is still in progress and no new one has succeeded."""
+    new = newest_first([deployment for deployment in found if deployment["id"] not in listed])
     if not new or new[0]["state"] != IN_PROGRESS or any(d["state"] == "SUCCEEDED" for d in new):
         return None
     return new[0]
 
 
-def step_5_result(workspace, name: str, started: dt.datetime, sleep: Callable[[float], None]) -> tuple[bool, str]:
+def step_5_result(workspace, name: str, listed: Collection[str], started: dt.datetime,
+                  sleep: Callable[[float], None]) -> tuple[bool, str]:
     """Whether step 5's deployment succeeded, and the sentence that says so. While the app's deployments show it in
     progress, read them again every STEP_5_POLL_SECONDS, for up to STEP_5_WAIT_MINUTES."""
     found = workspace.deployments(name)
-    waiting = in_progress(found, started)
+    waiting = in_progress(found, listed)
     if waiting:
         print(f"   The deployment {waiting['id']} is still {IN_PROGRESS}, as it may be after the app's compute starts "
               f"cold, so I read its state again every {STEP_5_POLL_SECONDS} seconds, for up to "
@@ -387,10 +406,10 @@ def step_5_result(workspace, name: str, started: dt.datetime, sleep: Callable[[f
         for _ in range(STEP_5_WAIT_MINUTES * 60 // STEP_5_POLL_SECONDS):
             sleep(STEP_5_POLL_SECONDS)
             found = workspace.deployments(name)
-            if not in_progress(found, started):
+            if not in_progress(found, listed):
                 break
-    succeeded, said = registered(name, found, started)
-    if in_progress(found, started):
+    succeeded, said = registered(name, found, listed, started)
+    if in_progress(found, listed):
         said += (f" It was still {IN_PROGRESS} after {dayone.count_words(STEP_5_WAIT_MINUTES, 'minute')}. Run "
                  f"`databricks apps get {name}`, and once its deployment shows SUCCEEDED, deploy again so steps 6 and 7 "
                  "run.")
@@ -419,7 +438,10 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
     names = dayone.load_config()["names"]
     name, scope = names["app"], names["secret_scope"]
 
-    stopped = workspace_state.refusal(workspace, app=name)
+    try:
+        stopped = workspace_state.refusal(workspace, app=name)
+    except Exception as error:  # the Apps or warehouses API refused the read itself
+        stopped = workspace_state.unreadable(error)
     if stopped:
         print(stopped)
         return 2
@@ -510,14 +532,17 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
 
     print("5. Deploying the app. This takes a few minutes.")
     if not app["running"]:
-        workspace.start(name)
+        workspace.start_app(name)
+    listed = {deployment["id"] for deployment in workspace.deployments(name)}
     url = workspace.deploy(name, folder)
-    succeeded, said = step_5_result(workspace, name, started, sleep)
+    succeeded, said = step_5_result(workspace, name, listed, started, sleep)
     print(said)
     if not succeeded:
         return 1
 
-    print("6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to strata.ops.")
+    print("6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to "
+          f"strata.ops, with the lesson review record ({and_list(LESSON_REVIEW_TABLES)}) and the retrieval loop's record "
+          f"({and_list(RETRIEVAL_TABLES)}).")
     if not run_statements(workspace, grants(app["principal"]),
                           "I stopped at step 6, so the app's own service principal may lack some of its grants."):
         return 1

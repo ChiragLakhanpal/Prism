@@ -894,7 +894,11 @@ def load_search(path: Path = CONFIG_DIR / "models.toml") -> SearchSettings:
                             depth, table.boolean("header_in_words"))
         if setup.keyword_weight == 0 and setup.vector_weight == 0:
             table._fail("keyword_weight", "or vector_weight must be more than zero, or nothing ranks")
-    return SearchSettings(entry.text("index"), entry.text("reranker"), entry.texts("rerank_columns"), setup)
+    index = entry.text("index")
+    # catalog.build, the deploy's step 2 and the table sizes measure split it in three (ticket 87's review).
+    if len(index.split(".")) != 3 or not all(index.split(".")):
+        entry._fail("index", f"must be a catalog, a schema and a name, such as strata.gold.passage_index, not {index!r}")
+    return SearchSettings(index, entry.text("reranker"), entry.texts("rerank_columns"), setup)
 
 
 # ── The retrieval loop's lists (ticket 32) ───────────────────────────────

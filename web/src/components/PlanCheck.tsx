@@ -19,6 +19,7 @@ import { copy } from "../copy";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
 import { cx } from "../lib/cx";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
+import { sticks } from "../lib/sticky";
 import { Button } from "./Button";
 import { Byline } from "./Byline";
 import { CheckPill } from "./CheckPill";
@@ -533,11 +534,11 @@ function bringIntoView(target: HTMLElement) {
   };
   const activity = target.closest("tr, li") ?? target;
   const row = place(activity);
-  const sticks = (element: HTMLElement | null) => (element && getComputedStyle(element).position === "sticky" ? element.offsetHeight : 0);
+  const stuckHeight = (element: HTMLElement | null) => (sticks(element) ? element.offsetHeight : 0);
   const bar = document.querySelector<HTMLElement>("[data-nav-bar]")?.closest("header") ?? null;
-  const barStuck = sticks(bar);
+  const barStuck = stuckHeight(bar);
   const header = document.querySelector<HTMLElement>("[data-plan-header]");
-  const stuck = barStuck + sticks(header);
+  const stuck = barStuck + stuckHeight(header);
   const fits = (from: number) => row.bottom + LANDING_GAP - from <= window.innerHeight;
   let top = fits(0) ? 0 : row.top - stuck - LANDING_GAP;
   // A block that sits closer above the activity than the gap, as the count line's row sits 8 px above the
@@ -560,7 +561,7 @@ function bringIntoView(target: HTMLElement) {
   window.scrollTo({ top: Math.max(0, top) });
 }
 
-export function PlanCheckHeader({ agency, plan, pill, action, feedforward, headerRef, level = 1, sticky = true }: {
+export function PlanCheckHeader({ agency, plan, pill, action, feedforward, level = 1, sticky = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
   plan?: ReactNode;
@@ -569,14 +570,12 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
   // caption right-aligned on the subtitle's line. Below 1024 px they follow the pill, 8 px apart.
   action?: ReactNode;
   feedforward?: ReactNode;
-  headerRef?: Ref<HTMLDivElement>;
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
   sticky?: boolean;
 }) {
   return (
     <div
-      ref={headerRef}
       data-plan-header
       data-sticky={sticky ? "top" : undefined}
       className={cx("border-b border-line bg-page pt-2 pb-4", sticky && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10")}

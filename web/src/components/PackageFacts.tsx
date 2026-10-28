@@ -2,7 +2,7 @@
 // over its STEP reference, sticky from a page area of 768 px, and the package's facts as a definition list in STEP's
 // field names, word for word, which are the defaults find_comparables started from. A missing value
 // reads "Not in the plan row". "In the plan" links back to the plan check with this row in view.
-import { type ReactNode, type RefObject } from "react";
+import { type ReactNode } from "react";
 import { copy } from "../copy";
 import type { PackageFacts } from "../lib/api";
 import { cx } from "../lib/cx";
@@ -21,7 +21,6 @@ export const mono = (text: string) => <span className="font-mono font-medium">{t
 export function PackageHeader({
   title,
   reference,
-  headerRef,
   level = 1,
   sticky = true,
   action,
@@ -30,7 +29,6 @@ export function PackageHeader({
   title: ReactNode;
   // The STEP reference under the title, or null when the title is the reference itself.
   reference: ReactNode | null;
-  headerRef?: RefObject<HTMLDivElement | null>;
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
   sticky?: boolean;
@@ -41,7 +39,7 @@ export function PackageHeader({
 }) {
   const Heading = level === 1 ? "h1" : "h2";
   return (
-    <div ref={headerRef} data-package-header data-sticky={sticky ? "top" : undefined} className={sticky ? "border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10" : "border-b border-line bg-page py-4"}>
+    <div data-package-header data-sticky={sticky ? "top" : undefined} className={sticky ? "border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10" : "border-b border-line bg-page py-4"}>
       <div className="flex items-start justify-between gap-x-6">
         <div className="min-w-0 flex-1">
           <Heading tabIndex={-1} className="text-h1 text-pretty wrap-anywhere text-ink-heading focus:outline-none">

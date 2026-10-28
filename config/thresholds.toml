@@ -473,11 +473,12 @@ read_well_min_share = 0.9
 check_min_share = 0.9
 # A share is written only from this many rows; below it, a cell shows the count alone ("6 of 12"),
 # as DESIGN.md section 7, rules 6 and 15 say. web/src/lib/format.ts's FEWEST_FOR_A_FREQUENCY holds
-# the same rule until ticket 12 reads it from here, and tests/test_data_readiness.py checks they agree.
+# the same rule, because the Node test runner that checks format.ts cannot read this file (ticket 12
+# kept the copy), and tests/test_data_readiness.py checks they agree.
 fewest_for_a_share = 20
 # From this many rows a share is a whole percent ("528 of 603, 88%"); from fewest_for_a_share up to
 # it, "about N in 10" (DESIGN.md section 7, rule 15). The dashboard charts a share only from here.
-# format.ts's FEWEST_FOR_A_PERCENTAGE holds the same value until ticket 12, and the test checks it.
+# format.ts's FEWEST_FOR_A_PERCENTAGE holds the same value, for the same reason, and the test checks it.
 fewest_for_a_percentage = 50
 # Partial when late: a source's latest fetch is older than its schedule allows plus this many days.
 # Daily data are on time when they are less than two days old.

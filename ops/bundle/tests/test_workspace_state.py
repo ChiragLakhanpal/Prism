@@ -42,7 +42,8 @@ def sdk_client(started=None):
         started.append((warehouse_id, timeout))
 
     return SimpleNamespace(
-        apps=SimpleNamespace(get=lambda name: app, list_deployments=lambda app_name: iter(deployments)),
+        apps=SimpleNamespace(get=lambda name: app, list_deployments=lambda app_name: iter(deployments),
+                             start_and_wait=start_and_wait),
         warehouses=SimpleNamespace(get=lambda warehouse_id: warehouse, start_and_wait=start_and_wait))
 
 
@@ -79,3 +80,12 @@ def test_the_live_reader_lists_each_deployment_with_its_state_and_its_time_in_ut
          "created": dt.datetime(2026, 10, 26, 10, 29, 31, 481000, tzinfo=dt.UTC)},
         {"id": "01f0b1a7f3c90e11", "state": "FAILED", "message": "Error installing packages",
          "created": dt.datetime(2026, 10, 26, 5, 46, 2, tzinfo=dt.UTC)}]
+
+
+def test_the_live_app_start_waits_for_the_app_s_compute_to_run_for_a_bounded_time():
+    """An App the workspace stopped is asked to start before a command refuses (ticket 81's review, follow-up 1)."""
+    started = []
+
+    workspace_state.start_app(sdk_client(started), "strata")
+
+    assert started == [("strata", dt.timedelta(minutes=20))]

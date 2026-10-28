@@ -39,7 +39,16 @@ from strata.server.engines import duckdb_file
 from strata.tools import registry
 
 ROOT = Path(__file__).resolve().parents[1]
-TRUTH = {entry["id"]: entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
+sys.path.insert(0, str(ROOT / "ops" / "bundle" / "tests"))
+from workspace_fakes import (  # noqa: E402  (the workspace's state, shared with the two deploys' tests)
+    FREE_DAILY_LIMIT,
+    STATE_METHODS,
+    STOPPED_BY_THE_WORKSPACE,
+    USUAL_CAUSE,
+    WorkspaceStateFake,
+)
+
+TRUTH ={entry["id"]: entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
 DEMO = load_slice().demo_plan
 QUESTIONS = {question["id"]: question for question in benchmark.load()}
 ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", user_id="ana", token="token-for-ana-only")
@@ -120,7 +129,7 @@ def ops_tables() -> list[str]:
     return [definition.full_name for definition in catalog.table_definitions() if definition.schema == "ops"]
 
 
-class FakeWorkspace:
+class FakeWorkspace(WorkspaceStateFake):
     """Strata's app, stopped or running, with the time of its last start or deploy (None when the Apps API gives
     none; a start sets it to NOW), whose health route answers after a number of tries once it runs; the SQL
     warehouse as the fixture database or a copy; the stand-in agent; the examples' seed command, which may write
@@ -131,7 +140,7 @@ class FakeWorkspace:
 
     def __init__(self, live_db, running=False, started=EARLIER_THIS_MORNING, source=None, health_after=1,
                  healthy=True, agent=None, seeded=(0, ""), listing_error=None, seed_writes=(), missing_tables=(),
-                 compute=None, warehouse="RUNNING", warehouse_answer=None, deployed=True, deploy_answer=(0, "")):
+                 deployed=True, deploy_answer=(0, ""), **state):
         app = command().deploy_app
         self.folder = f"/Workspace/Users/ana.example@worldbank.org/{app.FOLDER}"
         self.apps = {"strata": {"description": app.DESCRIPTION, "running": running, "started": started,
@@ -148,31 +157,8 @@ class FakeWorkspace:
         self.seeded = seeded
         self.listing_error = listing_error
         self.seed_writes, self.missing_tables = seed_writes, set(missing_tables)
-        # Ticket 81: the App's compute as apps get gives it, when a test sets it, and the env file's SQL warehouse,
-        # which answers a start with warehouse_answer when a test sets it.
-        self.compute = compute
-        self.warehouse = {"id": ENV["DATABRICKS_WAREHOUSE_ID"], "state": warehouse, "message": ""}
-        self.warehouse_answer, self.warehouse_starts = warehouse_answer, 0
-
-    def app_compute(self, name):
-        if name not in self.apps:
-            return None
-        if self.compute:
-            return dict(self.compute)
-        running = self.apps[name]["running"]
-        return {"state": "ACTIVE" if running else "STOPPED",
-                "message": "App compute is running." if running else "App compute is stopped."}
-
-    def warehouse_state(self):
-        if isinstance(self.warehouse_answer, Exception):  # the warehouses API itself refused
-            raise self.warehouse_answer
-        return dict(self.warehouse)
-
-    def start_warehouse(self):
-        self.warehouse_starts += 1
-        if self.warehouse_answer:
-            raise RuntimeError(self.warehouse_answer)
-        self.warehouse["state"] = "RUNNING"
+        # Ticket 81: the App's compute and the env file's SQL warehouse (workspace_fakes.py).
+        self.hold_state(warehouse_id=ENV["DATABRICKS_WAREHOUSE_ID"], **state)
 
     def app(self, name):
         found = self.apps.get(name)
@@ -182,7 +168,7 @@ class FakeWorkspace:
         self.calls.append(("stop", name))
         self.apps[name]["running"] = False
 
-    def start_app(self, name):
+    def app_started(self, name):
         self.calls.append(("start", name))
         self.apps[name]["running"] = True
         self.apps[name]["started"] = NOW
@@ -665,20 +651,14 @@ def test_two_runs_in_a_row_both_succeed_and_the_second_leaves_nothing_different(
 
 # ── The workspace's state, read first (ticket 81) ───────────────────────
 
-# What apps get strata answered at 13:01 UTC on October 26, 2026, after Free Edition's daily limit stopped the App.
-STOPPED_BY_THE_WORKSPACE = {"state": "STOPPED", "message": "App compute was stopped due to workspace or account status."}
-# What databricks warehouses start answered at 10:33 UTC on October 25, 2026 (docs/workspace-catchup.md, ticket 11).
-FREE_DAILY_LIMIT = "Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow."
-DAILY_LIMIT = "which on Free Edition usually means the workspace reached its daily compute limit."
-
-
+# The Apps API's answer to a start on a stopped workspace was not recorded, so the warehouses' answer stands in for it.
 @pytest.mark.parametrize(("stopped", "said"), [
-    ({"compute": STOPPED_BY_THE_WORKSPACE},
+    ({"compute": STOPPED_BY_THE_WORKSPACE, "app_answer": FREE_DAILY_LIMIT},
      "I changed nothing, because the app strata's compute is STOPPED with the message \"App compute was stopped due to "
-     f"workspace or account status.\", {DAILY_LIMIT}"),
+     f"workspace or account status.\" and would not start when I asked, saying \"{FREE_DAILY_LIMIT}\", {USUAL_CAUSE}"),
     ({"warehouse": "STOPPED", "warehouse_answer": FREE_DAILY_LIMIT},
      "I changed nothing, because the SQL warehouse abc123 is STOPPED and would not start when I asked, saying "
-     f"\"{FREE_DAILY_LIMIT}\", {DAILY_LIMIT}")], ids=["app compute", "warehouse"])
+     f"\"{FREE_DAILY_LIMIT}\", {USUAL_CAUSE}")], ids=["app compute", "warehouse"])
 def test_a_workspace_that_stopped_the_app_or_the_warehouse_stops_the_command_first_with_one_sentence(
         tmp_path, fixture_db, stopped, said):
     workspace = FakeWorkspace(fixture_db, **stopped)
@@ -728,10 +708,7 @@ def test_a_workspace_state_the_command_cannot_read_is_said_once_and_the_steps_st
 
 
 def test_the_live_adapter_reads_the_app_s_compute_and_the_warehouse_as_the_fake_does():
-    called = {name for name in ("app_compute", "warehouse_state", "start_warehouse") if name in vars(FakeWorkspace)}
-
-    assert called == {"app_compute", "warehouse_state", "start_warehouse"}
-    assert called <= set(vars(live_adapter().LiveDemo))
+    assert STATE_METHODS <= set(vars(live_adapter().LiveDemo))
 
 
 def test_a_restart_is_listed_as_a_change_with_the_time_the_app_started_again():
@@ -946,7 +923,8 @@ def test_the_live_adapter_says_an_app_is_deployed_while_it_has_an_active_or_a_pe
     assert deployed(SimpleNamespace(active_deployment=None, pending_deployment=None)) is False
     assert adapter.redeploy_command(Path("/repo/.env")) == [
         "uv", "run", "--script", "ops/app/deploy_app.py", "--env-file", "/repo/.env", "--keep-secrets"]
-    assert {"app", "start_app", "redeploy_app", "health"} <= set(vars(FakeWorkspace)) & set(vars(adapter.LiveDemo))
+    assert {"app", "redeploy_app", "health"} <= set(vars(FakeWorkspace)) & set(vars(adapter.LiveDemo))
+    assert "start_app" in vars(adapter.LiveDemo)
 
 
 # ── The live listing ─────────────────────────────────────────────────────

@@ -38,7 +38,7 @@ import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { WORD_JOINER } from "./CitationMarker";
 import { CopyKey } from "./CopyKey";
-import { Highlight, highlighted, withoutMarkers } from "./Document";
+import { drawable, Highlight, highlighted, withoutMarkers } from "./Document";
 import { sourcePageHref } from "../lib/documents";
 import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { linkProjectIds, ProjectId } from "./ProjectId";
@@ -251,7 +251,7 @@ function RowCells({ fields, ranges }: { fields: ReturnType<typeof passageFields>
               {label}
             </th>
             <td className={cx("py-2 wrap-break-word text-ink", /^[\d,.\s]+$/.test(value) && "text-right tabular-nums")}>
-              {spans ? highlighted(value, inCell(spans[index], ranges), true) : value}
+              {spans ? highlighted(value, inCell(spans[index], ranges), true) : drawable(value)}
             </td>
           </tr>
         ))}
@@ -927,9 +927,11 @@ export function EvidenceDrawer({
   const onClosedRef = useRef(onClosed);
   onClosedRef.current = onClosed;
 
-  // Every source the drawer shows is marked visited and recorded for the viewer, once per opening.
+  // Every source the drawer shows is marked visited and recorded for the viewer, once per opening, a step's list of
+  // comparables included, as brief 27 section 6.6 asks (ticket 27's review round 2, follow-up 6; the server takes
+  // steps: and steps-longest: ids, strata.server.evidence.recordable).
   useEffect(() => {
-    if (id.startsWith(DOT) || isRiskList(id) || isStepList(id)) return;
+    if (id.startsWith(DOT) || isRiskList(id)) return;
     recordOpened(id, from?.runId ?? run?.runId ?? null);
     // The source is recorded when it changes, not when the answer does.
   }, [id]);
@@ -1014,14 +1016,15 @@ export function EvidenceDrawer({
       // From a quantile dot's list to one of its packages and back, in place: the dot stays the drawer's
       // opener, so closing gives focus back to it.
       onOpenEntry={(entry) => {
-        // A dot's list counts its packages; a step's list and the ran-longest list count their entries (ticket 27).
+        // Each list's count is the tool's own (CLAUDE.md rule 1): a dot's packages, a step's comparables_n and the
+        // ran-longest list's m (ticket 27's review round 2, follow-up 3).
         const row = data.status === "ready" ? data.evidence.row : null;
         const count = !row
           ? 0
           : data.status === "ready" && data.evidence.kind === "steps"
-            ? row.step.comparables.length
+            ? Number(row.step.comparables_n ?? 0)
             : data.status === "ready" && data.evidence.kind === "steps-longest"
-              ? row.longest.entries.length
+              ? Number(row.longest.m)
               : Number(row.count);
         openEvidence(
           entry.evidence_id,

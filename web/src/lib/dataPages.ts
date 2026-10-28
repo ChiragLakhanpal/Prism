@@ -142,6 +142,8 @@ export type Readiness = {
 export type ShelfEntry = {
   key: string;
   kind: "scan_annex" | "longest_pad" | "large_plan" | "other_language" | "over_parser_limit";
+  // The slice file's rule that picks the document at run time, or null for an entry that names its document.
+  rule: string | null;
   position: number;
   row_id: string;
   state: "read" | "stopped_at_cap" | "not_read" | "no_document";

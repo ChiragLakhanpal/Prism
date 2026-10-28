@@ -456,7 +456,7 @@ test("tabbing through a draft never leaves the focused element under the bar, th
 // scroll padding reaches 8 px above the box, so it counts both.
 test("on a draft at 1440 by 900 the box floats 16 px above the draft bar, and the bottom scroll padding counts both", async ({ page }) => {
   await openDraft(page, { width: 1440, height: 900 });
-  const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+  const box = (await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!;
   const edge = (await bar(page).boundingBox())!;
   expect(Math.round(edge.y + edge.height), "the draft bar on the window's bottom edge").toBe(900);
   expect(Math.round(edge.y - (box.y + box.height)), "the box 16 px above the draft bar").toBe(16);
@@ -475,7 +475,7 @@ test("near the end of a draft the box rides 16 px above the draft bar as it scro
           window.scrollTo(0, y);
           requestAnimationFrame(() =>
             requestAnimationFrame(() => {
-              const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+              const box = document.querySelector("[data-box-slot] form > [data-focus-ring]")!.getBoundingClientRect();
               const bar = document.querySelector("[data-draft-bar]")!;
               const shares = (part: DOMRect) =>
                 Math.min(box.bottom, part.bottom) - Math.max(box.top, part.top) >= 1 && Math.min(box.right, part.right) - Math.max(box.left, part.left) >= 1;
@@ -497,7 +497,7 @@ test("near the end of a draft the box rides 16 px above the draft bar as it scro
   // At the end the draft's last line, above the bar, is clear of the box too, so the box covers it for good nowhere.
   const lastLine = await page.evaluate(() => {
     const bar = document.querySelector("[data-draft-bar]")!;
-    const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+    const box = document.querySelector("[data-box-slot] form > [data-focus-ring]")!.getBoundingClientRect();
     const before = [...document.querySelectorAll("main p, main li, main a")].filter((el) => el.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING && !el.contains(bar));
     return Math.round(box.top - before.at(-1)!.getBoundingClientRect().bottom);
   });
@@ -514,7 +514,7 @@ test("near the end of a draft the box rides 16 px above the draft bar as it scro
   await page.keyboard.press("Tab");
   const place = await page.evaluate(() => {
     const focused = document.activeElement!;
-    const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+    const box = document.querySelector("[data-box-slot] form > [data-focus-ring]")!.getBoundingClientRect();
     const rect = focused.getBoundingClientRect();
     return {
       inBar: focused.closest("[data-draft-bar]") !== null,

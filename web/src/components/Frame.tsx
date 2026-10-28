@@ -25,7 +25,7 @@ import { createContext, useCallback, useContext, useEffect, useId, useMemo, useR
 import { flushSync } from "react-dom";
 import { copy } from "../copy";
 import { useStickyPadding } from "../lib/sticky";
-import { isBoxShortcut } from "./BoxBand";
+import { isBoxShortcut } from "./OneBox";
 
 export function Footer() {
   return (
@@ -135,7 +135,7 @@ export function Frame({
                 {children}
               </main>
               {box && (
-                <div data-box-band data-sticky="bottom" className="ask-bar">
+                <div data-box-slot data-sticky="bottom" className="ask-bar">
                   {box}
                 </div>
               )}
