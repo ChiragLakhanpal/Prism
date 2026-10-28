@@ -26,6 +26,11 @@ On the hand-made set tests/step_set.py builds, as of January 15, 2021, every ste
   and steps-planned-hand-made-dated.json, the answer to giving March 1, 2021.
 - steps-planned-hand-made-needs-earlier.json: the same package and date where a later plan records no comparable's
   bidding document, so the steps after it need an earlier step's date.
+
+On the hand-made set as of July 1, 2022, for ticket 115's tracker, the target's plan of December 1, 2021 gives five
+steps' actual dates and its completion is late (tests/ground_truth/values.toml, [step_tracker]):
+
+- steps-ke-hand-900000-done.json: its steps, five done and the completion late.
 """
 
 import asyncio
@@ -57,7 +62,7 @@ SENTENCE = {"sentence": "rural roads, Kenya, about US$15 million"}
 DEMO = "/api/packages/KE-NWWDA-541055-CW-RFB"
 TARGET = f"/api/packages/{step_set.TARGET}"
 PLANNED = "/api/planned-packages/pkg-000000000001"
-FIXTURE_DAY, HAND_MADE_DAY = dt.date(2026, 10, 28), dt.date(2021, 1, 15)
+FIXTURE_DAY, HAND_MADE_DAY, TRACKER_DAY = dt.date(2026, 10, 28), dt.date(2021, 1, 15), dt.date(2022, 7, 1)
 
 
 def app_on(database: Path, folder: Path, today: dt.date):
@@ -123,6 +128,11 @@ async def unrecorded_story(app) -> dict[str, str]:
     return {"steps-planned-hand-made-needs-earlier.json": pretty(answer)}
 
 
+async def tracker_story(app) -> dict[str, str]:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://strata.test") as client:
+        return {"steps-ke-hand-900000-done.json": pretty(await client.get(f"{TARGET}/steps", headers=ANA))}
+
+
 def fixture_answers(folder: Path) -> dict[str, str]:
     return asyncio.run(fixture_story(app_on(FIXTURE_DB, folder, FIXTURE_DAY)))
 
@@ -139,8 +149,15 @@ def unrecorded_answers(folder: Path) -> dict[str, str]:
     return asyncio.run(unrecorded_story(app_on(unrecorded, folder, HAND_MADE_DAY)))
 
 
+def tracker_answers(folder: Path) -> dict[str, str]:
+    later = folder / "hand-made-later.duckdb"
+    step_set.build(later).close()
+    return asyncio.run(tracker_story(app_on(later, folder, TRACKER_DAY)))
+
+
 # Each story on its own, so the test that checks them can run them side by side.
-STORIES = {"fixture": fixture_answers, "hand-made": hand_made_answers, "unrecorded": unrecorded_answers}
+STORIES = {"fixture": fixture_answers, "hand-made": hand_made_answers, "unrecorded": unrecorded_answers,
+           "tracker": tracker_answers}
 
 
 def answers(folder: Path) -> dict[str, str]:

@@ -3404,3 +3404,43 @@ document_type = "Procurement Plan"
 project = "P161329"
 date = 2022-05-06
 pdf_page = 1
+
+# The step tracker (ticket 115): each step's state in the package's plan, in its newest version public on the
+# as-of date, and for a late step its days late, counted on a calendar from the plan's planned date to the as-of
+# date. A step is done when the plan gives its actual date; unknown when the plan gives it no date, or when a later
+# step is done and this one has no actual date; late when its planned date is before the as-of date; next for the
+# first step after the last done one whose planned date has not passed, when no late step comes before it; and
+# planned for every step after that.
+#
+# The showcase, KE-NWWDA-541055-CW-RFB, as of October 28, 2026 (the recorded answers' day), from the plan of
+# October 9, 2026, which gives no actual date and no Bidding Documents as Issued date (the plan-541055 values): the
+# bid invitation (March 10, 2026) is 232 days late, the opening (April 1) 210, the evaluation report (April 6) 205,
+# the signed contract (April 24) 187 and the completion (July 31) 89. A package from a sentence has no plan, so
+# each of its steps is unknown.
+#
+# The hand-made set (tests/step_set.py): the target's plan of December 15, 2020 gives planned dates only, and the
+# plan of December 1, 2021 adds five actual dates. As of May 1, 2021, March 1 is 61 days back, March 8 is 54,
+# April 7 is 24 and April 30 is 1; the signing (June 10, 2021) and the completion (June 10, 2022) are still ahead
+# but come after a late step, so both are planned. As of January 1, 2022 the five are done and the completion is
+# next; as of July 1, 2022 it is 21 days late (June 10 to July 1). In the set whose plan of December 20, 2020 leaves
+# out the bidding document's actual date, the comparable KE-HAND-900001-CW-RFB, as of January 15, 2021, has every
+# other step's actual date but none for the completion, which its plan never dated.
+[step_tracker]
+showcase_as_of = 2026-10-28
+showcase_states = ["late", "unknown", "late", "late", "late", "late"]
+showcase_late_days = [232, 210, 205, 187, 89]
+hand_made_before_as_of = 2021-01-15
+hand_made_before_states = ["next", "planned", "planned", "planned", "planned", "planned"]
+hand_made_before_late_days = []
+hand_made_late_as_of = 2021-05-01
+hand_made_late_states = ["late", "late", "late", "late", "planned", "planned"]
+hand_made_late_late_days = [61, 54, 24, 1]
+hand_made_signed_as_of = 2022-01-01
+hand_made_signed_states = ["done", "done", "done", "done", "done", "next"]
+hand_made_signed_late_days = []
+hand_made_overdue_as_of = 2022-07-01
+hand_made_overdue_states = ["done", "done", "done", "done", "done", "late"]
+hand_made_overdue_late_days = [21]
+gap_reference = "KE-HAND-900001-CW-RFB"
+gap_as_of = 2021-01-15
+gap_states = ["done", "unknown", "done", "done", "done", "unknown"]

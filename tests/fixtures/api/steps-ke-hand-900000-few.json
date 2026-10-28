@@ -138,7 +138,10 @@
         "plan_latest_version_date": "2020-12-15",
         "abstain_reason": null,
         "middle": null,
-        "cautious": null
+        "cautious": null,
+        "actual_date": null,
+        "state": "next",
+        "late_days": null
       },
       {
         "step_key": "bidding_document_issued",
@@ -225,7 +228,10 @@
         "plan_latest_version_date": "2020-12-15",
         "abstain_reason": null,
         "middle": null,
-        "cautious": null
+        "cautious": null,
+        "actual_date": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "bid_opening",
@@ -312,7 +318,10 @@
         "plan_latest_version_date": "2020-12-15",
         "abstain_reason": null,
         "middle": null,
-        "cautious": null
+        "cautious": null,
+        "actual_date": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "bid_evaluation_report",
@@ -399,7 +408,10 @@
         "plan_latest_version_date": "2020-12-15",
         "abstain_reason": null,
         "middle": null,
-        "cautious": null
+        "cautious": null,
+        "actual_date": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "contract_signed",
@@ -486,7 +498,10 @@
         "plan_latest_version_date": "2020-12-15",
         "abstain_reason": null,
         "middle": null,
-        "cautious": null
+        "cautious": null,
+        "actual_date": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "contract_completed",
@@ -500,7 +515,10 @@
         "plan_latest_version_date": "2020-12-15",
         "abstain_reason": null,
         "middle": null,
-        "cautious": null
+        "cautious": null,
+        "actual_date": null,
+        "state": "planned",
+        "late_days": null
       }
     ],
     "longest": null,
