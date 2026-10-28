@@ -14,6 +14,9 @@ not respond, or answers in a shape it was not asked for, the verifier removes ev
 - AzureOpenAIJudge, live: the deployment of the role config/models.toml's [judge] names (the draft role, whose
   purpose line names it the judge), on Azure OpenAI's chat completions, asked for one JSON object. The rules are in the instructions and
   the sentences and sources are data in the message, so Prompt Shields does not read the rules as an attack.
+  The draft role's deployment is also the agent's, with one cap on tokens a minute, so a call Azure refuses with
+  429 or 503 is tried again after the wait Azure names, up to config/thresholds.toml's [azure], before its
+  sentences are removed (ticket 118; src/strata/agent/retries.py).
 - Offline, the scripted cases' recorded judge answers stand in for it (src/strata/agent/scripted.py,
   ScriptedJudge), in the same response shape, read by the same judgements() below. ops/agent/record.py
   --judge records them from the live judge.
@@ -26,11 +29,16 @@ from __future__ import annotations
 
 import json
 import os
+import urllib.error
+import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
-from strata.knowledge.http import post_json
+from strata.agent.retries import Retries, Waits
+
+WHO = "The judge on Azure OpenAI"  # who the log names when the judge's call waits
+
 
 @dataclass(frozen=True)
 class Source:
@@ -61,7 +69,12 @@ class Judge(Protocol):
 
 
 class JudgeError(RuntimeError):
-    """The judge did not respond, or answered in a shape it was not asked for."""
+    """The judge did not respond, or answered in a shape it was not asked for. A refusal from Azure OpenAI keeps its
+    HTTP status and headers, so a busy one can be tried again after the wait it names (src/strata/agent/retries.py)."""
+
+    def __init__(self, message: str, status: int | None = None, headers: Mapping | None = None):
+        super().__init__(message)
+        self.status, self.headers = status, dict(headers or {})
 
 
 # What the judge reads as the name of a tool's abstention among a sentence's sources, after the tool's name, as in
@@ -112,7 +125,18 @@ Transport = Callable[[str, dict, dict], dict]  # (url, headers, body) -> the par
 
 
 def http_post(url: str, headers: dict, body: dict, timeout: float) -> dict:
-    return post_json(url, headers, body, timeout=timeout, error=JudgeError, service="Azure OpenAI")
+    """The parsed JSON answer to one chat completion. A refusal raises JudgeError with Azure OpenAI's status and
+    headers."""
+    request = urllib.request.Request(url, method="POST", data=json.dumps(body).encode("utf-8"),
+                                     headers={**headers, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            return json.loads(response.read() or b"{}")
+    except urllib.error.HTTPError as refused:
+        raise JudgeError(f"Azure OpenAI answered {refused.code}: {refused.read().decode(errors='replace')[:300]}",
+                         refused.code, dict(refused.headers.items()) if refused.headers else None) from refused
+    except urllib.error.URLError as unreachable:
+        raise JudgeError(f"I could not reach Azure OpenAI: {unreachable.reason}") from unreachable
 
 
 def request_body(deployment: str, questions: list[Question]) -> dict:
@@ -125,21 +149,29 @@ class AzureOpenAIJudge:
     """The draft role's deployment on Azure OpenAI, asked about every sentence in one call."""
 
     def __init__(self, endpoint: str, key: str, deployment: str, post: Transport | None = None,
-                 timeout: float | None = None):
-        """timeout is config/thresholds.toml's verifier.judge_timeout_seconds unless a test gives one."""
+                 timeout: float | None = None, retries: Retries | None = None,
+                 sleep: Callable[[float], None] | None = None):
+        """timeout is config/thresholds.toml's verifier.judge_timeout_seconds, and retries its [azure], unless a test
+        gives them. sleep stands in for the waits in the tests."""
         from strata.config import load_thresholds
 
         self.url = f"{endpoint.rstrip('/')}/chat/completions"
         self.headers = {"api-key": key}
-        seconds = timeout if timeout is not None else load_thresholds().value("verifier.judge_timeout_seconds")
+        thresholds = load_thresholds()
+        seconds = timeout if timeout is not None else thresholds.value("verifier.judge_timeout_seconds")
+        self.retries, self.sleep = retries or Retries.from_thresholds(thresholds), sleep
         # It keeps no answer: the app's one judge serves every viewer, and the recording command keeps what it
         # needs by wrapping the transport (src/strata/agent/record.py, JudgeKeeper).
         self.name = deployment
         self.post = post or (lambda url, headers, body: http_post(url, headers, body, seconds))
 
     def judge(self, questions: list[Question]) -> list[Judgement]:
+        """One call per answer, so the call's waits are the answer's waits on the judge: a 429 or 503 is tried again
+        after the wait Azure names (src/strata/agent/retries.py), and the last refusal goes up as a JudgeError."""
+        body = request_body(self.name, questions)
+        waits = Waits(WHO, self.retries, self.sleep)
         try:
-            answer = self.post(self.url, self.headers, request_body(self.name, questions))
+            answer = waits.call(lambda: self.post(self.url, self.headers, body), JudgeError)
         except (TimeoutError, OSError, ValueError) as error:  # a read that timed out, or a body that is not JSON
             raise JudgeError(f"Azure OpenAI gave no answer I can read: {error}") from error
         return judgements(answer, questions)

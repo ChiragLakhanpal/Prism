@@ -36,15 +36,17 @@ class Asked:
         return [data for found, data in self.parsed if found == kind]
 
 
-def ask(fixture_db, case_id: str, today: dt.date = TODAY, view: str | None = None, **app_options) -> Asked:
+def ask(fixture_db, case_id: str, today: dt.date = TODAY, view: str | None = None, agent=None,
+        **app_options) -> Asked:
     """Ask the case's question as Ana, in the case's scope and as-of date, and in view when given (the request's
-    default, staff, otherwise). app_options go to create_app."""
+    default, staff, otherwise). agent, when given, takes the scripted agent's place, such as the live Foundry adapter
+    on a fake transport. app_options go to create_app."""
     case = load_cases()[case_id]
     agents: list[ScriptedAgent] = []
     judge = app_options.pop("judge", None) or ScriptedJudge(case)
 
     def agent_for(turn):
-        agents.append(ScriptedAgent(case))
+        agents.append(agent or ScriptedAgent(case))
         return agents[-1]
 
     @contextmanager

@@ -13,7 +13,9 @@ The adapters:
 - FoundryAgent, live: one agent through the Responses API, as the answer loop's Agent. It passes the
   request's trace on in a traceparent header, so Foundry's spans join the app's trace in Application
   Insights. A content filter or Prompt Shields refusal becomes the error code content_filter, and any
-  other failure agent_unavailable; the details stay in the server log.
+  other failure agent_unavailable; the details stay in the server log. A call Foundry refuses as busy, 429 or
+  503, is first tried again after the wait it names, up to config/thresholds.toml's [azure] (ticket 118;
+  src/strata/agent/retries.py).
 
 The REST shapes follow the Foundry agents API as documented for the api_version in config/agents.toml.
 They have not been called from this repo yet; the workspace steps in docs/workspace-catchup.md do that.
@@ -33,8 +35,10 @@ from typing import Protocol
 
 from strata.agent import traces
 from strata.agent.loop import AgentError
+from strata.agent.retries import Retries, Waits
 from strata.config import AgentSpec
 
+WHO = "The agent on Foundry"  # who the log names when the agent's call waits
 ARM = "https://management.azure.com"
 FOUNDRY_SCOPE = "https://ai.azure.com/.default"
 ARM_SCOPE = "https://management.azure.com/.default"
@@ -44,11 +48,12 @@ Call = Callable[[str, str, dict, dict | None], dict]  # (method, url, headers, b
 
 
 class FoundryError(RuntimeError):
-    """Foundry or Azure answered with an error, or could not be reached."""
+    """Foundry or Azure answered with an error, or could not be reached. A refusal keeps the answer's headers, so a
+    busy one can be tried again after the wait it names (src/strata/agent/retries.py)."""
 
-    def __init__(self, status: int | None, detail: str):
+    def __init__(self, status: int | None, detail: str, headers: dict | None = None):
         super().__init__(f"Foundry answered {status}: {detail}" if status else detail)
-        self.status, self.detail = status, detail
+        self.status, self.detail, self.headers = status, detail, dict(headers or {})
 
 
 def http_call(method: str, url: str, headers: dict, body: dict | None, timeout: int = 120) -> dict:
@@ -58,7 +63,8 @@ def http_call(method: str, url: str, headers: dict, body: dict | None, timeout: 
         with urllib.request.urlopen(request, timeout=timeout) as response:
             return json.loads(response.read() or b"{}")
     except urllib.error.HTTPError as refused:
-        raise FoundryError(refused.code, refused.read().decode(errors="replace")[:2000]) from refused
+        raise FoundryError(refused.code, refused.read().decode(errors="replace")[:2000],
+                           dict(refused.headers.items()) if refused.headers else None) from refused
     except (OSError, ValueError) as unreachable:
         raise FoundryError(None, f"I could not reach {urllib.parse.urlsplit(url).netloc}: {unreachable}") \
             from unreachable
@@ -196,24 +202,32 @@ def _filtered(detail: str) -> bool:
 
 
 class FoundryAgent:
-    """One Foundry agent through the Responses API: the answer loop's live Agent."""
+    """One Foundry agent through the Responses API: the answer loop's live Agent. The app makes one for each answer
+    (src/strata/agent/runner.py), so its calls share one answer's waits: a call Foundry refuses with 429 or 503 is
+    tried again after the wait it names, up to config/thresholds.toml's [azure] (src/strata/agent/retries.py), and
+    the last refusal becomes agent_unavailable."""
 
     def __init__(self, endpoint: str, spec: AgentSpec, token: Token, call: Call = http_call,
-                 traceparent: Callable[[], str | None] = traces.traceparent):
+                 traceparent: Callable[[], str | None] = traces.traceparent, retries: Retries | None = None,
+                 sleep: Callable[[float], None] | None = None):
         self.url = f"{endpoint.rstrip('/')}/openai/responses?api-version={spec.api_version}"
         self.name, self.version = spec.name, None
         self.token, self.call, self.traceparent = token, call, traceparent
+        self.waits = Waits(WHO, retries, sleep)
+
+    def _post(self, body: dict) -> dict:
+        headers = {"Authorization": f"Bearer {self.token()}"}
+        if parent := self.traceparent():
+            headers["traceparent"] = parent
+        return self.call("POST", self.url, headers, body)
 
     def respond(self, items: list[dict], previous_response_id: str | None) -> dict:
         body = {"agent": {"type": "agent_reference", "name": self.name}, "input": items}
         if previous_response_id:
             body["previous_response_id"] = previous_response_id
         try:
-            headers = {"Authorization": f"Bearer {self.token()}"}
-            if parent := self.traceparent():
-                headers["traceparent"] = parent
-            reply = self.call("POST", self.url, headers, body)
-        except FoundryError as error:  # the token, the network or Foundry's own answer
+            reply = self.waits.call(lambda: self._post(body), FoundryError)
+        except FoundryError as error:  # the token, the network or Foundry's own answer, after any retries
             raise AgentError("content_filter" if error.status == 400 and _filtered(error.detail)
                              else "agent_unavailable", str(error)) from error
         if (reply.get("incomplete_details") or {}).get("reason") == "content_filter":
