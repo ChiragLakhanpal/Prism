@@ -132,6 +132,14 @@ tool_rounds = 3
 # the passage the smoke question needs and wrote its sentence in its own words, so the verifier removed it in both
 # runs (10:18 and 10:19 UTC).
 rewrite_rounds = 1
+# The longest a tool's result may be, in characters of JSON, when it goes back to the agent. A longer result goes as a
+# trimmed copy: its fields that hold one value kept, each list cut to its first entries until the whole fits, and a
+# field named truncated that says how many entries each list kept and left out (strata.agent.loop.call_output). The
+# turn's records still hold the whole result, so the verifier checks against every row the tool returned. Source:
+# ticket 117. On October 28, 2026 at 03:01 UTC Foundry refused a tool result of 20,831,467 characters, because one
+# string in a request may be at most 10,485,760, and the answer ended with agent_unavailable. 400,000 characters is
+# about 100,000 tokens, the ticket's starting value for the owner to confirm.
+max_tool_output_chars = 400000
 
 # The app (ticket 06). Every warehouse query the server runs as a viewer, the plan check's included,
 # gives up after stamp_timeout_seconds. The data-freshness stamp then shows its error state, and the
