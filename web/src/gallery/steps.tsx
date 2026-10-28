@@ -6,6 +6,7 @@ import dated from "../../../tests/fixtures/api/steps-ke-hand-900000.json";
 import done from "../../../tests/fixtures/api/steps-ke-hand-900000-done.json";
 import few from "../../../tests/fixtures/api/steps-ke-hand-900000-few.json";
 import canceled from "../../../tests/fixtures/api/steps-ke-kura-219079.json";
+import firms from "../../../tests/fixtures/api/steps-ke-cwsb-224323.json";
 import fixture from "../../../tests/fixtures/api/steps-ke-nwwda-541055.json";
 import needsEarlier from "../../../tests/fixtures/api/steps-planned-hand-made-needs-earlier.json";
 import plannedDated from "../../../tests/fixtures/api/steps-planned-hand-made-dated.json";
@@ -37,6 +38,8 @@ const UNKNOWN = STEP_STATES[STEP_STATES.length - 1];
 const DONE_LATE = done as unknown as StepsResult;
 // An individual consultant's activity whose plan gave its Process Status as Canceled, on the fixture (ticket 115).
 const CANCELED = canceled as unknown as StepsResult;
+// A consulting firm's nine steps on the fixture, whose plan gave its Process Status as Completed (ticket 115).
+const FIRMS = firms as unknown as StepsResult;
 
 const ready = (result: StepsResult): StepsState => ({ status: "ready", result });
 const changed = (result: StepsResult, edit: Partial<StepDates>): StepsResult => ({ ...result, step_dates: { ...result.step_dates!, ...edit } });
@@ -173,6 +176,7 @@ export function stepsPage(): GalleryPage {
       { id: "tracker-late", title: t.trackerLate, body: <Column><StepTracker state={ready(FIXTURE)} /></Column> },
       { id: "tracker-no-dates", title: t.trackerNoDates, body: <Column><StepTracker state={ready(PLANNED)} /></Column> },
       { id: "tracker-ended", title: t.trackerEnded, body: <Column><StepTracker state={ready(CANCELED)} /></Column> },
+      { id: "tracker-firms", title: t.trackerFirms, body: <Column><StepTracker state={ready(FIRMS)} /></Column> },
       { id: "tracker-loading", title: t.trackerLoading, body: <Column><StepTracker state={{ status: "loading" }} /></Column> },
       { id: "tracker-error", title: t.trackerError, body: <Column><StepTracker state={{ status: "error", error: null, onRetry: () => undefined }} /></Column> },
       { id: "collapsed", title: t.collapsed, body: <Section state={ready(DATED)} /> },

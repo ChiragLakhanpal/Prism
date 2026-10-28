@@ -79,6 +79,21 @@ def test_a_signing_in_the_contract_awards_marks_the_signed_contract_done_once_it
         "late", KNOWN["showcase_before_signing_late_days"], None)
 
 
+def test_a_contract_from_a_record_the_tracker_does_not_name_leaves_the_plans_own_dates(on_the_fixture, monkeypatch):
+    """A new source in strata.gold.contract, one tracker.CONTRACT_SOURCES does not name yet, must not fail the steps
+    route, which section 2 shares: the signing keeps the plan's own dates, so the showcase's completion and signing
+    stand as the plan gives them. Here the contract awards datasets play the new source."""
+    from strata.server import tracker
+
+    monkeypatch.setattr(tracker, "CONTRACT_SOURCES", {"notices": tracker.NOTICE})
+    answer = call(on_the_fixture, "GET", f"/api/packages/KE-NWWDA-541055-CW-RFB/steps"
+                  f"?asof={KNOWN['showcase_as_of'].isoformat()}", ANA)
+
+    assert answer.status_code == 200, answer.text
+    signed = answer.json()["step_dates"]["steps"][4]
+    assert (signed["step_key"], signed["actual_date"], signed["actual_source"]) == ("contract_signed", None, None)
+
+
 @pytest.mark.parametrize("status", ["completed", "canceled"])
 def test_an_activity_the_plan_says_ended_has_no_late_step_and_says_why(on_the_fixture, status):
     answer = call(on_the_fixture, "GET", f"/api/packages/{KNOWN[f'{status}_reference']}/steps"
@@ -126,3 +141,15 @@ def test_the_recorded_showcase_is_signed_and_late_to_complete_and_a_package_from
     assert [step["actual_date"] for step in steps] == [None] * 4 + [KNOWN["showcase_signed_on"].isoformat(), None]
     sentence = recorded("steps-planned-rural-roads.json")["step_dates"]["steps"]
     assert [(step["state"], step["late_days"], step["actual_date"]) for step in sentence] == [("unknown", None, None)] * 6
+
+
+def test_the_recorded_consulting_firms_package_has_nine_steps_and_its_completed_plan_leaves_one_unknown():
+    """The nine-step tracker the screen tests and the gallery draw (the design review's R2-B1) is the route's own
+    answer for a consulting firm's package on the fixture."""
+    firms = recorded("steps-ke-cwsb-224323.json")
+    dates = firms["step_dates"]
+
+    assert dates["family"] == "firms"
+    assert [step["state"] for step in dates["steps"]] == KNOWN["firms_states"]
+    assert {step["late_days"] for step in dates["steps"]} == {None}
+    assert dates["status_reason"] == "Completed"

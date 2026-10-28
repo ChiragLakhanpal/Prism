@@ -10,9 +10,11 @@
 //   move focus along the nodes.
 // - The next node's fill enters over 160 ms when the steps arrive (DESIGN.md section 4, Motion), and nothing moves
 //   under reduced motion.
-// - From a 768 px page area the nodes sit in a row, on a grid whose four rows (node, label, state, date) every step
-//   shares, so the state words line up across the row however the labels wrap; below it they stack, with the line
-//   running down beside them. The stretch of line between two done steps is drawn in the done colour.
+// - From a 768 px page area five or six nodes sit in a row, on a grid whose four rows (node, label, state, date) every
+//   step shares, so the state words line up across the row however the labels wrap; below it they stack, with the
+//   line running down beside them. A consulting firm's nine steps would leave each about 90 px, narrower than one
+//   date, so they stay a list at every width, each step's label, state and date on one line from a 768 px page area.
+//   The stretch of line between two done steps is drawn in the done colour.
 // - While the steps load it holds its place with static bars; when they fail, it keeps its card with one sentence
 //   that points to section 2, which says why and offers Try again.
 import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
@@ -28,7 +30,14 @@ import type { StepsState } from "./StepsSection";
 
 const words = copy.stepTracker;
 
+// A step's date in the table form ("Jun 22, 2026", DESIGN.md section 7 rule 13): short, and it may break at a space,
+// so it stays inside its step in a row of six even with wider letter and word spacing (WCAG 1.4.12).
+const stepDate = (iso: string) => <Num date={iso} style="table" />;
+// A date in the sentences under the list, in the sentence form.
 const date = (iso: string) => <Num date={iso} />;
+
+// The most steps that share one row from a 768 px page area; more stay a list (the design review's R2-B1).
+const ROW_MOST = 6;
 
 // The state in words on one line, then on the next the date it rests on, so every step's state stays level and short.
 function stateLine(step: StepDate): ReactNode {
@@ -49,9 +58,9 @@ function stateLine(step: StepDate): ReactNode {
 // plan is the plan version the dates come from, or null when no plan dates the steps: then the note under the list
 // says once why no step has a date, and each unknown step reads only "No date".
 function dateLine(step: StepDate, plan: string | null): ReactNode {
-  if (step.state === "done") return date(step.actual_date!);
+  if (step.state === "done") return stepDate(step.actual_date!);
   if (step.state === "unknown") return plan === null ? null : step.plan_latest_date ? words.noActual : words.notInPlan;
-  return <Fill template={words.plannedFor} slots={{ date: date(step.plan_latest_date!) }} />;
+  return <Fill template={words.plannedFor} slots={{ date: stepDate(step.plan_latest_date!) }} />;
 }
 
 const STATE_TEXT: Record<StepState, string> = {
@@ -70,12 +79,12 @@ const NODE: Record<StepState, string> = {
   unknown: "border-dotted border-line-strong bg-surface",
 };
 
-function Node({ state }: { state: StepState }) {
+function Node({ state, row }: { state: StepState; row: boolean }) {
   return (
     <span
       aria-hidden="true"
       data-step-node={state}
-      className={cx("relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border-2 @md/page:mb-2", NODE[state])}
+      className={cx("relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border-2", row && "@md/page:mb-2", NODE[state])}
     >
       {state === "done" && <Check data-node-tick className="size-4" strokeWidth={3} />}
       {state === "next" && <span data-node-fill className="animate-fill-in absolute inset-0.5 rounded-full bg-primary" />}
@@ -93,7 +102,26 @@ const KEYS: Record<string, (index: number, last: number) => number> = {
   End: (_, last) => last,
 };
 
-const CARD = "rounded-md border border-line bg-surface p-4";
+// 16 px above and below, and the Card's own sides, 24 px from a 768 px page area, so its text keeps the other cards' edge.
+const CARD = "rounded-md border border-line bg-surface px-4 py-4 @md/page:px-6";
+
+// The list's classes in its two layouts. In both, the steps stand 8 px apart with 8 px under each, so a focused step's
+// ring (2 px out, 2 px wide) clears the next node, and each step's part of the line runs on through the gap to it.
+const LAYOUT = {
+  row: {
+    list: "mt-4 flex flex-col gap-2 @md/page:grid @md/page:auto-cols-fr @md/page:grid-flow-col @md/page:grid-rows-[repeat(4,auto)] @md/page:gap-0",
+    item: "@md/page:row-span-4 @md/page:grid @md/page:grid-cols-1 @md/page:grid-rows-subgrid @md/page:justify-items-center @md/page:gap-0 @md/page:px-1 @md/page:pb-0 @md/page:text-center",
+    line: "@md/page:bottom-auto @md/page:left-1/2 @md/page:h-0.5 @md/page:w-full @md/page:translate-x-0 @md/page:-translate-y-1/2",
+    words: "@md/page:contents",
+  },
+  list: {
+    list: "mt-4 flex flex-col gap-2",
+    item: "",
+    line: "",
+    words:
+      "@md/page:grid @md/page:grid-cols-[minmax(0,16rem)_minmax(0,9rem)_minmax(0,1fr)] @md/page:items-baseline @md/page:gap-x-4 @md/page:pt-0.5",
+  },
+};
 
 export function StepTracker({ state }: { state: StepsState }) {
   const headingId = useId();
@@ -114,6 +142,7 @@ export function StepTracker({ state }: { state: StepsState }) {
   const family = stepFamily(dates?.family);
   if (!dates || !family || dates.steps.length === 0) return null;
   const steps = dates.steps;
+  const layout = steps.length <= ROW_MOST ? LAYOUT.row : LAYOUT.list;
   const current = Math.max(0, steps.findIndex((step) => step.state === "late" || step.state === "next"));
   // A new answer may hold fewer steps, as when a package from a sentence changes its method family.
   const stop = focused !== null && focused < steps.length ? focused : current;
@@ -121,6 +150,7 @@ export function StepTracker({ state }: { state: StepsState }) {
   // The source line names each record a done step's date came from: the plan, and for the signing the contract's.
   const recorded = new Set(steps.map((step) => step.actual_source));
   const source = recorded.has("award_notice") ? words.sourceNotice : recorded.has("contract_awards") ? words.sourceAwards : words.source;
+  const counted = steps.some((step) => step.state === "late") ? words.lateTo : words.asOf;
 
   const move = (event: KeyboardEvent<HTMLOListElement>) => {
     const to = KEYS[event.key];
@@ -141,7 +171,7 @@ export function StepTracker({ state }: { state: StepsState }) {
         ref={list}
         aria-labelledby={headingId}
         onKeyDown={move}
-        className="mt-4 flex flex-col @md/page:grid @md/page:auto-cols-fr @md/page:grid-flow-col @md/page:grid-rows-[repeat(4,auto)]"
+        className={layout.list}
         data-numbers
       >
         {steps.map((step, index) => (
@@ -150,28 +180,26 @@ export function StepTracker({ state }: { state: StepsState }) {
             data-step-state={step.state}
             tabIndex={index === stop ? 0 : -1}
             onFocus={() => setFocused(index)}
-            className={cx(
-              "relative flex min-w-0 gap-3 rounded-sm pb-4 last:pb-0",
-              "@md/page:row-span-4 @md/page:grid @md/page:grid-rows-subgrid @md/page:justify-items-center @md/page:gap-0 @md/page:px-1 @md/page:pb-0 @md/page:text-center",
-            )}
+            className={cx("relative flex min-w-0 gap-3 rounded-sm pb-2 last:pb-0", layout.item)}
           >
             {/* One line joins the nodes: each step but the last draws its part, to the next node's centre. */}
             {index < steps.length - 1 && (
               <span
                 aria-hidden="true"
                 className={cx(
-                  "absolute top-3 bottom-0 left-3 w-0.5 -translate-x-1/2 @md/page:bottom-auto @md/page:left-1/2 @md/page:h-0.5 @md/page:w-full @md/page:translate-x-0 @md/page:-translate-y-1/2",
+                  "absolute top-3 -bottom-2 left-3 w-0.5 -translate-x-1/2",
+                  layout.line,
                   step.state === "done" && steps[index + 1].state === "done" ? "bg-success" : "bg-line",
                 )}
               />
             )}
-            <Node state={step.state} />
-            {/* From a 768 px page area the label, state and date each take their row of the step's subgrid, so an empty
-                line keeps its row and the next step's words stay level. */}
-            <span className="flex min-w-0 flex-col @md/page:contents">
+            <Node state={step.state} row={layout === LAYOUT.row} />
+            {/* From a 768 px page area, in a row the label, state and date each take their row of the step's subgrid,
+                so an empty line keeps its row and the next step's words stay level; in a list they share one line. */}
+            <span className={cx("flex min-w-0 flex-col", layout.words)}>
               <span className="text-small font-semibold text-balance wrap-break-word text-ink">{familyStep(family, step.step_key)?.label ?? step.step_key}</span>
-              <span className={cx("text-caption", STATE_TEXT[step.state])}>{stateLine(step)}</span>
-              <span className="text-caption text-ink-muted">{dateLine(step, plan)}</span>
+              <span className={cx("text-caption text-balance", STATE_TEXT[step.state])}>{stateLine(step)}</span>
+              <span className="text-caption text-balance text-ink-muted">{dateLine(step, plan)}</span>
             </span>
           </li>
         ))}
@@ -183,7 +211,7 @@ export function StepTracker({ state }: { state: StepsState }) {
       )}
       {plan ? (
         <Source className={dates.status_reason ? "mt-1" : "mt-4"}>
-          <Fill template={source} slots={{ plan: date(plan), date: date(state.result.as_of) }} />
+          <Fill template={source} slots={{ plan: date(plan) }} /> <Fill template={counted} slots={{ date: date(state.result.as_of) }} />
         </Source>
       ) : (
         <p data-tracker-note className="mt-4 text-caption text-ink-muted">

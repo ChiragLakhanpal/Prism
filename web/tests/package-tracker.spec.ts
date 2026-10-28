@@ -42,6 +42,25 @@ const tracker = (page: Page) => page.locator("[data-step-tracker]");
 const items = (page: Page) => tracker(page).getByRole("listitem");
 const words = async (locator: Locator) => (await locator.allInnerTexts()).map((text) => text.replace(/\s+/g, " ").trim());
 const states = (page: Page) => items(page).evaluateAll((all) => all.map((item) => item.getAttribute("data-step-state")));
+const lefts = (page: Page) => items(page).evaluateAll((all) => all.map((item) => Math.round(item.getBoundingClientRect().left)));
+
+// Each line of text inside a step, as the browser laid it out, that leaves its step's box (the design review's R2-B1).
+const spills = (page: Page) =>
+  items(page).evaluateAll((all) =>
+    all.flatMap((item, index) => {
+      const box = item.getBoundingClientRect();
+      const walker = document.createTreeWalker(item, NodeFilter.SHOW_TEXT);
+      const out: string[] = [];
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const range = document.createRange();
+        range.selectNodeContents(node);
+        for (const rect of Array.from(range.getClientRects())) {
+          if (rect.left < box.left - 0.5 || rect.right > box.right + 0.5) out.push(`step ${index + 1}: ${node.textContent}`);
+        }
+      }
+      return out;
+    }),
+  );
 
 // What each state's node looks like, read from the page: a tick, a fill, an outline, the warning colour, or dots.
 async function forms(page: Page) {
@@ -78,12 +97,12 @@ test("on the fixture's showcase package the signing is done on the contract awar
 
   await expect(tracker(page).getByRole("heading", { level: 2 })).toHaveText("Where the steps stand");
   expect(await words(items(page))).toEqual([
-    "Bid invitation (SPN) No date The plan gives no actual date",
+    "Bid invitation (SPN) No date The plan gave no actual date",
     "Bidding document issued No date Not in the plan",
-    "Bid opening No date The plan gives no actual date",
-    "Bid evaluation report No date The plan gives no actual date",
-    "Contract signed Done June 22, 2026",
-    "Contract completed Late by 89 days Planned for July 31, 2026",
+    "Bid opening No date The plan gave no actual date",
+    "Bid evaluation report No date The plan gave no actual date",
+    "Contract signed Done Jun 22, 2026",
+    "Contract completed Late by 89 days Planned for Jul 31, 2026",
   ]);
   expect(await states(page)).toEqual(["unknown", "unknown", "unknown", "unknown", "done", "late"]);
   expect(await forms(page)).toEqual([FORM.unknown, FORM.unknown, FORM.unknown, FORM.unknown, FORM.done, FORM.late]);
@@ -91,6 +110,11 @@ test("on the fixture's showcase package the signing is done on the contract awar
     "Source: The Procurement Plan of October 9, 2026 and World Bank contract awards data. I count days late to October 28, 2026.",
   );
   await expect(tracker(page).locator("[data-tracker-status]")).toHaveCount(0);
+  // At 1024 px the page area still holds the six steps in a row, and no step's words reach into the next.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  expect(await spills(page)).toEqual([]);
+  expect(new Set(await lefts(page)).size).toBe(6);
+  await page.setViewportSize({ width: 1440, height: 900 });
   // Section 2's list stays where it was, under "Show the steps".
   await expect(page.locator("section#planned-dates [data-section-toggle]")).toHaveText("Show the steps");
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
@@ -122,13 +146,14 @@ test("done steps carry a tick and their actual dates, the next step is filled, a
   await openStepRow(page, "KE-HAND-900000-CW-RFB", { ...hand, steps: "steps-ke-hand-900000-done.json" });
 
   expect(await words(items(page))).toEqual([
-    "Bid invitation (SPN) Done March 10, 2021",
-    "Bidding document issued Done March 30, 2021",
-    "Bid opening Done April 20, 2021",
+    "Bid invitation (SPN) Done Mar 10, 2021",
+    "Bidding document issued Done Mar 30, 2021",
+    "Bid opening Done Apr 20, 2021",
     "Bid evaluation report Done May 20, 2021",
-    "Contract signed Done July 20, 2021",
-    "Contract completed Late by 21 days Planned for June 10, 2022",
+    "Contract signed Done Jul 20, 2021",
+    "Contract completed Late by 21 days Planned for Jun 10, 2022",
   ]);
+  await expect(tracker(page).locator("[data-source]")).toHaveText("Source: The Procurement Plan of December 1, 2021. I count days late to July 1, 2022.");
   expect(await forms(page)).toEqual([FORM.done, FORM.done, FORM.done, FORM.done, FORM.done, FORM.late]);
 
   // A list for screen readers, named by its heading; Tab lands on the step that needs a look, and the arrow keys,
@@ -150,13 +175,15 @@ test("done steps carry a tick and their actual dates, the next step is filled, a
   await page.unrouteAll();
   await openStepRow(page, "KE-HAND-900000-CW-RFB", { ...hand, steps: "steps-ke-hand-900000.json" });
   expect(await words(items(page))).toEqual([
-    "Bid invitation (SPN) Next Planned for March 1, 2021",
-    "Bidding document issued Planned for March 8, 2021",
-    "Bid opening Planned for April 7, 2021",
-    "Bid evaluation report Planned for April 30, 2021",
-    "Contract signed Planned for June 10, 2021",
-    "Contract completed Planned for June 10, 2022",
+    "Bid invitation (SPN) Next Planned for Mar 1, 2021",
+    "Bidding document issued Planned for Mar 8, 2021",
+    "Bid opening Planned for Apr 7, 2021",
+    "Bid evaluation report Planned for Apr 30, 2021",
+    "Contract signed Planned for Jun 10, 2021",
+    "Contract completed Planned for Jun 10, 2022",
   ]);
+  // With no step late, the source line gives the date the states hold on, not a count to it.
+  await expect(tracker(page).locator("[data-source]")).toHaveText("Source: The Procurement Plan of December 15, 2020. Dates as of January 15, 2021.");
   expect(await forms(page)).toEqual([FORM.next, ...Array(5).fill(FORM.planned)]);
   const fill = tracker(page).locator("[data-node-fill]");
   expect(await fill.evaluate((el) => getComputedStyle(el).transitionDuration)).toContain("0.16s");

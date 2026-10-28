@@ -3422,6 +3422,11 @@ pdf_page = 1
 # the plan of March 5, 2026 and before the contract was signed, the signing (April 24) is 38 days late. A package
 # from a sentence has no plan, so each of its steps is unknown.
 #
+# A consulting firm's package has nine steps (strata.estimates.step_dates.families()["firms"]). As of October 28,
+# 2026, the plan of August 17, 2026 (document 40122770, page 3) gives KE-CWSB-224323-CS-QCBS as Completed, with an
+# actual date for every step but Request for Proposals as Issued, which it leaves blank, so that step is unknown and
+# never late.
+#
 # Two activities whose plan of the as-of date gives an ended Process Status, as of October 28, 2026: the plan of
 # October 9, 2026 gives KE-NWWDA-541061-CW-RFQ as Completed, with actual dates for its bid invitation (April 15,
 # 2026) and signing (May 11, 2026) only, so no step is late; the plan of September 24, 2026 gives
@@ -3446,6 +3451,8 @@ completed_reference = "KE-NWWDA-541061-CW-RFQ"
 completed_states = ["done", "unknown", "unknown", "unknown", "done", "unknown"]
 canceled_reference = "KE-KURA-219079-CS-INDV"
 canceled_states = ["done", "unknown", "unknown", "unknown", "unknown"]
+firms_reference = "KE-CWSB-224323-CS-QCBS"
+firms_states = ["done", "done", "done", "unknown", "done", "done", "done", "done", "done"]
 hand_made_before_as_of = 2021-01-15
 hand_made_before_states = ["next", "planned", "planned", "planned", "planned", "planned"]
 hand_made_before_late_days = []

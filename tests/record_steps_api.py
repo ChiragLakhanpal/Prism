@@ -14,6 +14,8 @@ comparable packages whose plans recorded it:
   date of its first step.
 - steps-ke-kura-219079.json: an individual consultant's activity whose plan of September 24, 2026 gives its Process
   Status as Canceled, so ticket 115's tracker marks no step late and says why.
+- steps-ke-cwsb-224323.json: a consulting firm's package, whose nine steps the tracker draws as a list at every width;
+  its plan of August 17, 2026 gives it as Completed, with every step dated but one.
 
 On the hand-made set tests/step_set.py builds, as of January 15, 2021, every step but the completion can be dated
 (tests/ground_truth/values.toml, [step_dates]):
@@ -63,6 +65,7 @@ ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-Preferred-
 SENTENCE = {"sentence": "rural roads, Kenya, about US$15 million"}
 DEMO = "/api/packages/KE-NWWDA-541055-CW-RFB"
 CANCELED = "/api/packages/KE-KURA-219079-CS-INDV"
+FIRMS = "/api/packages/KE-CWSB-224323-CS-QCBS"
 TARGET = f"/api/packages/{step_set.TARGET}"
 PLANNED = "/api/planned-packages/pkg-000000000001"
 FIXTURE_DAY, HAND_MADE_DAY, TRACKER_DAY = dt.date(2026, 10, 28), dt.date(2021, 1, 15), dt.date(2022, 7, 1)
@@ -94,6 +97,7 @@ async def fixture_story(app) -> dict[str, str]:
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://strata.test") as client:
         found["steps-ke-nwwda-541055.json"] = pretty(await client.get(f"{DEMO}/steps", headers=ANA))
         found["steps-ke-kura-219079.json"] = pretty(await client.get(f"{CANCELED}/steps", headers=ANA))
+        found["steps-ke-cwsb-224323.json"] = pretty(await client.get(f"{FIRMS}/steps", headers=ANA))
         await client.post("/api/planned-packages", headers=ANA, json=SENTENCE)
         found["steps-planned-rural-roads.json"] = pretty(await client.get(f"{PLANNED}/steps", headers=ANA))
     return found

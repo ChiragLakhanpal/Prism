@@ -7,7 +7,8 @@ value to step_dates, worked out here from STEP's records and the page's as-of da
 - actual_date: when the step happened, or None. It is the step's Actual date in the package's plan. For the Signed
   Contract step, when the plan gives no actual date, it is the signing date of the package's first contract in
   strata.gold.contract that was public and signed by the as-of date (sql/tracker/signed.sql): the World Bank's
-  contract awards data, or an award notice for the years those data skip.
+  contract awards data, or an award notice for the years those data skip. A contract from a source CONTRACT_SOURCES
+  does not name is logged and left out, so the plan's own dates stand.
 - actual_source: where actual_date comes from: "plan", "contract_awards" or "award_notice"; None with no date.
 - state, one of STATES:
   - done: the step has an actual date.
@@ -32,6 +33,7 @@ package from a sentence has no plan, so each of its steps is unknown.
 from __future__ import annotations
 
 import datetime as dt
+import logging
 from pathlib import Path
 
 from strata.estimates import step_dates as dated
@@ -47,6 +49,7 @@ CONTRACT_SOURCES = {"awards": AWARDS, "awards_fy2001_2016": AWARDS, "notices": N
 SIGNED, COMPLETED = CONTRACT_STATUSES  # in STEP's order: the contract signed, then completed
 
 SQL = Path(__file__).resolve().parent / "sql" / "tracker"
+log = logging.getLogger("strata.server.tracker")
 
 Dates = tuple[dt.date | None, dt.date | None, str | None]  # (planned, actual, where the actual date comes from)
 
@@ -97,9 +100,13 @@ def read(engine: Engine, reference: str, as_of: dt.date, names: list[str]) -> tu
                           for name in names]
     if SIGNING in names and found[names.index(SIGNING)][1] is None:
         signed = rows((SQL / "signed.sql").read_text(), reference=reference)
-        if signed:
+        kind = CONTRACT_SOURCES.get(signed[0]["source"]) if signed else None
+        if signed and kind is None:
+            log.warning("The step tracker skipped %s's signing: strata.gold.contract source %r is not in "
+                        "CONTRACT_SOURCES.", reference, signed[0]["source"])
+        if kind:
             k = names.index(SIGNING)
-            found[k] = (found[k][0], as_date(signed[0]["signed_on"]), CONTRACT_SOURCES[signed[0]["source"]])
+            found[k] = (found[k][0], as_date(signed[0]["signed_on"]), kind)
     return found, own.process_status if own else None
 
 

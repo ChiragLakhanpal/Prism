@@ -4773,19 +4773,22 @@ export const copy = {
     plannedFor: "Planned for {date}",
     // An unknown step: the plan gives it no date, or a later step is done and the plan gives this one no actual date.
     notInPlan: "Not in the plan",
-    noActual: "The plan gives no actual date",
-    // The source line: the plan version the dates come from, and the page's as-of date the days late count to. When
-    // the signing's date came from the contract's record, the line names that record too.
-    source: "The Procurement Plan of {plan}. I count days late to {date}.",
-    sourceAwards: "The Procurement Plan of {plan} and World Bank contract awards data. I count days late to {date}.",
-    sourceNotice: "The Procurement Plan of {plan} and the contract's award notice. I count days late to {date}.",
+    noActual: "The plan gave no actual date",
+    // The source line: the plan version the dates come from, and when the signing's date came from the contract's
+    // record, that record too. Then the page's as-of date: the date days late count to when a step is late, otherwise
+    // the date the states hold on.
+    source: "The Procurement Plan of {plan}.",
+    sourceAwards: "The Procurement Plan of {plan} and World Bank contract awards data.",
+    sourceNotice: "The Procurement Plan of {plan} and the contract's award notice.",
+    lateTo: "I count days late to {date}.",
+    asOf: "Dates as of {date}.",
     // The plan's Process Status, when it says the activity ended or its contract was signed, so a step with no actual
-    // date is not late.
-    status: "The plan gave its Process Status as {status}.",
+    // date is not late. It quotes STEP's value, as section 2's canceled row does.
+    status: 'The plan gave its Process Status as "{status}".',
     // A package from a sentence, or a plan that dates none of the steps.
     none: "No Procurement Plan gives dates for these steps yet.",
     // The steps routes failed: section 2 shows the error and Try again.
-    error: "I couldn't load where the steps stand. Section 2 below says why and lets you try again.",
+    error: "I couldn't load where the steps stand. You can try again in section 2 below.",
   },
 
   // Section 1's "Advertised again" block (ticket 28; the 28 brief, section 7), at the end of section 1's card.

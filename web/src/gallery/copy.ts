@@ -545,6 +545,7 @@ export const galleryCopy = {
     trackerLate: "Tracker: the fixture's showcase package, signed by the contract awards data and late to complete, with steps the plan left without a date",
     trackerNoDates: "Tracker: a package from a sentence, which has no plan dates",
     trackerEnded: "Tracker: an activity its plan gave as Canceled, so no step is late, as on the fixture",
+    trackerFirms: "Tracker: a consulting firm's nine steps, as a list at every width, as on the fixture",
     trackerLoading: "Tracker: loading",
     trackerError: "Tracker: the steps failed to load, so it points to section 2",
     collapsed: "Collapsed, with the steps dated",
