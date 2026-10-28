@@ -75,7 +75,8 @@
   registry for section 1's "Advertised again" block, for a STEP row and for a package planned from a sentence,
   with find_comparables' criteria as query parameters, ?asof= and ?view=, as the viewer (ticket 28).
 - GET /api/suppliers/review is the review list for supplier name matching (ticket 19): each candidate
-  pair that waits for a person, with both names, countries and contracts, read as the viewer. POST
+  pair that waits for a person, with both names, countries and contracts and the latest decision a
+  person made on it, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
   viewer as the reviewer; the next nightly run applies it. GET /api/suppliers/labels gives the labeling
   tool's next unlabeled pairs, without where Strata sent them, and POST /api/suppliers/labels records a

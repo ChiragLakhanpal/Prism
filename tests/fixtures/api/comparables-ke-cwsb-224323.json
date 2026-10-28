@@ -388,7 +388,8 @@
         "evidence_ids": [
           "strata.gold.contract:1645770",
           "strata.gold.contract:1673597"
-        ]
+        ],
+        "step_references": []
       },
       {
         "reason": "no_notice",
@@ -416,6 +417,30 @@
           "strata.gold.package:KE-MOALF-420467-CS-QCBS",
           "strata.gold.package:KE-MOALF-457201-CS-QCBS",
           "strata.gold.package:KE-MOWASCO-79877-CS-QCBS"
+        ],
+        "step_references": [
+          "KE-ICTA-388468-CS-QCBS",
+          "KE-ICTA-388525-CS-QCBS",
+          "KE-ICTA-388921-CS-QCBS",
+          "KE-ICTA-392524-CS-QCBS",
+          "KE-ICTA-392791-CS-QCBS",
+          "KE-ICTA-393199-CS-QCBS",
+          "KE-ICTA-393208-CS-QCBS",
+          "KE-ICTA-395930-CS-QCBS",
+          "KE-ICTA-396381-CS-QCBS",
+          "KE-ICTA-401465-CS-QCBS",
+          "KE-ICTA-402012-CS-QCBS",
+          "KE-ICTA-410949-CS-QCBS",
+          "KE-ICTA-411201-CS-QCBS",
+          "KE-ICTA-411692-CS-QCBS",
+          "KE-ICTA-422440-CS-QCBS",
+          "KE-ICTA-458284-CS-QCBS",
+          "KE-ICTA-458646-CS-QCBS",
+          "KE-ICTA-459498-CS-QCBS",
+          "KE-MOALF-388893-CS-QCBS",
+          "KE-MOALF-420467-CS-QCBS",
+          "KE-MOALF-457201-CS-QCBS",
+          "KE-MOWASCO-79877-CS-QCBS"
         ]
       }
     ]
@@ -539,7 +564,8 @@
           "evidence_ids": [
             "strata.gold.contract:1645770",
             "strata.gold.contract:1673597"
-          ]
+          ],
+          "step_references": []
         },
         {
           "reason": "no_notice",
@@ -567,6 +593,30 @@
             "strata.gold.package:KE-MOALF-420467-CS-QCBS",
             "strata.gold.package:KE-MOALF-457201-CS-QCBS",
             "strata.gold.package:KE-MOWASCO-79877-CS-QCBS"
+          ],
+          "step_references": [
+            "KE-ICTA-388468-CS-QCBS",
+            "KE-ICTA-388525-CS-QCBS",
+            "KE-ICTA-388921-CS-QCBS",
+            "KE-ICTA-392524-CS-QCBS",
+            "KE-ICTA-392791-CS-QCBS",
+            "KE-ICTA-393199-CS-QCBS",
+            "KE-ICTA-393208-CS-QCBS",
+            "KE-ICTA-395930-CS-QCBS",
+            "KE-ICTA-396381-CS-QCBS",
+            "KE-ICTA-401465-CS-QCBS",
+            "KE-ICTA-402012-CS-QCBS",
+            "KE-ICTA-410949-CS-QCBS",
+            "KE-ICTA-411201-CS-QCBS",
+            "KE-ICTA-411692-CS-QCBS",
+            "KE-ICTA-422440-CS-QCBS",
+            "KE-ICTA-458284-CS-QCBS",
+            "KE-ICTA-458646-CS-QCBS",
+            "KE-ICTA-459498-CS-QCBS",
+            "KE-MOALF-388893-CS-QCBS",
+            "KE-MOALF-420467-CS-QCBS",
+            "KE-MOALF-457201-CS-QCBS",
+            "KE-MOWASCO-79877-CS-QCBS"
           ]
         }
       ]

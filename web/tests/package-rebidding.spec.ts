@@ -6,6 +6,7 @@
 // files: three of the 52 comparable packages were advertised again, 49 in the past range, and the one reason in
 // words is OP00083890's "The Request for Bids has been cancelled.", in an Invitation for Bids, not an award notice.
 // The words are the 28 brief's, copied here so the test checks the screen against an independent source.
+import { copy } from "../src/copy";
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
@@ -133,6 +134,11 @@ test("a marker opens the drawer at the notice with its words highlighted under t
   await expect(claim.locator("p").nth(1)).toContainText(`"${QUOTE}"`);
   await expect(claim.locator("p").nth(1).locator("[aria-hidden=true]").last()).toHaveText("3");
   await expect(drawer.locator("mark")).toContainText(QUOTE);
+  // The way out to the source: the notice's own page (ticket 28's design review, F1).
+  await expect(drawer.getByRole("link", { name: new RegExp(`^${copy.evidence.openNotice}`) })).toHaveAttribute(
+    "href",
+    "https://projects.worldbank.org/en/projects-operations/procurement-detail/OP00083890",
+  );
   await expect(block(page).locator("[data-rebid-row='KE-KIMAWASCO-149448-CW-RFB']")).toHaveAttribute("data-open", "true");
 
   await page.keyboard.press("Escape");
@@ -149,6 +155,11 @@ test("a canceled plan row opens with its Process Status highlighted, and a STEP 
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Activity KE-KIMAWASCO-157517-CW-RFB");
   await expect(drawer.locator("mark")).toContainText("Canceled");
+  // Its place in Check a plan, on the plan version that canceled it (ticket 28's design review, F1).
+  await expect(drawer.getByRole("link", { name: copy.trail.plan.showInPlan })).toHaveAttribute(
+    "href",
+    "/projects/P156634/procurement/kilifi-mariakani-water-and-sewerage-company-ltd/2025-03-19#KE-KIMAWASCO-157517-CW-RFB",
+  );
 
   await block(page).getByRole("button", { name: "Open the records for KE-KIMAWASCO-149448-CW-RFB" }).click();
   await expect(page).toHaveURL(/evidence=strata\.gold\.package%3AKE-KIMAWASCO-149448-CW-RFB/);

@@ -114,7 +114,7 @@ async def plan(planning: Planning, reader_for: Callable[[], object | None], form
         try:
             response = await asyncio.to_thread(agent.respond, message, None)
             planning.agent_version = getattr(agent, "version", None)
-            reading = reader.read(output_text(response), form, codes, max_months)
+            reading = reader.read(output_text(response), form, codes, max_months, thresholds)
         except AgentError as error:
             raise PlanError(error.code if error.code in PLAN_ERRORS else "agent_unavailable") from error
         except ClaimsError as error:
@@ -127,7 +127,7 @@ async def plan(planning: Planning, reader_for: Callable[[], object | None], form
         yield step("read", "done", count=len(reading.values), guesses=guesses)
 
         yield step("compute", "running")
-        criteria = criteria_of.from_reading(form, reading.values, reading.dividing, thresholds)
+        criteria = criteria_of.from_reading(form, reading.values, reading.dividing, thresholds, reading.unlisted)
         yield step("compute", "done")
     else:
         criteria = criteria_of.empty(form)

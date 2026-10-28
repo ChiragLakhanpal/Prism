@@ -272,14 +272,22 @@ def _comparable(candidate: dict, as_of: dt.date) -> dict:
     }
 
 
+def _is_canceled(candidate: dict, signed: bool, canceled_as_still_open: bool) -> bool:
+    """Whether a package is left out as canceled: never signed, its plan row says Canceled, and the thresholds don't
+    count a canceled package as still open (past_range.canceled_as_still_open). The one rule _select and
+    read_comparable both follow (ticket 15's review round 3, R6)."""
+    return not signed and candidate["process_status"] == "Canceled" and not canceled_as_still_open
+
+
 def _select(candidates: list[dict], unlinked: list[dict], criteria: dict, limits: Limits,
-            as_of: dt.date) -> tuple[list[dict], dict[str, list[str]], int]:
-    """The comparables, what was left out by reason, and how many canceled packages matched."""
+            as_of: dt.date) -> tuple[list[dict], dict[str, list[tuple[str, str | None]]], int]:
+    """The comparables, what was left out by reason, each as its evidence id and its STEP reference (none for a
+    contract with no STEP reference), and how many canceled packages matched."""
     rows, left_out, canceled = [], {reason: [] for reason in REASONS}, 0
     for contract in unlinked:
         matched, _ = _matches(contract, criteria)
         if matched:
-            left_out["no_step_reference"].append(f"strata.gold.contract:{contract['contract_id']}")
+            left_out["no_step_reference"].append((f"strata.gold.contract:{contract['contract_id']}", None))
     for candidate in candidates:
         matched, unknown = _matches(candidate, criteria)
         if not matched:
@@ -292,13 +300,13 @@ def _select(candidates: list[dict], unlinked: list[dict], criteria: dict, limits
         row = None
         if candidate["notice_date"] is None:
             reason = "no_notice"
-        elif is_canceled and not limits.canceled_as_still_open:
+        elif _is_canceled(candidate, signed, limits.canceled_as_still_open):
             reason = "canceled"
         else:
             row = _comparable(candidate, as_of)
             reason = "signed_before_notice" if row["days"] < 0 else unknown
         if reason:
-            left_out[reason].append(evidence_id)
+            left_out[reason].append((evidence_id, candidate["step_reference"]))
         else:
             rows.append(row)
         canceled += is_canceled and (reason == "canceled" or not reason)
@@ -324,8 +332,13 @@ def every_package(engine, as_of: dt.date, limits: Limits) -> list[dict]:
     return rows
 
 
-def _coverage(rows: list[dict], left_out: dict[str, list[str]]) -> dict:
-    not_used = [{"reason": reason, "count": len(ids), "evidence_ids": ids} for reason, ids in left_out.items() if ids]
+def _coverage(rows: list[dict], left_out: dict[str, list[tuple[str, str | None]]]) -> dict:
+    """The coverage line. Each entry keeps the STEP references of the packages it left out beside their evidence
+    ids, so a caller such as rebidding_risk reads them without taking an id apart (ticket 28's review, follow-up
+    12)."""
+    not_used = [{"reason": reason, "count": len(found), "evidence_ids": [evidence for evidence, _ in found],
+                 "step_references": [reference for _, reference in found if reference]}
+                for reason, found in left_out.items() if found]
     return {"matched": len(rows) + sum(entry["count"] for entry in not_used), "used": len(rows), "not_used": not_used}
 
 
@@ -415,12 +428,16 @@ def _datasets() -> dict:
     return found
 
 
-def read_comparable(engine, step_reference: str, as_of: dt.date) -> dict | None:
+def read_comparable(engine, step_reference: str, as_of: dt.date,
+                    canceled_as_still_open: bool | None = None) -> dict | None:
     """One comparable package as the evidence drawer shows it: its procurement cycle time, counted as
     find_comparables counts it, its specific procurement notice and its contract award (or the award notice
     that gives its signing date), each as public on the as-of date, or None when no package has the
     reference by then. A still-open package's months run to the as-of date (counted_to); a canceled one that
-    find_comparables leaves out says so (canceled), as _select's rule decides."""
+    find_comparables leaves out says so (canceled), by _select's own rule and the caller's canceled_as_still_open,
+    which falls back to the thresholds file only when the caller gives none (CLAUDE.md rule 4)."""
+    if canceled_as_still_open is None:
+        canceled_as_still_open = bool(load_thresholds().value("past_range.canceled_as_still_open"))
     found = _rows(engine, "candidates.sql", as_of=as_of, only=step_reference.strip(), step_reference="",
                   country=None, method=None, category=None, notice_from=dt.date(1900, 1, 1), notice_to=as_of)
     if not found or found[0]["notice_date"] is None:
@@ -442,10 +459,9 @@ def read_comparable(engine, step_reference: str, as_of: dt.date) -> dict | None:
     named = _rows(engine, "project.sql", project_id=candidate["project_id"])
     through = _rows(engine, "records_through.sql", as_of=as_of)
     amount = _money(candidate["amount_usd"])
-    left_out = not load_thresholds().value("past_range.canceled_as_still_open")
     return {**row,
             "counted_to": _iso(as_of) if row["still_open"] else None,
-            "canceled": left_out and row["still_open"] and candidate["process_status"] == "Canceled",
+            "canceled": _is_canceled(candidate, not row["still_open"], canceled_as_still_open),
             "evidence_id": f"strata.gold.package:{candidate['step_reference']}",
             "description": (notice or {}).get("bid_description"),
             "project_name": named[0]["project_name"] if named else None,

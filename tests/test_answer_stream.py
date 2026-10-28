@@ -1132,6 +1132,11 @@ def test_an_answer_can_quote_each_side_of_a_disagreement_and_state_the_trajector
     evidence = {item["id"]: item for item in of(parsed, "evidence")}
     side = evidence["strata.gold.passage:31525018/v1/78"]
     assert (side["kind"], side["tool"]) == ("passage", "get_disagreements")
+    # Its source line, as search_passages gives a passage's, so its card names the report (ticket 20's review round 3,
+    # F1), where it read ", paragraph 78".
+    assert (side["row"]["project_id"], side["row"]["source"]["project_name"], side["row"]["source"]["document_date"]) == (
+        "P130164", truth["project-p130164-name"]["value"], truth["icr-date"]["value"].isoformat())
+    assert side["row"]["source"]["paragraph"] == "78"
     [highlight] = side["highlights"]
     assert side["row"]["text"][highlight["start"]:highlight["end"]] == words
     assert of(parsed, "checks")[0]["quotes"] == {"total": 1, "found": 1}

@@ -11,7 +11,9 @@ import { address } from "./router";
 import { streamEvents, StreamError } from "./sse";
 import { createStore, useStore } from "./store";
 
-export type Provenance = "sentence" | "default" | "guess" | "computed" | "you";
+// unlisted: the sentence named a value the form does not list, such as a method STEP has no name for, so the field
+// took its default, and read_as keeps the sentence's words (ticket 15's verification round 3, V4).
+export type Provenance = "sentence" | "default" | "unlisted" | "guess" | "computed" | "you";
 
 export type FormGroup = { key: string; label: string; name: string };
 export type FormOption = { value: string; label: string };
@@ -51,6 +53,8 @@ export type FieldValue = {
   provenance: Provenance | null;
   // What the thresholds give a computed field, whether or not the person set it themselves.
   computed: string | null;
+  // The sentence's own words for a value the form does not list; only an unlisted value has them.
+  read_as?: string | null;
 };
 
 // A rule's source, and the date of the table it was checked against, which is null until the owner checks it.

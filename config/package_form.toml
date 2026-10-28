@@ -4,7 +4,7 @@
 # This is the one place a criterion chip is defined (CLAUDE.md rule 9). Each [[fields]] entry is one chip in
 # the package workspace's "What I understood" card, in its group and in this order. Adding an entry adds a
 # chip in its group, and the package reader is asked for it; removing one removes the chip. No other code
-# names a field. strata.packages.form.load_form() reads this file, and GET /api/planned-packages/{id} hands
+# names a field. strata.config.load_package_form() reads this file, and GET /api/planned-packages/{id} hands
 # it to the screen with each package.
 #
 # [groups.<key>], in the card's order:

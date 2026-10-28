@@ -88,6 +88,7 @@ class Evidence:
     reference: str  # the notice's id, or the plan row's STEP reference
     date: str  # the notice's date, or the plan version's date
     agency: str | None = None  # a plan row's implementing agency
+    document_id: str | None = None  # a plan row's plan version, so no reader parses it back out of the evidence id
 
     def as_row(self) -> dict:
         return {"evidence_id": self.evidence_id, "public_from": self.public_from, "record_kind": self.record_kind,
@@ -151,7 +152,7 @@ def _label(row: dict, as_of: dt.date, wait: int) -> Label:
     if signed_on is None and row["process_status"] == CANCELED:
         label.sources[CANCELED_ROW] = Evidence(plan_row_evidence_id(row["plan_document_id"], row["step_reference"]),
                                                iso(row["plan_public_from"]), "plan_row", row["step_reference"],
-                                               iso(row["plan_date"]), row["implementing_agency"])
+                                               iso(row["plan_date"]), row["implementing_agency"], row["plan_document_id"])
     return label
 
 

@@ -367,6 +367,8 @@
           ]
         }
       ],
+      "chips_max": 6,
+      "folded": 0,
       "sentences": [
         {
           "index": 1,

@@ -445,6 +445,20 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
         )}
       </dl>}
       <RecordSourceLine evidence={evidence} />
+      {/* The way out to the source (ticket 28's design review, F1): a notice's page on the World Bank's site, and a
+          plan row's place in Check a plan on its plan version. */}
+      {typeof row.url === "string" && (
+        <p>
+          <ExternalLink href={row.url}>{copy.evidence.openNotice}</ExternalLink>
+        </p>
+      )}
+      {typeof row.plan_href === "string" && row.plan_href.split("#")[0] !== here && (
+        <p>
+          <TextLink href={row.plan_href} className="inline-flex min-h-6 items-center text-small" data-record-plan>
+            {copy.trail.plan.showInPlan}
+          </TextLink>
+        </p>
+      )}
       {/* A notice, award notice, contract or plan row whose activity Strata holds opens its trail (ticket 22), unless
           the drawer is open on that trail already. */}
       {typeof row.activity_href === "string" && row.activity_href !== here && (

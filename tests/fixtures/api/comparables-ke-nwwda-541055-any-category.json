@@ -2293,7 +2293,8 @@
           "strata.gold.contract:1878691",
           "strata.gold.contract:1903099",
           "strata.gold.contract:1903578"
-        ]
+        ],
+        "step_references": []
       },
       {
         "reason": "no_notice",
@@ -2334,6 +2335,43 @@
           "strata.gold.package:KE-VIHIGA COUNTY-519405-CW-RFB",
           "strata.gold.package:KE-VIHIGA COUNTY-519423-CW-RFB",
           "strata.gold.package:KE-WAJWASCO-22242-GO-RF"
+        ],
+        "step_references": [
+          "KE-BUSIA COUNTY-561519-CW-RFB",
+          "KE-EMBU COUNTY-493078-CW-RFB",
+          "KE-EMBU COUNTY-493099-CW-RFB",
+          "KE-ICTA-395947-GO-RFB",
+          "KE-ICTA-414831-NC-RFB",
+          "KE-ICTA-441843-GO-RFB",
+          "KE-ICTA-441844-GO-RFB",
+          "KE-ICTA-441845-GO-RFB",
+          "KE-ICTA-441867-GO-RFB",
+          "KE-ICTA-441890-GO-RFB",
+          "KE-ICTA-443118-NC-RFB",
+          "KE-ICTA-458650-NC-RFB",
+          "KE-ICTA-459492-CW-RFB",
+          "KE-ICTA-459496-GO-RFB",
+          "KE-ICTA-466781-GO-RFB",
+          "KE-ICTA-466782-GO-RFB",
+          "KE-ICTA-476102-GO-RFB",
+          "KE-ICTA-486639-GO-RFB",
+          "KE-ICTA-555502-GO-RFB",
+          "KE-KIAMBU COUNTY-492369-CW-RFB",
+          "KE-KIAMBU COUNTY-494940-GO-RFB",
+          "KE-KIAMBU COUNTY-510866-CW-RFB",
+          "KE-KWAWASCO-74600-GO-RFQ-LOT2",
+          "KE-MACHAKOS COUNTY-489611-GO-RFB",
+          "KE-MOALF-402063-GO-RFB",
+          "KE-MOALF-410742-GO-RFB",
+          "KE-MOALF-478015-NC-RFB",
+          "KE-MOALF-529705-GO-RFB",
+          "KE-MOWASCO-318293-GO-RFB",
+          "KE-SIAYA COUNTY-519173-CW-RFB",
+          "KE-SIAYA COUNTY-554186-CW-RFB",
+          "KE-TAVEVO-172331-GO-RFB-LOT I",
+          "KE-VIHIGA COUNTY-519405-CW-RFB",
+          "KE-VIHIGA COUNTY-519423-CW-RFB",
+          "KE-WAJWASCO-22242-GO-RF"
         ]
       },
       {
@@ -2343,6 +2381,11 @@
           "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB",
           "strata.gold.package:KE-KIMAWASCO-157517-CW-RFB",
           "strata.gold.package:KE-KIMAWASCO-377450-CW-RFB"
+        ],
+        "step_references": [
+          "KE-KIMAWASCO-149448-CW-RFB",
+          "KE-KIMAWASCO-157517-CW-RFB",
+          "KE-KIMAWASCO-377450-CW-RFB"
         ]
       }
     ]
@@ -2876,7 +2919,8 @@
             "strata.gold.contract:1878691",
             "strata.gold.contract:1903099",
             "strata.gold.contract:1903578"
-          ]
+          ],
+          "step_references": []
         },
         {
           "reason": "no_notice",
@@ -2917,6 +2961,43 @@
             "strata.gold.package:KE-VIHIGA COUNTY-519405-CW-RFB",
             "strata.gold.package:KE-VIHIGA COUNTY-519423-CW-RFB",
             "strata.gold.package:KE-WAJWASCO-22242-GO-RF"
+          ],
+          "step_references": [
+            "KE-BUSIA COUNTY-561519-CW-RFB",
+            "KE-EMBU COUNTY-493078-CW-RFB",
+            "KE-EMBU COUNTY-493099-CW-RFB",
+            "KE-ICTA-395947-GO-RFB",
+            "KE-ICTA-414831-NC-RFB",
+            "KE-ICTA-441843-GO-RFB",
+            "KE-ICTA-441844-GO-RFB",
+            "KE-ICTA-441845-GO-RFB",
+            "KE-ICTA-441867-GO-RFB",
+            "KE-ICTA-441890-GO-RFB",
+            "KE-ICTA-443118-NC-RFB",
+            "KE-ICTA-458650-NC-RFB",
+            "KE-ICTA-459492-CW-RFB",
+            "KE-ICTA-459496-GO-RFB",
+            "KE-ICTA-466781-GO-RFB",
+            "KE-ICTA-466782-GO-RFB",
+            "KE-ICTA-476102-GO-RFB",
+            "KE-ICTA-486639-GO-RFB",
+            "KE-ICTA-555502-GO-RFB",
+            "KE-KIAMBU COUNTY-492369-CW-RFB",
+            "KE-KIAMBU COUNTY-494940-GO-RFB",
+            "KE-KIAMBU COUNTY-510866-CW-RFB",
+            "KE-KWAWASCO-74600-GO-RFQ-LOT2",
+            "KE-MACHAKOS COUNTY-489611-GO-RFB",
+            "KE-MOALF-402063-GO-RFB",
+            "KE-MOALF-410742-GO-RFB",
+            "KE-MOALF-478015-NC-RFB",
+            "KE-MOALF-529705-GO-RFB",
+            "KE-MOWASCO-318293-GO-RFB",
+            "KE-SIAYA COUNTY-519173-CW-RFB",
+            "KE-SIAYA COUNTY-554186-CW-RFB",
+            "KE-TAVEVO-172331-GO-RFB-LOT I",
+            "KE-VIHIGA COUNTY-519405-CW-RFB",
+            "KE-VIHIGA COUNTY-519423-CW-RFB",
+            "KE-WAJWASCO-22242-GO-RF"
           ]
         },
         {
@@ -2926,6 +3007,11 @@
             "strata.gold.package:KE-KIMAWASCO-149448-CW-RFB",
             "strata.gold.package:KE-KIMAWASCO-157517-CW-RFB",
             "strata.gold.package:KE-KIMAWASCO-377450-CW-RFB"
+          ],
+          "step_references": [
+            "KE-KIMAWASCO-149448-CW-RFB",
+            "KE-KIMAWASCO-157517-CW-RFB",
+            "KE-KIMAWASCO-377450-CW-RFB"
           ]
         }
       ]

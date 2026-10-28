@@ -7,7 +7,8 @@
 // The compact variant, under "This may repeat a lesson in the library" on a review page, keeps the eyebrow,
 // the statement, the badge, the chips and "Version {version}, decided on {date}."
 //
-// More than six sources fold behind "Show {n} more sources". The re-check form opens under the button with
+// Sources past the card's chips_max fold behind "Show {n} more sources", n being the card's folded, both from the
+// server (config/thresholds.toml's lesson_review.card_chips_max). The re-check form opens under the button with
 // no animation beyond a short fade, keeps its text when it closes, and Escape closes it.
 import { createElement, Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { copy } from "../copy";
@@ -25,16 +26,15 @@ import { Source } from "./Source";
 import { StatusBadge } from "./StatusBadge";
 
 const words = copy.lessons;
-const MOST_CHIPS = 6;
 
 export function eyebrowOf(card: { kind: { label: string } | null; stage: { label: string } | null }): string {
   return fillText(words.card.eyebrow, { kind: card.kind?.label ?? "", stage: card.stage?.label ?? "" });
 }
 
-function Chips({ evidence, open, visited }: { evidence: LessonEvidence[]; open: string | null; visited: ReadonlySet<string> }) {
+// chipsMax and more are the card's own (LessonCard's chips_max and folded), from the server.
+function Chips({ evidence, chipsMax, more, open, visited }: { evidence: LessonEvidence[]; chipsMax: number; more: number; open: string | null; visited: ReadonlySet<string> }) {
   const [all, setAll] = useState(false);
-  const more = evidence.length - MOST_CHIPS;
-  const shown = all || more <= 0 ? evidence : evidence.slice(0, MOST_CHIPS);
+  const shown = all || more <= 0 ? evidence : evidence.slice(0, chipsMax);
   return (
     <div className="flex flex-wrap items-center gap-2" data-source-chips>
       {shown.map((source) => (
@@ -241,7 +241,7 @@ export function LessonCard({
       )}
       {children}
       {!compact && card.quote && <p className="max-w-prose text-body text-ink">{fillText(words.card.quote, { quote: card.quote })}</p>}
-      <Chips evidence={card.evidence} open={open} visited={visited} />
+      <Chips evidence={card.evidence} chipsMax={card.chips_max} more={card.folded} open={open} visited={visited} />
       <div className="flex flex-wrap gap-2">
         {retired && <StatusBadge kind={retired.as === "retired_wrong" ? "retired-wrong" : "retired-outdated"} />}
         <EvidenceBadge status={card.ieg_status} />

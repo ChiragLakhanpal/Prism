@@ -215,7 +215,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         try:
             # The schema first, so the reading page can draw the card's groups while the reader reads.
             shown = await asyncio.to_thread(countries, planning.viewer)
-            yield frame(Event("form", {"form": payload(form, shown, max_months)}))
+            yield frame(Event("form", {"form": payload(form, shown, max_months, thresholds)}))
             names = {entry["code"]: entry["name"] for entry in shown}
             events = workflow.plan(planning, reader_for, form, thresholds, lambda: names, store,
                                    lambda query: find(planning.viewer, STAFF, None, query), now, new_package_id,
@@ -280,7 +280,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
                 return refused(404, "unknown_package")
             made = examples(viewer) if examples is not None else set()
             return {"package": workflow.package_view(saved, form, thresholds),
-                    "form": payload(form, countries(viewer), max_months),
+                    "form": payload(form, countries(viewer), max_months, thresholds),
                     **({"example": True} if package_id in made else {})}
         return guarded(f"package {package_id}", read)
 

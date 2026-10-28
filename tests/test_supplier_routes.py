@@ -104,6 +104,33 @@ def test_a_decision_writes_merge_with_the_reviewer_and_the_reason_and_the_next_r
     assert LOSAI_PAIR not in {pair["pair_id"] for pair in listed}
 
 
+def test_a_merge_the_run_could_not_apply_comes_back_to_the_list_with_the_latest_decision_beside_it(database):
+    """Ticket 19's verification round 3, O1: merging both LOSAI pairs would join two STEP supplier IDs, 391987 and
+    477806, by name, which the run never does, so both pairs wait for a person again. The list shows what was decided
+    last beside each pair, so a reviewer does not decide it again as if no one had."""
+    from strata.knowledge.suppliers import resolve
+    from strata.knowledge.suppliers.judge import SameNameStandIn
+
+    other = f"{LOSAI_ROW['notice']}/2|{VALUES['notice-losai-391987']['value']}"
+    reason = "Both notices write LOSAI MANAGEMENT for the same project."
+    app = app_on(database)
+    for pair in (LOSAI_PAIR, other):
+        assert call(app, "POST", "/api/suppliers/review", ANA,
+                    json={"pair_id": pair, "decision": "merge", "reason": reason}).json() == {"recorded": True}
+    with DuckDBEngine.open(database) as engine:
+        resolve.run(engine, "after-the-decisions", SameNameStandIn())
+
+    listed = {pair["pair_id"]: pair for pair in call(app, "GET", "/api/suppliers/review", ANA).json()["pairs"]}
+
+    assert {LOSAI_PAIR, other} <= set(listed)
+    for pair in (LOSAI_PAIR, other):
+        decided = listed[pair]["latest_decision"]
+        assert (decided["decision"], decided["reason"]) == ("merge", reason)
+        assert decided["on"]  # the day it was decided, and never who decided it
+        assert set(decided) == {"decision", "reason", "on"}
+    assert all(pair["latest_decision"] is None for key, pair in listed.items() if key not in (LOSAI_PAIR, other))
+
+
 @pytest.mark.parametrize(("headers", "body", "status", "code"), [
     ({}, {"decision": "merge", "reason": "Same firm."}, 401, "no_identity"),
     (ANA, {"decision": "merge", "reason": "   "}, 422, None),

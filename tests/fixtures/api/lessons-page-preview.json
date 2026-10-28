@@ -258,7 +258,9 @@
               960
             ]
           }
-        ]
+        ],
+        "chips_max": 6,
+        "folded": 0
       },
       {
         "lesson_id": "lesson-cfdf000a46",
@@ -340,7 +342,9 @@
               168
             ]
           }
-        ]
+        ],
+        "chips_max": 6,
+        "folded": 0
       }
     ],
     "more": 0,
@@ -538,7 +542,9 @@
               960
             ]
           }
-        ]
+        ],
+        "chips_max": 6,
+        "folded": 0
       },
       {
         "lesson_id": "lesson-cfdf000a46",
@@ -620,7 +626,9 @@
               168
             ]
           }
-        ]
+        ],
+        "chips_max": 6,
+        "folded": 0
       }
     ]
   }

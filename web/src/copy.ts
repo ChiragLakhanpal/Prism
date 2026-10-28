@@ -4319,6 +4319,7 @@ export const copy = {
       from: {
         sentence: "From your sentence",
         default: "The default, since your sentence did not say",
+        unlisted: "The default, since I don't list what your sentence named",
         guess: "My guess",
         computed: "Computed from the thresholds",
         you: "You set this",
@@ -4390,6 +4391,8 @@ export const copy = {
     editor: {
       fromSentence: "From your sentence.",
       fromDefault: "Your sentence did not say, so I used the default.",
+      // A value the form does not list, such as a method STEP has no name for (ticket 15's verification round 3, V4).
+      fromUnlisted: (words: string) => `Your sentence said ${words}, which I don't list, so I used the default.`,
       fromComputed: "I computed this from the thresholds.",
       fromGuess: "This is my guess. Your sentence did not say.",
       fromYou: "You set this.",

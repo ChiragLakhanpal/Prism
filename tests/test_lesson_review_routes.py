@@ -40,6 +40,7 @@ ANA = viewer("ana.example@worldbank.org")  # in no group
 ASHA = viewer("asha.raman@worldbank.example")  # accredited, South Asia
 LEELA = viewer("leela.iyer@worldbank.example")  # lead, South Asia, works on P130164
 OMAR = viewer("omar.haddad@worldbank.example")  # lead, South Asia
+PRIYA = viewer("priya.nair@worldbank.example")  # lead, South Asia
 WANJIRU = viewer("wanjiru.kamau@worldbank.example")  # lead, Eastern and Southern Africa
 
 
@@ -248,6 +249,31 @@ def test_a_decision_makes_the_lesson_current_at_version_1_with_both_names_reason
     assert [(source["doc_short"], source["page"]) for source in lesson["evidence"]] == [("ICR", 23), ("ICR Review", 13)]
 
 
+def test_a_card_says_how_many_source_chips_it_shows_and_how_many_fold_from_the_thresholds_file(database):
+    """Ticket 29's review round 3, P5: the most source chips a card shows is lesson_review.card_chips_max in the
+    thresholds file, and the server counts the ones that fold, so the browser counts nothing. The rebidding lesson
+    rests on two sources: none folds under 6, and one folds under 1."""
+    from strata.config import Thresholds, load_thresholds
+
+    held = load_thresholds()
+    one = Thresholds(held.path, {**held.values, "lesson_review": {**held.values["lesson_review"], "card_chips_max": 1}})
+    connection = scenario.OneConnection(database)
+    narrow = create_app(engine_for=connection.engine_for, lesson_record=connection.the_app, lessons=LessonReview(
+        ROLES, today=lambda: TODAY, now=lambda: dt.datetime.combine(TODAY, dt.time(14, 0), tzinfo=dt.UTC),
+        thresholds=one))
+    item = item_for(narrow, ASHA, REBIDDING)
+    act(narrow, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    act(narrow, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Yes.")
+
+    [card] = call(narrow, "GET", "/api/lessons", ANA).json()["lessons"]
+    [usual] = call(create_app(engine_for=connection.engine_for, lessons=review_today()), "GET", "/api/lessons",
+                   ANA).json()["lessons"]
+
+    assert len(card["evidence"]) == 2
+    assert (card["chips_max"], card["folded"]) == (1, 1)
+    assert (usual["chips_max"], usual["folded"]) == (6, 0)
+
+
 def test_a_rejection_keeps_its_reason_and_adds_nothing_to_the_library(app, database):
     item = item_for(app, ASHA, REBIDDING)
     act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="reject",
@@ -303,6 +329,78 @@ def test_a_kept_lesson_s_record_names_the_version_it_stays_at(app):
     history = call(app, "GET", f"/api/lessons/review/{recheck}", ASHA).json()["history"]
     [decided] = [event for event in history if event["event"] == "decided"]
     assert (decided["outcome"], decided["version"]) == ("keep", 1)
+
+
+def test_a_lesson_kept_through_a_re_check_a_merge_moved_on_names_the_version_the_lesson_holds(app, database):
+    """Ticket 29's review round 3, P1: while IEG's lesson is being re-checked, a lead merges paragraph 55 into it,
+    which makes version 2. The open re-check's page shows the lesson as it is now, and once the lead keeps it, its
+    record and outcome name version 2, the version the library holds, not version 1, the one it was asked on."""
+    from strata.knowledge.lessons import writer
+
+    item = item_for(app, ASHA, scenario.IEG_LESSON)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    act(app, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Yes.")
+    [lesson] = call(app, "GET", "/api/lessons", ASHA).json()["lessons"]
+    asked = call(app, "POST", f"/api/lessons/{lesson['lesson_id']}/recheck", WANJIRU, json={"reason": "Check it."}).json()
+    with DuckDBEngine.open(database) as engine:  # the nightly run writes the notes again, naming the likely repeats
+        writer.run(engine, writer.recorded_agent_for(), lambda: dt.datetime(2026, 10, 27, 15, tzinfo=dt.UTC), 3,
+                   judge_for=writer.recorded_judge_for())
+    permits = item_for(app, ASHA, scenario.PERMITS)
+    act(app, ASHA, permits["item_id"], "recommend", expected_stage="recommendation", outcome="repeat",
+        repeat_of=lesson["lesson_id"], reason="It says the same.")
+    merged = act(app, PRIYA, permits["item_id"], "decide", expected_stage="decision", outcome="repeat",
+                 repeat_of=lesson["lesson_id"], reason="It says the same.")
+    assert merged.status_code == 200, merged.text
+
+    open_page = call(app, "GET", f"/api/lessons/review/{asked['item_id']}", ASHA).json()
+    act(app, ASHA, asked["item_id"], "recommend", expected_stage="recommendation", outcome="keep", reason="Holds.")
+    act(app, OMAR, asked["item_id"], "decide", expected_stage="decision", outcome="keep", reason="Holds.")
+    kept = call(app, "GET", f"/api/lessons/review/{asked['item_id']}", ASHA).json()
+
+    assert (open_page["lesson"]["version"], open_page["lesson"]["next_version"]) == (2, 3)
+    assert [event["version"] for event in kept["history"] if event["event"] == "decided"] == [2]
+    assert kept["outcome"]["version"] == 2
+    assert [(card["lesson_id"], card["version"]) for card in call(app, "GET", "/api/lessons", ASHA).json()["lessons"]] == [
+        (lesson["lesson_id"], 2)]
+
+
+def test_when_two_reviewers_ask_for_a_re_check_in_the_same_moment_only_the_first_opens(database):
+    """Ticket 29's review round 3, P3: the re-check is checked and written in one statement, so a second request that
+    reads no open re-check an instant after the first was written still gets 409 recheck_open."""
+    class RivalFirst:
+        """The app's own engine while another reviewer's re-check lands an instant before this one."""
+
+        def __init__(self, engine):
+            self.engine, self.rival = engine, True
+
+        def __getattr__(self, name):
+            return getattr(self.engine, name)
+
+        def run(self, sql, params=None):
+            if self.rival and "INSERT INTO strata.ops.lesson_review_items" in sql:
+                self.rival = False
+                self.engine.run(sql, {**params, "item_id": "recheck-rival", "origin_by": "asha.raman@worldbank.example",
+                                      "created_at": params["created_at"] - dt.timedelta(seconds=1)})
+            return self.engine.run(sql, params)
+
+        def close(self):
+            pass
+
+    connection = scenario.OneConnection(database)
+    rival = {"on": False}
+    app = create_app(engine_for=connection.engine_for, lessons=review_today(),
+                     lesson_record=lambda: RivalFirst(connection.open) if rival["on"] else connection.the_app())
+    item = item_for(app, ASHA, REBIDDING)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    act(app, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Yes.")
+    [lesson] = call(app, "GET", "/api/lessons", ASHA).json()["lessons"]
+
+    rival["on"] = True
+    late = call(app, "POST", f"/api/lessons/{lesson['lesson_id']}/recheck", WANJIRU, json={"reason": "Check it."})
+
+    assert (late.status_code, late.json()["code"]) == (409, "recheck_open")
+    opened = query(database, "SELECT item_id FROM strata.ops.lesson_review_items WHERE kind = 'recheck'")
+    assert opened == [{"item_id": "recheck-rival"}]
 
 
 def test_the_server_names_the_version_a_decision_will_write_and_the_one_a_change_leaves_on_record(app):

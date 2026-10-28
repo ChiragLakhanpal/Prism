@@ -22,6 +22,7 @@ the reports are public, and the as-of date (ticket 40) is what limits them.
 from __future__ import annotations
 
 import datetime as dt
+import functools
 import json
 import logging
 from importlib import resources
@@ -68,6 +69,40 @@ def _cells(value) -> list[list[str]] | None:
     return None if value is None or value == "" else json.loads(value)
 
 
+# The columns of strata.gold.passage a passage's source line is built from (passage_source).
+SOURCE_COLUMNS = ("kind", "document_type", "project_id", "project_name", "document_id", "document_date", "report_number",
+                  "version", "section_path", "paragraph", "paragraph_numbered", "pdf_page", "pdf_pages", "pdf_url",
+                  "doc_key")
+
+
+def passage_source(found: dict) -> dict:
+    """A passage's source line, in the registry's source_fields for search_passages, from its row of
+    strata.gold.passage (SOURCE_COLUMNS). It is defined once here, and every tool that hands over a passage, such as
+    get_disagreements for a side that rests on one, gives it this way (CLAUDE.md rule 4)."""
+    notice = found["kind"] == NOTICE_TEXT
+    return {
+        "document_type": found["document_type"],
+        "project_id": found["project_id"],
+        "project_name": found["project_name"],
+        "document_id": str(found["document_id"]),
+        "document_date": _iso(found["document_date"]),
+        "report_number": found["report_number"],
+        "version": _int(found["version"]),
+        "section_path": found["section_path"],
+        "paragraph": found["paragraph"],
+        # False when the report numbers no paragraphs, as an ISR does: paragraph is then Strata's own
+        # count (s4), so a citation names the section and the page instead.
+        "paragraph_numbered": _boolean(found["paragraph_numbered"]),
+        "pdf_page": _int(found["pdf_page"]),
+        "pdf_pages": _int(found["pdf_pages"]),
+        "pdf_url": found["pdf_url"],
+        "doc_key": found["doc_key"],
+        "notice_id": str(found["document_id"]) if notice else None,
+        # A notice's own page, from the source registry's address for it (CLAUDE.md rule 9).
+        "notice_url": notice_page(str(found["document_id"])) if notice else None,
+    }
+
+
 def passage_row(found: dict) -> dict:
     """One passage in the registry's row shape, without a search's rank. Values arrive typed from DuckDB
     and as text from the SQL warehouse, so each is read once here. A notice's text has its notice's id
@@ -77,27 +112,7 @@ def passage_row(found: dict) -> dict:
     return {
         "evidence_id": f"{TABLE}:{found['passage_id']}",
         "public_from": _iso(found["public_from"]),
-        "source": {
-            "document_type": found["document_type"],
-            "project_id": found["project_id"],
-            "project_name": found["project_name"],
-            "document_id": str(found["document_id"]),
-            "document_date": _iso(found["document_date"]),
-            "report_number": found["report_number"],
-            "version": _int(found["version"]),
-            "section_path": found["section_path"],
-            "paragraph": found["paragraph"],
-            # False when the report numbers no paragraphs, as an ISR does: paragraph is then Strata's own
-            # count (s4), so a citation names the section and the page instead.
-            "paragraph_numbered": _boolean(found["paragraph_numbered"]),
-            "pdf_page": _int(found["pdf_page"]),
-            "pdf_pages": _int(found["pdf_pages"]),
-            "pdf_url": found["pdf_url"],
-            "doc_key": found["doc_key"],
-            "notice_id": str(found["document_id"]) if notice else None,
-            # A notice's own page, from the source registry's address for it (CLAUDE.md rule 9).
-            "notice_url": notice_page(str(found["document_id"])) if notice else None,
-        },
+        "source": passage_source(found),
         "passage_id": found["passage_id"],
         "document_id": str(found["document_id"]),
         "document_type": found["document_type"],
@@ -144,9 +159,16 @@ def read_passages(engine, passage_ids: list[str], as_of: dt.date) -> dict[str, d
     return {row["passage_id"]: passage_row(row) for row in found}
 
 
+@functools.cache
+def _notice_address() -> str | None:
+    """Notices' record_url in config/sources.toml, read once, since every notice row of a search needs it (ticket
+    18's review round 3, P9)."""
+    return load_sources()["notices"].record_url
+
+
 def notice_page(notice_id: str) -> str | None:
     """A notice's own page on the World Bank's site, from config/sources.toml (notices' record_url)."""
-    address = load_sources()["notices"].record_url
+    address = _notice_address()
     return address.replace("{id}", notice_id) if address else None
 
 
@@ -188,11 +210,14 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
     result = call.engine.run(_sql("passages.sql"), {"ids": ",".join(hit.passage_id for hit in hits.hits),
                                                     "as_of": call.as_of})
     held = {row["passage_id"]: row for row in (dict(zip(result.columns, row)) for row in result.rows)}
-    kept, left_out = [], {reason: [] for reason in shields.LEFT_OUT}
+    kept, left_out, missing = [], {reason: [] for reason in shields.LEFT_OUT}, 0
     for hit in hits.hits:
         found = held.get(hit.passage_id)
         if found is None:
-            continue  # the index named a passage the viewer's table does not hold as of this date
+            # The index named a passage the viewer's table does not hold as of this date, such as one a re-issue
+            # replaced: it is no match, so the coverage line counts it nowhere (ticket 11's review round 2, P5).
+            missing += 1
+            continue
         if reason := shields.held_back(found["attack_detected"]):
             left_out[reason].append(f"{TABLE}:{hit.passage_id}")
         else:
@@ -204,10 +229,11 @@ def search_passages(call: Call, query: str, project_id: str | None = None, docum
     kept = rank(kept, lambda pair: pair[0]["passage_id"], ranked_lower)
     rows = [_row(found, rank_, score) for rank_, (found, score) in enumerate(kept[:limit], 1)]
     not_used = shields.coverage_entries(left_out)
-    below = hits.matched - len(rows) - sum(len(ids) for ids in left_out.values())
+    matched = hits.matched - missing
+    below = matched - len(rows) - sum(len(ids) for ids in left_out.values())
     if below > 0:
         not_used.append({"reason": "ranked_below_limit", "count": below, "evidence_ids": []})
-    return {"rows": rows, "coverage": {"matched": hits.matched, "used": len(rows), "not_used": not_used},
+    return {"rows": rows, "coverage": {"matched": matched, "used": len(rows), "not_used": not_used},
             "abstention": None if rows else {"reason": "no_match", "query": query}, "query": query,
             "filters": filters.as_dict(), "search": search,
             "ranked_lower": {"query_kind": kind, "evidence_ids": [f"{TABLE}:{found['passage_id']}" for found, _ in kept

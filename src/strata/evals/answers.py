@@ -145,8 +145,8 @@ def past_range(result, question) -> dict[str, list]:
         "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
         "cited_as": [result["summary"]["evidence_id"]],
         "still_open": sorted(row["step_reference"] for row in result["rows"] if row["still_open"]),
-        "canceled_left_out": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
-                                    if entry["reason"] == "canceled" for evidence in entry["evidence_ids"]),
+        "canceled_left_out": sorted(reference for entry in result["coverage"]["not_used"]
+                                    if entry["reason"] == "canceled" for reference in entry["step_references"]),
         "eight_in_ten": result["summary"]["frequencies"]["q80"],
     }
     if result["plan"] is not None:

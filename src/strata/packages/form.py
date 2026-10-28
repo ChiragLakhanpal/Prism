@@ -2,7 +2,8 @@
 
 strata.config.load_package_form() reads the schema, as every registry is read: its groups, in the card's order,
 and its fields, each with its group, kind, source (typed, computed or guessed), STEP field name and the
-find_comparables parameter it sets, if any. payload() hands it to the package workspace with the limits below.
+find_comparables parameter it sets, if any. payload() hands it to the package workspace with the limits the
+thresholds file's [package_form] gives.
 
 value() is the one check a value passes before it is kept, whether the package reader or the person gave
 it: a choice is one of its options (an old method name, such as ICB, maps to the Procurement Regulations'
@@ -14,32 +15,38 @@ from __future__ import annotations
 
 import math
 
-from strata.config import FormField, PackageForm
+from strata.config import FormField, PackageForm, Thresholds
 from strata.lakehouse import clean
 
 # The schema's own types, by their short names here.
 Field = FormField
 Form = PackageForm
-# The limits a person's values must keep, each defined once here and handed to the package workspace in the
-# form's payload, so the browser checks the same ones (CLAUDE.md rule 4).
-TEXT_LIMIT = 200
-MAX_COUNT = 99
 
 
 class Invalid(ValueError):
     """A value a field does not take."""
 
 
-def payload(form: PackageForm, countries: list[dict], max_months: float) -> dict:
+def text_limit(thresholds: Thresholds) -> int:
+    """The longest description, in characters (config/thresholds.toml's package_form.text_limit)."""
+    return int(thresholds.value("package_form.text_limit"))
+
+
+def max_count(thresholds: Thresholds) -> int:
+    """The most lots (config/thresholds.toml's package_form.max_count)."""
+    return int(thresholds.value("package_form.max_count"))
+
+
+def payload(form: PackageForm, countries: list[dict], max_months: float, thresholds: Thresholds) -> dict:
     """The schema as the package workspace reads it, with the World Bank's country list, the old method names a
-    method chip takes, and the limits a person's values must keep: the longest plan, the most lots and the
-    longest description."""
+    method chip takes, and the limits a person's values must keep, from the thresholds file, so the browser checks
+    the same ones (CLAUDE.md rules 4 and 9): the longest plan, the most lots and the longest description."""
     return {"groups": [{"key": g.key, "label": g.label, "name": g.name} for g in form.groups],
             "fields": [field.as_dict() for field in form.fields],
             "countries": countries,
             "aliases": {name: {"method": method.name, "market_approach": method.market_approach}
                         for name, method in clean.OLD_METHODS.items()},
-            "max_months": max_months, "max_count": MAX_COUNT, "text_limit": TEXT_LIMIT}
+            "max_months": max_months, "max_count": max_count(thresholds), "text_limit": text_limit(thresholds)}
 
 
 # ── Values ───────────────────────────────────────────────────────────────
@@ -56,8 +63,9 @@ def old_method(text: str) -> clean.Method | None:
     return clean.OLD_METHODS.get(clean.method_key(text))
 
 
-def value(field: Field, raw, country_codes: dict[str, str], max_months: float):
-    """The value a field keeps for this input, in STEP's words for a choice, or Invalid."""
+def value(field: Field, raw, country_codes: dict[str, str], max_months: float, thresholds: Thresholds):
+    """The value a field keeps for this input, in STEP's words for a choice, or Invalid. The thresholds file gives
+    the longest description and the most lots."""
     if raw is None:
         raise Invalid("no value")
     if field.kind == "choice":
@@ -70,7 +78,7 @@ def value(field: Field, raw, country_codes: dict[str, str], max_months: float):
         raise Invalid("not one of the options")
     if field.kind == "text":
         text = " ".join(str(raw).split())
-        if not text or len(text) > TEXT_LIMIT:
+        if not text or len(text) > text_limit(thresholds):
             raise Invalid("no words, or too many")
         return text[0].upper() + text[1:]
     if field.kind == "amount":
@@ -80,7 +88,7 @@ def value(field: Field, raw, country_codes: dict[str, str], max_months: float):
         return round(amount, 2) if amount != int(amount) else int(amount)
     if field.kind == "count":
         count = _number(raw)
-        if count != int(count) or not 1 <= count <= MAX_COUNT:
+        if count != int(count) or not 1 <= count <= max_count(thresholds):
             raise Invalid("not a whole number in range")
         return int(count)
     if field.kind == "country":

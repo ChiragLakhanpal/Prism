@@ -97,6 +97,14 @@ def _iso(value) -> str | None:
     return day.isoformat() if day else None
 
 
+def _moment(value) -> dt.datetime | None:
+    """A timestamp in UTC: DuckDB gives a datetime, the warehouse text such as 2026-10-27T14:00:00.000Z."""
+    if value is None or value == "":
+        return None
+    found = value if isinstance(value, dt.datetime) else dt.datetime.fromisoformat(str(value))
+    return found if found.tzinfo else found.replace(tzinfo=dt.UTC)
+
+
 def _bool(value) -> bool:
     return value if isinstance(value, bool) else str(value).lower() == "true"
 
@@ -230,8 +238,27 @@ class Store:
             self.notes[row["item_id"]] = row
 
     def act(self, item: dict, verb: str) -> dict | None:
+        """The act of this kind that counts: the first written, as act_taken.sql reads it. insert_act.sql keeps one act
+        of each kind on an item, so a second is only ever one that lost a race (ticket 29's review round 3, P2)."""
         found = [act for act in self.acts.get(item["item_id"], []) if act["act"] == verb]
-        return found[-1] if found else None
+        return found[0] if found else None
+
+    def written_by(self, lesson_id: str | None, item_id: str) -> dict | None:
+        """The version of a lesson an item's decision wrote, or None for a decision that wrote none, such as a keep."""
+        return next((row for row in self.versions.get(lesson_id or "", []) if row["item_id"] == item_id), None)
+
+    def version_at(self, lesson_id: str | None, moment) -> int | None:
+        """The version a lesson held at a moment: the newest whose own decision was made on or before it (ticket 29's
+        review round 3, P1). A version whose item the queue no longer lists counts from its day."""
+        at = _moment(moment)
+        held = None
+        for row in self.versions.get(lesson_id or "", []):
+            item = self.items.get(row["item_id"])
+            decision = self.act(item, "decide") if item else None
+            made = _moment(decision["acted_at"]) if decision else None
+            if (made <= at) if made else (_date(row["decided_on"]) <= at.date()):
+                held = _int(row["version"])
+        return held
 
     def stage(self, item: dict) -> str:
         """recommendation, decision, cross_check or decided, from the acts on the item."""
@@ -424,11 +451,27 @@ class LessonReview:
             return {"statement": proposal.get("statement"), "row": proposal, "evidence": rows,
                     "project_id": item["project_id"], "version": None, "lesson_id": store.lesson_of(item)}
         lesson_id = item["lesson_id"]
-        version = store.at(lesson_id, _int(item["version"])) or {}
+        concerns = self._recheck_version(store, item) if item["kind"] == "recheck" else _int(item["version"])
+        version = store.at(lesson_id, concerns) or {}
         rows = self._proposal_evidence(store, store.lesson_proposals(lesson_id, _int(version.get("version"))))
         return {"statement": version.get("statement"), "row": version, "evidence": rows,
                 "project_id": version.get("project_id") or item["project_id"],
                 "version": _int(version.get("version")), "lesson_id": lesson_id}
+
+    @staticmethod
+    def _recheck_version(store: Store, item: dict) -> int | None:
+        """The version a re-check is about (ticket 29's review round 3, P1). A lead may merge a proposal into a lesson
+        while its re-check is open, so an open re-check reads the version the lesson holds now, and a decided one the
+        version the lesson held when the lead decided: the one its own decision replaced, or the one it kept."""
+        lesson_id = item["lesson_id"]
+        decision = store.act(item, "decide")
+        if decision is None:
+            latest = store.latest(lesson_id)
+            return _int(latest["version"]) if latest else _int(item["version"])
+        written = store.written_by(lesson_id, item["item_id"])
+        if written is not None:
+            return _int(written["version"]) - 1
+        return store.version_at(lesson_id, decision["acted_at"]) or _int(item["version"])
 
     def clock(self, store: Store, item: dict) -> dict | None:
         if store.stage(item) == "decided":
@@ -581,9 +624,8 @@ class LessonReview:
                 continue
             subject = self.subject(store, item)
             lesson_id = store.lesson_of(item) or decision["repeat_of"]
-            version = next((row for row in store.versions.get(lesson_id or "", [])
-                            if row["item_id"] == item["item_id"]), None)
-            published = _date((store.proposals.get(item["proposal_id"]) or {}).get("report_public_on"))
+            version = store.written_by(lesson_id, item["item_id"])
+            published =_date((store.proposals.get(item["proposal_id"]) or {}).get("report_public_on"))
             found.append({
                 "item_id": item["item_id"], "kind": item["kind"], "statement": subject["statement"],
                 "pid": subject["project_id"], "project_name": (store.projects.get(subject["project_id"]) or {}).get(
@@ -687,21 +729,24 @@ class LessonReview:
                      "changes": self._changes(store, item, act)}
             if act["act"] == "decide":
                 lesson_id = act["repeat_of"] or store.lesson_of(item)
-                version = next((row for row in store.versions.get(lesson_id or "", [])
-                                if row["item_id"] == item["item_id"]), None)
-                # A kept lesson writes no version, so its record names the version it stays at.
-                entry["version"] = _int(version["version"]) if version else _int(item["version"])
+                version = store.written_by(lesson_id, item["item_id"])
+                # A kept lesson writes no version, so its record names the version the lesson held when it was kept.
+                entry["version"] = _int(version["version"]) if version else self._held(store, item, lesson_id, act)
                 target = store.latest(act["repeat_of"]) if act["repeat_of"] else None
                 entry["target"] = target["statement"] if target else None
             events.append(entry)
         return events
 
+    @staticmethod
+    def _held(store: Store, item: dict, lesson_id: str | None, decision: dict) -> int | None:
+        """The version a decision that wrote none, such as a keep, left the lesson at: the one it held at that moment,
+        which a merge during an open re-check may have moved past the version the re-check was asked on."""
+        return store.version_at(lesson_id, decision["acted_at"]) or _int(item["version"])
+
     def _changes(self, store: Store, item: dict, act: dict) -> list[dict]:
         """The fields an act changed, each with its was and now, for the history's Was and Now lines."""
         if act["act"] == "decide":
-            lesson_id = act["repeat_of"] or store.lesson_of(item)
-            version = next((row for row in store.versions.get(lesson_id or "", []) if row["item_id"] == item["item_id"]),
-                           None)
+            version = store.written_by(act["repeat_of"] or store.lesson_of(item), item["item_id"])
             if version is None or not version["was"]:
                 return []
             was, now = _json(version["was"], {}), _json(version["now"], {})
@@ -726,14 +771,13 @@ class LessonReview:
         if decision is None:
             return None
         lesson_id = decision["repeat_of"] or store.lesson_of(item)
-        version = next((row for row in store.versions.get(lesson_id or "", []) if row["item_id"] == item["item_id"]),
-                       None)
+        version = store.written_by(lesson_id, item["item_id"])
         target = store.latest(decision["repeat_of"]) if decision["repeat_of"] else None
         published = _date((store.proposals.get(item["proposal_id"]) or {}).get("report_public_on"))
         on = _date(decision["acted_at"])
         written = _int(version["version"]) if version else None
         return {"outcome": DECIDED_OUTCOME[decision["outcome"]], "on": on.isoformat(), "lesson_id": lesson_id,
-                "version": written if written else _int(item["version"]),
+                "version": written if written else self._held(store, item, lesson_id, decision),
                 # The version a change or a retirement leaves on record: the one before the version it wrote.
                 "previous_version": written - 1 if written and written > 1 else None,
                 "target": target["statement"] if target else None,
@@ -751,6 +795,7 @@ class LessonReview:
         project = store.projects.get(latest["project_id"]) or {}
         recheck = store.open_recheck(lesson_id)
         first = next((row for row in evidence if row["role"] == "source"), None)
+        chips_max = int(self.value("card_chips_max"))
         return {
             "lesson_id": lesson_id, "version": _int(latest["version"]), "statement": latest["statement"],
             **self.tags(latest), "sector": project.get("sector_name"), "pid": latest["project_id"],
@@ -762,6 +807,9 @@ class LessonReview:
             "region": project.get("region"),
             "quote": first["quote"] if first else None,
             "evidence": [self.evidence_row(store,row) for row in evidence],
+            # The most source chips the card shows, and how many fold behind "Show {n} more sources", so the browser
+            # holds no threshold and counts nothing (ticket 29's review round 3, P5).
+            "chips_max": chips_max, "folded": max(0, len(evidence) - chips_max),
         }
 
     # Ticket 39: the library's filters. Status sets the population; stage, method and sector narrow it.
@@ -1064,13 +1112,16 @@ class LessonReview:
             raise Refused(409, "recheck_open", {"on": _iso(open_item["entered_on"])})
         region = (store.projects.get(latest["project_id"]) or {}).get("region") or person.regions[0]
         now = self.now()
-        row = {"item_id": item_id("recheck", f"{lesson_id}|{person.email}|{now.isoformat()}"), "kind": "recheck",
-               "proposal_id": None, "lesson_id": lesson_id, "version": _int(latest["version"]),
-               "decided_item_id": None, "project_id": latest["project_id"], "region": region,
-               "decided_region": None, "origin": "asked", "origin_by": person.email, "origin_by_name": person.name,
-               "origin_reason": reason, "origin_item_id": None, "entered_on": now.date(), "due_on": None,
-               "created_at": now, "public_from": now.date()}
-        writer.insert_rows("strata.ops.lesson_review_items", ITEM_COLUMNS, [tuple(row[c] for c in ITEM_COLUMNS)])
+        row = {"item_id": item_id("recheck", f"{lesson_id}|{person.email}|{now.isoformat()}"),
+               "lesson_id": lesson_id, "version": _int(latest["version"]), "project_id": latest["project_id"],
+               "region": region, "origin_by": person.email, "origin_by_name": person.name, "origin_reason": reason,
+               "entered_on": now.date(), "created_at": now, "public_from": now.date()}
+        # Checked and written in one statement, then read back: a request that lost a race to another reviewer's finds
+        # theirs open (ticket 29's review round 3, P3).
+        writer.run(_sql("insert_recheck"), row)
+        opened = _rows(writer, "open_recheck", lesson_id=lesson_id)
+        if opened[:1] and opened[0]["item_id"] != row["item_id"]:
+            raise Refused(409, "recheck_open", {"on": _iso(opened[0]["entered_on"])})
         return {"item_id": row["item_id"], "region": region, "on": now.date().isoformat()}
 
 

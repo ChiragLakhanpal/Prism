@@ -13,7 +13,8 @@
         "evidence_ids": [
           "strata.gold.contract:1810568",
           "strata.gold.contract:1814061"
-        ]
+        ],
+        "step_references": []
       },
       {
         "reason": "no_notice",
@@ -23,6 +24,12 @@
           "strata.gold.package:KE-ICTA-443118-NC-RFB",
           "strata.gold.package:KE-ICTA-458650-NC-RFB",
           "strata.gold.package:KE-MOALF-478015-NC-RFB"
+        ],
+        "step_references": [
+          "KE-ICTA-414831-NC-RFB",
+          "KE-ICTA-443118-NC-RFB",
+          "KE-ICTA-458650-NC-RFB",
+          "KE-MOALF-478015-NC-RFB"
         ]
       }
     ]
@@ -144,7 +151,8 @@
           "evidence_ids": [
             "strata.gold.contract:1810568",
             "strata.gold.contract:1814061"
-          ]
+          ],
+          "step_references": []
         },
         {
           "reason": "no_notice",
@@ -154,6 +162,12 @@
             "strata.gold.package:KE-ICTA-443118-NC-RFB",
             "strata.gold.package:KE-ICTA-458650-NC-RFB",
             "strata.gold.package:KE-MOALF-478015-NC-RFB"
+          ],
+          "step_references": [
+            "KE-ICTA-414831-NC-RFB",
+            "KE-ICTA-443118-NC-RFB",
+            "KE-ICTA-458650-NC-RFB",
+            "KE-MOALF-478015-NC-RFB"
           ]
         }
       ]

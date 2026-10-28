@@ -14,6 +14,7 @@ import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { evidenceHref } from "../lib/evidence";
 import { locatorText, type RiskSource } from "../lib/risks";
+import { shortProjectName } from "../lib/sources";
 import { Fill } from "./Fill";
 import { Tooltip } from "./Popover";
 import { DocumentSource } from "./Source";
@@ -21,7 +22,9 @@ import { DocumentSource } from "./Source";
 // The evidence card a pill shows on hover and focus: the stratum, the source, the words the lesson quotes from
 // it, and its source line. A row shows a lesson, not the paragraph's words, so the card adds the quote.
 export function PillCard({ source }: { source: RiskSource }) {
-  const project = source.project_name ?? source.pcode;
+  // The project as the drawer's passage names it (lib/sources.ts, passageFields), so the card and the drawer it
+  // opens give one name (ticket 30's design review, F10).
+  const project = source.project_name ? shortProjectName(source.project_name) : source.pcode;
   return (
     <div data-evidence-card className="flex flex-col p-1">
       <p className="text-label text-ink-muted">{copy.evidence.eyebrow.Why}</p>
