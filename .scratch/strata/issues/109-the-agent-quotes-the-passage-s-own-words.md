@@ -14,7 +14,7 @@ Read first: the diagnosis in the catch-up file's block "Ticket 109" when it land
 - [ ] The assembled orchestrator instructions hold the worked quote claim and the exact-copy sentence (a definition test), and find_quotes accepts a quote whose first letter is capitalized while rejecting changed words (the new test beside the curly-quotes one).
 - [ ] With CallsThenAnswers, a first answer without quote marks and a second with, the rewrite round keeps the second answer's sentence after the full verifier run, `agent.rewrite_rounds = 0` turns the round off, and the shown answer is never the unverified one.
 - [ ] The demo-ready command prints each removed sentence with its quote and reason, and its step 1 redeploys the App when the compute is stopped with no active deployment (a fake workspace in the test).
-- [ ] On the paid workspace, after the merge, the orchestrator agent's sync and the App redeploy, the smoke question keeps its sentence citing strata.gold.passage:31525018/v1/54 (recorded in the catch-up file under this ticket).
+- [x] On the paid workspace, after the merge, the orchestrator agent's sync and the App redeploy, the smoke question keeps its sentence citing strata.gold.passage:31525018/v1/54 (recorded in the catch-up file under this ticket).
 
 ## Comments
 
@@ -31,3 +31,4 @@ Read first: the diagnosis in the catch-up file's block "Ticket 109" when it land
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1), so I sent no index-busy or index-free message.
   - No ticket names 109 as a blocker, so no ticket's Status changed. In the wave's order, 110, 111 and 112 come next.
 - October 27, 2026, orchestrator (18:29 PDT): the bundle deployed from 9a8ae27b's snapshot (01:04 UTC) and the orchestrator agent synced to version 10, which matches the repo; the smoke question through the demo-ready command follows the night's final App deploy (the catch-up block "Tickets 108 and 109, the workspace steps, part 1").
+- October 27, 2026, orchestrator (23:09 PDT): criterion 4 holds (the catch-up block "Ticket 109, criterion 4 ran"): the smoke question kept its sentence citing strata.gold.passage:31525018/v1/54 twice in a row with the agent at version 11 on gpt-5.4.

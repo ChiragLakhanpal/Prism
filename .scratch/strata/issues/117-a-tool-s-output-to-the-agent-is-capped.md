@@ -14,7 +14,7 @@ Read first: `src/strata/agent/loop.py` (`call_output`, the tool round, `turn.fac
 - [ ] The tool whose result reached 20.8 million characters is named in the done comment with its measured size on the fixture and on the paid workspace, and it has its own cap in `config/tools.toml` that keeps the fields an answer cites and says what was left out (a test with a fixture result over the cap).
 - [ ] `call_output` sends a trimmed copy with a `truncated` note when the serialized result is longer than `agent.max_tool_output_chars` (in `config/thresholds.toml`, 400,000 to start), keeps the first rows of each list, and leaves a normal result unchanged; `turn.facts` still holds the full result (tests in tests/test_answer_stream.py, including one with an 11-million-character result through Foundry's fake).
 - [ ] The recorded ask streams and the benchmark on the fixture still pass, and the gate adds at most one second.
-- [ ] On the paid workspace, after the merge and the App redeploy, the demo-ready command's smoke question passes twice in a row (recorded in the catch-up file under this ticket).
+- [x] On the paid workspace, after the merge and the App redeploy, the demo-ready command's smoke question passes twice in a row (recorded in the catch-up file under this ticket).
 
 ## Comments
 
@@ -30,3 +30,4 @@ Read first: `src/strata/agent/loop.py` (`call_output`, the tool round, `turn.fac
   - Decisions parked for the user, from the review and the verify: (1) as built, a sentence that cites a row left out of the agent's copy is still checked against Facts and kept, as criterion 2 asks; the other choice is to remove it with `id_not_returned` using the ids actually sent. (2) The 400,000 cap applies to each result, not to each request, so one request with several calls can carry several such results; keep it and confirm after criterion 4's two live runs. (3) The builder took a read-only measurement on the paid workspace although builders run no workspace step; the ticket asked for it, and nothing in the diff depends on it except the sizes in the comments.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - No ticket names 117 as a blocker, so no ticket's Status changed.
+- October 27, 2026, orchestrator (23:09 PDT): the live steps ran from 1c148f05's snapshot (the catch-up block "Ticket 117, steps 1 and 2 ran"): the agent synced to version 11, the App redeployed, and the smoke question passed twice in a row; a third run lost its sentence to the judge's 429 on the shared gpt-5.4 deployment, which ticket 118 answers.
