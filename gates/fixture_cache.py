@@ -114,9 +114,12 @@ class Cache:
         sys.addaudithook(self._audit)
 
     def _audit(self, event, args):
+        """Python calls this before each audited action. An error raised here would stop that action, so it only
+        reads what it is given."""
         if not self.recording or event not in ("open", "os.listdir", "os.scandir"):
             return
-        if sys._getframe(1).f_code.co_filename.startswith(IMPORT_SYSTEM):
+        caller = sys._getframe(0).f_back  # the code that opened or listed, or None when no Python code did
+        if caller is not None and caller.f_code.co_filename.startswith(IMPORT_SYSTEM):
             return
         if event == "open":
             path, mode, flags = args
