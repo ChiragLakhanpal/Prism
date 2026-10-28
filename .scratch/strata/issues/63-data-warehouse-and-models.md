@@ -123,3 +123,4 @@ Fixtures, ground truth and their tests
     10. The Playwright test `web/tests/package.spec.ts:430` should wait until the page stops moving before it measures (verify, "The gate").
   - Ticket 43 (done) owns the nightly job: I added a comment there that the assertions run now sends one batch a run and asks again for a request a finished batch did not answer.
   - This merge unblocks no ticket; no ticket lists 63 under Blocked by.
+- October 28, 2026, orchestrator (01:21 PDT): steps 1, 3 and 5 ran, step 2 in part, on the night of October 27 to 28 (the catch-up blocks "Ticket 63, step 1 of 5 ran" to "step 5 of 5 ran"): the two table changes landed after the nightly failed on the NOT NULL amount_basis and the run was repaired; the row filter and masks are on both tables; the orchestrator is at version 11; the similar-experience question ranks 0 of 2 until the index holds the notices' passages; the non-member's count waits for the owner.
