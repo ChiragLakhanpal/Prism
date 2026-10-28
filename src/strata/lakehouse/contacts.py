@@ -33,7 +33,8 @@ Silver runs the same removal again on each notices page it reads (strip_again), 
 once more on the plain text it keeps (strip_left), so a fix here reaches the pages bronze already
 holds when silver reads them again (ticket 76). Silver reads a page again when the nightly check
 finds one of LEFTOVERS in its notices (ticket 121), so a rule added there reaches every page that
-needs it on the next run.
+needs it on the next run. Each of the removal's other rules is named in NOT_CHECKED, with the
+reason the check does not look for it.
 
 Every other field stays as received. bid_reference_no is STEP's field and, when it holds a STEP
 reference, the join from a notice to its package. A reference such as NWWDA-WSDP-03-2019-2020
@@ -107,7 +108,7 @@ ATTENTION = re.compile(
     r"(?P<label>\b(?i:attention)\b[ \t]*:?[ \t]*)"
     r"(?P<name>(?i:mr|mrs|ms|miss|dr|eng|prof)\b\.?(?:[ \t]+[A-Z][A-Za-z'’-]*\.?){1,4})")
 TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
-
+DIGIT_RUN = re.compile(r"\+?\(?\d[\d \t().–-]{5,}\d")  # digits and the separators a phone number uses
 
 
 @dataclass(frozen=True)
@@ -151,10 +152,11 @@ LEFTOVERS = (
     # label (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob, Cell, Fax, Facsimile) with up to 12 other
     # characters but no digit between (Fax #: , Phone No. , Tel: (-, or a line break), or with none, the label run
     # into the digits (Phone0722...); or such a number written after one already removed, with a comma, slash,
-    # semicolon or dash before it, and maybe the letter l typed for a 1 ([contact removed]l, 0722...).
+    # semicolon, dash or "or" before it, and maybe the letter l typed for a 1 ([contact removed]l, 0722...; a page
+    # stripped before ticket 63 kept the second number of "Tel: 0722... or 0733...").
     Leftover("phone", "phones", LABELLED,
              r"(?i)(\b(?:tel|telephone|telefax|phone|cellphone|mobile|mob|cell|fax|facsimile)(?:\b[^0-9]{0,12})?"
-             r"|\[contact removed\][ \t]*l?[ \t]*[,;/-][ \t]*)\+?[0-9](?:[ ().–-]*[0-9]){6,}"),
+             r"|\[contact removed\][ \t]*l?[ \t]*(?:[,;/-]|or\b)[ \t]*)\+?[0-9](?:[ ().–-]*[0-9]){6,}"),
     # A number of nine digits or more after Ph, M, Contact or WhatsApp and a colon or No. (Contact: 254 722 123456).
     Leftover("short_phone", "phones", SHORT_LABELLED,
              r"(?i)(\b(?:ph|m|contact|whats\s?app)\b\.?(?:\s*(?:no\.?|number)\s*:?|\s*:)[ \t]*)[(+]{0,2}[0-9]"
@@ -166,6 +168,21 @@ LEFTOVERS = (
 )
 # The same patterns, as the removal reads them. ASCII, because RE2 and Java's \b and (?i) know only ASCII letters.
 CHECKED = tuple((leftover, re.compile(leftover.pattern, re.A)) for leftover in LEFTOVERS)
+# The removal's other rules, which the nightly check does not look for, each with the reason (ticket 121). A rule the
+# removal gains goes in LEFTOVERS or here, and tests/test_contacts_left.py fails until it is in one of them.
+NOT_CHECKED = (
+    (PHONE, "A number with no label is a phone number only by _phone's test, which tells it from a date, an amount, "
+            "a fiscal year or a postal code. No pattern the SQL warehouse reads can run that test."),
+    (EMAIL_SPELLED_OUT, "No recorded notice spells out an address, so no test could show that a pattern finds what "
+                        "this rule removes. Every page the workspace holds was stripped with it, since October 23, "
+                        "2026."),
+    (DIGIT_RUN, "It finds a page's own phone numbers, which only the record's contact fields name, and bronze "
+                "replaced those fields before silver reads the page."),
+    (AFTER_EMAIL, "What it removes is part of an address the removal counted already: the domain of a second address "
+                  "run into the first."),
+    (LINE_ENDING, "What it removes is part of a number the removal counted already: the last digit or two of another "
+                  "line."),
+)
 SIGNS_BEFORE = re.compile(r"[(+][(+ \t–-]*$")  # a number's own bracket or plus, written before its first digit
 
 
@@ -190,9 +207,6 @@ def _labelled_number(numbers: str, shortest: int = 7) -> bool:
     removed number (Tel: [contact removed] / 8, the last digit of a second line)."""
     digits = len(re.sub(r"\D", "", numbers.replace(REMOVED, "")))
     return digits >= shortest or (REMOVED in numbers and digits >= 1)
-
-
-DIGIT_RUN = re.compile(r"\+?\(?\d[\d \t().–-]{5,}\d")  # digits and the separators a phone number uses
 
 
 def _digits(value: str) -> str | None:

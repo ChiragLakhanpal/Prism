@@ -19,6 +19,7 @@ import datetime as dt
 import importlib.util
 import json
 import random
+import re
 import shutil
 from pathlib import Path
 
@@ -184,6 +185,37 @@ def test_every_rule_of_the_last_pass_has_its_leftover_pattern_which_finds_on_the
     assert {leftover.kind for leftover in contacts.LEFTOVERS} <= set(contacts.KINDS)
     assert len({leftover.parameter for leftover in contacts.LEFTOVERS}) == len(contacts.LEFTOVERS)
     assert quality.contacts_left_params() == {leftover.parameter: leftover.pattern for leftover in contacts.LEFTOVERS}
+
+
+# The patterns in contacts that remove nothing themselves: what _phone tells from a phone number, and what the removal
+# keeps around a number it takes out.
+HELPERS = {contacts.DATE_LIKE, contacts.AMOUNT_LIKE, contacts.FISCAL_YEARS, contacts.POSTAL_CODE,
+           contacts.TRAILING, contacts.SIGNS_BEFORE}
+
+
+def test_every_removal_rule_is_a_leftover_the_check_looks_for_or_is_named_with_the_reason_it_is_not():
+    """Ticket 121: a rule the removal gains is flagged by the nightly check, and its pages read again, from the first
+    night after it ships, because it is one of contacts.LEFTOVERS; or it is named in contacts.NOT_CHECKED with the
+    reason the check cannot look for it. Every pattern the module defines is one of those two, or a helper that
+    removes nothing, so a new rule fails this test until it is one or the other."""
+    defined = {value for value in vars(contacts).values() if isinstance(value, re.Pattern)}
+    checked = {leftover.rule for leftover in contacts.LEFTOVERS}
+    not_checked = {rule for rule, _ in contacts.NOT_CHECKED}
+
+    assert defined - HELPERS == checked | not_checked
+    assert not checked & not_checked
+    assert all(reason.strip() for _, reason in contacts.NOT_CHECKED)
+
+
+def test_a_second_number_an_older_removal_left_after_or_is_flagged_and_taken_out(notices):
+    """Ticket 63 taught the removal to take out a second number written after "or" (Tel: 0722... or 0733...). A page
+    stripped before then kept the second number after the first one's [contact removed]. The check flags it, so silver
+    reads the page again, and both removals take it out."""
+    left = f"The works are in Kisumu. Tel: {R} or 99 999 9999. Email: {R}"
+
+    assert contacts_left(notices, [left]) == 1
+    assert strip_notices([left]) == silver_texts([left]) == [f"The works are in Kisumu. Tel: {R}. Email: {R}"]
+    assert contacts_left(notices, strip_notices([left]) + silver_texts([left])) == 0
 
 
 def made_up_texts(count: int, seed: int = 76) -> list[str]:
