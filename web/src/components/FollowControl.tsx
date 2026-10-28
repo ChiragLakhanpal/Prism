@@ -1,5 +1,5 @@
-// Follow control (DESIGN.md section 5; the 37 brief, section 6): a 44 px row in the project header's flow, under
-// the agency line. Not following: a secondary "Follow this project" with a plus icon. Following: the small sentence
+// Follow control (DESIGN.md section 5; the 37 brief, section 6): a 44 px row at the project head's right from a page
+// area of 46rem, and under the agency line below it (ticket 99). Not following: a secondary "Follow this project" with a plus icon. Following: the small sentence
 // "You follow this project." with a check icon, then a ghost "Unfollow" that the sentence describes. The state says
 // itself in words and each button says what it will do, so it is not a pressed toggle.
 //
@@ -76,7 +76,7 @@ export function FollowControl({ pid, name, sample }: {
   };
 
   return (
-    <div className="mt-4" data-follow={state}>
+    <div data-follow={state}>
       <div role="group" aria-label={words.label} aria-busy={busy || undefined} className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2">
         {state === "loading" && <Skeleton className="h-11 w-[184px]" radius="rounded-sm" />}
         {state === "unread" && (

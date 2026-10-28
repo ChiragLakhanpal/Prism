@@ -8,7 +8,8 @@
 // instead of the page area's. In a card each column's head sits above its value, and
 // every value starts at one left edge: text runs the card's full width, and two or more
 // numbers and short values share a grid of 120 px columns, so they sit side by side (the 10
-// brief's activity card).
+// brief's activity card). A list in a Task zone panel, as All projects (ticket 99), sets inPanel:
+// the panel is its frame, and cardsBelow="list" keeps its three columns down to a 34rem page area.
 //
 // States, each saying only what is true in it:
 // - Ready: the title, the count line, the rows and the source line. A ready table has rows;
@@ -75,12 +76,15 @@ type Level = 2 | 3 | 4 | 5;
 // at 1024 px. The 8 px over leave room for small font differences between systems. narrow reads its own frame
 // too, with cards under 30rem (480 px): for a table of three short columns, as the evidence drawer's list of a
 // band's ISRs (ticket 23), which stays a table in the 576 px drawer and becomes cards in the 410 px one.
-export type CardsBelow = "md" | "lg" | "fit" | "narrow";
+// list reads the page area, with cards under 34rem (544 px): for a list of three columns in a panel, as All projects
+// (ticket 99), which keeps its columns on a 768 px tablet and turns to cards on a phone.
+export type CardsBelow = "md" | "lg" | "fit" | "narrow" | "list";
 const SHOW: Record<CardsBelow, { table: string; cards: string }> = {
   md: { table: "@md/page:block", cards: "@md/page:hidden" },
   lg: { table: "@lg/page:block", cards: "@lg/page:hidden" },
   fit: { table: "@table-fit/table:block", cards: "@table-fit/table:hidden" },
   narrow: { table: "@table-narrow/table:block", cards: "@table-narrow/table:hidden" },
+  list: { table: "@list/page:block", cards: "@list/page:hidden" },
 };
 // The plan check (web/src/components/PlanCheck.tsx) draws its own rows and cards, at the same
 // breakpoint as cardsBelow="lg".
@@ -120,6 +124,7 @@ export function Table({
   busy,
   countLead = false,
   selected,
+  inPanel = false,
 }: {
   // The finding the rows show, as a sentence.
   title: ReactNode;
@@ -149,6 +154,11 @@ export function Table({
   // The row whose details show elsewhere, such as the comparable the evidence drawer shows (ticket 15):
   // it takes the selected row's tint fill.
   selected?: string | null;
+  // The table is a Task zone panel's open work (DESIGN.md section 5, Tables; ticket 99's All projects): it draws no frame
+  // of its own, its count line sits on the zone's edges, its rows run the panel's full width with their outer cells on
+  // those edges, and its cards are rows divided by a line (app.css, "A table in a panel"). The zone names it
+  // (labelledBy), and the panel's foot strip holds its source.
+  inPanel?: boolean;
 }) {
   const ownTitleId = useId();
   const titleId = labelledBy ?? ownTitleId;
@@ -200,8 +210,9 @@ export function Table({
     // carries no name of its own.
     <section
       data-table={state.status}
+      data-table-panel={inPanel || undefined}
       aria-busy={loading || Boolean(busy) || undefined}
-      className={cx("flex flex-col gap-2", (cardsBelow === "fit" || cardsBelow === "narrow") && "@container/table")}
+      className={cx("flex flex-col", !inPanel && "gap-2", (cardsBelow === "fit" || cardsBelow === "narrow") && "@container/table")}
     >
       {loading ? (
         <>
@@ -216,7 +227,11 @@ export function Table({
               </div>
             </>
           )}
-          {count && <SkeletonLine className="text-caption" width="w-1/5" />}
+          {count && (
+            <div data-count-row>
+              <SkeletonLine className="text-caption" width="w-1/5" />
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -224,7 +239,7 @@ export function Table({
           {count && (
             // The count, and the cards' note as its own element at the row's end, which wraps to a line
             // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
+            <div data-count-row className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
               <p id={countId} data-numbers data-page-lead={countLead || undefined} tabIndex={countLead ? -1 : undefined} className="focus:outline-none">
                 {busy ?? countText(count)}
               </p>
@@ -247,13 +262,14 @@ export function Table({
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
         data-table-view="table"
-        className={cx("hidden overflow-x-auto rounded-md border border-line bg-surface", SHOW[cardsBelow].table)}
+        className={cx("hidden overflow-x-auto bg-surface", !inPanel && "rounded-md border border-line", SHOW[cardsBelow].table)}
       >
         <table
           aria-labelledby={loading ? undefined : titleId}
           aria-describedby={count && !loading ? countId : undefined}
-          // A narrow table shows only from a 30rem frame, so it keeps no wider minimum that would scroll sideways.
-          className={cx("w-full table-fixed border-collapse text-small", cardsBelow === "narrow" ? "min-w-[30rem]" : "min-w-[40rem]")}
+          // A narrow table shows only from a 30rem frame, and a list's from a 34rem page area, so each keeps no wider
+          // minimum that would scroll sideways.
+          className={cx("w-full table-fixed border-collapse text-small", cardsBelow === "narrow" || cardsBelow === "list" ? "min-w-[30rem]" : "min-w-[40rem]")}
         >
           <thead className="bg-surface-2">
             <tr>
@@ -312,10 +328,10 @@ export function Table({
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
         data-table-view="cards"
-        className={cx("flex flex-col gap-3", SHOW[cardsBelow].cards)}
+        className={cx("flex flex-col", !inPanel && "gap-3", SHOW[cardsBelow].cards)}
       >
         {skeletonRows.map((index) => (
-          <li key={index} className="rounded-md border border-line bg-surface p-4">
+          <li key={index} className={inPanel ? "border-t border-line py-4" : "rounded-md border border-line bg-surface p-4"}>
             {skeletonHeader ? <div className="text-small">{skeletonHeader}</div> : <SkeletonLine className="text-small" width="w-3/5" />}
             <dl className={cx("mt-2", CARD_FIELDS)}>
               {fields.map((column) => (
@@ -333,7 +349,7 @@ export function Table({
           <li
             key={row.id}
             data-selected={row.id === selected || undefined}
-            className={cx("rounded-md border border-line p-4", row.id === selected ? "bg-tint" : "bg-surface")}
+            className={cx(inPanel ? "border-t border-line py-4" : "rounded-md border border-line p-4", row.id === selected ? "bg-tint" : "bg-surface")}
           >
             {createElement(cardHeading, { className: "text-small font-semibold wrap-break-word text-ink-heading" }, row.cells[rowHeader])}
             <dl className={cx("mt-2", CARD_FIELDS)} data-numbers>

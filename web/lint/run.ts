@@ -26,7 +26,7 @@ import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { causalChecker, copyChecker, whatIfChecker } from "./copy.ts";
 import { CAUSAL_SCOPES, UPPERCASE_ONLY_WITH, WHAT_IF_SAYS, WHAT_IF_SCOPES } from "./rules.ts";
-import { copyStrings, lineOf, literalText, offTokenClasses, retiredClasses, scopedRanges, termLiterals } from "./source.ts";
+import { copyStrings, lineOf, literalText, offTokenClasses, rawHoverClasses, retiredClasses, scopedRanges, termLiterals } from "./source.ts";
 import { staleServerCopies } from "./server-copy.ts";
 import { definitions } from "../src/lib/definitions.ts";
 
@@ -160,6 +160,13 @@ function main(): number {
           ? `${where} sets capitals outside a chart label. Write the words in sentence case, or use "uppercase" ` +
               `with "${UPPERCASE_ONLY_WITH}" on a chart's lane or legend label (DESIGN.md section 3).`
           : `${where} is retired. Use "${found.where}" (DESIGN.md sections 3 and 4).`,
+      );
+    }
+    // Ticket 99: a hover inside an arbitrary variant keeps to a pointer that can hover, as the hover: variant does.
+    for (const found of rawHoverClasses(source, file)) {
+      problems.push(
+        `${at(file, lineOf(source, found.offset))}: the class "${found.text}" hovers outside the pointer's media query. ` +
+          `Put "can-hover:" in front of it, so a tap on a phone leaves nothing behind (DESIGN.md section 4, Motion).`,
       );
     }
   }

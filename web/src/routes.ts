@@ -52,10 +52,9 @@ export function litSection(match: Match, sections: readonly string[] | null): Se
 // each ticket that moves a page onto the workspace adds its key here.
 export const ANSWER_IN_PAGE: ReadonlySet<PageKey> = new Set<PageKey>(["home"]);
 
-// A project page's tabs, in the copy file's order (copy.projectPage.tab), and the ones built so far.
-// Ticket 23 added "timeline" and ticket 22 "connections", and the tab row shows each built tab.
-export type ProjectTab = "summary" | "procurement" | "timeline" | "documents" | "connections";
-export const BUILT_TABS: ProjectTab[] = ["summary", "procurement", "timeline", "documents", "connections"];
+// A project page's tabs. Their order lives in one place, the copy file (copy.projectPage.tab), which the tab row reads
+// (ticket 99); here each tab has its address. Ticket 23 added "timeline" and ticket 22 "connections".
+export type ProjectTab = keyof typeof copy.projectPage.tab;
 export const TAB_PATH: Record<ProjectTab, string> = {
   summary: "",
   procurement: "/procurement",
@@ -169,7 +168,7 @@ export function matchRoute(pathname: string): Match {
   if (!PROJECT_ID.test(second)) return page("notAProject");
   const pid = second.toUpperCase();
   let match: Match;
-  const tab = parts.length === 2 ? "summary" : parts.length === 3 ? BUILT_TABS.find((key) => key === third) : undefined;
+  const tab = parts.length === 2 ? "summary" : parts.length === 3 && Object.hasOwn(TAB_PATH, third) ? third : undefined;
   if (tab) {
     match = { ...page("project", "projects", { pid, tab }), frame: `project:${pid}` };
     if (tab === "summary" && parts.length === 3) match.canonical = `/projects/${pid}`;

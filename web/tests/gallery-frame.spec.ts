@@ -88,6 +88,13 @@ test("a section's own pages show under it only while it is current, and a view l
   await page.goto("/gallery/navigation?sub=1&sidebar=rail");
   await expect(subs).toHaveCount(2);
   await expect(subs.first()).toBeHidden();
+  // The rail hides the sub-item that carries the mark, so Projects carries the tint and the bar itself (ticket 99;
+  // DESIGN.md section 2's one current mark, never color alone).
+  const mark = await page.locator("[data-nav-item=projects]").evaluate((link) => {
+    const bar = getComputedStyle(link, "::before");
+    return { fill: getComputedStyle(link).backgroundColor, bar: [bar.width, bar.backgroundColor] };
+  });
+  expect(mark).toEqual({ fill: TINT, bar: ["3px", PRIMARY] });
 });
 
 test("below 360 px the Menu button hides its word from sight and keeps its name, 44 by 44 px", async ({ page }) => {

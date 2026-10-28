@@ -65,7 +65,8 @@ export function TaskZone({
   // sentence in the DOM, and the tag moves under the name.
   corner?: ReactNode;
   headingRef?: Ref<HTMLHeadingElement>;
-  // The h2's id when an address or another page names it, such as Start here's "start-here" (ticket 98).
+  // The h2's id when an address or another page names it, such as Start here's "start-here" (ticket 98), or when a
+  // part inside the zone is named by it too, such as a list's table (Table's labelledBy; ticket 99).
   headingId?: string;
   // A short line right after the name, in caption ink-muted, which the zone's name includes, such as Start here's
   // "2 of 6 done" (ticket 114; ticket 98).

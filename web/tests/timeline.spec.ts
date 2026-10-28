@@ -179,6 +179,18 @@ test("P130164's timeline places each report, event and record at its date, names
   expect(unrecorded).toEqual([]);
 });
 
+// Ticket 99 (from ticket 91's verify): each lane label's box, which keeps a disagreement chip off the label, is measured
+// as the label draws, in the chart label's 12 px and its +0.02em tracking, not in the chart's small size.
+test("each lane label's box is the width the label draws, at the chart label's size and tracking", async ({ page }) => {
+  await open(page, "/projects/P130164/timeline");
+  const labels = page.locator("[data-chart-drawing] [data-lane] > text[data-label-width]");
+  await expect(labels).toHaveCount(3);
+  for (const label of await labels.all()) {
+    const [drawn, measured] = await label.evaluate((text) => [(text as SVGTextElement).getBBox().width, Number(text.getAttribute("data-label-width"))]);
+    expect(Math.abs(drawn - measured), await label.textContent() ?? "").toBeLessThanOrEqual(0.5);
+  }
+});
+
 test("config/project_page.toml's disagreement_line_state sets the dashed lines' state when no answer depends on them", async ({ page }) => {
   // The server's answer with the setting switched to warning, as the ticket's text first had it.
   const warning = (await recorded("timeline-p130164.json")).replace('"disagreement_line_state": "info"', '"disagreement_line_state": "warning"');
