@@ -37,3 +37,4 @@ Read first: the user's words and `rationale.md` (What each tab is for, Lessons);
   - Decisions parked for the user: none. The review, the design note, the critique and the verify each list none, and the builder's report named none to me.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - Unblocks nothing: no ticket lists 114 under Blocked by.
+- October 28, 2026, orchestrator (04:12 PDT): the App redeploy ran from 4484310a (the catch-up block "Tickets 112, 113, 114 and 115, the App redeploy ran"); the strip and the sidebar item are the owner's check by eye.
