@@ -1,11 +1,15 @@
-// The trail above a project's pages (the 10 brief): "Projects > Water and Sanitation Development
-// Project (P156634) > Procurement > Plan of Oct 9, 2026", in caption type. Each step but the last is a
-// link; the last is the page you are on. Each step's words sit in one span, so a flex link reads
-// "Water and Sanitation Development Project (P156634)" as one name. Below 768 px the whole trail would take three lines, so
-// only its parent shows, as a link back with a chevron. The chevrons are hidden from screen readers.
+// The breadcrumb (DESIGN.md section 5, Page head; the 10 brief; ticket 95): the trail above a page, such as "Projects >
+// Water and Sanitation Development Project (P156634) > Procurement", in caption type. Each step but the last is a
+// link; the last is the page you are on, unless the trail lists parents only, as the page head's does, so an object's
+// ID shows once in the head. Each link sits in a 24 px line box. Each step's words sit in one span, so a flex link
+// reads "Water and Sanitation Development Project (P156634)" as one name, and a step too long for the line wraps inside
+// itself and is never cut. The chevron after a step stays on that step's line, so a wrapped trail never starts a line
+// with a chevron. Below 768 px the whole trail would take three lines, so only its parent shows, as a link back with a
+// chevron, which wraps the same way. The chevrons are hidden from screen readers.
 import type { ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { copy } from "../copy";
+import { cx } from "../lib/cx";
 import { TextLink } from "./TextLink";
 
 export type Crumb = { text: ReactNode; href?: string };
@@ -23,24 +27,24 @@ export function Breadcrumb({ trail, back, held = false }: {
   const parent = back ?? [...trail].reverse().find((crumb) => crumb.href);
   return (
     <nav aria-label={copy.breadcrumb.label} data-breadcrumb className="text-caption text-ink-muted">
-      <ol className={held ? "hidden flex-wrap items-center gap-x-2 @md/page:flex @xl/frame:flex" : "hidden flex-wrap items-center gap-x-2 @md/page:flex"}>
+      <ol className={cx("hidden flex-wrap items-center gap-x-2 @md/page:flex", held && "@xl/frame:flex")}>
         {trail.map((crumb, index) => (
           <li key={index} className="flex min-w-0 items-center gap-2">
-            {index > 0 && <ChevronRight aria-hidden="true" className="size-4 shrink-0 text-line-strong" />}
             {crumb.href ? (
-              <TextLink href={crumb.href} className="inline-flex min-h-6 items-center">
+              <TextLink href={crumb.href} className="inline-flex min-h-6 min-w-0 items-center">
                 <span>{crumb.text}</span>
               </TextLink>
             ) : (
-              <span aria-current="page" className="inline-flex min-h-6 items-center text-ink">
+              <span aria-current="page" className="inline-flex min-h-6 min-w-0 items-center text-ink">
                 <span>{crumb.text}</span>
               </span>
             )}
+            {index < trail.length - 1 && <ChevronRight aria-hidden="true" data-crumb-chevron className="size-4 shrink-0 text-line-strong" />}
           </li>
         ))}
       </ol>
       {parent?.href && (
-        <p className={held ? "@md/page:hidden @xl/frame:hidden" : "@md/page:hidden"}>
+        <p className={cx("@md/page:hidden", held && "@xl/frame:hidden")}>
           <TextLink href={parent.href} className="inline-flex min-h-6 items-center gap-1">
             <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
             <span>{parent.text}</span>

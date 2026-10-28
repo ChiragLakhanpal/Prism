@@ -124,7 +124,7 @@ export function CheckMyPlanPage({ search }: { search: string }) {
     <div className="layout-grid" data-check-my-plan-page={load.status}>
       <div className="col-span-12 @xl/page:col-span-7">
         <Breadcrumb trail={crumbs} />
-        <div className="mt-4">{header}</div>
+        <div className="mt-2">{header}</div>
         {body}
       </div>
     </div>

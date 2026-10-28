@@ -325,9 +325,10 @@ export function offTokenClasses(source: string, file: string): Found[] {
 }
 
 // The classes the shell redesign retired (ticket 90; DESIGN.md section 3): `uppercase` in a class string that does not
-// also set the chart label's step, and the old title and box classes. `keeps` names those the file may still use, from
-// FROZEN_CLASS_USES. Each found class is reported with what to use instead in `where`.
-export function retiredClasses(source: string, file: string, keeps: readonly string[] = []): Found[] {
+// also set the chart label's step, and the old title and box classes, in every file: the frozen list that exempted the
+// files the shell tickets rewrote went with the last of them (ticket 95). Each found class is reported with what to
+// use instead in `where`.
+export function retiredClasses(source: string, file: string): Found[] {
   const found: Found[] = [];
   walk(parse(source, file), (node) => {
     const text = isString(node)
@@ -340,7 +341,6 @@ export function retiredClasses(source: string, file: string, keeps: readonly str
     const chartLabel = names.some((name) => utility(name) === UPPERCASE_ONLY_WITH);
     for (const name of names) {
       const used = utility(name);
-      if (keeps.includes(used)) continue;
       if (used === "uppercase" && !chartLabel) found.push({ offset: node.start, text: name, where: UPPERCASE_ONLY_WITH });
       if (used in RETIRED_CLASSES) found.push({ offset: node.start, text: name, where: RETIRED_CLASSES[used] });
     }
@@ -351,11 +351,4 @@ export function retiredClasses(source: string, file: string, keeps: readonly str
 // A class name without its variants or its important mark: "md:!uppercase" is "uppercase".
 function utility(name: string): string {
   return name.slice(name.lastIndexOf(":") + 1).replace(/^!/, "");
-}
-
-// The classes FROZEN_CLASS_USES lets a file keep that it no longer uses (ticket 91). Each one comes off the list when
-// its file is fixed, so the list empties as the shell tickets rewrite their files, and then it goes.
-export function unusedKeeps(source: string, file: string, keeps: readonly string[] = []): string[] {
-  const used = new Set(retiredClasses(source, file).map((found) => utility(found.text)));
-  return keeps.filter((name) => !used.has(name));
 }

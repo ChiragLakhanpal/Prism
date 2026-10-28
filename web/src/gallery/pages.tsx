@@ -99,6 +99,7 @@ import { risksPage } from "./risks";
 import { rebiddingPage } from "./rebidding";
 import { criteriaPage } from "./criteria";
 import { stepsPage } from "./steps";
+import { LoadingZone, zonesPage } from "./zones";
 
 // ── The package workspace's samples (ticket 12) ──────────────────────────
 // Made-up comparables in find_comparables' shape, built from the gallery copy's months so that every
@@ -249,6 +250,11 @@ export type GalleryPage = {
   // them all here too, so the gallery shows it as it ships.
   wide?: boolean;
   sections: { id: string; title: string; body: ReactNode }[];
+  // The evidence drawer the page's samples open beside the page, in the frame's place for it (ticket 95).
+  aside?: ReactNode;
+  // Samples drawn as a whole page, with no gallery title or list, at /gallery/{slug}?sample={name}, such as the
+  // workspace sample (ticket 95), so they lay out exactly as a page does under the bar.
+  samples?: Record<string, ReactNode>;
 };
 
 function Inline({ children }: { children: ReactNode }) {
@@ -680,6 +686,7 @@ export const PAGES: GalleryPage[] = [
       { id: "type-scale", title: t.typeScale, body: <TypeScale /> },
     ],
   },
+  zonesPage(),
   {
     slug: "buttons",
     sections: [
@@ -1333,6 +1340,8 @@ export const PAGES: GalleryPage[] = [
           </Panel>
         ),
       },
+      // Ticket 95: a Task zone loads with its real header over bars sized to the summary they stand for.
+      { id: "zone", title: galleryCopy.zones.labels.skeleton, body: <LoadingZone /> },
     ],
   },
   {

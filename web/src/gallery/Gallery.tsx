@@ -18,6 +18,7 @@ import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { galleryCopy } from "./copy";
 import { PAGES, type GalleryPage } from "./pages";
+import { useZonesSheet } from "./zones";
 
 // The World Bank logo, the official file the app shows (web/src/assets/world-bank-logo.md).
 export function LogoSlot() {
@@ -75,6 +76,8 @@ export function GalleryFrame({
   rest,
   subs = false,
   scope,
+  aside,
+  inertPage,
   children,
 }: {
   current?: Section;
@@ -88,6 +91,9 @@ export function GalleryFrame({
   subs?: boolean;
   // A package's scope chip in the box (?scope=).
   scope?: string;
+  // The evidence drawer a page's samples open beside the page (ticket 95), and whether it is a modal sheet now.
+  aside?: ReactNode;
+  inertPage?: boolean;
   children: ReactNode;
 }) {
   const date = formatDate(galleryCopy.sampleDate, { style: "short", today: galleryCopy.sampleDate });
@@ -96,6 +102,8 @@ export function GalleryFrame({
   return (
     <Frame
       menuOpen={menuOpen}
+      aside={aside}
+      inertPage={inertPage}
       nav={<TopNav logo={<LogoSlot />} viewer={viewer} viewOpen={viewOpen} mode={mode} />}
       box={<Box scope={scope} />}
       sidebar={
@@ -214,13 +222,18 @@ function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; vie
 export function Gallery({ path, search = "" }: { path: string; search?: string }) {
   const slug = path.replace(/^\/gallery\/?/, "").replace(/\/$/, "");
   const page = PAGES.find((candidate) => candidate.slug === slug);
+  // ?sample= draws one of the page's whole-page samples in place of the gallery's title and list (ticket 95).
+  const sample = page?.samples?.[new URLSearchParams(search).get("sample") ?? ""];
+  const sheet = useZonesSheet();
   return (
     <div data-gallery-root>
-      <GalleryFrame current={page?.current} {...frameState(search)}>
-        <div className="layout layout-grid gap-y-8 pt-10">
-          {page ? <Page page={page} /> : <Index />}
-          <ComponentList active={page?.slug} wide={page?.wide} />
-        </div>
+      <GalleryFrame current={page?.current} {...frameState(search)} aside={page?.aside} inertPage={sheet}>
+        {sample ?? (
+          <div className="layout layout-grid gap-y-8 pt-10">
+            {page ? <Page page={page} /> : <Index />}
+            <ComponentList active={page?.slug} wide={page?.wide} />
+          </div>
+        )}
       </GalleryFrame>
     </div>
   );

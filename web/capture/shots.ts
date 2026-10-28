@@ -1758,6 +1758,34 @@ const CHECK_SHOTS: Shot[] = [
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
 
+// Ticket 95's zone parts (/gallery/zones). An action photographs the window around its element, so each state's shot
+// brings its zone into view first.
+const inView = (selector: string) => async (page: Page) => {
+  await page.locator(selector).first().evaluate((el) => el.scrollIntoView({ block: "center" }));
+  await page.waitForTimeout(250);
+};
+const ZONES = "/gallery/zones";
+const WORKSPACE = `${ZONES}?sample=workspace`;
+const ZONE_STATES = ["open", "closed", "loading", "error", "empty"] as const;
+const ZONE_SHOTS: Shot[] = [
+  ...ZONE_STATES.map((state) => ({
+    name: `zones--state-${state}`,
+    path: ZONES,
+    widths: state === "open" || state === "closed" ? WIDTHS : [1440, 390],
+    act: inView(`[data-section=state-${state}]`),
+  })),
+  { name: "zones--opened-row", path: ZONES, act: click("[data-section=steps] [data-section-toggle]") },
+  { name: "zones--failed-block", path: ZONES, act: inView("[data-state-section=failed] [data-zone]") },
+  { name: "zones--tag-under", path: ZONES, act: inView("[data-section=start-here]") },
+  { name: "zones--side-panel", path: ZONES, act: inView("[data-state-section=side]") },
+  { name: "zones--focus-toggle", path: ZONES, act: focus("[data-section=steps] [data-section-toggle]") },
+  { name: "zones--hover-toggle", path: ZONES, widths: WIDE, act: hover("[data-section=steps] [data-section-toggle]") },
+  { name: "zones--workspace-open", path: `${WORKSPACE}&sidebar=open`, widths: [1440, 1200] },
+  { name: "zones--workspace-rail", path: `${WORKSPACE}&sidebar=rail`, widths: [1280, 1024, 390] },
+  { name: "zones--workspace-drawer-open", path: `${WORKSPACE}&sidebar=open&drawer=open`, widths: [1440] },
+  { name: "zones--workspace-drawer-rail", path: `${WORKSPACE}&sidebar=rail&drawer=open`, widths: [1280] },
+];
+
 // Ticket 32: the evidence drawer's feedback row, opened from the showcase answer's first marker, in the states the 32
 // brief's section 12 lists, and Lessons > Passage reports and Lessons > Judging. The answers are the server's own,
 // recorded on the fixture by tests/record_retrieval_api.py. Each page is served with the frame's counts from the
@@ -1906,6 +1934,11 @@ export const SHOTS: Shot[] = [
   { name: "navigation--hover-stamp", path: "/gallery/navigation?sidebar=open", widths: WIDE, act: hover("[data-sidebar] [data-stamp] a") },
   { name: "navigation--long-chip", path: "/gallery/navigation?scope=KE-UASIN%20GISHU%20COUNTY-571338-CW-RFB", widths: [390] },
   { name: "navigation--320", path: "/gallery/navigation?menu=open", widths: [320] },
+
+  // Ticket 95: the Task zone in each state, at 1440 and 390 px, and open and closed at 1024 px too; a row opened in
+  // place; the Show button's focus and hover; and the workspace sample, closed and beside the drawer, at 1440 px with
+  // the sidebar open and 1280 px as a rail, and as one column at 1200 px open, 1024 px as a rail and 390 px.
+  ...ZONE_SHOTS,
 
   // Buttons, links and tabs.
   // The variants' own buttons: the frame's view popover holds a secondary button too, out of sight until it opens.

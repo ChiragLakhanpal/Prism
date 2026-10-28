@@ -10,7 +10,7 @@
 //   Anyone who is not a lesson reviewer gets the no-access card (the route answers 403 not_a_reviewer).
 //
 // Every Lessons page keeps to columns 1 to 7 from a 1200 px window, so the evidence drawer opens into the
-// free space and the column never moves (DESIGN.md section 4, Document column).
+// free space and the column never moves (DESIGN.md section 4, Page layouts, Workspace).
 import { useEffect, useState, type ReactNode } from "react";
 import { EmptyState } from "../components/Card";
 import { Fill, Joined } from "../components/Fill";

@@ -216,12 +216,12 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
   ];
   const heading = data?.activity.description ? data.activity.description : fill(words.titleFallback, { stepRef });
 
-  // The column keeps its place and width when the drawer opens from 1200 px (DESIGN.md section 4, Document column).
+  // The column keeps its place and width when the drawer opens from 1200 px (DESIGN.md section 4, Page layouts, Workspace).
   return (
     <DocumentColumn>
       <div data-activity-page={notFound ? "not-found" : load.status}>
         <Breadcrumb trail={trail} />
-        <h1 ref={title} tabIndex={-1} className="mt-4 text-h1 wrap-break-word text-ink-heading focus:outline-none">
+        <h1 ref={title} tabIndex={-1} className="mt-2 text-h1 wrap-break-word text-ink-heading focus:outline-none">
           {notFound || load.status !== "ready" ? (
             <Fill template={words.titleFallback} slots={{ stepRef: <span className="font-mono font-medium wrap-anywhere">{stepRef}</span> }} />
           ) : (
