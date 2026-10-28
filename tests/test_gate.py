@@ -797,7 +797,7 @@ def test_a_lane_that_is_not_a_quoted_name_stops_the_gate_with_a_plain_message(re
     done = subprocess.run([".githooks/pre-commit"], cwd=repo, capture_output=True, text=True, env=clean_env())
 
     assert done.returncode != 0
-    assert 'The lane of the step "Build" in gates/steps.toml must be a name in quotes, such as lane = "python".' \
+    assert 'The lane of the step "Build" in gates/steps.toml must be a name in quotes, such as lane = "python-1".' \
         in done.stdout + done.stderr
 
 
@@ -950,7 +950,7 @@ def folders_in_testpaths():
 
 
 # The pytest options the steps file uses that take a value, so a value is never read as a tested path.
-OPTIONS_WITH_A_VALUE = ("-n", "--numprocesses", "--dist", "--basetemp")
+OPTIONS_WITH_A_VALUE = ("-n", "--numprocesses", "--dist", "--basetemp", "--shard")
 
 
 def pytest_args(step):
@@ -1207,7 +1207,7 @@ def test_the_gate_makes_no_scratch_folder_when_no_step_names_it(repo):
 
 # Edits to the steps file that the two checks above must catch: each adds a second pytest step,
 # in a new lane named web, that runs tests a step in another lane already runs and that may read the
-# fixture database while the python lane is still building it.
+# fixture database while a python lane is still building it.
 SECOND_PYTEST_STEPS = {
     "every folder in testpaths": [],
     "a folder inside tests": ["tests/ground_truth"],
@@ -1241,7 +1241,7 @@ def workers(step):
 
 
 def test_the_python_tests_that_read_the_fixture_database_run_on_pytest_xdist_workers():
-    """Every ticket adds tests under tests/, so the python lane must stay well inside the gate's limit."""
+    """Every ticket adds tests under tests/, so the python lanes must stay well inside the gate's limit."""
     readers = [step for step in gate_steps() if reads_the_fixture_database(step)]
 
     assert readers and all(workers(step) > 1 for step in readers), [step["run"] for step in readers]
@@ -1414,6 +1414,14 @@ def test_a_bad_edit_to_the_python_lanes_fails_its_check(bad, check):
     assert check(bad(gate_steps())) != []
 
 
+def test_a_shard_written_as_two_words_counts_as_that_shard_and_never_as_a_tested_path():
+    step = {"run": ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-2", "--shard", "2/2", "tests",
+                    "ops/bundle/tests"], "lane": "python-2"}
+
+    assert shard(step) == (2, 2)
+    assert pytest_targets(step) == ["tests", "ops/bundle/tests"]
+
+
 # The web lanes. Each builds the app and the gallery into a folder of its own under web/, which
 # STRATA_WEB_OUT names (web/out-dirs.ts; web/dist when it is unset), and runs its share of the
 # Playwright tests against that build, so no lane serves files that another lane is rebuilding.
@@ -1433,11 +1441,18 @@ def web_folder(step):
 
 
 def shard(step):
-    """The share of the Playwright tests a step runs, as (current, total); (1, 1) is every test."""
-    for arg in step["run"]:
+    """The share of the tests a Playwright or pytest step runs, as (current, total); (1, 1) is every test. It reads
+    both --shard=K/N and --shard K/N, since the root conftest.py and Playwright accept both."""
+    run = step["run"]
+    for i, arg in enumerate(run):
         if arg.startswith("--shard="):
-            current, total = arg.removeprefix("--shard=").split("/")
-            return int(current), int(total)
+            value = arg.removeprefix("--shard=")
+        elif arg == "--shard" and i + 1 < len(run):
+            value = run[i + 1]
+        else:
+            continue
+        current, total = value.split("/")
+        return int(current), int(total)
     return 1, 1
 
 

@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-LEFT_OUT = pytest.StashKey[frozenset]()  # the test files the other shards run
+OTHER_SHARDS = pytest.StashKey[frozenset]()  # the test files the other shards run
 
 LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", None, ""}
 
@@ -76,7 +76,7 @@ def shard_of(value):
     return current, total
 
 
-def test_files(config):
+def files_to_shard(config):
     """Every file under the paths pytest was given whose name pytest's python_files patterns match, sorted by its
     path from the root. It skips the folders pytest skips: hidden ones, __pycache__ and those norecursedirs names."""
     patterns, skipped = config.getini("python_files"), config.getini("norecursedirs")
@@ -99,13 +99,13 @@ def pytest_configure(config):
     if config.getoption("shard") is None:
         return
     current, total = shard_of(config.getoption("shard"))
-    files = test_files(config)
+    files = files_to_shard(config)
     start, end = (current - 1) * len(files) // total, current * len(files) // total
-    config.stash[LEFT_OUT] = frozenset(files[:start] + files[end:])
+    config.stash[OTHER_SHARDS] = frozenset(files[:start] + files[end:])
 
 
 def pytest_ignore_collect(collection_path, config):
     """Leave out the test files another shard runs."""
-    if collection_path in config.stash.get(LEFT_OUT, ()):
+    if collection_path in config.stash.get(OTHER_SHARDS, ()):
         return True
     return None

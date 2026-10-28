@@ -152,7 +152,10 @@ def test_two_builds_started_together_build_the_database_once(tmp_path):
     tree = make_tree(tmp_path)
     started = [subprocess.Popen([sys.executable, "gates/build_fixture.py", "1"], cwd=tree, stdout=subprocess.PIPE,
                                 stderr=subprocess.STDOUT, text=True) for _ in range(2)]
-    outputs = [process.communicate(timeout=60)[0] for process in started]
+    try:
+        outputs = [process.communicate(timeout=60)[0] for process in started]
+    finally:  # A build the timeout left running must not outlive the test.
+        [process.kill() for process in started if process.poll() is None]
 
     assert [process.returncode for process in started] == [0, 0], outputs
     assert builds(tree) == 1
