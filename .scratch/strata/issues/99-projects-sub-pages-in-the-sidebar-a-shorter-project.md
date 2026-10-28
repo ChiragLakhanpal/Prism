@@ -53,3 +53,4 @@ Read first: the prototype's All projects at 1440, 1024 and 390 px, with the Data
   - Unblocks: ticket 102 (Lessons: the digest leads), whose only blocker was 99, and ticket 104 (Data readiness by the page area), whose other blocker, 97, is done. Both stay `ready` for the orchestrator to dispatch, since neither is one of this wave's tickets.
 
 ---
+- October 28, 2026, orchestrator (15:25 PDT): the App redeploy ran from 7f42374f (the catch-up block "Tickets 96, 97, 98 and 99, the App redeploy ran"); the page's check by eye is the owner's.

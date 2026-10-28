@@ -44,3 +44,4 @@ Read first: the prototype's package page (hover "49", then "2", then "1.5"; focu
   - Unblocks: none yet. Ticket 101 waits on 96 and on 100, which is still ready.
 
 ---
+- October 28, 2026, orchestrator (15:25 PDT): the App redeploy ran from 7f42374f (the catch-up block "Tickets 96, 97, 98 and 99, the App redeploy ran"); the page's check by eye is the owner's.
