@@ -380,6 +380,8 @@ export const galleryCopy = {
     cardRecord: "Evidence card, for a record",
     record: "A record",
     recordIsrRating: "A record: an ISR rating as the passage reader read it, which a Summary cites when no passage prints it",
+    // Ticket 100: what a plan check row's reference opens in the drawer.
+    planRowCheck: "A plan check row's records: the reason, what I checked, the plan row, its source and its links",
     unknown: "An ID no source has",
     unknownAsOf: "An ID no source has as of the address's date",
     drawerPreview: "In a preview",

@@ -1114,6 +1114,10 @@ export const copy = {
     // "Open the activity" on a notice, award notice, contract or plan row whose activity Strata holds (ticket 22).
     openActivity: "Open the activity",
     openActivityFor: (ref: string) => ` ${ref}`,
+    // The one caption sentence under a plan check row's reference in the drawer's head, saying what the records are
+    // (ticket 100; DESIGN.md section 5, Evidence drawer: placement, head and motion).
+    // The date keeps to one line (ticket 100's design review, item 6).
+    planRowCaption: "Activity in the {agency} plan of {date}",
     // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
     // project ID or loan number follows in Roboto Mono.
     summaryRecordKinds: {
@@ -1594,6 +1598,8 @@ export const copy = {
   breadcrumb: {
     label: "Breadcrumb",
     projects: "Projects",
+    // The plan check's breadcrumb starts at Packages, the section it belongs to (ticket 100).
+    packages: "Packages",
     project: "{name} ({pid})",
     // While the project's name loads, or when it could not load.
     projectId: "Project {pid}",
@@ -2551,13 +2557,50 @@ export const copy = {
       same: "This version lists the same activities as the plan of {prev_date}, with no planned date moved and no estimate changed.",
       earliest: "This is the earliest plan I have from this agency, so I have no earlier version to compare it with.",
       prevUnread: "I haven't read the plan of {prev_date}, the version before this one, so I can't say what changed.",
+      // "What changed" is a closed row under the activities (ticket 100), and these open and close it in place.
+      show: "Show the changes",
+      hide: "Hide the changes",
     },
+    // The panel that holds the activities' table (ticket 100; DESIGN.md section 5, Plan check table).
+    activitiesTitle: "Activities in this plan",
     countLine: (shown: string, total: string) => `Showing ${shown} of ${total} activities`,
     noun: "activities",
     caption: (agency: string, date: string) => `Activities in the ${agency} plan of ${date}, marked activities first`,
+    // A row's reference opens the row's records in the evidence drawer (ticket 100). The button's name is the reference
+    // it shows, so a card's heading still reads "Needs a look KE-NWWDA-541055-CW-RFB"; aria-haspopup says it opens.
+    closeRecords: "Close the records",
+    // The records' two headings: the values each reason rests on, then the plan row as STEP gives it.
+    rowChecked: "What I checked",
+    rowPlan: "From the plan row",
+    // What I checked: each value a reason rests on, under its own name, as check_plan returned it.
+    // Only the labels a check adds; a STEP field keeps its one label in evidence.summaryRecordFields (CLAUDE.md
+    // rule 4; ticket 100's review, F4).
+    checkedFields: {
+      planned_signing_on: "Planned signing",
+      // The plan a planned date came from: the first published plan that listed the activity, or your upload when no
+      // published plan lists it (check_plan's measured_from; ticket 100's review, F3).
+      planned_signing_plan_date: "In the plan of",
+      planned_completion_plan_date: "In the plan of",
+      signed_on: "Contract signed",
+      days_late: "Days late",
+      closing_date: "Project closing date",
+      days_to_close: "Days to the closing date",
+      as_of: "Checked as of",
+      ratio: "Actual divided by estimated",
+      reference_method_code: "Reference ends in",
+      step: "Step with no date",
+    } as Record<string, string>,
+    // "In the plan of" when the date is your upload's own, since no published plan lists the activity.
+    yourUploadOf: "your upload of {date}",
+    // A value the plan row does not give, such as no signed contract.
+    notInRow: "Not in the plan row",
+    ratioAbout: "about {ratio}",
+    // The closing date with the project record it came from.
+    closingFrom: "{date}, from the projects API record of {record}",
     columns: {
       activity: "Activity",
-      method: "Method · market approach",
+      // Ticket 100: the column head in words, with no middle dot (DESIGN.md section 5, Plan check table).
+      method: "Method and market approach",
       review: "Review",
       estimated: "Estimated (US$)",
       status: "Process status",
@@ -2629,9 +2672,9 @@ export const copy = {
       counted: "The activities I counted: {refs}",
       // The finding's count words, by the mark each counts.
       countedBy: {
-        needs_a_look: "The activities that need a look: {refs}",
-        watch: "The activities worth watching: {refs}",
-        data_note: "The activities with data notes: {refs}",
+        needs_a_look: { one: "The activity that needs a look: {refs}", many: "The activities that need a look: {refs}" },
+        watch: { one: "The activity worth watching: {refs}", many: "The activities worth watching: {refs}" },
+        data_note: { one: "The activity with a data note: {refs}", many: "The activities with data notes: {refs}" },
       },
       countedEnd: ".",
     },
@@ -2703,7 +2746,6 @@ export const copy = {
       button: (count: number, countText: string) => (count === 1 ? "Draft review notes (1 row)" : `Draft review notes (${countText} rows)`),
       feedforward: "The draft waits in Drafts for you to check. I send nothing.",
       description: "I write one note for each activity that needs a look or is worth watching.",
-      none: "No activity needs a look or is worth watching, so I have no review notes to draft.",
       asof: "I draft review notes only from today's check, not from a past date.",
       existingYou: (date: string) => `You started review notes on this plan on ${date}.`,
       existingTeammate: (author: string, date: string) => `${author} started review notes on this plan on ${date}.`,
@@ -5310,7 +5352,8 @@ export const copy = {
       country: "Country",
       project: "Project",
       lastWorked: "Last worked on",
-      lastWorkedNote: "When you last saved the package or opened the plan check",
+      // Its definition, in a window from the column head (ticket 100).
+      lastWorkedDefinition: "When you last saved the package or opened the plan check.",
     },
     noReference: "No STEP reference yet.",
     planName: (agency: string, date: string) => `${agency}, plan of ${date}`,
@@ -9003,6 +9046,10 @@ export const copy = {
       list: "Select to list them.",
       listOne: "Select to list it.",
       measure: "Select to see how I measured it.",
+      // Rows: the plan check's finding marks the rows a count word counts in the table below it (ticket 100).
+      // "below", since below a frame of 34rem the rows are cards (ticket 100's design review, item 14).
+      mark: "Select to mark them below.",
+      markOne: "Select to mark it below.",
     },
   },
 } as const;

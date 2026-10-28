@@ -818,6 +818,8 @@ test("See what changed lands on the change list when the comparison answers befo
     await checkLate(page);
     await page.locator("[data-agency=northern-water-works-development-agency] [data-changes-sentence]").getByRole("link", { name: "See what changed" }).click();
     await expect(heading).toBeFocused();
+    // Ticket 100: the link opens the closed row in place.
+    await expect(page.locator("[data-changes] [data-change-kind]")).toHaveCount(1);
     expect(await heading.evaluate((el) => Math.round(el.getBoundingClientRect().top)), `the heading is in view at ${width} px`).toBeLessThan(450);
   }
 
@@ -892,6 +894,18 @@ test("the NWWDA plan of October 9, 2026 lists what changed since the plan of Mar
   const changes = page.locator("[data-changes]");
   await expect(changes.getByRole("heading", { level: 2 })).toHaveText("What changed since the plan of March 5, 2026");
   await expect(changes).toContainText("This version re-estimated two activities. No activity was added, dropped or re-dated.");
+  // Ticket 100: "What changed" is a closed row with its sentence; Show the changes opens it in place, focus kept.
+  const show = changes.getByRole("button", { name: "Show the changes" });
+  await expect(show).toHaveAttribute("aria-expanded", "false");
+  await expect(changes.locator("[data-change-kind]")).toHaveCount(0);
+  await show.click();
+  await expect(changes.getByRole("button", { name: "Hide the changes" })).toBeFocused();
+  await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
+  // Closed again, "See what changed" in the change line opens it in place and moves focus to its heading.
+  await changes.getByRole("button", { name: "Hide the changes" }).click();
+  await expect(changes.locator("[data-change-kind]")).toHaveCount(0);
+  await page.locator("[data-change-line]").getByRole("link", { name: "See what changed" }).click();
+  await expect(changes.getByRole("heading", { level: 2 })).toBeFocused();
   await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
   const table = changes.locator("[data-change-kind=reestimated]");
   await expect(table.getByRole("heading", { level: 3 })).toHaveText("Two activities were re-estimated.");
@@ -905,9 +919,36 @@ test("the NWWDA plan of October 9, 2026 lists what changed since the plan of Mar
   await expect(changes.locator("[data-source]")).toContainText("Procurement Plans of Northern Water Works Development Agency, versions of March 5, 2026 and October 9, 2026");
 });
 
+// The critique of ticket 100, round 1: opening the closed row once left main at its old height, so the footer
+// printed over the baseline row at 1440 px and over the re-estimated cards at 1024 px. Opened, the row is a panel in
+// place (DESIGN.md section 5, Task zone), and the page grows with it.
+for (const [width, height] of [[1440, 900], [1024, 768]] as const) {
+  test(`at ${width} by ${height} opening What changed makes it a panel and grows the page, so the footer starts below the baseline row`, async ({ page }) => {
+    await open(page, `${NWWDA}/2026-10-09`, width, await p156634());
+    await page.setViewportSize({ width, height });
+    await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
+    const changes = page.locator("[data-changes]");
+    await expect(changes).toHaveAttribute("data-zone", "row");
+    await page.locator("[data-change-line]").getByRole("link", { name: "See what changed" }).click();
+    await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
+    await expect(changes).toHaveAttribute("data-zone", "panel");
+    // Its evidence ends as a panel's does: the source line in a foot strip.
+    await expect(changes.locator(":scope > [data-foot-strip] [data-source]")).toContainText("Procurement Plans of Northern Water Works Development Agency");
+    const bottom = (selector: string) => page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().bottom + scrollY));
+    const top = (selector: string) => page.locator(selector).evaluate((element) => Math.round(element.getBoundingClientRect().top + scrollY));
+    await expect.poll(async () => (await bottom("main")) - (await bottom("[data-baseline]"))).toBeGreaterThanOrEqual(0);
+    expect(await top("footer")).toBeGreaterThanOrEqual(await bottom("[data-baseline]"));
+    expect(await top("footer")).toBeGreaterThanOrEqual(await bottom("[data-changes]"));
+    // The baseline row's sentence keeps to the prose measure, as What changed's summary does (ticket 100's design
+    // review, item 8).
+    expect(await page.locator("[data-baseline] [role=status]").evaluate((element) => element.getBoundingClientRect().width)).toBeLessThan(700);
+  });
+}
+
 test("a version that added and re-dated activities lists each in its own table, with a step that lost its date as No date", async ({ page }) => {
   await open(page, "/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30", 1440, await p156634());
   const changes = page.locator("[data-changes]");
+  await changes.getByRole("button", { name: "Show the changes" }).click();
   await expect(changes.locator("[data-change-kind]")).toHaveCount(2);
   await expect(changes.locator("[data-change-kind=added] h3")).toHaveText("One activity was added.");
   await expect(changes.locator("[data-change-kind=added] [data-view=table] tbody tr")).toContainText("MWSI-WSDP-04-2019-2020");
@@ -1071,7 +1112,7 @@ test("the implementing agency view reads the baseline without its saver and offe
   body.baseline.saved_by = null;
   await open(page, `${NWWDA}/2026-10-09?view=piu`, 1440, { ...(await p156634()), [`/api${NWWDA}/2026-10-09?view=piu`]: { body: JSON.stringify(body) } });
   const panel = page.getByRole("region", { name: "Baseline for delay" });
-  await expect(panel).toHaveText("The baseline is the plan of July 21, 2025, saved on October 23, 2026 as the plan agreed at negotiations. Only World Bank staff can change it.");
+  await expect(panel.getByRole("status")).toHaveText("The baseline is the plan of July 21, 2025, saved on October 23, 2026 as the plan agreed at negotiations. Only World Bank staff can change it.");
   await expect(panel.getByRole("button")).toHaveCount(0);
 
   const open_ = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
@@ -1141,7 +1182,8 @@ test.describe(() => {
 test("axe finds no WCAG 2.2 AA violations on Check a plan's change list and baseline panel, and in the hub's loading and error states", async ({ page }) => {
   // Check a plan with the Ministry's change list (added and re-dated) and the baseline panel, at three widths.
   await open(page, "/projects/P156634/procurement/ministry-of-water-and-irrigation/2020-04-30", 1440, await p156634());
-  await expect(page.locator("[data-changes]")).toBeVisible();
+  await page.locator("[data-changes]").getByRole("button", { name: "Show the changes" }).click();
+  await expect(page.locator("[data-changes] [data-change-kind]").first()).toBeVisible();
   for (const width of [1440, 1024, 390]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await axe(page), `change list at ${width} px`).toEqual([]);

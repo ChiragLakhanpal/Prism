@@ -114,10 +114,13 @@ test("with no activity marked, a preview or an as-of date, Check a plan offers n
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, { [`/api${PLAN}`]: { body: JSON.stringify(result) } });
   await page.goto(PLAN);
-  await expect(page.locator("[data-draft-slot=none]")).toHaveText(
-    "No activity needs a look or is worth watching, so I have no review notes to draft.",
-  );
-  await expect(page.locator("[data-draft-action]")).toHaveCount(0);
+  // Ticket 100: with no signal to draft from, the finding says so, the head holds the check pill and no action, and it
+  // does not stick; only the data-note rows are marked.
+  await expect(page.locator("[data-finding]")).toHaveText("No activity needs a look or is worth watching; three have data notes.");
+  await expect(page.locator("[data-plan-header] [data-check-pill]")).toHaveText("9 activities checked");
+  await expect(page.locator("[data-draft-slot], [data-draft-action]")).toHaveCount(0);
+  expect(await page.locator("[data-plan-header]").evaluate((head) => getComputedStyle(head).position)).toBe("static");
+  await expect(page.locator("[data-view=table] tbody tr[id]:visible")).toHaveCount(3);
 
   await page.goto(`${PLAN}?asof=2026-10-12`);
   await expect(page.locator("[data-draft-slot=asof]")).toHaveText("I draft review notes only from today's check, not from a past date.");

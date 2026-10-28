@@ -1,12 +1,17 @@
-// The plan check (the 10 brief, section 2): check_plan's result for one Procurement Plan version, as
-// a table from 1024 px and as activity cards below it.
+// The plan check (the 10 brief, section 2; ticket 100's redesign): check_plan's result for one Procurement Plan
+// version.
 //
-// - PlanCheckHeader: the agency's name (the h1), the plan's date, and the check pill. From 1024 px
-//   it sticks to the top of the window with a hairline under it.
-// - PlanCheck: the finding as an h2 in the title token, the method sentence, the count line, the rows
-//   in STEP's columns with each mark's badge and reason, the activities with no signals folded
-//   behind "Show them", the source line and what Strata cannot see.
-// - PlanCheckSkeleton: the same places while the check loads, under the real column heads.
+// - PlanCheckHeader: the agency's name (the h1, wrapping in full), the plan's date, the check pill and the page's one
+//   action. It sticks under the bar from a 1024 px window 50rem tall, and only while it holds that action.
+// - PlanCheck: the finding in the finding style with the method and change lines, then the activities panel: its
+//   name and count line, the rows in STEP's columns with each mark's badge and reason, the activities with no
+//   signals folded behind "Show them", and a foot strip with the source line and what Strata cannot see. Then the
+//   zones the page passes: "What changed" as a closed row and the baseline as a row.
+// - PlanCheckSkeleton: the same places while the check loads, under the real panel name and column heads.
+//
+// A row's reference is a button that opens the row's records in the evidence drawer (PlanRowRecords.tsx), and the
+// row keeps the current mark while they show. A count word in the finding marks the rows it counts and moves focus to
+// the first one's reference.
 //
 // Every number comes from the tool: the counts, the days, the ratio and the amounts. The screen
 // writes them (web/src/lib/format.ts) and counts nothing. Marked rows come first, by their strongest
@@ -16,16 +21,22 @@
 // rows this way).
 import { createElement, useEffect, useId, useState, type ReactNode, type Ref } from "react";
 import { copy } from "../copy";
+import type { EvidenceEvent } from "../lib/answer";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
 import { cx } from "../lib/cx";
+import { evidenceIn, openEvidence, remember } from "../lib/evidence";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
+import { planRowCheckId } from "../lib/planRows";
+import { address } from "../lib/router";
+import { useStore } from "../lib/store";
 import { Button } from "./Button";
 import { Byline } from "./Byline";
 import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
-import { useShows, type View } from "../lib/view";
-import { ListedRefs } from "./MonoWords";
+import { FootStrip } from "./FootStrip";
+import { useShows } from "../lib/view";
+import { ListedRefs, MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { checkFrom, FromLine, planFrom } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
@@ -33,13 +44,13 @@ import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
 import { Steps, type Step } from "./Steps";
-import { CARD_BREAKPOINTS, CARD_FIELD, CARD_FIELDS } from "./Table";
+import { CARD_FIELD, CARD_FIELDS } from "./Table";
+import { TaskZone } from "./TaskZone";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 
 const words = copy.checkPlan;
-const VIEW = CARD_BREAKPOINTS.lg;
-const BADGE: Record<Mark, BadgeKind> = { needs_a_look: "needs-a-look", watch: "watch", data_note: "data-note" };
+export const BADGE: Record<Mark, BadgeKind> = { needs_a_look: "needs-a-look", watch: "watch", data_note: "data-note" };
 const RANK: Record<Mark, number> = { needs_a_look: 0, watch: 1, data_note: 2 };
 
 export type CheckedPlan = CheckPlanResult & {
@@ -185,8 +196,9 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
   }
 }
 
-// One paragraph per mark: its reasons' sentences, in the order check_plan returns them.
-function MarkReasons({ mark, result }: { mark: Activity["marks"][number]; result: CheckedPlan }) {
+// One paragraph per mark: its reasons' sentences, in the order check_plan returns them. The row's records in the
+// drawer give the same sentences (PlanRowRecords.tsx).
+export function MarkReasons({ mark, result }: { mark: Activity["marks"][number]; result: CheckedPlan }) {
   return (
     <p className="text-small text-ink">
       {mark.reasons.map((reason, index) => (
@@ -226,19 +238,21 @@ function methodText(row: Activity): ReactNode {
 // The rows a mark's count word counts, for its tooltip: one sentence that says what it counts, by its mark, and lists
 // their references.
 function Counted({ rows, mark }: { rows: Activity[]; mark: Mark }) {
-  return <ListedRefs template={words.explain.countedBy[mark]} refs={rows.map((row) => row.activity_reference_no)} end={words.explain.countedEnd} />;
+  const template = words.explain.countedBy[mark];
+  return <ListedRefs template={rows.length === 1 ? template.one : template.many} refs={rows.map((row) => row.activity_reference_no)} end={words.explain.countedEnd} />;
 }
 
-function Finding({ result }: { result: CheckedPlan }) {
+// The finding. Each count word marks the rows it counts with tint and moves focus to the first one's reference (ticket
+// 100; DESIGN.md section 5, Plan check table), and its tooltip says so.
+function Finding({ result, onMark }: { result: CheckedPlan; onMark?: (mark: Mark) => void }) {
   const { needs_a_look: look, watch, data_note: notes } = result.counts;
   const f = words.finding;
-  const word = (count: number, mark: Mark, capital: boolean) => (
-    <Num
-      count={count}
-      capital={capital}
-      check={checked(result, <Counted mark={mark} rows={result.rows.filter((row) => row.marks.some((m) => m.mark === mark))} />)}
-    />
-  );
+  const word = (count: number, mark: Mark, capital: boolean) => {
+    const what = checked(result, <Counted mark={mark} rows={result.rows.filter((row) => row.marks.some((m) => m.mark === mark))} />);
+    const check: NumCheck =
+      onMark && count > 0 ? { ...what, onOpen: () => onMark(mark), act: count === 1 ? copy.num.act.markOne : copy.num.act.mark, opens: "rows" } : what;
+    return <Num count={count} capital={capital} check={check} />;
+  };
   // In the public view of a project still under way the server sent no signal, and the finding says why (ticket 40).
   const first = result.withheld ? f.withheld : look && watch ? f.lookAndWatch(look, watch) : look ? f.lookOnly(look) : watch ? f.watchOnly(watch) : f.none;
   return (
@@ -338,36 +352,46 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
   );
 }
 
-// The table from 1024 px (the 10 brief, section 2.1, with round 2's design review). At 1024 px a
-// 24-character reference (202 px) fits the Activity column, "Limited - National" (116 px) the
-// Method column, "Review" and "Prior" the Review column, "2,000,000.00" the Estimated column and
-// "Implementation" the Process status column; from 1100 px "Open - International" (132 px) fits
-// too. What Strata found keeps the rest and stays the widest column. Cells are padded 8 px at the
-// sides from 1024 px and 12 px from 1200 px (CELL).
-const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean }[] = [
-  { key: "activity", header: words.columns.activity, width: "w-[25%] @xl/page:w-[21.5%]" },
-  { key: "method", header: words.columns.method, width: "w-[16%] @xl/page:w-[15%]" },
-  { key: "review", header: words.columns.review, width: "w-[7.5%]" },
-  { key: "estimated", header: words.columns.estimated, width: "w-[11.5%] @xl/page:w-[11%]", numeric: true },
-  { key: "status", header: words.columns.status, width: "w-[14%] @xl/page:w-[12.5%]" },
-  { key: "found", header: null, width: "w-[26%] @xl/page:w-[32.5%]" },
+// The table's columns (DESIGN.md section 5, Plan check table; ticket 100). All six from a table frame of 60rem (the
+// plan container, inside the window's margins: a 1280 or 1440 px window with the rail); three below it, Activity,
+// Estimated (US$) and What Strata found, since a row's records show the rest in the drawer: a 1024 px window with
+// the rail, or a wide window beside the drawer; and cards below 34rem (app.css, --container-plan-six and
+// --container-plan-cards). Estimated (US$) keeps a fixed 9rem, so "232,524,000.00" never wraps; Activity and What
+// Strata found share what is left in three columns. Each width is measured on the real and the longest values in
+// the fixture, so no word in a cell breaks inside itself (web/tests/check-plan.spec.ts).
+const SIX = "hidden @plan-six/plan:table-cell";
+const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean; six?: boolean }[] = [
+  // In three columns Activity takes 40 percent, so beside the drawer at 1440 px with the sidebar open (576 px) a
+  // 22-character reference keeps one line (ticket 100's design review, item 12).
+  { key: "activity", header: words.columns.activity, width: "w-[40%] @plan-six/plan:w-[26%]" },
+  { key: "method", header: words.columns.method, width: "@plan-six/plan:w-[16%]", six: true },
+  { key: "review", header: words.columns.review, width: "@plan-six/plan:w-[8%]", six: true },
+  { key: "estimated", header: words.columns.estimated, width: "w-36", numeric: true },
+  { key: "status", header: words.columns.status, width: "@plan-six/plan:w-[13%]", six: true },
+  { key: "found", header: null, width: "" },
 ];
-const CELL = "px-2 py-3 @xl/page:px-3";
+// Cells are padded 12 px, and the row's first and last cells 24 px at the panel's edges, where the zone's name and its
+// foot strip start.
+const CELL = "px-3 py-3 first:pl-6 last:pr-6";
+const columnClass = (column: (typeof COLUMNS)[number]) => cx(CELL, column.six && SIX);
 
 // Each activity's links (ticket 22; the 22 brief, section 5.1): "Open the activity" to its contract trail, then
 // "See the past range" to its package workspace (the 12 brief), 16 px apart and wrapping. Each accessible name
 // adds the reference, so a list of links tells the activities apart, and starts with the visible words (WCAG
 // 2.5.3). Every row gets both: a row with no public notice opens the workspace's "not measurable" state, which
-// says why. The public view has no Packages tab, so it shows only the first. In a card they sit 12 px under the
-// last field, so they don't read as part of the Process status value.
-function ActivityLinks({ reference, pid, inCard = false }: { reference: string; pid: string; inCard?: boolean }) {
+// says why. The public view has no Packages tab, so it shows only the first. Since ticket 100 a row shows only "See
+// the past range", and its records in the drawer show both.
+export function ActivityLinks({ reference, pid, rangeOnly = false, className }: { reference: string; pid: string; rangeOnly?: boolean; className?: string }) {
   // The past range opens the package page, which the view the server applied may hide (the roles file's [views]).
   const showsPackage = useShows("package");
+  if (rangeOnly && !showsPackage) return null;
   return (
-    <span className={cx(inCard ? "mt-3" : "mt-1", "flex flex-wrap gap-x-4 text-small font-normal")}>
-      <TextLink href={`/projects/${pid}/packages/${encodeURIComponent(reference)}`} aria-label={words.openActivityLabel(reference)} data-activity-link={reference}>
-        {words.openActivity}
-      </TextLink>
+    <span className={cx("flex flex-wrap gap-x-4 text-small font-normal", className)}>
+      {!rangeOnly && (
+        <TextLink href={`/projects/${pid}/packages/${encodeURIComponent(reference)}`} aria-label={words.openActivityLabel(reference)} data-activity-link={reference}>
+          {words.openActivity}
+        </TextLink>
+      )}
       {showsPackage && (
         <TextLink href={`/packages/${encodeURIComponent(reference)}`} aria-label={words.pastRangeLabel(reference)} data-past-range-link={reference}>
           {words.pastRangeLink}
@@ -377,8 +401,6 @@ function ActivityLinks({ reference, pid, inCard = false }: { reference: string; 
   );
 }
 
-// A row or card a link's hash names keeps the selected row's tint after focus moves on
-// (DESIGN.md: tint, Selected row).
 // "Re-estimated in this version": the caption at the end of a changed row's Activity cell (ticket 21),
 // which ties the row to the change list under the plan check. It is text, never a badge.
 function ChangedLine({ change }: { change?: keyof typeof copy.changes.cell }) {
@@ -393,6 +415,14 @@ function ChangedLine({ change }: { change?: keyof typeof copy.changes.cell }) {
 // A row's key, and the id a link's hash names: its STEP reference, or its place in an upload with no reference yet.
 export const rowKey = (row: Activity) => row.activity_reference_no ?? `row-${row.position}`;
 
+// The drawer's id for a row's records (lib/planRows.ts): the plan row's own evidence id, or the row's key in an upload.
+const recordsId = (row: Activity) => planRowCheckId(row.evidence_id || rowKey(row));
+
+// The row's records, as the drawer shows them (PlanRowRecords.tsx): the row and the check it belongs to.
+export function rowRecords(row: Activity, result: CheckedPlan): EvidenceEvent {
+  return { id: recordsId(row), kind: "plan-row-check", tool: "check_plan", stratum: "What", short_name: null, row: { activity: row, result }, highlights: [] };
+}
+
 // An upload's row with no reference yet says so where the reference goes, and one no published plan lists says that
 // under its Description (ticket 38; the 38 brief, 3.4). A published plan's rows have neither.
 function UploadLines({ row }: { row: Activity }) {
@@ -403,65 +433,101 @@ function UploadLines({ row }: { row: Activity }) {
   ) : null;
 }
 
-function TableRow({ row, result, fresh, named, change }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean; change?: keyof typeof copy.changes.cell }) {
+// How a row is marked: the current mark while the drawer shows its records, the tint of a row a count word counted,
+// or of a row a link's hash named (DESIGN.md: tint, Selected row; app.css, "The plan check's marked rows").
+type RowMark = "open" | "counted" | "named" | undefined;
+
+type RowProps = {
+  row: Activity;
+  result: CheckedPlan;
+  fresh?: boolean;
+  mark?: RowMark;
+  change?: keyof typeof copy.changes.cell;
+  onOpen: (row: Activity, element: HTMLElement) => void;
+};
+
+// The row's reference: a button that opens its records in the drawer, with aria-expanded while they show. A row with
+// no reference yet, as in an upload, says so instead.
+function Reference({ row, open, onOpen }: { row: Activity; open: boolean; onOpen: (row: Activity, element: HTMLElement) => void }) {
+  const ref = row.activity_reference_no;
+  if (!ref) return <span className="block text-small text-ink-muted">{copy.uploadCheck.noRef}</span>;
+  return (
+    <button
+      type="button"
+      data-row-ref={rowKey(row)}
+      aria-expanded={open}
+      aria-haspopup="dialog"
+      onClick={(event) => onOpen(row, event.currentTarget)}
+      className={cx(
+        "inline cursor-pointer py-1 text-left font-mono font-medium wrap-break-word text-primary underline decoration-1 underline-offset-3",
+        "transition-paint duration-150 hover:text-link-hover active:text-primary-pressed",
+      )}
+    >
+      {/* A parent's underline never reaches inside the parts' inline blocks, so each part draws its own: the reference
+          is a text link to the row's records (DESIGN.md section 10; ticket 100's design review, item 1). */}
+      <MonoWords text={ref} medium className="underline decoration-1 underline-offset-3" />
+    </button>
+  );
+}
+
+function Found({ row, result }: { row: Activity; result: CheckedPlan }) {
+  return row.marks.length > 0 ? (
+    <div className="flex flex-col gap-3">
+      {row.marks.map((mark) => (
+        <div key={mark.mark} className="flex flex-col items-start gap-1">
+          <StatusBadge kind={BADGE[mark.mark]} />
+          <MarkReasons mark={mark} result={result} />
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-small text-ink-muted">{result.withheld ? words.noDataNotes : words.noSignals}</p>
+  );
+}
+
+function TableRow({ row, result, fresh, mark, change, onOpen }: RowProps) {
   const ref = row.activity_reference_no;
   return (
-    <tr id={rowKey(row)} data-named={named || undefined} className={cx("border-t border-line align-top", named && "bg-tint", fresh && "animate-fade-in")}>
+    <tr id={rowKey(row)} data-named={mark === "named" || undefined} data-row-mark={mark} className={cx("border-t border-line align-top", fresh && "animate-fade-in")}>
       <th scope="row" tabIndex={-1} data-activity={rowKey(row)} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
-        {ref ? (
-          <span className="block font-mono font-medium wrap-anywhere text-ink">{ref}</span>
-        ) : (
-          <span className="block text-small text-ink-muted">{copy.uploadCheck.noRef}</span>
-        )}
+        <Reference row={row} open={mark === "open"} onOpen={onOpen} />
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
         <UploadLines row={row} />
         <ChangedLine change={change} />
-        {ref && row.listed !== false && <ActivityLinks reference={ref} pid={result.plan.project_id} />}
+        {ref && row.listed !== false && <ActivityLinks reference={ref} pid={result.plan.project_id} rangeOnly className="mt-1" />}
       </th>
-      <td className={CELL}>{methodText(row)}</td>
-      <td className={CELL}>{row.review_type ?? blank}</td>
-      <td className={cx(CELL, "text-right tabular-nums")}>{row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank}</td>
-      <td className={CELL}>{row.process_status ?? blank}</td>
+      <td className={columnClass(COLUMNS[1])}>{methodText(row)}</td>
+      <td className={columnClass(COLUMNS[2])}>{row.review_type ?? blank}</td>
+      <td className={cx(CELL, "text-right whitespace-nowrap tabular-nums")}>{row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank}</td>
+      <td className={columnClass(COLUMNS[4])}>{row.process_status ?? blank}</td>
       <td className={CELL}>
-        {row.marks.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {row.marks.map((mark) => (
-              <div key={mark.mark} className="flex flex-col items-start gap-1">
-                <StatusBadge kind={BADGE[mark.mark]} />
-                <MarkReasons mark={mark} result={result} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-small text-ink-muted">{result.withheld ? words.noDataNotes : words.noSignals}</p>
-        )}
+        <Found row={row} result={result} />
       </td>
     </tr>
   );
 }
 
-// An activity card below 1024 px: the badges and the reference as its heading, so a screen reader's
-// list of headings says "Needs a look KE-NWWDA-541055-CW-RFB"; then the Description, the reasons, a
-// hairline and the four STEP fields. Method and Process status take the card's full width, since
-// STEP's values, such as "Pending Implementation", are wider than a 120 px column; Review and the
-// amount share a row.
-function ActivityCard({ row, result, fresh, named, change }: { row: Activity; result: CheckedPlan; fresh?: boolean; named?: boolean; change?: keyof typeof copy.changes.cell }) {
+// An activity card below a frame of 34rem: the badges and the reference as its heading, so a screen reader's list of
+// headings says "Needs a look KE-NWWDA-541055-CW-RFB"; then the Description, the reasons, a hairline and the four
+// STEP fields. Method and Process status take the card's full width, since STEP's values, such as "Pending
+// Implementation", are wider than a 120 px column; Review and the amount share a row.
+function ActivityCard({ row, result, fresh, mark, change, onOpen }: RowProps) {
   const ref = row.activity_reference_no;
-  const field = (label: ReactNode, value: ReactNode, wide?: boolean) => (
+  const field = (label: ReactNode, value: ReactNode, wide?: boolean, numeric?: boolean) => (
     <div className={cx(CARD_FIELD, wide && "col-span-full")}>
       <dt className="text-caption text-ink-muted">{label}</dt>
-      <dd className="text-small wrap-break-word text-ink">{value}</dd>
+      <dd className={cx("text-small text-ink", numeric ? "whitespace-nowrap tabular-nums" : "wrap-break-word")}>{value}</dd>
     </div>
   );
   return (
-    <li className={cx("rounded-md border border-line p-4", named ? "bg-tint" : "bg-surface", fresh && "animate-fade-in")}>
+    <li data-row-mark={mark} className={cx("rounded-md border border-line p-4", mark ? "bg-tint" : "bg-surface", fresh && "animate-fade-in")}>
       <article>
         <h3 className="flex flex-col items-start gap-2 text-small">
           {row.marks.map((mark) => (
             <StatusBadge key={mark.mark} kind={BADGE[mark.mark]} />
           ))}
-          <span tabIndex={-1} data-activity={rowKey(row)} className={cx(ref ? "font-mono font-medium" : "font-normal text-ink-muted", "wrap-anywhere text-ink-heading")}>
-            {ref ?? copy.uploadCheck.noRef}
+          <span tabIndex={-1} data-activity={rowKey(row)} className="text-ink-heading">
+            <Reference row={row} open={mark === "open"} onOpen={onOpen} />
           </span>
         </h3>
         {row.description && <p className="mt-1 text-small text-ink">{row.description}</p>}
@@ -477,10 +543,10 @@ function ActivityCard({ row, result, fresh, named, change }: { row: Activity; re
         <dl className={cx("mt-3 border-t border-line pt-3", CARD_FIELDS)} data-numbers>
           {field(words.columns.method, methodText(row), true)}
           {field(words.columns.review, row.review_type ?? blank)}
-          {field(words.columns.estimated, row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank)}
+          {field(words.columns.estimated, row.estimated_amount_usd ? amount(row.estimated_amount_usd) : blank, false, true)}
           {field(words.columns.status, row.process_status ?? blank, true)}
         </dl>
-        {ref && row.listed !== false && <ActivityLinks reference={ref} pid={result.plan.project_id} inCard />}
+        {ref && row.listed !== false && <ActivityLinks reference={ref} pid={result.plan.project_id} rangeOnly className="mt-3" />}
       </article>
     </li>
   );
@@ -503,9 +569,18 @@ function visibleActivity(ref: string): HTMLElement | null {
   return found[0] ?? null;
 }
 
+// The reference button of a row at this width: in its table row or on its card.
+function visibleReference(key: string): HTMLElement | null {
+  const found = Array.from(document.querySelectorAll<HTMLElement>("[data-row-ref]")).filter(
+    (element) => element.dataset.rowRef === key && element.getClientRects().length > 0,
+  );
+  return found[0] ?? null;
+}
+
 // The space left above a named activity when the page lands on it: the cards' own gap, so the line
-// above a card lands just past the edge instead of leaving a sliver of it in view.
-const LANDING_GAP = 12;
+// above a card lands just past the edge instead of leaving a sliver of it in view. A table's rows touch, so a row
+// lands right at the edge, and the row above it leaves the screen whole (ticket 100).
+const landingGap = (activity: Element) => (activity.tagName === "TR" ? 0 : 12);
 
 // The block on screen just above an element in the page's order: the row or card before it, or for the
 // first card the count line's row, skipping the view this width hides.
@@ -523,7 +598,8 @@ function blockAbove(element: Element): Element | null {
 // under the sticky parts. The activity is its whole row or card, badges included, not only the
 // reference that takes focus. The bar, below 1024 px where it does not stick, and the title are each
 // shown whole when the activity still fits under them, and otherwise scrolled away whole. From 1024 px
-// the bar sticks (ticket 93), so the activity lands under it and the header both.
+// the bar sticks (ticket 93), so the activity lands under it, and under the head too where the head sticks
+// (from 50rem of window height, ticket 100).
 function bringIntoView(target: HTMLElement) {
   const place = (element: Element) => {
     const rect = element.getBoundingClientRect();
@@ -536,8 +612,9 @@ function bringIntoView(target: HTMLElement) {
   const barStuck = sticks(bar);
   const header = document.querySelector<HTMLElement>("[data-plan-header]");
   const stuck = barStuck + sticks(header);
-  const fits = (from: number) => row.bottom + LANDING_GAP - from <= window.innerHeight;
-  let top = fits(0) ? 0 : row.top - stuck - LANDING_GAP;
+  const gap = landingGap(activity);
+  const fits = (from: number) => row.bottom + gap - from <= window.innerHeight;
+  let top = fits(0) ? 0 : row.top - stuck - gap;
   // A block that sits closer above the activity than the gap, as the count line's row sits 8 px above the
   // first card, lands just past the edge too, so none of its lines is left as a sliver (ticket 90: the
   // caption's 20 px line left one pixel of it in view).
@@ -545,6 +622,19 @@ function bringIntoView(target: HTMLElement) {
   if (above) {
     const { bottom } = place(above);
     if (bottom > top + stuck && bottom < row.top) top = bottom - stuck;
+  }
+  // Near the page's end the window cannot scroll that far, and the row above would be left cut under the parts that
+  // stick. Then the nearest row above that the window can reach lands at the edge instead, and the activity stays in
+  // view under it (ticket 100).
+  const furthest = document.documentElement.scrollHeight - window.innerHeight;
+  if (top > furthest) {
+    // The rows or cards that show before the activity, its fold's included, nearest first.
+    const blocks = Array.from(activity.closest("[data-view]")?.querySelectorAll("tbody > tr, ul > li") ?? []).filter(
+      (block) => block.getClientRects().length > 0,
+    );
+    const before = blocks.slice(0, blocks.indexOf(activity)).reverse();
+    const reachable = before.map((block) => place(block).top - stuck - landingGap(block)).find((edge) => edge <= furthest);
+    top = reachable ?? 0;
   }
   // A title inside the sticky header, and a bar that sticks, stay in view whatever the page does. The edge a part
   // could be cut at is the sticking bar's foot, or the window's top.
@@ -558,7 +648,7 @@ function bringIntoView(target: HTMLElement) {
   window.scrollTo({ top: Math.max(0, top) });
 }
 
-export function PlanCheckHeader({ agency, plan, pill, action, feedforward, headerRef, level = 1, sticky = true }: {
+export function PlanCheckHeader({ agency, plan, pill, action, feedforward, headerRef, level = 1, sticky = false, rule = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
   plan?: ReactNode;
@@ -570,28 +660,33 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
   headerRef?: Ref<HTMLDivElement>;
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
+  // Whether it sticks under the bar where the window allows (app.css, head-sticks). It sticks only while it holds the
+  // page's one action (DESIGN.md section 5, Page head; ticket 100), so it does not unless a caller with an action asks.
   sticky?: boolean;
+  // The hairline under the head. A failed check draws nothing under its head, so it has none (ticket 100).
+  rule?: boolean;
 }) {
   return (
     <div
       ref={headerRef}
       data-plan-header
       data-sticky={sticky ? "top" : undefined}
-      className={cx("border-b border-line bg-page pt-2 pb-4", sticky && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10")}
+      className={cx("bg-page pt-2 pb-4", rule && "border-b border-line", sticky && "head-sticks:@head/page:sticky head-sticks:@head/page:top-(--frame-top) head-sticks:@head/page:z-10")}
     >
-      {/* The title sits beside the actions from a page area of 46rem, so a page the drawer narrows stacks them
-          (DESIGN.md section 4, Page layouts; ticket 94). */}
+      {/* The title block sits beside the actions block from a page area of 46rem, so a page the drawer narrows stacks
+          them (DESIGN.md section 4, Page layouts; ticket 94). Only those two blocks stack: the pill and the action keep
+          one row that wraps, their centres level (ticket 100, from ticket 94's critique). */}
       <div className="flex flex-col gap-3 @head/page:flex-row @head/page:items-start @head/page:justify-between @head/page:gap-6">
         {/* The name's column takes the row's free width, so a skeleton bar sized as a share of it
-            is as wide as the name it stands for. */}
+            is as wide as the name it stands for. The agency's name wraps in full, however long. */}
         <div className="min-w-0 @head/page:flex-1">
-          {createElement(`h${level}`, { tabIndex: -1, className: "text-h1 text-ink-heading focus:outline-none" }, agency)}
+          {createElement(`h${level}`, { tabIndex: -1, className: "text-h1 wrap-break-word text-ink-heading focus:outline-none" }, agency)}
           {plan && <p className="mt-2 text-body text-ink-muted">{plan}</p>}
         </div>
         {(pill || action) && (
-          <div className="flex shrink-0 flex-col items-start gap-2 @head/page:items-end">
-            <div className="flex flex-col items-start gap-2 @head/page:flex-row @head/page:items-center @head/page:gap-3">
-              {pill && <div className="@head/page:mt-0.5">{pill}</div>}
+          <div className="flex min-w-0 flex-col items-start gap-2 @head/page:shrink-0 @head/page:items-end">
+            <div data-head-actions className="flex flex-wrap items-center gap-x-3 gap-y-2 @head/page:justify-end">
+              {pill}
               {action}
             </div>
             {feedforward}
@@ -616,6 +711,16 @@ export function checkPill(result: CheckedPlan): ReactNode {
   );
 }
 
+// The activities panel's name and its count line, the same while the check loads and once it is ready, so nothing
+// under them moves when the rows arrive.
+function ActivitiesZone({ id, tag, busy, children }: { id?: string; tag: ReactNode; busy?: boolean; children: ReactNode }) {
+  return (
+    <TaskZone panel name={words.activitiesTitle} headingId={id} tag={tag} busy={busy} sectionKey="activities">
+      {children}
+    </TaskZone>
+  );
+}
+
 export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source, reveal = false }: {
   result: CheckedPlan;
   // Ticket 111: the finding replaces a narration that showed for at least 400 ms, so its byline, the finding and the
@@ -627,14 +732,15 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   findingRef?: Ref<HTMLHeadingElement>;
   // The gallery shows the fold open; the page opens it from a link's hash.
   defaultOpen?: boolean;
-  // Ticket 21: the change line and the baseline panel, under the method sentence they qualify.
+  // Ticket 21: the change line, under the method sentence it qualifies.
   afterMethod?: ReactNode;
   // Ticket 21: the rows this version changed since the one before, by STEP reference.
   changed?: Record<string, keyof typeof copy.changes.cell>;
-  // Ticket 21: the change list, after what Strata cannot see.
+  // The zones after the activities: "What changed" as a closed row and the baseline as a row (ticket 100).
   after?: ReactNode;
 }) {
   const findingId = useId();
+  const zoneId = useId();
   const foldId = useId();
   const foldCardsId = useId();
   const sentenceId = useId();
@@ -642,6 +748,10 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   const [open, setOpen] = useState(defaultOpen);
   const [opened, setOpened] = useState(false);
   const [named, setNamed] = useState<string | null>(null);
+  // The mark whose count word was pressed last, and how many times, so pressing it again moves focus again.
+  const [counted, setCounted] = useState<{ mark: Mark; times: number } | null>(null);
+  // The records the drawer shows now, from the address (lib/evidence.ts).
+  const drawer = evidenceIn(useStore(address).search);
 
   const ordered = result.rows
     .map((row, index) => ({ row, index }))
@@ -656,6 +766,12 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
     setOpen((now) => !now);
     setOpened(true);
   };
+
+  // Each row's records are held on the page, so the drawer opens at once and a link to it shows them once the check
+  // has loaded (lib/planRows.ts).
+  useEffect(() => {
+    for (const row of result.rows) remember(rowRecords(row, result));
+  }, [result]);
 
   // A link whose hash names an activity: open the fold if the activity is in it, then bring the
   // activity into view and focus it.
@@ -678,108 +794,152 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
     // The rows are fixed for a result, so following once per result is enough.
   }, [result]);
 
+  // A count word in the finding marks the rows it counts and moves focus to the first one's reference, brought into
+  // view under the parts that stick (ticket 100). The rows it counts are marked rows, so none is in the fold.
+  useEffect(() => {
+    if (!counted) return;
+    const first = ordered.find((row) => row.marks.some((mark) => mark.mark === counted.mark));
+    if (!first) return;
+    const frame = requestAnimationFrame(() => {
+      const target = visibleReference(rowKey(first));
+      if (!target) return;
+      bringIntoView(target);
+      target.focus({ preventScroll: true });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [counted]);
+
+  const openRecords = (row: Activity, element: HTMLElement) => {
+    const records = rowRecords(row, result);
+    remember(records);
+    openEvidence(records.id, { serial: null, sentence: null, marker: element, runId: null });
+  };
+  const markOf = (row: Activity): RowMark =>
+    drawer === recordsId(row)
+      ? "open"
+      : counted && row.marks.some((mark) => mark.mark === counted.mark)
+        ? "counted"
+        : named === rowKey(row)
+          ? "named"
+          : undefined;
+  const rowProps = (row: Activity) => ({ row, result, mark: markOf(row), change: changed[row.activity_reference_no], onOpen: openRecords });
+
   const countLine = open || unmarked === 0 ? copy.table.showingAll(whole(activities), words.noun) : words.countLine(whole(marked), whole(activities));
 
   return (
     <section aria-labelledby={findingId} data-plan-check>
       <EightColumns prose className="mt-6">
         <div data-finding-block className={cx(reveal && "animate-reveal")}>
-          {/* Strata's own words open with its byline, 8 px above them (ticket 111). */}
-          <Byline kind="found" />
-          {/* The page's finding: a count word's tooltip opens under all of it (DESIGN.md, Number tooltip). */}
-          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-h2 text-pretty text-ink-heading focus:outline-none" data-finding>
-            <Finding result={result} />
+          {/* Strata's own words open with its byline, 8 px above them (ticket 111): "Strata held back" over the public
+              view's finding, which holds the signals back (DESIGN.md section 5, Byline). */}
+          <Byline kind={result.withheld ? "heldBack" : "found"} />
+          {/* The page's finding, in the finding style (ticket 100): a count word's tooltip opens under all of it
+              (DESIGN.md, Number tooltip), and a press marks the rows it counts. */}
+          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-finding text-pretty text-ink-heading focus:outline-none" data-finding>
+            <Finding result={result} onMark={(mark) => setCounted((now) => ({ mark, times: (now?.times ?? 0) + 1 }))} />
           </h2>
-          <div className="mt-2">
+          <div className="mt-4">
             {method ?? <Method result={result} />}
           </div>
         </div>
         {afterMethod}
       </EightColumns>
-      {/* Below 1024 px the cards have no column heads, so the definition of the marks sits at the
-          right end of the count line's row, or on a line of its own when the two don't fit. */}
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-4 text-caption">
-        <p className="whitespace-nowrap text-ink-muted" data-count-line data-numbers>
-          {countLine}
-        </p>
-        <div className={cx("whitespace-nowrap", VIEW.cards)}>
-          <Definition result={result} triggerClassName="inline-flex min-h-6 items-center" />
-        </div>
-      </div>
 
-      {/* The frame clips its corners, so a row header a link focuses draws its ring inside. */}
-      <div data-view="table" className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
-        <table className="w-full table-fixed border-collapse text-small">
-          <caption className="sr-only">{words.caption(result.plan.implementing_agency, formatDate(result.plan.plan_date))}</caption>
-          <thead className="bg-surface-2">
-            <tr>
-              {COLUMNS.map((column) => (
-                <th
-                  key={column.key}
-                  scope="col"
-                  className={cx(CELL, "align-bottom font-semibold text-ink-heading", column.numeric ? "text-right" : "text-left", column.width)}
-                >
-                  {column.key === "found" ? <Definition result={result} /> : column.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ordered.map((row) => (
-              <TableRow key={rowKey(row)} row={row} result={result} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
-            ))}
-            {unmarked > 0 && (
-              <tr className="border-t border-line bg-page" data-fold>
-                <td colSpan={COLUMNS.length} className="px-2 py-2 @xl/page:px-3">
-                  <div className="flex flex-wrap items-center gap-x-4">
-                    <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={sentenceId} withheld={Boolean(result.withheld)} />
-                    <FoldButton count={unmarked} open={open} controls={foldId} describedBy={sentenceId} onToggle={toggle} />
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-          <tbody id={foldId} hidden={!open}>
-            {unmarkedRows.map((row) => (
-              <TableRow key={rowKey(row)} row={row} result={result} fresh={opened} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <div className="mt-8">
+        <ActivitiesZone
+          id={zoneId}
+          tag={
+            <span data-count-line data-numbers>
+              {countLine}
+            </span>
+          }
+        >
+          {/* The table and the cards each read the plan container's width, which the evidence drawer narrows. */}
+          <div data-zone-table className="@container/plan">
+            {/* The frame keeps the row header's focus ring inside the panel. */}
+            <div data-view="table" className="hidden overflow-hidden @plan-cards/plan:block">
+              <table className="w-full table-fixed border-collapse text-small">
+                <caption className="sr-only">{words.caption(result.plan.implementing_agency, formatDate(result.plan.plan_date))}</caption>
+                <thead className="bg-surface-2">
+                  <tr>
+                    {COLUMNS.map((column) => (
+                      <th
+                        key={column.key}
+                        scope="col"
+                        className={cx(columnClass(column), "align-bottom font-semibold text-ink-heading", column.numeric ? "text-right" : "text-left", column.width)}
+                      >
+                        {column.key === "found" ? <Definition result={result} /> : column.header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {ordered.map((row) => (
+                    <TableRow key={rowKey(row)} {...rowProps(row)} />
+                  ))}
+                  {/* The fold's row spans the columns that show: a cell that spanned six while three show would add
+                      three empty columns to the table's layout, so each count of columns has its own row, and only
+                      one of them shows. */}
+                  {unmarked > 0 &&
+                    ([6, 3] as const).map((span) => (
+                      <tr key={span} className={cx("border-t border-line bg-page", span === 6 ? "hidden @plan-six/plan:table-row" : "@plan-six/plan:hidden")} data-fold>
+                        <td colSpan={span} className="px-6 py-2">
+                          <div className="flex flex-wrap items-center gap-x-4">
+                            <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={`${sentenceId}-${span}`} withheld={Boolean(result.withheld)} />
+                            <FoldButton count={unmarked} open={open} controls={foldId} describedBy={`${sentenceId}-${span}`} onToggle={toggle} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+                <tbody id={foldId} hidden={!open}>
+                  {unmarkedRows.map((row) => (
+                    <TableRow key={rowKey(row)} {...rowProps(row)} fresh={opened} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-      <div data-view="cards" className={cx("mt-2", VIEW.cards)}>
-        <ul aria-labelledby={findingId} className="flex flex-col gap-3">
-          {ordered.map((row) => (
-            <ActivityCard key={rowKey(row)} row={row} result={result} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
-          ))}
-          {unmarked > 0 && (
-            <li className="rounded-md border border-line bg-page p-4" data-fold>
-              <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={cardSentenceId} withheld={Boolean(result.withheld)} />
-              <div className="mt-2">
-                <FoldButton count={unmarked} open={open} controls={foldCardsId} describedBy={cardSentenceId} onToggle={toggle} />
-              </div>
-            </li>
-          )}
-        </ul>
-        <ul id={foldCardsId} hidden={!open} aria-labelledby={findingId} className="mt-3 flex flex-col gap-3">
-          {unmarkedRows.map((row) => (
-            <ActivityCard key={rowKey(row)} row={row} result={result} fresh={opened} named={named === rowKey(row)} change={changed[row.activity_reference_no]} />
-          ))}
-        </ul>
+            {/* Below a frame of 34rem the cards have no column heads, so the definition of the marks heads them. */}
+            <div data-view="cards" data-zone-inset className="pb-4 @plan-cards/plan:hidden">
+              <p className="flex text-caption">
+                <Definition result={result} triggerClassName="inline-flex min-h-6 items-center whitespace-nowrap" />
+              </p>
+              <ul aria-labelledby={zoneId} className="mt-2 flex flex-col gap-3">
+                {ordered.map((row) => (
+                  <ActivityCard key={rowKey(row)} {...rowProps(row)} />
+                ))}
+                {unmarked > 0 && (
+                  <li className="rounded-md border border-line bg-page p-4" data-fold>
+                    <FoldSentence rows={unmarkedRows} unmarked={unmarked} id={cardSentenceId} withheld={Boolean(result.withheld)} />
+                    <div className="mt-2">
+                      <FoldButton count={unmarked} open={open} controls={foldCardsId} describedBy={cardSentenceId} onToggle={toggle} />
+                    </div>
+                  </li>
+                )}
+              </ul>
+              <ul id={foldCardsId} hidden={!open} aria-labelledby={zoneId} className="mt-3 flex flex-col gap-3">
+                {unmarkedRows.map((row) => (
+                  <ActivityCard key={rowKey(row)} {...rowProps(row)} fresh={opened} />
+                ))}
+              </ul>
+            </div>
+          </div>
+          <FootStrip>
+            {source ?? <PlanSource result={result} />}
+            <p className="text-caption text-ink-muted" data-not-visible>
+              {words.notVisible}
+            </p>
+          </FootStrip>
+        </ActivitiesZone>
+        {after}
       </div>
-
-      <EightColumns prose className="mt-2">
-        {source ?? <PlanSource result={result} />}
-        <p className="mt-6 text-small text-ink-muted" data-not-visible>
-          {words.notVisible}
-        </p>
-      </EightColumns>
-      {after && <div className="mt-12">{after}</div>}
     </section>
   );
 }
 
-function PlanSource({ result }: { result: CheckedPlan }) {
+// The plan's source line: under the activities, and in a row's records in the drawer.
+export function PlanSource({ result }: { result: CheckedPlan }) {
   const s = words.source;
   const { plan, project } = result;
   return (
@@ -817,14 +977,10 @@ function PlanSource({ result }: { result: CheckedPlan }) {
 }
 
 // While the check loads: the header's places, then the narration in the places of the finding's byline, the
-// finding and the method sentence (ticket 111), then the real column heads over five skeleton rows from 1024 px, and
-// three skeleton cards below it. Nothing moves when the rows arrive, and nothing shimmers.
-export function PlanCheckSkeleton({ slow, baseline }: {
-  slow?: boolean;
-  // The baseline panel's place under the method sentence (ticket 21): as tall as the panel with no baseline
-  // saved, its words held invisibly, so the rows stay put when the check arrives. None in the public view.
-  baseline?: View;
-}) {
+// finding and the method sentence (ticket 111), then the activities panel with its real name and column heads over
+// five skeleton rows, or three skeleton cards below a frame of 34rem. Nothing moves when the rows arrive, and nothing
+// shimmers.
+export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
   const rows = [0, 1, 2, 3, 4];
   // The narration (ticket 111): the answer panel's own steps, with one running step and how I check under it, then,
   // after two seconds, why it can take longer. The page's polite status says the step, so the steps announce nothing.
@@ -839,101 +995,110 @@ export function PlanCheckSkeleton({ slow, baseline }: {
     <div data-plan-skeleton>
       <EightColumns prose className="mt-6">
         {/* The narration and the places it holds share one grid cell, so it is exactly as tall as the byline, the
-            finding and the method sentence it stands for. The finding takes two lines below 768 px and at the eight
-            columns' 1024 to 1199 px, and one line at the full width from 768 px and from 1200 px. Its count words keep
-            to the line's height (Num). The method sentence takes five lines below 768 px and three from it. */}
+            finding and the method sentence it stands for. In the finding style the finding takes three lines below
+            768 px and two from it, where the eight columns hold their 65 characters; the method sentence five lines
+            below 768 px and three from it. Its count words keep to the line's height (Num). */}
         <div className="grid" data-plan-narration>
           <div aria-hidden="true" className="invisible col-start-1 row-start-1">
             <SkeletonLine className="text-label" width="w-24" />
             <div className="mt-2">
-              <SkeletonText className="text-h2 @md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-2/5"]} />
-              <SkeletonLine className="hidden text-h2 @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
+              <SkeletonText className="text-finding @md/page:hidden" widths={["w-full", "w-full", "w-2/5"]} />
+              <SkeletonText className="hidden text-finding @md/page:flex" widths={["w-full", "w-2/5"]} />
             </div>
-            <SkeletonText className="mt-2 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
-            <SkeletonText className="mt-2 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
+            <SkeletonText className="mt-4 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
+            <SkeletonText className="mt-4 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
           </div>
           <div className="col-start-1 row-start-1">
             <Steps steps={[narration]} announce={false} />
           </div>
         </div>
-        {baseline && baseline !== "public" && (
-          <div aria-hidden="true" className="mt-4 rounded-md border border-line bg-surface p-4" data-baseline-skeleton>
-            <p className="invisible text-body">{baseline === "piu" ? copy.baseline.piuNone : copy.baseline.none}</p>
-            {baseline === "staff" && <span className="invisible mt-3 block h-11" />}
-          </div>
-        )}
       </EightColumns>
-      {/* Below 1024 px the count line's row also holds the definition's 24 px trigger. */}
-      <div aria-hidden="true" className="mt-4 flex min-h-6 items-center @lg/page:block @lg/page:min-h-0">
-        <SkeletonLine className="text-caption" width="w-40" />
-      </div>
-      {/* The real column heads are only places: a screen reader hears the narration's step, not an empty table. */}
-      <div aria-hidden="true" className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
-        <table className="w-full table-fixed border-collapse text-small">
-          <thead className="bg-surface-2">
-            <tr>
-              {COLUMNS.map((column) => (
-                <th key={column.key} scope="col" className={cx(CELL, "text-left font-semibold text-ink-heading", column.numeric && "text-right", column.width)}>
-                  {column.key === "found" ? words.columns.found : column.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((index) => (
-              <tr key={index} className="h-28 border-t border-line align-top">
-                <td className={CELL}>
-                  <SkeletonText widths={["w-4/5", "w-3/5"]} />
-                </td>
-                <td className={CELL}>
-                  <SkeletonLine width="w-4/5" />
-                </td>
-                <td className={CELL}>
-                  <SkeletonLine width="w-3/5" />
-                </td>
-                <td className={CELL}>
-                  <SkeletonLine width="ml-auto w-4/5" />
-                </td>
-                <td className={CELL}>
-                  <SkeletonLine width="w-4/5" />
-                </td>
-                <td className={CELL}>
-                  <Skeleton className="h-7 w-28 rounded-pill" />
-                  <SkeletonText className="mt-1" widths={["w-full", "w-3/5"]} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      {/* Each skeleton card has an activity card's places: the badge and the reference, two lines
-          of Description (one from a 768 px page area, whose margins follow the window since ticket 94), two of
-          reason, the hairline and the four STEP fields under their labels. */}
-      <ul aria-hidden="true" data-skeleton-cards className={cx("mt-2 flex flex-col gap-3", VIEW.cards)}>
-        {[0, 1, 2].map((index) => (
-          <li key={index} className="rounded-md border border-line bg-surface p-4">
-            <div className="flex flex-col items-start gap-2 text-small">
-              <Skeleton className="h-[30px] w-28 rounded-pill" />
-              <SkeletonLine width="w-[190px] max-w-full" />
+      <div className="mt-8">
+        <ActivitiesZone busy tag={<SkeletonLine className="text-caption" width="w-40" />}>
+          <div data-zone-table className="@container/plan">
+            {/* The real column heads are only places: a screen reader hears the narration's step, not an empty table. */}
+            <div aria-hidden="true" className="hidden overflow-hidden @plan-cards/plan:block">
+              <table className="w-full table-fixed border-collapse text-small">
+                <thead className="bg-surface-2">
+                  <tr>
+                    {COLUMNS.map((column) => (
+                      <th key={column.key} scope="col" className={cx(columnClass(column), "text-left font-semibold text-ink-heading", column.numeric && "text-right", column.width)}>
+                        {column.key === "found" ? words.columns.found : column.header}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((index) => (
+                    <tr key={index} className="h-28 border-t border-line align-top">
+                      <td className={CELL}>
+                        <SkeletonText widths={["w-4/5", "w-3/5"]} />
+                      </td>
+                      <td className={columnClass(COLUMNS[1])}>
+                        <SkeletonLine width="w-4/5" />
+                      </td>
+                      <td className={columnClass(COLUMNS[2])}>
+                        <SkeletonLine width="w-3/5" />
+                      </td>
+                      <td className={CELL}>
+                        <SkeletonLine width="ml-auto w-4/5" />
+                      </td>
+                      <td className={columnClass(COLUMNS[4])}>
+                        <SkeletonLine width="w-4/5" />
+                      </td>
+                      <td className={CELL}>
+                        <Skeleton className="h-7 w-28 rounded-pill" />
+                        <SkeletonText className="mt-1" widths={["w-full", "w-3/5"]} />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            <SkeletonText className="mt-1 text-small @md/page:hidden" widths={["w-full", "w-3/5"]} />
-            <SkeletonLine className="mt-1 hidden text-small @md/page:flex" width="w-4/5" />
-            <SkeletonText className="mt-2 text-small" widths={["w-full", "w-4/5"]} />
-            <dl className={cx("mt-3 border-t border-line pt-3", CARD_FIELDS)}>
-              {[words.columns.method, words.columns.review, words.columns.estimated, words.columns.status].map((label, field) => (
-                <div key={field} className={cx(CARD_FIELD, (field === 0 || field === 3) && "col-span-full")}>
-                  <dt className="text-caption text-ink-muted">{label}</dt>
-                  <dd>
-                    <SkeletonLine className="text-small" width={field === 0 ? "w-4/5" : "w-3/5"} />
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            {/* "See the past range", the card's last line. */}
-            <SkeletonLine className="mt-3 text-small" width="w-32" />
-          </li>
-        ))}
-      </ul>
+            {/* Each skeleton card has an activity card's places: the badge and the reference, two lines
+                of Description (one from a 768 px page area), two of reason, the hairline and the four STEP fields
+                under their labels. */}
+            <div aria-hidden="true" data-zone-inset className="pb-4 @plan-cards/plan:hidden">
+              <div>
+                <SkeletonLine className="min-h-6 text-caption" width="w-32" />
+              </div>
+              <ul data-skeleton-cards className="mt-2 flex flex-col gap-3">
+                {[0, 1, 2].map((index) => (
+                  <li key={index} className="rounded-md border border-line bg-surface p-4">
+                    <div className="flex flex-col items-start gap-2 text-small">
+                      <Skeleton className="h-[30px] w-28 rounded-pill" />
+                      <SkeletonLine width="w-[190px] max-w-full" />
+                    </div>
+                    <SkeletonText className="mt-1 text-small @md/page:hidden" widths={["w-full", "w-3/5"]} />
+                    <SkeletonLine className="mt-1 hidden text-small @md/page:flex" width="w-4/5" />
+                    <SkeletonText className="mt-2 text-small" widths={["w-full", "w-4/5"]} />
+                    <dl className={cx("mt-3 border-t border-line pt-3", CARD_FIELDS)}>
+                      {[words.columns.method, words.columns.review, words.columns.estimated, words.columns.status].map((label, field) => (
+                        <div key={field} className={cx(CARD_FIELD, (field === 0 || field === 3) && "col-span-full")}>
+                          <dt className="text-caption text-ink-muted">{label}</dt>
+                          <dd>
+                            <SkeletonLine className="text-small" width={field === 0 ? "w-4/5" : "w-3/5"} />
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {/* "See the past range", the card's last line. */}
+                    <SkeletonLine className="mt-3 text-small" width="w-32" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          {/* The foot strip's places: the source line's bar, and what Strata cannot see, which reads the same before
+              the check arrives, so the panel ends as it will (ticket 100's design review, item 7). */}
+          <FootStrip>
+            <SkeletonLine className="text-caption" width="w-3/5" />
+            <p className="text-caption text-ink-muted" data-not-visible>
+              {words.notVisible}
+            </p>
+          </FootStrip>
+        </ActivitiesZone>
+      </div>
     </div>
   );
 }

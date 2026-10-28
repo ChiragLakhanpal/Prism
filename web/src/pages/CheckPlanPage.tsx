@@ -15,6 +15,7 @@ import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { TextLink } from "../components/TextLink";
 import { EightColumns } from "../components/EightColumns";
+import { TaskZone } from "../components/TaskZone";
 import { Fill, Unbroken } from "../components/Fill";
 import { Tag } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
@@ -37,8 +38,9 @@ import { REVEAL_AFTER_MS, useRevealAfterWait } from "../lib/reveal";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
-import { appliedView, previewOf, withReadParams } from "../lib/view";
+import { appliedView, previewOf, useShows, withReadParams } from "../lib/view";
 import { fill } from "../routes";
+import { useRowsLoading } from "../lib/planRows";
 
 const words = copy.checkPlan;
 const short = (iso: string) => formatDate(iso, { style: "table" });
@@ -128,8 +130,9 @@ export function ChangeLineError() {
   );
 }
 
-// The change section when only the comparison failed: the error takes the section body's place under its
-// heading (the 21 brief, section 5.4), with the request's reference when the server gave one.
+// The change section when only the comparison failed: the error takes the zone body's place under its heading (the
+// 21 brief, section 5.4; DESIGN.md section 5, Task zone's error state), with the request's reference when the server
+// gave one.
 export function ChangesError({
   headingRef,
   error,
@@ -142,21 +145,19 @@ export function ChangesError({
   attempt: number;
 }) {
   return (
-    <section aria-labelledby="changes" data-changes="error">
-      <EightColumns prose>
-        <h2 ref={headingRef} id="changes" tabIndex={-1} className="scroll-mt-4 text-h2 text-ink-heading focus:outline-none">
-          {copy.changes.titleUnknown}
-        </h2>
-        <div className="mt-2">
-          <LoadError error={error} message={copy.changes.error} permission={copy.changes.error} onRetry={onRetry} retrying={false} attempt={attempt} />
-        </div>
-      </EightColumns>
-    </section>
+    <TaskZone
+      headingId="changes"
+      headingRef={headingRef}
+      name={copy.changes.titleUnknown}
+      state="error"
+      error={<LoadError error={error} message={copy.changes.error} permission={copy.changes.error} onRetry={onRetry} retrying={false} attempt={attempt} />}
+      marks={{ "data-changes": "error" }}
+    />
   );
 }
 
 // The change line under the method sentence, with its link to the change list below (#changes).
-function ChangeLine({ changes }: { changes: PlanChanges }) {
+function ChangeLine({ changes, onSee }: { changes: PlanChanges; onSee: () => void }) {
   const line = words.changes;
   const prev = changes.previous ? <Num date={changes.previous.plan_date} /> : null;
   let text: ReactNode;
@@ -174,7 +175,7 @@ function ChangeLine({ changes }: { changes: PlanChanges }) {
       {link && (
         <>
           {" "}
-          <TextLink href="#changes" className="whitespace-nowrap">
+          <TextLink href="#changes" className="whitespace-nowrap" onClick={onSee}>
             {line.link}
           </TextLink>
         </>
@@ -198,6 +199,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const preview = shownView ? shownView.applied.preview : previewOf(search) !== null;
   const asOf = params.get("asof");
   const baselineView = useBaselineView();
+  // The view the server applied may have no Packages (the public view), and then the plan check belongs to Projects.
+  const showsPackages = useShows("packages");
   // The draft action's slot holds a button on today's check outside a preview.
   const slotShown = !preview && asOf === null;
 
@@ -214,28 +217,37 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   // Ticket 111: the finding enters only when it replaces a narration that showed for at least 400 ms; a faster check,
   // and every later render, show it at once.
   const reveal = useRevealAfterWait(load.status === "loading" || waiting, path, REVEAL_AFTER_MS);
+  // A link that opens a row's records waits while the check loads, then says if the page holds none (ticket 100's
+  // review, F2).
+  const rowsLoading = load.status === "loading" || waiting;
+  useRowsLoading(rowsLoading);
   const { changes } = planChanges;
   const listed = changes !== null && changes.state === "compared" && changed(changes.counts);
 
-  // "#changes" in the address, from "See what changed" or a link straight to it: the change list's heading takes
-  // focus once it is drawn. The heading needs both the comparison and the check, and either may answer first,
-  // so this runs again when each lands. It moves on the next frame, after the route change has focused the h1
-  // (the 21 critique, round 3).
+  // "What changed" starts as a closed row (ticket 100). "See what changed", or a link straight to "#changes", opens it in
+  // place and its heading takes focus once it is drawn. The heading needs both the comparison and the check, and either
+  // may answer first, so this runs again when each lands. It moves on the next frame, after the route change has
+  // focused the h1 (the 21 critique, round 3).
+  const [changesOpen, setChangesOpen] = useState(false);
   const drawn = listed && checked !== null;
+  const frame = useRef(0);
+  const seeChanges = () => {
+    setChangesOpen(true);
+    cancelAnimationFrame(frame.current);
+    frame.current = requestAnimationFrame(() => {
+      if (!changesHeading.current) return;
+      changesHeading.current.scrollIntoView({ block: "start" });
+      changesHeading.current.focus({ preventScroll: true });
+    });
+  };
   useEffect(() => {
-    let frame = 0;
     const follow = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (window.location.hash !== "#changes" || !changesHeading.current) return;
-        changesHeading.current.scrollIntoView({ block: "start" });
-        changesHeading.current.focus({ preventScroll: true });
-      });
+      if (window.location.hash === "#changes") seeChanges();
     };
     if (drawn) follow();
     window.addEventListener("hashchange", follow);
     return () => {
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(frame.current);
       window.removeEventListener("hashchange", follow);
     };
   }, [drawn]);
@@ -263,18 +275,16 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   }, [load]);
 
   const procurementHref = `/projects/${pid}/procurement`;
-  const projectCrumb = (name: ReactNode): Crumb => ({ text: name, href: `/projects/${pid}` });
   // An ID from the address in Roboto Mono 500 (DESIGN.md section 5, Page header).
   const idText = <ProjectIdText pid={pid} />;
   const named = (name: string) => <Fill template={copy.breadcrumb.project} slots={{ name, pid: idText }} />;
   const unnamed = <Fill template={copy.breadcrumb.projectId} slots={{ pid: idText }} />;
-  const trail = (project: ReactNode, last: ReactNode): Crumb[] => [
-    { text: copy.breadcrumb.projects, href: "/projects" },
-    projectCrumb(project),
-    { text: copy.breadcrumb.procurement, href: procurementHref },
-    { text: last },
+  // The breadcrumb lists parents only (DESIGN.md section 5, Page head): Packages, the section the plan check belongs
+  // to, then its project; in a view with no Packages (the public view) it starts at the project (ticket 100).
+  const trail = (project: ReactNode): Crumb[] => [
+    ...(showsPackages ? [{ text: copy.breadcrumb.packages, href: "/packages" }] : []),
+    { text: project, href: `/projects/${pid}` },
   ];
-  const versionCrumb = version ? copy.breadcrumb.plan(short(version)) : null;
   // The header's h1 and the line under it. With no agency's name, a known date makes the h1
   // "Procurement Plan of October 9, 2026" and nothing goes under it, so the words come once.
   const headerWords = (agency: ReactNode | null, planDate: string | undefined) =>
@@ -292,7 +302,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
         <Skeleton className="inline-block h-[1em] w-[200px] align-middle" />
       </>
     );
-    crumbs = trail(loadingName, versionCrumb ?? words.agencyUnknown);
+    crumbs = trail(loadingName);
     // Every state renders PlanCheckHeader first, so React keeps the one h1 that a route change
     // focused, and focus stays on it when the check arrives (DESIGN.md section 5, Page header).
     body = (
@@ -300,13 +310,14 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
         <PlanCheckHeader
           agency={
             // An agency's name takes two lines below 768 px and one from it, as most do. Beside the pill and
-            // the draft action (ticket 35), a long name takes two lines again from 1024 to 1199 px.
+            // the draft action (ticket 35), which keep one row since ticket 100, a long name takes two lines again
+            // below a page area of 75rem.
             <>
               <span className="sr-only">{words.status.checking}</span>
               {slotShown ? (
                 <>
-                  <SkeletonText className="@md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-3/5"]} />
-                  <SkeletonLine className="hidden @md/page:flex @lg/page:hidden @xl/page:flex" width="w-3/5 max-w-[560px]" />
+                  <SkeletonText className="@xl/page:hidden" widths={["w-full", "w-3/5"]} />
+                  <SkeletonLine className="hidden @xl/page:flex" width="w-3/5 max-w-[560px]" />
                 </>
               ) : (
                 <>
@@ -324,16 +335,18 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           feedforward={slotShown ? <SkeletonLine className="text-caption" width="w-80 max-w-full" /> : undefined}
           sticky={false}
         />
-        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} baseline={baselineView} />
-        <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{words.notVisible}</p>
+        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} />
       </>
     );
   } else if (load.status === "error") {
-    crumbs = trail(unnamed, versionCrumb ?? words.agencyUnknown);
+    crumbs = trail(unnamed);
     // The page's one read failed, so its error alert sits in the page's alert slot, above the breadcrumb, and the
-    // page draws only its head, whose h1 names the page (ticket 94; the shell redesign plan, 8.5).
+    // page draws only its head, whose h1 names the page, "Procurement Plan", with no rule under it, since nothing
+    // follows (ticket 94; the shell redesign plan, 8.5; ticket 100). The head comes first, as in every state, so React
+    // keeps the h1 a route change focused and focus stays on it (ticket 94's review, F1); the alert goes to the slot.
     body = (
       <>
+        <PlanCheckHeader agency={words.agencyUnknown} rule={false} />
         <PageAlert>
           <LoadError
             error={load.error}
@@ -344,11 +357,10 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             attempt={load.attempt}
           />
         </PageAlert>
-        <PlanCheckHeader {...headerWords(null, version)} />
       </>
     );
   } else if (checked) {
-    crumbs = trail(named(checked.project.display_name ?? checked.project.project_name), copy.breadcrumb.plan(short(checked.plan.plan_date)));
+    crumbs = trail(named(checked.project.display_name ?? checked.project.project_name));
     const slot = draftSlot(checked);
     body = (
       <>
@@ -358,39 +370,45 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           pill={checkPill(checked)}
           action={slot.action}
           feedforward={slot.feedforward}
+          // The head sticks only while it holds the page's one action (DESIGN.md section 5, Page head; ticket 100).
+          sticky={Boolean(slot.action)}
         />
         <PlanCheck
           result={checked}
           findingRef={finding}
           reveal={reveal}
           changed={changedRows(changes)}
-          afterMethod={
-            <>
-              {changes ? <ChangeLine changes={changes} /> : planChanges.failed && <ChangeLineError />}
-              <div className="mt-4">
-                <BaselinePanel
-                  pid={pid}
-                  agencyId={checked.plan.agency_id}
-                  agency={checked.plan.implementing_agency}
-                  planDate={checked.plan.plan_date}
-                  baseline={checked.baseline ?? null}
-                  view={baselineView}
-                  readOnly={asOf !== null}
-                  refresh={async () => {
-                    const next = await getJson<CheckPlanResult>(path);
-                    setFresh({ path, result: next });
-                    return next;
-                  }}
-                />
-              </div>
-            </>
-          }
+          afterMethod={changes ? <ChangeLine changes={changes} onSee={seeChanges} /> : planChanges.failed && <ChangeLineError />}
+          // After the activities: "What changed" as a closed row, then the baseline as a row with its action, which the
+          // public view does not show (ticket 100; the shell redesign plan, 8.4).
           after={
-            listed ? (
-              <ChangeTables ref={changesHeading} changes={changes!} agency={checked.plan.implementing_agency} />
-            ) : planChanges.failed ? (
-              <ChangesError headingRef={changesHeading} error={planChanges.error} onRetry={planChanges.retry} attempt={planChanges.attempt} />
-            ) : undefined
+            <>
+              {listed ? (
+                <ChangeTables
+                  ref={changesHeading}
+                  changes={changes!}
+                  agency={checked.plan.implementing_agency}
+                  open={changesOpen}
+                  onToggle={() => setChangesOpen((now) => !now)}
+                />
+              ) : planChanges.failed ? (
+                <ChangesError headingRef={changesHeading} error={planChanges.error} onRetry={planChanges.retry} attempt={planChanges.attempt} />
+              ) : null}
+              <BaselinePanel
+                pid={pid}
+                agencyId={checked.plan.agency_id}
+                agency={checked.plan.implementing_agency}
+                planDate={checked.plan.plan_date}
+                baseline={checked.baseline ?? null}
+                view={baselineView}
+                readOnly={asOf !== null}
+                refresh={async () => {
+                  const next = await getJson<CheckPlanResult>(path);
+                  setFresh({ path, result: next });
+                  return next;
+                }}
+              />
+            </>
           }
         />
         {/* "Drafts from this check" (ticket 36): the Project Paper summary, at the end of the page. */}
@@ -414,7 +432,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     const abstention = found.abstention;
     const agency = abstention?.agency_name ?? abstention?.implementing_agency ?? found.plan?.implementing_agency ?? null;
     const knownAgency = abstention?.reason === "no_plan_from_agency" ? (abstention.agency_name ?? null) : agency;
-    crumbs = trail(found.project ? named(found.project.display_name ?? found.project.project_name) : unnamed, versionCrumb ?? knownAgency ?? words.agencyUnknown);
+    crumbs = trail(found.project ? named(found.project.display_name ?? found.project.project_name) : unnamed);
     const allPlans = { href: procurementHref, text: words.allPlans };
     let title: ReactNode = words.noPlanTitleUnnamed;
     let text: ReactNode = words.noPlanBody;
@@ -471,7 +489,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     if (preview) return {};
     if (asOf !== null) return { feedforward: <p className="text-caption text-ink-muted" data-draft-slot="asof">{action.asof}</p> };
     const count = result.counts.signal;
-    if (count === 0) return { feedforward: <p className="max-w-[40ch] text-caption text-ink-muted @lg/page:text-right" data-draft-slot="none">{action.none}</p> };
+    // With no signal to draft from, the head holds the check pill and no action, so it does not stick (ticket 100).
+    if (count === 0) return {};
     const start = () => {
       // The rows the notes will be on, in the plan check's order: needs a look first, then watch.
       const rank = (row: CheckedPlan["rows"][number]) => (row.marks.some((mark) => mark.mark === "needs_a_look") ? 0 : 1);

@@ -1,15 +1,20 @@
-// The Packages tab (the 15 brief, section 7.9), at /packages: the packages the person is planning and the plans
-// they checked, newest first, 20 a page, as one table that spans all 12 columns (cards below 768 px). Its two
-// actions put the one box into a mode and move focus there: "Check a plan" lists a project's latest plans by
-// agency, and "Plan a package" lists "Plan a package from this sentence" first. Every row and count comes from
-// GET /api/planned-packages; the page counts nothing itself.
-import { useEffect, useState } from "react";
+// The Packages tab (the 15 brief, section 7.9; ticket 100's redesign), at /packages: the packages the person is
+// planning and the plans they checked, newest first, 20 a page, as one panel that spans all 12 columns (cards below
+// 768 px). Its two actions, at the head's right, put the one box into a mode and move focus there: "Check a plan"
+// lists a project's latest plans by agency, and "Plan a package" lists "Plan a package from this sentence" first.
+// Every row and count comes from GET /api/planned-packages; the page counts nothing itself.
+import { useEffect, useId, useState } from "react";
 import { getJson } from "../lib/api";
 import { Button } from "../components/Button";
+import { FootStrip } from "../components/FootStrip";
 import { Num } from "../components/Num";
 import { Tag } from "../components/LessonParts";
-import { PageHeader } from "../components/PageHeader";
-import { Table, type Column, type Row } from "../components/Table";
+import { PageHead } from "../components/PageHead";
+import { SkeletonLine } from "../components/Skeleton";
+import { Source } from "../components/Source";
+import { countText, Table, type Column, type Row } from "../components/Table";
+import { TaskZone } from "../components/TaskZone";
+import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { formatCount, formatDate } from "../lib/format";
@@ -75,7 +80,7 @@ function rowOf(row: PlannedRow): Row {
         type: words.typePackage,
         country: row.country_name ?? words.noCountry,
         project: row.project_id ? <TextLink href={`/projects/${row.project_id}`}>{mono(row.project_id)}</TextLink> : words.noProject,
-        last: <Num date={row.last_worked_on.slice(0, 10)} style="table" />,
+        last: <LastDate on={row.last_worked_on} />,
       },
     };
   }
@@ -95,68 +100,98 @@ function rowOf(row: PlannedRow): Row {
       type: words.typePlan,
       country: row.country_name ?? copy.notInRecord,
       project: <TextLink href={`/projects/${row.project_id}`}>{mono(row.project_id)}</TextLink>,
-      last: <Num date={row.last_worked_on.slice(0, 10)} style="table" />,
+      last: <LastDate on={row.last_worked_on} />,
     },
   };
 }
 
-// The list of packages and checked plans, in each of its states: loading, failed, empty and ready.
+// A row's "Last worked on" date, which never breaks inside (plan 7.10), however narrow the column is beside the sidebar.
+function LastDate({ on }: { on: string }) {
+  return (
+    <span className="whitespace-nowrap">
+      <Num date={on.slice(0, 10)} style="table" />
+    </span>
+  );
+}
+
+// "Last worked on" opens its definition in a window from the column head, and from each card's field below 768 px,
+// since cards have no column heads (ticket 100).
+function LastWorked() {
+  return (
+    <DefinitionWindow label={words.columns.lastWorked} title={words.columns.lastWorked}>
+      {words.columns.lastWorkedDefinition}
+    </DefinitionWindow>
+  );
+}
+
+// The list of packages and checked plans, in each of its states (ticket 100; DESIGN.md section 5, Task zone): one panel
+// with its title sentence in lead, the count line, the table and its source in the foot strip; while it loads, the same
+// panel over skeleton rows; with nothing yet, a Task zone row that says so; and when it failed, the error alert in the
+// list's place. The panel is the table's frame (Table's inPanel), as All projects' is: its rows run the panel's width
+// on its text edge, and below 768 px they are rows with a line between them, not cards in a box.
 export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRetry: () => void }) {
   const [page, setPage] = useState(0);
+  const headingId = useId();
   const columns: Column[] = [
     { key: "name", header: words.columns.name, width: "w-2/5" },
     { key: "type", header: words.columns.type, short: true, width: "w-[7rem]" },
     { key: "country", header: words.columns.country, short: true, width: "w-[7rem]" },
     { key: "project", header: words.columns.project, short: true, width: "w-[7rem]" },
-    {
-      key: "last",
-      header: (
-        <>
-          {words.columns.lastWorked}
-          <span className="block text-caption font-normal text-ink-muted">{words.columns.lastWorkedNote}</span>
-        </>
-      ),
-      cardHeader: words.columns.lastWorked,
-      short: true,
-    },
+    // While the rows load the table is hidden from screen readers, so its head holds the words alone, with no button.
+    load.status === "loading"
+      ? { key: "last", header: words.columns.lastWorked, short: true, width: "w-[8.5rem]" }
+      : { key: "last", header: <LastWorked />, cardHeader: <LastWorked />, short: true, width: "w-[8.5rem]" },
   ];
 
-  let table;
-  if (load.status === "loading") table = <Table title={null} columns={columns} rowHeader="name" state={{ status: "loading", rows: 5 }} />;
-  else if (load.status === "error")
-    table = <Table title={null} columns={columns} rowHeader="name" state={{ status: "error", message: words.error, onRetry }} />;
-  else if (load.data.rows.length === 0)
-    table = <Table title={null} columns={columns} rowHeader="name" state={{ status: "empty", title: words.emptyTitle, body: words.emptyBody }} />;
-  else {
-    const { rows, counts } = load.data;
-    const from = page * PAGE;
-    const shown = rows.slice(from, from + PAGE);
-    table = (
-      <>
-        <Table
-          title={words.title(counts.packages, formatCount(counts.packages), counts.plan_checks, formatCount(counts.plan_checks))}
-          count={{ noun: words.noun, one: words.nounOne, total: counts.total, from: from + 1, to: from + shown.length }}
-          columns={columns}
-          rowHeader="name"
-          cardsNote={words.columns.lastWorkedNote}
-          state={{ status: "ready", rows: shown.map(rowOf) }}
-          source={words.source}
-        />
-        {counts.total > PAGE && (
-          <div className="mt-3 flex flex-wrap gap-3">
-            <Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>
-              {words.previous}
-            </Button>
-            <Button variant="secondary" disabled={from + PAGE >= counts.total} onClick={() => setPage(page + 1)}>
-              {words.next}
-            </Button>
-          </div>
-        )}
-      </>
+  if (load.status === "error") {
+    return <Table title={null} columns={columns} rowHeader="name" state={{ status: "error", message: words.error, onRetry }} />;
+  }
+  if (load.status === "ready" && load.data.rows.length === 0) {
+    return <TaskZone name={words.emptyTitle} summary={words.emptyBody} sectionKey="packages-list" />;
+  }
+  if (load.status === "loading") {
+    return (
+      <TaskZone panel leadName name={<SkeletonLine className="text-lead" width="w-3/5" />} tag={<SkeletonLine className="text-caption" width="w-40" />} busy sectionKey="packages-list">
+        <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" inPanel state={{ status: "loading", rows: 5 }} />
+        <FootStrip>
+          <SkeletonLine className="text-caption" width="w-2/5" />
+        </FootStrip>
+      </TaskZone>
     );
   }
-
-  return table;
+  const { rows, counts } = load.data;
+  const from = page * PAGE;
+  const shown = rows.slice(from, from + PAGE);
+  const count = { noun: words.noun, one: words.nounOne, total: counts.total, from: from + 1, to: from + shown.length };
+  return (
+    <TaskZone
+      panel
+      leadName
+      headingId={headingId}
+      name={words.title(counts.packages, formatCount(counts.packages), counts.plan_checks, formatCount(counts.plan_checks))}
+      tag={
+        <span data-count-line data-numbers>
+          {countText(count)}
+        </span>
+      }
+      sectionKey="packages-list"
+    >
+      <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" inPanel state={{ status: "ready", rows: shown.map(rowOf) }} />
+      {counts.total > PAGE && (
+        <div data-zone-pager className="flex flex-wrap gap-3">
+          <Button variant="secondary" disabled={page === 0} onClick={() => setPage(page - 1)}>
+            {words.previous}
+          </Button>
+          <Button variant="secondary" disabled={from + PAGE >= counts.total} onClick={() => setPage(page + 1)}>
+            {words.next}
+          </Button>
+        </div>
+      )}
+      <FootStrip>
+        <Source>{words.source}</Source>
+      </FootStrip>
+    </TaskZone>
+  );
 }
 
 // The public view holds no packages, so the route shows the not-in-this-view state and reads nothing; the
@@ -196,27 +231,32 @@ function PackagesTab({ preview, search }: { preview: boolean; search: string }) 
   const [load, retry] = useLoad<PlannedList>("/api/planned-packages");
   useBoxFromAddress(search, preview);
   const officer = Boolean(useStore(officerAgency)) && !preview;
+  // The head's two verbs (ticket 100; DESIGN.md section 5, Page head): "Check a plan", the primary, then "Plan a
+  // package", at the head's right when the page area allows (46rem) and under the purpose otherwise. Each puts the one
+  // box in its mode with focus in the box. An officer's primary is "Check my plan"; a preview holds both, and says why.
+  const actions = (
+    <>
+      {officer ? (
+        <a href={CHECK_MY_PLAN} className={PRIMARY_LINK} data-check-mine>
+          {words.checkMine}
+        </a>
+      ) : (
+        <Button variant="primary" held={preview} onClick={() => !preview && enterBoxMode("check")} className="w-full @head/page:w-auto">
+          {words.checkPlan}
+        </Button>
+      )}
+      <Button variant="secondary" held={preview} onClick={() => !preview && enterBoxMode("plan")} className="w-full @head/page:w-auto">
+        {words.planPackage}
+      </Button>
+    </>
+  );
   return (
     <div className="layout-grid min-h-svh" data-packages-page={load.status}>
       <div className="col-span-12">
-        <PageHeader title={copy.pages.packages.title} purpose={officer ? words.purposeAgency : words.purpose} />
-        <div className="mt-4 flex flex-col gap-3 @md/page:flex-row @md/page:flex-wrap @md/page:items-center">
-          {officer ? (
-            <a href={CHECK_MY_PLAN} className={PRIMARY_LINK} data-check-mine>
-              {words.checkMine}
-            </a>
-          ) : (
-            <Button variant="primary" held={preview} onClick={() => !preview && enterBoxMode("check")} className="w-full @md/page:w-auto">
-              {words.checkPlan}
-            </Button>
-          )}
-          <Button variant="secondary" held={preview} onClick={() => !preview && enterBoxMode("plan")} className="w-full @md/page:w-auto">
-            {words.planPackage}
-          </Button>
-          {preview && <p className="text-caption text-ink-muted">{previewReason("plan_package") ?? words.previewOff}</p>}
-        </div>
+        <PageHead title={copy.pages.packages.title} purpose={officer ? words.purposeAgency : words.purpose} action={actions} />
+        {preview && <p className="mt-3 text-caption text-ink-muted">{previewReason("plan_package") ?? words.previewOff}</p>}
         {officer && <UploadsList />}
-        <div className="mt-6 @lg/page:mt-8">
+        <div className="mt-8">
           <PackagesList load={load} onRetry={retry} />
         </div>
         {load.status === "loading" && (

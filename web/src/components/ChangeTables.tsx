@@ -1,5 +1,5 @@
 // Change tables (DESIGN.md section 5; the 21 brief, section 5.4): what changed in a Procurement Plan since
-// the agency's version before it, on the version's Check a plan page under "What changed since the plan of
+// the agency's version before it, on the version's Check a plan page as the Task zone "What changed since the plan of
 // {prev_date}" (#changes). Up to four short tables, one per kind of change, each with its own columns: an
 // added or dropped activity with its method and estimate, a re-dated one with each moved step and both
 // dates, a re-estimated one with both amounts. "Was" and "now" sit side by side. A kind with no change has
@@ -14,8 +14,9 @@ import type { ChangedActivity, ChangeKind, PlanChanges } from "../lib/api";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { CHANGE_KINDS as KINDS, changeList } from "../lib/changes";
-import { EightColumns } from "./EightColumns";
+import { TaskZone, ZoneBlock } from "./TaskZone";
 import { Fill, Unbroken } from "./Fill";
+import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
 import { FromLine, plansFrom } from "./NumFrom";
 import { MethodText } from "./PlanCheck";
@@ -272,7 +273,15 @@ export function changedRows(changes: PlanChanges | null): Record<string, keyof t
   return found;
 }
 
-export const ChangeTables = forwardRef<HTMLHeadingElement, { changes: PlanChanges; agency: string }>(function ChangeTables({ changes, agency }, ref) {
+// "What changed since the plan of {prev_date}" (#changes): a Task zone that starts as a closed row with its one
+// sentence, "This version re-estimated two activities. No activity was added, dropped or re-dated.", and "Show the
+// changes" at its right, which makes it a panel in place with the match note, the tables and the source line
+// (ticket 100; DESIGN.md section 5, Task zone and Plan check table). The plan check's "See what changed" opens it and
+// moves focus to its heading. Without a toggle, as in the design gallery, it is a panel, open.
+export const ChangeTables = forwardRef<
+  HTMLHeadingElement,
+  { changes: PlanChanges; agency: string; open?: boolean; onToggle?: () => void }
+>(function ChangeTables({ changes, agency, open, onToggle }, ref) {
   const counts = changes.counts!;
   const previous = changes.previous!;
   const prev = formatDate(previous.plan_date);
@@ -284,27 +293,19 @@ export const ChangeTables = forwardRef<HTMLHeadingElement, { changes: PlanChange
   );
   const overlap = new Set(references).size < references.length;
   const title = (kind: ChangeKind) => words.tableTitle[kind](counts[kind], formatCount(counts[kind], { capital: true }));
-  return (
-    <section aria-labelledby="changes" data-changes>
-      <EightColumns prose>
-        <h2 ref={ref} id="changes" tabIndex={-1} className="scroll-mt-4 text-h2 text-ink-heading focus:outline-none">
-          <Fill template={words.title} slots={{ prev_date: <Num date={previous.plan_date} /> }} />
-        </h2>
-        <p className="mt-2 text-body text-ink">
-          <Fill template={words.lead} slots={{ change_list: <Unbroken text={changeList(counts)} /> }} />{" "}
-          {unchanged.length > 0 && <Unbroken text={words.unchanged(unchanged)} />}
-        </p>
-        <p className="mt-2 text-caption text-ink-muted">
-          {words.matchNote}
-          {overlap && (
-            <>
-              {" "}
-              {words.overlapNote}
-            </>
-          )}
-        </p>
-      </EightColumns>
-      <div className="mt-6 flex flex-col gap-8">
+  const toggled = onToggle !== undefined;
+  const inner = (
+    <>
+      <p className="text-caption text-ink-muted">
+        {words.matchNote}
+        {overlap && (
+          <>
+            {" "}
+            {words.overlapNote}
+          </>
+        )}
+      </p>
+      <div className="flex flex-col gap-8">
         {shown.map((kind) => (
           <div key={kind} data-change-kind={kind}>
             <h3 className="text-h2 text-ink-heading">
@@ -317,11 +318,37 @@ export const ChangeTables = forwardRef<HTMLHeadingElement, { changes: PlanChange
           </div>
         ))}
       </div>
-      <EightColumns prose className="mt-2">
-        <Source>
-          <Fill template={words.source} slots={{ agency, prev_date: <Num date={previous.plan_date} />, plan_date: <Num date={changes.plan.plan_date} /> }} />
-        </Source>
-      </EightColumns>
-    </section>
+    </>
+  );
+  const foot = (
+    <FootStrip>
+      <Source>
+        <Fill template={words.source} slots={{ agency, prev_date: <Num date={previous.plan_date} />, plan_date: <Num date={changes.plan.plan_date} /> }} />
+      </Source>
+    </FootStrip>
+  );
+  // A closed row's body sits in the zone's own body once opened, and the source line ends it in a foot strip, as a
+  // panel's evidence ends; a panel with no toggle holds it as its one block.
+  const body = toggled ? <div className="flex flex-col gap-4 pt-2">{inner}</div> : <ZoneBlock foot={foot}>{inner}</ZoneBlock>;
+  return (
+    <TaskZone
+      id="changes-zone"
+      headingId="changes"
+      headingRef={ref}
+      name={<Fill template={words.title} slots={{ prev_date: <Num date={previous.plan_date} /> }} />}
+      // Closed, a row; opened, a panel in place (TaskZone's panel follows the toggle when it is left out).
+      panel={toggled ? undefined : true}
+      summary={
+        <p data-changes-summary>
+          <Fill template={words.lead} slots={{ change_list: <Unbroken text={changeList(counts)} /> }} />{" "}
+          {unchanged.length > 0 && <Unbroken text={words.unchanged(unchanged)} />}
+        </p>
+      }
+      toggle={toggled ? { open: Boolean(open), onToggle, show: copy.checkPlan.changes.show, hide: copy.checkPlan.changes.hide } : undefined}
+      marks={{ "data-changes": "" }}
+      foot={toggled ? foot : undefined}
+    >
+      {body}
+    </TaskZone>
   );
 });

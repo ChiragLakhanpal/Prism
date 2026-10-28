@@ -311,14 +311,14 @@ test("a streamed answer's Strata, in short block enters over 200 ms and the chec
     { property: "translate", from: "0px 4px", duration: 200, delay: 0 },
   ]);
   expect(await transitionsOn(page, "checkTick")).toEqual([{ property: "clip-path", from: "inset(0px 100% 0px 0px)", duration: 200, delay: 120 }]);
-  // The tick sits in the check line's 48 px indent beside "Checked", where the removed box has its icon, 16 px wide
-  // in ink-muted, and a screen reader hears only the line's words, which say "Checked".
+  // The tick sits before "Checked" on the line's text edge, 12 px inside its block since ticket 100 took the indent
+  // away, 16 px wide in ink-muted, and a screen reader hears only the line's words, which say "Checked".
   const line = panel(page).locator("[data-check-line]");
   const tick = line.locator("[data-check-tick]");
   await expect(tick).toHaveAttribute("aria-hidden", "true");
   await expect(line).toHaveText(/^Checked: /);
   const [edge, mark, checked] = [(await line.boundingBox())!, (await tick.boundingBox())!, (await line.locator("[data-check-part=checked]").boundingBox())!];
-  expect([Math.round(mark.x - edge.x), Math.round(mark.width)]).toEqual([20, 16]);
+  expect([Math.round(mark.x - edge.x), Math.round(mark.width)]).toEqual([12, 16]);
   expect(mark.y).toBeGreaterThanOrEqual(checked.y);
   expect(mark.y + mark.height).toBeLessThanOrEqual(checked.y + 20);
   expect(await tick.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(75, 94, 113)");

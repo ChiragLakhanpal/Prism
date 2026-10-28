@@ -43,7 +43,7 @@ import { address, navigate, startRouter } from "./lib/router";
 import { createStore, useStore } from "./lib/store";
 import { pageTitle } from "./lib/title";
 import { RoutePage } from "./RoutePage";
-import { ANSWER_IN_PAGE, fill, isDay, matchRoute, type Match, type PageKey } from "./routes";
+import { ANSWER_IN_PAGE, fill, isDay, litSection, matchRoute, type Match, type PageKey } from "./routes";
 
 const viewer = createStore<Viewer>({ status: "loading" });
 
@@ -424,7 +424,7 @@ export function App() {
         <Sidebar
           mode={navMode}
           viewer={who}
-          current={match.key === "home" ? "home" : match.section}
+          current={match.key === "home" ? "home" : litSection(match, navMode.tabs)}
           pathname={here.pathname}
           freshness={freshness}
           // World Bank staff open Following from Projects (ticket 37); a preview, and everyone else, All projects.

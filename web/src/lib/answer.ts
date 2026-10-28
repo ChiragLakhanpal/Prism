@@ -60,7 +60,9 @@ export type EvidenceEvent = {
     | "contracts"
     | "disagreement"
     // Two versions of a lesson (ticket 39): versions:{lesson_id}:{a}:{b}.
-    | "versions";
+    | "versions"
+    // A plan check row's records (ticket 100; lib/planRows.ts): the plan check holds them on the page.
+    | "plan-row-check";
   tool: string | null;
   stratum: "What" | "How" | "Why" | null;
   short_name: string | null;

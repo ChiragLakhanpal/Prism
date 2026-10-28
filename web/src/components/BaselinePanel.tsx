@@ -1,5 +1,5 @@
-// Baseline line (DESIGN.md section 5; the 21 brief, section 5.2): a quiet panel under Check a plan's method
-// sentence, beside the claim it changes, that saves one version of an agency's plans as the baseline, the
+// Baseline line (DESIGN.md section 5; the 21 brief, section 5.2): a Task zone row after Check a plan's activities, "Baseline
+// for delay" (ticket 100; it sat under the method sentence before), that saves one version of an agency's plans as the baseline, the
 // plan agreed at negotiations. The baseline is shared: every World Bank staff viewer who checks that
 // agency's plans sees the same one, and who saved it. Later checks then also measure delay from its dates;
 // the marks still come from the first published planned date.
@@ -22,6 +22,7 @@ import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
+import { TaskZone, ZoneBlock } from "./TaskZone";
 import { TextLink } from "./TextLink";
 
 const words = copy.baseline;
@@ -194,8 +195,11 @@ export function BaselinePanel({
   }
 
   return (
-    <section aria-label={words.label} data-baseline={mode.kind === "idle" ? (baseline ? (isThis ? "this" : "another") : "none") : mode.kind} className="rounded-md border border-line bg-surface p-4">
-      <p ref={status} role="status" tabIndex={-1} className="text-body text-ink focus:outline-none">
+    <TaskZone name={words.label} sectionKey="baseline" marks={{ "data-baseline": mode.kind === "idle" ? (baseline ? (isThis ? "this" : "another") : "none") : mode.kind }}>
+      <ZoneBlock>
+      {/* A sentence on a wide page keeps to the prose measure (DESIGN.md section 4, Page layouts; ticket 100's design
+          review, item 8). */}
+      <p ref={status} role="status" tabIndex={-1} className="max-w-prose text-body text-ink focus:outline-none">
         {message}
       </p>
       {mode.kind === "failed" && (
@@ -230,7 +234,7 @@ export function BaselinePanel({
             setMode({ kind: "idle" });
           }}
         >
-          <p ref={confirmText} tabIndex={-1} className="text-body font-semibold text-ink focus:outline-none" data-baseline-confirm>
+          <p ref={confirmText} tabIndex={-1} className="max-w-prose text-body font-semibold text-ink focus:outline-none" data-baseline-confirm>
             <Fill template={words.confirm} slots={{ baseline_date: date(baseline.plan_date), agency }} />
           </p>
           {/* Below 768 px the two buttons stack and the ghost one sits flush, its label on the text's edge
@@ -264,6 +268,7 @@ export function BaselinePanel({
         </div>
       )}
       {controls && mode.kind !== "confirm" && <div className="mt-3">{controls}</div>}
-    </section>
+      </ZoneBlock>
+    </TaskZone>
   );
 }
