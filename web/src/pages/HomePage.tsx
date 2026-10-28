@@ -4,7 +4,9 @@
 // - The h1 is the briefing: a date line, then sentences whose count words open what they count. Each count equals the
 //   lines of its kind below, folded lines included.
 // - The Start here strip, for World Bank staff in their own view today: one example per stage, which "Remove" hides
-//   for this viewer on every later visit (kept on the server), with an undo row for the visit.
+//   for this viewer on every later visit (kept on the server), with an undo row for the visit. Ticket 114 makes it a
+//   to-do list: a tick on each example followed and a count, kept in this browser (lib/startHere.ts), and the sidebar
+//   shows the next one on every page.
 // - "Worth knowing · fixed checks, no model": one past-tense line per activity, project or lesson, each with its
 //   status, its source and one action. More than eight fold behind "Show them".
 // - "Waiting for you": the viewer's own drafts to check, with their progress, eight at most, then a link to Drafts.
@@ -526,7 +528,7 @@ export function HomePage() {
   useEffect(() => {
     if (answer && answer.view === "staff" && !answer.preview && !answer.as_of && answer.start_here.links.length > 0) keepLinks(answer.start_here.links);
   }, [answer]);
-  const strip =Boolean(answer?.start_here.visible && answer.start_here.links.length > 0);
+  const strip = Boolean(answer?.start_here.visible && answer.start_here.links.length > 0);
   // A later visit after Remove: World Bank staff today, with the strip's links but not the strip.
   const restore = Boolean(answer && !strip && answer.view === "staff" && !answer.as_of && answer.start_here.links.length > 0);
   return (

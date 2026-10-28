@@ -3798,3 +3798,33 @@ A deploy from this commit or a later one also serves ticket 109's step 2, if it 
 ## Tickets 108 and 109, the workspace steps, part 1: the deploy and the agent's sync
 
 **Ran on October 28, 2026 (orchestrator), from a snapshot of 9a8ae27b (ticket 109's done commit, which holds 108).** Step 1: the bundle deploy exited 0 at 01:04 UTC and the Jobs API update put the nightly's window back to 18000 seconds (schedule unchanged). Step 2 (ticket 109): `ops/agent/sync.py --agent orchestrator` made version 10 of strata-orchestrator, and `--check` printed that version 10 matches the repo with no difference in its model, instructions, tools, description or guardrail. Step 3 (ticket 108): `parse_and_embed` alone started as run 260082096321553 at 01:04 UTC with the 120-minute budget; its result, the plan rows and the index sync are recorded in part 2 when it ends. The App's redeploy for ticket 109's smoke question comes with the night's final deploy, after the polish tickets.
+
+## Ticket 116, step 1 of 1: the package demo's recorded answer on the deployed App (after ticket 47's step 2, with the night's final redeploy)
+
+Parked on October 27, 2026 with ticket 116 (merge commit 2d4abf79, branch `deck/recorded-answer` at d5dcaa47). Every key is set, but the merger ran no workspace step. The orchestrator runs the final App redeploy, and the second session runs the checks from a snapshot. Since this ticket, slide 9 reads the recording that ticket 47's step 2 writes, so the heading of that step ("no slide draws them") is out of date: run it before the night's final redeploy, or the deployed deck shows no button.
+
+1. Run "Ticket 47, step 2 of 3" above: `record_demo_live.py` on the paid workspace, then `uv run python -m strata.proposal deck`, then commit `docs/proposal/demo-package.json` and `web/public/deck/data.json` together through the gate.
+2. Redeploy the App from a snapshot of that commit or a later one, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot):
+
+       uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- `python3 -c "import json; c = json.load(open('web/public/deck/data.json'))['demo']['comparables']; print(c['package']['step_reference'], len(c['rows']))"` prints `KE-NWWDA-541055-CW-RFB` and a number above 0.
+- The commit's gate passes, with `web/tests/deck.spec.ts`'s number check over the committed data.
+- The deploy exits 0 and its last line is "Strata is running at <address>" on the paid workspace's App.
+- On `/present/9` of that address, the demo box shows "Show the recorded answer". One press draws the recorded range chart with "Recorded on <date>, for KE-NWWDA-541055-CW-RFB", the coverage line and the source line, and the next press moves to slide 10.
+
+Record the recorder's exit code, the deck commit, the deploy's exit code, last line and deployment id, and whether slide 9 drew the chart, here under ticket 116. If the recording does not land before the final redeploy, the slide is as it was before this ticket, and the demo depends on the live App.
+
+## Ticket 108, the live step, part 2: the demo plan is read and the package page shows it
+
+**Ran on October 28, 2026 (orchestrator), 01:04 to 02:04 UTC, from the snapshot of 9a8ae27b.** `parse_and_embed` alone (run 260082096321553) ended SUCCESS after 57 minutes: with the newest-only rule, P156634's 235 older plan versions got `superseded` rows in strata.ops.skipped_documents (821 superseded and 68 `not_read` rows across the slice, the latter for projects the minutes did not reach), and nothing was waiting to parse, because the newest plan, document 40132287 (a two-page summary Procurement Plan of October 9, 2026, fetched on October 27 at 04:44 UTC, 10,509 characters, 3 pages, 1 layout page), had been parsed in the earlier passes. Its rows are in the tables the App reads: strata.silver.plan_rows holds 8 rows and strata.silver.plan_listings 9 for P156634, and `GET /api/packages/KE-NWWDA-541055-CW-RFB` on the live App carries the plan (document 40132287, plan_date 2026-10-09, planned notice 2026-03-10). strata.ops.anchored_plan_rows and strata.ops.plan_baselines hold 0 rows because they are the staff's saved baselines from the plan check, not the reader's output, so ticket 108's criterion 3 named the wrong table; the intent holds. `sync_index` alone (run 303102476192478) ended SUCCESS at 02:04 UTC with the index unchanged at 808 rows.
+
+## Ticket 47, step 2 of 3 ran: the demo package's answers are recorded
+
+**Ran on October 28, 2026 (orchestrator), 02:07 to 02:08 UTC, from the snapshot of 050365f9.** `ops/proposal/record_demo_live.py` exited 0 and wrote docs/proposal/demo-package.json (the comparables with 49 rows and their coverage, and the estimate, for KE-NWWDA-541055-CW-RFB); the file was copied into the main checkout and `python -m strata.proposal deck` rebuilt web/public/deck/data.json (exit 0). Both are in this commit; ticket 116's button on the deck's planning demo slide reads them.
+
+## Ticket 46, step 1 of 2 ran: the proposal's measures pulled, 16 measured and 21 not yet
+
+**Ran on October 28, 2026 (orchestrator), 02:09 to 02:11 UTC, from the snapshot of 050365f9.** `ops/proposal/pull_live.py` wrote docs/proposal/snapshot.json and exited 1: 16 results measured on the paid workspace and 21 not yet, among them award-rows-by-year, trail, documents-read, pages-read-well, pages-published-text, shelf-read, backtest-coverage, backtest-years, retrieval-precision, retrieval-recall, retrieval-ndcg, benchmark-passed, must-refuse, groundedness and hindsight-caught; the deck's slides for those say so. The retrieval weekly job, run by hand at 02:11 UTC (run 2941201953167), ended FAILED after 4 minutes with `SystemExit: 0`: its notebook stops with sys.exit(0) when the query sets are not loaded on the workspace ("Run ops/retrieval/evaluate_live.py --load-queries with the env file"), which the platform counts as a failure; the query sets and the retrieval scores wait for a session with time for ticket 32's live run (evaluate_live.py still describes an AI Search adapter), and the exit is a follow-up for ticket 57. The snapshot is in this commit with the deck's data rebuilt from it.
