@@ -253,10 +253,18 @@ export const copy = {
     lessons: {
       title: "Lessons",
       purpose: LESSONS_PURPOSE,
-      emptyTitle: "There are no lessons in the library yet.",
+      // The empty library's card says whose lessons these are, who decides, what happens to the proposed ones and
+      // where the lessons show up anyway (ticket 114). The page's caption above it spells out IEG.
+      emptyTitle: "No lesson has entered the library yet.",
       emptyBody:
-        "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
-      link: "Go to Data",
+        "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of " +
+        "them. I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed " +
+        "lessons wait for that decision, and only lesson reviewers can read them.",
+      emptyMore:
+        "You don't need to search here for each package. On a package's page, section 3, Procurement risks and what " +
+        "helped, I show the lessons from the completion reports of projects with comparable packages.",
+      // Where section 3's own empty state links (routes.ts, RISKS_READINESS_HREF).
+      link: "See which completion reports I have read",
     },
     // Lessons > Waiting for review and one item's review page (ticket 29): the frame keeps the Lessons h1.
     lessonsQueue: {
@@ -435,6 +443,22 @@ export const copy = {
     // Below 1024 px the Menu button opens the sidebar's items as the Menu sheet.
     menu: "Menu",
     menuClose: "Close the menu",
+    // Start here as a to-do list (ticket 114): the item under Home in the sidebar, and the ticks and count on Home's
+    // strip. The counts are written by lib/format.ts; each example's words are copy.home.start.links.
+    startHere: {
+      title: "Start here",
+      count: (done: string, total: string) => `${done} of ${total} done`,
+      // The rail's short count, under its icon.
+      short: (done: string, total: string) => `${done} of ${total}`,
+      next: "Next: {example}",
+      // With every example followed: total is the count word ("six").
+      allDone: (total: string) => `All ${total} done`,
+      // The rail's tooltip, which is also the item's name.
+      tip: (done: string, total: string, example: string) => `Start here: ${done} of ${total} done. Next: ${example}.`,
+      tipAllDone: (total: string) => `Start here: all ${total} done.`,
+      // Read after a done link's own words on Home's strip.
+      doneHidden: ", done",
+    },
     view: {
       // The pill names the view the server applies (the 40 brief, 3.2): each label fits the bar at 1024 px.
       pill: {

@@ -37,12 +37,16 @@ export function Card({
 export function EmptyState({
   title,
   body,
+  more,
   link,
   level = 2,
   className,
 }: {
   title: ReactNode;
   body: ReactNode;
+  // A second paragraph, for the one card that must also say where its content shows up (the Lessons library's,
+  // ticket 114).
+  more?: ReactNode;
   link?: { href: string; text: ReactNode };
   level?: Level;
   className?: string;
@@ -53,6 +57,7 @@ export function EmptyState({
       <div className="min-w-0">
         {createElement(`h${level}`, { className: "text-h2 text-balance text-ink-heading" }, title)}
         <p className="mt-2 max-w-prose text-body text-pretty text-ink">{body}</p>
+        {more && <p className="mt-2 max-w-prose text-body text-pretty text-ink">{more}</p>}
         {link && (
           <p className="mt-4">
             <TextLink href={link.href}>{link.text}</TextLink>

@@ -237,7 +237,7 @@ test("a first visit says so, and a visit with nothing new says that, with no new
   await openLessons(page, "lessons-page-empty.json");
   await expect(page.locator("#lessons-digest")).toHaveText("This is your first visit to Lessons. The library has no lessons yet.");
   await expect(page.locator("[data-digest=first]")).toContainText("From your next visit, I start this page with what came in since this one.");
-  await expect(page.locator("[data-empty-state] h2")).toHaveText("There are no lessons in the library yet.");
+  await expect(page.locator("[data-empty-state] h2")).toHaveText("No lesson has entered the library yet.");
   expect(await axe(page)).toEqual([]);
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -247,6 +247,37 @@ test("a first visit says so, and a visit with nothing new says that, with no new
   // The notice stays until the author chooses, whatever happened to the last visit.
   await expect(page.locator("[data-version-notice=narrowed]")).toHaveCount(1);
   expect(await axe(page)).toEqual([]);
+});
+
+// Ticket 114: the empty library's card answers whose lessons these are, who decides, what happens to the proposed ones
+// and where the lessons show up anyway, and links where section 3's own empty state links: Data readiness for the
+// sources the package page's risks draw on (the server's answer for section 3, risks-ke-nwwda-541055.json). One page
+// load serves both widths.
+test("at 1440 and 390 px the empty library says whose lessons they are, who decides, and where they show up on a package's page", async ({ page }) => {
+  await openLessons(page, "lessons-page-empty.json");
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const card = page.locator("[data-empty-state]");
+    await expect(card.getByRole("heading", { level: 2 })).toHaveText("No lesson has entered the library yet.");
+    await expect(card.locator("p")).toHaveText([
+      "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of them. " +
+        "I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
+        "wait for that decision, and only lesson reviewers can read them.",
+      "You don't need to search here for each package. On a package's page, section 3, Procurement risks and what " +
+        "helped, I show the lessons from the completion reports of projects with comparable packages.",
+      "See which completion reports I have read",
+    ]);
+    const section3 = JSON.parse(await recorded("risks-ke-nwwda-541055.json"));
+    expect(section3.empty_reason).toBe("no_reports");
+    const link = card.getByRole("link", { name: "See which completion reports I have read" });
+    await expect(link).toHaveAttribute("href", `/data?sources=${section3.coverage.sources.join(",")}&from=package_risks`);
+    await expect(link).toHaveAttribute("href", "/data?sources=notices,awards,documents,projects&from=package_risks");
+    // The page's caption spells IEG out above the card; the opening sentence still counts what came in.
+    await expect(page.locator("main")).toContainText("by the Independent Evaluation Group (IEG)");
+    await expect(page.locator("#lessons-digest")).toHaveText("This is your first visit to Lessons. The library has no lessons yet.");
+    await expect(card).not.toContainText(/approv/i);
+    expect((await scan(page, "[data-empty-state]")).violations, `${width} px`).toEqual([]);
+  }
 });
 
 test("a preview leaves out the reader's drafts, reports and the proposed count", async ({ page }) => {
