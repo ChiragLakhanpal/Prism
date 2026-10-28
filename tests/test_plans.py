@@ -693,3 +693,72 @@ def test_a_reference_the_layout_parser_misreads_is_written_as_the_plans_own_text
     if written == value("plan-229129-reference-2026-10-09")["value"]:
         signed = demo_step(fresh, written, "Signed Contract")
         assert signed["delay_days"] == value("plan-229129-days-late")["value"]
+
+
+# ── Words the layout parser writes with markup (ticket 122) ──
+
+class WritesMarkup:
+    """The recorded layout parser, except that it writes each table's title inside the underline tags ai_parse_document
+    put around it on the workspace (<u>WORKS</u>), and every body cell's words inside a tag too, so every text field a
+    row takes comes with markup. On October 28, 2026, 245 of the 268 rows of the 25 plans read on the workspace held
+    such a section, and no step family was found for them."""
+
+    def __init__(self, manifest):
+        from strata.reader.layout import RecordedLayout
+
+        self.recorded = RecordedLayout(manifest)
+        self.name = self.recorded.name
+
+    def parse(self, page):
+        from strata.reader.layout import Layout, Table
+
+        found = self.recorded.parse(page)
+        return Layout(tuple(Table(f"<u>{table.title}</u>" if table.title else table.title, table.header_rows,
+                                  (*table.rows[:table.header_rows],
+                                   *(tuple(f"<b>{cell}</b>" if cell else cell for cell in row)
+                                     for row in table.rows[table.header_rows:])))
+                            for table in found.tables), found.text, found.figures)
+
+
+@pytest.fixture(scope="module")
+def marked_up():
+    """A run of the plan reader whose layout parser wrote the words of the October 9, 2026 plan with markup: the
+    database it wrote, and that plan's rows in silver. Both tests below read the one run."""
+    from strata.fixture import recorded as fmt
+    from strata.lakehouse import catalog, plans
+    from strata.reader.documents import RecordedDocuments
+
+    manifest = fmt.load_manifest()
+    with DuckDBEngine.open() as engine:
+        catalog.build(engine)
+        plans.run(engine, RecordedDocuments(manifest), WritesMarkup(manifest), "P156634",
+                  clock=clock(dt.date(2026, 10, 28)))
+        yield engine, rows(engine, DEMO_ROWS + " ORDER BY r.activity_reference_no", agency=NWWDA, plan_date=DEMO_PLAN)
+
+
+def test_a_plan_page_whose_words_carry_markup_is_written_to_silver_as_plain_words(marked_up, db):
+    """The section, the description, the method and every other word of a row are written as plain words, as the
+    fixture's own run wrote them, so clean.category reads each STEP table's name. Bronze keeps what the parser read."""
+    from strata.lakehouse import clean
+
+    engine, written = marked_up
+
+    tagged_in_bronze = rows(engine, "SELECT count(*) AS n FROM strata.bronze.layout_pages WHERE tables LIKE :tagged",
+                            tagged="%<u>WORKS</u>%")
+    assert tagged_in_bronze[0]["n"] > 0
+    assert written == rows(db, DEMO_ROWS + " ORDER BY r.activity_reference_no", agency=NWWDA, plan_date=DEMO_PLAN)
+    assert {clean.category(row["section"]) for row in written} == {
+        "WORKS", "GOODS", "CONSULTING FIRMS", "INDIVIDUAL CONSULTANTS"}
+
+
+def test_a_row_whose_section_the_layout_parser_wrote_with_tags_finds_its_step_family(marked_up):
+    """As on the workspace on October 28, 2026: the section came as <u>WORKS</u>, and the demo package's steps route
+    answered family null and family_reason no_family. Each row now finds the family of its STEP table."""
+    from strata.estimates import step_dates
+
+    _, written = marked_up
+    found = {row["activity_reference_no"]: step_dates.family_for(None, row["method"], row["section"])
+             for row in written}
+
+    assert found["KE-NWWDA-541055-CW-RFB"] == ("goods", None)
+    assert sorted(family for family, _ in found.values()) == ["firms", *["goods"] * 7, "individuals"]
