@@ -36,6 +36,8 @@ NEEDED = {"strata.bronze.api_pages", "strata.bronze.current_pages", "strata.ops.
 # The projects transform's tables, sorted and joined with commas, as the record names them.
 PROJECT_TABLES = ("strata.silver.project_environment,strata.silver.project_isr_ratings,strata.silver.project_loans,"
                   "strata.silver.project_sectors,strata.silver.projects")
+# The projects transform's VERSION as it is now, which each record names (2 since ticket 120).
+VERSION = silver.version(projects)
 SECTORS = "strata.silver.project_sectors"
 ENVIRONMENT = "strata.silver.project_environment"
 # P130164's sectors (data/fixture/recorded/api/projects/P130164.json; tests/test_project_hub.py).
@@ -102,7 +104,7 @@ def test_a_run_records_every_page_it_read_and_reads_none_of_them_again(engine):
     first = silver.run(engine, PROJECTS)
 
     assert first > 0
-    assert records(engine) == Counter({(page, PROJECT_TABLES, 1): 1 for page in bronze_pages(engine)})
+    assert records(engine) == Counter({(page, PROJECT_TABLES, VERSION): 1 for page in bronze_pages(engine)})
     assert silver.pending(engine, PROJECTS) == []
     assert silver.run(engine, PROJECTS) == 0  # every table holds every page: no page is read again
     assert sum(records(engine).values()) == len(bronze_pages(engine))
@@ -144,13 +146,13 @@ def test_a_bumped_version_reads_every_page_of_its_source_again_and_the_rows_matc
                                                                                                     monkeypatch):
     first = silver.run(engine, PROJECTS)
     before = rows(engine)
-    bumped = like_projects(monkeypatch, "projects_version_2", version=2)
+    bumped = like_projects(monkeypatch, "projects_version_bumped", version=VERSION + 1)
 
     assert set(silver.pending(engine, bumped)) == bronze_pages(engine)
     assert silver.run(engine, bumped) == first
     assert rows(engine) == before
     assert records(engine) == Counter({(page, PROJECT_TABLES, number): 1
-                                       for page in bronze_pages(engine) for number in (1, 2)})
+                                       for page in bronze_pages(engine) for number in (VERSION, VERSION + 1)})
     assert silver.run(engine, bumped) == 0
 
 

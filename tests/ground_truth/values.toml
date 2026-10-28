@@ -2353,6 +2353,34 @@ project = "P156634"
 date = 2026-10-09
 pdf_page = 3
 
+# Financing numbers that are not loans or credits (ticket 120). A project record's loan transactions also
+# name IDA grants, whose number has a letter before its digits, and trust funds, each written with its
+# financier, a hyphen and the rest of the number.
+
+[[value]]
+id = "financing-grant-p127203"
+says = "P127203's project record names IDA grant H8060 in its loan transactions, written with the financier, a hyphen and the grant's letter and digits."
+value = "IDA-H8060"
+quote = "IDA-H8060"
+record = "api/projects/P127203.json"
+at = "projects.P127203.loan_transactions.0.financier_loan"
+
+[[value]]
+id = "financing-grant-p176867"
+says = "P176867's project record names IDA grant D9910 beside its credits IDA-70670 and IDA-79520."
+value = "IDA-D9910"
+quote = "IDA-D9910"
+record = "api/projects/kenya-fy2012-2025.json"
+at = "projects.P176867.loan_transactions.15.financier_loan"
+
+[[value]]
+id = "financing-trust-fund-p180465"
+says = "P180465's project record names trust fund C3892, committed on December 26, 2023, beside its credit IDA-74910."
+value = "TF-C3892"
+quote = "TF-C3892"
+record = "api/projects/kenya-fy2012-2025.json"
+at = "projects.P180465.loan_transactions.11.financier_loan"
+
 [[value]]
 id = "individual-consultant"
 says = "The award for KE-NWWDA-207796-CS-INDV names its supplier only as INDIVIDUAL CONSULTANT, with a hashed supplier id."

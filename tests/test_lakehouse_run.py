@@ -11,6 +11,7 @@ import datetime as dt
 import decimal
 import json
 import re
+import shutil
 import tomllib
 from pathlib import Path
 
@@ -732,12 +733,76 @@ def test_a_project_record_keeps_a_loan_with_four_digits_as_its_lender_and_digits
     from strata.lakehouse.silver import projects as silver_projects
 
     body = {"projects": {"P000003": {"id": "P000003", "boardapprovaldate": "2018-06-15T00:00:00Z", "loan_transactions": [
-        {"financier_loan": "IBRD-8956"}, {"financier_loan": "IDA-60300"}, {"financier_loan": "TF0A1234"}]}}}
+        {"financier_loan": "IBRD-8956"}, {"financier_loan": "IDA-60300"}]}}}
 
     rows = silver_projects.parse(body, "page", dt.datetime(2026, 10, 23, tzinfo=dt.UTC))["strata.silver.project_loans"]
+    columns = silver_projects.TABLES["strata.silver.project_loans"]
 
-    assert [(project, loan, written) for project, loan, written, *_ in rows] == [
-        ("P000003", "IBRD8956", "IBRD-8956"), ("P000003", "IDA60300", "IDA-60300")]
+    assert [{name: row[columns.index(name)] for name in ("loan_number", "loan_number_as_written", "financier")}
+            for row in rows] == [
+        {"loan_number": "IBRD8956", "loan_number_as_written": "IBRD-8956", "financier": "IBRD"},
+        {"loan_number": "IDA60300", "loan_number_as_written": "IDA-60300", "financier": "IDA"}]
+
+
+def test_gold_keeps_a_projects_grant_beside_its_credits_and_says_who_finances_each(gold):
+    """values.toml: P176867's record names IDA grant D9910 beside its credits IDA-70670 and IDA-79520; P180465's names
+    trust fund C3892 beside credit IDA-74910. A grant's financier is IDA, like a credit's, and its number keeps its
+    letter, so a reader tells the two apart."""
+    rows = gold.run("SELECT project_id, loan_number, loan_number_as_written, financier FROM strata.gold.project_loan "
+                    "WHERE project_id IN ('P176867', 'P180465') ORDER BY project_id, loan_number", {}).rows
+
+    grant, trust_fund = VALUES["financing-grant-p176867"]["value"], VALUES["financing-trust-fund-p180465"]["value"]
+    assert ("P176867", grant, grant, "IDA") in rows
+    assert ("P176867", "IDA70670", "IDA-70670", "IDA") in rows
+    assert ("P180465", trust_fund, trust_fund, "TF") in rows
+    assert ("P180465", "IDA74910", "IDA-74910", "IDA") in rows
+
+
+@pytest.mark.parametrize(("written", "kept", "financier"), [
+    ("IDA-H0010", "IDA-H0010", "IDA"),  # an IDA grant
+    ("TF-D2212", "TF-D2212", "TF"),  # a trust fund with a letter
+    ("TF0A1234", "TF-0A1234", "TF"),  # a trust fund written with no hyphen
+    ("COFN-00280", "COFN-00280", "COFN"),  # co-financing with five digits
+    ("IBRD-2075S", "IBRD-2075S", "IBRD"),  # a loan with a suffix letter
+    ("ida-h0010", "IDA-H0010", "IDA"),
+])
+def test_a_project_record_keeps_every_other_financing_number_with_its_financier(written, kept, financier):
+    """Made-up record, with numbers in the forms the live check of October 28, 2026 found missing from
+    strata.silver.project_loans (ticket 120): clean.loan_number does not read them whole, so silver keeps each one as
+    its financier, one hyphen and the rest as written, in upper case, beside the project's credit."""
+    from strata.lakehouse.silver import projects as silver_projects
+
+    body = {"projects": {"P000004": {"id": "P000004", "boardapprovaldate": "2018-06-15T00:00:00Z", "loan_transactions": [
+        {"financier_loan": "IDA-60300"}, {"financier_loan": written}]}}}
+
+    rows = silver_projects.parse(body, "page", dt.datetime(2026, 10, 23, tzinfo=dt.UTC))["strata.silver.project_loans"]
+    columns = silver_projects.TABLES["strata.silver.project_loans"]
+
+    assert sorted((row[columns.index("loan_number")], row[columns.index("loan_number_as_written")],
+                   row[columns.index("financier")]) for row in rows) == sorted(
+        [("IDA60300", "IDA-60300", "IDA"), (kept, written, financier)])
+
+
+def test_every_financing_number_a_project_record_names_is_kept_with_its_financier(gold):
+    """The live check of ticket 63's step 4 (October 28, 2026), run on the fixture: every financier_loan a project
+    record in strata.bronze.current_pages names is a row of strata.silver.project_loans for that project, with the
+    financier the record writes before the hyphen. The fixture's records name IDA grants (IDA-H8060, IDA-D9910) and
+    a trust fund (TF-C3892) beside credits such as IDA-60300 (ticket 120)."""
+    named = set()
+    for (body,) in gold.run("SELECT body FROM strata.bronze.current_pages WHERE source = 'projects'", {}).rows:
+        for project in json.loads(body)["projects"].values():
+            named |= {(project["id"], loan["financier_loan"]) for loan in project.get("loan_transactions") or []
+                      if loan.get("financier_loan")}
+    kept = {(project, written): (loan, financier) for project, loan, written, financier in gold.run(
+        "SELECT project_id, loan_number, loan_number_as_written, financier FROM strata.silver.project_loans", {}).rows}
+
+    assert len(named) > 90 and sorted(named - kept.keys()) == []
+    assert sorted({pair for pair in named if kept[pair][1] != pair[1].split("-")[0]}) == []
+    for key, project in (("financing-grant-p127203", "P127203"), ("financing-grant-p176867", "P176867"),
+                         ("financing-trust-fund-p180465", "P180465")):
+        written = VALUES[key]["value"]
+        assert kept[(project, written)] == (written, written.split("-")[0])
+    assert kept[("P156634", VALUES["loan-form-hyphen"]["value"])] == ("IDA60300", "IDA")
 
 
 @pytest.mark.parametrize("project", ["P156634", "P130164"])
@@ -758,6 +823,31 @@ def test_every_notice_that_writes_one_of_its_projects_credits_carries_it_in_gold
                     wrong.append((notice, written, loan))
     assert checked and wrong == []
     assert not [loan for _, _, loan in rows if loan and re.fullmatch(r"[A-Z]+\d{4}", loan)]
+
+
+def test_a_notice_that_writes_bare_digits_gets_its_projects_credit_never_a_grant_with_the_same_digits(
+        fixture_db, tmp_path):
+    """Made-up grant on a copy of the fixture. P156634's notices write credit 60300 with no lender, once as the bare
+    older form 6030. Bare digits name a loan or credit, never a grant, whose number always has a letter: a grant
+    IDA-H6030 on the same project's record leaves the notice with IDA60300 (ticket 120)."""
+    from strata.lakehouse import gold as gold_tables
+    from strata.lakehouse.silver import projects as silver_projects
+
+    copy = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, copy)
+    with DuckDBEngine.open(copy) as engine:
+        page = one(engine, "SELECT page_hash, fetched_at, public_from FROM strata.silver.projects "
+                           "WHERE project_id = 'P156634' ORDER BY fetched_at DESC, page_hash LIMIT 1")
+        engine.insert_rows("strata.silver.project_loans", silver_projects.TABLES["strata.silver.project_loans"], [
+            ("P156634", "IDA-H6030", "IDA-H6030", page["page_hash"], page["fetched_at"], page["public_from"], "IDA")])
+        gold_tables.sync(engine, "project_loan")
+        gold_tables.sync(engine, "notice")
+
+        rows = engine.run("SELECT n.notice_id, n.loan_number FROM strata.silver.notices AS s "
+                          "JOIN strata.gold.notice AS n ON n.notice_id = s.notice_id "
+                          "WHERE s.project_id = 'P156634' AND s.loan_digits = '6030'").rows
+
+    assert rows and {loan for _, loan in rows} == {"IDA60300"}
 
 
 def test_a_notice_that_says_ncb_is_stored_as_request_for_bids_open_national(gold):
