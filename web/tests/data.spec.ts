@@ -66,7 +66,7 @@ test("the Data tab has one header, and its three sub-tabs are links in a nav tha
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Data");
   await expect(page.locator("main h1 + p")).toHaveText(
-    "See how far each source can support answers, where each dataset comes from, and how I read them.",
+    "See how far each source can support an answer and where each dataset comes from.",
   );
   await expect(page).toHaveTitle("Data readiness | Strata");
   const tabs = page.getByRole("navigation", { name: "Data pages" }).getByRole("link");

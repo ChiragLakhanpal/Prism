@@ -10,10 +10,11 @@ export type Section = keyof typeof copy.nav.tabs;
 
 export type SectionItem = { key: Section; href: string; icon: LucideIcon };
 
-// Data sits at the sidebar's foot; the others in this order above it.
+// Data sits at the sidebar's foot; the others in this order above it. The order is the user's (ticket 110): a project
+// holds its Procurement Plan, and the plan holds the packages, so Projects comes before Packages.
 export const SECTIONS: SectionItem[] = [
-  { key: "packages", href: "/packages", icon: Package },
   { key: "projects", href: "/projects", icon: FolderOpen },
+  { key: "packages", href: "/packages", icon: Package },
   { key: "lessons", href: "/lessons", icon: BookOpen },
   { key: "drafts", href: "/drafts", icon: FilePenLine },
   { key: "data", href: "/data", icon: Database },

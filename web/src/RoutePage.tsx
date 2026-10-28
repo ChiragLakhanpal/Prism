@@ -37,7 +37,8 @@ import type { Match, ProjectTab } from "./routes";
 
 // A page the applied view does not show (ticket 40; the 40 brief, 3.7 and 6.4): it keeps its address, its section's
 // name is the h1, and an empty-state card says why, in the words its own brief wrote when it wrote some. The server
-// never sends what the page holds, so the page itself is not drawn.
+// never sends what the page holds, so the page itself is not drawn. Like the Drafts list and Lessons it stands in for, it
+// takes all 12 columns (ticket 110), and the card's sentences keep to the width of prose.
 function NotInView({ match, view }: { match: Match; view: "piu" | "public" }) {
   const words = copy.view.hidden;
   const name = copy.view.name[view];
@@ -55,7 +56,7 @@ function NotInView({ match, view }: { match: Match; view: "piu" | "public" }) {
             : { title: words.title(name), body: words.body };
   return (
     <div className="layout-grid" data-not-in-view={match.key}>
-      <div className="col-span-12 @md/page:col-span-8">
+      <div className="col-span-12 min-w-0">
         <PageHeader title={match.section ? copy.nav.tabs[match.section] : copy.pages[match.key].title} />
         <EmptyState className="mt-6" title={card.title} body={card.body} link={{ href: "/projects", text: words.link }} />
       </div>
@@ -101,7 +102,7 @@ export function RoutePage({ match, search = "", hiddenIn = null, pending = false
   if (match.key === "plannedPackage") return <PlannedPackagePage packageId={match.values.id} search={search} />;
   return (
     <div className="layout-grid">
-      <div className="col-span-12 @md/page:col-span-8">
+      <div className="col-span-12 min-w-0">
         <PlaceholderPage match={match} />
       </div>
     </div>

@@ -5,7 +5,8 @@
 // error state, so a section that fails leaves the header and the facts usable.
 //
 // One narrative column: columns 1 to 8 of the grid from 1200 px, leaving the right side for the
-// evidence drawer that ticket 15 opens, and all 12 below that. The header (the package's
+// evidence drawer that ticket 15 opens, and all 12 below that. While no drawer is open, the space line in columns 9 to
+// 12 says what that side is for (ticket 110). The header (the package's
 // Description as the h1 and its STEP reference) sticks from 768 px, and the page keeps scroll
 // padding at its height plus 16 px, so a focused dot or link is never hidden under it. Every width
 // on this page is the page area's, not the window's, since the evidence drawer narrows it (DESIGN.md
@@ -27,6 +28,7 @@ import type { EstimateState } from "../components/TimeEstimate";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
 import { SkeletonLine, SkeletonText } from "../components/Skeleton";
+import { SpaceLine } from "../components/SpaceLine";
 import { StepsSection } from "../components/StepsSection";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -217,7 +219,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   }
 
   return (
-    <EightColumns breakpoint="xl">
+    <EightColumns breakpoint="xl" beside={<SpaceLine>{copy.evidence.spaceHint.package}</SpaceLine>}>
       <div data-package-page={load.status}>
         {/* Below 768 px the trail shows its parent, the project, whose name takes two lines; it holds them while loading. */}
         <div className={load.status === "loading" ? "min-h-[2lh] text-caption @md/page:min-h-0" : undefined}>

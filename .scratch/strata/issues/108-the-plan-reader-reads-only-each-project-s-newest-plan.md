@@ -13,7 +13,7 @@ Read first: `src/strata/lakehouse/plans.py` (`newest_first`, `by_plan_date`, the
 
 - [ ] On the fixture with three plan versions of one project, the reader fetches and parses only the newest (the two older ones get one `superseded` row each in `skipped_documents`, written once), the plan rows are the newest plan's, and `plan_versions = "all"` restores the old behavior; the waiting pages are parsed newest plan first.
 - [ ] `plan_versions` (default `"newest"`) and `document_host_minutes` (120) live in `config/thresholds.toml` [ingestion] and nowhere else; `bundle/README.md` or the readers' doc names the rule in one sentence.
-- [ ] On the paid workspace, a `parse_and_embed` run alone after the merge and the deploy parses 40132287 first and leaves P156634's plan rows in `strata.ops.anchored_plan_rows` (recorded in the catch-up file under this ticket), before the demo of October 28, 2026.
+- [x] On the paid workspace, a `parse_and_embed` run alone after the merge and the deploy parses 40132287 first and leaves P156634's plan rows in `strata.ops.anchored_plan_rows` (recorded in the catch-up file under this ticket), before the demo of October 28, 2026.
 
 ## Comments
 
@@ -29,3 +29,4 @@ Read first: `src/strata/lakehouse/plans.py` (`newest_first`, `by_plan_date`, the
   - Coordination: ListAgents showed no session named strata-58, so I sent no index-busy or index-free message.
   - No ticket names 108 as a blocker. In the wave's order, 110, 111 and 112 come next.
 - October 27, 2026, orchestrator (18:29 PDT): the bundle deployed from 9a8ae27b's snapshot (01:04 UTC); the reader run 260082096321553 started at 01:04 UTC with the 120-minute budget; its result goes under this ticket when it ends.
+- October 27, 2026, orchestrator (19:22 PDT): the live step ran (the catch-up block "Ticket 108, the live step, part 2"): the newest-only rule superseded P156634's 235 older plans; the newest plan 40132287 was already parsed and its 8 rows are in strata.silver.plan_rows, which the live package page shows (plan_date 2026-10-09); criterion 3 named strata.ops.anchored_plan_rows, which holds the staff's saved baselines, not the reader's rows, so the intent holds with the table corrected.

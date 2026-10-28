@@ -78,8 +78,6 @@
   --spacing: 0.25rem;
   --breakpoint-xs: 22.5rem;  --breakpoint-md: 48rem;  --breakpoint-lg: 64rem;
   --breakpoint-xl: 75rem;  --breakpoint-2xl: 87.5rem;
-  /* 1440 px, used only by the sidebar's default: open from here, a rail below (DESIGN.md section 4, Breakpoints). */
-  --breakpoint-3xl: 90rem;
   /* The same four breakpoints as container sizes, and one for a table's own frame. The page column
      is a size container (ticket 14), so a page lays out by the page area's width, which the evidence
      drawer narrows: its classes use @md/page:, @lg/page: and @xl/page: where the bar and the band use
@@ -194,8 +192,8 @@
 /* The sidebar and the Menu sheet (DESIGN.md section 5, Sidebar and Menu sheet; ticket 92). From 1024 px the sidebar
    sits beside the page, open at 224 px or a 64 px rail of icons. Its width changes at once and never moves: width is a
    layout property, and the motion would add wait without news. A person's choice is the data-sidebar-rest attribute on the
-   root, which web/index.html's first script writes from local storage before the first paint; with no choice it is
-   open from 1440 px (90rem) and a rail from 1024 to 1439 px.
+   root, which web/index.html's first script writes from local storage before the first paint; with no choice it rests
+   as the rail at every width from 1024 px (ticket 110, the user's decision of October 27, 2026).
 
    The bar is 56 px. From 1024 px it sticks (ticket 93), so the sticky parts under it stick at frame-top, 56 px, and the
    sidebar is the window's height less the bar; below 1024 px the bar scrolls away with the page and frame-top is 0. The
@@ -219,9 +217,6 @@
 }
 @media (width >= 75rem) {
   :root { --window-margin: 40px; }
-}
-@media (width >= 90rem) {
-  :root:not([data-sidebar-rest="rail"]) { --nav-width: var(--sidebar-width); }
 }
 
 /* The top bar (DESIGN.md section 5, Top bar; ticket 93). Below 1024 px it has two rows: the Menu button, the logo and
@@ -263,15 +258,11 @@
 @utility bar-view {
   grid-area: view;
 }
-/* Classes for the rail alone: its labels move into tooltips, and the sub-items hide. */
+/* Classes for the rail alone: its labels move into tooltips, and the sub-items hide. The rail holds from 1024 px
+   unless the person opened the sidebar. */
 @custom-variant rail {
-  @media (width >= 64rem) and (width < 90rem) {
+  @media (width >= 64rem) {
     :root:not([data-sidebar-rest="open"]) & {
-      @slot;
-    }
-  }
-  @media (width >= 90rem) {
-    :root[data-sidebar-rest="rail"] & {
       @slot;
     }
   }
@@ -334,13 +325,14 @@
 }
 
 /* The page grid (DESIGN.md section 4, Grid; ticket 94): 12 columns, gutters of 16, 24 and 32 px (below 768, from 768
-   and from 1024 px), the window's margin of 16, 32 and 40 px, and content at most 1280 px wide, left aligned beside the
-   sidebar. The margin and the gutter follow the window, never the page area, so the evidence drawer narrows the page
-   and keeps its left edge; what a page shows still follows the page area's width, through its @md/page: classes. */
+   and from 1024 px), the window's margin of 16, 32 and 40 px, and content at most 1440 px wide (ticket 110, so a wide
+   page fills a laptop's frame beside the rail and its margins even out), left aligned beside the sidebar. The margin
+   and the gutter follow the window, never the page area, so the evidence drawer narrows the page and keeps its left
+   edge; what a page shows still follows the page area's width, through its @md/page: classes. */
 :root {
   --layout-margin: var(--window-margin);
   --layout-gutter: 16px;
-  --layout-max: 1280px;
+  --layout-max: 1440px;
 }
 @media (width >= 48rem) {
   :root { --layout-gutter: 24px; }
@@ -434,7 +426,7 @@
   scroll-margin-bottom: var(--sticky-top, 0px);
 }
 
-/* The page's content box: the window's margin on each side, at most 1280 px of content, left aligned beside the
+/* The page's content box: the window's margin on each side, at most 1440 px of content, left aligned beside the
    sidebar, so the space a wide window has left over sits at the right, where the evidence drawer opens. */
 @utility layout {
   width: 100%;

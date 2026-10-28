@@ -45,7 +45,7 @@ test("All projects shows 20 projects a page with the range it shows, sets projec
 
   await expect(main.getByRole("heading", { level: 1 })).toHaveText("Projects");
   await expect(
-    main.getByText("Find a World Bank-financed project by its name, project ID or country. Open a project ID to see the project's summary, Procurement Plans and documents."),
+    main.getByText("Find a World Bank-financed project by name, project ID or country, then open it to see its plans and documents."),
   ).toBeVisible();
   await expect(main.getByRole("heading", { level: 2, name: "All projects" })).toBeVisible();
   const table = main.locator("[data-table-view=table] tbody tr");
@@ -180,12 +180,13 @@ test("All projects' skeleton rows and cards are as tall as its rows and cards, s
 });
 
 test("All projects says when it holds no records, and when the data service didn't answer", async ({ page }) => {
-  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
+  // A 1440 px page area: beside the rail (tickets 92 and 110) the window is wider.
   await open(page, "/projects", { "/api/projects": { body: '{"as_of":"2026-10-23","total":0,"rows":[],"records_through":null}' } }, windowBeside(1440));
   await expect(page.locator("[data-empty-state]")).toContainText("I don't have any project records yet.");
   await expect(page.locator("[data-empty-state]").getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data");
-  // Columns 1 to 8 of 1280 px of content, the most a page holds (ticket 94): 8 columns of 77.33 px and 7 gutters of 32 px.
-  expect(Math.round((await page.locator("[data-empty-state]").boundingBox())!.width)).toBe(843);
+  // Columns 1 to 8 of the 1360 px of content the window's 40 px margins leave (content may take 1440 px since ticket
+  // 110): 8 columns of 84 px and 7 gutters of 32 px.
+  expect(Math.round((await page.locator("[data-empty-state]").boundingBox())!.width)).toBe(896);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "empty at 390 px").toEqual([]);
 
@@ -193,7 +194,7 @@ test("All projects says when it holds no records, and when the data service didn
   await expect(page.getByRole("alert")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   // In a 1440 px page area the alert holds columns 1 to 8, as on every other page.
-  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(843);
+  expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(896);
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "error at 390 px").toEqual([]);
 });

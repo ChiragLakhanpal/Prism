@@ -40,6 +40,9 @@ async function copiesThreeWays(page: Page, key: Locator, text: string, what: str
   await key.hover();
   await expect(tooltip).toHaveText("Copy");
   await expect(key.locator("svg")).toHaveClass(/lucide-copy/);
+  // From here the page's clock stands still, so "Copied" stays however slowly a busy computer runs the checks, until
+  // the test moves the clock on.
+  await page.clock.pauseAt(await page.evaluate(() => Date.now() + 1000));
 
   for (const press of ["click", "Enter", "Space"]) {
     if (press === "click") await key.click();
@@ -65,6 +68,7 @@ async function copiesThreeWays(page: Page, key: Locator, text: string, what: str
   await expect(tooltip).toHaveText("I couldn't copy it. Select the text instead.");
   await expect(key.locator("svg")).toHaveClass(/lucide-copy/);
   await expect(key).toBeFocused();
+  await page.clock.resume();
 }
 
 // 24 by 24 px at 1440 and 390 px, and at 320 px on the same line as the ID's last characters.

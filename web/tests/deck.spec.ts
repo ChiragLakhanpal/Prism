@@ -416,6 +416,67 @@ test("the demo slides open Strata's own screens from the examples registry in a 
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(data.demo.question);
 });
 
+test("the package demo's recorded answer: no button without a recording; with one, a press draws the app's range chart from it with its date, coverage line and source line, passes the number check and axe, and the next press moves on", async ({ page }) => {
+  const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
+  const comparables = data.demo.comparables!;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Without the recorded answers the slide is as it was.
+  await serveData(page, { ...data, demo: { ...data.demo, comparables: null, estimate: null } });
+  await page.goto("/present/1");
+  await expect(page.locator("[data-deck=present]")).toBeVisible();
+  const n = await numberOf(page, "demo-package");
+  await openAt(page, n);
+  const slide = slideById(page, "demo-package");
+  await expect(slide.locator("[data-demo-box]")).toBeVisible();
+  await expect(slide.locator("[data-recorded-toggle]")).toHaveCount(0);
+  // With them, the slide is reached by a press, from the slide before it.
+  await page.unroute("**/deck/data.json");
+  await serveDeck(page);
+  await openAt(page, n - 1);
+  await page.keyboard.press("ArrowRight");
+  await expect(slide).toHaveAttribute("data-step-current", "0");
+  const toggle = slide.locator("[data-recorded-toggle]");
+  await expect(toggle).toHaveText(deckCopy.demo.showRecorded);
+  await toggle.click();
+  // The answer takes the box's and the points' place, with the slide's last press in, and focus on the button that
+  // hides it.
+  const answer = slide.locator("[data-recorded-answer]");
+  await expect(answer.locator("svg[data-chart-drawing]")).toBeVisible();
+  await expect(slide.locator("[data-demo-box]")).toHaveCount(0);
+  await expect(slide).toHaveAttribute("data-step-current", String(deckCopy.slides.demoPackage.lines.length));
+  await expect(toggle).toBeFocused();
+  await expect(toggle).toHaveText(deckCopy.demo.hideRecorded);
+  // Every number is the recording's: the plan line's readout, the coverage line's counts and the dates.
+  const plan = comparables.plan!;
+  await expect(answer.locator("svg[data-chart-drawing]")).toContainText(`${plan.within} of ${comparables.rows.length}`);
+  await expect(answer.locator("[data-recorded-on]")).toContainText(formatDate(comparables.as_of));
+  await expect(answer.locator("[data-recorded-on]")).toContainText(data.demo.step_reference);
+  await expect(answer.locator("[data-coverage-line]")).toContainText(`${comparables.coverage.used} of ${comparables.coverage.matched}`);
+  await expect(answer.locator("[data-source]")).toContainText(formatDate(comparables.records_through!));
+  expect(numberCheck({ "The recorded answer": await slide.evaluate((element) => element.outerHTML) })).toEqual([]);
+  expect((await scan(page)).violations.map((found) => found.id)).toEqual([]);
+  // A press back closes it and shows the points from that press; opened again, the next press moves on, and coming
+  // back shows the slide whole, with its box.
+  await page.keyboard.press("ArrowLeft");
+  await expect(slide.locator("[data-demo-box]")).toBeVisible();
+  await expect(slide).toHaveAttribute("data-step-current", String(deckCopy.slides.demoPackage.lines.length - 1));
+  await expect(toggle).toBeFocused();
+  await toggle.click();
+  await expect(answer).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  await expect(page).toHaveURL(new RegExp(`/present/${n + 1}$`));
+  await page.keyboard.press("ArrowLeft");
+  await expect(slide.locator("[data-demo-box]")).toBeVisible();
+  await expect(answer).toHaveCount(0);
+  // In the reading view the same button opens it under the points.
+  await page.goto("/present/page");
+  const reading = page.locator(`[data-reading-slide='${n}']`);
+  await reading.locator("[data-recorded-toggle]").click();
+  await expect(reading.locator("[data-recorded-toggle]")).toHaveAttribute("aria-expanded", "true");
+  await expect(reading.locator("[data-recorded-answer] svg[data-chart-drawing]")).toBeVisible();
+  expect(numberCheck({ "The recorded answer, reading view": await reading.evaluate((element) => element.outerHTML) })).toEqual([]);
+});
+
 test("below the size of the canvas the deck is a page that reflows, with every slide whole, its figure text and its notes, and the footer once", async ({ page }) => {
   await serveDeck(page);
   await page.setViewportSize({ width: 390, height: 844 });

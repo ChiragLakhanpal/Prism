@@ -32,8 +32,9 @@ export const ROUTES: Route[] = [
     path: "/lessons",
     h1: "Lessons",
     tab: "Lessons",
+    // Ticket 110: one sentence that says what the tab is for.
     purpose:
-      "Each lesson comes from a completion report or its review, quoted word for word with its page. A lead procurement specialist decides which lessons enter the library.",
+      "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a package's page where they apply.",
     empty: {
       title: "There are no lessons in the library yet.",
       body: "A lesson appears here after I read a completion report and a lead procurement specialist decides it belongs.",
@@ -58,8 +59,7 @@ export const ROUTES: Route[] = [
     path: "/drafts",
     h1: "Drafts",
     tab: "Drafts",
-    purpose:
-      "I write drafts for you to check, such as review notes and suggested rows for the borrower's Project Procurement Strategy for Development (PPSD). Only you can mark a draft as checked or export it, and exporting sends nothing.",
+    purpose: "These are the drafts I wrote for you to check and export, and exporting sends nothing.",
     empty: {
       title: "You have no drafts to check.",
       body: "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you to check.",
@@ -232,7 +232,7 @@ test("below 768 px the Menu sheet holds the items; an item opens its page, close
 
   await menu.click();
   const nav = page.getByRole("dialog", { name: "Menu" }).getByRole("navigation", { name: "Main" });
-  await expect(nav.locator("[data-nav-item]")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  await expect(nav.locator("[data-nav-item]")).toHaveText(["Home", "Projects", "Packages", "Lessons", "Drafts", "Data"]);
   // Every item, and the stamp under Data (ticket 93), shows in full in the sheet's first screen, above the view lines
   // at its foot.
   for (const link of await nav.getByRole("link").all()) await expect(link).toBeInViewport({ ratio: 1 });

@@ -97,7 +97,7 @@ test("the preview banner reads as the blueprint's, never collapses, is reached b
   await expect(page.getByRole("region", { name: "Preview" })).toBeVisible();
   // The officer's view has every section, but Projects opens All projects, not Following, and no reviewer page is an
   // item (ticket 92; config/roles.toml's [views.piu] hidden).
-  await expect(main.locator("[data-nav-item]")).toHaveText(["Home", "Packages", "Projects", "Lessons", "Drafts", "Data"]);
+  await expect(main.locator("[data-nav-item]")).toHaveText(["Home", "Projects", "Packages", "Lessons", "Drafts", "Data"]);
   await expect(main.getByRole("link", { name: "Projects" })).toHaveAttribute("href", "/projects?view=piu");
   await expect(main.locator('a[href^="/projects/following"], a[href^="/lessons/"]')).toHaveCount(0);
 

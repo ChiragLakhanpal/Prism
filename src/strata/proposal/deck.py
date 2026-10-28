@@ -13,8 +13,9 @@ the panel. build() gathers everything the slides read into one JSON object:
 - urls       the panel's addresses (config/urls.toml); presenter, the title slide's name and date (config/deck.toml)
 - designed_not_built  the parts designed but not built (config/designed_not_built.toml), for the last slide
 - demo       the demo package and its plan (config/slice.toml [demo_plan]) and the answers find_comparables and
-             estimate_time gave for it, recorded on the workspace (docs/proposal/demo-package.json), which no slide
-             of the second draft draws, since its package demo opens the live package workspace; for the second
+             estimate_time gave for it, recorded on the workspace (docs/proposal/demo-package.json); the package
+             demo opens the live App, and its "Show the recorded answer" button draws the recorded comparables
+             in its place when the App is down (ticket 116); for the second
              draft's demo slides, the plan's date, the Start here links they open
              (config/examples.toml, filled as Home fills them), the sentence the package demo types and the smoke
              question the answer demo asks (evals/benchmark.yaml)

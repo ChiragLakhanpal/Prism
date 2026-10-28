@@ -29,9 +29,9 @@ const NARRATION = {
   how: "I'm comparing each activity with its own dates, its estimate and the project's closing date.",
   slow: "The database may be starting up, so this can take longer.",
 };
-// Columns 1 to 8 of the 12-column grid in a 1440 px page area: the window's 40 px margins leave 1360 px, and content
-// stops at 1280 px (ticket 94), so 8 columns of 77.33 px and 7 gutters of 32 px.
-const EIGHT_COLUMNS = 843;
+// Columns 1 to 8 of the 12-column grid in a 1440 px page area: the window's 40 px margins leave 1360 px, all of it
+// content, which may take 1440 px since ticket 110, so 8 columns of 84 px and 7 gutters of 32 px.
+const EIGHT_COLUMNS = 896;
 const widthOf = async (page: Page, selector: string) => Math.round((await page.locator(selector).boundingBox())!.width);
 
 type Answer = { status?: number; body: string };

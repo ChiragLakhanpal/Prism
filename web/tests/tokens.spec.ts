@@ -136,4 +136,10 @@ test("the app's spacing steps and breakpoints are the ones in DESIGN.md section 
   expect(SPACE_STEPS.map((step) => step * 4)).toEqual(spacing);
   const appBreakpoints = [...app].filter(([name]) => name.startsWith("--breakpoint-")).map(([, value]) => px(value));
   expect(appBreakpoints.sort((a, b) => a - b)).toEqual(breakpoints.sort((a, b) => a - b));
+
+  // The Grid row's widest content is app.css's --layout-max (ticket 110: 1440 px, so a wide page fills a laptop's frame).
+  const widest = /content at most (\d+)px wide/.exec(await shapeRow("Grid"));
+  expect(widest, "DESIGN.md's Grid row names the widest content").not.toBeNull();
+  const layout = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue("--layout-max").trim());
+  expect(px(layout)).toBe(Number(widest![1]));
 });

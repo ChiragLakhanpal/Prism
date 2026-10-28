@@ -34,7 +34,6 @@ import { setPageTitle } from "../lib/title";
 import { itemHref, LESSONS_HREF, pageHref, QUEUE_HREF, type Me, type Queue, type QueueRow as Row } from "../lib/lessons";
 import { JUDGING_HREF, REPORTS_HREF } from "../lib/retrieval";
 import { dataReadinessHref } from "../routes";
-import { DocumentColumn } from "./DraftPage";
 
 const words = copy.lessons;
 const page = copy.pages.lessons;
@@ -93,9 +92,11 @@ export function LessonsFrame({ tabKey: tab, me, children }: { tabKey: LessonsTab
     if (lastTab && lastTab !== tab) setAnnounced(SHOWING[tab]);
     lastTab = tab;
   }, [tab]);
+  // The wide layout (plan 8.3; ticket 110): all 12 columns, with each sentence kept to the width of prose, so the
+  // margins even out beside the rail. When the drawer opens, the page narrows and keeps its left edge.
   return (
-    <DocumentColumn>
-      <div data-lessons-frame={tab}>
+    <div className="layout-grid">
+      <div data-lessons-frame={tab} className="col-span-12 min-w-0">
         <PageHeader title={page.title} purpose={page.purpose} />
         {reviewer && (
           <div className="mt-6" data-lessons-tabs>
@@ -114,7 +115,7 @@ export function LessonsFrame({ tabKey: tab, me, children }: { tabKey: LessonsTab
           <div className={reviewer ? "mt-6 @md/page:mt-8" : "mt-8"}>{children}</div>
         )}
       </div>
-    </DocumentColumn>
+    </div>
   );
 }
 
