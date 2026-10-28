@@ -55,7 +55,7 @@ from dataclasses import astuple, dataclass, field, fields
 from importlib import resources
 
 from strata.config import ConfigError, Thresholds, load_sources, load_thresholds
-from strata.lakehouse import contacts
+from strata.lakehouse import clean, contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
 from strata.reader import step
@@ -674,12 +674,23 @@ class RowsRead:
     settled: tuple[tuple[str, str, str], ...] = ()  # (document_id, as the parser read it, as the text writes it)
 
 
+def plain_words(table: Table) -> Table:
+    """A parsed table with its title and every cell in plain words (strata.lakehouse.clean.plain_text), the one place
+    the plan reader takes markup out of what the layout parser wrote. On the workspace, ai_parse_document wrote each
+    section's name with its tags, <u>WORKS</u>, which no step family's sections hold, so family_for
+    (src/strata/estimates/step_dates.py) found no family for 245 of the 268 rows read by October 28, 2026
+    (ticket 122)."""
+    return Table(clean.plain_text(table.title), table.header_rows,
+                 tuple(tuple(clean.plain_text(cell) for cell in row) for row in table.rows))
+
+
 def write_rows(engine: Engine, project_id: str, versions: list[Version], misread_characters: int) -> RowsRead:
     """STEP rows and step dates for every version whose table pages are all parsed.
 
     Each version's references are checked against the ones its text lists (Route A): a reference the layout parser
     misread by at most misread_characters characters (config/thresholds.toml, ingestion.reference_misread_characters)
-    is written as the text gives it, so its steps keep their first listing and their delay (ticket 78). Bronze keeps
+    is written as the text gives it, so its steps keep their first listing and their delay (ticket 78). Each word a
+    row takes, its section, description, method and the rest, is written as plain words (plain_words). Bronze keeps
     what the parser read."""
     parsed: dict[tuple[str, int], tuple[str, str, str]] = {}
     for document_id, number, digest, parser, tables, _ in engine.run(
@@ -695,8 +706,8 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
         found = [parsed.get((version.document_id, number)) for number, _ in pages]
         if not pages or any(page is None or page[0] != digest for page, (_, digest) in zip(found, pages)):
             continue
-        reading = step.plan_rows([(number, tables_from_json(page[2])) for (number, _), page in zip(pages, found)],
-                                 version.listings, misread_characters)
+        reading = step.plan_rows([(number, [plain_words(table) for table in tables_from_json(page[2])])
+                                  for (number, _), page in zip(pages, found)], version.listings, misread_characters)
         parser = found[0][1]
         read.add(version.document_id)
         without_reference += reading.rows_without_reference
@@ -720,6 +731,29 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
     for transform in ("plan_step_delays.sql", "plan_data_notes.sql"):
         engine.run(_sql(transform), {"project_id": project_id})
     return RowsRead(frozenset(read), len(rows), without_reference, tuple(sorted(unknown)), tuple(settled))
+
+
+def projects_with_rows(engine: Engine) -> list[str]:
+    """Every project strata.silver.plan_rows holds rows for."""
+    return [str(row[0]) for row in engine.run(
+        "SELECT DISTINCT project_id FROM strata.silver.plan_rows ORDER BY project_id").rows]
+
+
+def rewrite(engine: Engine, project_id: str, *, thresholds: Thresholds | None = None) -> RowsRead:
+    """One project's plan rows written again by the reader as it is now, from what bronze holds, with no fetch and no
+    parse: the plan versions the project's last run read (strata.silver.plan_versions), from the document list, the
+    texts and the parsed pages bronze keeps. A fix to how the reader reads a parsed page reaches rows already written
+    this way: on October 28, 2026 the workspace's rows held sections such as <u>WORKS</u> (ticket 122). The same
+    versions give the same plan_versions and plan_listings, so only the rows, steps, delays and data notes are
+    written again (write_rows)."""
+    thresholds = thresholds or load_thresholds()
+    held = {str(row[0]) for row in engine.run(
+        "SELECT document_id FROM strata.silver.plan_versions WHERE project_id = :project_id",
+        {"project_id": project_id}).rows}
+    listing = listed_plans(engine, project_id)
+    versions = read_versions(engine, project_id, Listing(
+        [entry for entry in listing.entries if entry.document_id in held], listing.dates))
+    return write_rows(engine, project_id, versions, int(thresholds.value("ingestion.reference_misread_characters")))
 
 
 # ── 6. Data readiness ────────────────────────────────────────────────────
