@@ -3921,3 +3921,18 @@ Record the deploy's exit code, last line and deployment id, the /api/health stat
 ## Ticket 109, steps 1 and 2 ran: the orchestrator synced twice, the App redeployed twice; step 4 waits
 
 **Ran on October 28, 2026 (orchestrator).** Step 1: at 01:04 UTC, from the snapshot of 9a8ae27b, `ops/agent/sync.py --agent orchestrator` made version 10 of strata-orchestrator (the worked quote claim and the exact-copy rule), and `--check` printed that it matches the repo; after the agent role moved to gpt-5.4 (e8cd0021), the sync from 1c148f05 at 05:33 UTC made version 11, which matches the repo. Step 2: the App redeployed with `--keep-secrets` from 856ab249 at 02:51 UTC and again from 1c148f05 at 05:47 UTC, so it runs the new loop, the verifier's capital-letter rule, `agent.rewrite_rounds` (1) and ticket 117's cap. Step 3 is the block "Ticket 109, criterion 4 ran". Step 4, re-recording the agent's cases from the live model, has not run: with the agent on gpt-5.4 it would re-record every stream in tests/fixtures under the gate, so it runs when the machine is quiet, or it goes on the morning list.
+
+## Ticket 115, step 1 of 1: redeploy the App, so the package page shows the step tracker from the warehouse
+
+Parked on October 28, 2026 with ticket 115, which merged into build/strata as 865ce7c8 (branch `strata/115-the-package-s-steps-as-a-horizontal-tracker` at 472a428d). The builder named no workspace step; the verifier parked this one check (`.notes/115-verify-r3.md`, "Parked"). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this from a snapshot that includes this merge (865ce7c8, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in the env file and the Foundry and judge secrets in the scope `strata`. The ticket changes the server (`src/strata/server/steps.py`, the new `src/strata/server/tracker.py` and `src/strata/server/sql/tracker/signed.sql`) and the web app. No table changes: `src/strata/lakehouse/gold/contract.sql` changed only in its comment, so no bundle deploy or nightly run is needed. A deploy from this commit or a later one also serves ticket 114's redeploy block above if that has not run yet.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- The last line is `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com` and /api/health answers 200.
+- Signed in as staff, `GET /api/packages/KE-NWWDA-541055-CW-RFB/steps` answers 200, and every row of `step_dates.steps` carries `state` and `late_days`. This proves `signed.sql` ran on the SQL warehouse: a failure there gives HTTP 500 or no `state` field.
+- Then `/packages/KE-NWWDA-541055-CW-RFB` shows "Where the steps stand" at the top. Read it against `tests/fixtures/api/steps-ke-nwwda-541055.json` (recorded as of October 28, 2026): "Contract signed Done Jun 22, 2026" (contract 1903781 in `strata.gold.contract`), "Contract completed Late by N days Planned for Jul 31, 2026", where N is the days from July 31, 2026 to the as-of date (89 on October 28), and the first four steps unknown. If the workspace's newest plan for P156634 (document 40132287) gives other dates than the fixture's plan of October 9, 2026, the states follow that plan; record which plan the source line names.
+- Section 2 still opens under "Show the steps".
+
+Record the deploy's exit code, last line and deployment id, the /api/health status, the steps route's status, and the six states and dates the tracker showed, here under ticket 115.
