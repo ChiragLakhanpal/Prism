@@ -26,6 +26,7 @@ import {
 } from "../lib/answer";
 import { evidenceHref, loadVisited, openEvidence } from "../lib/evidence";
 import { ENGLISH, langOf, languageName, workingLanguage } from "../lib/lang";
+import { useRevealAfterWait } from "../lib/reveal";
 import { useStore } from "../lib/store";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
@@ -632,6 +633,8 @@ export function AnswerPanel({
 }) {
   const [stillWorking, setStillWorking] = useState(false);
   const current = useStore(workingLanguage)?.code ?? ENGLISH;
+  // The answer replaces the stream's skeleton in this panel, so it enters (ticket 111); one shown again is drawn at once.
+  const reveal = useRevealAfterWait(run.phase === "streaming", run.serial);
   useEffect(() => {
     if (run.phase !== "streaming") {
       setStillWorking(false);
@@ -689,7 +692,7 @@ export function AnswerPanel({
           </div>
         </div>
         <div className="mt-6">
-          <Answer state={stateOf(run, opened, visited, stillWorking)} />
+          <Answer state={stateOf(run, opened, visited, stillWorking)} reveal={reveal} />
         </div>
         <Announcer key={run.serial} messages={announcements(run)} />
       </div>

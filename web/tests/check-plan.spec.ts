@@ -8,6 +8,8 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
+import { recordTransitions, transitionsOn, type Moved } from "./reveals";
+import { animationsDone } from "./settled";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const API = `/api${PLAN}`;
@@ -21,6 +23,12 @@ const MARKED = [
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
 const FINDING = "One needs a look and two are worth watching; three have data notes.";
+// Ticket 111's narration, word for word: the step, how I check, and why it can take longer.
+const NARRATION = {
+  running: "I'm checking the plan.",
+  how: "I'm comparing each activity with its own dates, its estimate and the project's closing date.",
+  slow: "The database may be starting up, so this can take longer.",
+};
 // Columns 1 to 8 of the 12-column grid in a 1440 px page area: the window's 40 px margins leave 1360 px, and content
 // stops at 1280 px (ticket 94), so 8 columns of 77.33 px and 7 gutters of 32 px.
 const EIGHT_COLUMNS = 843;
@@ -59,8 +67,9 @@ const textLines = (element: Element) => {
 };
 
 async function axe(page: Page) {
-  // Let the fold's fade-in finish, so contrast is measured on what stays on screen.
-  await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
+  // Let the fold's fade-in finish, so contrast is measured on what stays on screen. The narration's turning icon
+  // turns until the check arrives, so it never rests and is left out (ticket 111).
+  await animationsDone(page);
   const results = await scan(page);
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
@@ -442,12 +451,13 @@ test("while the check loads, skeletons hold its places and a status says so", as
     await held;
     await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
   });
-  // The page's clock runs fast through the two seconds before "Still checking this plan.".
+  // The page's clock runs fast through the two seconds before the database line.
   await page.clock.install();
   await page.goto(PLAN);
 
   await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
-  await expect(page.getByRole("status").filter({ hasText: "Checking this plan." })).toHaveCount(1);
+  // Ticket 111: the status says the step the narration shows, once.
+  await expect(page.getByRole("status").filter({ hasText: NARRATION.running })).toHaveCount(1);
   // The h1's bar stands for the agency's name: 60% of the header's row, at most 560 px (the 10
   // brief, section 6), not the width of the date's bar under it.
   const nameBar = page.locator("[data-plan-header] h1 [data-skeleton]").filter({ visible: true });
@@ -463,18 +473,140 @@ test("while the check loads, skeletons hold its places and a status says so", as
     "What Strata found",
   ]);
   await page.clock.fastForward(2000);
-  await expect(page.getByText("Still checking this plan.")).toBeVisible();
-  // The header's skeleton has the populated header's shape, with the pill's bar on the right, so
-  // the table under it does not move when the rows arrive (the 10 brief, section 7).
+  await expect(page.getByText(NARRATION.slow)).toBeVisible();
+  // The header's skeleton has the populated header's shape, with the pill's bar on the right, and the narration
+  // holds the byline's, the finding's and the method's places, its database line included, so the table under
+  // them does not move when the rows arrive (the 10 brief, section 7; ticket 111).
   await page.evaluate(() => document.fonts.ready);
   const top = (selector: string) => page.locator(selector).evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
   const header = { loading: await top("[data-plan-header]"), table: await top("[data-plan-skeleton] thead") };
-  // "Still checking this plan." and its 4 px margin go when the rows arrive; nothing else moves.
-  const still = await page.getByText("Still checking this plan.").evaluate((element) => element.getBoundingClientRect().height + 4);
   release();
   await expect(page.getByRole("status").filter({ hasText: "Checked nine activities." })).toHaveCount(1);
   expect(Math.abs((await top("[data-plan-header]")) - header.loading)).toBeLessThanOrEqual(1);
-  expect(Math.abs(header.table - still - (await top("[data-view=table] thead")))).toBeLessThanOrEqual(1);
+  expect(Math.abs(header.table - (await top("[data-view=table] thead")))).toBeLessThanOrEqual(1);
+});
+
+// Ticket 111: while its one request runs, the plan check says what I'm doing in the finding's place with the answer
+// panel's own steps, one running step and how I check under it, and after two seconds why it can take longer, with
+// no timer. The page's clock runs fast through those two seconds.
+for (const width of [1440, 390]) {
+  test(`at ${width} px, while the check runs, the finding's place says what I'm doing, and the finding replaces it`, async ({ page }) => {
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
+    await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route(`**${API}`, async (route) => {
+      await held;
+      await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
+    });
+    // When the page's h1 and the narration first drew, and each line the page's status said, in order.
+    await page.addInitScript(() => {
+      const seen = { h1: -1, narration: -1, said: [] as string[] };
+      (window as unknown as { seen: typeof seen }).seen = seen;
+      new MutationObserver(() => {
+        const now = performance.now();
+        if (seen.h1 < 0 && document.querySelector("main h1")) seen.h1 = now;
+        if (seen.narration < 0 && document.querySelector("[data-plan-narration]")) seen.narration = now;
+        const line = document.querySelector("[data-check-plan-page] > [role=status]")?.textContent ?? "";
+        if (line && seen.said.at(-1) !== line) seen.said.push(line);
+      }).observe(document, { subtree: true, childList: true, characterData: true });
+    });
+    const seen = () => page.evaluate(() => (window as unknown as { seen: { h1: number; narration: number; said: string[] } }).seen);
+    await recordTransitions(page);
+    await page.clock.install();
+    await page.goto(PLAN);
+
+    const narration = page.locator("[data-plan-narration]");
+    const running = narration.locator("[data-steps] li[data-step=running]");
+    await expect(running).toContainText(NARRATION.running);
+    await expect(running.locator("svg.animate-spin")).toBeVisible();
+    await expect(running.locator("[data-step-items] li")).toHaveText([NARRATION.how]);
+    // The narration draws with the page's first frame, never after a delay.
+    const first = await seen();
+    expect(first.narration - first.h1).toBeLessThanOrEqual(100);
+    // It sits above today's table skeleton: the skeleton table's head from 1024 px, its first card below.
+    await page.evaluate(() => document.fonts.ready);
+    const box = async (selector: string) => {
+      const found = (await page.locator(selector).filter({ visible: true }).first().boundingBox())!;
+      return { top: found.y, bottom: found.y + found.height, height: found.height };
+    };
+    const rows = width < 1024 ? "[data-skeleton-cards] > li" : "[data-plan-skeleton] thead";
+    const told = await box("[data-plan-narration]");
+    expect(told.bottom).toBeLessThanOrEqual((await box(rows)).top);
+    // The steps announce nothing themselves: the page's one polite status says the step.
+    await expect(narration.locator("[aria-live]")).toHaveCount(0);
+    await expect(page.getByRole("status").filter({ hasText: NARRATION.running })).toHaveCount(1);
+
+    await page.clock.fastForward(2000);
+    await expect(running.locator("[data-step-items] li")).toHaveText([NARRATION.how, NARRATION.slow]);
+    await expect(page.getByText("Still checking this plan.")).toHaveCount(0);
+    // The database line keeps to the narration's reserved height.
+    expect(Math.abs((await box("[data-plan-narration]")).height - told.height)).toBeLessThanOrEqual(1);
+
+    release();
+    await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
+    await expect(narration).toHaveCount(0);
+    // The finding takes the narration's place, its byline on the narration's top line, and no other part of the page,
+    // its rows and source line included, has a byline.
+    await expect(page.locator("[data-byline]")).toHaveText(["Strata found"]);
+    await expect(page.locator("[data-plan-check] [data-byline] + h2")).toHaveText(FINDING);
+    // The status said the step once, then how many activities were checked.
+    await expect.poll(async () => (await seen()).said).toEqual([NARRATION.running, "Checked nine activities."]);
+    // The narration showed for more than 400 ms, so the finding entered: opacity and a 4 px rise over 200 ms.
+    await animationsDone(page);
+    expect(byProperty(await transitionsOn(page, "findingBlock"))).toEqual(ENTERED);
+    expect(Math.abs((await box("[data-plan-check] [data-byline]")).top - told.top)).toBeLessThanOrEqual(1);
+  });
+}
+
+// What the finding's entrance runs, in the order byProperty sorts it (DESIGN.md section 4, Motion; ticket 111).
+const ENTERED = [
+  { property: "opacity", from: "0", duration: 200, delay: 0 },
+  { property: "translate", from: "0px 4px", duration: 200, delay: 0 },
+];
+const byProperty = (moved: Omit<Moved, "on">[]) => [...moved].sort((a, b) => a.property.localeCompare(b.property));
+
+test("a check that arrives before its narration has shown for 400 ms puts the finding up at once", async ({ page }) => {
+  await recordTransitions(page);
+  // When the narration came and went, as the page drew it.
+  await page.addInitScript(() => {
+    const shown = { from: -1, to: -1 };
+    (window as unknown as { shown: typeof shown }).shown = shown;
+    new MutationObserver(() => {
+      const here = document.querySelector("[data-plan-narration]") !== null;
+      if (here && shown.from < 0) shown.from = performance.now();
+      if (!here && shown.from >= 0 && shown.to < 0) shown.to = performance.now();
+    }).observe(document, { subtree: true, childList: true });
+  });
+  await openPlan(page);
+  await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
+  await animationsDone(page);
+  const shown = await page.evaluate(() => (window as unknown as { shown: { from: number; to: number } }).shown);
+  const showed = shown.to - shown.from;
+  // The recorded check answers at once. On a busy computer it can still take 400 ms or more, and then the finding
+  // enters, as after any wait that long; a few milliseconds either side of 400 prove nothing, so they are left out.
+  if (showed < 350) expect(await transitionsOn(page, "findingBlock")).toEqual([]);
+  else if (showed > 450) expect(byProperty(await transitionsOn(page, "findingBlock"))).toEqual(ENTERED);
+});
+
+test("under reduced motion the finding replaces a long narration with no transition", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(`**${API}`, async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
+  });
+  await recordTransitions(page);
+  await page.clock.install();
+  await page.goto(PLAN);
+  await expect(page.locator("[data-plan-narration]")).toBeVisible();
+  await page.clock.fastForward(2000);
+  release();
+  await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
+  expect(await transitionsOn(page, "findingBlock")).toEqual([]);
 });
 
 test("at 1024 and 390 px the skeleton is as tall as the header, finding and method above the rows, so the rows stay put", async ({ page }) => {
@@ -499,7 +631,8 @@ test("at 1024 and 390 px the skeleton is as tall as the header, finding and meth
     }
     return tops;
   };
-  const loading = await rowsTop("[data-plan-skeleton]", "[data-plan-skeleton]");
+  // The skeleton's cards, not the narration's steps above them, which are a list too (ticket 111).
+  const loading = await rowsTop("[data-plan-skeleton]", "[data-skeleton-cards]");
 
   release();
   await expect(page.locator("[data-plan-check]")).toBeVisible();
@@ -558,7 +691,7 @@ test("below 1024 px the skeleton cards are as tall as the activity cards they st
     return sizes;
   };
   await expect(page.locator("[data-plan-skeleton]")).toBeVisible();
-  const skeleton = await heights("[data-plan-skeleton] li");
+  const skeleton = await heights("[data-skeleton-cards] > li");
 
   release();
   await expect(page.locator("[data-plan-check]")).toBeVisible();

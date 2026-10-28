@@ -4,6 +4,7 @@
 // dev.spec.ts against the development build.
 import type { Page, Request } from "@playwright/test";
 import { expect, mockApi, recorded, viewAnswers } from "./mocked";
+import { animationsDone } from "./settled";
 
 export const QUESTION = "Why were works contracts in P130164 advertised again?";
 export const ICR_54 = "strata.gold.passage:31525018/v1/54";
@@ -57,6 +58,9 @@ export async function askFromTheBox(page: Page, question = QUESTION) {
   await page.keyboard.press("Enter");
 }
 
+// The answer has landed and come to rest: its "Strata, in short" block rises 4 px as it fades in (ticket 111), so a
+// test measures it, or scans it with axe, once that has ended.
 export async function landed(page: Page) {
   await expect(panel(page).locator("[data-answer]:not([data-answer=streaming])")).toBeVisible();
+  await animationsDone(page);
 }

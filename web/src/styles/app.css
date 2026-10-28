@@ -99,13 +99,13 @@
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
 
-  /* DESIGN.md section 4, Motion: two curves and six times, all 120 to 200 ms, and nothing moves under
+  /* DESIGN.md section 4, Motion: two curves and seven times, all 120 to 200 ms, and nothing moves under
      reduced motion. ease-out is for what enters and for a press; ease-drawer for a sheet that slides in;
-     a color change uses plain ease. Nothing uses ease-in. */
+     a color change uses plain ease. Nothing uses ease-in. A reveal (ticket 111) follows a wait, never a page load. */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --motion-press: 120ms;  --motion-color: 120ms;  --motion-popover: 160ms;  --motion-pane: 160ms;
-  --motion-sheet: 200ms;  --motion-exit: 120ms;
+  --motion-sheet: 200ms;  --motion-exit: 120ms;  --motion-reveal: 200ms;
   --default-transition-duration: var(--motion-color);
   --default-transition-timing-function: ease;
   /* The number tooltip's width, as Data readiness's tooltips are today. */
@@ -141,12 +141,40 @@
     transform: translateY(-4px);
   }
 }
-/* The evidence drawer (the 14 brief, section 8): its content fades in over 160 ms, the matching words then
-   settle into their highlight over 200 ms, and below 768 px the sheet slides up. */
+/* The evidence drawer beside the page (the 14 brief, section 8; ticket 111): it fades in over 160 ms while its panel
+   comes 12 px in from the right, the edge it lives on, then the matching words settle into their highlight over
+   200 ms; below 768 px the sheet slides up instead. The drawer clips its panel's way in, so the page never scrolls
+   sideways while it enters. It closes at once, and a new source in it moves nothing, since both only run when the
+   drawer is first drawn. */
 @utility animate-drawer-in {
   transition: opacity var(--motion-pane) var(--ease-out);
   @starting-style {
     opacity: 0;
+  }
+}
+@utility animate-drawer-slide {
+  transition: translate var(--motion-pane) var(--ease-out);
+  @starting-style {
+    translate: 12px;
+  }
+}
+/* Reveals (DESIGN.md section 4, Motion; ticket 111): what a wait produced, entering once the wait ends. An answer's
+   "Strata, in short" block after its stream, and the plan check's finding after a narration of at least 400 ms, rise
+   4 px as they fade in. */
+@utility animate-reveal {
+  transition: opacity var(--motion-reveal) var(--ease-out), translate var(--motion-reveal) var(--ease-out);
+  @starting-style {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+/* The check line's tick, beside "Checked", draws left to right 120 ms after a streamed answer lands. It ends at
+   inset(0), not at no clip, since a browser can only move between two insets. */
+@utility animate-tick-in {
+  clip-path: inset(0);
+  transition: clip-path var(--motion-reveal) var(--ease-out) 120ms;
+  @starting-style {
+    clip-path: inset(0 100% 0 0);
   }
 }
 @utility animate-settle {

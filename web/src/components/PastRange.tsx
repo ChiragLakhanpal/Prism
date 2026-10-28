@@ -40,6 +40,7 @@ import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { dataReadinessHref } from "../routes";
 import { Button } from "./Button";
+import { Byline } from "./Byline";
 import { CoverageLine } from "./Checks";
 import { Fill, Joined } from "./Fill";
 import { LoadError } from "./LoadError";
@@ -931,7 +932,9 @@ function Populated({
 
   return (
     <div ref={measure} className="mt-4">
-      <h3 id={ids.title} className="font-bold text-pretty text-ink-heading" style={{ fontSize: titleSize(type), lineHeight: 1.3 }} data-finding>
+      {/* Strata's own words open with its byline, 8 px above them (ticket 111): what it found, or that it held back. */}
+      <Byline kind={abstained ? "heldBack" : "found"} />
+      <h3 id={ids.title} className="mt-2 font-bold text-pretty text-ink-heading" style={{ fontSize: titleSize(type), lineHeight: 1.3 }} data-finding>
         {title}
       </h3>
       {abstained && more}
@@ -1242,6 +1245,8 @@ function PastRangeSkeleton({ twoLanes = false }: { twoLanes?: boolean }) {
   // The title and the summary hold checkable numbers, whose buttons make each line a little taller: pb-2.
   return (
     <div ref={measure} aria-hidden="true" className="mt-4" data-past-range-skeleton>
+      {/* The byline's line over the title (ticket 111). */}
+      <SkeletonLine className="mb-2 text-label" width="w-24" />
       <SkeletonText className="pb-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: titleSize(type), lineHeight: 1.3 }} />
       <SkeletonText className="hidden pb-2 @md/page:flex" widths={lines(2)} style={{ fontSize: titleSize(type), lineHeight: 1.3 }} />
       <SkeletonText className="mt-2 pb-2 text-body @md/page:hidden" widths={lines(7, "w-2/5")} />

@@ -676,14 +676,19 @@ export function EvidenceDrawerView({
           : narrow
             ? "fixed inset-0 z-50 animate-sheet-in"
             : // On a wide page the page narrows beside it and keeps its left edge (ticket 94); beside a draft's
-              // document column it fills the free space instead (app.css, "A draft's document column").
-              "w-[clamp(384px,40vw,560px)] shrink-0 self-stretch border-l border-line",
+              // document column it fills the free space instead (app.css, "A draft's document column"). It fades in
+              // while its panel comes 12 px in from the right, inside it, so the page never scrolls sideways (ticket 111).
+              "w-[clamp(384px,40vw,560px)] shrink-0 self-stretch overflow-x-clip border-l border-line animate-drawer-in",
       )}
     >
       <div
         ref={panelRef}
+        data-drawer-panel
         onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
-        className={cx(!sample && "overflow-y-auto", !sample && (narrow ? "h-dvh" : "sticky top-(--frame-top) max-h-[calc(100dvh-var(--frame-top))]"))}
+        className={cx(
+          !sample && "overflow-y-auto",
+          !sample && (narrow ? "h-dvh" : "sticky top-(--frame-top) max-h-[calc(100dvh-var(--frame-top))] animate-drawer-slide"),
+        )}
         style={narrow ? { paddingBottom: "env(safe-area-inset-bottom)" } : undefined}
       >
         <div
@@ -741,7 +746,7 @@ export function EvidenceDrawerView({
                         : copy.evidence.close}
           </Button>
         </div>
-        <div className="flex animate-drawer-in flex-col gap-4 px-6 pt-2 pb-6">
+        <div className="flex flex-col gap-4 px-6 pt-2 pb-6">
           {claim && (
             <div data-claim>
               <p className="text-caption text-ink-muted">{copy.evidence.fromAnswer}</p>

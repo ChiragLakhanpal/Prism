@@ -874,6 +874,27 @@ test("a quantile dot the curve never reached is pinned at the plot's edge, so th
   }
 });
 
+// Ticket 111: Strata's own words open with its byline, and a record's words end with their source. On this page the
+// byline sits over section 1's finding alone: "Strata found", or "Strata held back" over its abstention, 8 px above
+// the words, outside the finding's own heading.
+test("section 1's finding opens with Strata's byline, its abstention with Strata held back, and nothing else on the page has one", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  const bylines = page.locator("[data-byline]");
+  await expect(bylines).toHaveText(["Strata found"]);
+  await expect(section(page).getByRole("heading", { level: 3, name: FINDING })).toBeVisible();
+  const [over, under] = [(await bylines.boundingBox())!, (await section(page).locator("[data-finding]").boundingBox())!];
+  expect(Math.round(under.y - (over.y + over.height))).toBe(8);
+
+  await openPackage(page, {
+    comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
+    estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
+  });
+  await ready(page);
+  await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range: only seven comparable packages. Here are all seven.");
+  await expect(bylines).toHaveText(["Strata held back"]);
+});
+
 test("below 20 comparables there is no range and no share: the copy file's sentence, every package, and the table open", async ({ page }) => {
   await openPackage(page, {
     comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },

@@ -184,8 +184,10 @@ test("the check line uses the neutral state, never success green", async ({ page
   for (const line of await lines.all()) {
     const style = await line.evaluate((el) => ({ background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
     expect(style).toEqual({ background: "rgb(231, 237, 243)", color: "rgb(61, 76, 92)" });
+    // Ticket 111: the line's one icon is the tick beside "Checked", in ink-muted, never success green.
+    const ticks = await line.locator("svg").evaluateAll((icons) => icons.map((icon) => [icon.hasAttribute("data-check-tick"), getComputedStyle(icon).color]));
+    expect(ticks).toEqual([[true, "rgb(75, 94, 113)"]]);
   }
-  expect(await page.locator("[data-check-line] svg").count()).toBe(0);
 });
 
 test("Num shows 6 of 12 as a count and 31 of 37 beside about 8 in 10, on screen", async ({ page }) => {

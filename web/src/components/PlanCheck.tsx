@@ -20,6 +20,7 @@ import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
 import { cx } from "../lib/cx";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { Button } from "./Button";
+import { Byline } from "./Byline";
 import { CheckPill } from "./CheckPill";
 import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
@@ -29,6 +30,7 @@ import { ProjectId } from "./ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
+import { Steps, type Step } from "./Steps";
 import { CARD_BREAKPOINTS, CARD_FIELD, CARD_FIELDS } from "./Table";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
@@ -660,8 +662,11 @@ export function checkPill(result: CheckedPlan): ReactNode {
   );
 }
 
-export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source }: {
+export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source, reveal = false }: {
   result: CheckedPlan;
+  // Ticket 111: the finding replaces a narration that showed for at least 400 ms, so its byline, the finding and the
+  // method sentence enter, once: opacity and a 4 px rise over 200 ms.
+  reveal?: boolean;
   // Ticket 38: an upload's check says how it measured delay, and names the upload as its source.
   method?: ReactNode;
   source?: ReactNode;
@@ -724,11 +729,15 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   return (
     <section aria-labelledby={findingId} data-plan-check>
       <EightColumns prose className="mt-6">
-        <h2 ref={findingRef} id={findingId} tabIndex={-1} className="text-h2 text-pretty text-ink-heading focus:outline-none">
-          <Finding result={result} />
-        </h2>
-        <div className="mt-2">
-          {method ?? <Method result={result} />}
+        <div data-finding-block className={cx(reveal && "animate-reveal")}>
+          {/* Strata's own words open with its byline, 8 px above them (ticket 111). */}
+          <Byline kind="found" />
+          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-h2 text-pretty text-ink-heading focus:outline-none">
+            <Finding result={result} />
+          </h2>
+          <div className="mt-2">
+            {method ?? <Method result={result} />}
+          </div>
         </div>
         {afterMethod}
       </EightColumns>
@@ -852,9 +861,9 @@ function PlanSource({ result }: { result: CheckedPlan }) {
   );
 }
 
-// While the check loads: the header's places, the finding and method lines, the real column heads
-// over five skeleton rows from 1024 px, and three skeleton cards below it. Nothing moves when the
-// rows arrive, and nothing shimmers.
+// While the check loads: the header's places, then the narration in the places of the finding's byline, the
+// finding and the method sentence (ticket 111), then the real column heads over five skeleton rows from 1024 px, and
+// three skeleton cards below it. Nothing moves when the rows arrive, and nothing shimmers.
 export function PlanCheckSkeleton({ slow, baseline }: {
   slow?: boolean;
   // The baseline panel's place under the method sentence (ticket 21): as tall as the panel with no baseline
@@ -862,31 +871,49 @@ export function PlanCheckSkeleton({ slow, baseline }: {
   baseline?: View;
 }) {
   const rows = [0, 1, 2, 3, 4];
+  // The narration (ticket 111): the answer panel's own steps, with one running step and how I check under it, then,
+  // after two seconds, why it can take longer. The page's polite status says the step, so the steps announce nothing.
+  const narration: Step = {
+    key: "check_plan",
+    running: copy.steps.tools.check_plan.running(),
+    done: "",
+    state: "running",
+    items: slow ? [copy.steps.tools.check_plan.how, words.databaseStarting] : [copy.steps.tools.check_plan.how],
+  };
   return (
-    <div aria-hidden="true" data-plan-skeleton>
+    <div data-plan-skeleton>
       <EightColumns prose className="mt-6">
-        {/* The finding takes two lines below 768 px and at the eight columns' 1024 to 1199 px, and
-            one line at the full width from 768 px and from 1200 px. Its count words keep to the
-            line's height (Num). The method sentence takes five lines below 768 px and three from it. */}
-        <div>
-          <SkeletonText className="text-h2 @md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-2/5"]} />
-          <SkeletonLine className="hidden text-h2 @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
+        {/* The narration and the places it holds share one grid cell, so it is exactly as tall as the byline, the
+            finding and the method sentence it stands for. The finding takes two lines below 768 px and at the eight
+            columns' 1024 to 1199 px, and one line at the full width from 768 px and from 1200 px. Its count words keep
+            to the line's height (Num). The method sentence takes five lines below 768 px and three from it. */}
+        <div className="grid" data-plan-narration>
+          <div aria-hidden="true" className="invisible col-start-1 row-start-1">
+            <SkeletonLine className="text-label" width="w-24" />
+            <div className="mt-2">
+              <SkeletonText className="text-h2 @md/page:hidden @lg/page:flex @xl/page:hidden" widths={["w-full", "w-2/5"]} />
+              <SkeletonLine className="hidden text-h2 @md/page:flex @lg/page:hidden @xl/page:flex" width="w-[70%]" />
+            </div>
+            <SkeletonText className="mt-2 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
+            <SkeletonText className="mt-2 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
+          </div>
+          <div className="col-start-1 row-start-1">
+            <Steps steps={[narration]} announce={false} />
+          </div>
         </div>
-        {slow && <p className="mt-1 text-caption text-ink-muted">{words.stillChecking}</p>}
-        <SkeletonText className="mt-2 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
-        <SkeletonText className="mt-2 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
         {baseline && baseline !== "public" && (
-          <div className="mt-4 rounded-md border border-line bg-surface p-4" data-baseline-skeleton>
+          <div aria-hidden="true" className="mt-4 rounded-md border border-line bg-surface p-4" data-baseline-skeleton>
             <p className="invisible text-body">{baseline === "piu" ? copy.baseline.piuNone : copy.baseline.none}</p>
             {baseline === "staff" && <span className="invisible mt-3 block h-11" />}
           </div>
         )}
       </EightColumns>
       {/* Below 1024 px the count line's row also holds the definition's 24 px trigger. */}
-      <div className="mt-4 flex min-h-6 items-center @lg/page:block @lg/page:min-h-0">
+      <div aria-hidden="true" className="mt-4 flex min-h-6 items-center @lg/page:block @lg/page:min-h-0">
         <SkeletonLine className="text-caption" width="w-40" />
       </div>
-      <div className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
+      {/* The real column heads are only places: a screen reader hears the narration's step, not an empty table. */}
+      <div aria-hidden="true" className={cx("mt-2 hidden overflow-hidden rounded-md border border-line bg-surface", VIEW.table)}>
         <table className="w-full table-fixed border-collapse text-small">
           <thead className="bg-surface-2">
             <tr>
@@ -927,7 +954,7 @@ export function PlanCheckSkeleton({ slow, baseline }: {
       {/* Each skeleton card has an activity card's places: the badge and the reference, two lines
           of Description (one from a 768 px page area, whose margins follow the window since ticket 94), two of
           reason, the hairline and the four STEP fields under their labels. */}
-      <ul className={cx("mt-2 flex flex-col gap-3", VIEW.cards)}>
+      <ul aria-hidden="true" data-skeleton-cards className={cx("mt-2 flex flex-col gap-3", VIEW.cards)}>
         {[0, 1, 2].map((index) => (
           <li key={index} className="rounded-md border border-line bg-surface p-4">
             <div className="flex flex-col items-start gap-2 text-small">

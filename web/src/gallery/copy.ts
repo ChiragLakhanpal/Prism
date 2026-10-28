@@ -448,6 +448,7 @@ export const galleryCopy = {
     checkLine: "Check line",
     coverage: "Coverage line",
     removed: "Removed box",
+    byline: "Byline",
     steps: "Steps",
     states: "States",
     held: "Held, with the sentence that says what releases it",

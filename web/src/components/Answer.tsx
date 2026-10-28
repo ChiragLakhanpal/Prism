@@ -23,6 +23,7 @@ import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
+import { Byline, type BylineKind } from "./Byline";
 import { CheckLine, RemovedBox, type NotChecked, type Removed } from "./Checks";
 import { WORD_JOINER } from "./CitationMarker";
 import { numText } from "./Num";
@@ -66,15 +67,18 @@ function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
 
 // wide: the children are blocks that keep their own measure, so a disagreement card can take the
 // answer's full width while its paragraphs stay at about 65 characters a line.
-function InShort({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
+// kind: the byline, "Strata, in short" over an answer and "Strata held back" over one that abstains (ticket 111).
+// reveal: the block replaces the stream's skeleton, so it enters: opacity and a 4 px rise over 200 ms, once.
+function InShort({ children, wide = false, kind = "inShort", reveal = false }: { children: ReactNode; wide?: boolean; kind?: BylineKind; reveal?: boolean }) {
   return (
-    <>
-      {/* "In short" in label and its sentences in lead (DESIGN.md section 5, Answer panel; ticket 94). */}
-      <h3 className="text-label text-ink-muted">{copy.answer.inShort}</h3>
+    <div data-in-short-block className={cx(reveal && "animate-reveal")}>
+      {/* The byline in label as the answer's h3, and its sentences in lead (DESIGN.md section 5, Answer panel and
+          Byline; tickets 94 and 111). */}
+      <Byline as="h3" kind={kind} />
       <div data-in-short onCopy={withoutWordJoiners} className={cx("mt-2 text-lead text-ink", !wide && "max-w-prose")}>
         {children}
       </div>
-    </>
+    </div>
   );
 }
 
@@ -110,16 +114,25 @@ export function StepsTaken({ steps: all, runId, idLabel = copy.steps.answerId }:
 }
 
 // The check line and the removed box keep the answer's measure, about 65 characters a line.
-function ChecksBlock({ checks }: { checks: Checks }) {
+function ChecksBlock({ checks, reveal = false }: { checks: Checks; reveal?: boolean }) {
   return (
     <div className="mt-4 flex max-w-prose flex-col gap-2">
-      <CheckLine numbers={checks.numbers} dates={checks.dates} quotes={checks.quotes} judged={checks.judged} notChecked={checks.notChecked} />
+      <CheckLine
+        numbers={checks.numbers}
+        dates={checks.dates}
+        quotes={checks.quotes}
+        judged={checks.judged}
+        notChecked={checks.notChecked}
+        reveal={reveal}
+      />
       <RemovedBox removed={checks.removed} names={checks.names} retry={checks.retry} />
     </div>
   );
 }
 
-export function Answer({ state }: { state: AnswerState }) {
+// reveal: the answer just streamed in this panel (ticket 111), so its "Strata, in short" block enters and the check
+// line's tick draws; an answer shown again, such as by Back, is drawn at once.
+export function Answer({ state, reveal = false }: { state: AnswerState; reveal?: boolean }) {
   switch (state.status) {
     case "streaming":
       return (
@@ -137,19 +150,21 @@ export function Answer({ state }: { state: AnswerState }) {
     case "ready":
       return (
         <div data-answer="ready">
-          <InShort wide={state.wide}>
+          <InShort wide={state.wide} reveal={reveal}>
             {state.refusal && <div className="mb-4 max-w-prose">{state.refusal}</div>}
             {state.sentences}
           </InShort>
-          <ChecksBlock checks={state.checks} />
+          <ChecksBlock checks={state.checks} reveal={reveal} />
           <StepsTaken steps={state.steps} runId={state.runId} />
         </div>
       );
     case "abstained":
       return (
         <div data-answer="abstained">
-          <InShort>{state.sentence}</InShort>
-          <ChecksBlock checks={state.checks} />
+          <InShort kind="heldBack" reveal={reveal}>
+            {state.sentence}
+          </InShort>
+          <ChecksBlock checks={state.checks} reveal={reveal} />
           <div className="mt-6">{state.rows}</div>
           <StepsTaken steps={state.steps} runId={state.runId} />
         </div>
@@ -157,7 +172,7 @@ export function Answer({ state }: { state: AnswerState }) {
     case "unsupported":
       return (
         <div data-answer="unsupported">
-          <InShort>
+          <InShort reveal={reveal}>
             {state.refusal && <div className="mb-4">{state.refusal}</div>}
             {state.message}
           </InShort>
@@ -178,7 +193,7 @@ export function Answer({ state }: { state: AnswerState }) {
     case "refused":
       return (
         <div data-answer="refused">
-          <InShort>{state.message}</InShort>
+          <InShort reveal={reveal}>{state.message}</InShort>
           {state.note && <p className="mt-2 text-caption text-ink-muted">{state.note}</p>}
           <StepsTaken steps={state.steps} runId={state.runId} />
         </div>

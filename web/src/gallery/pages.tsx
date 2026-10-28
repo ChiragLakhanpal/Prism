@@ -60,6 +60,7 @@ import { Alert } from "../components/Alert";
 import { ViewBanner } from "../components/ViewBanner";
 import { FreshnessStamp, OneBox, type Freshness } from "../components/BoxBand";
 import { Button } from "../components/Button";
+import { Byline } from "../components/Byline";
 import { Card, EmptyState } from "../components/Card";
 import { CheckLine, CoverageLine, RemovedBox } from "../components/Checks";
 import { CitationMarker } from "../components/CitationMarker";
@@ -1031,6 +1032,18 @@ export const PAGES: GalleryPage[] = [
             <RemovedBox removed={[sample.removed[0]]} />
             <RemovedBox removed={[...sample.removed]} names={[...sample.removedNames]} />
             <RemovedBox removed={[...sample.removed]} all />
+          </div>
+        ),
+      },
+      {
+        // Ticket 111: the byline over Strata's own words, in its three kinds.
+        id: "byline",
+        title: t.byline,
+        body: (
+          <div className="flex max-w-prose flex-col gap-6">
+            <Byline kind="inShort" />
+            <Byline kind="found" />
+            <Byline kind="heldBack" />
           </div>
         ),
       },

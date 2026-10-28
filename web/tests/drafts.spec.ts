@@ -9,7 +9,8 @@ import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
 import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
-import { fontsLoaded } from "./settled";
+import { recordTransitions, transitionsOn } from "./reveals";
+import { animationsDone, fontsLoaded } from "./settled";
 import { tabUnderStickyParts } from "./sticky";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
@@ -308,6 +309,15 @@ test("a reload of the writing page says I'm not writing, and links back to the p
 });
 
 // ── A draft's page ───────────────────────────────────────────────────────
+
+// Ticket 111: the check line's tick reveals only after an answer that just streamed; a page load draws it at once.
+test("a draft's page load draws the check line's tick at once, with no transition", async ({ page }) => {
+  await recordTransitions(page);
+  await openDraft(page);
+  await expect(page.locator("[data-check-line] [data-check-tick]")).toBeVisible();
+  await animationsDone(page);
+  expect(await transitionsOn(page, "checkTick")).toEqual([]);
+});
 
 test("the draft's notes cite their plan rows, and the bar says what exporting does and is not, with the opened count", async ({ page }) => {
   await openDraft(page);
