@@ -130,8 +130,8 @@ from strata.agent.answer_check import Asker, SixChecks
 from strata.agent.judge import Judge
 from strata.agent.runs import RunLog, run_row
 from strata.agent.verifier import Verdict, answer_events
-from strata.config import (ENGLISH, DraftKinds, Thresholds, Views, load_draft_kinds, load_roles, load_thresholds,
-                           load_tools, load_views)
+from strata.config import (ENGLISH, DraftKinds, Thresholds, Views, load_draft_kinds, load_examples, load_roles,
+                           load_thresholds, load_tools, load_views)
 from strata.dbx import Viewer, viewer_from_headers
 from strata.drafts.store import DraftStore
 from strata.estimates import exposures as exposure_log
@@ -1248,6 +1248,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 "asof": {"applied": date.applied.isoformat() if date.applied else None, "problem": date.problem},
                 # Whether Home shows its Start here strip (ticket 41), so the page keeps its room before it loads.
                 "start_here_visible": start_here_visible(viewer, own, found.preview, date.applied),
+                # The questions the box suggests while it is focused and empty (ticket 112; config/examples.toml's
+                # [[ask]]): World Bank staff's own view only, today, so no view is offered a question its answer
+                # holds back.
+                "ask": ([{"key": row["key"], "page": row["page"], "within": row["within"]}
+                         for row in load_examples().suggestions()]
+                        if own == view_routes.STAFF and not found.preview and date.applied is None else []),
                 "language": {**language.as_dict(), "saved_readable": readable, "choices": language_choices()}}
 
     @app.put("/api/me/working-language")

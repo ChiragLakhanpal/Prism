@@ -6,13 +6,30 @@
 // Keys: Down and Up move the option Enter does; Enter does it; Tab closes the list; Escape closes the
 // list, then empties the box, and only then reaches the evidence drawer; Backspace in an empty box
 // removes the scope chip and says so.
+//
+// Focused and empty (ticket 112), the list holds its hint, then up to three questions for the page from GET /api/me's
+// ask (config/examples.toml's [[ask]]), none chosen: Down or Up moves to one, and Enter or a click puts its words in
+// the box and asks it within the page's scope, exactly as "Ask this" does. Typing replaces them with what Enter will
+// do.
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { FolderOpen, MessageSquareText, PackagePlus, Table2 } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { removedScopes, removeScope } from "../lib/answer";
-import { hrefFor, intentKey, intentsFor, lookUp, type Found, type Intent, type Lookup } from "../lib/intents";
+import {
+  askRows,
+  hrefFor,
+  intentKey,
+  intentsFor,
+  lookUp,
+  suggestionsFor,
+  suggestionText,
+  type AskPage,
+  type Found,
+  type Intent,
+  type Lookup,
+} from "../lib/intents";
 import { boxMode, startPlanning } from "../lib/packages";
 import { navigate } from "../lib/router";
 import { allows, appliedView } from "../lib/view";
@@ -152,16 +169,25 @@ function boxListOf(value: string, chip: string | null, lookups: Record<string, L
 export function IntentBox({
   scope,
   scopeKind,
+  page = null,
   onAsk,
 }: {
   // The page's scope: a P-code on a project page, a STEP reference or package on a package page.
   scope: string | null;
   scopeKind: "project" | "package";
+  // Which suggestions the page shows (ticket 112): a package's, a project's or a plan check's; null shows Home's.
+  page?: AskPage | null;
   onAsk: (question: string, scope: string | null) => void;
 }) {
   const [value, setValue] = useState("");
+  // Whether the list may show: set by a focus the person moved, a click, Down or typing; cleared by Escape, Tab, a
+  // choice and focus the page gave back.
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const [focused, setFocused] = useState(false);
+  // The suggestion Enter asks, or -1 for none.
+  const [picked, setPicked] = useState(-1);
+  const rows = useStore(askRows);
   const [lookups, setLookups] = useState<Record<string, Lookup>>({});
   const [said, setSaid] = useState("");
   const asked = useRef(new Map<string, Promise<Lookup>>());
@@ -194,6 +220,9 @@ export function IntentBox({
   const shownView = useStore(appliedView);
   const view = !allows("packages", shownView) ? "public" : !allows("plan_package", shownView) ? "piu" : "staff";
   const { ids, options, choices, notes } = boxList(value, chip, lookups, mode, view);
+  const suggested = suggestionsFor(rows, page, chip);
+  const suggesting = open && focused && value === "" && !mode && suggested.items.length > 0;
+  const suggestion = Math.min(picked, suggested.items.length - 1);
 
   const lookupOf = (intent: Intent) => {
     const key = intentKey(intent);
@@ -266,6 +295,18 @@ export function IntentBox({
     if (result.status === "found") go(result.found);
   };
 
+  // A suggestion's words go into the box, and it is asked within the page's scope (or, on Home, its own example),
+  // exactly as "Ask this" asks: the question stays in the box, with focus, so you can refine it.
+  const chooseSuggestion = (index: number) => {
+    const item = suggested.items[index];
+    if (!item) return;
+    const question = suggestionText(item);
+    setValue(question);
+    setPicked(-1);
+    setOpen(false);
+    onAsk(question, item.within);
+  };
+
   const removeChip = () => {
     if (!chip) return;
     removeScope(chip);
@@ -276,7 +317,16 @@ export function IntentBox({
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     event.currentTarget.removeAttribute(RETURNING);
     const listShown = open && value.trim().length > 0 && options.length > 0;
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+    if ((event.key === "ArrowDown" || event.key === "ArrowUp") && value === "" && !mode && suggested.items.length > 0) {
+      event.preventDefault();
+      if (!suggesting) {
+        setOpen(true);
+        return;
+      }
+      const count = suggested.items.length;
+      if (event.key === "ArrowDown") setPicked(suggestion < 0 ? 0 : (suggestion + 1) % count);
+      else setPicked(suggestion < 0 ? count - 1 : (suggestion - 1 + count) % count);
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       if (!value.trim()) return;
       event.preventDefault();
       if (!listShown) {
@@ -288,13 +338,15 @@ export function IntentBox({
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (event.nativeEvent.isComposing) return;
-      void choose(listShown ? current : 0);
+      if (suggesting && suggestion >= 0) chooseSuggestion(suggestion);
+      else void choose(listShown ? current : 0);
     } else if (event.key === "Escape") {
       // Innermost first: the list, then the text. With both gone, Escape reaches the drawer.
-      if (listShown) {
+      if (listShown || suggesting) {
         event.preventDefault();
         event.stopPropagation();
         setOpen(false);
+        setPicked(-1);
       } else if (value) {
         event.preventDefault();
         event.stopPropagation();
@@ -320,6 +372,7 @@ export function IntentBox({
         onChange={(next) => {
           setValue(next);
           setActive(0);
+          setPicked(-1);
           setOpen(true);
         }}
         options={options}
@@ -333,16 +386,32 @@ export function IntentBox({
         onKeyDown={onKeyDown}
         onPointerDown={() => {
           input.current?.removeAttribute(RETURNING);
-          setOpen(value.trim().length > 0);
+          setOpen(true);
         }}
-        onFocusChange={(focused) => {
+        onFocusChange={(now) => {
           // Focus the page gave back (AnswerPanel's close) leaves the list shut until a key or a click.
           const given = input.current?.hasAttribute(RETURNING) ?? false;
-          if (!focused) input.current?.removeAttribute(RETURNING);
+          if (!now) input.current?.removeAttribute(RETURNING);
           // Leaving the box ends its mode.
-          if (!focused && mode) boxMode.set(null);
-          setOpen(focused && !given && value.trim().length > 0);
+          if (!now && mode) boxMode.set(null);
+          setFocused(now);
+          setPicked(-1);
+          setOpen(now && !given);
         }}
+        suggestions={
+          suggesting
+            ? {
+                name: copy.box.suggest.group[suggested.page],
+                options: suggested.items.map((item, index) => ({
+                  key: `suggest:${index}:${item.key}`,
+                  icon: MessageSquareText,
+                  label: <Fill template={item.template} slots={{ id: item.id ? mono(item.id) : "" }} />,
+                })),
+              }
+            : null
+        }
+        suggestionActive={suggestion}
+        onChooseSuggestion={chooseSuggestion}
         modePlaceholder={mode === "plan" ? copy.box.mode.planPlaceholder : mode === "check" ? copy.box.mode.checkPlaceholder : undefined}
         modeHelp={mode === "plan" ? copy.box.mode.planHelp : undefined}
       />

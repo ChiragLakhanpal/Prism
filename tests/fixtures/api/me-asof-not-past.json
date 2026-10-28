@@ -100,6 +100,48 @@
     "problem": "not_past"
   },
   "start_here_visible": true,
+  "ask": [
+    {
+      "key": "pastRange",
+      "page": "package",
+      "within": null
+    },
+    {
+      "key": "rebidding",
+      "page": "package",
+      "within": null
+    },
+    {
+      "key": "costEstimates",
+      "page": "package",
+      "within": null
+    },
+    {
+      "key": "contractsSinceIsr",
+      "page": "project",
+      "within": null
+    },
+    {
+      "key": "projectSignals",
+      "page": "project",
+      "within": null
+    },
+    {
+      "key": "planActivities",
+      "page": "plan_check",
+      "within": null
+    },
+    {
+      "key": "pastRange",
+      "page": "home",
+      "within": "KE-NWWDA-541055-CW-RFB"
+    },
+    {
+      "key": "worksRebidding",
+      "page": "home",
+      "within": "P130164"
+    }
+  ],
   "language": {
     "code": "en",
     "source": "default",

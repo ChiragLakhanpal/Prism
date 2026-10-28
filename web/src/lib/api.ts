@@ -75,6 +75,8 @@ export type Me = {
   asof?: import("./view").AppliedView["asof"];
   // Ticket 41: whether Home shows its Start here strip for this viewer.
   start_here_visible?: boolean;
+  // Ticket 112: the questions the box suggests while it is focused and empty, none in a preview or as of a date.
+  ask?: import("./intents").AskRow[];
 };
 
 // One page of a list the server searches and pages (ticket 21): the rows shown, and the range and

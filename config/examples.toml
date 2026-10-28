@@ -20,6 +20,14 @@
 # [[start_here]], one per link on Home's Start here strip, in the strip's order. key names its words in the copy file
 # (copy.home.start.links), and href is where it lands, with {showcase}, {demo_project}, {demo_agency_id},
 # {demo_plan_date} and {lesson_notice} filled from the slice file and the seeded lesson change.
+#
+# [[ask]], one per question the box suggests while it is focused and empty (ticket 112), at most three a page, in the
+# list's order. Each is a question Strata has been measured on: the benchmark question it shortens, without its as-of
+# date. GET /api/me lists them for World Bank staff in their own view, and none in a preview or as of a date.
+#   key        its words in the copy file (copy.box.suggest), with {id} the page's scope
+#   page       where it shows: package, project, plan_check, or home, which also serves every page with no scope
+#   benchmark  the id of the evals/benchmark.yaml question it shortens
+#   within     a home row only: what it is asked within, {demo_package} or {showcase}, filled from the slice file
 
 viewers = "reviewing_panel"
 follows = ["showcase"]
@@ -64,3 +72,45 @@ href = "/data"
 [[start_here]]
 key = "publicView"
 href = "/?view=public"
+
+[[ask]]
+key = "pastRange"
+page = "package"
+benchmark = "find-comparables-ke-nwwda-541055"
+
+[[ask]]
+key = "rebidding"
+page = "package"
+benchmark = "rebidding-risk-ke-nwwda-541055"
+
+[[ask]]
+key = "costEstimates"
+page = "package"
+benchmark = "compare-cost-estimates-ke-nwwda-541055"
+
+[[ask]]
+key = "contractsSinceIsr"
+page = "project"
+benchmark = "project-records-p156634"
+
+[[ask]]
+key = "projectSignals"
+page = "project"
+benchmark = "project-signals-p156634"
+
+[[ask]]
+key = "planActivities"
+page = "plan_check"
+benchmark = "check-plan-nwwda-2026-10-09"
+
+[[ask]]
+key = "pastRange"
+page = "home"
+benchmark = "find-comparables-ke-nwwda-541055"
+within = "{demo_package}"
+
+[[ask]]
+key = "worksRebidding"
+page = "home"
+benchmark = "search-passages-icr-rebidding"
+within = "{showcase}"
