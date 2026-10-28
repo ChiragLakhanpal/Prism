@@ -815,7 +815,7 @@ test("Sources and licenses works while the warehouse is down, because it reads o
   await expect(page.locator("[data-dataset]")).toHaveCount((await json("data-sources.json")).datasets.length);
 });
 
-test("How Strata works shows the deck's eight figures with plain captions and their text, and nothing links to /present", async ({ page }) => {
+test("How Strata works shows the deck's figures with plain captions and their text, and nothing links to /present", async ({ page }) => {
   await mockData(page, FULL);
   await open(page, "/data/how-strata-works");
 

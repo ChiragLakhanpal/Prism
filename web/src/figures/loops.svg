@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 864 268" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="loops-title loops-desc" id="loops-root">
+<svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="loops-title loops-desc" data-motion-root="" data-motion-mode="none" data-step-count="6" id="loops-root">
         <title id="loops-title">Three loops, one dated store</title>
-        <desc id="loops-desc">The knowledge loop each week, the retrieval loop each month and the estimates loop each quarter each read from and write to one dated store that keeps every version, and plans made with the estimates come back as new signings, so each estimate shown is logged.</desc>
+        <desc id="loops-desc">Plans, awards and new reports arrive every night, the knowledge loop runs weekly, the retrieval loop monthly and the estimates loop quarterly, each with a person or a test deciding, one dated store keeps every version, and every estimate shown is logged.</desc>
         <defs>
       <style>#loops-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
       #loops-root .diagram-container { width: 100%; overflow-x: auto; }
@@ -13,46 +13,75 @@
 <marker id="loops-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
         </defs>
         <rect width="100%" height="100%" fill="#f5f7f9"/>
-<path d="M148,72 H163" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
-<path d="M424,72 H439" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
-<path d="M688,72 H703" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
-<path d="M222,96 V179" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
-<path d="M500,96 V179" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
-<path d="M772,96 V179" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
-<path d="M86,180 V97" fill="none" stroke="#4b5e71" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#loops-arrow)"/>
-<path d="M364,180 V97" fill="none" stroke="#4b5e71" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#loops-arrow)"/>
-<path d="M636,180 V97" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#loops-arrow-accent)"/>
-<rect x="544" y="132" width="84" height="12" rx="2" fill="#f5f7f9"/>
-<text x="586" y="141" fill="#0071bc" font-size="8" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle" letter-spacing="0.06em">EXPOSURE LOGGED</text>
-<rect x="24" y="48" width="124" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="48" width="124" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="86" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Proposed lesson</text>
-<text x="86" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">quote on its page</text>
-<rect x="164" y="48" width="116" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="164" y="48" width="116" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="222" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Lesson review</text>
-<text x="222" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a lead decides</text>
-<rect x="304" y="48" width="120" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="304" y="48" width="120" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="364" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Reader reports</text>
-<text x="364" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">wrong passage</text>
-<rect x="440" y="48" width="120" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="440" y="48" width="120" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="500" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Label review</text>
-<text x="500" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a person checks</text>
-<rect x="584" y="48" width="104" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="584" y="48" width="104" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="636" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">New signings</text>
-<text x="636" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">outcomes mature</text>
-<rect x="704" y="48" width="136" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="704" y="48" width="136" height="48" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
-<text x="772" y="69" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Challenger model</text>
-<text x="772" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">wins its backtest</text>
-<rect x="24" y="180" width="816" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="180" width="816" height="48" rx="6" fill="#181f25" stroke="#4b5e71" stroke-width="1" fill-opacity="0.05"/>
-<text x="432" y="201" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Dated store</text>
-<text x="432" y="215" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">every version kept, fed nightly</text>
-<text x="24" y="32" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">KNOWLEDGE LOOP, WEEKLY</text>
-<text x="304" y="32" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">RETRIEVAL LOOP, MONTHLY</text>
-<text x="584" y="32" fill="#586e84" font-size="8" font-weight="500" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start" letter-spacing="0.18em">ESTIMATES LOOP, QUARTERLY</text>
+<text x="24" y="72" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Knowledge loop</text>
+<path d="M29.94,77.25 A4.2,4.2 0 1 1 25.06,78.79" fill="none" stroke="#586e84" stroke-width="1.1"/>
+<polygon points="26.55,76.66 23.03,77.86 26.63,80.38" fill="#586e84"/>
+<text x="38" y="84" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Weekly</text>
+<text x="304" y="72" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Retrieval loop</text>
+<path d="M309.94,77.25 A4.2,4.2 0 1 1 305.06,78.79" fill="none" stroke="#586e84" stroke-width="1.1"/>
+<polygon points="306.55,76.66 303.03,77.86 306.63,80.38" fill="#586e84"/>
+<text x="318" y="84" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Monthly</text>
+<text x="584" y="72" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Estimates loop</text>
+<path d="M589.94,77.25 A4.2,4.2 0 1 1 585.06,78.79" fill="none" stroke="#586e84" stroke-width="1.1"/>
+<polygon points="586.55,76.66 583.03,77.86 586.63,80.38" fill="#586e84"/>
+<text x="598" y="84" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif">Quarterly</text>
+<line x1="292" y1="64" x2="292" y2="272" stroke="#586e84" stroke-width="1" stroke-opacity="0.3"/>
+<line x1="572" y1="64" x2="572" y2="272" stroke="#586e84" stroke-width="1" stroke-opacity="0.3"/>
+<g data-motion-item="" data-step="1" aria-label="Plans, awards and new reports arrive every night">
+<rect x="24" y="24" width="816" height="28" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="24" width="816" height="28" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.1"/>
+<text x="432" y="42" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Every night: plans, awards, new reports</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="The knowledge loop runs weekly: a proposed lesson with its exact quote, a specialist recommends and a lead decides">
+<path d="M152.0,52 V95" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<rect x="24" y="96" width="256" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="96" width="256" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="152" y="115.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Proposed lesson</text>
+<text x="152" y="129.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">quote found on its page</text>
+<path d="M152.0,140 V159" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<rect x="24" y="160" width="256" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="160" width="256" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="152" y="179.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Lesson review</text>
+<text x="152" y="193.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a specialist recommends, a lead decides</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="The retrieval loop runs monthly: reports of a wrong passage become labels after a person checks them, and search changes only if it loses nothing on held-out tests">
+<rect x="304" y="96" width="256" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="304" y="96" width="256" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="432" y="115.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Reader reports</text>
+<text x="432" y="129.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">wrong passage</text>
+<path d="M432.0,140 V159" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<rect x="304" y="160" width="256" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="304" y="160" width="256" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="432" y="179.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Label review</text>
+<text x="432" y="193.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a person checks</text>
+<path d="M432.0,204 V223" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<rect x="304" y="224" width="256" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="304" y="224" width="256" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="432" y="243.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Search tuned</text>
+<text x="432" y="257.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">only if it loses nothing on held-out tests</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="The estimates loop runs quarterly: a new model replaces the old one only after it wins its backtest and a quarter in shadow">
+<path d="M712.0,52 V95" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<rect x="584" y="96" width="256" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="584" y="96" width="256" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="712" y="122.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">New signings</text>
+<path d="M712.0,140 V159" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<rect x="584" y="160" width="256" height="44" rx="6" fill="#f5f7f9"/>
+<rect x="584" y="160" width="256" height="44" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="712" y="179.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Challenger model</text>
+<text x="712" y="193.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">wins its backtest and a quarter in shadow</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="One dated store keeps every version, and answers and drafts cite the version they used">
+<path d="M152.0,204 V291" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<path d="M432.0,268 V291" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#loops-arrow)"/>
+<rect x="24" y="292" width="816" height="36" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="292" width="816" height="36" rx="6" fill="#181f25" stroke="#4b5e71" stroke-width="1" fill-opacity="0.05"/>
+<text x="40" y="314" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Dated store</text>
+<text x="127" y="313.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">every version kept; answers cite the version they used</text>
+</g>
+<g data-motion-item="" data-step="6" aria-label="Plans made from the time estimates change later outcomes, so every estimate shown is logged">
+<path d="M608,204 V291" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#loops-arrow-accent)"/>
+<rect x="616" y="242" width="168" height="12" rx="2" fill="#f5f7f9"/>
+<text x="620" y="251" fill="#0071bc" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Every estimate shown is logged</text>
+</g>
       </svg>

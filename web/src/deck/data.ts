@@ -38,15 +38,22 @@ export type DeckData = {
   presenter: { name: string | null; date: string | null };
   designed_not_built: { key: string; name: string; route: string }[];
   // The demo package, its project and its plan's address (config/slice.toml [demo_plan]), and its recorded answers.
+  // The second draft adds the plan's date, the Start here links the demo slides open
+  // (config/examples.toml, filled as Home fills them), the sentence the package demo types into the box, and the
+  // question the answer demo asks (the demo-ready command's smoke question in evals/benchmark.yaml).
   demo: {
     step_reference: string;
     project_id: string;
     agency: string;
+    plan_date?: string;
     plan_href: string;
+    links?: Partial<Record<"checkPlan" | "planPackage" | "wholeStory", string>>;
+    sentence?: string;
+    question?: string;
     comparables: ComparablesResult | null;
     estimate: EstimateResult | null;
   };
-  // The showcase project (config/slice.toml [showcase]), whose disagreement slide 11 quotes.
+  // The showcase project (config/slice.toml [showcase]), whose disagreement the ladder slide quotes.
   showcase: { project_id: string };
   award_gap: { start: number; end: number } | null;
 };

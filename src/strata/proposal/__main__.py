@@ -170,7 +170,7 @@ def write_deck(args) -> int:
     print(f"Wrote {out.relative_to(ROOT) if out.is_relative_to(ROOT) else out}. "
           f"Not measured yet, so their slides say so: {', '.join(waiting) or 'none'}.")
     if demo is None:
-        print("There is no docs/proposal/demo-package.json, so slide 8 says the demo package was not recorded yet.")
+        print("There is no docs/proposal/demo-package.json, so the deck has no recorded answers for the demo package yet.")
     return 0
 
 

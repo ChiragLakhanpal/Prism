@@ -8,14 +8,17 @@ the panel. build() gathers everything the slides read into one JSON object:
              kind, noun and table, which the number's tooltip and definition window print
 - settings   each design count and planning choice the slides write as a word ("six checks", "two countries"),
              read from its registry through the settings register, as the proposal's Annex 2 reads it
-- checks     the verifier's checks, in the order it runs them, which slide 10 lists
+- checks     the verifier's checks, in the order it runs them, which the checks slide counts
 - rubric     the assessment's four dimensions and their points (config/rubric.toml, citing docs/assessment.md)
 - urls       the panel's addresses (config/urls.toml); presenter, the title slide's name and date (config/deck.toml)
 - designed_not_built  the parts designed but not built (config/designed_not_built.toml), for the last slide
 - demo       the demo package and its plan (config/slice.toml [demo_plan]) and the answers find_comparables and
-             estimate_time gave for it, recorded on the workspace (docs/proposal/demo-package.json), which slide 8's
-             range chart draws
-- showcase   the showcase project (config/slice.toml [showcase]), whose disagreement slide 11 quotes
+             estimate_time gave for it, recorded on the workspace (docs/proposal/demo-package.json), which no slide
+             of the second draft draws, since its package demo opens the live package workspace; for the second
+             draft's demo slides, the plan's date, the Start here links they open
+             (config/examples.toml, filled as Home fills them), the sentence the package demo types and the smoke
+             question the answer demo asks (evals/benchmark.yaml)
+- showcase   the showcase project (config/slice.toml [showcase]), whose disagreement the ladder slide quotes
 - award_gap  the fiscal years no contract awards dataset publishes, from config/sources.toml's known gap, which the
              Data readiness page's Gap row shows; the rows-by-year series must agree with it
 
@@ -26,6 +29,7 @@ fetches. A result the snapshot has not measured is kept with "measured": false, 
 from __future__ import annotations
 
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 from strata import config
 from strata.proposal import register
@@ -41,7 +45,7 @@ RESULTS = ("passages", "documents-read", "pages-read-well", "award-rows-by-year"
 SETTINGS = ("check-count", "loop-count", "pilot-countries", "rollout-phases", "risks-per-package", "checklist-size",
             "hindsight-coders", "fewest-comparables")
 DEMO_ANSWERS = ("comparables", "estimate")
-# The known gap in config/sources.toml that slide 7 states: the fiscal years no contract awards dataset publishes.
+# The known gap in config/sources.toml that the gap slide states: the fiscal years no contract awards dataset publishes.
 AWARD_GAP = ("awards", "fy2017_2019")
 
 
@@ -78,13 +82,14 @@ def _series_gap(series: list[dict]) -> dict | None:
 
 
 def _award_gap(result: dict) -> dict | None:
-    """The known gap's fiscal years, once the award rows are measured. The rows-by-year series is only a check: when it
-    shows a different gap, the slide's sentence and its chart would disagree, so the build stops."""
-    if not result.get("measured"):
-        return None
+    """The known gap's fiscal years, from config/sources.toml, which the Data readiness page's Gap row shows too; the
+    second draft states it whether or not the award rows are measured yet. Once they are, the rows-by-year series is a
+    check: when it shows a different gap, the slide's sentence and its chart would disagree, so the build stops."""
     source, gap_id = AWARD_GAP
     known = next(gap for gap in config.load_sources()[source].known_gaps if gap.id == gap_id)
     gap = {"start": known.first_fiscal_year, "end": known.last_fiscal_year}
+    if not result.get("measured"):
+        return gap
     seen = _series_gap(result.get("series") or [])
     if seen is not None and seen != gap:
         raise DeckError(f"The award rows by year leave fiscal {seen['start']} to {seen['end']} empty, but "
@@ -93,13 +98,44 @@ def _award_gap(result: dict) -> dict | None:
     return gap
 
 
+def _smoke_question(key: str) -> str | None:
+    """The words of the demo-ready command's smoke question (config/slice.toml [demo_plan] smoke_question), which the
+    answer demo asks: the question in evals/benchmark.yaml with that id."""
+    from strata.evals import benchmark
+
+    return next((" ".join(question["question"].split()) for question in benchmark.load() if question.get("id") == key),
+                None)
+
+
+def _demo_links(agency: str, examples: config.Examples | None = None) -> dict:
+    """The Start here links the demo slides open (config/examples.toml), filled as Home fills them, by key, and the
+    sentence the package demo types into the box, the example its link names. The packages page reads that example
+    from the link's query, so a link that names no example in the registry stops the build instead of leaving the
+    package demo's box blank."""
+    examples = examples or config.load_examples()
+    links = {link["key"]: link["href"] for link in examples.links(agency)}
+    sentence = None
+    if "planPackage" in links:
+        named = parse_qs(urlsplit(links["planPackage"]).query).get("example", [""])[0]
+        if named not in examples.sentences:
+            raise DeckError(f"config/examples.toml's planPackage link, {links['planPackage']}, names "
+                            f"{f'the example {named}' if named else 'no example'}, but the package demo types the "
+                            f"sentence of one of {', '.join(sorted(examples.sentences)) or 'no examples'}. Name one "
+                            "of those in the link's example=, or add the example under [packages].")
+        sentence = examples.sentences[named]
+    return {"links": {key: links[key] for key in ("checkPlan", "planPackage", "wholeStory") if key in links},
+            "sentence": sentence}
+
+
 def _demo(answers: dict | None) -> dict:
     from strata.tools.check_plan import agency_id
 
     plan = config.load_slice().demo_plan
     package = plan.package
+    agency = agency_id(plan.implementing_agency)
     where = {"step_reference": package, "project_id": plan.project_id, "agency": plan.implementing_agency,
-             "plan_href": f"/projects/{plan.project_id}/procurement/{agency_id(plan.implementing_agency)}"}
+             "plan_date": plan.plan_date.isoformat(), "plan_href": f"/projects/{plan.project_id}/procurement/{agency}",
+             **_demo_links(agency), "question": _smoke_question(plan.smoke_question)}
     if answers is None:
         return {**where, "comparables": None, "estimate": None}
     for name in DEMO_ANSWERS:

@@ -9,7 +9,7 @@ Sources, checked October 22, 2026: the live CSS of worldbank.org (`/ext/styles/c
 ## 1. Principles
 
 1. **Evidence first.** Every number, chart, table and card ends with a source line.
-2. **Quiet and blue.** A grey frame, white panels for the work, navy only in the bar that carries the logo, one blue for action. Other colors mark a state or a data category.
+2. **Quiet and blue.** A grey frame, white panels for the work, navy only in the bar that carries the logo and on the deck's navy slides, which carry the white logo, one blue for action. Other colors mark a state or a data category.
 3. **Plain words.** Full sentences a 10th grader follows, in World Bank editorial style.
 4. **Accessible.** WCAG 2.2 AA. Nothing depends on color alone.
 5. **World Bank look, honest label.** Use the World Bank's public conventions and its logo, and never claim to be an official World Bank product.
@@ -37,7 +37,7 @@ Light theme only: the World Bank publishes no dark theme.
 | `focus` | `#b6490c` | keyboard-focus-on-light | Focus outline |
 | `focus-on-dark` | `#f5926c` | keyboard-focus-on-dark | Focus outline on the navy bar. Strata: `focus` is 3.01:1 on navy |
 | `highlight` | `#fff1b8` | Strata (the blueprint's highlighter) | Matched words in a quoted passage, under `ink` text |
-| `navy` | `#002244` | brand navy | The top navigation bar only |
+| `navy` | `#002244` | brand navy | The top navigation bar, and the deck's title, topic opener and closing slides |
 | `scrim` | `rgba(0,13,26,.57)` | Strata | Behind a full-screen sheet below 768 px |
 | `bright` | `#169af3` | blue-40 | Decoration on white only, never text |
 
@@ -109,10 +109,8 @@ Light theme only: the World Bank publishes no dark theme.
   --text-chart-label: 0.75rem; --text-chart-label--line-height: 1rem; --text-chart-label--font-weight: 600;
   --text-chart-label--letter-spacing: 0.02em;
   --text-button: 0.875rem;   --text-button--line-height: 1.25rem;   --text-button--font-weight: 600;
-  --text-title: 1.125rem;    --text-title--line-height: 1.5rem;     --text-title--font-weight: 600; /* deprecated: the deck's last uses */
   --font-weight-light: 300;  --font-weight-normal: 400;  --font-weight-medium: 500;  --font-weight-semibold: 600;  --font-weight-bold: 700;
   --radius-xs: 2px;  --radius-sm: 4px;  --radius-md: 8px;  --radius-lg: 16px;  --radius-pill: 32px;
-  --radius-box: 22px; /* deprecated: the deck's last use */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --motion-press: 120ms;  --motion-color: 120ms;  --motion-popover: 160ms;  --motion-pane: 160ms;
@@ -123,9 +121,9 @@ Light theme only: the World Bank publishes no dark theme.
 
 The `chart-*` tokens are section 6's chart text, greys and the first three categorical text variants (cat2 and cat3 added for the deck's award chart, ticket 47), kept here as tokens so a chart draws from them and the token test checks them.
 
-The deck at /present uses the same five values (Strata, the shell redesign): `navy`, `primary`, `ink-heading`, `page`, and `info-icon` (#0071bc), which the deck calls its accent. The app keeps navy to the bar that carries the logo; the deck may set whole opener slides in navy. Neither adds a color the other lacks.
+The deck at /present uses the same five values (Strata, the shell redesign): `navy`, `primary`, `ink-heading`, `page`, and `info-icon` (#0071bc), which the deck calls its accent. The app keeps navy to the bar that carries the logo; the deck sets its title slide, its topic openers and its closing slide in navy, each with the white logo in its header (section 4, Deck frame and type). Neither adds a color the other lacks.
 
-Brand navy `#002244` (`navy`) is used only for the top bar, which carries the logo and the one box, as The Loop keeps it to "main navigation and WB logo"; text on it is white (about 16:1). Brand blue `#009fda` is used sparingly and never for text.
+Brand navy `#002244` (`navy`) is used only for the top bar, which carries the logo and the one box, as The Loop keeps it to "main navigation and WB logo", and the deck's navy slides, which carry the white logo (section 4, Deck frame and type); text on it is white (about 16:1). Brand blue `#009fda` is used sparingly and never for text.
 
 Strata (the shell redesign, ticket 92): the sidebar sits on `page` with a 1px `line` right edge, so the only white surfaces are the work, the box and the drawer. An item hovers to `surface-2`. The current item is `tint` with a 3px `primary` bar on its left and its label in 600 `ink-heading`, the same current mark as the view rows, the box list's Enter option and a table row whose records are open.
 
@@ -161,7 +159,7 @@ Self-host with `@fontsource/open-sans` (300, 400, 400 italic, 600 and 700) and `
 
 Every size is a step on the World Bank's scale. Use sentence case, tabular numerals in tables and charts, and italics only for publication titles. A table may set its one payload column in `body`; every other cell stays `small` (the risk table's What helped, the 30 brief; brief 27's planned dates).
 
-Strata (the shell redesign): size says how much a line matters and weight says what kind of line it is. The finding is the only light text; the h1 and the wordmark are the only 700; names, labels and buttons are 600. A zone's name never outranks its finding. Tracking follows size: -0.01em on the finding, zero on text, +0.02em on the small uppercase chart label. `title` (18 / 700) is retired into `h2`, and `label` loses its uppercase and its tracking. An ID inside the finding, such as a P-code in an officer's briefing, takes Roboto Mono 400, so it does not outweigh the light sentence around it. Two old tokens stay until the deck branch moves its last uses: `--text-title` (with `h2`'s values) and `--radius-box`; the class lint lets only files under `web/src/deck/` use them, and the uppercase rule exempts the same folder until then. Both rules also exempt, by one frozen list, the files the shell tickets rewrite after the class sweep: now only the collapsed section's eyebrow (the box's band left the list with the top bar ticket, 93, and the evidence drawer's head with the page frame ticket, 94). The workspace ticket takes that file off the list and deletes it. Uppercase appears only with `chart-label`, inside charts.
+Strata (the shell redesign): size says how much a line matters and weight says what kind of line it is. The finding is the only light text; the h1 and the wordmark are the only 700; names, labels and buttons are 600. A zone's name never outranks its finding. Tracking follows size: -0.01em on the finding, zero on text, +0.02em on the small uppercase chart label. `title` (18 / 700) is retired into `h2`, and `label` loses its uppercase and its tracking. An ID inside the finding, such as a P-code in an officer's briefing, takes Roboto Mono 400, so it does not outweigh the light sentence around it. The deck's second draft moved the last uses of `--text-title` and `--radius-box`, so both tokens are gone, and the class lint refuses `text-title`, `rounded-box` and `uppercase` without `chart-label` in every folder, the deck's included. Both rules exempt, by one frozen list, the files the shell tickets rewrite after the class sweep: now only the collapsed section's eyebrow (the box's band left the list with the top bar ticket, 93, and the evidence drawer's head with the page frame ticket, 94). The workspace ticket takes that file off the list and deletes it. Uppercase appears only with `chart-label`, inside charts.
 
 Exported Word files use Word's built-in styles (Normal, Heading 1, Table Grid, footnote text) in Arial 11 pt, black, with Heading 1 at 14 pt bold, so they paste into any template. Open Sans may not be installed where the file is opened. PDFs keep Open Sans and Roboto Mono, embedded from the TTF files in `src/strata/drafts/fonts` (SIL OFL 1.1).
 
@@ -184,6 +182,7 @@ Text in French, Spanish and Portuguese uses the same scale (Strata, ticket 42). 
 | Document column | Reading columns that open the evidence drawer (the package workspace, drafts, a lesson's review page) span columns 1 to 7 from 1200 px, so the drawer opens into free space; all 12 columns below 1200 px. From a frame of 1200 px the column is measured against the frame (the window minus the sidebar), not the page area the drawer narrows, so it keeps its place and width when the drawer opens, and its sticky header keeps sticking. Strata (ticket 94): beside it the drawer fills from the column's end plus a gutter to the window's edge, 384 to 600px. A draft's notes are a table when the column is at least 560 px wide, and cards below that | Strata |
 | Slide canvas | The deck at /present (Strata, ticket 47): slides are laid out once on a 960 by 540 canvas on `page`, 48 px side margins, 12 columns of 50 px with 24 px gutters, and scaled as one unit by `min((W - 48) / 960, (H - 104) / 540)`. Presentation mode only at a scale of 1 or more, `(min-width: 63rem) and (min-height: 40.25rem)`; otherwise the deck is a reflowing reading view, and /present/page shows that view at any size | Strata |
 | Home's blocks | Strata (ticket 41): "Worth knowing" and "Waiting for you" sit side by side, columns 1 to 7 and 8 to 12, from a page area of 1,200 px (`@[75rem]/page`), and stack below it, "Worth knowing" first, so the reading and focus order never change. | Strata |
+| Deck frame and type, second draft | Strata (the deck's second draft, October 26, 2026): every slide has a header strip from y 0 to 48, the logo at x 48, a hairline, the five topics as a tracker from x 217 to 852 (each name 12 px, the current one `ink-heading` 600, with a 3 px segment per slide like a tab's underline: `primary` passed, `info-icon` current, `line` to come) and the slide counter, chrome, ending at x 912; and a footer with section 8's sentence on one line at 11 px. The title slide and the close show the logo alone, and the agenda shows no tracker. The bookends and the topic openers sit on brand `navy` with `surface` type, as the navy bar does, and each opener plays its hairline figure. Canvas type, in canvas pixels so the slide holds its layout at any default font size: statement 36, title 32 (`display`), a figure slide's title 24, an opener's topic 40, body 18, a tile's head 18 at 700, a note 14, the source line 12 and the footer 11; a measured result reads inside its sentence, at body or note size, with its dotted underline; body text stays well under titles and figures. A press brings in one point, tile or figure step, which fades in with a 6 px rise over 200 ms; earlier points recede to `ink-muted`; going back onto a slide shows it whole; and a polite live region reads each press's new words. In full screen the canvas scales by `min(W / 960, H / 540)` and the control bar rests out of sight until the pointer moves or a control has focus. A text slide whose content outgrows its space zooms out as a whole, down to 0.6. | Strata |
 
 ### Motion
 
@@ -476,6 +475,8 @@ On the deck (Strata, ticket 47), slides name Strata in the third person, because
 
 On the deck (Strata, ticket 47), every slide carries the footer sentence in presentation mode and in print; the reading view carries it once, at the end of the page. The deck's chrome (the slide numbers and the notes view's timer) is marked `data-chrome` and is the only text the number check leaves out; every other number on a slide sits in an element whose `data-source-key` names its result, setting or the assessment's rubric.
 
+In the deck's second draft (Strata, October 26, 2026) the sentence sits on one line along each slide's foot, 11 canvas px, `ink-muted` on light slides and `surface` at 75 percent on navy ones, and the slide counter moves to the header. The topic numbers on the agenda and the openers, and the press counters under the stage and in the notes window, are chrome too (`data-chrome`).
+
 In the proposal (Strata, ticket 46), the footer sentence follows the title and ends the document on GitHub; a printed copy puts it on every page beside "Page {n} of {m}". Annex 3 writes every dataset's line and the fixed lines from the same words the Sources and licenses page uses (`src/strata/proposal/copy.json`, written from the copy file).
 
 Word runs of the writer's text in another language carry the draft's proofing locale from the language registry (fr-FR, es-ES, pt-PT), and the words they quote carry their source's; headings and the origin paragraph stay in the Normal style's English (Strata, ticket 42).
@@ -486,6 +487,7 @@ Word runs of the writer's text in another language carry the draft's proofing lo
 - Use the official file from worldbank.org unaltered: no redrawing, recoloring, stretching, shadows or effects. worldbank.org's white mark, in its footer, is the World Bank Group logo; Strata uses that file because the header file's wordmark is dark navy, and its text alternative is "World Bank Group logo". Keep clear space of at least half the logo's height on every side, and never set it smaller than 24px tall. (Strata: the World Bank publishes no third-party logo rules, so these are conservative defaults.)
 - Proposal figures and How Strata works figures carry no logo (Strata, ticket 46). Only the deck's export of a figure adds the logo corner.
 - On the deck's light slides (Strata, ticket 47) the logo is the World Bank's artwork for light backgrounds, the header logo of data.worldbank.org (`web/src/assets/world-bank-logo-light.svg`, viewBox 172 by 34, shown 121 by 24), unaltered, as an `<img>` on the title slide and in each figure frame's credit row. Its lettering reads WORLD BANK GROUP, so its text alternative is "World Bank Group logo". The white file stays in the navy bar.
+- In the deck's second draft (Strata, October 26, 2026) the logo sits in every slide's header, once, 24 px tall with clear space of half its height: the light file on light slides and the white file (`web/src/assets/world-bank-logo.svg`, shown 120 by 24) on the navy bookends and topic openers, as the navy bar carries it. Figures no longer carry it in a credit row, so every slide shows one logo.
 - The product name stays "Strata". The World Bank's name appears as attribution and as context ("built for the World Bank Group's procurement intelligence assessment"), never with "official", "partner" or "powered by".
 - Wordmark: "Strata" in Open Sans 700, white on the navy bar and `ink-heading` on light surfaces.
 
@@ -534,12 +536,14 @@ For figures made with the `diagram-design` skill. Saved as `~/.diagram-design/pr
 | `title` | Open Sans | 1.75rem | 700 |
 | `node-name` | Open Sans | 12px | 600 |
 | `sublabel` | Roboto Mono | 9px | 400 |
-| `eyebrow` | Roboto Mono | 7 to 8px | 500, tracked 0.18em, uppercase |
-| `arrow-label` | Roboto Mono | 8px | 400, tracked 0.06em |
+| `eyebrow` | Open Sans | 10px | 600, sentence case, no tracking |
+| `arrow-label` | Open Sans | 9px | 400, sentence case, no tracking; a pass or fail tag 10px 600 |
 | `callout` | Open Sans italic | 14px | 400 |
 
-On `paper`: accent 4.78, muted 6.23, soft 4.92, link 5.40. Keep accent text off `paper-2` (4.36). Deliberate breaks from the skill's defaults: cool grey paper, and no serif, because the World Bank sets everything in sans.
+On `paper`: accent 4.78, muted 6.23, soft 4.92, link 5.40. Keep accent text off `paper-2` (4.36). Deliberate breaks from the skill's defaults: cool grey paper, no serif, because the World Bank sets everything in sans, and group and arrow labels in sentence case in Open Sans, never tracked capitals in mono, because section 3 keeps capitals to a chart's lane and legend labels (Strata, October 27, 2026).
 
-For documents (Strata, ticket 46): figure titles, source lines and notes are text in the document or slide, never drawn into the image, so the copy lint and the number check read them. Numbers drawn in a data figure come from the measures snapshot at build time. Figures are drawn on `paper`, never transparent, 720 px wide, with no text under 12 px, so labels stay at 11 px or more when GitHub shows them at 880 px and a printed page at 640 px. That raises `sublabel` (9 px) and `eyebrow` (7 to 8 px) to 12 px in document figures. The proposal's figures are drawn by `src/strata/proposal/figures.py` from these roles and section 6's chart tokens.
+For documents (Strata, ticket 46): figure titles, source lines and notes are text in the document or slide, never drawn into the image, so the copy lint and the number check read them. Numbers drawn in a data figure come from the measures snapshot at build time. Figures are drawn on `paper`, never transparent, 720 px wide, with no text under 12 px, so labels stay at 11 px or more when GitHub shows them at 880 px and a printed page at 640 px. That raises `sublabel` (9 px) and `eyebrow` (10 px) to 12 px in document figures. The proposal's figures are drawn by `src/strata/proposal/figures.py` from these roles and section 6's chart tokens.
 
 For the deck and How Strata works (Strata, ticket 47): the seven structural figures are drawn with this profile as HTML in `web/figures/` and exported with `export_svg.py --system-fonts` into `web/src/figures/`, each `viewBox` its slot (wide 864 by 268, narrow 568 by 268, half 420 by 268), drawn 1:1 with the standard ramp, a 24 px outer margin, no legend strip, no digits, plain words for labels except STEP, and no logo inside the SVG. Charts of measured data are never drawn this way. The hairline figure (`hairline-create`) runs on the skill's kernel, vendored unchanged, with this palette set through the kernel's custom properties, light only: `--hairline-plate #f5f7f9`, `--hairline-hi #0071bc`, `--hairline-edge #586e84`, `--hairline-mid #bdccdb`, `--hairline-lo #dae3eb`.
+
+For the deck's second draft (Strata, October 26, 2026): eleven structural figures, in two slots, `stage` 864 by 352 and `half` 420 by 352, still drawn 1:1 with the standard ramp (a group heading may take 14 px). Each marks the parts a press brings in with the skill's step markup in its static mode, `data-motion-root data-motion-mode="none" data-step-count="N"` on the `<svg>` and `data-motion-item data-step="k"` on each part, inside the skill's budget of eight steps, twelve parts and two a step; the source stays whole, the deck hides the parts a press has not reached, and How Strata works shows the figure whole. A figure's steps match its text version in `web/src/deck/copy.ts`, line for line. The hairline openers (`plan-rows`, `passages`, `filter`, `sediment`) and the core sample play on navy with `--hairline-plate #002244`, `--hairline-hi #169af3`, `--hairline-edge #dae3eb`, `--hairline-mid #8a9db1` and `--hairline-lo #2c4560`; How Strata works keeps the light palette.

@@ -9,7 +9,10 @@ import { formatNumber } from "../lib/format";
 import { deckCopy } from "./copy";
 import type { DeckResult } from "./data";
 
-const words = deckCopy.slides.s7;
+const words = deckCopy.slides.gap;
+// The chart's width in its own units: on the slide it scales to its card from this; in the reading view it is drawn at
+// this size, and its frame scrolls where the column is narrower.
+export const CHART_WIDTH = { present: 400, read: 500 } as const;
 // DESIGN.md section 6's categorical text variants, as the theme's chart tokens, in the order the series lists them.
 const FILLS = ["fill-chart-cat2-text", "fill-chart-cat3-text", "fill-chart-cat1-text"];
 const SWATCHES = ["bg-chart-cat2-text", "bg-chart-cat3-text", "bg-chart-cat1-text"];
@@ -28,14 +31,22 @@ function ticks(top: number): number[] {
   return [0, top];
 }
 
+// A source's name in the key, with the fiscal years the chart draws for it, not the years its name claims: a dataset
+// named "Contract awards, FY2001–16" that the chart draws from FY12 reads "Contract awards, FY12 to FY16".
+function keyName(rows: Row[], group: string): string {
+  const own = rows.filter((row) => row.dataset === group);
+  return words.keyName(group.split(",")[0], own[0].fiscal_year_label, own[own.length - 1].fiscal_year_label);
+}
+
 export function AwardKey({ result }: { result: DeckResult }) {
-  const groups = [...new Set(rowsOf(result).map((row) => row.dataset))];
+  const rows = rowsOf(result);
+  const groups = [...new Set(rows.map((row) => row.dataset))];
   return (
     <ul className="flex flex-wrap gap-x-4 gap-y-1 text-caption text-chart-text" data-chart-key>
       {groups.map((group, index) => (
         <li key={group} className={`flex items-center gap-2 font-semibold ${INKS[index % INKS.length]}`}>
           <span aria-hidden="true" className={`inline-block size-3 ${SWATCHES[index % SWATCHES.length]}`} />
-          {group}
+          {keyName(rows, group)}
         </li>
       ))}
     </ul>
@@ -49,13 +60,17 @@ export function AwardChart({
   height,
   labelledById,
   describedById,
+  fluid = false,
 }: {
   result: DeckResult;
   gap: { start: number; end: number } | null;
+  // The drawing's size in its own units. A fluid chart scales to its card's width, keeping its shape, so it never
+  // runs out of its card; otherwise it is drawn at this size and its frame scrolls.
   width: number;
   height: number;
   labelledById: string;
   describedById: string;
+  fluid?: boolean;
 }) {
   const rows = rowsOf(result);
   const groups = [...new Set(rows.map((row) => row.dataset))];
@@ -71,7 +86,16 @@ export function AwardChart({
   const slot = (right - left) / (last - first + 1);
   const x = (year: number) => left + (year - first) * slot;
   return (
-    <svg role="img" aria-labelledby={labelledById} aria-describedby={describedById} width={width} height={height} className="block tabular-nums" data-award-chart>
+    <svg
+      role="img"
+      aria-labelledby={labelledById}
+      aria-describedby={describedById}
+      viewBox={`0 0 ${width} ${height}`}
+      width={fluid ? undefined : width}
+      height={fluid ? undefined : height}
+      className={fluid ? "block h-auto w-full tabular-nums" : "block tabular-nums"}
+      data-award-chart
+    >
       {marks.map((tick) => (
         <g key={tick}>
           {tick > 0 && <line x1={left} x2={right} y1={bottom - tick * scale} y2={bottom - tick * scale} className="stroke-chart-grey200" strokeDasharray="4 4" />}
@@ -83,7 +107,7 @@ export function AwardChart({
       {gap && (
         <g data-gap>
           <line x1={x(gap.start)} x2={x(gap.end + 1)} y1={top - 4} y2={top - 4} className="stroke-chart-grey300" strokeWidth={3} />
-          <text x={(x(gap.start) + x(gap.end + 1)) / 2} y={top - 12} textAnchor="middle" fontSize={13} fontWeight={600} className="fill-chart-text-subtle uppercase">
+          <text x={(x(gap.start) + x(gap.end + 1)) / 2} y={top - 12} textAnchor="middle" className="fill-chart-text-subtle text-chart-label uppercase">
             {words.gapLabel}
           </text>
         </g>
@@ -117,7 +141,7 @@ export function AwardTable({ result, caption }: { result: DeckResult; caption: s
       <caption className="sr-only">{caption}</caption>
       <thead className="bg-surface-2 text-left">
         <tr>
-          <th scope="col" className="px-3 py-2 font-semibold">{t.year}</th>
+          <th scope="col" className="w-px whitespace-nowrap px-3 py-2 font-semibold">{t.year}</th>
           <th scope="col" className="px-3 py-2 text-right font-semibold">{t.rows}</th>
           <th scope="col" className="px-3 py-2 font-semibold">{t.from}</th>
         </tr>
@@ -127,7 +151,7 @@ export function AwardTable({ result, caption }: { result: DeckResult; caption: s
           <tr key={row.fiscal_year} className="border-t border-line">
             <th scope="row" className="px-3 py-1 text-left font-normal">{row.fiscal_year_label}</th>
             <td className="px-3 py-1 text-right">{formatNumber(row.award_rows, { compact: false })}</td>
-            <td className="px-3 py-1">{row.dataset}</td>
+            <td className="whitespace-nowrap px-3 py-1">{row.dataset}</td>
           </tr>
         ))}
       </tbody>

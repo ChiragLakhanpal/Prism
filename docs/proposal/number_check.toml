@@ -58,3 +58,7 @@ reason = "The name of a retrieval measure, as the replay harness stores it and t
 [[allow]]
 phrase = "per 100 sources opened"
 reason = "The name of the retrieval loop's leading indicator, as ticket 32 named the measure."
+
+[[allow]]
+phrase = "about US$15 million"
+reason = "The words a person types to plan a package from a sentence, the examples registry's sentence (config/examples.toml, packages.rural_roads_kenya), which the deck's package demo shows in its box: an input, not a number Strata measured. A new sentence there means a new line here, and the number check says so."
