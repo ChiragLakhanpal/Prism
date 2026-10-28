@@ -260,6 +260,19 @@ test("for World Bank staff, Following and All projects are sidebar items under P
   await expect(page.getByRole("navigation", { name: "Projects pages" })).toHaveCount(0);
 });
 
+test("in the officer's and the public previews, Projects opens All projects and holds it alone, with no Following", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "/api/projects": { body: await recorded("projects.json") }, "/api/agency/projects": { body: await recorded("agency-projects-two.json") } });
+  for (const view of ["piu", "public"]) {
+    await page.goto(`/projects?view=${view}`);
+    await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
+    const nav = page.getByRole("navigation", { name: "Main" });
+    await expect(nav.locator("[data-nav-item=projects]"), view).toHaveAttribute("href", `/projects?view=${view}`);
+    await expect(nav.locator("[data-sub-items=projects] a"), view).toHaveText(["All projects"]);
+    await expect(nav.locator("[data-sub-item=following]"), view).toHaveCount(0);
+  }
+});
+
 test("when reading whether you follow a project fails, the control says so and offers Try again, not a state", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, {
