@@ -2,10 +2,12 @@
 
 On October 26, 2026 the nightly job's contacts_left check found a labelled phone number in the text of 1,256 of the
 workspace's 158,587 notices, because ingestion's removal used stricter patterns than the check. Now the two share one
-definition: the removal's last pass is the check's own patterns (contacts.LEFT_EMAIL and LEFT_PHONE), with the label
-and the words around it kept. These tests run the check as the nightly job runs it (quality.check_table, on DuckDB,
-with the patterns as bound parameters) over what the removal leaves. Silver runs the removal again on each notices
-page it reads, and the notices transform's VERSION is 2, so the pages bronze kept before the fix are read again.
+definition: the removal's last pass is the check's own patterns (contacts.LEFTOVERS, one for each rule it takes out:
+an email address, a labelled phone number, a number after a short label and a name after "Attention" and a title;
+ticket 121), with the label and the words around it kept. These tests run the check as the nightly job runs it
+(quality.check_table, on DuckDB, with the patterns as bound parameters) over what the removal leaves. Silver runs the
+removal again on each notices page it reads, and the notices transform's VERSION is 2, so the pages bronze kept
+before the fix are read again; since ticket 121 silver also reads again each page whose notices the check flags.
 
 SHAPES are the twenty the second session recorded (docs/workspace-catchup.md, "Ticket 76, before step 1"), with every
 digit written as 9 and thirty characters kept on each side of the label. Where those thirty characters cut through a
@@ -17,6 +19,7 @@ import datetime as dt
 import importlib.util
 import json
 import random
+import re
 import shutil
 from pathlib import Path
 
@@ -24,7 +27,7 @@ import pytest
 from nightly_helpers import clock
 
 from strata.config import load_quality_checks, load_sources
-from strata.lakehouse import bronze, contacts, nightly, quality, silver
+from strata.lakehouse import bronze, clean, contacts, nightly, quality, silver
 from strata.lakehouse.catalog import table_definitions
 from strata.lakehouse.engine import DuckDBEngine
 from strata.lakehouse.silver import notices as notices_module
@@ -145,17 +148,89 @@ def test_silver_reads_a_page_bronze_kept_before_the_fix_without_the_numbers_the_
     assert contacts_left(notices, [notice["notice_text"], notice["bid_description"]]) == 0
 
 
+def recorded_notice_texts() -> list[str]:
+    """The free text of every notice the fixture records, with its contact details as published: the HTML bronze
+    strips, and the plain text silver keeps of it, which the check reads."""
+    texts = []
+    for path in sorted((ROOT / "data" / "fixture" / "recorded" / "api" / "notices").glob("*.json")):
+        for notice in json.loads(path.read_text())["response"]["procnotices"]:
+            for field in contacts.FREE_TEXT:
+                if notice.get(field):
+                    texts += [notice[field], clean.plain_text(notice[field])]
+    return texts
+
+
+def found_by(engine, leftover, text: str) -> bool:
+    """Whether the leftover's pattern finds something in the text, bound and read as the nightly check reads it."""
+    return engine.run(f"SELECT regexp_like(:text, :{leftover.parameter}) AS found",  # sql-lint: names only
+                      {"text": text, leftover.parameter: leftover.pattern}).rows[0][0]
+
+
+def test_every_rule_of_the_last_pass_has_its_leftover_pattern_which_finds_on_the_fixture_what_its_rule_removes():
+    """Ticket 121: each rule of the removal's last pass is one entry of contacts.LEFTOVERS, which names the removal's
+    own rule it stands for. Read by DuckDB as the nightly check binds it, each pattern finds every piece of the
+    fixture's recorded notices that its rule matches and the removal takes out, and the last pass leaves nothing in
+    those pieces that any pattern finds. The test counts and never prints a piece, since each is a contact detail."""
+    texts = recorded_notice_texts()
+
+    with DuckDBEngine.open() as engine:
+        for leftover in contacts.LEFTOVERS:
+            removed = {match[0] for text in texts for match in leftover.rule.finditer(text)
+                       if contacts.strip_again(match[0]) != match[0]}
+            missed = sum(not found_by(engine, leftover, piece) for piece in removed)
+            kept = sum(found_by(engine, other, contacts.strip_left(piece))
+                       for piece in removed for other in contacts.LEFTOVERS)
+            assert (leftover.key, len(removed) > 0, missed, kept) == (leftover.key, True, 0, 0)
+
+    assert {leftover.kind for leftover in contacts.LEFTOVERS} <= set(contacts.KINDS)
+    assert len({leftover.parameter for leftover in contacts.LEFTOVERS}) == len(contacts.LEFTOVERS)
+    assert quality.contacts_left_params() == {leftover.parameter: leftover.pattern for leftover in contacts.LEFTOVERS}
+
+
+# The patterns in contacts that remove nothing themselves: what _phone tells from a phone number, and what the removal
+# keeps around a number it takes out.
+HELPERS = {contacts.DATE_LIKE, contacts.AMOUNT_LIKE, contacts.FISCAL_YEARS, contacts.POSTAL_CODE,
+           contacts.TRAILING, contacts.SIGNS_BEFORE}
+
+
+def test_every_removal_rule_is_a_leftover_the_check_looks_for_or_is_named_with_the_reason_it_is_not():
+    """Ticket 121: a rule the removal gains is flagged by the nightly check, and its pages read again, from the first
+    night after it ships, because it is one of contacts.LEFTOVERS; or it is named in contacts.NOT_CHECKED with the
+    reason the check cannot look for it. Every pattern the module defines is one of those two, or a helper that
+    removes nothing, so a new rule fails this test until it is one or the other."""
+    defined = {value for value in vars(contacts).values() if isinstance(value, re.Pattern)}
+    checked = {leftover.rule for leftover in contacts.LEFTOVERS}
+    not_checked = {rule for rule, _ in contacts.NOT_CHECKED}
+
+    assert defined - HELPERS == checked | not_checked
+    assert not checked & not_checked
+    assert all(reason.strip() for _, reason in contacts.NOT_CHECKED)
+
+
+def test_a_second_number_an_older_removal_left_after_or_is_flagged_and_taken_out(notices):
+    """Ticket 63 taught the removal to take out a second number written after "or" (Tel: 0722... or 0733...). A page
+    stripped before then kept the second number after the first one's [contact removed]. The check flags it, so silver
+    reads the page again, and both removals take it out."""
+    left = f"The works are in Kisumu. Tel: {R} or 99 999 9999. Email: {R}"
+
+    assert contacts_left(notices, [left]) == 1
+    assert strip_notices([left]) == silver_texts([left]) == [f"The works are in Kisumu. Tel: {R}. Email: {R}"]
+    assert contacts_left(notices, strip_notices([left]) + silver_texts([left])) == 0
+
+
 def made_up_texts(count: int, seed: int = 76) -> list[str]:
     """Notice text put together at random from labels, the characters between a label and its number, numbers in
     many shapes, removed details and the words around them. Every digit and address is made up."""
     pick = random.Random(seed)
     labels = ["Tel", "TEL", "Telephone", "Telefax", "Phone", "Cellphone", "Mobile", "Mob", "Cell", "Fax", "Facsimile",
-              "Ph", "Contact", "E-mail", "Ref"]
+              "Ph", "Contact", "E-mail", "Ref", "M", "WhatsApp"]
     between = ["", " ", ": ", ":: ", " No. ", " #: ", ". (", ": (-", ": + ", " number: ", "/Fax: ", " (office): ",
                "</b>&nbsp;", "&#160;", "<br/>", " Nr ", "\n", " and "]
     around = [R, "Nairobi", "2019-2020", "P.O. Box 05586-00100", "USD 1,234,567.00", "jdoe@ example.org",
               "JDOE @ EXAMPLE.COM", "l, ", ", ", " / ", " - ", "; ", "l - ", " or ", "Dated 12/03/2019", "Ext. 42301",
-              "Société", "Tél"]
+              "Société", "Tél", "jdoe@g mail.com", "jdoe@example,com", "ATTENTION: Mr. John Doe",
+              "Attention:Dr. Jane A. Roe", "attention Mrs. O’Neil-Roe", "<b>ATTENTION:</b> Ms. Jane",
+              "Attention is drawn", "Attention: Chief Executive Officer", "Attention: Mr.", "\nMr. John Doe"]
 
     def number() -> str:
         groups = ["".join(pick.choice("0123456789") for _ in range(pick.randint(1, 8)))
@@ -253,6 +328,64 @@ def test_the_next_bronze_to_gold_reads_the_pages_read_under_version_1_again_and_
                       {"run": "night-76", "kind": "contacts_left"}).rows == ((0,),)
     assert engine.run("SELECT notice_type, project_id FROM strata.gold.notice WHERE notice_id = :id",
                       {"id": "OP-made-up-76"}).rows == (("Invitation for Bids", "P156634"),)
+    assert silver.pending(engine, source) == []
+
+
+@pytest.fixture
+def a_name_left_after_attention(fixture_db, tmp_path):
+    """A writable copy of the fixture database holding what the workspace held on October 28, 2026 (ticket 121): a
+    notices page bronze kept on October 26, before the removal took out a name after "Attention" and a title (ticket
+    63), and the silver row read from it with the name left. Ticket 75's record says silver read the page under the
+    notices transform's own version, so a new version would not send it back: only the check's flag can."""
+    target = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, target)
+    fetched = dt.datetime(2026, 10, 26, 21, 25, tzinfo=dt.UTC)
+    kept = "ATTENTION: Mr. John Doe, Procurement Officer"
+    page = {"procnotices": [{"id": "OP-made-up-121", "notice_type": "Invitation for Bids", "noticedate": "2009-06-01",
+                             "project_id": "P156634", "contact_name": R, "contact_email": R,
+                             "notice_text": f"<p>The works are in Kisumu.</p><p><strong>{kept}</strong></p>"
+                                            f"<p>Tel: {R} Email: {R}</p>"}]}
+    with DuckDBEngine.open(target) as engine:
+        engine.insert_rows("strata.bronze.api_pages", bronze.COLUMNS, [(
+            "notices", "KE", "made-up request", "made-up-page-121", json.dumps(page), 1, 1, dt.date(2009, 6, 1), 4,
+            fetched, fetched.date())])
+        engine.insert_rows(NOTICES.table, ("notice_id", "notice_type", "notice_date", "project_id", "notice_text",
+                                           "contact_details_removed", "page_hash", "fetched_at", "public_from"),
+                           [("OP-made-up-121", "Invitation for Bids", dt.date(2009, 6, 1), "P156634",
+                             f"The works are in Kisumu.\n{kept}\nTel: {R} Email: {R}", True, "made-up-page-121",
+                             fetched, dt.date(2009, 6, 1))])
+        engine.insert_rows(silver.SILVER_PAGES, silver.SILVER_PAGES_COLUMNS, [
+            ("notices", "made-up-page-121", silver.tables(notices_module), silver.version(notices_module), fetched,
+             fetched.date())])
+        yield engine
+
+
+def test_a_notice_whose_only_leftover_is_a_name_after_attention_is_flagged_and_its_page_is_read_again(
+        a_name_left_after_attention):
+    """Ticket 121: the check counts what every rule of the removal's last pass takes out, a name after "Attention"
+    and a title among them, and silver reads again the pages whose notices it counts. The page was read once on
+    October 26; the next bronze_to_gold reads it a second time, the name comes out with the label kept, and the
+    check of that night finds nothing."""
+    engine = a_name_left_after_attention
+    source = load_sources()["notices"]
+    night = dt.datetime(2026, 10, 29, 7, 0, tzinfo=dt.UTC)
+    reads = ("SELECT count(*) FROM strata.ops.silver_pages WHERE source = :source AND page_hash = :page")
+    page = {"source": "notices", "page": "made-up-page-121"}
+
+    [flagged] = [r.found for r in quality.check_table(engine, NOTICES) if r.check_kind == "contacts_left"]
+    assert flagged == 1
+    assert silver.pending(engine, source) == ["made-up-page-121"]
+    assert engine.run(reads, page).rows == ((1,),)
+
+    nightly.main(["--task", "bronze_to_gold", "--run-id", "night-121", "--src", "src"], engine,
+                 fetch=lambda source, engine: (), clock=clock(night, step=dt.timedelta(seconds=1)))
+
+    assert engine.run(reads, page).rows == ((2,),)
+    assert engine.run("SELECT notice_text FROM strata.silver.notices WHERE notice_id = :id",
+                      {"id": "OP-made-up-121"}).rows == (
+        (f"The works are in Kisumu.\nATTENTION: {R}, Procurement Officer\nTel: {R} Email: {R}",),)
+    assert engine.run("SELECT found FROM strata.ops.quality_checks WHERE run_id = :run AND check_kind = :kind",
+                      {"run": "night-121", "kind": "contacts_left"}).rows == ((0,),)
     assert silver.pending(engine, source) == []
 
 

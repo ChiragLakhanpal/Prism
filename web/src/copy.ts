@@ -7805,8 +7805,8 @@ export const copy = {
       removeWhy:
         "I remove the contact person's name, email address and phone number from every procurement notice as I take " +
         "it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and " +
-        "never answers questions about them. The counter above counts any email addresses and phone numbers that " +
-        "got through.",
+        "never answers questions about them. The counter above counts any email addresses, phone numbers and " +
+        "names after \"Attention\" that got through.",
       // Tile 21 when the workspace doesn't let Strata read its query history (the 45 brief, section 6.4). {date} is
       // the day the dashboard was deployed.
       noHistory:

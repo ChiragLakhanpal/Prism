@@ -4244,7 +4244,7 @@
             "name": "remove_why",
             "multilineTextboxSpec": {
               "lines": [
-                "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses and phone numbers that got through."
+                "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses, phone numbers and names after \"Attention\" that got through."
               ]
             }
           },
