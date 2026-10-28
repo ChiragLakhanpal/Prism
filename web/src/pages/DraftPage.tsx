@@ -15,7 +15,7 @@ import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { ExampleNote } from "../components/ExampleNote";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
-import { BAR_BUTTONS, BAR_MAIN, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
+import { BAR_BUTTONS, BAR_MAIN, BAR_ROOM, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
 import { DraftNotes, NoteSentences, WrittenIn, type NoteRow } from "../components/DraftNotes";
 import { ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { citedInParts, MissionBriefParts } from "../components/MissionBriefParts";
@@ -555,7 +555,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   } else if (d.state === "discarded") {
     end = (
       <DiscardedNotice
-        className="mt-8"
+        className={BAR_ROOM}
         sentenceRef={discarded}
         sentence={kind.discarded}
         restoring={busy === "restore"}
@@ -567,7 +567,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   } else {
     end = (
       <DraftBar
-        className="mt-8"
+        className={BAR_ROOM}
         draft={d}
         words={dates ? { ...kind, exportLabel: copy.draft.kinds.step_rows.dates.exportButton, openedLine: copy.draft.kinds.step_rows.dates.barOpened } : kind}
         notice={conflict ? words.conflict : null}
@@ -864,7 +864,7 @@ function DraftSkeleton() {
         </div>
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{copy.checkPlan.notVisible}</p>
         <SkeletonLine className="mt-2 text-caption" width="w-64 max-w-full" />
-        <section aria-label={words.bar.label} className={cx("z-10 mt-8 border-t border-line bg-surface px-4 py-3 md:px-6", STICKY)}>
+        <section aria-label={words.bar.label} className={cx("z-10 border-t border-line bg-surface px-4 py-3 md:px-6", BAR_ROOM, STICKY)}>
           <p className="max-w-[80ch] text-small text-ink">
             {/* The kind's lead sentence before the consequence, and the opened count and hold line after it,
                 each in two parts, so they wrap over as many lines as the words will. */}

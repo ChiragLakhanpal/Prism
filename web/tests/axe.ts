@@ -14,11 +14,26 @@ import type { Page } from "@playwright/test";
 
 export const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
+// Ticket 113: the box floats at the window's foot over whatever the page has scrolled under it, so which of the page's
+// targets it partly covers, or sits within 24 px of, depends only on where the page is scrolled, and axe counts each
+// such target as too small (WCAG 2.5.8). For the scan, the ask bar rests in its own place at the page column's end,
+// above the footer, which it keeps as it sticks, so nothing else moves: the page's targets are checked as the page lays
+// them out, and the box, its list and its chip are checked as drawn, at that place. Where a focused element lands
+// against the box as the page scrolls is tested on its own, by Tab (tests/sticky.ts). The override is there for
+// target-size alone: no other rule changed with where the box floats. A new part that floats over the page needs its own
+// Tab test, as tests/sticky.ts gives the box.
+const BOX_COVERS_NOTHING = "[data-box-band] { position: relative !important; bottom: auto !important; }";
+
 export async function scan(page: Page, within?: string) {
   const frames = page.frames().length - 1;
   if (frames > 0) {
     throw new Error(`The page holds ${frames} frame(s), and these scans cannot check a frame from another origin.`);
   }
   const builder = new AxeBuilder({ page }).withTags(WCAG_22_AA).setLegacyMode();
-  return (within ? builder.include(within) : builder).analyze();
+  const rest = await page.addStyleTag({ content: BOX_COVERS_NOTHING });
+  try {
+    return await (within ? builder.include(within) : builder).analyze();
+  } finally {
+    await rest.evaluate((style) => (style as Element).remove());
+  }
 }

@@ -56,6 +56,7 @@ DELAY, DURATION = "delay", "duration"
 CHOICES = ("middle", "cautious")
 FEW, EARLIER, NOT_REACHED, NOT_IN_PLAN = "few_comparables", "needs_earlier_step", "not_reached", "not_in_plan"
 CANCELED = "Canceled"
+ENDED = (CANCELED, "Terminated")  # STEP's Process Status for an activity that stopped before its end
 NO_PLAN_DATES = "no_plan_dates"
 # A comparable package planned in another STEP table, whose steps differ, so it dates none of these (ticket 63).
 OTHER_FAMILY = "other_family"

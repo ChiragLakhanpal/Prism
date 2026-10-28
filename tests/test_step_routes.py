@@ -74,7 +74,7 @@ def hand_made_app(tmp_path):
 TARGET = f"/api/packages/{KNOWN['target']}"
 
 
-@pytest.mark.parametrize("story", ["fixture", "hand-made", "unrecorded"])
+@pytest.mark.parametrize("story", ["fixture", "hand-made", "unrecorded", "tracker"])
 def test_the_screens_recorded_step_answers_are_what_the_routes_answer(story, fixture_db, tmp_path):
     """tests/record_steps_api.py writes the answers section 2's screen tests serve, from the fixture and the
     hand-made set; the routes must still answer with them word for word. Each story runs on its own, so the

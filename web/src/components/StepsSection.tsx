@@ -1007,7 +1007,19 @@ function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
 
 // ── The section on a page: it reads, chooses, dates and opens ───────────
 
-export function StepsSection({ packageKey, kind, rerunKey = "" }: { packageKey: string; kind: "step" | "planned"; rerunKey?: string }) {
+// onState hears each state the section's answer passes through, so the tracker at the top of the page (ticket 115)
+// draws from the same answer and the page asks for the steps once.
+export function StepsSection({
+  packageKey,
+  kind,
+  rerunKey = "",
+  onState,
+}: {
+  packageKey: string;
+  kind: "step" | "planned";
+  rerunKey?: string;
+  onState?: (state: StepsState) => void;
+}) {
   const here = useStore(address);
   const from = useStore(origin);
   const params = new URLSearchParams(here.search);
@@ -1056,6 +1068,10 @@ export function StepsSection({ packageKey, kind, rerunKey = "" }: { packageKey: 
   useEffect(() => {
     if (state.status === "ready") rememberStepLists(packageKey, state.result);
   }, [state, packageKey]);
+
+  useEffect(() => {
+    onState?.(state);
+  }, [state, onState]);
 
   const toggle = () => {
     if (!open && state.status === "loading") setAnnounce(words.loading);

@@ -619,6 +619,20 @@ function AskedLine({ run, current }: { run: Run; current: string }) {
   );
 }
 
+// A new question scrolls the page at once so its heading sits under the bar (ticket 113): the box floats at the window's
+// foot, and the answer opens at the top of the page column. The page goes to its top when the heading shows there, under
+// the bar and any page alerts, and otherwise the panel's top goes to the bar's foot. Focus stays in the box.
+export function scrollToAnswer() {
+  const section = document.querySelector<HTMLElement>("[data-answer-panel]");
+  const heading = section?.querySelector<HTMLElement>("h2");
+  if (!section || !heading) return;
+  const end = heading.getBoundingClientRect().bottom + window.scrollY;
+  // The box's top: the page shows nothing under the box at the window's foot.
+  const limit = document.querySelector("[data-box-band] form")?.getBoundingClientRect().top ?? window.innerHeight;
+  if (end <= limit) window.scrollTo({ top: 0, behavior: "instant" });
+  else section.scrollIntoView({ block: "start", behavior: "instant" });
+}
+
 export function AnswerPanel({
   run,
   opened,
@@ -655,7 +669,8 @@ export function AnswerPanel({
     closeAnswer(run);
     const box = document.querySelector<HTMLInputElement>("[data-box-band] [role=combobox]");
     box?.setAttribute(RETURNING, "");
-    box?.focus();
+    // The box always shows, at the window's foot (ticket 113), so giving it focus scrolls nothing.
+    box?.focus({ preventScroll: true });
   };
 
   return (

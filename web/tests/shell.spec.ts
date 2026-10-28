@@ -4,6 +4,7 @@
 import { createHash } from "node:crypto";
 import type { Page } from "@playwright/test";
 import { hubApi } from "./hub-api";
+import { open as openAnswerPage } from "./answer-page";
 import { expect, mockApi, mockShell, openSidebar, recorded, test } from "./mocked";
 
 // web/src/assets/world-bank-logo.md: the official file's hash when it was downloaded.
@@ -48,14 +49,28 @@ test("the navy bar carries the official World Bank Group logo, unaltered, 24 px 
   expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(24);
 });
 
-test("one banner holds the search landmark around the box and the view switch, and no section link or stamp", async ({ page }) => {
+// Ticket 113: the box left the bar. It is its own search landmark, after the page's content and before the footer, so
+// it comes after the page in the Tab order.
+test("one banner holds the view switch and no box, section link or stamp; the box is its own search landmark after the page", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
 
   const banner = page.getByRole("banner");
   await expect(banner).toHaveCount(1);
-  await expect(banner.getByRole("search")).toHaveCount(1);
+  await expect(banner.getByRole("search")).toHaveCount(0);
+  await expect(banner.getByRole("combobox")).toHaveCount(0);
+  await expect(page.getByRole("search")).toHaveCount(1);
+  const order = await page.evaluate(() => {
+    const search = document.querySelector("[role=search]")!;
+    const after = (a: Element, b: Element) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return {
+      inMain: Boolean(search.closest("main")),
+      afterMain: after(document.querySelector("main")!, search),
+      beforeFooter: after(search, document.querySelector("footer")!),
+    };
+  });
+  expect(order).toEqual({ inMain: false, afterMain: true, beforeFooter: true });
   await expect(banner.getByRole("button", { name: "View: World Bank staff" })).toBeVisible();
   // Ticket 93: the stamp moved to the sidebar's foot.
   await expect(banner.locator("[data-stamp]")).toHaveCount(0);
@@ -64,53 +79,64 @@ test("one banner holds the search landmark around the box and the view switch, a
   await expect(banner.getByRole("link", { name: /^(Home|Packages|Projects|Lessons|Drafts|Data)$/ })).toHaveCount(0);
 });
 
-// Ticket 93 (DESIGN.md section 5, Top bar): from 1024 px one 56 px navy row that sticks: the logo, the wordmark, the
-// box from the page's content edge (224 + 40 px) beside the open sidebar, or from 244 px beside the rail, at most 640 px
-// wide, and the view switch ending 24 px from the right edge. No white band sits under it.
-test("from 1024 px the bar is one 56 px navy row that sticks, with the box from 264 px beside the open sidebar and 244 px beside the rail", async ({ page }) => {
+// Ticket 113 (DESIGN.md section 5, Top bar and Ask bar): the bar is one 56 px navy row at every width, the Menu button
+// below 1024 px, the logo, the wordmark and the view switch from 768 px, 24 px from the right edge from 1024 px, with no
+// box. The box floats centered in the page column, at most 640 px wide and the window's margin from each side below
+// that, its bottom 16 px above the window's bottom edge, on surface with a 1 px line-strong edge, 4 px corners and the
+// popover shadow. From 1024 px the bar sticks; below, it scrolls away, and the box stays at the window's foot.
+const LINE_STRONG_EDGE = "rgb(88, 110, 132) 0px 0px 0px 1px inset";
+const POPOVER_SHADOW = "rgba(160, 158, 143, 0.25) 0px 5px 25px 0px";
+test("the bar is one 56 px navy row with no box at every width, and the box floats centered at the page column's foot", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
+  await expect(page.locator("main h1")).toBeVisible();
   const at = async (selector: string) => (await page.locator(selector).boundingBox())!;
 
-  // Ticket 110: the rail rests at every width, and the open sidebar is a person's choice.
-  for (const [width, left, open] of [[1440, 244, false], [1440, 264, true], [1280, 264, true], [1024, 244, false]] as const) {
-    const toggle = page.locator("[data-sidebar-toggle]");
-    if ((await toggle.getAttribute("aria-expanded")) !== String(open)) {
-      await toggle.click();
-      // Focus leaves the button, so narrowing the window below hands no focus to the Menu button, which would scroll.
-      await toggle.blur();
-    }
-    await page.setViewportSize({ width, height: 900 });
+  // Ticket 110: the rail rests at every width from 1024 px.
+  for (const [width, height] of [[1440, 900], [1024, 768], [390, 844]] as const) {
+    await page.setViewportSize({ width, height });
     const bar = await at("[data-nav-bar]");
     expect([bar.x, bar.y, bar.width, bar.height], `${width} px`).toEqual([0, 0, width, 56]);
     expect(await page.locator("[data-nav-bar]").evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(0, 34, 68)");
-    // The header is the bar alone.
+    // The header is the bar alone, and the bar holds no box.
     expect((await at("header")).height, `${width} px`).toBe(56);
+    await expect(page.locator("[data-nav-bar] input")).toHaveCount(0);
     const logo = await at("[data-nav-bar] img");
     expect([logo.width, logo.height], `${width} px`).toEqual([120, 24]);
-    const box = await at("[data-box-band] form > [data-focus-ring]");
-    expect(Math.round(box.x), `${width} px: the box's left edge`).toBe(left);
-    expect(box.width, `${width} px`).toBeLessThanOrEqual(640);
-    expect(Math.round(box.y + box.height / 2), `${width} px: the box sits on the bar's row`).toBe(28);
-    const pill = await at("[data-view-pill]");
-    expect(Math.round(width - (pill.x + pill.width)), `${width} px: the view switch's right edge`).toBe(24);
-    expect(pill.x, `${width} px`).toBeGreaterThanOrEqual(box.x + box.width + 24);
-  }
-  expect((await at("[data-box-band] form > [data-focus-ring]")).width).toBeLessThan(640);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  expect((await at("[data-box-band] form > [data-focus-ring]")).width).toBe(640);
+    const pill = page.locator("[data-view-pill]");
+    await expect(pill, `${width} px`).toBeVisible({ visible: width >= 768 });
+    if (width >= 1024) expect(Math.round(width - ((await pill.boundingBox())!.x + (await pill.boundingBox())!.width)), `${width} px`).toBe(24);
 
-  // It sticks: scrolled down, the bar stays at the top of the window.
+    const box = await at("[data-box-band] form > [data-focus-ring]");
+    const column = await at("[data-page-column]");
+    expect(Math.round(box.width), `${width} px: the box's width`).toBe(width >= 1024 ? 640 : width - 32);
+    expect(Math.abs(box.x + box.width / 2 - (column.x + column.width / 2)), `${width} px: centered in the page column`).toBeLessThanOrEqual(0.5);
+    expect(Math.round(height - (box.y + box.height)), `${width} px: 16 px above the window's bottom edge`).toBe(16);
+    expect(
+      await page.locator("[data-box-band] form > [data-focus-ring]").evaluate((el) => {
+        const style = getComputedStyle(el);
+        // The shadows the box draws, leaving out the empty ones Tailwind composes with them.
+        const shadows = style.boxShadow.split(/,\s*(?![^()]*\))/).filter((shadow) => !shadow.startsWith("rgba(0, 0, 0, 0)"));
+        return [style.backgroundColor, style.borderRadius, shadows];
+      }),
+      `${width} px`,
+    ).toEqual(["rgb(255, 255, 255)", "4px", [LINE_STRONG_EDGE, POPOVER_SHADOW]]);
+  }
+
+  // From 1024 px the bar sticks: scrolled down, it stays at the top of the window, and the box at its foot.
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.addStyleTag({ content: "main { min-height: 3000px; }" });
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
   expect((await at("[data-nav-bar]")).y).toBe(0);
-  // Below 1024 px it scrolls away with the page, so a phone keeps its screen for the page.
+  expect(Math.round(900 - ((await at("[data-box-band] form")).y + 40))).toBe(16);
+  // Below 1024 px the bar scrolls away with the page, so a phone keeps its screen for the page.
   await page.setViewportSize({ width: 800, height: 900 });
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
   expect((await at("[data-nav-bar]")).y).toBeLessThan(0);
+  expect(Math.round(900 - ((await at("[data-box-band] form")).y + 40))).toBe(16);
 });
 
 // Ticket 93 (DESIGN.md section 10): the focused skip link shows below the bar, over the page, so it covers neither the
@@ -257,8 +283,8 @@ test("each rail item's tooltip shows its label on hover and on keyboard focus", 
 
 // Ticket 92: web/index.html's first script reads the stored choice, and its style paints the sidebar's frame at that
 // width, or the width's default, before the app's script runs. The app's bundle is held back here, so the page shows
-// only what index.html paints; below 1024 px no sidebar is painted and the closed Menu sheet is not shown. Ticket 93:
-// the bar holds the box, one 56 px row from 1024 px and two rows below, with the logo after the Menu button.
+// only what index.html paints; below 1024 px no sidebar is painted and the closed Menu sheet is not shown. Ticket 113:
+// the box left the bar, so the bar is one 56 px row at every width, with the logo after the Menu button below 1024 px.
 test("the first paint holds the bar, the logo and the sidebar where the app puts them, before the app's script runs", async ({ browser, page }) => {
   const boxes = (selectors: string[]) =>
     selectors.map((selector) => {
@@ -288,7 +314,7 @@ test("the first paint holds the bar, the logo and the sidebar where the app puts
 
     expect(painted.slice(0, 3), `${width} px, stored ${stored}`).toEqual(mounted);
     expect(mounted[2] === null, `${width} px`).toBe(width < 1024);
-    expect(mounted[0]![3], `${width} px: the bar's height`).toBe(width < 1024 ? 108 : 56);
+    expect(mounted[0]![3], `${width} px: the bar's height`).toBe(56);
     if (width < 1024) continue;
     const wide = stored === "open" ? 224 : 64;
     expect(painted[3]![2], `${width} px, stored ${stored}: the painted sidebar's width`).toBe(wide);
@@ -690,6 +716,15 @@ for (const width of [1440, 1024]) {
       await expect(drawer).toBeVisible();
       await expect(h1).toBeVisible();
       const beside = (await h1.boundingBox())!.x;
+      // Ticket 113: the box centers in the page column the drawer narrowed, and covers no part of the drawer.
+      if (width === 1440) {
+        const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+        const column = (await page.locator("[data-page-column]").boundingBox())!;
+        const pane = (await drawer.boundingBox())!;
+        expect(column.width, `${name}: the narrowed page column`).toBeLessThan(1440 - 64);
+        expect(Math.abs(box.x + box.width / 2 - (column.x + column.width / 2)), `${name}: the box centered`).toBeLessThanOrEqual(0.5);
+        expect(box.x + box.width, `${name}: the box clear of the drawer`).toBeLessThanOrEqual(pane.x);
+      }
       await drawer.getByRole("button", { name: /^Close/ }).click();
       await expect(drawer).toBeHidden();
       expect((await h1.boundingBox())!.x, `${name} at ${width} px`).toBe(beside);
@@ -807,4 +842,25 @@ test("Packages, Projects, Lessons, Drafts and Data each say what the tab is for 
     const lines = await purpose.evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
     expect(lines, `${name}: lines at 1440 px`).toBeLessThanOrEqual(2);
   }
+});
+
+// Round 1's design review: the page's bottom scroll padding counts the box only while focus is in main, so focus on
+// the sidebar's foot, or low in the evidence drawer, which both stick at the window's foot, never scrolls the page.
+test("Tab down the sidebar to its foot, or focus low in the evidence drawer, leaves the page where it was", async ({ page }) => {
+  await openAnswerPage(page);
+  await expect(page.locator("[data-box-band]")).toBeVisible();
+  await page.locator("a[href='/drafts']").first().focus();
+  const toggle = page.locator("[data-sidebar-toggle]");
+  for (let press = 0; press < 6 && !(await toggle.evaluate((el) => el === document.activeElement)); press++) {
+    await page.keyboard.press("Tab");
+  }
+  await expect(toggle).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY), "the page after Tab to the sidebar's foot").toBe(0);
+
+  await openAnswerPage(page, { path: `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}` });
+  await page.setViewportSize({ width: 1440, height: 640 });
+  const low = page.getByRole("dialog").getByRole("link", { name: /Open at page/ }).first();
+  await expect(low).toBeVisible();
+  await low.focus();
+  expect(await page.evaluate(() => window.scrollY), "the page after focus low in the drawer").toBe(0);
 });

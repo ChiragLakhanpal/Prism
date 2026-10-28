@@ -35,6 +35,14 @@ async function open(page: Page, path = "/", extra: Record<string, { status?: num
 const box = (page: Page) => page.locator("[data-box-band]").getByRole("combobox");
 const options = (page: Page) => page.getByRole("listbox", { name: "What Enter will do" }).getByRole("option");
 
+// Ticket 113: the box floats at the window's foot, so its list opens above it, at its width.
+async function listAboveTheBox(page: Page) {
+  const list = (await page.locator("[data-box-popup]").boundingBox())!;
+  const form = (await page.locator("[data-box-band] form").boundingBox())!;
+  expect([list.x, list.width], "the list at the box's width").toEqual([form.x, form.width]);
+  expect(list.y + list.height, "the list above the box").toBeLessThanOrEqual(form.y);
+}
+
 async function typeInBox(page: Page, text: string) {
   await page.keyboard.press("/");
   await expect(box(page)).toBeFocused();
@@ -49,6 +57,7 @@ test("typing a project ID lists Open first, with the project's name once it is l
   await expect(options(page).first()).toHaveAccessibleName("Open P130164 Rajasthan Road Sector Modernization Project, India");
   await expect(options(page).first()).toHaveAttribute("aria-selected", "true");
   await expect(box(page)).toHaveAttribute("aria-expanded", "true");
+  await listAboveTheBox(page);
   await page.keyboard.press("Enter");
 
   await expect(page).toHaveURL(/\/projects\/P130164$/);
@@ -155,14 +164,18 @@ for (const width of [1440, 390, 320]) {
 }
 
 // Ticket 94: the frame's one hook keeps the scroll padding at the bar plus the plan check's sticky head, plus 8 px,
-// so Tab down the page and Shift+Tab back up never leave the focused element under either.
-test("tabbing through the plan check never leaves the focused element under the bar or its sticky head", async ({ page }) => {
+// so Tab down the page and Shift+Tab back up never leave the focused element under either. Ticket 113: and at the box
+// that floats at the window's foot, 40 px tall and 16 px above the edge, plus 8 px, so nothing lands under it.
+test("tabbing through the plan check never leaves the focused element under the bar, its sticky head or the box", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, PLAN);
   const head = page.locator("[data-plan-header]");
   await expect(head).toHaveAttribute("data-sticky", "top");
   const height = await head.evaluate((element) => (element as HTMLElement).offsetHeight);
   expect(await page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe(`${56 + height + 8}px`);
+  // The bottom padding counts the box only while focus is in main (round 1's design review), as it is from the h1 on.
+  await page.locator("main h1").first().focus();
+  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingBottom)).toBe(`${16 + 40 + 8}px`);
   const { checked, covered } = await tabUnderStickyParts(page, 30);
   expect(checked).toBeGreaterThan(40);
   expect(covered).toEqual([]);
@@ -578,6 +591,7 @@ test("Down then Enter asks the first package suggestion within the package, a cl
   await page.keyboard.press("/");
   const suggestions = group(page, "Ask about this package").getByRole("option");
   await expect(suggestions).toHaveCount(3);
+  await listAboveTheBox(page);
   expect((await scan(page)).violations).toEqual([]);
   await page.keyboard.press("ArrowDown");
   await expect(suggestions.first()).toHaveAttribute("aria-selected", "true");
@@ -600,11 +614,20 @@ test("Down then Enter asks the first package suggestion within the package, a cl
   expect(asked[1].postDataJSON().scope).toBe(PACKAGE);
 });
 
-test("at 390 px the package's suggestions open under the box with no WCAG 2.2 AA violation", async ({ page }) => {
+test("at 390 px the package's suggestions open above the box with no WCAG 2.2 AA violation, and scroll inside a short window", async ({ page }) => {
   await openPackageToAsk(page, 390);
 
   await page.keyboard.press("/");
   await expect(group(page, "Ask about this package").getByRole("option")).toHaveCount(3);
+  await listAboveTheBox(page);
   expect((await scan(page)).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+
+  // Ticket 113: the list is at most as tall as the window less the bar and 96 px, and scrolls inside.
+  await page.setViewportSize({ width: 390, height: 360 });
+  const list = page.locator("[data-box-popup]");
+  await expect
+    .poll(() => list.evaluate((el) => ({ height: Math.round(el.getBoundingClientRect().height), scrolls: el.scrollHeight > el.clientHeight })))
+    .toEqual({ height: 360 - 56 - 96, scrolls: true });
+  await listAboveTheBox(page);
 });

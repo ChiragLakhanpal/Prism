@@ -38,6 +38,7 @@ from strata.dbx import Viewer, viewer_from_headers
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.packages import workflow
 from strata.packages.store import PackageStore
+from strata.server import tracker
 from strata.server.engines import EngineFor
 from strata.server.packages import comparables_criteria
 from strata.tools import registry
@@ -90,6 +91,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
                 context = registry.Context(engine=engine, viewer=viewer, view=view, as_of=as_of, thresholds=thresholds)
                 arguments = {**criteria, **({"start_date": start} if start else {})}
                 result = registry.call("estimate_time", arguments, context)
+                # Ticket 115's tracker: where each step stands in the package's plan as of the page's date.
+                result = {**result, "step_dates": tracker.track(result["step_dates"], engine,
+                                                                key if kind == STEP_ROW else None, as_of)}
         except registry.ToolError as error:
             return refused(422, "bad_request", detail=str(error))
         except PermissionDenied:

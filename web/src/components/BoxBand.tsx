@@ -1,10 +1,10 @@
-// The one box (DESIGN.md section 5, Top bar), which "/" focuses from anywhere outside a text field, and the
-// data-freshness stamp. The box sits in the navy bar (TopNav.tsx; ticket 93), white with 4 px corners: from 1024 px on
-// the bar's one row, up to 640 px wide, and below 1024 px on a row of its own. The stamp sits at the sidebar's foot,
-// under Data (Sidebar.tsx).
+// The one box (DESIGN.md section 5, Ask bar), which "/" focuses from anywhere outside a text field, and the
+// data-freshness stamp. The box floats at the bottom center of the page column (Frame.tsx's ask bar; ticket 113, which
+// moved it out of the navy bar): white with a 1 px line-strong edge, 4 px corners and the popover shadow, up to 640 px
+// wide. The stamp sits at the sidebar's foot, under Data (Sidebar.tsx).
 //
 // The box is a combobox (WAI-ARIA's list autocomplete with automatic selection): as you type, a
-// list under it says what Enter will do, laid over the page so the bar never grows. Its options
+// list above it says what Enter will do, laid over the page so the ask bar never grows. Its options
 // come from the intent rules (web/src/lib/intents.ts, through IntentBox.tsx); this file draws them.
 // On a project or package page the box holds a removable scope chip.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
@@ -95,6 +95,7 @@ export function OneBox({
   suggestions = null,
   suggestionActive = -1,
   onChooseSuggestion,
+  children,
 }: {
   // A mode the Packages tab put the box in (ticket 15): its own placeholder, and a help line that describes
   // the box and takes the hint's place.
@@ -128,6 +129,8 @@ export function OneBox({
   shortcut?: boolean;
   // The gallery shows the hint as if the box had focus.
   focusedHint?: boolean;
+  // More of the box's own parts, inside its search landmark, such as the status line that says the chip was removed.
+  children?: ReactNode;
 }) {
   const ownInput = useRef<HTMLInputElement>(null);
   const input = inputRef ?? ownInput;
@@ -146,7 +149,8 @@ export function OneBox({
       event.preventDefault();
       const element = input.current;
       if (!element) return;
-      element.focus();
+      // The box always shows, at the window's foot, so focusing it never scrolls the page (DESIGN.md section 10).
+      element.focus({ preventScroll: true });
       element.setSelectionRange(element.value.length, element.value.length);
     };
     document.addEventListener("keydown", onKey);
@@ -211,12 +215,12 @@ export function OneBox({
         </span>
       )}
       {/* One row is 40 px: 4 px around a 32 px field and chip, 12 px before the first of them, with a control's 4 px
-          corners and no border, since its white edge is 16:1 on the navy bar (DESIGN.md section 2). In the bar from
-          1024 px it keeps one row (app.css). Otherwise, when a long scope chip pushes the text field to a second row,
-          the chip and the text share one left edge. While anything inside it has focus, its ring shows around it: focus-on-dark on the
-          bar (app.css), focus elsewhere. The box shows the text cursor, so a press anywhere in it outside the field, a
-          button or the chip, such as the rest of the chip's row, the search icon or the "/" hint, acts as a press on
-          the field. */}
+          corners. Its 1 px line-strong edge, a control's border, is drawn inside it with the popover shadow, so the
+          edge moves nothing in it (ticket 113). In the ask bar from 1024 px it keeps one row (app.css). Otherwise,
+          when a long scope chip pushes the text field to a second row, the chip and the text share one left edge.
+          While anything inside it has focus, its focus ring shows around it. The box shows the text cursor, so a press
+          anywhere in it outside the field, a button or the chip, such as the rest of the chip's row, the search icon
+          or the "/" hint, acts as a press on the field. */}
       <div
         data-focus-ring
         onPointerDown={(event) => {
@@ -227,6 +231,7 @@ export function OneBox({
         }}
         className={cx(
           "flex min-h-10 w-full cursor-text flex-wrap items-center gap-x-2 gap-y-1 rounded-sm bg-surface py-1 pr-1 pl-3",
+          "shadow-popover inset-ring inset-ring-line-strong",
           "focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus focus-within:outline-solid",
         )}
       >
@@ -236,8 +241,9 @@ export function OneBox({
         {scope && <ScopeChip scope={scope} onRemove={() => onRemoveScope?.()} />}
         {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. Below 1024 px the
             field goes under the chip when less than 176 px is left beside it, the width of a package page's whole
-            placeholder, so "Ask about this package" is never cut. */}
-        <div className="flex min-w-0 flex-[1_1_176px] items-center gap-2">
+            placeholder, so "Ask about this package" is never cut; from 768 px, where the "/" hint shows after the
+            field, less than 210 px, the placeholder and the hint (ticket 113, since the box is at most 640 px wide). */}
+        <div className="flex min-w-0 flex-[1_1_176px] items-center gap-2 md:flex-[1_1_210px]">
           <div className="relative min-w-0 flex-1">
             <input
               ref={input}
@@ -306,10 +312,12 @@ export function OneBox({
           {modeHelp}
         </span>
       )}
+      {/* The list opens above the box at its width, at most as tall as the window less the bar and 96 px, and
+          scrolls inside, so it never reaches the bar (ticket 113). */}
       {(showHint || showList || showNotes) && (
         <div
           data-box-popup
-          className="absolute inset-x-0 top-full z-40 mt-1 rounded-md border border-line bg-surface py-1 shadow-popover"
+          className="absolute inset-x-0 bottom-full z-40 mb-1 max-h-[calc(100dvh-var(--bar-height)-96px)] overflow-y-auto overscroll-contain rounded-md border border-line bg-surface py-1 shadow-popover"
           // A click on an option keeps focus in the box, so the list stays a list of what Enter will do.
           onMouseDown={(event) => event.preventDefault()}
         >
@@ -346,6 +354,7 @@ export function OneBox({
           )}
         </div>
       )}
+      {children}
     </form>
   );
 }

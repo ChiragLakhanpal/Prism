@@ -36,6 +36,10 @@ const SETTLE_MS = 400;
 // Sticky only where the bar-sticks variant holds (app.css): a window at least 768 px wide and 640 px tall,
 // and a document column at least 30rem wide. Every class name is written out whole, so Tailwind finds it.
 export const STICKY = "bar-sticks:sticky bar-sticks:bottom-0";
+// The room above the bar, or the discarded notice, at the end of its column. Where the bar sticks, the box floats 16 px
+// above it and rides up with it as it lets go at the column's end (ticket 113), so the room is the box's 40 px, its
+// 16 px gap and 8 px more, or the box would sit on the draft's last line for good.
+export const BAR_ROOM = "mt-8 bar-sticks:mt-16";
 // The fixed consequence sentence, with each hyphenated word kept whole at a line end, so its key word never
 // breaks as "no-" and "objection". The draft page's skeleton shows it too, since it is true before the
 // draft loads (the 35 brief, section 8.3).

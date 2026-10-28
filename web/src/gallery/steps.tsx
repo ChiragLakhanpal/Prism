@@ -3,7 +3,10 @@
 // own dates. A state no recording holds is a recording with one value changed. Hover and keyboard focus are captured
 // from the app (web/capture/shots.ts, the steps-- shots).
 import dated from "../../../tests/fixtures/api/steps-ke-hand-900000.json";
+import done from "../../../tests/fixtures/api/steps-ke-hand-900000-done.json";
 import few from "../../../tests/fixtures/api/steps-ke-hand-900000-few.json";
+import canceled from "../../../tests/fixtures/api/steps-ke-kura-219079.json";
+import firms from "../../../tests/fixtures/api/steps-ke-cwsb-224323.json";
 import fixture from "../../../tests/fixtures/api/steps-ke-nwwda-541055.json";
 import needsEarlier from "../../../tests/fixtures/api/steps-planned-hand-made-needs-earlier.json";
 import plannedDated from "../../../tests/fixtures/api/steps-planned-hand-made-dated.json";
@@ -12,9 +15,10 @@ import { useState, type ReactNode } from "react";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { LongestView, StepComparablesView } from "../components/StepsDrawer";
 import { StepsView, type StartField, type StepsState } from "../components/StepsSection";
+import { StepTracker } from "../components/StepTracker";
 import { copy } from "../copy";
 import { formatDate } from "../lib/format";
-import { CHOICES, longestList, stepList, type Choice, type StepDate, type StepDates, type StepsResult, type TrackRecord } from "../lib/steps";
+import { CHOICES, longestList, STEP_STATES, stepList, type Choice, type StepDate, type StepDates, type StepsResult, type TrackRecord } from "../lib/steps";
 import { stepFamilies } from "../steps";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
@@ -28,6 +32,14 @@ const PLANNED = planned as unknown as StepsResult;
 const PLANNED_DATED = plannedDated as unknown as StepsResult;
 const NEEDS_EARLIER = needsEarlier as unknown as StepsResult;
 const KEY = "KE-HAND-900000-CW-RFB";
+// A step with no date (ticket 115), by name, so no sample writes a state's key as a word.
+const UNKNOWN = STEP_STATES[STEP_STATES.length - 1];
+// The hand-made set as of July 1, 2022: five steps done and the completion late (ticket 115).
+const DONE_LATE = done as unknown as StepsResult;
+// An individual consultant's activity whose plan gave its Process Status as Canceled, on the fixture (ticket 115).
+const CANCELED = canceled as unknown as StepsResult;
+// A consulting firm's nine steps on the fixture, whose plan gave its Process Status as Completed (ticket 115).
+const FIRMS = firms as unknown as StepsResult;
 
 const ready = (result: StepsResult): StepsState => ({ status: "ready", result });
 const changed = (result: StepsResult, edit: Partial<StepDates>): StepsResult => ({ ...result, step_dates: { ...result.step_dates!, ...edit } });
@@ -55,6 +67,7 @@ function familySteps(family: "firms" | "individuals"): StepsResult {
       middle: { planned_date: null, days: null, days_relation: null, longer: null, in10: null },
       cautious: { planned_date: null, days: null, days_relation: null, longer: null, in10: null },
       plan_first_date: null, plan_first_version_date: null, plan_latest_date: null, plan_latest_version_date: null,
+      actual_date: null, actual_source: null, state: UNKNOWN, late_days: null,
     }),
   );
   return changed(FIXTURE, { family, steps, longest: null });
@@ -157,6 +170,15 @@ export function stepsPage(): GalleryPage {
           </div>
         ),
       },
+      // The tracker at the top of the workspace (ticket 115): the five states across four answers, and loading.
+      { id: "tracker-done", title: t.trackerDone, body: <Column><StepTracker state={ready(DONE_LATE)} /></Column> },
+      { id: "tracker-next", title: t.trackerNext, body: <Column><StepTracker state={ready(DATED)} /></Column> },
+      { id: "tracker-late", title: t.trackerLate, body: <Column><StepTracker state={ready(FIXTURE)} /></Column> },
+      { id: "tracker-no-dates", title: t.trackerNoDates, body: <Column><StepTracker state={ready(PLANNED)} /></Column> },
+      { id: "tracker-ended", title: t.trackerEnded, body: <Column><StepTracker state={ready(CANCELED)} /></Column> },
+      { id: "tracker-firms", title: t.trackerFirms, body: <Column><StepTracker state={ready(FIRMS)} /></Column> },
+      { id: "tracker-loading", title: t.trackerLoading, body: <Column><StepTracker state={{ status: "loading" }} /></Column> },
+      { id: "tracker-error", title: t.trackerError, body: <Column><StepTracker state={{ status: "error", error: null, onRetry: () => undefined }} /></Column> },
       { id: "collapsed", title: t.collapsed, body: <Section state={ready(DATED)} /> },
       { id: "collapsed-partial", title: t.collapsedPartial, body: <Section state={ready(FIXTURE)} /> },
       { id: "collapsed-abstain", title: t.collapsedAbstain, body: <Section state={ready(FEW)} /> },

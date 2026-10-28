@@ -228,7 +228,11 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
+        },
+        "actual_date": null,
+        "actual_source": null,
+        "state": "next",
+        "late_days": null
       },
       {
         "step_key": "bidding_document_issued",
@@ -405,7 +409,11 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
+        },
+        "actual_date": null,
+        "actual_source": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "bid_opening",
@@ -582,7 +590,11 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
+        },
+        "actual_date": null,
+        "actual_source": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "bid_evaluation_report",
@@ -759,7 +771,11 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
+        },
+        "actual_date": null,
+        "actual_source": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "contract_signed",
@@ -936,7 +952,11 @@
           "days_relation": "after_plan",
           "longer": 5,
           "in10": 2
-        }
+        },
+        "actual_date": null,
+        "actual_source": null,
+        "state": "planned",
+        "late_days": null
       },
       {
         "step_key": "contract_completed",
@@ -962,7 +982,11 @@
           "days_relation": null,
           "longer": null,
           "in10": null
-        }
+        },
+        "actual_date": null,
+        "actual_source": null,
+        "state": "planned",
+        "late_days": null
       }
     ],
     "longest": {
@@ -1138,7 +1162,8 @@
         "documents",
         "projects"
       ]
-    }
+    },
+    "status_reason": null
   },
   "sources": [
     {

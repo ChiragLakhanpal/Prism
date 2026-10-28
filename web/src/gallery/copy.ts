@@ -20,7 +20,7 @@ export const galleryCopy = {
 
   pages: {
     navigation: {
-      title: "Navigation, box band and footer",
+      title: "Navigation, ask bar and footer",
       purpose: "Every page shares this frame. This page shows Projects as the current section in the sidebar.",
     },
     pages: {
@@ -76,7 +76,7 @@ export const galleryCopy = {
     "answer-panel": {
       title: "Answer panel",
       purpose:
-        "The answer to a question asked from the box, in the page under the band. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
+        "The answer to a question asked from the box, at the top of the page under the bar. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
     },
     evidence: {
       title: "Evidence card and drawer",
@@ -391,7 +391,7 @@ export const galleryCopy = {
 
   notes: {
     bar:
-      "The navy bar at the top of this page is the sample, with the box and the view switch, and the sidebar beside the page holds Home, the sections and the data stamp under Data. Below 1024 px the sidebar's items move into the Menu, and below 768 px the view switch does too. The footer is the same on every page.",
+      "The navy bar at the top of this page is the sample, with the view switch, the box floats at the foot of the page column, and the sidebar beside the page holds Home, the sections and the data stamp under Data. Below 1024 px the sidebar's items move into the Menu, and below 768 px the view switch does too. The footer is the same on every page.",
   },
 
   sections: {
@@ -539,6 +539,15 @@ export const galleryCopy = {
   // The steps page's sections (ticket 27).
   stepSections: {
     segmented: "The segmented control",
+    // The tracker at the top of the workspace (ticket 115).
+    trackerDone: "Tracker: five steps done, with a tick and the actual date, and the completion late",
+    trackerNext: "Tracker: before any step happened, the first is next and the rest are planned",
+    trackerLate: "Tracker: the fixture's showcase package, signed by the contract awards data and late to complete, with steps the plan left without a date",
+    trackerNoDates: "Tracker: a package from a sentence, which has no plan dates",
+    trackerEnded: "Tracker: an activity its plan gave as Canceled, so no step is late, as on the fixture",
+    trackerFirms: "Tracker: a consulting firm's nine steps, as a list at every width, as on the fixture",
+    trackerLoading: "Tracker: loading",
+    trackerError: "Tracker: the steps failed to load, so it points to section 2",
     collapsed: "Collapsed, with the steps dated",
     collapsedPartial: "Collapsed, when every step lacks comparables, as on the fixture",
     collapsedAbstain: "Collapsed, under 20 comparable packages in all",
