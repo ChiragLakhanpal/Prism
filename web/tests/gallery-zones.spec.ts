@@ -41,6 +41,13 @@ test("a zone with evidence is a white panel with 8 px corners that ends in a foo
   for (const row of await rows.all()) {
     expect(await look(row)).toEqual({ fill: "rgba(0, 0, 0, 0)", corner: "0px", under: `1px solid ${LINE}` });
   }
+  // Space falls only between blocks that show: the closed row's hidden body adds nothing under its summary, which ends
+  // 16 px above the row's line.
+  const closed = sequence(page).locator("section[data-section=steps]");
+  await expect(closed.locator("[data-section-body]")).toBeHidden();
+  expect(
+    await closed.evaluate((el) => Math.round(el.getBoundingClientRect().bottom - 1 - el.querySelector("[data-section-summary]")!.getBoundingClientRect().bottom)),
+  ).toBe(16);
 });
 
 // The workspace sample (DESIGN.md section 4, Page layouts, Workspace). Worked out by hand from section 4's grid: at
