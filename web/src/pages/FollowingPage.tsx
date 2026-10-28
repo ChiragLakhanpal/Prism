@@ -23,7 +23,6 @@ import { Num } from "../components/Num";
 import { PageHeader } from "../components/PageHeader";
 import { ProjectIdText } from "../components/ProjectId";
 import { Tag } from "../components/LessonParts";
-import { ProjectsTabs } from "../components/ProjectsTabs";
 import { SignalLine } from "../components/SignalLine";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Source } from "../components/Source";
@@ -77,18 +76,18 @@ export function FollowingPage({ search }: { search: string }) {
     if (data) for (const event of data.evidence) remember(event);
   }, [data]);
 
-  // A viewer who cannot follow (a preview, or not World Bank staff) gets All projects' purpose, not Following's.
-  const header = (tabs = true, purpose: string = copy.pages.following.purpose) => (
+  // A viewer who cannot follow (a preview, or not World Bank staff) gets All projects' purpose, not Following's. Following
+  // and All projects are the sidebar's items under Projects (ticket 99), so the page has no row of its own to switch.
+  const header = (purpose: string = copy.pages.following.purpose) => (
     <div className="col-span-12">
       <PageHeader title={copy.pages.following.title} purpose={purpose} />
-      {tabs && <ProjectsTabs following />}
     </div>
   );
 
   if (view !== "staff") {
     return (
       <div className="layout-grid" data-following-page="preview">
-        {header(false, copy.pages.projects.purpose)}
+        {header(copy.pages.projects.purpose)}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState
             title={view === "piu" ? words.previewPiuTitle : words.previewPublicTitle}
@@ -101,7 +100,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (load.status === "error" && load.error?.status === 403 && load.error.body.code === "not_staff") {
     return (
       <div className="layout-grid" data-following-page="not-staff">
-        {header(false, copy.pages.projects.purpose)}
+        {header(copy.pages.projects.purpose)}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState title={words.notStaffTitle} body={words.notStaffBody} link={{ href: "/projects", text: words.notStaffLink }} />
         </EightColumns>

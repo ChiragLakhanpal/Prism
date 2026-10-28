@@ -7,6 +7,8 @@ import type { Page } from "@playwright/test";
 import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
 
 const FOLLOWING = "/projects/following";
+// The current mark's fill (DESIGN.md section 2).
+const TINT = "rgb(233, 247, 253)";
 // The ticket's four lines, word for word (criterion 1).
 const LINES = [
   "KE-NWWDA-541055-CW-RFB passed its planned completion (July 31, 2026) with no signed contract.",
@@ -62,7 +64,7 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   const row = table.locator("[data-project-row=P156634]");
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Projects");
-  await expect(page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "Following" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("[data-sidebar] [data-sub-item=following]")).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { level: 2, name: "You follow two projects. One needs a look and one has closed." })).toBeVisible();
   await expect(row.locator("[data-badge=needs-a-look]")).toHaveText("Needs a look");
   await expect(row.locator("[data-signal-count]")).toHaveText("4 signals");
@@ -176,7 +178,8 @@ test("the track record states the stored counts, says when they are too few to r
 test("Following refuses a viewer without the World Bank staff role, and a preview shows no list", async ({ page }) => {
   await openFollowing(page, { answers: { "/api/me": { body: await recorded("me-not-staff.json") }, "/api/following": { status: 403, body: await recorded("following-not-staff.json") } } });
   await expect(page.getByRole("heading", { level: 2, name: "I show Following only to World Bank staff." })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Projects pages" })).toHaveCount(0);
+  // The sidebar offers no Following to a viewer without the role (ticket 99): All projects is the one page under Projects.
+  await expect(page.locator("[data-sidebar] [data-sub-items=projects] a")).toHaveText(["All projects"]);
   // A viewer who cannot follow is not told to follow: the purpose is All projects'.
   await expect(page.locator("main")).not.toContainText("Follow the projects you work on");
 
@@ -208,21 +211,66 @@ test("a row's partial line names the plan window the thresholds file sets, never
     "no implementing agency has published a Procurement Plan for it in the last six months");
 });
 
-test("the Projects item opens Following for World Bank staff, and All projects shows the sub-tabs", async ({ page }) => {
+// Ticket 99: Following and All projects are the sidebar's items under Projects for World Bank staff (DESIGN.md section 5,
+// Sidebar), and the sub-tab row is gone. The sub-items show in the open sidebar; the rail hides them, so there Projects
+// itself carries the current mark.
+test("for World Bank staff, Following and All projects are sidebar items under Projects, which opens Following", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, { "/api/projects": { body: await recorded("projects.json") }, "/api/following": { body: await recorded("following-p156634.json") } });
   await page.goto("/projects");
   await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Main" });
+  const projects = nav.locator("[data-nav-item=projects]");
+  const subs = nav.locator("[data-sub-items=projects] a");
+  const look = (link: typeof projects) =>
+    link.evaluate((element) => ({
+      weight: getComputedStyle(element).fontWeight,
+      fill: getComputedStyle(element).backgroundColor,
+      bar: getComputedStyle(element, "::before").width,
+    }));
 
-  await expect(page.locator("[data-sidebar] [data-nav-item=projects]")).toHaveAttribute("href", FOLLOWING);
-  await expect(page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "All projects" })).toHaveAttribute("aria-current", "page");
+  // The sidebar rests as the rail, which hides the sub-items, so Projects itself carries the tint and the bar
+  // (DESIGN.md section 2, one current mark).
+  await expect(subs.first()).toBeHidden();
+  expect(await look(projects)).toEqual({ weight: "600", fill: TINT, bar: "3px" });
 
-  // Choosing a sub-tab keeps focus on it, and a polite status says which page opened (the 37 brief, section 11.2).
-  await page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "Following" }).click();
-  const chosen = page.getByRole("navigation", { name: "Projects pages" }).getByRole("link", { name: "Following" });
-  await expect(chosen).toHaveAttribute("aria-current", "page");
-  await expect(chosen).toBeFocused();
-  await expect(page.locator("[data-subtab-status]")).toHaveText("Showing Following.");
+  // Opened, the sidebar shows them under Projects.
+  await page.getByRole("button", { name: "Expand the sidebar" }).click();
+  await expect(projects).toHaveAttribute("href", FOLLOWING);
+  await expect(subs).toHaveText(["Following", "All projects"]);
+  await expect(subs.nth(0)).toHaveAttribute("href", FOLLOWING);
+  await expect(subs.nth(1)).toHaveAttribute("href", "/projects");
+  // The page's own item carries the mark (tint and a 3 px primary bar); Projects is "true", in 600, with no tint.
+  await expect(subs.nth(1)).toHaveAttribute("aria-current", "page");
+  await expect(projects).toHaveAttribute("aria-current", "true");
+  expect(await look(subs.nth(1))).toEqual({ weight: "600", fill: TINT, bar: "3px" });
+  expect((await look(projects)).weight).toBe("600");
+  expect((await look(projects)).fill).not.toBe(TINT);
+  // No sub-tab row on the page.
+  await expect(page.getByRole("navigation", { name: "Projects pages" })).toHaveCount(0);
+  await expect(page.locator("main [data-projects-tabs]")).toHaveCount(0);
+
+  // A sub-item is a route link: Following opens with its h1 focused, and the mark moves to it.
+  await subs.nth(0).click();
+  await expect(page).toHaveURL(new RegExp(`${FOLLOWING}$`));
+  await expect(page.locator("[data-following-page=ready]")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  await expect(subs.nth(0)).toHaveAttribute("aria-current", "page");
+  await expect(subs.nth(1)).not.toHaveAttribute("aria-current");
+  await expect(page.getByRole("navigation", { name: "Projects pages" })).toHaveCount(0);
+});
+
+test("in the officer's and the public previews, Projects opens All projects and holds it alone, with no Following", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { "/api/projects": { body: await recorded("projects.json") }, "/api/agency/projects": { body: await recorded("agency-projects-two.json") } });
+  for (const view of ["piu", "public"]) {
+    await page.goto(`/projects?view=${view}`);
+    await expect(page.locator("[data-projects-page=ready]")).toBeVisible();
+    const nav = page.getByRole("navigation", { name: "Main" });
+    await expect(nav.locator("[data-nav-item=projects]"), view).toHaveAttribute("href", `/projects?view=${view}`);
+    await expect(nav.locator("[data-sub-items=projects] a"), view).toHaveText(["All projects"]);
+    await expect(nav.locator("[data-sub-item=following]"), view).toHaveCount(0);
+  }
 });
 
 test("when reading whether you follow a project fails, the control says so and offers Try again, not a state", async ({ page }) => {

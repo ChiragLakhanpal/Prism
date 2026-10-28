@@ -559,6 +559,9 @@ const HUB_SHOTS: Shot[] = [
   hubShot("summary--loading", "/projects/P130164", { pending: ["/api/projects/P130164/summary"] }),
   hubShot("summary--frame-loading", "/projects/P130164", { pending: ["/api/projects/P130164"] }),
   hubShot("summary--active", "/projects/P156634"),
+  // Ticket 99: at 1280 px beside the rail the Summary is under 75rem, so its fact tables take one column; at 1440 px two.
+  hubShot("summary--1280", "/projects/P130164", { widths: [1280] }),
+  hubShot("summary--active-1280", "/projects/P156634", { widths: [1280] }),
   hubShot("summary--history-unknown", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => Object.assign(body, { history: { known: false, rows: [] }, lead: { ...body.lead, moves: null } })) }),
   hubShot("summary--no-ratings", "/projects/P130164", {}, { "/api/projects/P130164/summary": summaryWithout((body) => (body.ratings = [])) }),
   // A project whose record has a risk rating under the ESF shows it in place of its EA category.
@@ -868,6 +871,9 @@ const FOLLOWING_SHOTS: Shot[] = [
   following("focus-marker", "following-p156634.json", { act: focus("[data-following-view]:visible [data-citation]") }),
   following("drawer", "following-p156634.json", { act: click("[data-following-view]:visible [data-signal=completion_passed] [data-citation]") }),
   following("all-projects", null, { api: { "/api/projects": { recorded: "projects.json" } } }, "/projects"),
+  // Ticket 99: Following and All projects as the sidebar's items under Projects, with the sidebar opened.
+  following("sidebar-items", "following-p156634.json", { widths: [1440], full: true, act: click("[data-sidebar-toggle]") }),
+  following("all-projects-sidebar-items", null, { widths: [1440], full: true, act: click("[data-sidebar-toggle]"), api: { "/api/projects": { recorded: "projects.json" } } }, "/projects"),
   projectWithFollow("project-not-following", { recorded: "follow-off.json" }),
   projectWithFollow("project-following", { recorded: "follow-on.json" }),
   // Only the PUT is held, so the control first reads that you don't follow and then shows Saving.

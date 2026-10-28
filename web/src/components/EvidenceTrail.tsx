@@ -64,15 +64,20 @@ const HIT = 24;
 const CHIP_ICON = 16;
 export type LineState = "info" | "warning";
 
-// One canvas for every label's width, in the chart's own fonts.
+// One canvas for every label's width, in the chart's own fonts. Tracking is in em, added after each character as the
+// browser draws it.
 let canvas: HTMLCanvasElement | null = null;
-function measure(text: string, size: number, weight = 400, mono = false): number {
+function measure(text: string, size: number, weight = 400, mono = false, tracking = 0): number {
   canvas ??= typeof document !== "undefined" ? document.createElement("canvas") : null;
   const context = canvas?.getContext("2d");
-  if (!context) return text.length * size * 0.6;
+  if (!context) return text.length * size * (0.6 + tracking);
   context.font = `${weight} ${size}px ${mono ? '"Roboto Mono"' : '"Open Sans"'}`;
-  return context.measureText(text).width;
+  return context.measureText(text).width + text.length * size * tracking;
 }
+
+// A lane label draws in the chart label's step (app.css, --text-chart-label: 12 px, 600, +0.02em), whatever the
+// chart's own sizes, so its box is measured in the same (ticket 99, from ticket 91's verify).
+const LANE_LABEL = { size: 12, weight: 600, tracking: 0.02 };
 
 // The fonts arrive after the first paint: measure again then.
 function useFontsReady(): number {
@@ -213,7 +218,7 @@ export function EvidenceTrail({
     const axis = axisFor(items, asOf);
     const x = scaleFor(axis, width);
     const laneLabelBoxes: Box[] = LANES.map((lane) => {
-      const w = measure(words.lane[lane].toUpperCase(), type.s, 600);
+      const w = measure(words.lane[lane].toUpperCase(), LANE_LABEL.size, LANE_LABEL.weight, false, LANE_LABEL.tracking);
       return { x0: PAD, x1: PAD + w, y0: ROWS[lane].label, y1: ROWS[lane].label + 24 };
     });
     const chipWidth = 8 + CHIP_ICON + 4 + measure(words.chip, type.s, 600) + 8;
@@ -259,7 +264,7 @@ export function EvidenceTrail({
         targets.push({ item, box: { x0: cx - HIT / 2, x1: cx + HIT / 2, y0: cy - HIT / 2, y1: cy + HIT / 2 }, cx, cy: cy - 8 });
       }
     }
-    return { axis, x, lines, placed, bands, targets, marks, chipWidth };
+    return { axis, x, lines, placed, bands, targets, marks, chipWidth, laneLabelBoxes };
     // fonts: measured again once the web fonts arrive.
   }, [items, asOf, width, type.s, showLines, fonts]);
 
@@ -348,12 +353,14 @@ export function EvidenceTrail({
         <SegmentText segments={data.alt} plain />
       </p>
       <svg role="img" aria-labelledby={altId} width={width} height={HEIGHT} className="block overflow-visible" data-chart-drawing style={{ fontSize: type.s }}>
-        {LANES.map((lane) => {
+        {LANES.map((lane, index) => {
           const rows = ROWS[lane];
           const y = markY(lane);
+          const box = layout.laneLabelBoxes[index];
           return (
             <g key={lane} data-lane={lane}>
-              <text x={PAD} y={rows.label + 16} className="fill-chart-text-subtle text-chart-label uppercase">
+              {/* data-label-width: the width its box was measured at, which keeps a disagreement chip off it. */}
+              <text x={PAD} y={rows.label + 16} data-label-width={box.x1 - box.x0} className="fill-chart-text-subtle text-chart-label uppercase">
                 {words.lane[lane]}
               </text>
               <line x1={PAD} x2={width - PAD} y1={y} y2={y} className="stroke-chart-grey200" strokeWidth={1} />

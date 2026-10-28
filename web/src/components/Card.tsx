@@ -40,6 +40,7 @@ export function EmptyState({
   more,
   link,
   level = 2,
+  bare = false,
   className,
 }: {
   title: ReactNode;
@@ -49,13 +50,16 @@ export function EmptyState({
   more?: ReactNode;
   link?: { href: string; text: ReactNode };
   level?: Level;
+  // Inside a Task zone panel, which is its card already, as All projects' no match (ticket 99): no border, fill or
+  // padding of its own, a 20 px circle and the title in h3.
+  bare?: boolean;
   className?: string;
 }) {
   return (
-    <section data-empty-state className={cx("flex gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6", className)}>
-      <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
+    <section data-empty-state className={cx("flex gap-3", !bare && "rounded-md border border-line bg-surface p-4 @md/page:p-6", className)}>
+      <CircleDashed aria-hidden="true" className={cx("shrink-0 text-line-strong", bare ? "mt-0.5 size-5" : "size-6")} />
       <div className="min-w-0">
-        {createElement(`h${level}`, { className: "text-h2 text-balance text-ink-heading" }, title)}
+        {createElement(`h${level}`, { className: cx(bare ? "text-h3" : "text-h2", "text-balance text-ink-heading") }, title)}
         <p className="mt-2 max-w-prose text-body text-pretty text-ink">{body}</p>
         {more && <p className="mt-2 max-w-prose text-body text-pretty text-ink">{more}</p>}
         {link && (

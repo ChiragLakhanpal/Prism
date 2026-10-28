@@ -17,11 +17,13 @@ export function projectHref(pid: string): string {
   return `/projects/${pid}`;
 }
 
-export function ProjectId({ pid, className, current: shown }: {
+export function ProjectId({ pid, className, current: shown, plain = false }: {
   pid: string;
   className?: string;
   // The gallery shows the current state on a page that is not the project's.
   current?: boolean;
+  // In 400 rather than 500, as in a project's h1, whose ID, country and status take 400 beside the name (ticket 99).
+  plain?: boolean;
 }) {
   const here = useStore(address);
   const current = shown ?? here.pathname === projectHref(pid);
@@ -32,7 +34,7 @@ export function ProjectId({ pid, className, current: shown }: {
       href={projectHref(pid)}
       aria-current={current ? "page" : undefined}
       data-project-id={pid}
-      className={cx("relative font-mono font-medium whitespace-nowrap after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']", className)}
+      className={cx("relative font-mono whitespace-nowrap after:absolute after:inset-x-0 after:-inset-y-0.5 after:content-['']", plain ? "font-normal" : "font-medium", className)}
     >
       {pid}
     </TextLink>

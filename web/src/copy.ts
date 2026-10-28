@@ -432,6 +432,13 @@ export const copy = {
       drafts: "Drafts",
       data: "Data",
     },
+    // A section's own pages, under its item while it is current (DESIGN.md section 5, Sidebar), by page key: Following
+    // and All projects under Projects for World Bank staff (ticket 99). The labels carry no count, so they never grow
+    // while a list loads.
+    sub: {
+      following: "Following",
+      projects: "All projects",
+    },
     // One button that turns the sidebar into the rail of icons and back.
     collapse: "Collapse the sidebar",
     expand: "Expand the sidebar",
@@ -1605,6 +1612,8 @@ export const copy = {
     tableTitle: "All projects",
     noun: "projects",
     nounOne: "project",
+    // The count line of one page of more (the redesign plan, 8.6), with the range in words rather than a dash.
+    countRange: (from: string, to: string, total: string) => `Showing ${from} to ${to} of ${total} projects`,
     loading: "Loading projects.",
     // While a search waits more than 400 ms for its answer, in the count line's place.
     searching: "Searching projects.",
@@ -1641,15 +1650,6 @@ export const copy = {
       `Procurement Plans that the World Bank disclosed for ${agency}. Records as of ${date}.`,
     loading: "Loading your agency's plans.",
     error: "I couldn't load your agency's plans because the data service didn't answer.",
-  },
-
-  // The Projects sub-tabs (ticket 37; the 37 brief, section 9.1), shown only to World Bank staff.
-  projectsTabs: {
-    label: "Projects pages",
-    // No count, so the label is the same on both pages and never grows while the list loads.
-    following: "Following",
-    all: "All projects",
-    announce: (name: string) => `Showing ${name}.`,
   },
 
   // Following (ticket 37; the 37 brief, sections 3 to 5 and 9.2 to 9.9). {braces} are filled from the route.
@@ -2006,8 +2006,9 @@ export const copy = {
   // A project's page (the 10 and 21 briefs): the header's one line, the agency line and the tabs.
   projectPage: {
     label: { id: "Project ID", country: "Country", status: "Status", agency: "Implementing agency", agencies: "Implementing agencies" },
-    // The h1's line: "{name} · {pid} · {country} · {status}". The dot and the item after it never part.
-    dot: "· ",
+    // The h1's line: "{name} · {pid} · {country} · {status}". Each dot keeps to the end of the word before it (a no-break
+    // space), so a wrapped line ends with a dot and never starts with one, as the evidence drawer's meta line does.
+    dot: " ·",
     // The status inside the header's line, by the projects API's value. Tables keep the API's own word.
     statusInline: { Active: "active", Closed: "closed", Pipeline: "in the pipeline", Dropped: "dropped" } as Record<string, string>,
     agencyLine: "Implementing agency: {agencies}",
@@ -2020,13 +2021,12 @@ export const copy = {
     headerError: "I couldn't load this project because the data service didn't answer.",
     // Two agency names hold commas, so the agencies are set apart with semicolons.
     agencyJoin: "; ",
-    // The agencies keep to two lines; these open and close the rest.
+    // The agencies keep to one line (ticket 99); these open and close the rest.
     allAgencies: "Show all agencies",
     fewerAgencies: "Show fewer agencies",
     sections: "Project sections",
-    // Every tab a project page will have, in the order the row shows them (the 21 brief, section 1). The
-    // row shows only the tabs that are built (BUILT_TABS in web/src/routes.ts), so ticket 22's Connections
-    // and ticket 23's Timeline join it with no change to the frame.
+    // Every tab of a project's page, in the order the row shows them (the 21 brief, section 1). This list is the one
+    // place the order lives (ticket 99): routes.ts reads its keys for the addresses, and the row its order.
     tab: { summary: "Summary", procurement: "Procurement", timeline: "Timeline", documents: "Documents", connections: "Connections" },
     loading: "Loading this project.",
     error: "I couldn't load this project's Procurement Plans because the data service didn't answer.",

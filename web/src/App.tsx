@@ -21,6 +21,7 @@ import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
 import { AlertSlot } from "./components/PageAlert";
 import { RETURNING } from "./components/Popover";
+import { subItemsFor } from "./components/sections";
 import { Sidebar } from "./components/Sidebar";
 import { SECTIONS, TopNav, type NavMode, type Section, type Viewer } from "./components/TopNav";
 import { ViewBanner } from "./components/ViewBanner";
@@ -428,6 +429,8 @@ export function App() {
           freshness={freshness}
           // World Bank staff open Following from Projects (ticket 37); a preview, and everyone else, All projects.
           projectsHref={staff && !preview ? FOLLOWING_HREF : undefined}
+          // Following and All projects under Projects for World Bank staff; All projects alone for everyone else (ticket 99).
+          subItems={subItemsFor(staff === true && !preview)}
           startHere={startHere}
         />
       }

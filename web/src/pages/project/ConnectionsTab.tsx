@@ -163,7 +163,7 @@ function PackageCard({ node, data, hot, setHot, list }: { node: PackageNode; dat
   const describe = `pkg-links-${node.step_reference}`;
   const items = chips.map(({ chip, doc }) => chipWithDoc(docShort(doc), chip));
   return (
-    <li data-node="package" data-focus-ring data-package={node.step_reference} className={cx("relative min-h-11 rounded-md border border-line p-3 transition-paint duration-150 has-[a[data-node-link]:focus-visible]:outline-2 has-[a[data-node-link]:focus-visible]:outline-offset-2 has-[a[data-node-link]:focus-visible]:outline-focus has-[a[data-node-link]:hover]:bg-tint-hover", lit ? "bg-tint" : "bg-surface")}>
+    <li data-node="package" data-focus-ring data-package={node.step_reference} className={cx("relative min-h-11 rounded-md border border-line p-3 transition-paint duration-150 has-[a[data-node-link]:focus-visible]:outline-2 has-[a[data-node-link]:focus-visible]:outline-offset-2 has-[a[data-node-link]:focus-visible]:outline-focus can-hover:has-[a[data-node-link]:hover]:bg-tint-hover", lit ? "bg-tint" : "bg-surface")}>
       <a
         href={node.href}
         data-node-link
@@ -206,7 +206,7 @@ function DocumentCard({ node, data, hot, setHot, list }: { node: DocumentNode; d
   const lit = hot?.kind === "package" && data.lines.some((line) => line.step_reference === hot.key && line.document_id === node.document_id);
   const packages = [...new Set(node.chips.flatMap((chip) => chip.packages))];
   return (
-    <li data-node="document" data-focus-ring data-document={node.document_id} className={cx("relative min-h-11 rounded-md border border-line p-3 transition-paint duration-150 has-[a[data-node-link]:focus-visible]:outline-2 has-[a[data-node-link]:focus-visible]:outline-offset-2 has-[a[data-node-link]:focus-visible]:outline-focus has-[a[data-node-link]:hover]:bg-tint-hover", lit ? "bg-tint" : "bg-surface")}>
+    <li data-node="document" data-focus-ring data-document={node.document_id} className={cx("relative min-h-11 rounded-md border border-line p-3 transition-paint duration-150 has-[a[data-node-link]:focus-visible]:outline-2 has-[a[data-node-link]:focus-visible]:outline-offset-2 has-[a[data-node-link]:focus-visible]:outline-focus can-hover:has-[a[data-node-link]:hover]:bg-tint-hover", lit ? "bg-tint" : "bg-surface")}>
       <a
         href={node.href}
         data-node-link

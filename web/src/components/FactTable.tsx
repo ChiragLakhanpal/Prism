@@ -1,7 +1,8 @@
 // Fact table (DESIGN.md section 5; the 21 brief, sections 3.1 and 10): a Table with no count line, for a
 // group of facts such as a project's dates. Its title is a noun in the title token, because it lists facts
 // rather than stating a finding. Three columns: the fact's label as the row header, its value (with the
-// units in the column's head), and its source, with a citation marker. The header row is surface-2.
+// units in the column's head), and its source, with a citation marker. The header row is surface-2. In a frame under
+// 45rem, as the Summary's tables side by side are (ticket 99), the source sits under its value instead.
 //
 // Below 768 px each row stacks: the label in caption, the value in body, the source in caption. The table
 // keeps explicit ARIA roles (table, row, columnheader, rowheader, cell), because a table laid out as blocks
@@ -22,12 +23,13 @@ export type FactRow = {
   source: ReactNode;
 };
 
-// The table's three columns: 38, 24 and 38 percent, as the brief sets them; and in a frame of 45rem or more,
-// as the Summary's 7 columns are at 1440 px, 33, 31 and 36, so a rating such as "Moderately Unsatisfactory"
-// and a source such as "Projects API, ISR of Dec 28, 2018" each keep to one line (the 21 critique, round 3,
-// item 4). The frame is the section, a size container. The widths sit on the column heads, which are hidden
-// below 768 px, where the rows stack.
-const WIDTHS = ["w-[38%] @fact-wide/facts:w-[33%]", "w-[24%] @fact-wide/facts:w-[31%]", "w-[38%] @fact-wide/facts:w-[36%]"];
+// The table's three columns: 33, 31 and 36 percent, so a rating such as "Moderately Unsatisfactory" and a source
+// such as "Projects API, ISR of Dec 28, 2018" each keep to one line (the 21 critique, round 3, item 4; ticket 59's
+// widths at 1200 and 1280 px). In a frame under 45rem, as the Summary's tables side by side are (ticket 99), three
+// columns would break them, so each row's label takes 40 percent and its source sits under its value (app.css, "Fact
+// table"). The frame is the section, a size container. The widths sit on the column heads, which are hidden below
+// 768 px, where the rows stack.
+const WIDTHS = ["w-[33%]", "w-[31%]", "w-[36%]"];
 const CELL = "block @md/page:table-cell px-3 @md/page:py-3 align-top";
 const STACK = "block @md/page:table-row";
 
@@ -60,7 +62,7 @@ export function FactTable({
   const loading = loadingRows !== undefined;
   const value = cx(CELL, "pb-3 text-body text-ink @md/page:pb-3", numeric && "@md/page:text-right @md/page:tabular-nums");
   return (
-    <section data-fact-table data-loading={loading || undefined} aria-busy={loading || undefined} className="@container/facts">
+    <section data-fact-table data-numeric={numeric || undefined} data-loading={loading || undefined} aria-busy={loading || undefined} className="@container/facts">
       {createElement(`h${level}`, { className: "text-h2 text-ink-heading" }, title)}
       {loading && <LoadingLabel />}
       <div className="mt-2 overflow-hidden rounded-md border border-line bg-surface">
