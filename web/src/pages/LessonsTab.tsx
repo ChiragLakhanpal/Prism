@@ -37,6 +37,7 @@ import { draftTitle, FILTER_KEYS, libraryHref, pageQuery, showHref } from "../li
 import { QUEUE_HREF } from "../lib/lessons";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
+import { RISKS_READINESS_HREF } from "../routes";
 import { LessonsFrame, LibrarySkeleton, refreshLessonsMe, useMe } from "./LessonsPages";
 
 const w = copy.lessonsPage;
@@ -374,12 +375,15 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
   const noun = server.count.nouns[library.status][library.of === 1 ? "one" : "many"];
   const open = evidenceIn(here.search);
   if (library.of === 0 && library.status === "current" && !library.narrowed) {
-    // Brief 29's empty-state card, unchanged, in place of the filters and the list: the library holds no lesson yet.
+    // The empty-state card in place of the filters and the list: the library holds no lesson yet. It says whose lessons
+    // these are and where they show up on a package's page, and links where section 3's own empty state does
+    // (ticket 114); a reviewer with lessons waiting is led to them instead.
     return (
       <EmptyState
         title={copy.pages.lessons.emptyTitle}
         body={copy.pages.lessons.emptyBody}
-        link={isReviewerWaiting ? { href: QUEUE_HREF, text: copy.lessons.library.reviewerLink } : { href: "/data", text: copy.pages.lessons.link }}
+        more={copy.pages.lessons.emptyMore}
+        link={isReviewerWaiting ? { href: QUEUE_HREF, text: copy.lessons.library.reviewerLink } : { href: RISKS_READINESS_HREF, text: copy.pages.lessons.link }}
       />
     );
   }

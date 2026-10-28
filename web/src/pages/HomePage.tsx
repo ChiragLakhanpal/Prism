@@ -4,7 +4,9 @@
 // - The h1 is the briefing: a date line, then sentences whose count words open what they count. Each count equals the
 //   lines of its kind below, folded lines included.
 // - The Start here strip, for World Bank staff in their own view today: one example per stage, which "Remove" hides
-//   for this viewer on every later visit (kept on the server), with an undo row for the visit.
+//   for this viewer on every later visit (kept on the server), with an undo row for the visit. Ticket 114 makes it a
+//   to-do list: a tick on each example followed and a count, kept in this browser (lib/startHere.ts), and the sidebar
+//   shows the next one on every page.
 // - "Worth knowing · fixed checks, no model": one past-tense line per activity, project or lesson, each with its
 //   status, its source and one action. More than eight fold behind "Show them".
 // - "Waiting for you": the viewer's own drafts to check, with their progress, eight at most, then a link to Drafts.
@@ -12,7 +14,7 @@
 // An implementing agency officer, the agency preview and the public preview get their own content from the server
 // (the roles table); a past date leaves out the lesson lines, the drafts and the strip. The page counts nothing.
 import { Fragment, useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, CircleX } from "lucide-react";
+import { ChevronDown, Circle, CircleCheck, CircleX } from "lucide-react";
 import { Button } from "../components/Button";
 import { CitationMarker } from "../components/CitationMarker";
 import { EmptyState } from "../components/Card";
@@ -30,9 +32,11 @@ import { copy } from "../copy";
 import { postJson } from "../lib/api";
 import { draftHref } from "../lib/drafts";
 import { evidenceHref, openEvidence } from "../lib/evidence";
-import { formatDate, formatDayLine } from "../lib/format";
+import { cx } from "../lib/cx";
+import { formatDate, formatDayLine, formatNumber } from "../lib/format";
 import { HOME_PATH, START_HERE_PATH, startHereVisible, type HomeAnswer, type HomeLine, type HomeSegment } from "../lib/home";
 import { draftTitle } from "../lib/lessonsPage";
+import { keepLinks, markDone, START_HERE_ANCHOR, startHereList } from "../lib/startHere";
 import { useLoad } from "../lib/load";
 import { useStore } from "../lib/store";
 import { CHECK_MY_PLAN } from "../lib/uploads";
@@ -211,11 +215,22 @@ type StripState = "shown" | "removing" | "removed" | "restoring" | "remove-faile
 
 function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
   const [state, setState] = useState<StripState>("shown");
-  const titleId = useId();
+  const countId = useId();
   const captionId = useId();
   const sentence = useRef<HTMLParagraphElement>(null);
   const title = useRef<HTMLHeadingElement>(null);
   const start = words.start;
+  // The examples the person followed from here or from the sidebar (ticket 114), kept in this browser.
+  const kept = useStore(startHereList);
+  const followed = new Set(kept?.done ?? []);
+  const doneCount = links.filter((link) => followed.has(link.key)).length;
+
+  // "All six done" in the sidebar leads here (/#start-here): once Home has drawn the strip, its title takes focus.
+  useEffect(() => {
+    if (window.location.hash !== `#${START_HERE_ANCHOR}`) return;
+    title.current?.scrollIntoView();
+    title.current?.focus({ preventScroll: true });
+  }, []);
 
   // Once the change is drawn, focus goes to what says what happened: the undo row's sentence after Remove, and the
   // strip's title after showing the examples again (the 41 brief, 6.2).
@@ -254,11 +269,14 @@ function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
     );
   }
   return (
-    <section aria-labelledby={titleId} data-start-here="shown" className="rounded-md bg-surface-2 px-4 py-4 @md/page:px-6">
+    <section aria-labelledby={`${START_HERE_ANCHOR} ${countId}`} data-start-here="shown" className="rounded-md bg-surface-2 px-4 py-4 @md/page:px-6">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h2 ref={title} id={titleId} tabIndex={-1} className="text-label text-ink-muted focus:outline-none">
+        <h2 ref={title} id={START_HERE_ANCHOR} tabIndex={-1} className="text-label text-ink-muted focus:outline-none">
           {start.title}
         </h2>
+        <span id={countId} data-start-count className="text-caption text-ink-muted">
+          {copy.nav.startHere.count(formatNumber(doneCount, { compact: false }), formatNumber(links.length, { compact: false }))}
+        </span>
         <span id={captionId} className="text-caption text-ink-muted @md/page:ml-auto">
           {start.caption}
         </span>
@@ -268,13 +286,23 @@ function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
       </div>
       {state === "remove-failed" && <FailedLine>{start.removeFailed}</FailedLine>}
       <ul aria-labelledby={captionId} className="mt-3 flex flex-col gap-1 @md/page:flex-row @md/page:flex-wrap @md/page:gap-x-8 @md/page:gap-y-2">
-        {links.map((link) => (
-          <li key={link.key} className="flex min-h-8 items-center">
-            <TextLink href={link.href} data-start-link={link.key} className="text-small font-semibold">
-              <Fill template={start.links[link.key] ?? link.key} slots={{ pid: <span className="font-mono font-medium">{link.pid}</span> }} />
-            </TextLink>
-          </li>
-        ))}
+        {links.map((link) => {
+          // Each link leads with its tick, which appears at once and never moves; its name ends with "done" only once
+          // the person followed it.
+          const done = followed.has(link.key);
+          const Tick = done ? CircleCheck : Circle;
+          return (
+            <li key={link.key} className="flex min-h-8 items-center">
+              <TextLink href={link.href} data-start-link={link.key} onClick={() => markDone(link.key)} className="inline-flex items-start gap-2 text-small font-semibold">
+                <Tick aria-hidden="true" data-start-tick={done ? "done" : "open"} className={cx("mt-0.5 size-4 shrink-0", done ? "text-primary" : "text-line-strong")} />
+                <span>
+                  <Fill template={start.links[link.key] ?? link.key} slots={{ pid: <span className="font-mono font-medium">{link.pid}</span> }} />
+                  {done && <span className="clip-visually">{copy.nav.startHere.doneHidden}</span>}
+                </span>
+              </TextLink>
+            </li>
+          );
+        })}
       </ul>
     </section>
   );
@@ -495,6 +523,11 @@ export function HomePage() {
   useEffect(() => {
     if (load.status === "ready" && (load.afterRetry || reading > 0)) document.getElementById("briefing")?.focus();
   }, [load, reading]);
+  // Start here goes with the person (ticket 114): World Bank staff's own Home today keeps its links in this browser,
+  // so the sidebar on every other page shows the next one with no request of its own.
+  useEffect(() => {
+    if (answer && answer.view === "staff" && !answer.preview && !answer.as_of && answer.start_here.links.length > 0) keepLinks(answer.start_here.links);
+  }, [answer]);
   const strip = Boolean(answer?.start_here.visible && answer.start_here.links.length > 0);
   // A later visit after Remove: World Bank staff today, with the strip's links but not the strip.
   const restore = Boolean(answer && !strip && answer.view === "staff" && !answer.as_of && answer.start_here.links.length > 0);

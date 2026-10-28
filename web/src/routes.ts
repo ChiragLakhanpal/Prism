@@ -74,6 +74,12 @@ export function dataReadinessHref(sources: string[], from: string): string {
   return `${DATA_HREF.data}?${query.toString().replaceAll("%2C", ",")}`;
 }
 
+// Where section 3's empty state on a package's page links when no completion report was read (RisksSection.tsx, from
+// the server's coverage line): Data readiness for the sources its risks draw on, find_comparables' and get_lessons' in
+// config/tools.toml. The Lessons library's empty card links there too (ticket 114), before any package is open;
+// web/tests/lessons-page.spec.ts checks it against the server's recorded answer for section 3.
+export const RISKS_READINESS_HREF = dataReadinessHref(["notices", "awards", "documents", "projects"], "package_risks");
+
 function page(key: PageKey, section?: Section, values: Record<string, string> = {}): Match {
   return { key, section, values, linkHref: LINKS[key]?.(values) };
 }
@@ -82,7 +88,7 @@ const LINKS: Partial<Record<PageKey, (values: Record<string, string>) => string>
   packages: () => "/data",
   activity: (values) => `/projects/${values.pid}`,
   document: (values) => `/projects/${values.pid}`,
-  lessons: () => "/data",
+  lessons: () => RISKS_READINESS_HREF,
   drafts: () => "/packages",
   notFound: () => "/",
   notAProject: () => "/projects",

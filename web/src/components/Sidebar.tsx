@@ -12,11 +12,20 @@
 // switch's lines at its foot. It closes on Escape, on "Close the menu" and on
 // the scrim, and focus goes back to the Menu button. When the window narrows past 1024 px, focus on an item moves
 // to the Menu button.
+//
+// Under Home, for World Bank staff in their own view once Home has loaded, sits Start here (ticket 114): how many of
+// the examples the person followed, and the next one as the item's link, which goes straight there and ticks it. With
+// all done it says so and leads to Home's strip, where Remove stays. As a rail it shows its icon and the short count,
+// and its tooltip says the rest. App.tsx decides when it shows (lib/startHere.ts).
 import { useEffect, useId, useLayoutEffect, useRef, useState, type FocusEvent } from "react";
-import { PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
+import { ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { formatCount, formatNumber } from "../lib/format";
+import { markDone, progressOf, START_HERE_HREF, type StartHereList } from "../lib/startHere";
 import { FreshnessStamp, stampWords, type Freshness } from "./BoxBand";
+import { Fill } from "./Fill";
+import { fillText } from "./LessonParts";
 import { useMenuSheet, WIDE } from "./Frame";
 import { LanguageChoice } from "./LanguageChoice";
 import { FOOT_SECTION, HOME_ITEM, SECTIONS, type Section, type SubItem, type SubItems } from "./sections";
@@ -83,6 +92,12 @@ const ITEM = cx(
 );
 // The current mark (DESIGN.md section 2): tint, a 3 px primary bar inset on the left, the label in 600 ink-heading.
 const CURRENT = "bg-tint font-semibold text-ink-heading before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-sm before:bg-primary";
+// Start here in the item's style (ticket 114), with its lines stacked beside the icon; as a rail, the icon over the
+// short count.
+const START_ITEM = cx(
+  "relative flex min-h-9 w-full items-start gap-3 rounded-sm px-3 py-2 text-left text-small text-ink transition-paint hover:bg-surface-2",
+  "rail:flex-col rail:items-center rail:gap-1 rail:px-0",
+);
 
 export function Sidebar({
   mode,
@@ -93,6 +108,7 @@ export function Sidebar({
   subItems,
   freshness,
   rest: forced,
+  startHere,
 }: {
   // The view the server applied: its sections, the pages it hides, and the address's mode, which every link keeps.
   mode: NavMode;
@@ -110,6 +126,8 @@ export function Sidebar({
   freshness?: Freshness;
   // For the gallery: the resting state to draw, whatever the width or the stored choice.
   rest?: Rest;
+  // Start here's examples and the ones followed (ticket 114), while the item shows; App.tsx decides when.
+  startHere?: StartHereList | null;
 }) {
   const sheet = useMenuSheet();
   const wide = useMedia(WIDE);
@@ -229,6 +247,44 @@ export function Sidebar({
     );
   };
 
+  // Start here under Home (ticket 114): one link, to the next example, or to Home's strip once all are done. Its words
+  // are its name open, as a rail (where they are visually hidden and the tooltip shows them) and in the Menu sheet.
+  const startHereItem = () => {
+    if (!startHere || startHere.links.length === 0) return null;
+    const words = copy.nav.startHere;
+    const { done, total, upcoming } = progressOf(startHere);
+    const [doneText, totalText] = [formatNumber(done, { compact: false }), formatNumber(total, { compact: false })];
+    const example = upcoming ? (copy.home.start.links[upcoming.key] ?? upcoming.key) : null;
+    const tip = upcoming && example ? words.tip(doneText, totalText, fillText(example, { pid: upcoming.pid ?? "" })) : words.tipAllDone(formatCount(total));
+    return (
+      <li>
+        <a
+          href={upcoming ? upcoming.href : START_HERE_HREF}
+          data-start-here-item={upcoming ? upcoming.key : "done"}
+          // Ticked once the click has finished, since the tick moves this link on to the next example, and the
+          // router reads where the click goes after React has drawn (lib/router.ts).
+          onClick={() => upcoming && window.setTimeout(() => markDone(upcoming.key))}
+          className={START_ITEM}
+          {...tipProps(tip)}
+        >
+          <ListChecks aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-ink-muted rail:mt-0" />
+          <span className="flex min-w-0 flex-col rail:clip-visually">
+            <span>{words.title}</span>
+            <span className="text-caption text-ink-muted">{upcoming ? words.count(doneText, totalText) : words.allDone(formatCount(total))}</span>
+            {upcoming && example && (
+              <span className="mt-0.5">
+                <Fill template={words.next} slots={{ example: <Fill template={example} slots={{ pid: <span className="font-mono">{upcoming.pid}</span> }} /> }} />
+              </span>
+            )}
+          </span>
+          <span aria-hidden="true" className="hidden text-caption text-ink-muted rail:block">
+            {words.short(doneText, totalText)}
+          </span>
+        </a>
+      </li>
+    );
+  };
+
   const foot = sections?.find((section) => section.key === FOOT_SECTION);
   const open = rest === "open";
   const Toggle = open ? PanelLeftClose : PanelLeftOpen;
@@ -292,7 +348,10 @@ export function Sidebar({
             </div>
           ) : (
             <>
-              <ul className="flex flex-col gap-0.5">{item("home", HOME_ITEM.href, HOME_ITEM.icon, copy.nav.home)}</ul>
+              <ul className="flex flex-col gap-0.5">
+                {item("home", HOME_ITEM.href, HOME_ITEM.icon, copy.nav.home)}
+                {startHereItem()}
+              </ul>
               <ul className="mt-4 flex flex-col gap-0.5">
                 {sections
                   .filter((section) => section.key !== FOOT_SECTION)

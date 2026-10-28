@@ -28,7 +28,7 @@ Revised October 27, 2026, round 3, after the second critic's review. Each item s
 
 13. **The plan check under Packages.** Assumed: it lights Packages and its breadcrumb starts at Packages; its address under `/projects/` stays. I would keep it.
 
-14. **Start here on Home.** Assumed: a Task zone row under the briefing, for staff in their own view, until removed. I would keep it on Home only.
+14. **Start here on Home.** **Decided by the user on October 27, 2026: a to-do list that goes with you.** The strip stays on Home with a tick on each example you followed and a count ("2 of 6 done"), and the sidebar shows Start here, the count and the next example as a link on every page, kept in the browser, with no points, badges or celebration (ticket 114; DESIGN.md section 5, Start here strip and Sidebar). What follows is the question as it stood. Assumed: a Task zone row under the briefing, for staff in their own view, until removed. I would keep it on Home only.
 
 15. **Keyboard shortcuts beyond "/".** None added. WCAG 2.1.4 needs single-key shortcuts that can be turned off or that work only in their panel ([WCAG 2.2](https://www.w3.org/TR/WCAG22/#character-key-shortcuts)). I would add none now.
 
