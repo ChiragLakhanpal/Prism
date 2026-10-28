@@ -3,6 +3,7 @@
 import fcntl
 import subprocess
 import sys
+import types
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -32,6 +33,20 @@ def fixture_db(tmp_path_factory):
             if not FIXTURE_DB.exists():
                 subprocess.run([sys.executable, str(ROOT / "gates" / "build_fixture.py")], check=True)
     return FIXTURE_DB
+
+
+@pytest.fixture(autouse=True)
+def no_real_retry_waits(monkeypatch):
+    """A model call Azure refuses as busy waits on a fake clock in a test (ticket 118), never on time.sleep: a test
+    that lets the agent or the judge wait for real fails at once and names the fix. It replaces only the name `time`
+    in src/strata/agent/retries.py, which uses it for nothing but its waits, so every other time.sleep is left as it
+    is."""
+
+    def refuse(seconds):
+        raise AssertionError(f"A test waited {seconds:g} real seconds for a retry; give the adapter sleep= with a "
+                             "fake clock.")
+
+    monkeypatch.setattr("strata.agent.retries.time", types.SimpleNamespace(sleep=refuse))
 
 
 @pytest.fixture

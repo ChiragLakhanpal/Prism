@@ -999,3 +999,28 @@ min_retry_seconds = 1
 # timeout_seconds of 900 in bundle/costs.yml, so the job's clock never stops a pull that is waiting;
 # tests/test_costs.py checks it.
 max_retry_seconds = 240
+
+# The calls to Azure's models in an answer (ticket 118; src/strata/agent/retries.py): the agent's through Foundry
+# (src/strata/agent/foundry.py) and the verifier's judge's through Azure OpenAI (src/strata/agent/judge.py). Since
+# October 27, 2026 the agent and the judge share the gpt-5.4 deployment and its cap of 30,000 tokens a minute
+# (ops/dayone/dayone.toml, [caps.deployments.draft]), so a long answer and its judging can cross the cap inside one
+# minute. Azure then answers 429, too many requests, and names the seconds to wait in its Retry-After header (or in
+# retry-after-ms); when it is briefly overloaded it answers 503. The call waits that long and tries again. When its
+# last try is refused too, it gives up as before: the judge's sentences are removed (judge_unavailable), and the
+# agent's answer ends with agent_unavailable. Any other refusal, such as a 403, gives up at once. Source: on October
+# 28, 2026 at 05:54 UTC the demo-ready command's third smoke run lost its one sentence to a 429 from the judge.
+[azure]
+# How many times one call tries again after its first try, so a call refused every time makes four tries in all.
+# Source: the ticket.
+retries = 3
+# The wait when Azure's answer names none. Source: the ticket's starting value, for the owner to confirm.
+retry_seconds = 5
+# The longest single wait, whatever the header says. A cap counted per minute clears within a minute. Source: the
+# ticket.
+max_retry_seconds = 60
+# The most one answer waits on one model in all. The agent's calls in one answer share it, and the judge's one call
+# per answer has its own, so the waits add at most twice this to an answer. A wait that would pass it is not taken,
+# and the call gives up. Source: the ticket asks that the waits stay inside the answer's own time limit; the answer
+# route has none (its heartbeats keep the stream open), so this bounds the sum instead. 120 allows two waits of a
+# full minute. A starting value for the owner to confirm.
+max_wait_seconds = 120
