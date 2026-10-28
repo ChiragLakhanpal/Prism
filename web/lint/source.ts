@@ -348,6 +348,27 @@ export function retiredClasses(source: string, file: string): Found[] {
   return found;
 }
 
+// A hover written inside an arbitrary variant, such as "has-[a:hover]:bg-tint" or "[&:hover]:underline", skips the app's
+// hover: variant, which holds every hover style to a pointer that can hover (app.css; DESIGN.md section 4, Motion), so a
+// tap on a phone would leave the style behind (ticket 99). Such a class needs can-hover: among its variants.
+export function rawHoverClasses(source: string, file: string): Found[] {
+  const found: Found[] = [];
+  walk(parse(source, file), (node) => {
+    const text = isString(node)
+      ? (node.value as string)
+      : node.type === "TemplateElement"
+        ? (node.value as { raw: string }).raw
+        : null;
+    if (text === null) return;
+    for (const name of text.split(/\s+/).filter(Boolean)) {
+      // ":hover" closing a bracket or a parenthesis is a selector inside an arbitrary variant; "hover:" is the variant.
+      const arbitraryHover = /:hover[\])]/.test(name);
+      if (arbitraryHover && !name.split(":").includes("can-hover")) found.push({ offset: node.start, text: name });
+    }
+  });
+  return found;
+}
+
 // A class name without its variants or its important mark: "md:!uppercase" is "uppercase".
 function utility(name: string): string {
   return name.slice(name.lastIndexOf(":") + 1).replace(/^!/, "");

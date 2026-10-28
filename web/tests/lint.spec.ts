@@ -351,6 +351,25 @@ function lintTree(files: Record<string, string>) {
   return { code: done.status, output: done.stdout + done.stderr };
 }
 
+// Ticket 99 (from ticket 90's verify): a hover written inside an arbitrary variant, such as has-[a:hover]:, skips the
+// app's hover: variant, which holds every hover style to a pointer that can hover (DESIGN.md section 4, Motion), so a tap
+// on a phone would leave its fill behind. The class lint asks for can-hover: in front of it.
+test("the class lint refuses a hover inside an arbitrary variant unless can-hover: holds it to a pointer", () => {
+  const div = (className: string) => `export const A = () => <div className="${className}" />;\n`;
+  const failed = lintTree({ "src/components/Node.tsx": div("p-3 has-[a[data-node-link]:hover]:bg-tint-hover") + div("[&:hover]:underline") });
+  expect(failed.code, failed.output).toBe(1);
+  const problems = failed.output.trim().split("\n");
+  expect(problems.map((line) => /([\w-]+\.tsx:\d+): the class "([^"]+)"/.exec(line)?.slice(1).join(" "))).toEqual([
+    "Node.tsx:1 has-[a[data-node-link]:hover]:bg-tint-hover",
+    "Node.tsx:2 [&:hover]:underline",
+  ]);
+  expect(problems[0]).toContain("can-hover:");
+
+  const passed = lintTree({ "src/components/Node.tsx": div("p-3 can-hover:has-[a[data-node-link]:hover]:bg-tint-hover") + div("hover:underline") });
+  expect(passed.output).toBe("");
+  expect(passed.code).toBe(0);
+});
+
 test("the class lint refuses uppercase outside a chart label, text-title and rounded-box in every file, the deck and the collapsed section included", () => {
   const div = (className: string) => `export const A = () => <div className="${className}" />;\n`;
   const failed = lintTree({

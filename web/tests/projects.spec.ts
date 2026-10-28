@@ -288,6 +288,11 @@ test("a project's Procurement tab shows each agency's plan versions newest first
 
   const nwwda = main.locator("[data-agency=northern-water-works-development-agency]");
   await expect(nwwda.getByRole("heading", { level: 3 })).toHaveText("Northern Water Works Development Agency");
+  // Each agency's h3 steps down from the zone's h2, 16 px under its 18 (ticket 99, from the reviews of tickets 90 and 91).
+  const size = (heading: import("@playwright/test").Locator) => heading.evaluate((element) => getComputedStyle(element).fontSize);
+  expect(await size(main.getByRole("heading", { level: 2, name: "Procurement Plans" }))).toBe("18px");
+  expect(await size(nwwda.getByRole("heading", { level: 3 }))).toBe("16px");
+  expect(await size(main.locator("[data-other-agencies]").getByRole("heading", { level: 3 }))).toBe("16px");
   await expect(nwwda.getByText("Showing all 5 versions")).toBeVisible();
   await expect(nwwda.locator("[data-table-view=table] tbody th")).toHaveText([
     "Plan of Oct 9, 2026 Latest",
