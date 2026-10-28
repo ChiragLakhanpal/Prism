@@ -623,7 +623,7 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
       ref={headerRef}
       data-plan-header
       data-sticky={sticky ? "top" : undefined}
-      className={cx("border-b border-line bg-page py-4", sticky && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10")}
+      className={cx("border-b border-line bg-page pt-2 pb-4", sticky && "@lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10")}
     >
       {/* The title sits beside the actions from a page area of 46rem, so a page the drawer narrows stacks them
           (DESIGN.md section 4, Page layouts; ticket 94). */}

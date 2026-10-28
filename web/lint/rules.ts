@@ -15,17 +15,6 @@ export const UPPERCASE_ONLY_WITH = "text-chart-label";
 // so a class that names one would draw nothing; the lint names its replacement instead.
 export const RETIRED_CLASSES: Record<string, string> = { "text-title": "text-h2", "rounded-box": "rounded-sm" };
 
-// The files, from web/, that used a retired class or `uppercase` when ticket 90 landed on October 27, 2026, each with
-// the ones it may keep. The class sweep (ticket 91) moved every other file's classes to their roles and took it off.
-// The one left is the collapsed section's eyebrow, for the workspace ticket (95), whose Task zone takes over its look;
-// the top bar ticket (93) moved the box's corners and took BoxBand.tsx off, and the page frame ticket (94) rewrote the
-// evidence drawer's head and took EvidenceDrawer.tsx off. A use in a file not on the list, a class a listed file did
-// not use then, or a listed class the file no longer uses fails the lint, so each ticket takes its file off as it moves
-// the class, and the last one deletes the list.
-export const FROZEN_CLASS_USES: Record<string, readonly string[]> = {
-  "src/components/CollapsedSection.tsx": ["uppercase"],
-};
-
 // Sentences and terms the copy may use word for word, even though a rule would catch a word
 // inside them. Each one names where it is fixed.
 export const FIXED_TERMS = [
@@ -163,6 +152,8 @@ export const NON_COPY_PROPS = new Set([
   "htmlFor",
   // Table's breakpoint for cards: "md" or "lg".
   "cardsBelow",
+  // Where a workspace page's side panel goes below a frame of 1200 px: "head" or "after" (Workspace.tsx, ticket 95).
+  "fold",
   // A deck slide's background, "light" or "navy", which picks its logo file (the deck's loading frame, ticket 106).
   "theme",
   // The plan prompt's "Show the past range" weight, "primary" or "secondary" (ticket 15, brief 36).

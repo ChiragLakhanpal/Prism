@@ -509,7 +509,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
     <div data-check-plan-page={load.status}>
       <DraftNotices existing={lookup.draft} />
       <Breadcrumb trail={crumbs} />
-      <div className="mt-4">{body}</div>
+      <div>{body}</div>
       <p role="status" className="sr-only">
         {statusText}
       </p>

@@ -201,7 +201,6 @@ function WritingKindPage({ current, backHref }: { current: Writing; backHref: st
           <DraftCrumbs pid={plan?.project_id ?? ""} name={plan?.project_name ?? ""} last={kind.crumb("")} />
         )}
         <DraftHeader
-          className="mt-4"
           title={kind.title}
           subtitle={ppsdKind ? ppsdSubtitle(pkg?.title ?? "", pkg?.step_reference) : subtitleOf(kind, plan?.implementing_agency ?? "", plan?.plan_date ?? "")}
           state={
@@ -378,7 +377,6 @@ function WritingPage({ current, planHref }: { current: Writing; planHref: string
       <div data-draft-new={current.phase} aria-busy={current.phase === "writing"}>
         <DraftCrumbs pid={project.project_id} name={project.project_name} last={kind.title} />
         <DraftHeader
-          className="mt-4"
           title={kind.title}
           subtitle={subtitleOf(kind, plan.implementing_agency, plan.plan_date)}
           state={
@@ -556,7 +554,6 @@ function WritingBriefPage({ current }: { current: Writing }) {
       <div data-draft-new={current.phase} aria-busy={current.phase === "writing"}>
         <DraftCrumbs pid={project.project_id} name={project.project_name} last={kind.title} />
         <DraftHeader
-          className="mt-4"
           title={kind.title}
           subtitle={<Fill template={kind.subtitle} slots={{ name: project.project_name, pid: <IdText id={project.project_id} />, country: project.country ?? "" }} />}
           state={

@@ -19,6 +19,16 @@ test("the capture list photographs every gallery page at 1440, 1024 and 390 px",
   }
 });
 
+// Ticket 95: every Task zone state at 1440 and 390 px, and the open and closed zones at 1024 px too.
+test("the capture list photographs each Task zone state at 1440 and 390 px, and open and closed at 1024 px", () => {
+  const widths = (state: string) => SHOTS.find((shot) => shot.name === `zones--state-${state}`)?.widths ?? [];
+  for (const state of ["open", "closed", "loading", "error", "empty"]) {
+    expect(widths(state), state).toEqual(expect.arrayContaining([1440, 390]));
+  }
+  expect(widths("open")).toContain(1024);
+  expect(widths("closed")).toContain(1024);
+});
+
 test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {
   expect(SHOTS.filter((shot) => shot.name.includes("--hover-")).length).toBeGreaterThan(5);
   expect(SHOTS.filter((shot) => shot.name.includes("--focus-")).length).toBeGreaterThan(5);

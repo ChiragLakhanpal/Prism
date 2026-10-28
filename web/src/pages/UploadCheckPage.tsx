@@ -148,7 +148,7 @@ export function UploadCheckPage({ uploadId, search }: { uploadId: string; search
   return (
     <div data-upload-check-page={load.status}>
       <Breadcrumb trail={trail} />
-      <div className="mt-4">{body}</div>
+      <div>{body}</div>
     </div>
   );
 }
