@@ -36,3 +36,4 @@ Read first: `docs/design/redesign-2026-10/plan.md` section 5.7 and 8.0 (the pack
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - Unblocks nothing: no ticket lists 115 under Blocked by.
 - October 28, 2026, orchestrator (04:12 PDT): the App redeploy ran from 4484310a (the catch-up block "Tickets 112, 113, 114 and 115, the App redeploy ran"); the tracker on a live package is the owner's check by eye.
+- October 28, 2026, orchestrator (09:07 PDT): the live proof holds (the catch-up block "Ticket 115, step 1 of 1 ran"): the steps route answers state and late_days for six steps and Contract signed done June 22, 2026, once ticket 122 cleaned the plan rows' sections.

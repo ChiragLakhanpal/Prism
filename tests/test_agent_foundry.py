@@ -14,6 +14,7 @@ import pytest
 from strata.agent import sync
 from strata.agent.foundry import FoundryAgent, FoundryError, FoundryProject
 from strata.agent.loop import AgentError
+from strata.agent.retries import Retries
 from strata.config import load_agent
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -57,12 +58,18 @@ def test_a_content_filter_refusal_is_its_own_error_and_any_other_failure_says_th
     def down(method, url, headers, body):
         raise FoundryError(503, "Service Unavailable")
 
+    # A 503 is tried again after a wait (ticket 118): three retries of 5 seconds here, on a fake clock, not time.sleep.
+    retries, waits = Retries(retries=3, retry_seconds=5, max_retry_seconds=60, max_wait_seconds=120), []
     with pytest.raises(AgentError) as filtered:
-        FoundryAgent(ENDPOINT, SPEC, lambda: "not-a-real-token", call=refused, traceparent=lambda: None).respond([], None)
+        FoundryAgent(ENDPOINT, SPEC, lambda: "not-a-real-token", call=refused, traceparent=lambda: None,
+                     retries=retries, sleep=waits.append).respond([], None)
+    filtered_waits = list(waits)
     with pytest.raises(AgentError) as unavailable:
-        FoundryAgent(ENDPOINT, SPEC, lambda: "not-a-real-token", call=down, traceparent=lambda: None).respond([], None)
+        FoundryAgent(ENDPOINT, SPEC, lambda: "not-a-real-token", call=down, traceparent=lambda: None,
+                     retries=retries, sleep=waits.append).respond([], None)
 
     assert (filtered.value.code, unavailable.value.code) == ("content_filter", "agent_unavailable")
+    assert filtered_waits == [] and waits == [5, 5, 5]
 
 
 def test_a_token_microsoft_entra_id_would_not_give_says_the_agent_is_unavailable():

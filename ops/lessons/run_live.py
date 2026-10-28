@@ -62,14 +62,16 @@ def main(argv=None) -> int:
     run_id = f"lessons-{clock():%Y%m%dT%H%M%S}"
     try:
         changed = propose.run(engine, model, run_id, clock)
-        agent = lesson_writer_from_environment(env)()
+        writer_for = lesson_writer_from_environment(env)  # a fresh writer for each item, with its own waits
+        agent = writer_for()
         notes = 0
         if agent is not None:
             most = int(load_thresholds().value("lesson_review.likely_repeats_max"))
             # The verifier's judge, for the sentences checks 1 to 3 cannot prove (ticket 61); without its keys they
             # are removed, never shown unchecked.
             judge = judges.from_environment(env)
-            notes = writer.run(engine, lambda item, subject: agent, clock, most, judge_for=lambda item, subject: judge)
+            notes = writer.run(engine, lambda item, subject: writer_for(), clock, most,
+                               judge_for=lambda item, subject: judge)
     except (EngineError, batch.BatchError) as error:
         print(f"The run stopped: {error}")
         return 2
