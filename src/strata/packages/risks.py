@@ -60,12 +60,14 @@ EMPTY_REASONS = ("missing_criteria", "no_comparables", "no_reports", "no_lessons
 
 @dataclass(frozen=True)
 class RiskTable:
-    """What the builder made: the section's payload, every row the tools returned, and the verifier's verdict on
-    the rows' claims (None when no row was written)."""
+    """What the builder made: the section's payload, every row the tools returned, the verifier's verdict on the
+    rows' claims (None when no row was written), and find_comparables' abstention when it gave one, such as
+    unknown_package for a STEP reference no plan lists, which the route answers with 404 (ticket 30's review, F9)."""
 
     payload: dict
     facts: Facts
     verdict: Verdict | None
+    abstention: dict | None = None
 
 
 def rank(candidate: tuple[dict, dict]) -> tuple:
@@ -172,6 +174,8 @@ def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, wo
                "source_names": list(dict.fromkeys(names[key].dataset_name for key in registry_sources)),
                "data_through": None, "as_of": as_of.isoformat() if as_of else None}
 
+    abstention = None  # find_comparables', once it has answered
+
     def finish(verdict: Verdict | None = None, **changes) -> RiskTable:
         payload.update(changes)
         shown = {row["risk_key"] for row in payload["rows"]}
@@ -179,7 +183,7 @@ def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, wo
         payload["selected_not_shown"] = [
             {"risk_key": key, "risk_label": (lists.risk_factor(key).label if lists.risk_factor(key) else key)}
             for key in stored if key not in shown]
-        return RiskTable(payload, facts, verdict)
+        return RiskTable(payload, facts, verdict, abstention)
 
     def run(name: str, arguments: Mapping) -> dict:
         result = registry.call(name, {key: value for key, value in arguments.items() if value is not None}, context,
@@ -190,6 +194,7 @@ def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, wo
     if criteria is None:
         return finish(empty_reason="missing_criteria")
     comparables = run("find_comparables", criteria)
+    abstention = comparables["abstention"]
     payload["as_of"], payload["data_through"] = comparables["as_of"], comparables["records_through"]
     # A package from a STEP row is described by its plan row, which find_comparables read.
     words = words or (comparables.get("package") or {}).get("description")

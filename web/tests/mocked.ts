@@ -48,6 +48,15 @@ export function recordingFor<T>(responses: Record<string, T>, url: URL): T | und
   return best;
 }
 
+// The routes the server tags as calling a model (src/strata/server/tags.py), recorded from its router in
+// model-routes.json, which tests/test_project_hub.py keeps in step with create_app. The answer says whether a request
+// goes to one of them: a part of a route's path in braces, such as {draft_id}, matches any one part of the address.
+export async function modelRoutes(): Promise<{ count: number; callsAModel: (method: string, path: string) => boolean }> {
+  const models: { method: string; path: string }[] = JSON.parse(await recorded("model-routes.json")).routes;
+  const routes = models.map(({ method, path }) => new RegExp(`^${method} ${path.replace(/\{[^}]+\}/g, "[^/]+")}$`));
+  return { count: routes.length, callsAModel: (method, path) => routes.some((route) => route.test(`${method} ${path}`)) };
+}
+
 // Serve /api from recorded responses. An /api call with no recording fails the test that made it.
 export async function mockApi(page: Page, responses: Record<string, { status?: number; body: string }>) {
   const unrecorded: string[] = [];

@@ -8,15 +8,19 @@ in src/strata/tools/sql/check_plan/.
 
 The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAUDE.md rule 9):
 
-- Needs a look: no signed contract, and the planned completion (the first published planned date
-  of the Contract Completion step) passed before the as-of date, for an activity estimated at
-  completion_passed_min_estimated_usd or more, or with no estimate, so a missing amount never
-  hides it. The reason gives the days left before closing.
+- Needs a look: no signed contract, and the planned completion passed before the as-of date, for
+  an activity estimated at completion_passed_min_estimated_usd or more, or with no estimate, so a
+  missing amount never hides it. The planned completion is the first published planned date of the
+  Contract Completion step, or this version's own planned date when the first listing gives none or
+  is not yet public (activities.sql). The reason gives the days left before closing.
 - Watch: no signed contract and still pending days_before_closing days or fewer before the
   project's closing date, or after it. Not added when the planned completion already passed,
   because that reason gives the closing date and the days left.
 - Watch: a signed amount at least actual_to_estimate_ratio times its estimate. The reason also
   gives how many days after its first published planned date the contract was signed.
+
+A reason that measures from a first published planned date cites the plan row that gave it, beside
+the row checked, so a later plan that moves the date never leaves the delay without its source.
 - Data note: each note the plan reader wrote, and a check the tool could not run because the plan
   gives no planned completion date or no estimate (the activity then counts as not fully checked).
 
@@ -97,7 +101,7 @@ def _whole(value) -> int | None:
     return None if value is None or value == "" else int(value)
 
 
-def _flag(value) -> bool | None:
+def _boolean(value) -> bool | None:
     if value is None or value == "":
         return None
     return value if isinstance(value, bool) else str(value).lower() == "true"
@@ -202,14 +206,15 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
     wanted = asked.strip().lower()
     mine = [v for v in versions if v["implementing_agency"].lower() == wanted or agency_id(v["implementing_agency"]) == wanted]
     if not mine:
-        agencies = {}
-        for version in public:  # the latest public version of each agency, by name
-            agencies[version["implementing_agency"]] = version["plan_date"]
+        # The latest public version of each agency, by its id, so an agency whose name is spelled two ways is listed
+        # once, as its latest plan spells it.
+        agencies = {agency_id(version["implementing_agency"]): version for version in public}
         record = [name for name in record_agencies if name.lower() == wanted or agency_id(name) == wanted]
         return None, {"reason": "no_plan_from_agency", "implementing_agency": asked,
                       "agency_name": record[0] if record else None,
-                      "agencies": [{"implementing_agency": name, "agency_id": agency_id(name),
-                                    "latest_plan_date": _iso(date)} for name, date in sorted(agencies.items())]}
+                      "agencies": [{"implementing_agency": version["implementing_agency"], "agency_id": key,
+                                    "latest_plan_date": _iso(version["plan_date"])}
+                                   for key, version in sorted(agencies.items())]}
     mine_public = [version for version in mine if version["public_from"] <= call.as_of]
     latest = mine_public[-1] if mine_public else None
     name = (latest or mine[-1])["implementing_agency"]  # as its latest plan spells it
@@ -222,10 +227,13 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
     named = [version for version in mine if version["plan_date"] == plan_date]
     if not named:
         return None, {"reason": "version_not_found", "plan_date": _iso(plan_date), **agency}
-    if named[-1]["public_from"] > call.as_of:
+    # Two documents can share a plan date, such as a plan and its re-issue; the one disclosed latest by the as-of
+    # date is the version, so a later disclosure never hides one that was public then.
+    named_public = [version for version in named if version["public_from"] <= call.as_of]
+    if not named_public:
         return None, {"reason": "version_not_public", "plan_date": _iso(plan_date),
-                      "public_from": _iso(named[-1]["public_from"]), **agency}
-    return {**named[-1], "is_latest": named[-1] is latest}, None
+                      "public_from": _iso(named[0]["public_from"]), **agency}
+    return {**named_public[-1], "is_latest": named_public[-1] is latest}, None
 
 
 def _plan(version: dict, project_id: str) -> dict:
@@ -333,12 +341,21 @@ DATES = ("signed_on", "planned_signing_on", "planned_signing_plan_date", "planne
 
 
 def _typed(raw: dict) -> dict:
-    """One activity's values from either engine, typed once: dates, amounts, whole numbers and a flag."""
+    """One activity's values from either engine, typed once: dates, amounts, whole numbers and a true-or-false
+    value."""
     return {**raw, **{key: _date(raw[key]) for key in DATES},
             "estimated_amount_usd": _money(raw["estimated_amount_usd"]),
             "actual_amount_usd": _money(raw["actual_amount_usd"]),
             "days_late": _whole(raw["days_late"]), "pdf_page": _whole(raw["pdf_page"]),
-            "first_listing_confirmed": _flag(raw["first_listing_confirmed"])}
+            "first_listing_confirmed": _boolean(raw["first_listing_confirmed"])}
+
+
+def _first_listed(row: dict, document: str, cite: list[str]) -> list[str]:
+    """The row cited, then the plan row that gave a delay's first published planned date when another plan gave it
+    (ticket 09's verification round 2, V2). An upload's rows name no such document."""
+    reference, first = row.get("activity_reference_no"), row.get(document)
+    found = f"strata.silver.plan_rows:{first}/{reference}" if first and reference else None
+    return cite + [found] if found and found not in cite else cite
 
 
 def _signals(row: dict, cite: list[str], project: dict, limits: Thresholds,
@@ -350,6 +367,7 @@ def _signals(row: dict, cite: list[str], project: dict, limits: Thresholds,
     contract = row["signed_on"] is not None or status in CONTRACT_STATUSES
     pending = not contract and (status is None or status in PENDING_STATUSES)
     closing, days_to_close = project["closing_date"], project["days_to_close"]
+    completion_cite = _first_listed(row, "planned_completion_document", cite)
     near = cite + [project["evidence_id"]]
 
     completion_passed = False
@@ -358,7 +376,8 @@ def _signals(row: dict, cite: list[str], project: dict, limits: Thresholds,
             notes.append(_reason("no_planned_date", "data_note", cite, step="Contract Completion"))
         elif row["planned_completion_on"] < as_of:
             completion_passed = True
-            signals.append(_reason("completion_passed_no_contract", "needs_a_look", near if closing else cite,
+            signals.append(_reason("completion_passed_no_contract", "needs_a_look",
+                                   completion_cite + [project["evidence_id"]] if closing else completion_cite,
                                    planned_completion_on=_iso(row["planned_completion_on"]),
                                    planned_completion_plan_date=_iso(row["planned_completion_plan_date"]),
                                    closing_date=closing, days_to_close=days_to_close))
@@ -375,7 +394,8 @@ def _signals(row: dict, cite: list[str], project: dict, limits: Thresholds,
             if actual / estimated >= limits.actual_to_estimate_ratio:
                 late = row["days_late"] is not None and row["days_late"] > 0
                 signals.append(_reason(
-                    "signed_late_over_estimate" if late else "signed_over_estimate", "watch", cite,
+                    "signed_late_over_estimate" if late else "signed_over_estimate", "watch",
+                    _first_listed(row, "planned_signing_document", cite) if late else cite,
                     signed_on=_iso(row["signed_on"]), actual_amount_usd=_text(actual),
                     estimated_amount_usd=_text(estimated), ratio=about, ratio_exact=str(exact),
                     days_late=row["days_late"] if late else None,
@@ -389,6 +409,8 @@ def _note(note: dict, cite: list[str]) -> dict:
     if note["note"] == "method_differs_from_reference":
         return _reason(note["note"], "data_note", cite, reference_method_code=note["reference_method_code"],
                        reference_method=note["reference_method"], method=note["method"])
+    if note["note"] == "method_unknown":  # the plan's own words, which no method name in the registry matches
+        return _reason(note["note"], "data_note", cite, method=note["method"])
     return _reason(note["note"], "data_note", cite, process_status=note["process_status"],
                    actual_amount_usd=_text(_money(note["actual_amount_usd"])))
 

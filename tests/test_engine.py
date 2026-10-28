@@ -6,6 +6,7 @@ runs the real thing.
 """
 
 import datetime as dt
+import http.client
 import io
 import urllib.error
 import urllib.request
@@ -102,6 +103,44 @@ def test_a_token_the_workspace_refuses_raises_permission_denied(monkeypatch, cod
     with pytest.raises(refused) as raised:
         http_transport("strata.test", "not-a-real-key")("POST", "/api/2.0/sql/statements/", {})
     assert isinstance(raised.value, PermissionDenied) == (refused is PermissionDenied)
+
+
+class Answers:
+    """A response from the workspace that urlopen hands back: one body, or a failure while it is read."""
+
+    def __init__(self, read):
+        self.read = read
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def cut_off():
+    raise http.client.IncompleteRead(b'{"statement_id": "s-')
+
+
+@pytest.mark.parametrize("answer, says", [
+    (Answers(cut_off), "could not reach the workspace"),  # the connection ended part way through the answer
+    (Answers(lambda: b"<html>Bad gateway</html>"), "could not read the workspace's answer"),  # not JSON at all
+], ids=["http-exception", "not-json"])
+def test_an_answer_the_transport_cannot_read_raises_an_engine_error_with_its_reason(monkeypatch, answer, says):
+    """Ticket 06's review round 3, P3: the transport's two other branches."""
+    monkeypatch.setattr(urllib.request, "urlopen", lambda request, timeout: answer)
+
+    with pytest.raises(EngineError, match=says) as raised:
+        http_transport("strata.test", "not-a-real-key")("POST", "/api/2.0/sql/statements/", {})
+    assert not isinstance(raised.value, PermissionDenied)
+
+
+def test_a_database_file_already_attached_in_this_process_gives_an_engine_error(tmp_path):
+    """Ticket 35's verification round 4, F3: DuckDB refuses to attach one file twice in a process, and that refusal
+    is an EngineError, which the routes answer with their data service error, not a 500."""
+    with DuckDBEngine.open(tmp_path / "state.duckdb"):
+        with pytest.raises(EngineError, match="state.duckdb"):
+            DuckDBEngine.open(tmp_path / "state.duckdb")
 
 
 def test_spark_gets_the_same_text_and_named_parameters():

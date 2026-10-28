@@ -113,6 +113,13 @@ def test_the_agents_tool_list_is_generated_from_the_registry_and_holds_exactly_i
         assert "as_of" not in tool["parameters"]["required"]
 
 
+def tool_list_texts() -> list[str]:
+    """Every text the agent's tool list holds: each tool's description, then each parameter's."""
+    listed = registry.agent_tools()
+    return [tool["description"] for tool in listed] + [
+        parameter["description"] for tool in listed for parameter in tool["parameters"]["properties"].values()]
+
+
 def test_the_agents_limit_description_takes_its_numbers_from_the_thresholds_file(tmp_path):
     """The prompt and the tool use the same numbers, so changing the thresholds file changes both."""
     text = (ROOT / "config" / "thresholds.toml").read_text()
@@ -125,10 +132,7 @@ def test_the_agents_limit_description_takes_its_numbers_from_the_thresholds_file
 
     assert limit() == "How many passages to return, from 1 to 20. Leave it out for 10."
     assert limit(config.load_thresholds(path)) == "How many passages to return, from 1 to 15. Leave it out for 10."
-    texts = [tool["description"] for tool in registry.agent_tools()] + [
-        parameter["description"] for tool in registry.agent_tools()
-        for parameter in tool["parameters"]["properties"].values()]
-    assert [text for text in texts if "{" in text] == []
+    assert [text for text in tool_list_texts() if "{" in text] == []
 
 
 def test_the_sector_parameter_names_the_slice_file_s_sectors(monkeypatch):
@@ -179,9 +183,7 @@ def test_the_agents_tool_list_uses_no_word_design_md_says_strata_never_writes():
     import re
 
     words = never_written()
-    texts = [tool["description"] for tool in registry.agent_tools()] + [
-        parameter["description"] for tool in registry.agent_tools()
-        for parameter in tool["parameters"]["properties"].values()]
+    texts = tool_list_texts()
 
     def forms(word: str) -> str:
         """Every form of the word: approve, approves, approved, approving; flag, flags, flagged, flagging."""
@@ -477,6 +479,27 @@ def test_changing_days_before_closing_in_the_thresholds_file_changes_ke_nwwda_54
     assert result["counts"]["watch"] == 1
 
 
+@pytest.mark.parametrize("key, setting, reference, marked", [
+    # KE-NWWDA-229129-CW-RFB was signed at US$1,245,092.76 against US$300,000.00, about 4.15 times its estimate.
+    ("actual_to_estimate_ratio", "5", "KE-NWWDA-229129-CW-RFB", []),
+    # KE-NWWDA-541055-CW-RFB is estimated at US$1,230,000.00; below the amount it is still pending 9 days before closing.
+    ("completion_passed_min_estimated_usd", "2_000_000", "KE-NWWDA-541055-CW-RFB", ["watch"]),
+], ids=["ratio", "amount"])
+def test_each_plan_check_threshold_comes_from_the_thresholds_file(engine, tmp_path, key, setting, reference, marked):
+    """Ticket 09's verification round 2, V3: each of [plan_check]'s three values moves a mark when the file changes,
+    so none is held in code (CLAUDE.md rule 9). days_before_closing is the test above."""
+    path = tmp_path / "thresholds.toml"
+    text = (ROOT / "config" / "thresholds.toml").read_text()
+    [line] = [line for line in text.splitlines() if line.startswith(f"{key} = ")]
+    path.write_text(text.replace(line, f"{key} = {setting}"))
+
+    before = check_plan(engine, plan_date="2026-10-09", as_of="2026-10-22")
+    after = check_plan(engine, thresholds=config.load_thresholds(path), plan_date="2026-10-09", as_of="2026-10-22")
+
+    assert marks(before)[reference] != marked
+    assert marks(after)[reference] == marked
+
+
 # ── Abstentions and refused calls ────────────────────────────────────────
 
 def test_an_agency_with_no_plan_gets_an_abstention_that_lists_the_agencies_with_plans(engine):
@@ -521,7 +544,7 @@ def fresh():
         yield engine
 
 
-def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked_and_says_why(fresh):
+def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked_and_says_why(fresh, monkeypatch):
     """A made-up plan with two activities no recorded plan has: one pending, estimated at
     US$2,000,000.00, with no planned Contract Completion, and one signed at US$50,000.00 with no
     Estimated Amount. The project closes June 30, 2027."""
@@ -554,6 +577,7 @@ def test_an_activity_whose_plan_lacks_a_date_or_an_estimate_is_not_fully_checked
     assert {(item["reason"], item["count"]) for item in result["coverage"]["not_used"]} == {
         ("no_planned_date", 1), ("no_estimate", 1)}
 
+    monkeypatch.setattr(registry, "today", lambda: dt.date(2027, 7, 15))  # a date after today is read as today
     after_closing = registry.call("check_plan", {**arguments, "as_of": "2027-07-15"}, context)
 
     assert marks(after_closing)["XX-MADE-1-CW-RFB"] == ["watch", "data_note"]
@@ -578,6 +602,12 @@ def test_the_latest_version_is_chosen_by_date_when_the_agency_s_name_is_spelled_
                                           "as_of": "2026-10-22"}, registry.Context(engine=fresh, viewer=ANA))
 
     assert (result["plan"]["document_id"], result["plan"]["plan_date"]) == ("capitals", "2026-02-01")
+    # An agency with no plan lists each agency with a plan once, by its id, as its latest plan spells it (ticket 09's
+    # review round 2, R2-P5).
+    other = registry.call("check_plan", {"project_id": "P000003", "implementing_agency": "Another Agency",
+                                         "as_of": "2026-10-22"}, registry.Context(engine=fresh, viewer=ANA))
+    assert other["abstention"]["agencies"] == [{"implementing_agency": "A MADE-UP AGENCY",
+                                                "agency_id": "a-made-up-agency", "latest_plan_date": "2026-02-01"}]
 
 
 def test_a_plan_disclosed_before_an_older_one_is_checked_on_its_own_dates_until_the_older_one_is_public(fresh):
@@ -642,6 +672,57 @@ def test_a_plan_disclosed_before_an_older_one_is_checked_on_its_own_dates_until_
     assert reasons(once_both_are_public, "XX-1-CW-RFB")["completion_passed_no_contract"][
         "planned_completion_on"] == "2021-09-30"  # the first published planned date
     assert reasons(once_both_are_public, "XX-2-GO-RFQ")["signed_late_over_estimate"]["days_late"] == 111
+    # Each delay cites the row that gave its first published planned date, the older plan's, beside the row checked
+    # (ticket 09's verification round 2, V2), so a later plan that moves the date never leaves a true delay uncited.
+    # As of December 10 the planned completion was the newer plan's own, so only its row is cited.
+    assert reasons(once_both_are_public, "XX-1-CW-RFB")["completion_passed_no_contract"]["evidence_ids"] == [
+        "strata.silver.plan_rows:newer/XX-1-CW-RFB", "strata.silver.plan_rows:older/XX-1-CW-RFB",
+        f"strata.gold.project:{project}"]
+    assert reasons(once_both_are_public, "XX-2-GO-RFQ")["signed_late_over_estimate"]["evidence_ids"] == [
+        "strata.silver.plan_rows:newer/XX-2-GO-RFQ", "strata.silver.plan_rows:older/XX-2-GO-RFQ"]
+    assert reasons(result, "XX-1-CW-RFB")["completion_passed_no_contract"]["evidence_ids"] == [
+        "strata.silver.plan_rows:newer/XX-1-CW-RFB", f"strata.gold.project:{project}"]
+
+
+def test_a_named_version_public_on_the_as_of_date_is_chosen_over_a_later_one_of_the_same_date(fresh):
+    """Two made-up plans of one agency, both dated January 15, 2026 (ticket 09's review round 2, R2-P1): the first
+    disclosed on January 20, the second, a re-issue, on March 1. As of February 1 a call for that plan date checks
+    the first, which was public, and does not say the version is not public. From March 1 it checks the re-issue."""
+    from strata.lakehouse.plans import insert
+
+    insert(fresh, "strata.gold.project", ("project_id", "project_name", "closing_date", "public_from"),
+           [("P000004", "A made-up project", dt.date(2028, 6, 30), dt.date(2020, 1, 1))])
+    insert(fresh, "strata.silver.plan_versions",
+           ("document_id", "project_id", "implementing_agency", "plan_date", "series_order", "is_latest", "pdf_pages",
+            "route_b_pages", "text_url", "pdf_url", "public_from"),
+           [("first", "P000004", "A Made-Up Agency", dt.date(2026, 1, 15), 1, False, 1, 1, "f.txt", "f.pdf",
+             dt.date(2026, 1, 20)),
+            ("reissued", "P000004", "A Made-Up Agency", dt.date(2026, 1, 15), 2, True, 1, 1, "r.txt", "r.pdf",
+             dt.date(2026, 3, 1))])
+    context = registry.Context(engine=fresh, viewer=ANA)
+    arguments = {"project_id": "P000004", "implementing_agency": "A Made-Up Agency", "plan_date": "2026-01-15"}
+
+    before_the_reissue = registry.call("check_plan", {**arguments, "as_of": "2026-02-01"}, context)
+    after_it = registry.call("check_plan", {**arguments, "as_of": "2026-03-10"}, context)
+    before_both = registry.call("check_plan", {**arguments, "as_of": "2026-01-16"}, context)
+
+    assert before_the_reissue["abstention"] == {"reason": "no_activities", "plan_date": "2026-01-15"}
+    assert (before_the_reissue["plan"]["document_id"], before_the_reissue["plan"]["is_latest"]) == ("first", True)
+    assert (after_it["plan"]["document_id"], after_it["plan"]["is_latest"]) == ("reissued", True)
+    assert before_both["abstention"]["reason"] == "version_not_public"
+
+
+def test_an_as_of_date_after_today_is_read_as_today(engine, monkeypatch):
+    """Ticket 09's verification round 2, V1: as of 2030-01-01 the tool counted days that had not passed, a
+    days_to_close of -1158. A call's date after today is read as today (ADR 0002); a page's date is the route's to
+    keep to its own today (tests/test_app_clock.py)."""
+    monkeypatch.setattr(registry, "today", lambda: dt.date(2026, 10, 22))
+
+    result = check_plan(engine, plan_date="2026-10-09", as_of="2030-01-01")
+
+    assert result["as_of"] == "2026-10-22"
+    assert reasons(result, "KE-NWWDA-541062-CW-RFQ")["pending_near_closing"]["days_to_close"] == 9
+    assert result["project"]["days_to_close"] == 9
 
 
 @pytest.mark.parametrize("name, arguments, says", [
@@ -718,13 +799,6 @@ def data_notes_written(sql: str) -> set[str]:
     return set(re.findall(r"r\.activity_reference_no, '([a-z_]+)'", sql))
 
 
-# The one note the plan reader writes that check_plan's reasons do not list, found when this test was written
-# (ticket 49): method_unknown, a Method cell the method-name registry does not list (ticket 42). A plan with such a
-# row would get HTTP 500 tool_contract. The fix is check_plan's own (its reasons, its values and a copy sentence),
-# so it is a follow-up; when it lands, this set becomes empty and the test below says so.
-UNLISTED_NOTES = {"method_unknown"}
-
-
 def test_every_data_note_the_plan_reader_writes_is_a_reason_check_plan_lists():
     """Ticket 09's review, R2-P2, for the change drill: plan_data_notes.sql is the one definition of each note, and
     check_plan passes each note's name through as a reason code. A note added there without the same name in
@@ -733,7 +807,38 @@ def test_every_data_note_the_plan_reader_writes_is_a_reason_check_plan_lists():
     sql = (ROOT / "src" / "strata" / "lakehouse" / "sql" / "plans" / "plan_data_notes.sql").read_text()
     reasons = set(config.load_tools()["check_plan"].result.reasons)
 
-    assert {"method_differs_from_reference", "actual_amount_zero"} <= data_notes_written(sql)  # the scan still works
-    assert data_notes_written(sql) - reasons == UNLISTED_NOTES
+    assert {"method_differs_from_reference", "actual_amount_zero", "method_unknown"} <= data_notes_written(sql)
+    assert data_notes_written(sql) <= reasons
     planted = sql + "\nUNION ALL\nSELECT r.document_id, r.project_id, r.activity_reference_no, 'lot_count_differs'"
-    assert data_notes_written(planted) - reasons == UNLISTED_NOTES | {"lot_count_differs"}
+    assert data_notes_written(planted) - reasons == {"lot_count_differs"}
+
+
+def test_a_method_name_the_registry_does_not_list_is_a_data_note_on_the_plan_check(fresh):
+    """Ticket 49's review round 2, follow-up 1: a Method cell the method-name registry does not list gets the plan
+    reader's method_unknown note (ticket 42), and the plan check shows it with the plan's own words, where it once
+    answered HTTP 500 tool_contract. A made-up plan of one activity whose Method cell reads "Reverse auction"."""
+    from strata.lakehouse.plans import insert
+
+    insert(fresh, "strata.gold.project", ("project_id", "project_name", "closing_date", "public_from"),
+           [("P000005", "A made-up project", dt.date(2028, 6, 30), dt.date(2020, 1, 1))])
+    insert(fresh, "strata.silver.plan_versions",
+           ("document_id", "project_id", "implementing_agency", "plan_date", "series_order", "is_latest", "pdf_pages",
+            "route_b_pages", "text_url", "pdf_url", "public_from"),
+           [("auction", "P000005", "A Made-Up Agency", dt.date(2026, 1, 15), 1, True, 1, 1, "a.txt", "a.pdf",
+             dt.date(2026, 1, 15))])
+    insert(fresh, "strata.silver.plan_rows",
+           ("document_id", "project_id", "section", "activity_reference_no", "method", "estimated_amount_usd",
+            "actual_amount_usd", "process_status", "pdf_page", "parser", "public_from"),
+           [("auction", "P000005", "GOODS", "XX-MADE-5-GO-RFQ", "Reverse auction", 50000, 0, "Pending Implementation",
+             2, "made up", dt.date(2026, 1, 15))])
+    insert(fresh, "strata.silver.plan_data_notes",
+           ("document_id", "project_id", "activity_reference_no", "note", "method", "process_status",
+            "actual_amount_usd", "public_from"),
+           [("auction", "P000005", "XX-MADE-5-GO-RFQ", "method_unknown", "Reverse auction", "Pending Implementation", 0,
+             dt.date(2026, 1, 15))])
+
+    result = registry.call("check_plan", {"project_id": "P000005", "implementing_agency": "A Made-Up Agency",
+                                          "as_of": "2026-10-22"}, registry.Context(engine=fresh, viewer=ANA))
+
+    note = reasons(result, "XX-MADE-5-GO-RFQ")["method_unknown"]
+    assert (note["mark"], note["method"]) == ("data_note", "Reverse auction")

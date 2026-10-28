@@ -22,6 +22,7 @@ import decimal
 import functools
 import http.client
 import json
+import logging
 import os
 import re
 import time
@@ -33,6 +34,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 Params = Mapping[str, Any] | None
+log = logging.getLogger("strata.lakehouse.engine")
 
 
 class EngineError(RuntimeError):
@@ -180,8 +182,14 @@ class DuckDBEngine:
         import duckdb
 
         connection = duckdb.connect(config=duckdb_config())
-        connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",  # sql-lint: names only
-                           [str(path) if path else ":memory:"])  # the path is bound; only the keyword is built in
+        try:
+            connection.execute(f"ATTACH ? AS strata{' (READ_ONLY)' if read_only else ''}",  # sql-lint: names only
+                               [str(path) if path else ":memory:"])  # the path is bound; only the keyword is built in
+        except duckdb.Error as error:
+            # Such as a file this process has attached already, which DuckDB refuses to attach twice, or one another
+            # process holds: the caller's data service error, not a crash (ticket 35's verification round 4, F3).
+            connection.close()
+            raise EngineError(f"DuckDB could not open the database file {path}: {error}") from error
         _session(connection)
         return cls(connection)
 
@@ -389,6 +397,7 @@ class WarehouseEngine:
         waited = float(wait)  # a reply that is still running means the warehouse held the call this long
         while reply.get("status", {}).get("state") in WAITING:
             if waited >= self.timeout_seconds:
+                self._cancel(reply.get("statement_id"))
                 raise EngineError(f"The warehouse took longer than {waited:.0f} seconds, "
                                   f"so I stopped waiting for statement {reply.get('statement_id')}.")
             self.sleep(self.poll_seconds)
@@ -404,6 +413,17 @@ class WarehouseEngine:
             raise refused(f"The warehouse did not run the statement. Its state was {status.get('state')}: {message}")
 
         return self._result(reply)
+
+    def _cancel(self, statement: str | None) -> None:
+        """Ask the warehouse to stop a statement this engine gave up on, so it does not keep running there (ticket
+        06's review round 3, P2). A cancel that fails is logged and changes nothing: the caller still gets the
+        error that it gave up."""
+        if not statement:
+            return
+        try:
+            self.transport("POST", f"{STATEMENTS}{statement}/cancel", None)
+        except Exception as error:  # noqa: BLE001 - the workspace or the network; the read failed either way
+            log.warning("I could not cancel statement %s on the warehouse: %s", statement, error)
 
     def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 100,
                     chunk_characters: int = PARAMETER_CHARACTERS) -> int:

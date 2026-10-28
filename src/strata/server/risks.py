@@ -4,7 +4,8 @@
   builder (src/strata/packages/risks.py) as the viewer, as of ?asof= (never later than today) and in ?view=,
   and answer with the section's payload: its rows, counts, checks and empty reason, and the viewer's selection.
   A package from a STEP row takes section 1's criteria as find_comparables' own parameter names
-  (?review_type=Prior, ?country=any), as GET /api/packages/{step_reference}/comparables does; a package from a
+  (?review_type=Prior, ?country=any), as GET /api/packages/{step_reference}/comparables does, and a STEP reference
+  no plan lists gets 404 unknown_package, as GET /api/packages/{step_reference} does; a package from a
   sentence uses the criteria its author saved, and only its author may open it (404 unknown_package for anyone
   else, as for a package that does not exist).
 - PUT /api/packages/{step_reference}/risk-selection and PUT /api/planned-packages/{package_id}/risk-selection
@@ -36,6 +37,7 @@ from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.packages import risks, workflow
 from strata.packages.store import PackageStore
 from strata.server.engines import EngineFor
+from strata.server.tags import MODEL
 from strata.server.packages import comparables_criteria
 from strata.tools import registry
 
@@ -89,11 +91,25 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
             ref = reference()
             log.exception("The data service failed on the risks for %s %s, reference %s.", kind, key, ref)
             return refused(503, "data_service", trace_id=ref)
+        # A STEP reference no plan lists has no risks, as it has no package page (ticket 30's review, F9).
+        if (built.abstention or {}).get("reason") == "unknown_package":
+            return refused(404, "unknown_package")
         return built.payload
 
-    def mine(viewer: Viewer, package_id: str):
-        saved = store.get(package_id) if store is not None else None
-        return saved if saved is not None and saved.author_id == viewer.user_id else None
+    def owned(viewer: Viewer, package_id: str):
+        """The viewer's own package from a sentence, or the answer a page gets instead: 401 with no identity, 404 for
+        a package that does not exist or that someone else made, and 503 when the store cannot answer."""
+        if not viewer.user_id:
+            return refused(401, "no_identity")
+        try:
+            saved = store.get(package_id) if store is not None else None
+        except Exception:  # Lakebase or the network
+            ref = reference()
+            log.exception("I could not read package %s, reference %s.", package_id, ref)
+            return refused(503, "data_service", trace_id=ref)
+        if saved is None or saved.author_id != viewer.user_id:
+            return refused(404, "unknown_package")
+        return saved
 
     def save(viewer: Viewer, body: SelectionRequest, kind: str, key: str):
         if not viewer.user_id:
@@ -112,7 +128,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
                           key, ref)
             return refused(503, "not_saved", trace_id=ref)
 
-    @app.get("/api/packages/{step_reference}/risks")
+    @app.get("/api/packages/{step_reference}/risks", tags=[MODEL])
     def step_row_risks(step_reference: str, request: Request, asof: dt.date | None = None, view: str = STAFF,
                        viewer: Viewer = Depends(current_viewer)):
         criteria = comparables_criteria(request)
@@ -125,19 +141,12 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
     def step_row_selection(step_reference: str, body: SelectionRequest, viewer: Viewer = Depends(current_viewer)):
         return save(viewer, body, STEP_ROW, step_reference)
 
-    @app.get("/api/planned-packages/{package_id}/risks")
+    @app.get("/api/planned-packages/{package_id}/risks", tags=[MODEL])
     def planned_risks(package_id: str, asof: dt.date | None = None, view: str = STAFF,
                       viewer: Viewer = Depends(current_viewer)):
-        if not viewer.user_id:
-            return refused(401, "no_identity")
-        try:
-            saved = mine(viewer, package_id)
-        except Exception:
-            ref = reference()
-            log.exception("I could not read package %s, reference %s.", package_id, ref)
-            return refused(503, "data_service", trace_id=ref)
-        if saved is None:
-            return refused(404, "unknown_package")
+        saved = owned(viewer, package_id)
+        if isinstance(saved, JSONResponse):
+            return saved
         shown = workflow.package_view(saved, form, thresholds)
         values = {field["key"]: field["value"] for field in shown["fields"]}
         return table(viewer, view, asof, shown["comparables_query"], values.get("description") or saved.sentence,
@@ -145,14 +154,5 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
 
     @app.put("/api/planned-packages/{package_id}/risk-selection")
     def planned_selection(package_id: str, body: SelectionRequest, viewer: Viewer = Depends(current_viewer)):
-        if not viewer.user_id:
-            return refused(401, "no_identity")
-        try:
-            saved = mine(viewer, package_id)
-        except Exception:
-            ref = reference()
-            log.exception("I could not read package %s, reference %s.", package_id, ref)
-            return refused(503, "data_service", trace_id=ref)
-        if saved is None:
-            return refused(404, "unknown_package")
-        return save(viewer, body, PLANNED, package_id)
+        saved = owned(viewer, package_id)
+        return saved if isinstance(saved, JSONResponse) else save(viewer, body, PLANNED, package_id)

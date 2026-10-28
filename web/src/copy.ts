@@ -2669,6 +2669,8 @@ export const copy = {
       method_differs_from_reference:
         "The reference ends in {code} ({referenceMethod}), but the Method column says {method}. I use the Method column.",
       actual_amount_zero: "{status}, but Actual Amount reads {actual}.",
+      // A Method cell whose name the method-name registry does not list (ticket 42), kept in the plan's own words.
+      method_unknown: "The Method column says {method}, a name I don't know, so I kept the plan's words.",
       no_planned_date: "The plan gives no planned date for {step}, so I couldn't check its timing.",
       no_estimate: "The plan gives no Estimated Amount, so I couldn't compare the signed amount with it.",
       // Ticket 38: the data notes on an upload's rows (the 38 brief, 5.4). The officer's own cell values are quoted on

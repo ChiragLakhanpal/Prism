@@ -1041,16 +1041,20 @@ function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
 // ── The section on a page: it reads, chooses, dates and opens ───────────
 
 // onState hears each state the section's answer passes through, so the tracker at the top of the page (ticket 115)
-// draws from the same answer and the page asks for the steps once.
+// draws from the same answer and the page asks for the steps once. criteria is section 1's comparables query on a
+// STEP row's page, find_comparables' criteria by its own parameter names, which the read and the start date both send,
+// so the section counts the comparables section 1 shows (ticket 27's review round 2, follow-up 5).
 export function StepsSection({
   packageKey,
   kind,
   rerunKey = "",
+  criteria = "",
   onState,
 }: {
   packageKey: string;
   kind: "step" | "planned";
   rerunKey?: string;
+  criteria?: string;
   onState?: (state: StepsState) => void;
 }) {
   const here = useStore(address);
@@ -1074,7 +1078,7 @@ export function StepsSection({
 
   useEffect(() => {
     const controller = new AbortController();
-    const query = new URLSearchParams();
+    const query = new URLSearchParams(criteria);
     if (asOf) query.set("asof", asOf);
     if (view && view !== "staff") query.set("view", view);
     getJson<StepsResult>(`${api}/steps${query.size ? `?${query.toString()}` : ""}`, { signal: controller.signal }).then(
@@ -1090,7 +1094,7 @@ export function StepsSection({
       },
     );
     return () => controller.abort();
-  }, [api, asOf, view, rerunKey, attempt]);
+  }, [api, asOf, view, rerunKey, criteria, attempt]);
 
   // A link to #planned-dates opens the section and moves focus to its heading.
   useEffect(() => {
@@ -1152,8 +1156,10 @@ export function StepsSection({
     setStart((now) => ({ ...now, error: null, committing: true, slow: false, status }));
     setAnnounce(status);
     const slow = setTimeout(() => commits.current === serial && setStart((now) => ({ ...now, slow: true })), SLOW_MS);
-    // The page's as-of date dates the steps from the comparables of then, as the section's first answer did.
-    putJson<StepsResult>(`${api}/step-start${asOf ? `?asof=${encodeURIComponent(asOf)}` : ""}`, { start_date: value }).then(
+    // The page's as-of date and section 1's criteria date the steps from the comparables the first answer used.
+    const query = new URLSearchParams(criteria);
+    if (asOf) query.set("asof", asOf);
+    putJson<StepsResult>(`${api}/step-start${query.size ? `?${query.toString()}` : ""}`, { start_date: value }).then(
       (result) => {
         if (commits.current !== serial) return;
         clearTimeout(slow);

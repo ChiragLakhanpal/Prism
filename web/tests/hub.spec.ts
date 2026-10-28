@@ -10,7 +10,7 @@ import type { Locator, Page, Request } from "@playwright/test";
 import { copy } from "../src/copy";
 import { askFromTheBox, landed, marker, panel } from "./answer-page";
 import { hubApi, KENHA_PLAN } from "./hub-api";
-import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
+import { expect, mockApi, modelRoutes, recorded, test, windowBeside } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
@@ -198,10 +198,10 @@ test("P130164's Summary renders from records with no request to a route that cal
 
   // The routes the server tags as calling a model, recorded from the router (tests/test_project_hub.py
   // keeps the file in step with create_app's tags).
-  const models: { method: string; path: string }[] = JSON.parse(await recorded("model-routes.json")).routes;
-  expect(models.length).toBeGreaterThan(0);
+  const models = await modelRoutes();
+  expect(models.count).toBeGreaterThan(0);
   const called = requests.map((request) => ({ method: request.method(), path: new URL(request.url()).pathname }));
-  expect(called.filter((request) => models.some((model) => model.method === request.method && model.path === request.path))).toEqual([]);
+  expect(called.filter((request) => models.callsAModel(request.method, request.path))).toEqual([]);
   // The Summary is one request.
   expect(called.filter((request) => request.path === "/api/projects/P130164/summary")).toHaveLength(1);
 

@@ -37,11 +37,11 @@ import uuid
 from collections.abc import AsyncIterator, Callable
 from functools import cache
 from importlib import resources
-from typing import Literal
+from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints
 
 from strata.agent.runs import RunLog, run_row
 from strata.config import Thresholds
@@ -53,6 +53,7 @@ from strata.packages import criteria as criteria_of, workflow
 from strata.packages.form import Form, Invalid, payload
 from strata.packages.store import PackageStore
 from strata.server.engines import EngineFor
+from strata.server.tags import MODEL
 from strata.tools import registry
 
 log = logging.getLogger("strata.server.packages")
@@ -65,7 +66,8 @@ DATES = ("notice_from", "notice_to")
 
 
 class PlanRequest(BaseModel):
-    sentence: str = Field(min_length=1, max_length=500)
+    # Its length is counted once the spaces at each end are removed, so a sentence of only spaces is refused (422).
+    sentence: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
     read: bool = True
     view: VIEWS = "staff"
 
@@ -187,7 +189,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
 
     # ── Planning ─────────────────────────────────────────────────────────
 
-    @app.post("/api/planned-packages")
+    @app.post("/api/planned-packages", tags=[MODEL])
     async def start_package(body: PlanRequest, viewer: Viewer = Depends(current_viewer)):
         if (refusal := allowed(viewer)) is not None:
             return refusal
@@ -288,6 +290,10 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
             return refusal
 
         def act():
+            # Only the viewer's own package gets a lock, so an id that names no package of theirs adds none
+            # (ticket 15's review round 3, R5); change() reads the package again under the lock.
+            if mine(viewer, package_id) is None:
+                return refused(404, "unknown_package")
             with lock_for(package_id):
                 return change(viewer, package_id, body)
         return guarded(f"a change to package {package_id}", act)

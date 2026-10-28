@@ -175,6 +175,8 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       );
     case "actual_amount_zero":
       return <Fill template={r.actual_amount_zero} slots={{ status: reason.process_status, actual: amount(reason.actual_amount_usd!) }} />;
+    case "method_unknown":
+      return <Fill template={r.method_unknown} slots={{ method: reason.method }} />;
     case "no_planned_date":
       return <Fill template={r.no_planned_date} slots={{ step: reason.step }} />;
     case "no_estimate":

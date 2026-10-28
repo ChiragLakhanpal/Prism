@@ -23,7 +23,7 @@ from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from strata.lakehouse import catalog
-from strata.lakehouse.engine import DuckDBEngine
+from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.server.app import create_app
 from strata.server.engines import duckdb_file, warehouse_as_viewer
 from strata.server.usage import UsageLog
@@ -130,7 +130,7 @@ def test_the_server_writes_waiting_events_every_few_seconds(ops):
         for _ in range(100):
             try:
                 found = events(ops)
-            except duckdb.Error:  # the writer holds the file at this moment; look again
+            except (duckdb.Error, EngineError):  # the writer holds the file at this moment; look again
                 found = []
             if found:
                 written.extend(found)

@@ -100,8 +100,9 @@
 Each request a viewer makes, except /api/health and the web app's files, writes one usage event
 (src/strata/server/usage.py) and sends one trace (src/strata/server/tracing.py), whose id the
 event keeps, whatever the route answers. An error no route expects answers 500 with the code
-internal and a reference, and its details stay in the server log. An /api span is named by its route, such as GET /api/projects/{project_id}/..., and
-an error's reference is the request's trace id.
+internal and a reference, and its details stay in the server log. An /api span is named by its
+route, such as GET /api/projects/{project_id}/..., and an error's reference is the request's trace
+id.
 
 Each request builds its own Viewer, Turn and engine; create_app keeps only settings, never a viewer.
 """
@@ -152,7 +153,7 @@ from strata.server import steps as step_routes
 from strata.server import drafts as draft_routes
 from strata.server import feedback as feedback_routes
 from strata.server import (baseline, changes, choices as choice_routes, documents, edges, engines, evidence, lookup,
-                           projects, summary, suppliers, timeline, tracing, trail)
+                           projects, summary, suppliers, tags, timeline, tracing, trail)
 from strata.server import packages as package_routes
 from strata.server import criteria as criteria_routes
 from strata.criteria.store import CriteriaStore
@@ -197,10 +198,8 @@ LIMIT 1
 # every request sees the World Bank staff view, whatever ?view= asks for.
 STAFF = "staff"
 IMMUTABLE = "public, max-age=31536000, immutable"
-# The tag on every route that calls a model: the answer stream now, and the draft writers when they
-# land. A project's Summary must render without a request to one (ticket 21), and the screen test
-# checks that against the list model_routes() gives, recorded in tests/fixtures/api/model-routes.json.
-MODEL = "model"
+# The tag on every route that calls a model (src/strata/server/tags.py says which).
+MODEL = tags.MODEL
 
 
 def model_routes(app: FastAPI) -> list[dict]:
@@ -289,6 +288,15 @@ def request_reference() -> str:
 
 def refused(status: int, code: str, **details) -> JSONResponse:
     return JSONResponse({"code": code, **details}, status_code=status, headers={"Cache-Control": "no-store"})
+
+
+def with_reference(status: int, code: str, message: str, *args) -> JSONResponse:
+    """An error whose details stay in the server log: the message, with its arguments and then the request's
+    reference, is logged with the error being handled, and the page gets the code and the reference to find it by
+    (ticket 06's review round 3, P4)."""
+    reference = request_reference()
+    log.exception(message, *args, reference)
+    return JSONResponse({"code": code, "trace_id": reference}, status_code=status)
 
 
 def new_draft_id() -> str:
@@ -453,9 +461,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             try:
                 response = await call_next(request)
             except Exception:  # an error no route expected: its details stay in the server log
-                reference = request_reference()
-                log.exception("%s failed in a way I did not expect, reference %s.", name, reference)
-                response = JSONResponse({"code": "internal", "trace_id": reference}, status_code=500)
+                response = with_reference(500, "internal", "%s failed in a way I did not expect, reference %s.", name)
             finally:  # whatever the route did, the request is counted
                 # The view ViewParams bound for the request (ticket 40): a preview's, or the viewer's own.
                 bound = parse_qs(request.scope.get("query_string", b"").decode("latin-1")).get("view", [STAFF])[0]
@@ -508,9 +514,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             log.warning("The warehouse refused %s on %s: %s", viewer.email or viewer.user_id, what, error)
             return JSONResponse({"code": "permission"}, status_code=403)
         except EngineError:
-            reference = request_reference()
-            log.exception("The data service failed on %s, reference %s.", what, reference)
-            return JSONResponse({"code": "data_service", "trace_id": reference}, status_code=503)
+            return with_reference(503, "data_service", "The data service failed on %s, reference %s.", what)
 
     def run_tool(name: str, arguments: dict, viewer: Viewer, view: str, as_of: dt.date | None):
         """One tool call as the viewer, or the error a page can show: a bad request, permission, a tool
@@ -518,14 +522,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         and give the page a reference to it."""
         def call(engine: Engine):
             try:
-                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of or today(),
+                return registry.call(name, arguments, registry.Context(engine, viewer, view, as_of_for(as_of),
                                                                        environ=environ))
             except registry.ToolError as error:  # a view or an argument the tool does not take
                 return JSONResponse({"code": "bad_request", "detail": str(error)}, status_code=422)
             except registry.ToolContractError:
-                reference = request_reference()
-                log.exception("The tool %s broke its contract, reference %s.", name, reference)
-                return JSONResponse({"code": "tool_contract", "trace_id": reference}, status_code=500)
+                return with_reference(500, "tool_contract", "The tool %s broke its contract, reference %s.", name)
         return read_for(name, viewer, call)
 
     page_size = int(thresholds.value("app.page_size"))
@@ -558,7 +560,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/projects")
     def list_projects(asof: dt.date | None = None, q: str = Query("", max_length=200), page: int = Query(1, ge=1),
                       viewer: Viewer = Depends(current_viewer)):
-        as_of = asof or today()
+        as_of = as_of_for(asof)
         return read_for("all projects", viewer,
                         lambda engine: projects.all_projects(engine, as_of, q.strip(), page, page_size))
 
@@ -600,7 +602,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/projects/{project_id}")
     def open_project(project_id: str, asof: dt.date | None = None, view: str = "staff",
                      viewer: Viewer = Depends(current_viewer)):
-        as_of = asof or today()
+        as_of = as_of_for(asof)
 
         def read(engine: Engine):
             found = projects.project_page(engine, project_id, as_of, view, versions_shown)
@@ -620,7 +622,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         def read(engine: Engine):
             # The page's as-of date, never later than today, by the clock create_app was given (today), so a
             # recording of the plain page holds still. The date the tab names is the one it read as of.
-            as_of = min(asof, today()) if asof else today()
+            as_of = as_of_for(asof)
             found = timeline.timeline(engine, viewer, project_id, as_of, view, as_of if asof else None)
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"the timeline of {project_id}", viewer, read)
@@ -739,7 +741,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         # An empty value reads as left out, so a link that writes sources= or from= opens the page.
         arguments = {"sources": sources or None, "from_tool": from_tool or None}
         return await as_viewer(viewer, lambda engine: registry.call(
-            "data_readiness_for", arguments, registry.Context(engine, viewer, view, asof or today())),
+            "data_readiness_for", arguments, registry.Context(engine, viewer, view, as_of_for(asof))),
             lambda result: result, say_timeout=True)
 
     @app.get("/api/data/sources")
@@ -800,6 +802,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def record_opened(body: OpenedRequest, viewer: Viewer = Depends(current_viewer)) -> dict:
         # A preview can only take things away: someone looking through another view is not checking sources as
         # themselves, so the view switch's guard answers {"recorded": false} before this runs (the 14 brief, 5.10).
+        if not evidence.recordable(body.evidence_id):
+            return refused(404, "unknown_evidence")
         if opened is None or not viewer.user_id:
             return {"recorded": False}
         return {"recorded": opened.record(viewer.user_id, body.evidence_id, body.run_id, body.route)}
@@ -919,7 +923,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/packages/{step_reference}")
     def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
-        as_of = asof or today()
+        as_of = as_of_for(asof)
 
         def read(engine: Engine):
             found = read_package(engine, step_reference, as_of)
@@ -943,7 +947,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         """A past range sent in the staff view, written to the exposure log after the answer has gone (ticket 44)."""
         if exposures is None or engine_for is None or not isinstance(result, dict):
             return
-        as_of = min(asof, today()) if asof else today()
+        as_of = as_of_for(asof)
         route = "/api/packages/{step_reference}/comparables"
         if not Shown("find_comparables", result, step_reference, view, as_of, route, viewer.user_id, None).counts():
             return
@@ -1139,10 +1143,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                     if drafts is not None and viewer.user_id and personal and asof is None else [])
             counts = feedback_counts(viewer) if personal and asof is None else None
         except EngineError:
-            reference = request_reference()
-            log.exception("I could not read the Lessons visits or drafts of %s, reference %s.", viewer.user_id,
-                          reference)
-            return JSONResponse({"code": "data_service", "trace_id": reference}, status_code=503)
+            return with_reference(503, "data_service", "I could not read the Lessons visits or drafts of %s, reference %s.",
+                                  viewer.user_id)
         extra = example_versions(viewer) if personal and asof is None else {}
         return lesson_read("the Lessons page", viewer, lambda engine: lessons_page.build(
             engine, viewer, visit=visit, preview=preview, drafts=mine, feedback=counts,
@@ -1178,7 +1180,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def lesson_review_item(item_id: str, viewer: Viewer = Depends(current_viewer)):
         return lesson_read(f"lesson review item {item_id}", viewer, lambda engine: lessons.item(engine, viewer, item_id))
 
-    @app.post("/api/lessons/review/{item_id}/summary")
+    @app.post("/api/lessons/review/{item_id}/summary", tags=[MODEL])
     def rewrite_lesson_summary(item_id: str, viewer: Viewer = Depends(current_viewer)):
         return lesson_write(f"the summary of {item_id}", viewer,
                             lambda engine, record: lessons.rewrite(engine, viewer, item_id, lesson_writer(), record,

@@ -289,6 +289,7 @@
                 "days_to_close": 3,
                 "evidence_ids": [
                   "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+                  "strata.silver.plan_rows:40090127/KE-NWWDA-541055-CW-RFB",
                   "strata.gold.project:P156634"
                 ]
               }

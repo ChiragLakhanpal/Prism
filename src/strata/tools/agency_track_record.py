@@ -99,7 +99,7 @@ def agency_track_record(call: Call, project_id: str, implementing_agency: str, p
                "method": raw["method"], "process_status": raw["process_status"],
                "first_planned_on": _iso(raw["first_planned_on"]),
                "first_planned_plan_date": _iso(raw["first_planned_plan_date"]),
-               "first_listing_confirmed": check_plan._flag(raw["first_listing_confirmed"]),
+               "first_listing_confirmed": check_plan._boolean(raw["first_listing_confirmed"]),
                "signed_on": _iso(raw["actual_on"]), "delay_days": check_plan._whole(raw["delay_days"]), "state": state,
                "awards_signed_on": _iso(award["contract_signing_date"]) if award else None,
                "awards_evidence_id": f"strata.gold.contract:{award['contract_id']}" if award else None}

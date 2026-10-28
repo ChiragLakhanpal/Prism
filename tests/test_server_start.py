@@ -110,6 +110,28 @@ def test_the_server_prints_an_ipv6_address_in_brackets_so_it_can_be_opened():
         assert health(listening) == {"status": "ok"}
 
 
+LOGGED_ONCE_TRACING_STARTS = """
+import logging
+from strata.server import __main__ as start
+
+start.configure_logging()
+logging.getLogger().addHandler(logging.NullHandler())  # as configure_azure_monitor adds Application Insights' handler
+logging.getLogger("strata.server").info("Run run-0001 ended: answered.")
+logging.getLogger("strata.server").warning("The warehouse refused ana.example@worldbank.org.")
+"""
+
+
+def test_the_server_s_own_warnings_and_run_lines_stay_in_its_log_once_traces_go_to_application_insights():
+    """Ticket 06's verification round 3: Python writes a warning to the log by itself only while the root logger has
+    no handler, so once Application Insights adds one, the server's own lines reached only Application Insights. The
+    server sets the log up before the app starts, so they stay in the App's log as the module docstrings say."""
+    done = subprocess.run([sys.executable, "-c", LOGGED_ONCE_TRACING_STARTS], capture_output=True, text=True,
+                          timeout=60, check=True)
+
+    assert "Run run-0001 ended: answered." in done.stderr
+    assert "The warehouse refused ana.example@worldbank.org." in done.stderr
+
+
 def test_a_computer_without_an_ipv6_loopback_address_skips_the_ipv6_test(monkeypatch):
     """With IPv6 turned off, ::1 does not exist, and the test above would fail the gate for a reason no change made."""
     monkeypatch.setattr(socket, "has_ipv6", False)

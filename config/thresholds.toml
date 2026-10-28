@@ -151,10 +151,10 @@ max_tool_output_chars = 400000
 
 # The app (ticket 06). Every warehouse query the server runs as a viewer, the plan check's included,
 # gives up after stamp_timeout_seconds. The data-freshness stamp then shows its error state, and the
-# plan check answers 503. Source: the 06 design brief ("Error (timeout
-# after 30 seconds, set in the app config, or a server error)"). Usage events wait at most
-# usage_flush_seconds before the server writes them to strata.ops.usage_events in one insert, so a
-# page never waits for the warehouse to log it; 10 is a starting value for the owner to confirm.
+# plan check answers 503. Source: the 06 design brief ("Error (timeout after 30 seconds, set in the
+# app config, or a server error)"). Usage events wait at most usage_flush_seconds before the server
+# writes them to strata.ops.usage_events in one insert, so a page never waits for the warehouse to
+# log it; 10 is a starting value for the owner to confirm.
 [app]
 stamp_timeout_seconds = 30
 usage_flush_seconds = 10
@@ -181,7 +181,8 @@ round_trip_budget_ms = 1000
 # starting value for the owner to confirm.
 [plan_check]
 # Needs a look: an activity with no signed contract whose planned completion passed. The planned
-# completion is the first published planned date of its Contract Completion step. Only activities
+# completion is the first published planned date of its Contract Completion step, or the version's
+# own planned date when the first listing gives none or is not yet public. Only activities
 # estimated at this many US dollars or more get this mark, so the mark stays on the packages where
 # a missed date matters most. A smaller activity still pending near closing gets Watch from
 # days_before_closing. The wireframe marks the US$1,230,000.00 package and leaves the

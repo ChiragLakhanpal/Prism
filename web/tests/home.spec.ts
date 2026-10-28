@@ -6,7 +6,7 @@ import type { Locator, Page } from "@playwright/test";
 import { scan } from "./axe";
 import { hubApi } from "./hub-api";
 import { trailApi } from "./trail-api";
-import { expect, mockApi, recorded, test, viewAnswers } from "./mocked";
+import { expect, mockApi, modelRoutes, recorded, test, viewAnswers } from "./mocked";
 
 type Answer = { status?: number; body: string };
 const NWWDA = "/projects/P156634/procurement/northern-water-works-development-agency";
@@ -36,7 +36,7 @@ async function open(page: Page, path = "/", extra: Record<string, Answer> = {}, 
 const line = (page: Page, n: number) => page.locator("li[data-line-kind]").nth(n);
 
 test("the briefing's counts equal the lines below it, kind by kind, and Home asks no model while it renders", async ({ page }) => {
-  const models: { method: string; path: string }[] = JSON.parse(await recorded("model-routes.json")).routes;
+  const { callsAModel } = await modelRoutes();
   const asked: string[] = [];
   page.on("request", (request) => {
     const url = new URL(request.url());
@@ -59,8 +59,7 @@ test("the briefing's counts equal the lines below it, kind by kind, and Home ask
   await expect(page.getByRole("heading", { name: "Worth knowing", exact: true })).toBeVisible();
 
   // Home's one read, beside the shell's: nothing that calls a model.
-  const routes = models.map(({ method, path }) => new RegExp(`^${method} ${path.replace(/\{[^}]+\}/g, "[^/]+")}$`));
-  expect(asked.filter((request) => routes.some((route) => route.test(request)))).toEqual([]);
+  expect(asked.filter((request) => callsAModel(request.split(" ")[0], request.split(" ")[1]))).toEqual([]);
   expect(asked.filter((request) => request.includes("/api/home"))).toEqual(["GET /api/home"]);
 });
 

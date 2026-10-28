@@ -48,7 +48,8 @@
               "planned_signing_on": "2021-07-01",
               "planned_signing_plan_date": "2021-04-21",
               "evidence_ids": [
-                "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"
+                "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
+                "strata.silver.plan_rows:33014836/KE-NWWDA-229129-CW-RFB"
               ]
             }
           ]
@@ -147,6 +148,7 @@
               "days_to_close": 9,
               "evidence_ids": [
                 "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+                "strata.silver.plan_rows:40090127/KE-NWWDA-541055-CW-RFB",
                 "strata.gold.project:P156634"
               ]
             }

@@ -248,6 +248,29 @@ def test_a_saved_package_reopens_with_the_same_chips_and_only_for_the_person_who
     assert (theirs.status_code, theirs.json()["code"]) == (404, "unknown_package")
 
 
+def test_a_change_to_someone_else_s_package_or_one_that_does_not_exist_is_not_found(planning):
+    """Ticket 15's review round 3, R5: the server checks the package is the viewer's before it makes a change."""
+    app = planning()
+    _, package = plan(app)
+    change = {"field": "method", "action": "set", "value": "ICB"}
+
+    theirs = call(app, "POST", f"/api/planned-packages/{package['package_id']}", BEN, json=change)
+    nobody = call(app, "POST", "/api/planned-packages/pkg-no-such-package", ANA, json=change)
+
+    assert [(answer.status_code, answer.json()["code"]) for answer in (theirs, nobody)] == [(404, "unknown_package")] * 2
+
+
+@pytest.mark.parametrize("sentence", ["   ", "\t\n"])
+def test_a_sentence_of_only_spaces_is_refused_and_nothing_is_planned(planning, sentence):
+    """Ticket 15's review round 3, R11: the length is counted after the spaces at each end are removed."""
+    app = planning()
+
+    response = call(app, "POST", "/api/planned-packages", ANA, json={"sentence": sentence})
+
+    assert response.status_code == 422
+    assert call(app, "GET", "/api/planned-packages", ANA).json()["rows"] == []
+
+
 def test_a_sentence_with_no_package_in_it_saves_nothing(planning):
     app = planning(case="package-no-package")
 

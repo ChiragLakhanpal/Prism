@@ -133,6 +133,31 @@ def test_each_viewer_s_opened_sources_are_one_row_per_evidence_id(ops_db):
     assert seen.json() == {"opened": [ICR_54]}
 
 
+@pytest.mark.parametrize("evidence_id", ["not-an-evidence-id", "strata.gold.nothing:1", "strata.gold.passage:",
+                                         "strata.tools.no_such_tool:P130164@2026-10-23"])
+def test_an_evidence_id_no_source_has_is_not_recorded_as_opened(ops_db, evidence_id):
+    """Ticket 14's verification round 5, observation 4: only an id the drawer can open is written."""
+    app = create_app(opened=OpenedLog(lambda: DuckDBEngine.open(ops_db)))
+
+    response = call(app, "POST", "/api/evidence/opened", ANA, json={"evidence_id": evidence_id})
+
+    assert (response.status_code, response.json()) == (404, {"code": "unknown_evidence"})
+    assert opened_rows(ops_db) == []
+
+
+@pytest.mark.parametrize("evidence_id", [
+    "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22",  # a tool's summary, opened from its answer
+    "steps:KE-NWWDA-541055-CW-RFB:bid_evaluation",  # section 2's list of a step, which a draft's page records
+    "steps-longest:KE-NWWDA-541055-CW-RFB",
+    "upload-row:upload-0001:3",  # an upload's row, read through the one access rule
+])
+def test_a_source_the_drawer_opens_without_a_reader_by_id_is_recorded(ops_db, evidence_id):
+    app = create_app(opened=OpenedLog(lambda: DuckDBEngine.open(ops_db)))
+
+    assert call(app, "POST", "/api/evidence/opened", ANA, json={"evidence_id": evidence_id}).json() == {
+        "recorded": True}
+
+
 @pytest.mark.parametrize("view", ["piu", "public"])
 def test_a_preview_records_no_opened_source(ops_db, view):
     app = create_app(opened=OpenedLog(lambda: DuckDBEngine.open(ops_db)))

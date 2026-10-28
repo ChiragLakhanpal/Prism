@@ -9,7 +9,8 @@
 --
 -- Signed Contract: the actual signing date in this version, its first published planned date and
 -- its delay. Contract Completion: the first published planned date, or this version's own planned
--- date when the first listing gives none or is not yet public. public_from is the latest public
+-- date when the first listing gives none or is not yet public. Each first published planned date
+-- comes with the document that gave it, which the reason cites. public_from is the latest public
 -- date among the rows each activity's values come from.
 --
 -- Activities come in the order of the plan's tables (works, goods, non-consulting services,
@@ -28,10 +29,12 @@ SELECT
   ss.actual_on AS signed_on,
   sc.first_planned_on AS planned_signing_on,
   sc.first_planned_plan_date AS planned_signing_plan_date,
+  sc.first_planned_document AS planned_signing_document,
   sc.delay_days AS days_late,
   COALESCE(cc.first_planned_on, cs.planned_on) AS planned_completion_on,
   CASE WHEN cc.first_planned_on IS NOT NULL THEN cc.first_planned_plan_date
        WHEN cs.planned_on IS NOT NULL THEN v.plan_date END AS planned_completion_plan_date,
+  CASE WHEN cc.first_planned_on IS NOT NULL THEN cc.first_planned_document END AS planned_completion_document,
   fl.first_listing_confirmed,
   GREATEST(r.public_from, ss.public_from, cs.public_from, sc.public_from, cc.public_from, fl.public_from)
     AS public_from

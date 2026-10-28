@@ -185,7 +185,7 @@ def test_a_stamp_read_that_gives_up_also_stops_the_warehouse_wait_behind_it():
     calls = []
 
     def still_running(method, path, body):
-        calls.append((method, body["wait_timeout"] if body else None))
+        calls.append((method, path, body["wait_timeout"] if body else None))
         return {"statement_id": "s-1", "status": {"state": "PENDING"}}
 
     engine_for = engines.warehouse_as_viewer("strata.test", "wh-1", transport=lambda host, token: still_running,
@@ -193,21 +193,27 @@ def test_a_stamp_read_that_gives_up_also_stops_the_warehouse_wait_behind_it():
     with pytest.raises(EngineError, match="longer than 5 seconds"), engine_for(viewer_from_headers(ANA)) as engine:
         engine.run("SELECT 1")
 
-    assert calls == [("POST", "5s")]
+    # The statement it gave up on is cancelled, so it does not keep running on the warehouse (ticket 06's review
+    # round 3, P2).
+    assert calls == [("POST", "/api/2.0/sql/statements/", "5s"), ("POST", "/api/2.0/sql/statements/s-1/cancel", None)]
 
 
 def test_a_warehouse_that_held_the_first_call_for_the_whole_timeout_is_not_polled_for_as_long_again():
     # A reply that is still running means the warehouse held the call for its whole wait_timeout,
     # so that time counts, and a 30 second read gives up at 30 seconds, not 60.
-    slept = []
+    slept, cancelled = [], []
 
     def still_running(method, path, body):
+        if path.endswith("/cancel"):
+            cancelled.append(path)
+            raise EngineError("The workspace answered 500 to the cancel.")  # a cancel that fails changes nothing
         return {"statement_id": "s-1", "status": {"state": "PENDING"}}
 
     with pytest.raises(EngineError, match="longer than 30 seconds"):
         WarehouseEngine("wh-1", still_running, timeout_seconds=30, sleep=slept.append).run("SELECT 1")
 
     assert slept == []
+    assert cancelled == ["/api/2.0/sql/statements/s-1/cancel"]
 
 
 def test_the_environment_s_warehouse_gives_up_at_the_stamp_s_timeout():

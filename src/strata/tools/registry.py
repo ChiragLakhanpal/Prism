@@ -7,7 +7,7 @@ strata.config.load_tools() reads it. This module does three things with those de
   shape, so adding a tool is one entry in the file. A value of the thresholds file named in braces
   in a description, such as {passages.results}, is filled in from that file.
 - call() runs a tool by name. It checks the arguments against the tool's parameters, settles
-  the as-of date (the earlier of the call's and the page's, else today), runs the adapter with
+  the as-of date (the call's, never later than the page's, or today's without one), runs the adapter with
   the viewer's engine, and wraps the result in the envelope every tool shares.
 - A tool that declares summary_fields gets one more citable record, its summary: those fields,
   with an evidence id that names the tool, its arguments and the as-of date. The derived figures in
@@ -235,8 +235,13 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
         raise ToolError(f"{context.view!r} is not a view. The views are {', '.join(VIEWS)}.")
     tool = tools[name]
     bound = _bind(tool, arguments)
-    asked = [date for date in (bound.pop("as_of", None), context.as_of) if date is not None]
-    as_of = min(asked) if asked else today()
+    # The call's date, never later than the page's, or, with no page date, than today: a date after today is read as
+    # today (ADR 0002), so no tool counts time that has not passed (ticket 09's verification round 2, V1). A caller
+    # that gives a page date read it by its own clock and never later than its own today, as every route does with
+    # the clock create_app was given (src/strata/server/app.py, as_of_for), so a recording's clock holds.
+    ceiling = context.as_of or today()
+    called = bound.pop("as_of", None)
+    as_of = min(called, ceiling) if called else ceiling
     engine = context.engine if context.reads is None else _Reading(context.engine, context.reads)
     output = _adapter(tool)(Call(engine, context.viewer, context.view, as_of, context.thresholds,
                                  context.decided_by, context.uploads, context.environ), **bound)

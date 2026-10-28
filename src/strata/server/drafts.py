@@ -57,6 +57,7 @@ from strata.packages.store import PackageStore
 from strata.server import uploads as upload_routes
 from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
+from strata.server.tags import MODEL
 from strata.uploads.store import UploadStore
 
 log = logging.getLogger("strata.server.drafts")
@@ -199,7 +200,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
 
     # ── Writing ──────────────────────────────────────────────────────────
 
-    @app.post("/api/drafts")
+    @app.post("/api/drafts", tags=[MODEL])
     async def start_draft(body: DraftRequest, viewer: Viewer = Depends(current_viewer)):
         if not viewer.user_id:
             return refused(401, "no_identity")
@@ -471,12 +472,18 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         if not project_id or not agency_id:
             return refused(422, "no_plan")
 
+        from strata.tools.check_plan import agency_id as agency_key
+
+        # check_plan takes the agency's name or its id in any case, so the lookup compares their ids (ticket 35's
+        # review round 4, P1): a typed address finds the draft the plan check's own link would.
+        asked = agency_key(agency_id)
+
         def read():
             newest: dict[str, Saved] = {}
             for draft in store.for_team(access.team(viewer).key, viewer.user_id):
                 subject = draft.content["subject"]
                 if (draft.kind != kind or draft.state.state not in runtime.OPEN_STATES
-                        or subject.get("project_id") != project_id or subject.get("agency_id") != agency_id):
+                        or subject.get("project_id") != project_id or agency_key(subject.get("agency_id") or "") != asked):
                     continue
                 version = subject.get("plan_date")
                 if version not in newest or draft.created_at > newest[version].created_at:
@@ -528,7 +535,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return shown(saved, viewer, view) if saved else JSONResponse({"code": "unknown_draft"}, status_code=404)
         return guarded(f"draft {draft_id}", read)
 
-    @app.post("/api/drafts/{draft_id}/{action}")
+    @app.post("/api/drafts/{draft_id}/{action}", tags=[MODEL])
     def act_on_draft(draft_id: str, action: str, body: ActRequest, viewer: Viewer = Depends(current_viewer)):
         if action not in runtime.ACTIONS:
             return JSONResponse({"detail": "Not Found"}, status_code=404)
@@ -677,7 +684,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return stale()
         return saved, updated[-1]["current_version"], latest, None
 
-    @app.post("/api/drafts/{draft_id}/rows/{row_key}/lesson")
+    @app.post("/api/drafts/{draft_id}/rows/{row_key}/lesson", tags=[MODEL])
     async def choose_for_row(draft_id: str, row_key: str, body: LessonChoiceRequest,
                              viewer: Viewer = Depends(current_viewer)):
         """The author's choice for a row whose lesson changed (the 39 brief, section 9): update rewrites the row from

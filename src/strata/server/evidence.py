@@ -109,6 +109,26 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
 }
 
 
+# The sources the drawer opens that no reader above fetches by id: a tool's summary of derived figures, which comes
+# inside the answer that cited it; an implementing agency's upload row, which the route reads through the one access
+# rule (ticket 38); and section 2's list of a step's comparables, which a draft's page records (ticket 27).
+TOOL_SUMMARY = "strata.tools."
+OPENED_WITHOUT_A_READER = ("upload-row:", "steps:", "steps-longest:")
+
+
+def recordable(evidence_id: str) -> bool:
+    """Whether an id names a kind of source the evidence drawer opens, so POST /api/evidence/opened writes a row for
+    it; an id no source could have is not written (ticket 14's verification round 5, observation 4)."""
+    from strata.config import load_tools
+
+    table, colon, key = evidence_id.partition(":")
+    if not colon or not key:
+        return False
+    if table.startswith(TOOL_SUMMARY):
+        return table.removeprefix(TOOL_SUMMARY) in load_tools()
+    return table in READERS or evidence_id.startswith(OPENED_WITHOUT_A_READER)
+
+
 def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None = None, why: bool = True,
          view: str = "staff", extra_versions: dict[str, list[dict]] | None = None) -> dict | None:
     """The source this evidence id names, as the viewer could see it on the as-of date and in the page's view, or
