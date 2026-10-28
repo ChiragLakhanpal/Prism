@@ -3679,3 +3679,47 @@ Why: the redeploy of 12:19 UTC on October 27, 2026 followed a cold start of the 
     uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
 
 It worked if step 5 ends "The deployment <id>, made at <time>, succeeded.", steps 6 and 7 run, and the last line is "Strata is running at <address>", with exit 0. After a cold start, a line before it says the deployment "is still IN_PROGRESS ... so I read its state again every 10 seconds, for up to 20 minutes", and it still ends that way. If it ends "It was still IN_PROGRESS after 20 minutes", run `databricks apps get strata -p strata` and record what it shows here. Record the deployment's id and how long step 5 waited.
+
+## Ticket 108, step 1 of 3: deploy the bundle from the merge commit, so the plan reader reads only each project's newest plan
+
+Parked on October 27, 2026 with ticket 108, which merged into build/strata as b4aac7dc. The orchestrator or the second session runs steps 1 to 3 tonight, in this order, from a snapshot of the done commit that follows b4aac7dc, with `--env-file` pointing at the main checkout's `.env`, before the demo of October 28, 2026. Every key is set, but mergers run no workspace step. It needs the Databricks keys in `.env`, the SQL warehouse and the Databricks CLI.
+
+When: outside the nightly window, never while a run of `strata nightly` (job 200833746315993) is going. The scheduled run starts at 07:00 UTC (03:00 in New York).
+
+Why: on the paid workspace, P156634's newest plan, document 40132287 of October 9, 2026, was still unread after three reader passes. The parse step took the waiting pages by document id, so last night's 30 minutes went to document 34106903 of May 23, 2023, and 7,872 pages were waiting across the project's 240 plans. Ticket 108 makes the plan reader read only each project's newest plan (`ingestion.plan_versions = "newest"` in `config/thresholds.toml`), list each older plan once in `strata.ops.skipped_documents` with the outcome `superseded`, parse the waiting pages newest plan first, and read for 120 minutes a night instead of 60 (`ingestion.document_host_minutes`).
+
+The builder's step, in the builder's words:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0. No ALTER TABLE is needed: `skipped_documents` only gains a new outcome value, `superseded`.
+
+## Ticket 108, step 2 of 3: put the nightly window back to 300 minutes, right after the deploy
+
+Parked on October 27, 2026 with ticket 108 (merge commit b4aac7dc). Run it at once after step 1, before the scheduled run of 07:00 UTC on October 28. It is required now, not optional: the deploy puts the job back to the bundle's 9000 seconds (`bundle/nightly.yml`), and 120 reading minutes plus the other tasks do not fit in it, so the tasks after `parse_and_embed` would be skipped that night.
+
+    databricks jobs update --json '{"job_id": 200833746315993, "new_settings": {"timeout_seconds": 18000}}' -p strata
+    databricks jobs get 200833746315993 -p strata
+
+It worked if `timeout_seconds` shows 18000 and the schedule is unchanged (0 0 3 * * ? America/New_York, UNPAUSED).
+
+## Ticket 108, step 3 of 3: run `parse_and_embed` alone, so 40132287 is parsed first (criterion 3, live)
+
+Parked on October 27, 2026 with ticket 108 (merge commit b4aac7dc). Run it after steps 1 and 2.
+
+    databricks jobs run-now --json '{"job_id": 200833746315993, "only": ["parse_and_embed"]}' -p strata
+
+The ops tables record the job run's id as `run_id`. It worked if the task ends SUCCESS and these hold:
+
+    SELECT document_id, pdf_page, run_id FROM strata.bronze.layout_pages WHERE project_id = 'P156634' AND document_id = '40132287'
+    SELECT pages_waiting, pages_parsed, stopped_at_document_id FROM strata.ops.parse_runs WHERE run_id = '<run id>' AND project_id = 'P156634'
+    SELECT document_id, count(*) FROM strata.silver.plan_rows WHERE project_id = 'P156634' GROUP BY document_id
+    SELECT outcome, count(*) FROM strata.ops.skipped_documents WHERE run_id = '<run id>' AND reader = 'plans' AND project_id = 'P156634' GROUP BY outcome
+
+(a) The first query returns the plan's table pages. (b) The second shows only a few pages waiting, not 7,872, and `stopped_at_document_id` is null. (c) The third returns one row, 40132287 (9 plan rows on the fixture). (d) The fourth shows about 235 `superseded` (the recorded list gives 235: 240 names, 236 with a text, a PDF and a date, less 40132287; the live count depends on the live list). A second run adds no `superseded` row. Record the run id, its start and end times and the four results here under ticket 108.
+
+Notes from the review (`.notes/108-review.md`) and the verify (`.notes/108-verify.md`):
+
+- Criterion 3's text asks for P156634's rows in `strata.ops.anchored_plan_rows`. The builder says the score task's monthly watch is the only writer of that table, for whole months and for rows published after an exposure, so expect it to stay at 0 before the demo and check (c) instead. Whether (c) satisfies criterion 3 is a decision parked in ticket 108's done comment.
+- What else changes on the first night after the deploy, under `"newest"` (verify V1, V3, V4): P130164's 15 read plan versions in silver shrink to its newest; P161305's stress-shelf plan 40129238 (`config/slice.toml`'s `long_plan`) is listed as superseded by 40129959; and `ops/bundle/check.py same-rows` will fail on five ground-truth files marked for Databricks (`delay_from_first_published_planned_date`, `past_range_coverage_ke_works_rfb`, `past_range_criteria_ke_works_rfb`, `rebidding_ke_works_rfb`, `rebidding_label_counts`), because the comparables in other agencies' plans drop out. These follow from the rule, not from a failed step. The one line `plan_versions = "all"` reads every version again from bronze, with no new fetch for the plans bronze holds.
+- Ticket 08's live plan run above says it worked when `plan_versions_read` equals the number after "of". Under `"newest"`, `ops/plans/run_live.py` reads 1 of 240 for P156634 (review F2).
