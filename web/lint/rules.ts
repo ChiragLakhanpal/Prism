@@ -139,6 +139,8 @@ export const NON_COPY_PROPS = new Set([
   "rel",
   "side",
   "align",
+  // What a number's click opens (Num's check, ticket 96): "rows", "record" or "window", never words.
+  "opens",
   "width",
   "term",
   "rowHeader",

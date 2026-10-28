@@ -2,12 +2,14 @@
 // measure's number opens its window, and every sentence the server built keeps its words. Nothing
 // here computes a number; each one is a count, a sum or a share the tool returned.
 //
-// Every tooltip names what the number counts ("528 of 603 contracts. Measured Oct 23, 2026."), and
-// every window shows the number that opened it: a number that is neither the measure's count nor
-// its denominator, such as a shortfall, gets its own first row.
+// Every tooltip names what the number counts ("528 of 603 contracts."), then when I measured it ("From my measures on
+// October 23, 2026.") and, for a number with a window, what a click opens (DESIGN.md section 5, Number tooltip; ticket
+// 96). Every window shows the number that opened it: a number that is neither the measure's count nor its
+// denominator, such as a shortfall, gets its own first row.
 import { Fragment, type MouseEvent, type ReactNode } from "react";
 import { MeasureNum, type Measure } from "../../components/MeasureNum";
 import { Num, numText, type NumValue } from "../../components/Num";
+import { FromLine, measuresFrom, wholeDate } from "../../components/NumFrom";
 import { copy } from "../../copy";
 import type { Column, MeasureRow, Segment } from "../../lib/dataPages";
 
@@ -90,22 +92,22 @@ function said(noun: Noun | null, n: number): string {
 export type TooltipKind = "ratio" | "count" | "day" | "missing";
 
 function tooltip(row: MeasureRow, noun: Noun | null, asOf: string, kind: TooltipKind, count?: number, lack?: string | null): string {
-  const measured = numText({ date: row.measured_on, style: "table", today: asOf });
   const n = (value: number) => numText({ value, options: { compact: false } });
-  if (kind === "day" && row.as_of) return words.number.day(numText({ date: row.as_of, style: "table", today: asOf }), measured);
+  // The date stays on one line in the tooltip (ticket 59).
+  if (kind === "day" && row.as_of) return words.number.day(wholeDate(numText({ date: row.as_of, style: "table", today: asOf })));
   // A shortfall names what its records lack: "75 of 603 contracts lack a STEP reference."
   if (kind === "missing" && lack && count !== undefined && row.denominator !== null) {
     const says = count === 1 ? words.number.missingOne : words.number.missing;
-    return says(n(count), n(row.denominator), said(noun, row.denominator), lack, measured);
+    return says(n(count), n(row.denominator), said(noun, row.denominator), lack);
   }
   if (kind === "missing" && row.kind === "read_well" && count !== undefined && row.denominator !== null) {
-    return words.number.unread(n(count), n(row.denominator), said(noun, row.denominator), measured);
+    return words.number.unread(n(count), n(row.denominator), said(noun, row.denominator));
   }
   if (kind === "ratio" && row.count !== null && row.denominator !== null) {
-    return words.number.ratio(n(row.count), n(row.denominator), said(noun, row.denominator), measured);
+    return words.number.ratio(n(row.count), n(row.denominator), said(noun, row.denominator));
   }
   const shown = count ?? row.count ?? 0;
-  return words.number.count(n(shown), said(noun, shown), measured);
+  return words.number.count(n(shown), said(noun, shown));
 }
 
 // A number from one of the tool's rows, with its tooltip and its window.
@@ -121,6 +123,7 @@ export function MeasureValue({
   className,
   extraRows,
   window: own,
+  inText = false,
 }: {
   measures: Measures;
   index: number;
@@ -135,6 +138,8 @@ export function MeasureValue({
   extraRows?: { label: string; value: ReactNode }[];
   // The window's own words, for a number no registry entry names.
   window?: WindowWords;
+  // A number in a sentence, rather than in a table's stack of values (MeasureNum's inText).
+  inText?: boolean;
 }) {
   const row = measures.rows[index];
   const owner = windowColumn === undefined ? (KIND_COLUMN[row.kind] ?? null) : windowColumn;
@@ -144,15 +149,33 @@ export function MeasureValue({
       value={value}
       className={className}
       tooltip={tooltip(row, noun, measures.asOf, role === "missing" && (lack || row.kind === "read_well") ? "missing" : tooltipKind, count, lack)}
+      from={<FromLine words={measuresFrom(row.measured_on)} />}
+      inText={inText}
       measure={measureWindow(row, owner, measures.asOf, role && count !== undefined ? { role, value: count } : null, extraRows, own)}
     />
   );
 }
 
+// The day of the newest measure, which a count of the page's own rows comes from.
+export function latestMeasured(measures: Measures): string | null {
+  return measures.rows.reduce<string | null>((latest, row) => (latest === null || row.measured_on > latest ? row.measured_on : latest), null);
+}
+
 // A sentence the tool built: its text as it came, and each number as a Num. A number with a row
 // behind it opens that measure; a count with none, such as the kinds of question, says where it
 // was counted.
-export function Sentence({ segments, measures, about }: { segments: Segment[]; measures: Measures; about?: string }) {
+export function Sentence({
+  segments,
+  measures,
+  about,
+  inText = false,
+}: {
+  segments: Segment[];
+  measures: Measures;
+  about?: string;
+  // A headline in lead type, whose lines keep their 28 px pitch with a number in them (MeasureNum's inText).
+  inText?: boolean;
+}) {
   return (
     <>
       {segments.map((segment, index): ReactNode => {
@@ -166,7 +189,16 @@ export function Sentence({ segments, measures, about }: { segments: Segment[]; m
         }
         if ("link" in segment) return <InPageLink key={index} href={segment.href} text={segment.link} />;
         if (segment.row === null) {
-          return <MeasureNum key={index} value={{ count: segment.number }} tooltip={about ?? words.number.kinds} />;
+          const measured = latestMeasured(measures);
+          return (
+            <MeasureNum
+              key={index}
+              value={{ count: segment.number }}
+              tooltip={about ?? words.number.kinds}
+              from={measured ? <FromLine words={measuresFrom(measured)} /> : undefined}
+              inText={inText}
+            />
+          );
         }
         return (
           <MeasureValue
@@ -177,6 +209,7 @@ export function Sentence({ segments, measures, about }: { segments: Segment[]; m
             noun={segment.noun ? { many: segment.noun, one: segment.noun_one } : null}
             role={segment.role}
             lack={segment.lack}
+            inText={inText}
           />
         );
       })}

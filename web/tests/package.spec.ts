@@ -490,7 +490,13 @@ test("the dots are one tab stop with arrow keys between them, each names its pac
   const first = group.getByRole("img").first();
   await expect(first).toBeFocused();
   // The shortest is KE-MIGORI COUNTY-532367-CW-RFB, still open after 13 days (0.4 months).
-  await expect(first).toHaveAccessibleName("KE-MIGORI COUNTY-532367-CW-RFB, Kenya. Still open after 0.4 months. Dot 1 of 49.");
+  // Its name says what its tooltip shows (ticket 96): reference, months, its sentence with full dates, where it came
+  // from and what Enter does.
+  const from = "From Procurement Notices and Contract Awards, through October 13, 2026.";
+  await expect(first).toHaveAccessibleName(
+    "KE-MIGORI COUNTY-532367-CW-RFB, 0.4 months. Kenya. Its notice was published October 9, 2026, and the records I hold show no " +
+      `signed contract. ${from} Select to see its records. Dot 1 of 49.`,
+  );
   const tip = page.locator("[data-dot-tooltip]");
   await expect(tip).toContainText("KE-MIGORI COUNTY-532367-CW-RFB");
 
@@ -500,11 +506,11 @@ test("the dots are one tab stop with arrow keys between them, each names its pac
   const fourth = group.getByRole("img").nth(3);
   await expect(fourth).toBeFocused();
   await expect(fourth).toHaveAccessibleName(
-    "KE-WAJWASCO-372776-CW-RFB, Kenya. Signed after 1.1 months, on October 6, 2023. Dot 4 of 49.",
+    "KE-WAJWASCO-372776-CW-RFB, 1.1 months. Kenya. Its notice was published September 2, 2023, and its contract was signed " +
+      `October 6, 2023. ${from} Select to see its records. Dot 4 of 49.`,
   );
-  // The country leads the line, as it follows the reference in the dot's name, so the notice is not
-  // read as published in Kenya.
-  await expect(tip).toContainText("Kenya. Signed Oct 6, 2023. Its notice was published Sep 2, 2023.");
+  // The country leads the line, so the notice is not read as published in Kenya.
+  await expect(tip).toContainText("Kenya. Its notice was published September 2, 2023, and its contract was signed October 6, 2023.");
 
   await page.keyboard.press("Escape");
   await expect(tip).toHaveCount(0);
@@ -857,7 +863,10 @@ test("a quantile dot the curve never reached is pinned at the plot's edge, so th
 
     // The 20th dot is past its last follow-up, so it sits at the edge with a chevron and keeps its months in its name.
     await expect(chart.locator("[data-beyond]")).toHaveCount(1);
-    await expect(page.locator("[data-dot-target='19']")).toHaveAccessibleName(/sits past \d+\.\d months\.$/);
+    // Its name ends as its tooltip does (ticket 96): where it came from, and what Enter does.
+    await expect(page.locator("[data-dot-target='19']")).toHaveAccessibleName(
+      /sits past \d+\.\d months\. From Procurement Notices and Contract Awards, through \w+ \d+, \d{4}\. Select to list the packages it stands for\.$/,
+    );
     const labels = await chart.locator("[data-tick-label]").evaluateAll((elements) =>
       elements.filter((el) => el.getAttribute("opacity") !== "0").map((el) => el.getBoundingClientRect()).map((r) => [r.left, r.right]),
     );
@@ -934,11 +943,12 @@ test("when packages matched but none could be measured, the reasons say how many
   );
   await expect(section(page)).not.toContainText("Based on");
   await expect(section(page).getByRole("link", { name: /^See data readiness/ })).toBeVisible();
-  // Each count can be checked, with the same tooltip as the populated coverage line.
+  // The count of matching packages can be checked; the counts of what they lacked are plain words, since the sentence
+  // says what each one counts and a shared tooltip would say the same of all three (ticket 96).
   const line = section(page).locator("[data-coverage-line]");
-  await expect(line.getByRole("button")).toHaveText(["six", "two", "four"]);
-  await line.getByRole("button", { name: "two" }).hover();
-  await expect(page.getByText("Counted from the records behind this section. Data readiness lists them by source.")).toBeVisible();
+  await expect(line.getByRole("button")).toHaveText(["six"]);
+  await line.getByRole("button", { name: "six" }).hover();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("Past packages that matched the criteria.");
 });
 
 test("a package with no public notice quotes its Market Approach and offers the way back to the plan check", async ({ page }) => {

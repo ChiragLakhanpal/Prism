@@ -88,6 +88,8 @@ function countCell(step: DatesStep, held: { row: Row; family: StepFamily } | nul
       className="-mx-3 px-3 text-small"
       check={{
         tooltip: copy.stepDates.tips.count(held.row.entry.phrase),
+        act: copy.stepDates.tips.listAct,
+        opens: "record",
         name: copy.stepDates.countName(String(n), held.row.entry.label),
         onOpen: (element) => onOpen(step.list_id, element),
       }}

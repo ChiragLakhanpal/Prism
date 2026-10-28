@@ -36,6 +36,7 @@ import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
+import { FromLine, recordsFrom } from "./NumFrom";
 import { ReasonGroup } from "./ReasonsList";
 import { Skeleton, SkeletonLine } from "./Skeleton";
 import { Source } from "./Source";
@@ -164,12 +165,18 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
     setFocusFirst(true);
   };
   const different = result.denominator_reason !== null;
-  const count = (value: number, tooltip: string) => <Num value={value} options={{ compact: false }} check={{ tooltip, onOpen: n > 0 ? toRows : undefined }} />;
-  const nNum = count(n, words.tips.n);
-  const mNum = count(m, different ? words.tips.mOther : words.tips.m);
+  // Each count comes from the notices and contract awards the tool read and, when any was advertised again, opens the
+  // list below (ticket 96).
+  const records = recordsFrom(result.sources, result.records_through);
+  const count = (value: number, tooltip: string, act: string) => {
+    const base = { tooltip, from: records ? <FromLine words={records} /> : undefined };
+    return <Num value={value} options={{ compact: false }} check={n > 0 ? { ...base, act, opens: "rows", onOpen: toRows } : base} />;
+  };
+  const nNum = count(n, words.tips.n, words.tips.nAct);
+  const mNum = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct);
   const sentence =
     n === 0 ? (
-      <Fill template={words.countNone} slots={{ m: count(m, different ? words.tips.mOther : words.tips.m) }} />
+      <Fill template={words.countNone} slots={{ m: mNum }} />
     ) : n === m ? (
       <Fill template={words.countAll} slots={{ m: mNum }} />
     ) : n === 1 ? (

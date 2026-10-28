@@ -17,6 +17,7 @@ import { CHANGE_KINDS as KINDS, changeList } from "../lib/changes";
 import { EightColumns } from "./EightColumns";
 import { Fill, Unbroken } from "./Fill";
 import { Num } from "./Num";
+import { FromLine, plansFrom } from "./NumFrom";
 import { MethodText } from "./PlanCheck";
 import { Source } from "./Source";
 import { CARD_BREAKPOINTS, CARD_FIELD, CARD_FIELDS } from "./Table";
@@ -130,20 +131,7 @@ function Moved({ step, changes }: { step: PlanChanges["redated"][number]["steps"
     <Num
       value={step.days}
       options={{ compact: false }}
-      check={{
-        tooltip: (
-          <Fill
-            template={words.explainMoved}
-            slots={{
-              was: <Num date={step.was} />,
-              prev: <Num date={changes.previous!.plan_date} />,
-              now: step.now ? <Num date={step.now} /> : words.noDate,
-              plan: <Num date={changes.plan.plan_date} />,
-              days: formatNumber(step.days, { compact: false }),
-            }}
-          />
-        ),
-      }}
+      check={{ tooltip: words.explainMoved, from: <FromLine words={plansFrom(changes.previous!.plan_date, changes.plan.plan_date)} /> }}
     />
   );
   return <Fill template={step.direction === "later" ? words.later : words.earlier} slots={{ n: days }} />;
@@ -220,14 +208,7 @@ function Change({ row, changes }: { row: PlanChanges["reestimated"][number]; cha
   const value = (
     <Num
       written={amount(row.change)}
-      check={{
-        tooltip: (
-          <Fill
-            template={words.explainAmount}
-            slots={{ was: amount(row.was), prev: <Num date={changes.previous!.plan_date} />, now: amount(row.now), plan: <Num date={changes.plan.plan_date} /> }}
-          />
-        ),
-      }}
+      check={{ tooltip: words.explainAmount, from: <FromLine words={plansFrom(changes.previous!.plan_date, changes.plan.plan_date)} /> }}
     />
   );
   return <Fill template={row.direction === "more" ? words.more : words.less} slots={{ amount: value }} />;

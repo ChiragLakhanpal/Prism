@@ -39,7 +39,8 @@ import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
-import { Num } from "./Num";
+import { Num, type NumCheck } from "./Num";
+import { evidenceFrom, FromLine } from "./NumFrom";
 import { RETURNING } from "./Popover";
 import type { Step } from "./Steps";
 import { IdText, linkProjectIds } from "./ProjectId";
@@ -233,13 +234,15 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
   );
 }
 
-// A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline,
-// a tooltip naming the source, and a click that opens it. Numbers are not tab stops; the markers carry
-// the keyboard to the same sources.
+// A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline and a
+// tooltip naming the source and where it came from (DESIGN.md, Number tooltip). In an answer that is all (the
+// Plain variant): the marker beside the sentence opens the source. In a draft's note, open is given and a click
+// opens the number's record in the drawer (the Record variant), as its action line says. Numbers are not tab
+// stops; the markers carry the keyboard to the same sources.
 export function sentenceText(
   sentence: SentenceEvent,
   evidence: Record<string, EvidenceEvent>,
-  open: (id: string) => void,
+  open: ((id: string) => void) | undefined,
   // The language the sentence is written in: the words it quotes from a source in another language keep that source's
   // lang (ticket 42; the 42 brief, section 6.5).
   around: string = ENGLISH,
@@ -286,13 +289,14 @@ export function sentenceText(
     const sign = /(US\$|\$|€|£)$/.exec(before)?.[0] ?? "";
     parts.push(...plain(at, mention.start - sign.length));
     const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
-    const num = (
-      <Num
-        key={mention.start}
-        written={mention.text}
-        check={tooltip ? { tooltip, tabStop: false, onOpen: () => open(mention.id) } : undefined}
-      />
-    );
+    const from = evidenceFrom(evidence[mention.id]);
+    const base = { tooltip, from: from ? <FromLine words={from} /> : undefined, tabStop: false };
+    const check: NumCheck | undefined = !tooltip
+      ? undefined
+      : open
+        ? { ...base, act: copy.num.act.record, opens: "record", onOpen: () => open(mention.id) }
+        : base;
+    const num = <Num key={mention.start} written={mention.text} check={check} />;
     // A number is a button, which a line may break after; the punctuation that follows it stays on its
     // line, so no line starts with a period or a comma (ticket 35's review notes showed it), and so does a
     // currency sign before it (ticket 37's mission brief showed "US$" ending a line).
@@ -364,7 +368,7 @@ export function AnswerSentences({
       <Fragment key={sentence.index}>
         {paragraph.length > 0 && " "}
         <span data-sentence-text={sentence.index} className={active ? "bg-tint [box-decoration-break:clone]" : undefined}>
-          {sentenceText(sentence, run.evidence, (id) => open(id, sentence.index, null), run.lang)}
+          {sentenceText(sentence, run.evidence, undefined, run.lang)}
           {/* A marker is the copy file's words, read in English inside an answer in another language. */}
           <Lang code={ENGLISH}>{sentence.evidence_ids.map((id) => markerFor(id, sentence.index, active))}</Lang>
         </span>

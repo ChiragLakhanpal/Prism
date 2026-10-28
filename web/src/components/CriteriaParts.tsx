@@ -89,9 +89,11 @@ function cellsOf(item: ComparedItem, comparison: Comparison): Cells {
   const list = itemListId(comparison.check_id, item.item_key);
   const total = comparison.coverage?.n ?? 0;
   const open = (element: HTMLElement) => openFrom(list, element);
+  // Each count opens the item's notices in the drawer, and its action line says so (ticket 96).
+  const opens = { act: words.items.listAct, opens: "record", onOpen: open } as const;
   const asked = item.stated ? (
     <span className="text-small tabular-nums">
-      <Num part={item.stated} whole={total} show="count" check={{ tooltip: words.items.statedTooltip(item.phrase), onOpen: open }} />
+      <Num part={item.stated} whole={total} show="count" check={{ tooltip: words.items.statedTooltip(item.phrase), ...opens, act: words.items.statedAct }} />
       <span className="sr-only">{words.items.statedName(String(item.stated), item.phrase)}</span>
     </span>
   ) : (
@@ -104,13 +106,13 @@ function cellsOf(item: ComparedItem, comparison: Comparison): Cells {
   ) : (
     <span className="text-body font-semibold tabular-nums" data-same-or-less>
       <Num part={item.same_or_less} whole={item.compared} show="count"
-        check={{ tooltip: words.items.sameOrLessTooltip(item.phrase), onOpen: open }} />
+        check={{ tooltip: words.items.sameOrLessTooltip(item.phrase), ...opens }} />
       <span className="sr-only">{words.items.sameOrLessName(String(item.same_or_less), item.phrase)}</span>
     </span>
   );
   const small = (template: string, slot: string, value: number, tooltip: string) => (
     <span className="block text-caption text-ink-muted">
-      <Fill template={template} slots={{ [slot]: <Num count={value} check={{ tooltip, onOpen: open }} inCaption /> }} />
+      <Fill template={template} slots={{ [slot]: <Num count={value} check={{ tooltip, ...opens }} inCaption /> }} />
     </span>
   );
   const under = (
@@ -503,7 +505,9 @@ export function RejectedBids({ rejected, numbers, yourItems, perGroup, readiness
     const first = rejected.groups[0];
     if (first) document.getElementById(`rejected-${first.item_key}`)?.focus();
   };
-  const num = (value: number) => <Num value={value} check={{ tooltip: words.rejected.countTooltip, onOpen: focusFirstGroup }} />;
+  const num = (value: number) => (
+    <Num value={value} check={{ tooltip: words.rejected.countTooltip, act: words.rejected.countAct, opens: "rows", onOpen: focusFirstGroup }} />
+  );
   if (rejected.state === "no_award_notices" || rejected.state === "no_comparables") {
     return (
       <div className="flex flex-col gap-2" data-rejected="none">

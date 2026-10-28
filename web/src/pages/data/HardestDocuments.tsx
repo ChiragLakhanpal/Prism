@@ -14,13 +14,27 @@ import { TextLink } from "../../components/TextLink";
 import { sourcePageHref } from "../../lib/documents";
 import { Num } from "../../components/Num";
 import { MeasureNum } from "../../components/MeasureNum";
+import { FromLine, settingsFrom } from "../../components/NumFrom";
 import { ReadinessTable, type ReadinessColumn, type ReadinessRow } from "../../components/ReadinessTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { Template } from "../../components/Template";
 import { DefinitionWindow } from "../../components/Term";
 import { copy } from "../../copy";
 import type { Readiness, ShelfEntry } from "../../lib/dataPages";
-import { MeasureValue, type Measures, type Noun } from "./measures";
+import { latestMeasured, MeasureValue, type Measures, type Noun } from "./measures";
+
+// One of my own settings in a row's note: what it is, and that the measured run used it (DESIGN.md section 5, Number
+// tooltip). It opens nothing, so it has no action line.
+function Setting({ value, what, measures }: { value: number; what: string; measures: Measures }) {
+  const used = latestMeasured(measures);
+  return (
+    <MeasureNum
+      value={{ value, options: { compact: false } }}
+      tooltip={what}
+      from={used ? <FromLine words={settingsFrom(used)} /> : undefined}
+    />
+  );
+}
 
 const words = copy.dataReadiness.shelf;
 export const SHELF_ID = "hardest-documents";
@@ -244,7 +258,7 @@ function spanningNote(entry: ShelfEntry, measures: Measures): ReactNode | null {
           <Template
             text={words.noDocumentOver}
             values={{
-              limit: <MeasureNum value={{ value: entry.parser_limit_pages, options: { compact: false } }} tooltip={words.windows.limit} />,
+              limit: <Setting value={entry.parser_limit_pages} what={words.windows.limit} measures={measures} />,
               maxPages: (
                 <MeasureValue
                   measures={measures}
@@ -286,7 +300,7 @@ function spanningNote(entry: ShelfEntry, measures: Measures): ReactNode | null {
         <span className="text-ink-muted">
           <Template
             text={words.stoppedNote}
-            values={{ cap: <MeasureNum value={{ value: entry.daily_page_cap ?? 0, options: { compact: false } }} tooltip={words.windows.cap} /> }}
+            values={{ cap: <Setting value={entry.daily_page_cap ?? 0} what={words.windows.cap} measures={measures} /> }}
           />
         </span>
       </span>

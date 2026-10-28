@@ -272,10 +272,15 @@ function Finding({
     <Num
       value={most.k_max}
       options={{ compact: false }}
-      check={one ? { tooltip: tips.k(kText), onOpen: (element) => onCount(one, element) } : { tooltip: tips.tie(kText) }}
+      check={
+        one
+          ? { tooltip: tips.k, act: tips.kAct(kText), opens: "record", onOpen: (element) => onCount(one, element) }
+          : { tooltip: tips.tie(kText) }
+      }
     />
   );
-  const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m(formatNumber(m, { compact: false })), onOpen: onAll }} />;
+  const mText = formatNumber(m, { compact: false });
+  const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
   if (one) return <Fill template={words.finding} slots={{ risk: one.risk_label, k, m: all }} />;
   if (tied.length === 2) return <Fill template={words.findingTwo} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, k, m: all }} />;
   return <Fill template={words.findingMany} slots={{ tied: formatCount(tied.length, { capital: true }), k, m: all }} />;
@@ -290,7 +295,7 @@ function CountCell({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k(k), name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
+          check={{ tooltip: words.numTips.k, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
         />
       </span>
       <span className="text-caption text-ink-muted">{words.reports}</span>
@@ -435,7 +440,7 @@ function ListCount({ row, m, onCount }: { row: RiskRow; m: number; onCount: (row
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k(k), name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
+          check={{ tooltip: words.numTips.k, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
         />
       </span>{" "}
       <span className="text-caption text-ink-muted">{words.reports}</span>

@@ -155,7 +155,7 @@ function PublicCount({ summary }: { summary: CriteriaSummary }) {
   return (
     <Num
       value={summary.public_criteria_count}
-      check={{ tooltip: words.nTooltip, onOpen: (element) => openFrom(publicListId(summaryKey(summary)), element) }}
+      check={{ tooltip: words.nTooltip, act: words.listAct, opens: "record", onOpen: (element) => openFrom(publicListId(summaryKey(summary)), element) }}
     />
   );
 }

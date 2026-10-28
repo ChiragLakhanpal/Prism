@@ -10,6 +10,7 @@ import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { Num, type NumCheck } from "./Num";
+import { backtestFrom, FromLine, modelFrom } from "./NumFrom";
 import type { Lane2 } from "./RangeChart";
 import { SegmentedControl } from "./SegmentedControl";
 import { Skeleton, SkeletonLine } from "./Skeleton";
@@ -162,6 +163,8 @@ function WentWithCount({ comparison, option, capital, onOpen }: { comparison: Co
         capital={capital}
         check={{
           tooltip: what.explainCount(option, whole(comparison.n)),
+          act: what.explainCountAct,
+          opens: "record",
           onOpen: () => {
             const button = anchor.current?.querySelector("button");
             if (button) onOpen(comparison, button);
@@ -182,11 +185,14 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
   }
   if (result.abstention !== null || !result.estimate) return <>{words.abstain.outsideSummary}</>;
   const e = result.estimate;
-  const explainEstimate: NumCheck = { tooltip: words.explain.estimate(formatDate(e.scored_on)), onOpen: links.onTestYears };
+  // The middle half's ends share one What sentence, as one record that opens one thing; the 8-in-10 point has its own.
+  const model = { from: <FromLine words={modelFrom(e.scored_on)} />, act: words.explain.estimateAct, opens: "rows", onOpen: links.onTestYears } as const;
+  const explainMiddle: NumCheck = { tooltip: words.explain.estimateMiddle, ...model };
+  const explainIn10: NumCheck = { tooltip: words.explain.estimateIn10, ...model };
   const lane = (
     <Fill
       template={words.summary}
-      slots={{ e25: months(e.q25, explainEstimate), e75: months(e.q75, explainEstimate), e80: months(e.q80, explainEstimate) }}
+      slots={{ e25: months(e.q25, explainMiddle), e75: months(e.q75, explainMiddle), e80: months(e.q80, explainIn10) }}
     />
   );
   const parts: ReactNode[] = [lane];
@@ -195,13 +201,18 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
     if (difference.direction === "same") parts.push(words.why.same);
     else {
       const later = difference.direction === "later";
-      const diff = months(difference.middle_diff_months, { tooltip: words.explain.diff, onOpen: links.onTwin });
+      const diff = months(difference.middle_diff_months, { tooltip: words.explain.diff, act: words.explain.diffAct, opens: "rows", onOpen: links.onTwin });
       const reasons = difference.reasons.map((reason) => (
         <Fill
           key={reason.code}
           template={words.reasons[reason.code]}
           slots={{
-            k: <Num count={reason.k} check={{ tooltip: words.explain[reason.code](whole(reason.n)), onOpen: links.onTwin }} />,
+            k: (
+              <Num
+                count={reason.k}
+                check={{ tooltip: words.explain[reason.code](whole(reason.n)), act: words.explain.sizeAct, opens: "rows", onOpen: links.onTwin }}
+              />
+            ),
             n: <Num value={reason.n} options={{ compact: false }} />,
           }}
         />
@@ -221,13 +232,15 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
     const n = <Num value={comparison.n} options={{ compact: false }} />;
     if (comparison.estimate) {
       const w = comparison.estimate;
+      const withOption: NumCheck = { tooltip: words.explain.estimateMiddleWith, ...model };
+      const withOptionIn10: NumCheck = { tooltip: words.explain.estimateIn10With, ...model };
       parts.push(
         <Fill
           template={what.summary}
           slots={{
             k, n, option,
-            w25: months(w.q25, explainEstimate), w75: months(w.q75, explainEstimate), w80: months(w.q80, explainEstimate),
-            b25: months(e.q25, explainEstimate), b75: months(e.q75, explainEstimate), b80: months(e.q80, explainEstimate),
+            w25: months(w.q25, withOption), w75: months(w.q75, withOption), w80: months(w.q80, withOptionIn10),
+            b25: months(e.q25, explainMiddle), b75: months(e.q75, explainMiddle), b80: months(e.q80, explainIn10),
           }}
         />,
       );
@@ -297,17 +310,33 @@ function TrackRecordLine({ result, onTestYears }: { result: EstimateResult; onTe
   if (track.abstention !== null) {
     return <Fill template={t.unavailable} slots={{ min: whole(track.abstention.min_unseen_packages), year: <Num year={track.year} /> }} />;
   }
-  const check: NumCheck = { tooltip: words.explain.track(String(track.year)), onOpen: onTestYears };
-  const count = (value: number) => <Num value={value} options={{ compact: false }} check={check} />;
+  // Each number of the track record says what it is, from the backtest for its year, and opens every test year.
+  const x = words.explain;
+  const check = (what: string): NumCheck => ({
+    tooltip: what,
+    from: <FromLine words={backtestFrom(String(track.year))} />,
+    act: x.trackAct,
+    opens: "rows",
+    onOpen: onTestYears,
+  });
+  const count = (value: number, what: string) => <Num value={value} options={{ compact: false }} check={check(what)} />;
   const early = track.misses_early ?? 0;
   return (
     <>
       <span className="font-bold text-chart-text">{t.label}</span>{" "}
-      <Fill template={t.sentence} slots={{ n: count(track.n), year: <Num year={track.year} check={check} />, m: count(track.m), expected: count(track.expected) }} />
+      <Fill
+        template={t.sentence}
+        slots={{
+          n: count(track.n, x.trackN),
+          year: <Num year={track.year} check={check(x.trackYear)} />,
+          m: count(track.m, x.trackM),
+          expected: count(track.expected, x.trackExpected),
+        }}
+      />
       {early > 0 && track.misses_late !== null && (
         <>
           {" "}
-          <Fill template={t.misses} slots={{ misses: count(track.misses), late: count(track.misses_late) }} />
+          <Fill template={t.misses} slots={{ misses: count(track.misses, x.trackMisses), late: count(track.misses_late, x.trackLate) }} />
         </>
       )}
     </>

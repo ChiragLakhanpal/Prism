@@ -153,6 +153,8 @@ function Summary({ dates, packageKey, onOpen }: { dates: StepDates; packageKey: 
                   show="count"
                   check={{
                     tooltip: <Fill template={words.tips.longest} slots={{ m: number(longest.m), n: number(longest.n), stage: stage.toLowerCase() }} />,
+                    act: words.tips.listAct,
+                    opens: "record",
                     onOpen: (element) => onOpen(longestListId(packageKey), element),
                   }}
                 />
@@ -346,7 +348,12 @@ export function dateCheck(point: StepPoint, row: Row, family: StepFamily, onOpen
           : point.days_relation === "before_plan"
             ? words.tips.dateBefore
             : words.tips.dateDelay;
-  return { tooltip: <Fill template={tip} slots={slots} />, onOpen: (element) => onOpen(row.listId, element) };
+  return {
+    tooltip: <Fill template={tip} slots={slots} />,
+    act: <Fill template={words.tips.act} slots={{ n: slots.n }} />,
+    opens: "record",
+    onOpen: (element) => onOpen(row.listId, element),
+  };
 }
 
 // Why a step has no date, in its own row.
@@ -464,6 +471,8 @@ function Comparables({ row, onOpen }: { row: Row; onOpen: Opener }) {
       className="-mx-3 px-3 text-small"
       check={{
         tooltip: words.tips.count(entry.phrase),
+        act: words.tips.listAct,
+        opens: "record",
         name: words.countName(String(n), entry.label),
         onOpen: (element) => onOpen(row.listId, element),
       }}
@@ -598,6 +607,8 @@ function LongestMark({ dates, family, packageKey, onOpen }: { dates: StepDates; 
               inCaption
               check={{
                 tooltip: <Fill template={words.tips.longest} slots={{ m: number(longest.m), n: number(longest.n), stage: stage.toLowerCase() }} />,
+                act: words.tips.listAct,
+                opens: "record",
                 onOpen: (element) => onOpen(longestListId(packageKey), element),
               }}
             />

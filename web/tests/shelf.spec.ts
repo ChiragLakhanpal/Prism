@@ -228,7 +228,8 @@ test("an outcome's number says what it counts and opens a window with what it ch
   const number = row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome'] [data-num]");
 
   await number.focus();
-  await expect(page.getByRole("tooltip").filter({ hasText: "8 rated risks. Measured Oct 23, 2026." })).toBeVisible();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("8 rated risks.");
+  await expect(page.getByRole("tooltip").locator("[data-num-from]")).toHaveText("From my measures on October 23, 2026.");
   await number.click();
   const window = page.getByRole("dialog", { name: "Outcome" });
   // The annex's outcome says it checks names and ratings, not the text the scan runs together (design r2 B2).
@@ -304,6 +305,8 @@ for (const width of [768, 1024]) {
     for (const [index, column] of columns.entries()) {
       const head = heads.nth(index + 2);
       const label = head.locator("[data-term]");
+      // On a busy computer the head's label can still be on its way when the table shows (the gate of ticket 96).
+      await expect(label).toBeVisible();
       const [h, l] = [(await head.boundingBox())!, (await label.boundingBox())!];
       expect(Math.abs(h.x + h.width - 16 - (l.x + l.width)), `the ${column} head's label`).toBeLessThanOrEqual(1.5);
       const cells = table.locator(`td[data-cell$=':${column}']`);

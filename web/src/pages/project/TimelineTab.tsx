@@ -389,7 +389,7 @@ export function TimelineCard({
     <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: titleSize(chart, width) }}>
         {/* The count's tooltip opens above it, so it never hides the finding's second line. */}
-        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, onOpen: openTable, side: "top" } : undefined} />
+        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, act: words.findingCheckAct, opens: "rows", onOpen: openTable, side: "top" } : undefined} />
       </p>
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (

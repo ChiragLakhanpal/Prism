@@ -87,6 +87,8 @@ function KOfN({ approach, n, index, comparables }: { approach: Approach; n: numb
               options={{ compact: false }}
               check={{
                 tooltip: what.explainCount(option, formatNumber(n, { compact: false })),
+                act: what.explainCountAct,
+                opens: "record",
                 onOpen: () => {
                   const button = anchor.current?.querySelector("button");
                   if (button) openWentWith(comparables, { key: `approach-${index}`, k: approach.k, n, matching_ids: approach.matching_ids }, option, button);

@@ -136,6 +136,20 @@ test("the headline is the server's sentence, and its caption says the measures' 
   );
 });
 
+test("a line of the headline that holds a number keeps the lead's 28 px pitch", async ({ page }) => {
+  // Ticket 91's review, routed to ticket 96: a number's button padding grew each line that held one to 30 or 32 px.
+  await mockData(page, FULL);
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
+  await page.goto("/data");
+  await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  await fontsLoaded(page);
+  const headline = page.locator("[data-headline]");
+  await expect(headline.locator("button[data-num]").first()).toBeVisible();
+  const height = await headline.evaluate((element) => element.getBoundingClientRect().height);
+  expect(height).toBeGreaterThan(28);
+  expect(height % 28, `${height} px is a whole number of 28 px lines`).toBe(0);
+});
+
 test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 · daily, and nothing scores a source", async ({ page }) => {
   const answer = await json("data-readiness.json");
   await mockData(page, FULL);
@@ -291,7 +305,12 @@ test("a number's tooltip says what was counted and when, and a click opens its m
 
   const number = cell(page, "awards:linked").locator("[data-num]").first();
   await number.focus();
-  await expect(page.getByRole("tooltip")).toHaveText("528 of 603 contracts. Measured Oct 23, 2026.");
+  // The Number tooltip's Window variant (DESIGN.md section 5; ticket 96): what was counted, when I measured it, and
+  // what a click opens.
+  const tip = page.getByRole("tooltip");
+  await expect(tip.locator("[data-num-what]")).toHaveText("528 of 603 contracts.");
+  await expect(tip.locator("[data-num-from]")).toHaveText("From my measures on October 23, 2026.");
+  await expect(tip.locator("[data-num-act]")).toHaveText("Select to see how I measured it.");
   await number.press("Enter");
   const window = page.getByRole("dialog", { name: "Linked" });
   await expect(window).toContainText("Counted528");
@@ -318,27 +337,27 @@ test("every number's tooltip names what it counts, and its window shows the numb
     const number = numbers.nth(index);
     await number.focus();
     await expect(number, `number ${index}`).toHaveAttribute("aria-describedby", /.+/);
-    const said = await page.locator(`[id="${await number.getAttribute("aria-describedby")}"]`).textContent();
-    // A bare number would read "2 . Measured" or "2. Measured": a noun always sits between them.
+    const tip = page.locator(`[id="${await number.getAttribute("aria-describedby")}"]`);
+    const said = await tip.locator("[data-num-what]").textContent();
+    // A bare number would read "2 ." or "2.": a noun always sits between them.
     expect(said, `number ${index}`).not.toMatch(/^[\d,]+ ?\./);
+    // Where it came from keeps its date on one line in the 20rem tooltip (ticket 59).
+    const dates = await tip.locator("[data-num-from] [data-num-date]").evaluateAll((elements) => elements.map((element) => element.getClientRects().length));
+    expect(dates, `number ${index}'s date`).toEqual([1]);
   }
 
   // The headline's 75 is a shortfall: its tooltip names what the 75 lack, and its window shows it
   // above the measure's own numbers.
   const shortfall = page.locator("[data-headline] [data-num]", { hasText: /^75$/ });
   await shortfall.focus();
-  await expect(
-    page.getByRole("tooltip").filter({
-      hasText: "75 of 603 contracts lack a reference from Systematic Tracking of Exchanges in Procurement (STEP). Measured Oct 23, 2026.",
-    }),
-  ).toBeVisible();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
+    "75 of 603 contracts lack a reference from Systematic Tracking of Exchanges in Procurement (STEP).",
+  );
   // The reports' check names what its pages lack, so its tooltip says so, as its sentence does
   // (critique r6; ticket 18 made paragraph numbers a check of the reports' row).
   const unread = table(page, "kinds").locator("[data-cell='document_search:holds'] [data-num]", { hasText: /^70$/ });
   await unread.focus();
-  await expect(
-    page.getByRole("tooltip").filter({ hasText: "70 of 264 body pages lack paragraph numbers I could find. Measured Oct 23, 2026." }),
-  ).toBeVisible();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("70 of 264 body pages lack paragraph numbers I could find.");
   await page.keyboard.press("Escape");
 
   await shortfall.click();
@@ -362,16 +381,14 @@ test("every number's tooltip names what it counts, and its window shows the numb
       await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
       await projects.hover();
       const said = `${inWords[fix.projects - 1]} ${fix.projects === 1 ? "project" : "projects"}`;
-      await expect(
-        page.getByRole("tooltip").filter({ hasText: `The records behind this gap come from ${said}. Measured Oct 23, 2026.` }),
-      ).toBeVisible();
+      await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(`The records behind this gap come from ${said}.`);
+      // It opens nothing, so its tooltip promises nothing (ticket 59).
+      await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveCount(0);
     } else {
       const counted = answer.rows[fix.projects_row];
       await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
       await projects.hover();
-      await expect(
-        page.getByRole("tooltip").filter({ hasText: `${counted.count} of ${counted.denominator} projects. Measured Oct 23, 2026.` }),
-      ).toBeVisible();
+      await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(`${counted.count} of ${counted.denominator} projects.`);
       await projects.click();
       const opened = page.getByRole("dialog", { name: titles[counted.measure] });
       await expect(opened).toContainText(`Counted${fix.projects}`);

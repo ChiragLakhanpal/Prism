@@ -21,7 +21,8 @@ import { ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { citedInParts, MissionBriefParts } from "../components/MissionBriefParts";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
-import { Num } from "../components/Num";
+import { Num, type NumCheck } from "../components/Num";
+import { checkFrom, FromLine } from "../components/NumFrom";
 import { PaperSheet } from "../components/PaperSheet";
 import { PpsdRows } from "../components/PpsdRows";
 import { PpsdSources } from "../components/PpsdSources";
@@ -451,16 +452,20 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const signal = d.counts.signal;
   const written = d.counts.written;
   const refs = d.notes.filter((note) => note.state === "written").map((note) => note.activity_reference_no);
-  const counted = (
-    <div>
-      <p className="font-semibold">{copy.checkPlan.explain.counted}</p>
-      <ul className="mt-1 font-mono">
-        {refs.map((ref) => (
-          <li key={ref}>{ref}</li>
-        ))}
-      </ul>
-    </div>
-  );
+  // The lede's count: the activities with a note, from my check of the plan the notes were written from (ticket 96).
+  const counted: NumCheck = {
+    tooltip: (
+      <div>
+        <p className="font-semibold">{copy.checkPlan.explain.counted}</p>
+        <ul className="mt-1 font-mono">
+          {refs.map((ref) => (
+            <li key={ref}>{ref}</li>
+          ))}
+        </ul>
+      </div>
+    ),
+    from: subject.as_of ? <FromLine words={checkFrom(subject.as_of)} /> : undefined,
+  };
   // A mission brief (ticket 37): five parts, with the project's name, country and records' date.
   const brief = d.kind === "mission_brief";
   // Suggested PPSD rows and the Project Paper summary (ticket 36), by what the kind's writer adds to the page, so a
@@ -489,9 +494,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   ) : brief ? (
     written === d.notes.length ? kind.lede(written) : copy.mission.ledePartial(formatCount(written))
   ) : written === signal ? (
-      <Fill template={kind.lede(signal)} slots={{ count: <Num count={signal} check={{ tooltip: counted }} /> }} />
+      <Fill template={kind.lede(signal)} slots={{ count: <Num count={signal} check={counted} /> }} />
     ) : (
-      <Fill template={kind.ledePartial} slots={{ written: <Num count={written} check={{ tooltip: counted }} />, count: <Num count={signal} /> }} />
+      <Fill template={kind.ledePartial} slots={{ written: <Num count={written} check={counted} />, count: <Num count={signal} /> }} />
     );
 
   // A field a person sets (ticket 36): the value shows at once, the progress line and the bar follow from the
@@ -618,7 +623,8 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           </ExampleNote>
         )}
         <div className="mt-6 max-w-[72ch]">
-          <h2 id={ledeId} tabIndex={-1} className="text-h2 text-pretty text-ink-heading focus:outline-none" data-lede>
+          {/* The page's finding: the lede count's tooltip opens under all of it (DESIGN.md, Number tooltip). */}
+          <h2 id={ledeId} tabIndex={-1} className="text-h2 text-pretty text-ink-heading focus:outline-none" data-lede data-finding>
             {lede}
           </h2>
           <p className="mt-2 text-body text-ink">

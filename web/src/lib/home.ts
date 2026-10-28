@@ -6,6 +6,9 @@ import type { DraftRow } from "./drafts";
 
 // A part of a sentence the server wrote: words, a count with the word it chose (and, in the briefing, the kind it
 // counts and the ids of what it counts), a date, a year, a STEP reference, a P-code, an amount as written, or a number.
+// An amount or a number in a line names the value it is (what, ticket 96), for its tooltip; an amount in millions
+// carries the plan row's own value to the cent (exact).
+export type HomeValue = "millions" | "estimated" | "actual" | "daysToClose";
 export type HomeSegment =
   | { text: string }
   | { count: number; word: string; kind?: string; ids?: string[] }
@@ -13,8 +16,8 @@ export type HomeSegment =
   | { year: number }
   | { ref: string }
   | { pid: string }
-  | { written: string }
-  | { number: number };
+  | { written: string; what?: HomeValue; exact?: string }
+  | { number: number; what?: HomeValue };
 
 export type HomeLine = {
   kind: "activity" | "project" | "lesson" | "public";

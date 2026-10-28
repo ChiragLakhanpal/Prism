@@ -46,6 +46,7 @@ import { Fill, Joined } from "./Fill";
 import { LoadError } from "./LoadError";
 import { MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
+import { FromLine, fromText, planFrom, recordsFrom, wholeDate } from "./NumFrom";
 import { axisFor, chartType, RangeChart, titleSize, type PlanMove, type RangeMark } from "./RangeChart";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
@@ -474,23 +475,27 @@ function Note({ result }: { result: ComparablesResult }) {
   );
 }
 
-// What each matching package left out lacked, each count under ten in words.
-function gapsOf(result: ComparablesResult, check?: NumCheck) {
+// What each matching package left out lacked, each count under ten in words. The sentence says what each count
+// counts, so the counts are plain text: given the coverage count's tooltip, they would share a What sentence with it.
+function gapsOf(result: ComparablesResult) {
   return result.coverage.not_used.map((entry) => (
-    <Fill key={entry.reason} template={words.reasons[entry.reason](entry.count)} slots={{ count: <Num count={entry.count} check={check} /> }} />
+    <Fill key={entry.reason} template={words.reasons[entry.reason](entry.count)} slots={{ count: <Num count={entry.count} /> }} />
   ));
 }
 
-// What a coverage count counts, in its tooltip.
-const EXPLAIN_COVERAGE: NumCheck = { tooltip: words.explain.coverage };
+// What a coverage count counts, in its tooltip, and the notices and contract awards it was counted from.
+function coverageCheck(result: ComparablesResult, what: string = words.explain.coverage): NumCheck {
+  const records = recordsFrom(result.sources, result.records_through);
+  return { tooltip: what, from: records ? <FromLine words={records} /> : undefined };
+}
 
-// Packages matched but none could be measured: what they lacked, without "Based on 0 of". Each count
-// can be checked, as on the populated coverage line.
+// Packages matched but none could be measured: what they lacked, without "Based on 0 of". The count of matching
+// packages can be checked, as the populated coverage line's count can.
 function Unmeasured({ result }: { result: ComparablesResult }) {
-  const matched = <Num count={result.coverage.matched} check={EXPLAIN_COVERAGE} />;
+  const matched = <Num count={result.coverage.matched} check={coverageCheck(result, words.explain.matched)} />;
   return (
     <p data-coverage-line className="text-small text-ink">
-      <Fill template={words.empty.unmeasuredOf} slots={{ matched, gaps: <Joined items={gapsOf(result, EXPLAIN_COVERAGE)} /> }} />{" "}
+      <Fill template={words.empty.unmeasuredOf} slots={{ matched, gaps: <Joined items={gapsOf(result)} /> }} />{" "}
       <TextLink href={readinessHref(result)}>{copy.coverage.link}</TextLink>
     </p>
   );
@@ -498,7 +503,7 @@ function Unmeasured({ result }: { result: ComparablesResult }) {
 
 function Coverage({ result, check, linked = true }: { result: ComparablesResult; check?: NumCheck; linked?: boolean }) {
   const { coverage } = result;
-  const gaps = gapsOf(result, check);
+  const gaps = gapsOf(result);
   return (
     <CoverageLine
       part={coverage.used}
@@ -524,7 +529,7 @@ function Coverage({ result, check, linked = true }: { result: ComparablesResult;
 export function RangeFigureLines({ result }: { result: ComparablesResult }) {
   return (
     <>
-      <Coverage result={result} check={EXPLAIN_COVERAGE} linked={false} />
+      <Coverage result={result} check={coverageCheck(result)} linked={false} />
       <Source>
         <SourceLine result={result} />
       </Source>
@@ -661,20 +666,31 @@ function Populated({
     setTableOpen(true);
     requestAnimationFrame(() => captionRef.current?.focus());
   };
-  const explainCounts: NumCheck | undefined = planRowMonths === null ? undefined : {
-    tooltip: words.explain.counts(months1(planRowMonths), whole(total), spelled(open)),
-    onOpen: showRows,
-  };
-  const explainQuantiles: NumCheck = { tooltip: words.explain.quantiles(whole(total), spelled(open)), onOpen: showRows };
+  // Each number in the finding and the summary has its own What sentence (DESIGN.md, Number tooltip), comes from the
+  // notices and contract awards the tool counted, and opens the table of all the comparable packages.
+  const records = recordsFrom(result.sources, result.records_through);
+  const fromRecords = records ? <FromLine words={records} /> : undefined;
+  const toTable = { from: fromRecords, act: copy.num.act.all(whole(total)), opens: "rows", onOpen: showRows } as const;
+  const explainWithin: NumCheck | undefined = planRowMonths === null ? undefined : { tooltip: words.explain.within(months1(planRowMonths)), ...toTable };
+  const explainShare: NumCheck | undefined = planRowMonths === null ? undefined : { tooltip: words.explain.share(months1(planRowMonths)), ...toTable };
+  const explainTotal: NumCheck = { tooltip: words.explain.total(open, spelled(open)), ...toTable };
+  // The middle half, the middle one and the 8-in-10 point count the packages still open as not signed yet.
+  const statistic = (what: string): NumCheck => ({
+    tooltip: open > 0 ? <>{what} {words.explain.openCounted(open, spelled(open))}</> : what,
+    ...toTable,
+  });
+  const explainMiddle = statistic(words.explain.middle(whole(total)));
+  const explainMedian = statistic(words.explain.median);
+  const explainIn10 = statistic(words.explain.in10);
   const explainPlan: NumCheck | undefined = pkg
-    ? { tooltip: words.explain.plan(pkg.plan.implementing_agency, formatDate(pkg.plan.plan_date)) }
+    ? { tooltip: words.explain.plan, from: <FromLine words={planFrom(pkg.plan.implementing_agency, pkg.plan.plan_date)} /> }
     : undefined;
 
   const type = chartType(width || 800);
 
   // ── The finding, at the plan row's own months ──
   const count = (value: number, check?: NumCheck) => <Num value={value} options={{ compact: false }} check={check} />;
-  const q = (value: number | null) => (value === null ? null : <Num value={value} options={{ decimals: 1, compact: false }} check={explainQuantiles} />);
+  const q = (value: number | null, check: NumCheck) => (value === null ? null : <Num value={value} options={{ decimals: 1, compact: false }} check={check} />);
   let title: ReactNode;
   if (abstained) {
     title =
@@ -694,17 +710,17 @@ function Populated({
       <Fill
         template={template}
         slots={{
-          within: count(w, explainCounts),
-          total: count(total, explainCounts),
-          in10: share === null ? null : count(share.states[0], explainCounts),
+          within: count(w, explainWithin),
+          total: count(total, explainTotal),
+          in10: share === null ? null : count(share.states[0], explainShare),
           plan: <Num value={result.plan.months} options={{ decimals: 1, compact: false }} check={explainPlan} />,
         }}
       />
     );
   } else if (range?.q25 != null && range.q75 != null) {
-    title = <Fill template={words.title.noPlan} slots={{ total: count(total), q25: q(range.q25), q75: q(range.q75) }} />;
+    title = <Fill template={words.title.noPlan} slots={{ total: count(total, explainTotal), q25: q(range.q25, explainMiddle), q75: q(range.q75, explainMiddle) }} />;
   } else {
-    title = <Fill template={words.title.noPlanNoRange} slots={{ total: count(total) }} />;
+    title = <Fill template={words.title.noPlanNoRange} slots={{ total: count(total, explainTotal) }} />;
   }
 
   // ── The summary ──
@@ -729,11 +745,11 @@ function Populated({
       range?.q75 == null || range.q25 == null || range.q50 == null ? (
         s.noUpper
       ) : titled ? (
-        <Fill template={s.middleOnly} slots={{ q50: q(range.q50) }} />
+        <Fill template={s.middleOnly} slots={{ q50: q(range.q50, explainMedian) }} />
       ) : (
-        <Fill template={s.middle} slots={{ q25: q(range.q25), q75: q(range.q75), q50: q(range.q50) }} />
+        <Fill template={s.middle} slots={{ q25: q(range.q25, explainMiddle), q75: q(range.q75, explainMiddle), q50: q(range.q50, explainMedian) }} />
       );
-    const second = range?.q80 == null ? s.noIn10 : <Fill template={s.in10} slots={{ q80: q(range.q80) }} />;
+    const second = range?.q80 == null ? s.noIn10 : <Fill template={s.in10} slots={{ q80: q(range.q80, explainIn10) }} />;
     summary = (
       <>
         {first} {second}
@@ -753,21 +769,28 @@ function Populated({
 
   // ── The chart's marks and words ──
   const c = words.chart;
+  // A dot's tooltip ends with where it came from and, when a click opens it, what that opens (DESIGN.md, Number
+  // tooltip, Dot variant); its name says the same, since screen readers do not hear its tooltip.
+  // The dot's name reads the From line as written; its tooltip keeps the date on one line.
+  const dotFrom = records ? fromText(records) : "";
+  const dotFromTip = records ? fromText(records, true) : "";
+  const dotAct = opening ? (quantile ? c.openHintDots : c.openHint) : "";
   const marks: RangeMark[] = quantile
     ? quantile.map((dot) => ({
         key: `dot-${dot.k}`,
         months: dot.months,
         hollow: !dot.reached,
         beyond: !dot.reached,
-        name: (dot.reached ? c.dotQuantile : c.dotQuantileOpen)(whole(dot.k), whole(total), months1(dot.months)),
+        name: [(dot.reached ? c.dotQuantile : c.dotQuantileOpen)(whole(dot.k), whole(total), months1(dot.months)), dotFrom, dotAct].filter(Boolean).join(" "),
         tip: {
           header: c.tipQuantile(whole(dot.k)),
           mono: false,
           number: dot.reached ? c.tipMonths(months1(dot.months)) : c.tipPast(months1(dot.months)),
           line: dot.reached ? c.tipQuantileLine(whole(total)) : c.tipQuantileOpen,
+          from: dotFromTip,
         },
       }))
-    : rows.map((row, index) => markFor(row, index, total, comparison));
+    : rows.map((row, index) => markFor(row, index, total, { from: dotFrom, fromTip: dotFromTip, act: dotAct }, comparison));
 
   const altParts = [
     quantile
@@ -977,7 +1000,7 @@ function Populated({
       )}
       <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
         <Note result={result} />
-        <Coverage result={result} check={EXPLAIN_COVERAGE} />
+        <Coverage result={result} check={coverageCheck(result)} />
         <Source>
           <SourceLine result={result} />
         </Source>
@@ -1015,13 +1038,21 @@ function Populated({
   );
 }
 
-function markFor(row: Comparable, index: number, total: number, comparison: Comparison | null = null): RangeMark {
+function markFor(
+  row: Comparable,
+  index: number,
+  total: number,
+  tip: { from: string; fromTip: string; act: string },
+  comparison: Comparison | null = null,
+): RangeMark {
   const c = words.chart;
   const m = months1(row.months);
   const country = row.country_name ?? copy.notInRecord;
-  const own = row.still_open
-    ? c.dotOpen(row.step_reference, country, m, whole(index + 1), whole(total))
-    : c.dotSigned(row.step_reference, country, m, formatDate(row.signed_on!), whole(index + 1), whole(total));
+  // Its sentence, with full dates (DESIGN.md section 7, rule 13); in the tooltip each date stays on one line.
+  const sentence = (date: (iso: string) => string) =>
+    row.still_open ? c.tipOpen(country, date(row.notice_date)) : c.tipSigned(country, date(row.notice_date), date(row.signed_on!));
+  const line = sentence(formatDate);
+  const own = c.dotName(row.step_reference, m, [line, tip.from, tip.act].filter(Boolean).join(" "), whole(index + 1), whole(total));
   return {
     key: row.step_reference,
     months: row.months,
@@ -1032,9 +1063,8 @@ function markFor(row: Comparable, index: number, total: number, comparison: Comp
       header: row.step_reference,
       mono: true,
       number: c.tipMonths(m),
-      line: row.still_open
-        ? c.tipOpen(tableDate(row.notice_date), country)
-        : c.tipSigned(tableDate(row.signed_on!), tableDate(row.notice_date), country),
+      line: sentence((iso) => wholeDate(formatDate(iso))),
+      from: tip.fromTip,
     },
   };
 }

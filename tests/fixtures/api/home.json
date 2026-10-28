@@ -186,7 +186,9 @@
             "text": ", US$"
           },
           {
-            "written": "1.23"
+            "written": "1.23",
+            "what": "millions",
+            "exact": "1,230,000.00"
           },
           {
             "text": " million of "
@@ -261,13 +263,15 @@
             "text": " was signed at US$"
           },
           {
-            "written": "1,245,092.76"
+            "written": "1,245,092.76",
+            "what": "actual"
           },
           {
             "text": " against an estimate of US$"
           },
           {
-            "written": "300,000"
+            "written": "300,000",
+            "what": "estimated"
           },
           {
             "text": "."
@@ -306,7 +310,8 @@
             "text": " is still pending in the plan, "
           },
           {
-            "number": 3
+            "number": 3,
+            "what": "daysToClose"
           },
           {
             "text": " days before the project closes on "

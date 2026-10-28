@@ -35,7 +35,12 @@ import { DocumentColumn } from "./DraftPage";
 
 const words = copy.activity;
 
-const open = (id: string) => (element: HTMLElement) => openEvidence(id, { serial: null, sentence: null, marker: element, runId: null });
+// A number from one record opens that record in the drawer, as its action line says (ticket 96).
+const open = (id: string) => ({
+  act: copy.num.act.record,
+  opens: "record" as const,
+  onOpen: (element: HTMLElement) => openEvidence(id, { serial: null, sentence: null, marker: element, runId: null }),
+});
 
 // One part of the lead, with its values as Num: "estimated at US$300,000 in the plan".
 function leadPart(part: LeadPart, trail: Trail): ReactNode {
@@ -44,7 +49,7 @@ function leadPart(part: LeadPart, trail: Trail): ReactNode {
     return (
       <Fill
         template={words.leadEstimated}
-        slots={{ estimate: <Num written={amount} check={{ tooltip: words.fromRecord(words.recordKind.estimated, trail.activity.step_reference), onOpen: open(part.evidence_id) }} /> }}
+        slots={{ estimate: <Num written={amount} check={{ tooltip: words.fromRecord(words.recordKind.estimated, trail.activity.step_reference), ...open(part.evidence_id) }} /> }}
       />
     );
   }
@@ -52,7 +57,7 @@ function leadPart(part: LeadPart, trail: Trail): ReactNode {
     return (
       <Fill
         template={words.leadAdvertised}
-        slots={{ notice_date: <Num date={part.date} check={{ tooltip: words.fromRecord(words.recordKind.advertised, part.reference), onOpen: open(part.evidence_id) }} /> }}
+        slots={{ notice_date: <Num date={part.date} check={{ tooltip: words.fromRecord(words.recordKind.advertised, part.reference), ...open(part.evidence_id) }} /> }}
       />
     );
   }
@@ -64,8 +69,8 @@ function leadPart(part: LeadPart, trail: Trail): ReactNode {
       <Fill
         template={part.amount ? words.leadSigned : words.leadSignedNoAmount}
         slots={{
-          signed_date: <Num date={part.date} check={{ tooltip, onOpen: open(part.evidence_id) }} />,
-          amount: part.amount ? <Num written={amountText(part.amount, part.currency)} check={{ tooltip, onOpen: open(part.evidence_id) }} /> : "",
+          signed_date: <Num date={part.date} check={{ tooltip, ...open(part.evidence_id) }} />,
+          amount: part.amount ? <Num written={amountText(part.amount, part.currency)} check={{ tooltip, ...open(part.evidence_id) }} /> : "",
         }}
       />
     );
@@ -131,7 +136,7 @@ function LeadBids({ trail }: { trail: Trail }) {
   const listed = trail.lead.bids;
   const proposals = listed[0].proposals;
   const count = (bids: (typeof listed)[number]) => (
-    <Num count={bids.count} check={{ tooltip: words.fromAwardNotice(bids.notice_id), onOpen: open(bids.evidence_id) }} />
+    <Num count={bids.count} check={{ tooltip: words.fromAwardNotice(bids.notice_id), ...open(bids.evidence_id) }} />
   );
   if (listed.length === 1) return <Fill template={words.leadBids(listed[0].count === 1, proposals)} slots={{ count: count(listed[0]) }} />;
   return <Fill template={words.leadBidsMany(proposals)} slots={{ counts: <Joined items={listed.map(count)} /> }} />;

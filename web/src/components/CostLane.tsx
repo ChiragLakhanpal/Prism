@@ -59,7 +59,9 @@ function dotName(row: CostRow): string {
 
 export function CostTitle({ cost, onCount }: { cost: Cost; onCount?: () => void }) {
   const { above, m } = cost.counts;
-  const num = (value: number) => <Num value={value} check={onCount ? { tooltip: words.countTooltip, onOpen: onCount } : undefined} />;
+  const num = (value: number) => (
+    <Num value={value} check={onCount ? { tooltip: words.countTooltip, act: words.countAct, opens: "rows", onOpen: onCount } : undefined} />
+  );
   if (above === 0) return <Fill template={words.titleNone} slots={{ m: num(m) }} />;
   if (above === m) return <Fill template={words.titleAll} slots={{ m: num(m) }} />;
   if (above === 1) return <Fill template={words.titleOne} slots={{ m: num(m) }} />;
