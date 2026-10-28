@@ -17,6 +17,7 @@ import pytest
 from scripted_answers import ask
 from strata.agent.foundry import FoundryAgent, FoundryError
 from strata.agent.judge import AzureOpenAIJudge, JudgeError
+from strata.agent.retries import Retries
 from strata.agent.scripted import JUDGED, RECORDED_STREAMS, RECORDED_TRACES
 from strata.config import load_agent, load_thresholds
 
@@ -27,6 +28,9 @@ RATE_LIMITED = json.dumps({"error": {"code": "rate_limit_exceeded", "message": (
     "Your requests to gpt-5.4 for gpt-5.4 in eastus have exceeded token rate limit.")}})
 JUDGED_CASE = "ke-nwwda-541055-past-range"  # an answer whose two sentences only the judge can prove
 AZURE = load_thresholds().value("azure")
+# The ticket's starting values, for the tests that count tries and waits, so config/thresholds.toml's [azure] can move
+# without breaking them (CLAUDE.md rule 9). The tests that give no retries= read the shipped [azure].
+TICKET = Retries(retries=3, retry_seconds=5, max_retry_seconds=60, max_wait_seconds=120)
 
 
 class FakeClock:
@@ -100,18 +104,18 @@ def test_a_judge_refused_twice_with_429_then_answered_keeps_its_sentences_after_
 
 
 def test_a_judge_refused_four_times_removes_its_sentences_as_judge_unavailable_after_three_waits(fixture_db, caplog):
-    """Four 429s that name no wait: the judge waits retry_seconds before each of its azure.retries retries, then
-    gives up, and the verifier removes the sentences it had to judge, as it did before ticket 118."""
+    """Four 429s that name no wait: the judge waits retry_seconds before each of its 3 retries, then gives up, and
+    the verifier removes the sentences it had to judge, as it did before ticket 118."""
     caplog.set_level("WARNING")
     clock = FakeClock()
     azure = AzureOpenAIFake(*[judge_refused(429) for _ in range(4)])
 
-    asked = ask(fixture_db, JUDGED_CASE, judge=live_judge(azure, clock))
+    asked = ask(fixture_db, JUDGED_CASE, judge=live_judge(azure, clock, retries=TICKET))
 
     assert [(item["sentence"], item["reason"]) for item in asked.of("removed")] == [
         (sentence, "judge_unavailable") for sentence in judged_sentences()]
     assert asked.of("checks")[0]["judge"]["responded"] is False and asked.of("error") == []
-    assert azure.tries == 4 and AZURE["retries"] == 3 and clock.waits == [AZURE["retry_seconds"]] * 3 == [5, 5, 5]
+    assert azure.tries == 4 and clock.waits == [5, 5, 5]
     assert [line.split("before ")[1] for line in waits_logged(caplog)] == [
         "retry 1 of 3.", "retry 2 of 3.", "retry 3 of 3."]
 
@@ -130,16 +134,15 @@ def test_a_judge_refused_with_403_gives_up_at_once(fixture_db, caplog):
 
 
 def test_a_503_is_tried_again_and_no_wait_passes_max_retry_seconds_nor_all_of_them_max_wait_seconds(fixture_db, caplog):
-    """Azure names ten minutes each time. Each wait is cut to azure.max_retry_seconds (60), and a third would take the
-    answer's waits on the judge past azure.max_wait_seconds (120), so the judge stops there with retries left."""
+    """Azure names ten minutes each time. Each wait is cut to max_retry_seconds (60 here), and a third would take the
+    answer's waits on the judge past max_wait_seconds (120 here), so the judge stops there with retries left."""
     caplog.set_level("WARNING")
     clock = FakeClock()
     azure = AzureOpenAIFake(judge_refused(503, {"Retry-After": "600"}), judge_refused(429, {"Retry-After": "600"}),
                             judge_refused(429, {"Retry-After": "600"}), recorded_judge_answer())
 
-    asked = ask(fixture_db, JUDGED_CASE, judge=live_judge(azure, clock))
+    asked = ask(fixture_db, JUDGED_CASE, judge=live_judge(azure, clock, retries=TICKET))
 
-    assert (AZURE["max_retry_seconds"], AZURE["max_wait_seconds"]) == (60, 120)
     assert azure.tries == 3 and clock.waits == [60, 60]
     assert [item["reason"] for item in asked.of("removed")] == ["judge_unavailable"] * 2
     assert waits_logged(caplog)[0] == (
@@ -161,11 +164,10 @@ def http_refusal(url, status, headers):
 
 
 def test_the_judges_http_transport_hands_azures_status_and_wait_to_the_retries(monkeypatch):
-    """http_post is the judge's one live transport: urllib's HTTPError carries the status and the headers, so a 429's
-    retry-after-ms reaches the wait."""
+    """http_post is the judge's one live transport, through strata.knowledge.http's post_json: urllib's HTTPError
+    carries the status and the headers, so a 429's retry-after-ms reaches the wait."""
     import io
 
-    from strata.agent import judge as live
     from strata.agent.judge import Question
 
     statuses, sent = iter([429, 429, 200]), []
@@ -176,7 +178,7 @@ def test_the_judges_http_transport_hands_azures_status_and_wait_to_the_retries(m
             raise http_refusal(request.full_url, 429, {"retry-after-ms": "1500", "Retry-After": "1"})
         return io.BytesIO(json.dumps(recorded_judge_answer()).encode())
 
-    monkeypatch.setattr(live.urllib.request, "urlopen", urlopen)
+    monkeypatch.setattr("urllib.request.urlopen", urlopen)
     clock = FakeClock()
     judge = AzureOpenAIJudge("https://judge.example.invalid/openai/v1", "not-a-real-key", "gpt-5.4", sleep=clock.sleep)
 
@@ -248,7 +250,7 @@ def test_an_agent_call_refused_four_times_ends_the_answer_with_agent_unavailable
     clock = FakeClock()
     foundry = FoundryFake(AGENT_CASE, {1: [foundry_refused(429) for _ in range(4)]})
 
-    asked = ask(fixture_db, AGENT_CASE, agent=live_agent(foundry, clock))
+    asked = ask(fixture_db, AGENT_CASE, agent=live_agent(foundry, clock, retries=TICKET))
 
     assert asked.of("error") == [{"code": "agent_unavailable"}] and asked.of("sentence") == []
     assert foundry.tries == 4 and clock.waits == [5, 5, 5]
@@ -270,7 +272,8 @@ def test_an_agent_call_refused_with_403_ends_the_answer_with_agent_unavailable_a
 def test_the_agents_calls_in_one_answer_share_max_wait_seconds_through_foundrys_http_transport(monkeypatch):
     """http_call is FoundryAgent's one live transport: urllib's HTTPError carries the status and the Retry-After
     header. Foundry names 60 seconds three times over the answer's two calls; the first two waits use up the 120
-    seconds one answer may wait on the agent, so the second call gives up with retries left, as agent_unavailable."""
+    seconds one answer may wait on the agent here, so the second call gives up with retries left, as
+    agent_unavailable."""
     import io
 
     from strata.agent import foundry as live
@@ -287,7 +290,7 @@ def test_the_agents_calls_in_one_answer_share_max_wait_seconds_through_foundrys_
     monkeypatch.setattr(live.urllib.request, "urlopen", urlopen)
     clock = FakeClock()
     agent = FoundryAgent(FOUNDRY, load_agent("orchestrator"), lambda: "not-a-real-token", traceparent=lambda: None,
-                         sleep=clock.sleep)
+                         retries=TICKET, sleep=clock.sleep)
 
     assert agent.respond([], None)["id"] == "resp_1"
     with pytest.raises(AgentError) as unavailable:

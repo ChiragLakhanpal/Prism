@@ -202,10 +202,11 @@ def _filtered(detail: str) -> bool:
 
 
 class FoundryAgent:
-    """One Foundry agent through the Responses API: the answer loop's live Agent. The app makes one for each answer
-    (src/strata/agent/runner.py), so its calls share one answer's waits: a call Foundry refuses with 429 or 503 is
-    tried again after the wait it names, up to config/thresholds.toml's [azure] (src/strata/agent/retries.py), and
-    the last refusal becomes agent_unavailable."""
+    """One Foundry agent through the Responses API: the answer loop's live Agent. Make one for each answer or each
+    item: its calls share one budget of waits. A call Foundry refuses with 429 or 503 is tried again after the wait
+    it names, up to config/thresholds.toml's [azure] (src/strata/agent/retries.py), and the last refusal becomes
+    agent_unavailable. The app makes one for each answer (src/strata/agent/runner.py), and the nightly's lesson
+    review writer one for each item."""
 
     def __init__(self, endpoint: str, spec: AgentSpec, token: Token, call: Call = http_call,
                  traceparent: Callable[[], str | None] = traces.traceparent, retries: Retries | None = None,

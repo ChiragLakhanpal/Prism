@@ -29,13 +29,12 @@ from __future__ import annotations
 
 import json
 import os
-import urllib.error
-import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from typing import Protocol
 
 from strata.agent.retries import Retries, Waits
+from strata.knowledge.http import post_json
 
 WHO = "The judge on Azure OpenAI"  # who the log names when the judge's call waits
 
@@ -126,17 +125,8 @@ Transport = Callable[[str, dict, dict], dict]  # (url, headers, body) -> the par
 
 def http_post(url: str, headers: dict, body: dict, timeout: float) -> dict:
     """The parsed JSON answer to one chat completion. A refusal raises JudgeError with Azure OpenAI's status and
-    headers."""
-    request = urllib.request.Request(url, method="POST", data=json.dumps(body).encode("utf-8"),
-                                     headers={**headers, "Content-Type": "application/json"})
-    try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            return json.loads(response.read() or b"{}")
-    except urllib.error.HTTPError as refused:
-        raise JudgeError(f"Azure OpenAI answered {refused.code}: {refused.read().decode(errors='replace')[:300]}",
-                         refused.code, dict(refused.headers.items()) if refused.headers else None) from refused
-    except urllib.error.URLError as unreachable:
-        raise JudgeError(f"I could not reach Azure OpenAI: {unreachable.reason}") from unreachable
+    headers (strata.knowledge.http)."""
+    return post_json(url, headers, body, timeout=timeout, error=JudgeError, service="Azure OpenAI")
 
 
 def request_body(deployment: str, questions: list[Question]) -> dict:
