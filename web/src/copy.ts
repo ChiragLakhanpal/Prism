@@ -432,6 +432,13 @@ export const copy = {
       drafts: "Drafts",
       data: "Data",
     },
+    // A section's own pages, under its item while it is current (DESIGN.md section 5, Sidebar), by page key: Following
+    // and All projects under Projects for World Bank staff (ticket 99). The labels carry no count, so they never grow
+    // while a list loads.
+    sub: {
+      following: "Following",
+      projects: "All projects",
+    },
     // One button that turns the sidebar into the rail of icons and back.
     collapse: "Collapse the sidebar",
     expand: "Expand the sidebar",
@@ -1605,6 +1612,8 @@ export const copy = {
     tableTitle: "All projects",
     noun: "projects",
     nounOne: "project",
+    // The count line of one page of more (the redesign plan, 8.6), with the range in words rather than a dash.
+    countRange: (from: string, to: string, total: string) => `Showing ${from} to ${to} of ${total} projects`,
     loading: "Loading projects.",
     // While a search waits more than 400 ms for its answer, in the count line's place.
     searching: "Searching projects.",
@@ -1641,15 +1650,6 @@ export const copy = {
       `Procurement Plans that the World Bank disclosed for ${agency}. Records as of ${date}.`,
     loading: "Loading your agency's plans.",
     error: "I couldn't load your agency's plans because the data service didn't answer.",
-  },
-
-  // The Projects sub-tabs (ticket 37; the 37 brief, section 9.1), shown only to World Bank staff.
-  projectsTabs: {
-    label: "Projects pages",
-    // No count, so the label is the same on both pages and never grows while the list loads.
-    following: "Following",
-    all: "All projects",
-    announce: (name: string) => `Showing ${name}.`,
   },
 
   // Following (ticket 37; the 37 brief, sections 3 to 5 and 9.2 to 9.9). {braces} are filled from the route.

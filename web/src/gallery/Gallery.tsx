@@ -10,7 +10,7 @@ import { useState, type ReactNode } from "react";
 import logo from "../assets/world-bank-logo.svg";
 import { OneBox } from "../components/BoxBand";
 import { Frame } from "../components/Frame";
-import type { SubItems } from "../components/sections";
+import { subItemsFor, type SubItems } from "../components/sections";
 import { Sidebar, type Rest } from "../components/Sidebar";
 import { STAFF_MODE, TopNav, type NavMode, type Section, type Viewer } from "../components/TopNav";
 import { copy } from "../copy";
@@ -55,12 +55,10 @@ export function sampleMode(pill: string | null): NavMode {
   };
 }
 
-// A section's own pages under its item while it is current (ticket 92's slot): a sample of what the tab tickets add.
+// A section's own pages under its item while it is current (ticket 92's slot): Projects' as World Bank staff see them
+// (ticket 99), and a sample of what the Lessons ticket adds.
 const SAMPLE_SUB_ITEMS: SubItems = {
-  projects: [
-    { page: "following", label: copy.projectsTabs.following, href: "/projects/following" },
-    { page: "projects", label: copy.projectsTabs.all, href: "/projects" },
-  ],
+  ...subItemsFor(true),
   lessons: [{ page: "lessonsQueue", label: copy.pages.lessonReview.title, href: "/lessons/review" }],
 };
 

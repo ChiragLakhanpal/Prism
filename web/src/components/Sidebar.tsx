@@ -92,6 +92,9 @@ const ITEM = cx(
 );
 // The current mark (DESIGN.md section 2): tint, a 3 px primary bar inset on the left, the label in 600 ink-heading.
 const CURRENT = "bg-tint font-semibold text-ink-heading before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-sm before:bg-primary";
+// A section whose sub-item is the page keeps 600 and its primary icon while the sub-item carries the mark; the rail hides
+// the sub-items, so there the section carries the tint and the bar itself, and the page keeps one current mark.
+const RAIL_CURRENT = "rail:bg-tint rail:before:absolute rail:before:inset-y-0 rail:before:left-0 rail:before:w-[3px] rail:before:rounded-l-sm rail:before:bg-primary";
 // Start here in the item's style (ticket 114), with its lines stacked beside the icon; as a rail, the icon over the
 // short count.
 const START_ITEM = cx(
@@ -218,7 +221,7 @@ export function Sidebar({
           aria-current={marked}
           data-nav-item={key}
           aria-describedby={line && rail ? stampId : undefined}
-          className={cx(ITEM, marked && !subPage ? CURRENT : cx("text-ink hover:bg-surface-2", marked && "font-semibold text-ink-heading"))}
+          className={cx(ITEM, marked && !subPage ? CURRENT : cx("text-ink hover:bg-surface-2", marked && "font-semibold text-ink-heading", marked && subPage && RAIL_CURRENT))}
           {...tipProps(label, line)}
         >
           <Icon aria-hidden="true" className={cx("size-4 shrink-0", marked ? "text-primary" : "text-ink-muted")} />

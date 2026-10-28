@@ -3,7 +3,8 @@
 // page belongs to. Adding a section is one entry here, its word in copy.nav.tabs, its view in config/roles.toml and its
 // pages in routes.ts.
 import { BookOpen, Database, FilePenLine, FolderOpen, House, Package, type LucideIcon } from "lucide-react";
-import type { copy } from "../copy";
+import { copy } from "../copy";
+import { FOLLOWING_HREF } from "../lib/following";
 import type { PageKey } from "../routes";
 
 export type Section = keyof typeof copy.nav.tabs;
@@ -29,3 +30,24 @@ export const HOME_ITEM = { href: "/", icon: House };
 // applied view hides (config/roles.toml, GET /api/me's hidden) is left out.
 export type SubItem = { page: PageKey; label: string; href: string };
 export type SubItems = Partial<Record<Section, SubItem[]>>;
+
+// The sub-items each section has, in order (ticket 99 fills Projects'). A page for World Bank staff alone (staff) shows
+// only to them in their own view, as Following does; the views' hidden pages (config/roles.toml) are left out by the
+// sidebar. Adding a section's page is one entry here and its word in copy.nav.sub.
+type SubEntry = { page: keyof typeof copy.nav.sub & PageKey; href: string; staff?: boolean };
+const SUB_ENTRIES: Partial<Record<Section, SubEntry[]>> = {
+  projects: [
+    { page: "following", href: FOLLOWING_HREF, staff: true },
+    { page: "projects", href: "/projects" },
+  ],
+};
+
+// The sub-items for a viewer: staff is true for World Bank staff in their own view, never in a preview.
+export function subItemsFor(staff: boolean): SubItems {
+  return Object.fromEntries(
+    Object.entries(SUB_ENTRIES).map(([section, entries]) => [
+      section,
+      entries.filter((entry) => staff || !entry.staff).map(({ page, href }) => ({ page, href, label: copy.nav.sub[page] })),
+    ]),
+  );
+}

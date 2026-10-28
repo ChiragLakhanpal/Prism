@@ -37,6 +37,7 @@ export function TaskZone({
   toggle,
   corner,
   headingRef,
+  headingId: givenHeadingId,
   busy = false,
   sectionKey,
   live,
@@ -61,6 +62,8 @@ export function TaskZone({
   // sentence in the DOM, and the tag moves under the name.
   corner?: ReactNode;
   headingRef?: Ref<HTMLHeadingElement>;
+  // The h2's id, when a part inside the zone is named by it too, such as a list's table (Table's labelledBy).
+  headingId?: string;
   busy?: boolean;
   // The zone's key, as data-section, for tests and the design gallery.
   sectionKey?: string;
@@ -73,7 +76,8 @@ export function TaskZone({
   // With a toggle, what the zone holds once opened. Without one, the zone's blocks: ZoneBlocks.
   children?: ReactNode;
 }) {
-  const headingId = useId();
+  const ownHeadingId = useId();
+  const headingId = givenHeadingId ?? ownHeadingId;
   const bodyId = useId();
   const open = toggle?.open ?? false;
   const form = (panel ?? open) ? "panel" : "row";

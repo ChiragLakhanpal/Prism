@@ -94,6 +94,9 @@
   /* A page head that sets its title beside its actions does so from a page area of 46rem, so a page the evidence
      drawer narrows stacks them (DESIGN.md section 4, Page layouts; ticket 94): @head/page:. */
   --container-head: 46rem;
+  /* A list of three columns in a panel, as All projects, keeps its table from a page area of 34rem and turns to cards
+     below it (Table's cardsBelow="list"; ticket 99): @list/page:. */
+  --container-list: 34rem;
   /* A side panel's own frame (DESIGN.md section 5, Side panel; ticket 95): its facts take two columns once its content
      is 18rem wide, @facts/side:. */
   --container-facts: 18rem;
@@ -518,6 +521,28 @@
 [data-foot-strip] + [data-zone-body] {
   border-top: 1px solid var(--color-line);
   padding-top: calc(var(--spacing) * 6);
+}
+/* A table in a panel (Table's inPanel; DESIGN.md section 5, Tables; ticket 99's All projects): the panel is the table's
+   frame. The body over it (the search) ends 16 px above the count line, the count line sits on the body's edges 16 px
+   above the rows, the rows run the panel's full width with their outer cells on those edges, a card is a row with a
+   1 px line over it, and the pages sit under a 1 px line before the foot strip. */
+[data-zone-body]:has(+ [data-table-panel]) {
+  padding-bottom: calc(var(--spacing) * 4);
+}
+[data-table-panel] > [data-count-row] {
+  padding: 0 var(--zone-pad) calc(var(--spacing) * 4) calc(var(--zone-pad) + var(--zone-indent));
+}
+[data-table-panel] :is(th, td):first-child,
+[data-table-panel] [data-table-view="cards"] > li {
+  padding-left: calc(var(--zone-pad) + var(--zone-indent));
+}
+[data-table-panel] :is(th, td):last-child,
+[data-table-panel] [data-table-view="cards"] > li {
+  padding-right: var(--zone-pad);
+}
+[data-zone-pager] {
+  padding: calc(var(--spacing) * 3) var(--zone-pad) calc(var(--spacing) * 3) calc(var(--zone-pad) + var(--zone-indent));
+  border-top: 1px solid var(--color-line);
 }
 @media (width >= 48rem) {
   [data-zone] {
