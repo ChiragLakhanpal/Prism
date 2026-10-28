@@ -190,6 +190,10 @@ test("on the package workspace every number and every dot opens what its action 
 
   const seen = await checkPage(page);
   expect(seen.filter((one) => one.act).map((one) => one.label)).toEqual(expect.arrayContaining(["2", "49", "3.3", "7.9", "4.4", "9.1", "3", "52"]));
+  // Section 2's step counts, inside a zone that rests closed, were read and opened too: one for each step a comparable
+  // package's plan recorded.
+  const steps = seen.filter((one) => one.what.startsWith("Comparable packages whose published plans recorded"));
+  expect(steps.map((one) => [one.label, one.act])).toEqual(Array.from({ length: 5 }, () => ["7", "Select to list them."]));
   // Advertised again counts plan rows canceled in the Procurement Plan too, so its From line names all three record sets.
   for (const count of await page.locator("[data-rebid-count] button[data-num]").all()) {
     await count.focus();
