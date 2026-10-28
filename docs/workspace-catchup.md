@@ -4086,3 +4086,39 @@ The first query is the first query of "Ticket 63, step 4 of 5", word for word. T
 It worked if `contacts_left_live.py --check-zero` exits 0 and prints "The nightly check's patterns find 0 notices on 0 pages of strata.silver.notices.", the first query returns 0, and the second shows that night's row with found 0 and passed true. Record all three here under ticket 121, with the job run's id and result. When all three hold, the orchestrator ticks criterion 3.
 
 If the first query is not 0 while the check finds 0, look first for a label and a name on separate lines. The verifier found that a name on the line after "Attention" (`ATTENTION:<br/>Mr. John Doe`) is neither removed nor counted: `contacts.ATTENTION` and its leftover use `[ \t]*`, while the step 4 query's `\s` crosses a line break (`.notes/121-verify.md`, finding 1). The fix belongs to the ATTENTION rule, and the registry would take a widened rule with no other edit.
+
+## Ticket 123, step 1 of 2: deploy the bundle, so the nightly's plan reader reads plan versions within the inline limit
+
+Parked on October 28, 2026 with ticket 123, which merged into build/strata as 75fe879a (branch `strata/123-the-plan-reader-reads-a-project-s-plan-versions-within-the-inline-limit` at 5ad37fd8). Every key is set, but mergers run no workspace step: the orchestrator runs these two steps today, in this order, from a snapshot that includes this merge (75fe879a, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`).
+
+What ticket 123 changes: `read_plans` in `src/strata/lakehouse/plans.py` reads only the plan versions a run needs, by document id: the newest listed plan for a nightly run, as ticket 108 chooses it, and the versions `strata.silver.plan_versions` holds for a rewrite. It measures the size of their rows first. It reads them in one statement when they fit under `ingestion.inline_result_bytes` (26,214,400 in `config/thresholds.toml`), and one version a statement when they do not. A version whose own rows pass the limit is left out with the warning "I left document ... out of my read of ...". The nightly's plan reader and `ops/plans/run_live.py --rewrite` share this read. No table, route or web file changed.
+
+The builder's step 1, in the builder's words:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0 and its "3. What changed:" names no table for this ticket (only `src/strata/lakehouse/plans.py` and `config/thresholds.toml` changed), so the nightly's plan reader runs the new read. As after the deploys of tickets 122 and 121, put the nightly window back to 18000 seconds afterwards (ticket 108's step 2 has the command).
+
+Record the exit code and the "3. What changed:" lines here under ticket 123.
+
+## Ticket 123, step 2 of 2: write every read plan's rows again, P156634 included, and rebuild gold (criterion 3)
+
+Run after step 1, from the same snapshot. This is criterion 3, the one the verifier parked (`.notes/123-verify.md`, "Criterion 3"). It finishes what ticket 122's step 2 began on October 28, when the rewrite stopped at P156634 on the inline limit. The paid workspace's nightly job was 200833746315993 in ticket 108's block.
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+As after any run of this script, the `bronze_to_gold` run follows the rewrite.
+
+It worked if:
+
+- `run_live.py` exits 0, fetches and parses nothing, and shows no "Inline byte limit exceeded".
+- It prints one "I wrote the N plan rows of <project> again, from ... plan versions bronze holds." line for every project with plan rows, P156634 included. That is all 26: the 13 of October 28 and the 13 after them, P156634 first.
+- It ends "No section in strata.silver.plan_rows holds a tag."
+- `bronze_to_gold` ends SUCCESS.
+
+Any "I left document ... out of my read of ..." warning names a plan version whose own rows pass the limit: record it.
+
+Two things are untried offline (`.notes/123-verify.md` and `.notes/123-review.md`). First, the size query binds a string of control characters (code points 1 to 31, the quote mark and the backslash) as a STRING parameter through the Statement Execution API. If the first project fails with a parameter error, look there first. Second, when a project's versions fit in one statement, the read binds one parameter for each document id, which is a long IN list if `strata.silver.plan_versions` still holds many versions of one project. Since ticket 108, the rewrite usually reads one version a project.
+
+Record the per-project lines, the last line and the job run id here under ticket 123, with any "I left document" warning. When every line above holds, the orchestrator ticks criterion 3; when one fails, it opens a follow-up and names it here.
