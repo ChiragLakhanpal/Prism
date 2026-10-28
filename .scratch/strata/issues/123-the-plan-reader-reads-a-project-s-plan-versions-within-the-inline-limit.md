@@ -29,3 +29,4 @@ Read first: `src/strata/lakehouse/plans.py` (`read_versions`, `rewrite`, `projec
   - Decisions parked for the user: none. The builder, the reviewer and the verifier named none.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - Unblocks: none. No ticket names 123 on its `Blocked by` line.
+- October 28, 2026, orchestrator (13:40 PDT): steps 1 and 2 ran (the catch-up block "Tickets 120, 121 and 123, the live steps ran"): the rewrite ran to its end for 25 projects, P156634 included, with no inline-limit error and no section with a tag; criterion 3 holds.
