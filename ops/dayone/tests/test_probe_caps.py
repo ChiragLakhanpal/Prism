@@ -36,12 +36,21 @@ def notification(kind, threshold):
             "contactEmails": ["owner@example.org"]}
 
 
-CAPPED = [
+# One entry per distinct deployment: two roles may share one (the agent and the drafting role both use gpt-5.4
+# since October 27, 2026), and Azure lists a deployment once; the shared one keeps the capacity Azure gives it,
+# the drafting role's 30, as the live account does.
+_BY_ROLE = [
     deployment(NAME["agent"], "GlobalStandard", 100, 100000),
     deployment(NAME["draft"], "GlobalStandard", 30, 30000),
     deployment(NAME["batch"], "GlobalBatch", 2000),
     deployment(NAME["embed"], "GlobalStandard", 150),
 ]
+CAPPED = list({d["name"]: d for d in _BY_ROLE}.values())
+
+
+def tokens_per_minute(role):
+    """The fake's tokens per minute for the role's deployment, as the probe prints it."""
+    return f"{next(d for d in CAPPED if d['name'] == NAME[role])['sku']['capacity'] * 1000:,}"
 BUDGET = {"name": "strata-monthly", "properties": {"amount": 50, "timeGrain": "Monthly", "notifications": {
     "actual_50": notification("Actual", 50), "actual_80": notification("Actual", 80),
     "actual_100": notification("Actual", 100), "forecast_100": notification("Forecasted", 100)}}}
@@ -84,9 +93,9 @@ def run(place, azure):
 def test_the_probe_prints_a_tokens_per_minute_limit_for_every_deployment(place, capsys):
     assert run(place, FakeAzure()) == 0
     shown = capsys.readouterr().out
-    assert f"{NAME['agent']}: 100,000 tokens per minute" in shown
-    assert f"{NAME['draft']}: 30,000 tokens per minute" in shown
-    assert f"{NAME['embed']}: 150,000 tokens per minute" in shown
+    assert f"{NAME['agent']}: {tokens_per_minute('agent')} tokens per minute" in shown
+    assert f"{NAME['draft']}: {tokens_per_minute('draft')} tokens per minute" in shown
+    assert f"{NAME['embed']}: {tokens_per_minute('embed')} tokens per minute" in shown
     batch = next(line for line in shown.splitlines() if f"{NAME['batch']}: " in line)
     assert "Global Batch" in batch and "2,000,000 enqueued tokens" in batch
 
@@ -96,7 +105,7 @@ def test_four_capped_deployments_pass_test_eight_and_the_caps_check(place):
     results = dayone.read_results(place / "results.md")
     assert results["test-8"]["Status"] == "passed"
     assert results["caps"]["Status"] == "capped"
-    assert len(results["caps"]["Deployments"]) == 4
+    assert len(results["caps"]["Deployments"]) == len(load_models())  # one line per role, even when two share a deployment
 
 
 def test_the_probe_checks_the_deployments_the_model_file_names(place, capsys):
@@ -125,7 +134,7 @@ def test_the_passed_result_holds_for_however_many_deployments_dayone_toml_lists(
 
 
 def test_a_missing_deployment_fails_test_eight(place):
-    assert run(place, FakeAzure(deployments=CAPPED[:3])) == 1
+    assert run(place, FakeAzure(deployments=[d for d in CAPPED if d["name"] != NAME["embed"]])) == 1
     test8 = dayone.read_results(place / "results.md")["test-8"]
     assert test8["Status"] == "failed"
     assert any(NAME["embed"] in line and "not found" in line for line in test8["Evidence"])

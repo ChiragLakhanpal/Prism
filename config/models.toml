@@ -9,7 +9,7 @@
 # day-one probes read the names and the embedding size from this file, so a swap here reaches them.
 
 [roles.agent]
-deployment = "gpt-5.4-mini"
+deployment = "gpt-5.4"
 purpose = "The agent: it answers questions and calls the tools."
 
 [roles.draft]

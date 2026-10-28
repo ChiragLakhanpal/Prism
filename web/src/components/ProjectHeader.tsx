@@ -7,6 +7,7 @@ import { useId, useLayoutEffect, useRef, useState, type ReactNode } from "react"
 import { copy } from "../copy";
 import type { ProjectPage as Page } from "../lib/api";
 import { Button } from "./Button";
+import { CopyKey } from "./CopyKey";
 import { Fill } from "./Fill";
 import { ProjectId } from "./ProjectId";
 
@@ -67,7 +68,14 @@ export function ProjectHeaderLine({ project }: { project: Page["project"] }) {
   return (
     <>
       <span className="text-ink-heading">{project.display_name ?? project.project_name}</span>
-      {item(<ProjectId pid={project.project_id} />)}
+      {/* The copy key after the P-code (ticket 112) sits in the P-code's item, which never wraps, so the two never part
+          at a line end and the line's text stays as it was. */}
+      {item(
+        <>
+          <ProjectId pid={project.project_id} />
+          <CopyKey text={project.project_id} what={copy.copyKey.projectId} joined={false} />
+        </>,
+      )}
       {project.country && item(project.country)}
       {status && item(status)}
     </>

@@ -520,6 +520,39 @@ export const copy = {
     chipRemove: (id: string) => `Remove the scope ${id}`,
     scoped: (id: string) => `Questions you ask here cover ${id} only.`,
     scopeRemoved: "The scope is removed. Questions now cover all projects.",
+    // Ticket 112: focused and empty, the list suggests questions for the page, under a group named by the page. Each is
+    // a row of config/examples.toml's [[ask]], keyed here, and shortens a question of evals/benchmark.yaml; {id} is
+    // the page's scope, or on Home what the row is asked within.
+    suggest: {
+      group: {
+        package: "Ask about this package",
+        project: "Ask about this project",
+        plan_check: "Ask about this plan",
+        home: "Ask, for example",
+      } as Record<string, string>,
+      pastRange: "How long did packages like {id} take from notice to signed contract?",
+      rebidding: "How many packages like {id} were advertised again, and why?",
+      costEstimates: "Were packages like {id} signed above or below their cost estimates?",
+      contractsSinceIsr: "Which contracts were signed on {id} since its last ISR?",
+      projectSignals: "Does {id} need a look, and which signals put it there?",
+      planActivities: "Which activities in this plan need a look, and why?",
+      worksRebidding: "Why did so many works contracts in {id} go through rebidding?",
+    },
+  },
+  // Ticket 112: the copy key after an ID or a source, from fairshare's "Copy the query": its name says what it copies,
+  // its tooltip says "Copy", then "Copied" for 2 seconds, and a polite status says what was copied once.
+  copyKey: {
+    name: (what: string) => `Copy ${what}`,
+    tip: "Copy",
+    copied: "Copied",
+    said: (what: string) => `Copied ${what}.`,
+    failed: "I couldn't copy it. Select the text instead.",
+    reference: "the STEP reference",
+    projectId: "the project ID",
+    source: "the source",
+    // The evidence drawer's key copies the source as one line: its heading and its meta line's parts, joined with
+    // this in place of the middle dots.
+    sourceJoin: ", ",
   },
   stamp: {
     loading: "Reading the data date",

@@ -3,6 +3,7 @@
 // in tests/fixtures/api, which the server tests check the server against. The words are the ticket's
 // and the 14 design brief's, copied here so the test checks the copy file against an independent source.
 import type { Page, Request } from "@playwright/test";
+import { scan } from "./axe";
 import { expect, mockApi, recorded, test } from "./mocked";
 import { tabUnderStickyParts } from "./sticky";
 
@@ -253,8 +254,9 @@ test("focused and empty, the box gives its hint; Escape closes the list, then em
   await expect(box(page)).toHaveAccessibleDescription(
     "Type a project ID such as P130164, a STEP reference, a loan number, or a question.",
   );
-  // DESIGN.md section 3: the hint's sample ID is in Roboto Mono, as every other ID the box writes.
-  expect(await idFaces(page, "P130164")).toEqual(["Roboto Mono"]);
+  // DESIGN.md section 3: the hint's sample ID is in Roboto Mono, as every other ID the box writes, and so is the ID in
+  // Home's second suggestion (ticket 112).
+  expect(await idFaces(page, "P130164")).toEqual(["Roboto Mono", "Roboto Mono"]);
   await page.keyboard.type("P130164");
   await expect(options(page)).toHaveCount(2);
   await page.keyboard.press("Escape");
@@ -408,7 +410,8 @@ test("a press on the box's / hint or its search icon puts the cursor in the text
   await open(page);
   const input = page.locator("[data-box-band] input");
   for (const part of ["kbd", "svg"]) {
-    await page.locator("main h1").click();
+    // Focus leaves the box for the h1 (a press would land on the box's suggestions, which lie over it; ticket 112).
+    await page.locator("main h1").focus();
     await expect(input, part).not.toBeFocused();
     const target = page.locator(`[data-box-band] form > [data-focus-ring] ${part}`).first();
     await expect(target, part).toBeVisible();
@@ -485,5 +488,123 @@ test("at 390 px a chip with the fixture's longest reference takes its own row, w
   expect(field.y, "the text under the chip").toBeGreaterThanOrEqual(inner.y + inner.height);
   expect(Math.round(field.x), "the chip and the text share one left edge").toBe(Math.round(inner.x));
   expect(inner.x + inner.width).toBeLessThanOrEqual(outer.x + outer.width);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+});
+
+// Ticket 112: focused and empty, the box keeps its hint and suggests questions for the page, each a question of
+// evals/benchmark.yaml without its as-of date (config/examples.toml's [[ask]], sent by GET /api/me). The words are the
+// ticket's, copied here.
+const PACKAGE = "KE-NWWDA-541055-CW-RFB";
+const SUGGESTED = {
+  package: [
+    `How long did packages like ${PACKAGE} take from notice to signed contract?`,
+    `How many packages like ${PACKAGE} were advertised again, and why?`,
+    `Were packages like ${PACKAGE} signed above or below their cost estimates?`,
+  ],
+  project: ["Which contracts were signed on P156634 since its last ISR?", "Does P156634 need a look, and which signals put it there?"],
+  plan: ["Which activities in this plan need a look, and why?"],
+  home: [
+    `How long did packages like ${PACKAGE} take from notice to signed contract?`,
+    "Why did so many works contracts in P130164 go through rebidding?",
+  ],
+};
+const group = (page: Page, name: string) => page.locator("[data-box-band]").getByRole("group", { name });
+
+// A move inside the app, as Back and Forward make one, so one page load serves every page.
+async function moveTo(page: Page, path: string) {
+  await page.evaluate((to) => {
+    window.history.pushState({ key: `moved-${to}` }, "", to);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }, path);
+  await expect(page).toHaveURL((url) => url.pathname === path);
+}
+
+test("focused and empty, each page's box keeps its hint and suggests the page's questions under the page's name; typing replaces them", async ({ page }) => {
+  const { asked } = await open(page, "/", {
+    "/api/home": { body: await recorded("home.json") },
+    [`/api/packages/${PACKAGE}`]: { body: await recorded("package-ke-nwwda-541055.json") },
+    [`/api/packages/${PACKAGE}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+  });
+
+  for (const [path, name, questions] of [
+    ["/", "Ask, for example", SUGGESTED.home],
+    ["/lessons", "Ask, for example", SUGGESTED.home],
+    [`/packages/${PACKAGE}`, "Ask about this package", SUGGESTED.package],
+    ["/projects/P156634", "Ask about this project", SUGGESTED.project],
+    [PLAN, "Ask about this plan", SUGGESTED.plan],
+  ] as const) {
+    if (path !== "/") await moveTo(page, path);
+    await page.locator("main h1").focus();
+    await page.keyboard.press("/");
+    await expect(box(page)).toHaveAccessibleDescription(/^Type a project ID such as P130164/);
+    await expect(group(page, name).getByRole("option")).toHaveText([...questions]);
+    await expect(box(page)).toHaveAttribute("aria-expanded", "true");
+    // None is chosen until Down or Up moves to one, so Enter in the empty box asks nothing.
+    await expect(group(page, name).getByRole("option", { selected: true })).toHaveCount(0);
+    if (path === "/") {
+      expect(await idFaces(page, PACKAGE)).toEqual(["Roboto Mono"]);
+      expect(await idFaces(page, "P130164")).toEqual(["Roboto Mono", "Roboto Mono"]);
+    }
+  }
+
+  await page.keyboard.type("P1");
+  await expect(page.locator("[data-box-band]").getByRole("group")).toHaveCount(0);
+  await expect(options(page).first()).toHaveAccessibleName("Ask this Within P156634");
+  expect(asked).toEqual([]);
+});
+
+async function openPackageToAsk(page: Page, width: number) {
+  await page.setViewportSize({ width, height: 900 });
+  const asked: Request[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/ask") asked.push(request);
+  });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [`/api/packages/${PACKAGE}`]: { body: await recorded("package-ke-nwwda-541055.json") },
+    [`/api/packages/${PACKAGE}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+    "/api/ask": { body: await recorded("ask-ke-nwwda-541055-past-range.sse") },
+  });
+  await page.goto(`/packages/${PACKAGE}`);
+  await expect(page.locator("main h1")).toBeVisible();
+  return asked;
+}
+
+test("Down then Enter asks the first package suggestion within the package, a click asks another, and axe passes with the list open", async ({ page }) => {
+  const asked = await openPackageToAsk(page, 1440);
+  const answer = page.getByRole("region", { name: "Answer" });
+
+  await page.keyboard.press("/");
+  const suggestions = group(page, "Ask about this package").getByRole("option");
+  await expect(suggestions).toHaveCount(3);
+  expect((await scan(page)).violations).toEqual([]);
+  await page.keyboard.press("ArrowDown");
+  await expect(suggestions.first()).toHaveAttribute("aria-selected", "true");
+  await expect(box(page)).toHaveAttribute("aria-activedescendant", (await suggestions.first().getAttribute("id"))!);
+  await page.keyboard.press("Enter");
+
+  await expect(box(page)).toHaveValue(SUGGESTED.package[0]);
+  await expect(box(page)).toBeFocused();
+  await expect(answer).toContainText("The middle half of the 49 comparable packages took 3.3 to 7.9 months");
+  await expect(answer).toContainText(`Asked within ${PACKAGE}`);
+  expect(asked.map((request) => [request.postDataJSON().question, request.postDataJSON().scope])).toEqual([[SUGGESTED.package[0], PACKAGE]]);
+
+  // Empty the box, and a click in it brings the suggestions back; a click on one asks it the same way.
+  await page.keyboard.press("Escape");
+  await expect(box(page)).toHaveValue("");
+  await box(page).click();
+  await suggestions.nth(1).click();
+  await expect(box(page)).toHaveValue(SUGGESTED.package[1]);
+  await expect.poll(() => asked.map((request) => request.postDataJSON().question)).toEqual([SUGGESTED.package[0], SUGGESTED.package[1]]);
+  expect(asked[1].postDataJSON().scope).toBe(PACKAGE);
+});
+
+test("at 390 px the package's suggestions open under the box with no WCAG 2.2 AA violation", async ({ page }) => {
+  await openPackageToAsk(page, 390);
+
+  await page.keyboard.press("/");
+  await expect(group(page, "Ask about this package").getByRole("option")).toHaveCount(3);
+  expect((await scan(page)).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 });

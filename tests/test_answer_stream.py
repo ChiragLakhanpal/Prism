@@ -18,17 +18,20 @@ from pathlib import Path
 import httpx
 import pytest
 
+from strata.agent.foundry import FoundryAgent, FoundryError
 from strata.agent.judge import Judgement
-from strata.agent.loop import AgentError, answer_runner
+from strata.agent.loop import AgentError, answer_runner, call_output
 from strata.agent.runs import RunLog
 from strata.agent.scripted import (RECORDED_STREAMS, ScriptedAgent, ScriptedJudge, failed_stream_text, load_cases,
                                    stream_text)
-from strata.config import load_thresholds, load_tools
+from strata.config import load_agent, load_thresholds, load_tools
+from strata.dbx import Viewer
 from strata.harness.turn import Event, RunError, TraceIds
 from strata.lakehouse import catalog
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.passages import TABLE_SUMMARY
 from strata.server.app import create_app
+from strata.tools import registry
 from strata.tools.check_plan import check_plan
 from strata.tools.estimate_time import estimate_time
 from strata.tools.search_passages import search_passages
@@ -1331,3 +1334,202 @@ def test_a_claim_whose_number_rests_only_on_a_table_summary_passage_is_removed_w
     assert str(annex["risks"]) == "8"
     assert [sentence["index"] for sentence in of(parsed, "sentence")] == [0, 1, 2]
     assert summary not in {evidence["id"] for evidence in of(parsed, "evidence")}
+
+
+# Ticket 117: a tool's result is capped on its way to the agent (config/thresholds.toml, agent.max_tool_output_chars).
+
+def comparables_result(packages, ids_left_out):
+    """A result in find_comparables' shape: one row per comparable package, each with the records it rests on, and a
+    coverage line that names every package it could not use, as the workspace's did on October 27, 2026."""
+    rows = [{"evidence_id": f"strata.gold.package:KE-NWWDA-{number:06d}-CW-RFB", "public_from": "2024-03-01",
+             "days": number, "items": [{"evidence_id": f"strata.gold.notice:OP{number:08d}", "public_from": "2024-01-02"},
+                                       {"evidence_id": f"strata.gold.contract:{number:07d}", "public_from": "2024-03-01"}]}
+            for number in range(packages)]
+    return {"tool": "find_comparables", "as_of": "2026-10-23", "view": "staff", "rows": rows,
+            "coverage": {"matched": packages + ids_left_out, "used": packages, "not_used": [
+                {"reason": "no_step_reference", "count": ids_left_out,
+                 "evidence_ids": [f"strata.gold.contract:{number:07d}" for number in range(ids_left_out)]}]},
+            "abstention": None, "package": {"step_reference": "KE-NWWDA-541055-CW-RFB", "country": "KE"},
+            "past_range": {"n": packages, "median_months": 7.5}}
+
+
+def test_a_result_within_the_cap_goes_to_the_agent_byte_for_byte_as_it_did_before():
+    """Ticket 117: only a result longer than the cap changes. A short one is the same JSON as before, curly
+    apostrophe and date included."""
+    output = {"text": "the World Bank’s prior review", "public_from": dt.date(2019, 10, 10), "rows": [1, 2]}
+
+    sent = call_output({"call_id": "call_1"}, output, max_chars=400_000)
+
+    assert sent == {"type": "function_call_output", "call_id": "call_1",
+                    "output": '{"text": "the World Bank’s prior review", "public_from": "2019-10-10", "rows": [1, 2]}'}
+
+
+def test_a_result_longer_than_the_cap_goes_as_its_first_rows_and_one_value_fields_with_a_note_on_what_was_left_out():
+    """Ticket 117: every field that holds one value stays, each list keeps its first entries in order until the whole
+    fits, and truncated says, list by list, how many entries were kept and how many left out."""
+    output = comparables_result(packages=2_000, ids_left_out=5_000)
+
+    text = call_output({"call_id": "call_1"}, output, max_chars=40_000)["output"]
+
+    assert len(text) <= 40_000
+    shown = json.loads(text)
+    assert {key: shown[key] for key in ("tool", "as_of", "view", "abstention", "package", "past_range")} == {
+        "tool": "find_comparables", "as_of": "2026-10-23", "view": "staff", "abstention": None,
+        "package": {"step_reference": "KE-NWWDA-541055-CW-RFB", "country": "KE"},
+        "past_range": {"n": 2_000, "median_months": 7.5}}
+    assert (shown["coverage"]["matched"], shown["coverage"]["used"]) == (7_000, 2_000)
+    kept = len(shown["rows"])
+    assert 0 < kept < 2_000 and shown["rows"] == output["rows"][:kept]
+    [not_used] = shown["coverage"]["not_used"]
+    assert (not_used["reason"], not_used["count"]) == ("no_step_reference", 5_000)
+    ids = len(not_used["evidence_ids"])
+    assert 0 < ids < 5_000 and not_used["evidence_ids"] == output["coverage"]["not_used"][0]["evidence_ids"][:ids]
+    note = shown["truncated"]
+    assert (note["chars"], note["max_chars"]) == (len(json.dumps(output)), 40_000)
+    assert note["lists"] == [{"list": "rows", "kept": kept, "left_out": 2_000 - kept},
+                             {"list": "coverage.not_used[].evidence_ids", "kept": ids, "left_out": 5_000 - ids}]
+    assert note["note"] == (
+        "This result was too long to send whole, so each list in it holds only its first entries; the counts under "
+        "truncated say how many each list left out, and a call with narrower arguments returns the others.")
+    # A list short enough to fit whole is not cut: each row still has both records it rests on.
+    assert all(len(row["items"]) == 2 for row in shown["rows"])
+
+
+def test_a_result_whose_first_row_alone_is_longer_than_the_cap_goes_with_that_row_s_texts_cut_to_their_first_words():
+    """Ticket 117: one passage of millions of characters would not fit even as the only row, so its text is cut too."""
+    text = "The works were advertised again. " * 3_000
+    output = {"tool": "search_passages", "as_of": "2026-10-23", "view": "staff", "abstention": None,
+              "rows": [{"evidence_id": "strata.gold.passage:31525018/v1/54", "text": text},
+                       {"evidence_id": "strata.gold.passage:31525018/v1/55", "text": text}]}
+
+    shown = json.loads(call_output({"call_id": "call_1"}, output, max_chars=10_000)["output"])
+
+    assert len(json.dumps(shown, ensure_ascii=False)) <= 10_000
+    [row] = shown["rows"]
+    assert row["evidence_id"] == "strata.gold.passage:31525018/v1/54" and text.startswith(row["text"])
+    assert shown["truncated"]["lists"] == [{"list": "rows", "kept": 1, "left_out": 1}]
+    assert (shown["truncated"]["texts_cut"], shown["truncated"]["text_chars_kept"]) == (1, len(row["text"]))
+
+
+ELEVEN_MILLION = 11_000_000
+# The longest string Foundry takes in a request, from its 400 of October 28, 2026 at 03:01 UTC (ticket 117).
+FOUNDRY_LONGEST_STRING = 10_485_760
+PADDING = "The works were advertised again. " * 300  # about 10,000 characters of a passage's text
+
+
+BUILT = {}  # the last result eleven_million_characters built, whole
+
+
+def eleven_million_characters(call, **arguments):
+    """search_passages, with copies of its last passage, each under its own id, after its own passages until its result is
+    more than 11 million characters of JSON, as rebidding_risk's was on the workspace on October 28, 2026."""
+    result = search_passages(call, **arguments)
+    last = result["rows"][-1]
+    copy_chars = len(json.dumps({**last, "text": PADDING}, ensure_ascii=False)) + 2
+    copies = (ELEVEN_MILLION - len(json.dumps(result, ensure_ascii=False))) // copy_chars + 1
+    result["rows"] += [{**last, "evidence_id": f"{last['evidence_id']}-copy{number}", "text": PADDING}
+                       for number in range(copies)]
+    BUILT["rows"] = result["rows"]
+    return result
+
+
+class FoundryFake:
+    """Foundry's Responses API behind FoundryAgent's HTTP call. It refuses a request that holds a string longer than
+    Foundry's own limit with the 400 Foundry gave on October 28, 2026, as FoundryAgent then reads it. Otherwise its first
+    answer is one search_passages call, and its second the claims answer() writes from the result it got back."""
+
+    def __init__(self, arguments, answer):
+        self.arguments, self.answer, self.bodies = arguments, answer, []
+
+    def __call__(self, method, url, headers, body):
+        self.bodies.append(body)
+        for at, item in enumerate(body["input"]):
+            text = item.get("output") or item.get("content") or ""
+            if len(text) > FOUNDRY_LONGEST_STRING:
+                raise FoundryError(400, json.dumps({"error": {
+                    "message": f"Invalid 'input[{at}].output': string too long. Expected a string with maximum length "
+                               f"{FOUNDRY_LONGEST_STRING}, but got a string with length {len(text)} instead.",
+                    "type": "invalid_request_error", "param": f"input[{at}].output",
+                    "code": "string_above_max_length"}}))
+        if len(self.bodies) == 1:
+            return {"id": "resp_1", "agent": {"version": "10"}, "output": [
+                {"type": "function_call", "call_id": "call_1", "name": "search_passages",
+                 "arguments": json.dumps(self.arguments)}]}
+        assert len(self.bodies) == 2, "No sentence of this answer goes back for a rewrite."
+        output = json.loads(body["input"][0]["output"])
+        return {"id": "resp_2", "agent": {"version": "10"}, "output": [
+            {"type": "message", "role": "assistant", "content": [
+                {"type": "output_text", "text": json.dumps({"claims": self.answer(output)})}]}]}
+
+
+def test_a_tool_result_of_11_million_characters_reaches_foundry_under_the_cap_and_the_answer_is_checked_in_full(
+        fixture_db):
+    """Ticket 117: on October 28, 2026 Foundry refused a tool result of 20,831,467 characters, and the answer ended with
+    agent_unavailable. Now the agent gets a copy under agent.max_tool_output_chars, with its first rows and the note, and
+    the turn keeps every row the tool returned: a sentence that cites a row the agent's copy left out still finds it."""
+    cap = int(load_thresholds().value("agent.max_tool_output_chars"))
+    rebidding = "108 of 328 cases had to go through rebidding"
+    arguments = {"query": "works contracts advertised again rebidding", "project_id": "P130164", "as_of": "2026-10-23"}
+    unseen = {}
+
+    def answer(output):
+        # The 501st copy of the tenth passage, which the agent's copy of the result left out.
+        unseen["id"] = f"{output['rows'][9]['evidence_id']}-copy500"
+        return [claim(f'The ICR said "{rebidding}".', kind="quote", evidence_ids=[ICR_54], numbers=["108", "328"],
+                      quote={"text": rebidding, "passage_id": ICR_54}),
+                claim("A later copy of the passage said the works were advertised again.", evidence_ids=[unseen["id"]])]
+
+    foundry = FoundryFake(arguments, answer)
+    agent = FoundryAgent("https://wb-strata.services.ai.azure.com/api/projects/Strata", load_agent("orchestrator"),
+                         lambda: "not-a-real-token", call=foundry, traceparent=lambda: None)
+
+    parsed = ask_with_tools(fixture_db, agent, with_adapter("search_passages", "eleven_million_characters"),
+                            judge=EverySentenceFollows())
+
+    sent = foundry.bodies[1]["input"][0]["output"]
+    assert len(sent) <= cap
+    shown = json.loads(sent)
+    [rows] = [entry for entry in shown["truncated"]["lists"] if entry["list"] == "rows"]
+    assert shown["truncated"]["chars"] > ELEVEN_MILLION and rows["kept"] == len(shown["rows"]) and rows["left_out"] > 900
+    assert shown["rows"] == BUILT["rows"][:rows["kept"]] and rows["kept"] + rows["left_out"] == len(BUILT["rows"])
+    assert ICR_54 in {row["evidence_id"] for row in shown["rows"]}
+    assert unseen["id"] not in {row["evidence_id"] for row in shown["rows"]}
+    assert (shown["tool"], shown["query"], shown["abstention"]) == ("search_passages", arguments["query"], None)
+    assert of(parsed, "error") == [] and of(parsed, "removed") == []
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [
+        f'The ICR said "{rebidding}".', "A later copy of the passage said the works were advertised again."]
+    assert unseen["id"] in {evidence["id"] for evidence in of(parsed, "evidence")}
+
+
+def test_rebidding_risk_has_a_cap_of_its_own_and_a_result_over_it_reaches_the_agent_with_its_counts_and_first_rows(
+        fixture_db):
+    """Ticket 117: rebidding_risk with every criterion open was the tool whose result reached 20,831,467 characters on
+    the workspace, because its coverage line, and the summary's copy of it, named each package it could not use. The
+    registry gives it a cap of its own (config/tools.toml, max_output_chars), below agent.max_tool_output_chars. Here the
+    cap is lowered below the fixture's own result for that call, which is 52,333 characters: the agent gets m, n and the
+    summary it cites them by whole, the first rows, and the note, and a sentence that states m and n is kept."""
+    tools = load_tools()
+    assert tools["rebidding_risk"].max_output_chars < int(load_thresholds().value("agent.max_tool_output_chars"))
+    tools["rebidding_risk"] = dataclasses.replace(tools["rebidding_risk"], max_output_chars=20_000)
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        whole = registry.call("rebidding_risk", {}, registry.Context(engine, Viewer(), "staff", TODAY, load_thresholds()))
+    said = f"{whole['n']} of the {whole['m']} comparable packages were advertised again."
+    agent = CallsThenAnswers(
+        [("rebidding_risk", {"as_of": "2026-10-23"})],
+        lambda outputs: [claim(f"{outputs[0]['n']} of the {outputs[0]['m']} comparable packages were advertised again.",
+                               kind="record", evidence_ids=[outputs[0]["summary"]["evidence_id"]],
+                               numbers=[str(outputs[0]["n"]), str(outputs[0]["m"])])])
+
+    parsed = ask_with_tools(fixture_db, agent, tools, judge=EverySentenceFollows())
+
+    [shown] = agent.outputs
+    assert len(json.dumps(shown, ensure_ascii=False)) <= 20_000 < len(json.dumps(whole, ensure_ascii=False, default=str))
+    assert (shown["m"], shown["n"], shown["summary"]["m"], shown["summary"]["n"]) == (
+        whole["m"], whole["n"], whole["m"], whole["n"])
+    assert shown["groups"] == whole["groups"] and shown["model"] == whole["model"]
+    assert [row["evidence_id"] for row in shown["rows"]] == [row["evidence_id"] for row in whole["rows"]]
+    assert {entry["list"] for entry in shown["truncated"]["lists"]} >= {
+        "coverage.not_used[].evidence_ids", "summary.coverage.not_used[].evidence_ids"}
+    assert [entry["count"] for entry in shown["coverage"]["not_used"]] == [
+        entry["count"] for entry in whole["coverage"]["not_used"]]
+    assert [sentence["text"] for sentence in of(parsed, "sentence")] == [said]

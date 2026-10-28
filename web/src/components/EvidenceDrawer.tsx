@@ -36,6 +36,8 @@ import { useStore } from "../lib/store";
 import { viewOf } from "../lib/view";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
+import { WORD_JOINER } from "./CitationMarker";
+import { CopyKey } from "./CopyKey";
 import { Highlight, highlighted, withoutMarkers } from "./Document";
 import { sourcePageHref } from "../lib/documents";
 import { ExternalLink, pdfPageHref } from "./ExternalLink";
@@ -195,6 +197,20 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
       ))}
     </p>
   );
+}
+
+// The source as one line, as the drawer shows it (ticket 112): its heading, then its meta line's parts, joined with
+// commas in place of the middle dots, with no word joiner and plain spaces for no-break ones. A record has no meta line,
+// so its heading alone.
+function sourceLine(header: HTMLElement | null, passageId: string): string {
+  const plain = (text: string | null | undefined) => (text ?? "").replaceAll(WORD_JOINER, "").replace(/\s+/g, " ").trim();
+  const dot = copy.evidence.meta.dot;
+  const meta = document.getElementById(passageId)?.querySelector("[data-meta-line]");
+  const parts = Array.from(meta?.querySelectorAll("[data-meta-part]") ?? [], (part) => {
+    const text = part.textContent ?? "";
+    return plain(text.endsWith(dot) ? text.slice(0, -dot.length) : text);
+  });
+  return [plain(header?.querySelector("h2")?.textContent), ...parts].filter(Boolean).join(copy.copyKey.sourceJoin);
 }
 
 // Where each cell's value sits in the row's text, which joins the cells as "Risk: Capacity; Rating: Low",
@@ -724,6 +740,10 @@ export function EvidenceDrawerView({
               {data.status === "loading" && <SkeletonText widths={["w-4/5"]} />}
             </h2>
           </div>
+          {/* Ticket 112: a source's copy key, before the close, on the heading's 24 px line. */}
+          {(evidence?.kind === "passage" || evidence?.kind === "record") && !criteriaView && !timelineView && (
+            <CopyKey text={() => sourceLine(headerRef.current, passageId)} what={copy.copyKey.source} joined={false} className="" />
+          )}
           <Button
             variant="ghost"
             icon={X}

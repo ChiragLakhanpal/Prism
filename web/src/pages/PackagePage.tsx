@@ -171,6 +171,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         <PackageHeader
           title={facts.description ?? mono(facts.step_reference)}
           reference={mono(facts.step_reference)}
+          copyReference={facts.step_reference}
           action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} /> : undefined}
         />
         <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>

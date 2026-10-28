@@ -99,7 +99,8 @@ export function StepTracker({ state }: { state: StepsState }) {
   if (!dates || !family || dates.steps.length === 0) return null;
   const steps = dates.steps;
   const current = Math.max(0, steps.findIndex((step) => step.state === "late" || step.state === "next"));
-  const stop = focused ?? current;
+  // A new answer may hold fewer steps, as when a package from a sentence changes its method family.
+  const stop = focused !== null && focused < steps.length ? focused : current;
   const plan = steps.find((step) => step.plan_latest_version_date)?.plan_latest_version_date ?? null;
 
   const move = (event: KeyboardEvent<HTMLOListElement>) => {

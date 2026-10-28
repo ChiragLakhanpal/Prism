@@ -10,7 +10,9 @@ answer_runner() makes the runner the server's /api/ask stream runs. For each que
    through the tool registry with the viewer's own engine, and every row it returns, with its summary
    of derived figures when it has one and the records inside its rows that the registry names
    (nested_rows, such as each side of a disagreement), is kept in the turn's Facts, so the verifier
-   can check the answer against it. The results go back to the agent.
+   can check the answer against it. The results go back to the agent, each whole up to agent.max_tool_output_chars
+   characters of JSON (or the tool's own max_output_chars in config/tools.toml), and a longer one as its first rows
+   with a note on what was left out (call_output, ticket 117); the Facts keep every row either way.
 3. This repeats for at most agent.tool_rounds rounds (config/thresholds.toml). A call the agent asks
    for after that is not run: the agent gets a result that says so, and must answer from what it has.
 4. One rewrite round (ticket 109): the loop runs the verifier's checks 1 to 3 on the agent's answer, offline, and
@@ -74,9 +76,105 @@ def function_calls(response: Mapping) -> list[dict]:
     return [item for item in response.get("output") or [] if item.get("type") == "function_call"]
 
 
-def call_output(call: Mapping, output: Mapping) -> dict:
-    return {"type": "function_call_output", "call_id": call["call_id"],
-            "output": json.dumps(output, ensure_ascii=False, default=str)}
+def call_output(call: Mapping, output: Mapping, max_chars: int | None = None) -> dict:
+    """One tool call's result as the agent gets it, as JSON. A result longer than max_chars characters (the thresholds
+    file's agent.max_tool_output_chars, or the tool's own max_output_chars in config/tools.toml) goes as trimmed() cuts
+    it, because Foundry refuses a string longer than its own limit and the answer then ends with agent_unavailable
+    (ticket 117). Any other result goes as it is. The turn's Facts keep the whole result either way."""
+    text = _json(output)
+    if max_chars is not None and len(text) > max_chars:
+        text = _json(trimmed(output, max_chars, len(text)))
+    return {"type": "function_call_output", "call_id": call["call_id"], "output": text}
+
+
+def _json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, default=str)
+
+
+TRUNCATED = "truncated"  # the field of a trimmed result that says what was left out (ticket 117)
+TRUNCATED_NOTE = ("This result was too long to send whole, so each list in it holds only its first entries; the counts "
+                  "under truncated say how many each list left out, and a call with narrower arguments returns the others.")
+
+
+def trimmed(output: Mapping, max_chars: int, chars: int) -> dict:
+    """A copy of a tool's result that fits in max_chars characters of JSON. Every field that holds one value stays as it
+    was, and each list keeps its first entries, in order: the copy keeps the same most number of entries in every list,
+    the largest number that still fits, so the longest lists are cut first and a short list, such as the two records a
+    row rests on, stays whole. Its field truncated says, list by list, how many entries were kept and how many were left
+    out, with one sentence for the agent. When even the first entry of each list does not fit, as with one text of
+    millions of characters, each text is cut to its first characters too, and truncated counts the texts cut."""
+    def attempt(entries: int, letters: int | None) -> tuple[str, dict] | None:
+        lists: dict[str, list[int]] = {}
+        texts = [0]
+        copy = _cut(output, entries, letters, "", lists, texts)
+        note = {"chars": chars, "max_chars": max_chars,
+                "lists": [{"list": path, "kept": kept, "left_out": left} for path, (kept, left) in lists.items()],
+                "note": TRUNCATED_NOTE}
+        if texts[0]:
+            note.update(texts_cut=texts[0], text_chars_kept=letters)
+        copy = {**copy, TRUNCATED: note}
+        text = _json(copy)
+        return (text, copy) if len(text) <= max_chars else None
+
+    entries = _most(lambda most: attempt(most, None) is not None, 1, _longest_list(output))
+    if entries is not None:
+        return attempt(entries, None)[1]
+    for entries in (1, 0):
+        letters = _most(lambda most, entries=entries: attempt(entries, most) is not None, 0, _longest_text(output))
+        if letters is not None:
+            return attempt(entries, letters)[1]
+    return {key: output[key] for key in ("tool", "as_of", "view") if key in output} | {
+        TRUNCATED: {"chars": chars, "max_chars": max_chars, "lists": [], "note": TRUNCATED_NOTE}}
+
+
+def _most(fits: Callable[[int], bool], least: int, most: int) -> int | None:
+    """The largest number from least to most that fits, or None when least does not: doubling from least, then halving
+    the gap, so no attempt is much longer than the one that fits."""
+    if most < least or not fits(least):
+        return None
+    good, step = least, 1
+    while good + step <= most and fits(good + step):
+        good, step = good + step, step * 2
+    bad = min(good + step, most + 1)
+    while bad - good > 1:
+        middle = (good + bad) // 2
+        good, bad = (middle, bad) if fits(middle) else (good, middle)
+    return good
+
+
+def _cut(value: Any, entries: int, letters: int | None, path: str, lists: dict[str, list[int]], texts: list[int]) -> Any:
+    """value with each list cut to its first entries and, when letters is given, each text to its first letters. lists
+    adds up, for each list's path (such as rows or coverage.not_used[].evidence_ids), the entries kept and left out."""
+    if isinstance(value, Mapping):
+        return {key: _cut(inner, entries, letters, f"{path}.{key}" if path else str(key), lists, texts)
+                for key, inner in value.items()}
+    if isinstance(value, list | tuple):
+        kept = value[:entries]
+        if len(value) > entries:
+            counts = lists.setdefault(path, [0, 0])
+            counts[0] += len(kept)
+            counts[1] += len(value) - len(kept)
+        return [_cut(inner, entries, letters, f"{path}[]", lists, texts) for inner in kept]
+    if letters is not None and isinstance(value, str) and len(value) > letters:
+        texts[0] += 1
+        return value[:letters]
+    return value
+
+
+def _longest_list(value: Any) -> int:
+    if isinstance(value, Mapping):
+        return max((_longest_list(inner) for inner in value.values()), default=0)
+    if isinstance(value, list | tuple):
+        return max(len(value), max((_longest_list(inner) for inner in value), default=0))
+    return 0
+
+
+def _longest_text(value: Any) -> int:
+    if isinstance(value, Mapping):
+        return max((_longest_text(inner) for inner in value.values()), default=0)
+    if isinstance(value, list | tuple):
+        return max((_longest_text(inner) for inner in value), default=0)
+    return len(value) if isinstance(value, str) else 0
 
 
 def for_agent(value: Any, as_of: dt.date) -> Any:
@@ -177,7 +275,14 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
     limits = thresholds or load_thresholds()
     rounds = int(limits.value("agent.tool_rounds"))
     rewrites = int(limits.value("agent.rewrite_rounds"))
+    longest = int(limits.value("agent.max_tool_output_chars"))  # the longest tool result the agent gets whole
     tools_held = tools if tools is not None else load_tools()
+
+    def longest_for(name: str | None) -> int:
+        """The longest result of this tool the agent gets whole: the tool's own cap in the registry, else the thresholds
+        file's (ticket 117)."""
+        tool = tools_held.get(name) if name else None
+        return tool.max_output_chars if tool is not None and tool.max_output_chars else longest
 
     def run_tool(turn: Turn, as_of: dt.date, call: Mapping) -> tuple[dict, dict]:
         """One tool call as the viewer: what goes back to the agent, and its line in the run's notes."""
@@ -283,7 +388,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
                     raise AgentError("agent_output", "The agent kept asking for tools after its last round.")
                 turn.notes.tool_calls += [{"tool": call.get("name"), "ran": False, "reason": "round_limit",
                                            "round": rounds + 1} for call in calls]
-                items = [call_output(call, {"not_run": "round_limit", "tool_rounds": rounds}) for call in calls]
+                items = [call_output(call, {"not_run": "round_limit", "tool_rounds": rounds}, longest) for call in calls]
                 continue
             turn.notes.tool_rounds += 1
             items = []
@@ -297,7 +402,7 @@ def answer_runner(agent_for: Callable[[Turn], Agent], engine_for: EngineFor, too
                 turn.notes.tool_calls.append({**note, "round": turn.notes.tool_rounds})
                 yield Event("step", {**shown, "status": "done", "count": note["rows"],
                                      "abstention": note["abstention"], "error": note.get("error")})
-                items.append(call_output(call, output))
+                items.append(call_output(call, output, longest_for(call.get("name"))))
 
     return run
 

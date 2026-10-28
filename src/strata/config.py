@@ -1162,6 +1162,9 @@ class Tool:
     parameters: tuple[ToolParameter, ...]
     result: ToolResult
     readiness: ToolReadiness | None = None
+    # The longest of its results the agent gets whole, in characters of JSON, in place of the thresholds file's
+    # agent.max_tool_output_chars; a longer one goes trimmed (strata.agent.loop.call_output, ticket 117). None: that one.
+    max_output_chars: int | None = None
 
     def parameter(self, name: str) -> ToolParameter:
         found = [parameter for parameter in self.parameters if parameter.name == name]
@@ -1180,13 +1183,18 @@ def load_tools(path: Path = CONFIG_DIR / "tools.toml") -> dict[str, Tool]:
             raise ConfigError(f"In {path.name}, the tool name {name!r} must be lower case letters, digits and _.")
         entry = _Entry(path, f"tools.{name}", table)
         parameters, result = _tool_parameters(path, name, table), _tool_result(path, name, table)
-        entry.only({"description", "adapter", "benchmark", "sources", "parameters", "result", "readiness"})
+        entry.only({"description", "adapter", "benchmark", "sources", "parameters", "result", "readiness",
+                    "max_output_chars"})
         adapter = entry.text("adapter")
         if not ADAPTER.fullmatch(adapter):
             entry._fail("adapter", f"must name a function as module:function, such as strata.tools.{name}:{name}")
+        longest = entry.integer("max_output_chars", required=False)
+        if longest is not None and longest < 1:
+            entry._fail("max_output_chars", "must be a whole number of characters above 0")
         tools[name] = Tool(name=name, description=entry.text("description"), adapter=adapter,
                            benchmark=entry.text("benchmark"), sources=entry.texts("sources"),
-                           parameters=parameters, result=result, readiness=_tool_readiness(path, name, table))
+                           parameters=parameters, result=result, readiness=_tool_readiness(path, name, table),
+                           max_output_chars=longest)
     return tools
 
 
@@ -2892,6 +2900,10 @@ def load_kpis(path: Path = CONFIG_DIR / "kpis.toml") -> dict[str, Kpi]:
 # ── The examples registry (ticket 41) ────────────────────────────────────
 
 START_HERE_SLOTS = ("showcase", "demo_project", "demo_agency_id", "demo_plan_date", "lesson_notice")
+# The pages a box suggestion shows on (ticket 112): home also serves every page with no scope.
+ASK_PAGES = ("package", "project", "plan_check", "home")
+# What a home suggestion is asked within, filled from the slice file as Start here's links are.
+ASK_WITHIN = ("demo_package", "showcase")
 
 
 @dataclass(frozen=True)
@@ -2900,6 +2912,18 @@ class StartHereLink:
 
     key: str
     href: str
+
+
+@dataclass(frozen=True)
+class AskSuggestion:
+    """One question the box suggests while it is focused and empty (ticket 112): its words' key in the copy file
+    (copy.box.suggest), the page it shows on, the evals/benchmark.yaml question it shortens, and, on Home, the slice
+    file's example it is asked within ("demo_package" or "showcase")."""
+
+    key: str
+    page: str
+    benchmark: str
+    within: str | None = None
 
 
 @dataclass(frozen=True)
@@ -2917,6 +2941,14 @@ class Examples:
     start_here: tuple[StartHereLink, ...]
     showcase: Showcase
     demo_plan: DemoPlan
+    asks: tuple[AskSuggestion, ...] = ()
+
+    def suggestions(self) -> list[dict]:
+        """Each box suggestion, with what a home row is asked within filled in from the slice file: the demo package's
+        STEP reference or the showcase project's ID. A page's own rows are asked within its scope, so theirs is None."""
+        values = {"demo_package": self.demo_plan.package, "showcase": self.showcase.project_id}
+        return [{"key": ask.key, "page": ask.page, "benchmark": ask.benchmark,
+                 "within": values[ask.within] if ask.within else None} for ask in self.asks]
 
     def links(self, agency_id: str, lesson_notice: str = "") -> list[dict]:
         """Each Start here link with its address filled in: the demo plan's agency id from check_plan's result, and the
@@ -2937,7 +2969,7 @@ def load_examples(path: Path = CONFIG_DIR / "examples.toml", slice_path: Path = 
     """The examples registry, with the slice file's showcase project and demo plan."""
     data = _read(path)
     top = _Entry(path, "the file", data)
-    top.only({"viewers", "follows", "packages", "ppsd_rows", "lesson_change", "start_here"})
+    top.only({"viewers", "follows", "packages", "ppsd_rows", "lesson_change", "start_here", "ask"})
     chosen = load_slice(slice_path)
     named = {"showcase": chosen.showcase.project_id}
     follows = []
@@ -2966,8 +2998,21 @@ def load_examples(path: Path = CONFIG_DIR / "examples.toml", slice_path: Path = 
             entry._fail("href", f"names {', '.join(sorted(slots - set(START_HERE_SLOTS)))}, which I can't fill. Use only "
                                 f"{', '.join(START_HERE_SLOTS)}")
         links.append(StartHereLink(entry.text("key"), href))
+    asks = []
+    for entry in _tables(path, data, "ask"):
+        entry.only({"key", "page", "benchmark", "within"})
+        page = entry.text("page")
+        if page not in ASK_PAGES:
+            entry._fail("page", f"must be one of {', '.join(ASK_PAGES)}, not {page!r}")
+        within = entry.text("within", required=page == "home")
+        slot = within[1:-1] if within and within.startswith("{") and within.endswith("}") else None
+        if within is not None and (page != "home" or slot not in ASK_WITHIN):
+            entry._fail("within", "is only for a home row, and must be "
+                                  f"{' or '.join('{' + name + '}' for name in ASK_WITHIN)}")
+        asks.append(AskSuggestion(entry.text("key"), page, entry.text("benchmark"), slot))
     return Examples(top.text("viewers"), tuple(follows), sentences, ppsd.text("package"), dict(criteria),
-                    ppsd.integer("risks"), change.text("sentence"), tuple(links), chosen.showcase, chosen.demo_plan)
+                    ppsd.integer("risks"), change.text("sentence"), tuple(links), chosen.showcase, chosen.demo_plan,
+                    tuple(asks))
 
 
 # ── The proposal's registries (ticket 46) ────────────────────────────────

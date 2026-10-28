@@ -78,9 +78,10 @@ def test_the_identity_route_says_when_no_one_signed_in():
     response = call(create_app(), "GET", "/api/me")
     recorded = json.loads((RECORDED / "me.json").read_text())
 
-    # The view switch's part (ticket 40) is the same for anyone in the World Bank staff view: me.json's.
+    # The view switch's part (ticket 40) is the same for anyone in the World Bank staff view: me.json's. So are the
+    # box's suggestions (ticket 112), which follow the view, not who signed in.
     views = {key: recorded[key] for key in ("views", "applied", "preview_agency", "tabs", "hidden", "capabilities",
-                                            "reasons", "asof")}
+                                            "reasons", "asof", "ask")}
     assert response.json() == {"email": None, "name": None, "signed_in": False, "has_token": False, "staff": False,
                                "agency": None, "own_view": "staff", **views,
                                # Home's Start here strip shows only to someone signed in (ticket 41).

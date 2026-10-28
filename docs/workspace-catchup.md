@@ -3832,3 +3832,37 @@ Record the recorder's exit code, the deck commit, the deploy's exit code, last l
 ## Ticket 116, step 1 of 1 ran: the App carries the deck's backup button with the recorded answers
 
 **Ran on October 28, 2026 (orchestrator), 02:45 to 02:51 UTC, from a snapshot of 856ab249 (the commit with the recording, the measures snapshot and the rebuilt deck data).** `ops/app/deploy_app.py --keep-secrets` exited 0 with the last line `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com`; with the CLI profile's token `/api/health` and `/present/9` answered 200, and `/deck/data.json` (284,761 bytes) names the demo package KE-NWWDA-541055-CW-RFB with 349 comparable rows and the presenter Chirag Lakhanpal, 2026-10-28. So slide 9 on the App has the data its button reads; the press itself is the second session's or the presenter's check in the browser. The watchdog holds 856ab249; the night's final redeploy after the polish tickets follows.
+
+## Ticket 117, step 1 of 2: redeploy the App from the merge commit, so the agent gets a capped copy of a long tool result
+
+Parked on October 27, 2026 with ticket 117, which merged into build/strata as 4240b94a (branch `strata/117-a-tool-s-output-to-the-agent-is-capped` at 1889a77d). Every key is set, but mergers run no workspace step: the orchestrator runs steps 1 and 2 today, in this order, with the night's final App deploy or right after it. Run the deploy from a snapshot of 4240b94a or of the done commit that follows it, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in the env file and the Foundry and judge secrets in the scope `strata`.
+
+Why: on October 28, 2026 at 03:01 UTC the demo-ready command's second run of the smoke question ended with `agent_unavailable`, because rebidding_risk, called with every criterion open, sent Foundry 20,831,467 characters, and one string may be at most 10,485,760. Since ticket 117, `call_output` in `src/strata/agent/loop.py` sends the agent a trimmed copy of any result longer than `agent.max_tool_output_chars` (400,000, in `config/thresholds.toml`), and rebidding_risk has its own cap of 200,000 (`max_output_chars` in `config/tools.toml`). The verifier still checks against the whole result.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if the deployment shows SUCCEEDED in `databricks apps get strata -p strata` and /api/health answers 200. Record the deployment's id and the time here. A deploy from this commit or a later one also serves any earlier block that waits on the night's final redeploy.
+
+## Ticket 117, step 2 of 2: the demo-ready command's smoke question passes twice in a row (criterion 4, live)
+
+Parked on October 27, 2026 with ticket 117 (merge commit 4240b94a). The orchestrator runs it today, after step 1, from the main checkout. It needs the Databricks keys and the four Foundry keys in the env file. No agent sync is needed, because the instructions and the tool list did not change.
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file "<main checkout>/.env"
+
+Run it twice in a row. It worked if the smoke question (search-passages-icr-rebidding) passes its checks in both runs with no agent_unavailable. This is ticket 117's criterion 4. Record both runs here under ticket 117: the time, the exit code and step 3's lines, with any "Removed:" lines word for word.
+
+Also parked from the verify notes (`.notes/117-verify.md`), criterion 1's size on the paid workspace: call rebidding_risk with no arguments on the paid workspace, read-only, and record the result's JSON length (expected 20,831,467, the builder's measure at 03:20 UTC on October 28) and the length of the copy `call_output` sends (expected 200,000 characters or fewer). The same run measures find_comparables with every criterion open (117,400 characters on the fixture; review follow-up 5). No script does this yet: it is the builder's read-only call through `strata.tools.registry.call` on the SQL warehouse, then `strata.agent.loop.call_output` at the tool's cap.
+
+## Ticket 112, step 1 of 1: redeploy the App, so the box suggests the page's questions and the copy keys show
+
+Parked on October 27, 2026 with ticket 112, which merged into build/strata as 6659d4bf (branch `strata/112-one-click-the-box-suggests-questions-for-the-page` at 4bc8fb29). Every key is set, but mergers run no workspace step: the second session runs this step from a snapshot of 6659d4bf or of the done commit that follows it, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in the env file and the Foundry and judge secrets in the scope `strata`. A deploy from this commit or a later one also serves ticket 117's step 1 and every earlier block that waits on the night's final redeploy, and the night's final redeploy serves this one.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- The deploy exits 0 and its last line is `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com`.
+- GET /api/me on that address with the CLI profile's token returns an `ask` list of 8 rows, and the last two have `within` KE-NWWDA-541055-CW-RFB and P130164 (Home's rows, filled from `config/slice.toml`).
+- On the App, pressing "/" on Home shows "Ask, for example" with two questions, and the package page KE-NWWDA-541055-CW-RFB shows a copy key after its STEP reference.
+
+Record the deploy's exit code, last line and deployment id, the `ask` row count, and what Home and the package page showed, here under ticket 112.

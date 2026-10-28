@@ -89,7 +89,8 @@ def test_every_tool_in_the_registry_takes_an_optional_as_of_date_and_declares_it
     ('name = "as_of"', 'name = "on_date"', "needs an optional as_of parameter"),
     ("[tools.check_plan.result]", "[tools.check_plan.output]", "has no result shape"),
     ('row_fields = ["evidence_id", "public_from", "source", ', 'row_fields = [', "lacks evidence_id"),
-], ids=["no-as-of-date", "no-result-shape", "rows-without-an-evidence-id"])
+    ("max_output_chars = 200000", "max_output_chars = 0", "max_output_chars must be a whole number of characters"),
+], ids=["no-as-of-date", "no-result-shape", "rows-without-an-evidence-id", "a-cap-of-no-characters"])
 def test_a_tool_without_an_as_of_date_or_a_result_shape_is_refused(tmp_path, old, new, says):
     path = copy_registry(tmp_path, old, new)
 

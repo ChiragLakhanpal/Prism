@@ -19,7 +19,7 @@ Strata is procurement intelligence on World Bank open data. It links what happen
 |---|---|---|
 | Lakehouse, knowledge model, search, Genie, models, app, dashboard | Databricks Free Edition, the workspace fairshare also uses | Strata has its own catalog, `strata`, with its own medallion schemas, pipelines and nightly job |
 | Agent, guardrails, evaluations, agent traces | Microsoft Foundry project `Strata` on `wb-strata`, resource group `WorldBank-demo` | ADRs 0001 and 0003 |
-| Models | Azure OpenAI deployments in `wb-strata` | `gpt-5.4-mini` for the agent, `gpt-5.4` for drafting and hard questions, `gpt-5.4-nano` on Global Batch for bulk extraction, `text-embedding-3-large` at 1,024 dimensions |
+| Models | Azure OpenAI deployments in `wb-strata` | `gpt-5.4` for the agent (gpt-5.4-mini until October 27, 2026, when the small model's quotes proved too loose for the verifier) and for drafting and hard questions, `gpt-5.4-nano` on Global Batch for bulk extraction, `text-embedding-3-large` at 1,024 dimensions |
 | Gap fills, only if a day-one test shows the gap | Azure | A Container Apps job for ingestion; Content Understanding `prebuilt-layout` for parsing; a Container Apps copy of the app behind Entra sign-in for reviewers |
 | Code | A new private GitHub repo, `strata` | Reviewers added as collaborators |
 

@@ -523,6 +523,66 @@ def test_the_examples_registry_reads_the_showcase_and_demo_plan_from_the_slice_f
         load_examples(broken)
 
 
+# ── The box's suggestions (ticket 112) ───────────────────────────────────
+
+def test_the_box_suggests_the_ask_rows_each_a_benchmark_question_and_home_s_within_the_slice_file_s_examples():
+    rows = [(row["page"], row["benchmark"], row["within"]) for row in load_examples().suggestions()]
+
+    # The ticket's eight rows, in the file's order; Home's two are asked within the demo package and the showcase
+    # project, which config/slice.toml names.
+    assert rows == [("package", "find-comparables-ke-nwwda-541055", None),
+                    ("package", "rebidding-risk-ke-nwwda-541055", None),
+                    ("package", "compare-cost-estimates-ke-nwwda-541055", None),
+                    ("project", "project-records-p156634", None),
+                    ("project", "project-signals-p156634", None),
+                    ("plan_check", "check-plan-nwwda-2026-10-09", None),
+                    ("home", "find-comparables-ke-nwwda-541055", "KE-NWWDA-541055-CW-RFB"),
+                    ("home", "search-passages-icr-rebidding", "P130164")]
+
+
+@pytest.mark.parametrize("row, named", [
+    ('key = "pastRange"\npage = "drafts"\nbenchmark = "find-comparables-ke-nwwda-541055"', "page"),
+    ('key = "pastRange"\npage = "package"\nbenchmark = "find-comparables-ke-nwwda-541055"\ncolour = "blue"', "colour"),
+    ('key = "pastRange"\npage = "package"\nbenchmark = "find-comparables-ke-nwwda-541055"\nwithin = "{showcase}"',
+     "within"),
+    ('key = "pastRange"\npage = "home"\nbenchmark = "find-comparables-ke-nwwda-541055"', "within"),
+    ('key = "pastRange"\npage = "home"\nbenchmark = "find-comparables-ke-nwwda-541055"\nwithin = "{nowhere}"',
+     "within"),
+])
+def test_the_examples_registry_refuses_a_suggestion_with_an_unknown_page_or_field(tmp_path, row, named):
+    broken = tmp_path / "examples.toml"
+    broken.write_text((ROOT / "config" / "examples.toml").read_text() + f"\n[[ask]]\n{row}\n")
+
+    with pytest.raises(ConfigError, match=rf"ask\[9\]\.?.*{named}"):
+        load_examples(broken)
+
+
+def suggestion_mistakes(examples) -> list[str]:
+    """Each suggestion whose words the copy file lacks (copy.box.suggest in web/src/copy.ts), or whose benchmark question
+    evals/benchmark.yaml lacks, so every suggestion has words and is a question Strata has been measured on."""
+    import re
+
+    from strata.evals import benchmark
+
+    text = (ROOT / "web" / "src" / "copy.ts").read_text()
+    words = text[text.index("\n  box: {"):]
+    words = words[words.index("\n    suggest: {"):]
+    words = words[:words.index("\n    },")]
+    keys = set(re.findall(r'^ {6}(\w+): "', words, flags=re.MULTILINE))
+    asked = {question["id"] for question in benchmark.load()}
+    return ([f"{row['key']} has no words" for row in examples.suggestions() if row["key"] not in keys]
+            + [f"{row['benchmark']} is no question" for row in examples.suggestions() if row["benchmark"] not in asked])
+
+
+def test_every_suggestion_has_its_words_in_the_copy_file_and_is_a_benchmark_question(tmp_path):
+    assert suggestion_mistakes(load_examples()) == []
+
+    broken = tmp_path / "examples.toml"
+    broken.write_text((ROOT / "config" / "examples.toml").read_text()
+                      + '\n[[ask]]\nkey = "whoWins"\npage = "package"\nbenchmark = "who-wins-ke-nwwda-541055"\n')
+    assert suggestion_mistakes(load_examples(broken)) == ["whoWins has no words", "who-wins-ke-nwwda-541055 is no question"]
+
+
 # ── The screens' recordings ──────────────────────────────────────────────
 
 def test_the_screens_recorded_answers_are_what_the_routes_answer(built, tmp_path):
