@@ -269,6 +269,16 @@ test("at 1024 px with a 15 px scrollbar the navy bar fits on one line", async ({
   await expect(page.getByRole("button", { name: "View: World Bank staff" })).toBeVisible();
 });
 
+// Ticket 113: at the end of every page the box that floats at the window's foot sits above the footer's disclaimer, not
+// over it.
+async function boxClearOfFooter(page: Page, named: string) {
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+  const footer = (await page.getByRole("contentinfo").boundingBox())!;
+  expect(footer.y + footer.height, `${named}: the footer ends the page`).toBeLessThanOrEqual(900 + 1);
+  expect(box.y + box.height, `${named}: the box above the footer`).toBeLessThanOrEqual(footer.y);
+}
+
 for (const route of [...ROUTES, ...NOT_FOUND]) {
   test(`${route.path}: a skip link leads, it reflows at 320 px, and axe finds no WCAG 2.2 AA violations`, async ({ page }) => {
     await open(page, route.path, 1440);
@@ -283,8 +293,10 @@ for (const route of [...ROUTES, ...NOT_FOUND]) {
         (v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`,
       );
     expect(await check(), "1440 px").toEqual([]);
+    await boxClearOfFooter(page, "1440 px");
     await page.setViewportSize({ width: 390, height: 900 });
     expect(await check(), "390 px").toEqual([]);
+    await boxClearOfFooter(page, "390 px");
     await page.setViewportSize({ width: 320, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });

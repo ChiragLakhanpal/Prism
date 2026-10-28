@@ -20,7 +20,7 @@ export const galleryCopy = {
 
   pages: {
     navigation: {
-      title: "Navigation, box band and footer",
+      title: "Navigation, ask bar and footer",
       purpose: "Every page shares this frame. This page shows Projects as the current section in the sidebar.",
     },
     pages: {
@@ -76,7 +76,7 @@ export const galleryCopy = {
     "answer-panel": {
       title: "Answer panel",
       purpose:
-        "The answer to a question asked from the box, in the page under the band. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
+        "The answer to a question asked from the box, at the top of the page under the bar. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
     },
     evidence: {
       title: "Evidence card and drawer",

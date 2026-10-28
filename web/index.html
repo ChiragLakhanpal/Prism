@@ -24,26 +24,22 @@
     <!--
       The first paint (the 06 design brief, "App start"; ticket 93): the page background and the navy bar with the
       logo at its size and place show before the app's script runs, and React mounts into the same sizes, so nothing
-      moves. Below 1024 px the bar has two rows, 108 px in all: the Menu button (96 px wide, 44 px below 360 px), the
-      logo, then the white box across the window, on a page with no scope chip. From 1024 px it is one 56 px row, the
-      logo 16 px from the edge, and beside the page the sidebar's frame at its stored width, or the rail's (ticket 92). The
-      colors are DESIGN.md's page, navy, surface and line tokens, and the margins the window's, written out because no
-      stylesheet has loaded yet.
+      moves. The bar is one 56 px row at every width (ticket 113: the box floats at the page's foot, which the app
+      draws). Below 1024 px it holds the Menu button (96 px wide, 44 px below 360 px), then the logo; from 1024 px the
+      logo sits 16 px from the edge, and beside the page the sidebar's frame at its stored width, or the rail's (ticket
+      92). The colors are DESIGN.md's page, navy, surface and line tokens, written out because no stylesheet has loaded yet.
     -->
     <style>
       body { margin: 0; background: #f5f7f9; }
-      [data-boot-bar] { box-sizing: border-box; height: 108px; padding-bottom: 12px; background: #002244; }
+      [data-boot-bar] { box-sizing: border-box; height: 56px; background: #002244; }
       [data-boot-row] { box-sizing: border-box; display: flex; align-items: center; height: 56px; padding-left: 12px; }
       [data-boot-menu] { box-sizing: border-box; flex: none; width: 44px; height: 44px; margin-right: 12px; border: 1px solid #ffffff; border-radius: 4px; }
       [data-boot-row] img { display: block; width: 120px; height: 24px; }
-      [data-boot-box] { height: 40px; margin: 0 16px; background: #ffffff; border-radius: 4px; }
       [data-boot-sidebar-column] { display: none; }
       @media (width >= 22.5rem) { [data-boot-menu] { width: 6rem; } }
-      @media (width >= 48rem) { [data-boot-box] { margin: 0 32px; } }
       @media (width >= 64rem) {
-        [data-boot-bar] { height: 56px; padding-bottom: 0; }
         [data-boot-row] { padding-left: 16px; }
-        [data-boot-menu], [data-boot-box] { display: none; }
+        [data-boot-menu] { display: none; }
         [data-boot-sidebar-column] { display: block; box-sizing: border-box; width: 64px; border-right: 1px solid #dae3eb; }
         html[data-sidebar-rest="open"] [data-boot-sidebar-column] { width: 224px; }
         [data-boot-sidebar] { height: calc(100vh - 56px); height: calc(100dvh - 56px); }
@@ -54,7 +50,6 @@
     <div id="root">
       <div data-boot-bar>
         <div data-boot-row><span data-boot-menu></span><img src="/src/assets/world-bank-logo.svg" width="120" height="24" alt="" /></div>
-        <div data-boot-box></div>
       </div>
       <div data-boot-sidebar-column><div data-boot-sidebar></div></div>
     </div>

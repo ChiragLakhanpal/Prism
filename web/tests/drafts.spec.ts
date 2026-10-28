@@ -445,11 +445,22 @@ test("one hook in the frame writes the document's scroll padding, and DraftPage'
   expect(files).not.toContain("lib/useScrollPadding.ts");
 });
 
-test("tabbing through a draft never leaves the focused element under the bar, the sticky head or the draft bar", async ({ page }) => {
+test("tabbing through a draft never leaves the focused element under the bar, the sticky head, the box or the draft bar", async ({ page }) => {
   await openDraft(page, { width: 1440, height: 900 });
   const { checked, covered } = await tabUnderStickyParts(page, 30);
   expect(checked).toBeGreaterThan(30);
   expect(covered).toEqual([]);
+});
+
+// Ticket 113: where the draft bar sticks at the window's foot, the box floats 16 px above it, and the page's bottom
+// scroll padding reaches 8 px above the box, so it counts both.
+test("on a draft at 1440 by 900 the box floats 16 px above the draft bar, and the bottom scroll padding counts both", async ({ page }) => {
+  await openDraft(page, { width: 1440, height: 900 });
+  const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+  const edge = (await bar(page).boundingBox())!;
+  expect(Math.round(edge.y + edge.height), "the draft bar on the window's bottom edge").toBe(900);
+  expect(Math.round(edge.y - (box.y + box.height)), "the box 16 px above the draft bar").toBe(16);
+  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingBottom)).toBe(`${Math.round(900 - box.y + 8)}px`);
 });
 
 test("opening a source, by click or by Enter, or switching to another, keeps the marker where it was and above the bar", async ({ page }) => {

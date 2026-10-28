@@ -197,9 +197,10 @@
 
    The bar is 56 px. From 1024 px it sticks (ticket 93), so the sticky parts under it stick at frame-top, 56 px, and the
    sidebar is the window's height less the bar; below 1024 px the bar scrolls away with the page and frame-top is 0. The
-   window margin is 16, 32 and 40 px (below 768, from 768 and from 1200 px), set by the window: the bar places the box and
-   the skip link by it, and the page grid below takes it as its margin (ticket 94). Where focused and linked-to elements
-   land under the bar and a sticky head is set by one hook in the frame (lib/sticky.ts), not here. */
+   window margin is 16, 32 and 40 px (below 768, from 768 and from 1200 px), set by the window: the bar places the skip
+   link by it, the ask bar keeps it beside the box, and the page grid below takes it as its margin (ticket 94). Where
+   focused and linked-to elements land under the bar, a sticky head and the parts that stick at the foot is set by one
+   hook in the frame (lib/sticky.ts), not here. */
 :root {
   --sidebar-width: 224px;
   --rail-width: 64px;
@@ -219,11 +220,9 @@
   :root { --window-margin: 40px; }
 }
 
-/* The top bar (DESIGN.md section 5, Top bar; ticket 93). Below 1024 px it has two rows: the Menu button, the logo and
-   the wordmark, with the view switch at the right from 768 px, then the box across the window. From 1024 px it is one
-   56 px row that sticks: the brand; the box from the page's content edge beside the open sidebar (the sidebar plus the
-   window margin), and never before 244 px, 32 px after the wordmark, beside the rail; the box at most 640 px wide; then
-   at least 24 px of navy and the view switch, 24 px from the right edge. */
+/* The top bar (DESIGN.md section 5, Top bar; ticket 93). One 56 px row at every width (ticket 113, since the box left
+   it): the brand (the Menu button below 1024 px, the logo and the wordmark), then navy, then the view switch from 768
+   px, 24 px from the right edge from 1024 px. From 1024 px it sticks. */
 @utility top-bar {
   position: relative;
   z-index: 40;
@@ -235,28 +234,40 @@
 @utility bar-row {
   display: grid;
   align-items: center;
+  height: var(--bar-height);
   grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: "brand . view" "box box box";
+  grid-template-areas: "brand . view";
   padding-right: var(--window-margin);
   @media (width >= 64rem) {
-    height: var(--bar-height);
     padding-right: calc(var(--spacing) * 6);
-    grid-template-columns: max(244px, calc(var(--nav-width) + var(--window-margin))) minmax(0, 640px) minmax(calc(var(--spacing) * 6), 1fr) auto;
-    grid-template-areas: "brand box . view";
   }
 }
 @utility bar-brand {
   grid-area: brand;
 }
-@utility bar-box {
-  grid-area: box;
-  padding: 0 0 calc(var(--spacing) * 3) var(--window-margin);
-  @media (width >= 64rem) {
-    padding: 0;
-  }
-}
 @utility bar-view {
   grid-area: view;
+}
+/* The ask bar (DESIGN.md section 5, Ask bar; ticket 113): the page column's last part before the footer, sticking at the
+   window's foot, so the box floats centered in the page column, at most 640 px wide and the window's margin from each
+   side below that, and at the end of a page sits above the footer instead of over it. Its bottom is 16 px above the
+   window's bottom edge and the phone's safe area; where a page's own bar sticks at the foot, such as the draft bar or
+   the grade bar, it floats 16 px above that bar, whose height the frame's hook writes as --sticky-foot (lib/sticky.ts).
+   Only the box takes the pointer, so the page under its margins stays usable. No translucency and no fade above it. */
+@utility ask-bar {
+  position: sticky;
+  bottom: var(--sticky-foot, 0px);
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  padding-inline: var(--window-margin);
+  padding-bottom: calc(var(--spacing) * 4 + max(0px, env(safe-area-inset-bottom, 0px) - var(--sticky-foot, 0px)));
+  pointer-events: none;
+  & > * {
+    width: 100%;
+    max-width: 640px;
+    pointer-events: auto;
+  }
 }
 /* Classes for the rail alone: its labels move into tooltips, and the sub-items hide. The rail holds from 1024 px
    unless the person opened the sidebar. */
@@ -415,9 +426,10 @@
 
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
    not scroll the page to bring it out of that padding (DESIGN.md section 10). A page marks a head that sticks
-   under the bar data-sticky="top" and a bar that sticks to the window's foot data-sticky="bottom"; the frame's
-   one hook (lib/sticky.ts) sets --sticky-top and --sticky-bottom on html only while such a part sticks. */
-[data-sticky="bottom"] :is(a, button) {
+   under the bar data-sticky="top" and a bar that sticks to the window's foot data-sticky="bottom", as the frame
+   marks its ask bar, whose box is a text field (ticket 113); the frame's one hook (lib/sticky.ts) sets
+   --sticky-top and --sticky-bottom on html only while such a part sticks. */
+[data-sticky="bottom"] :is(a, button, input) {
   scroll-margin-top: var(--sticky-bottom, 0px);
   scroll-margin-bottom: calc(-1 * var(--sticky-bottom, 0px));
 }
@@ -532,10 +544,6 @@
   .on-navy:focus-visible {
     outline-color: var(--color-focus-on-dark);
   }
-  /* The box is white on the bar, so a control inside it, such as the scope chip's remove button, shows focus (ticket 93). */
-  .on-navy [data-box-band] :focus-visible {
-    outline-color: var(--color-focus);
-  }
 
   table,
   [data-numbers] {
@@ -543,12 +551,7 @@
   }
 }
 
-/* The box on the navy bar (DESIGN.md section 2; ticket 93) has focus-on-dark around it while anything inside it has
-   focus. Outside the bar, as in the design gallery's samples on the page grey, its ring is focus (BoxBand.tsx). */
-.on-navy [data-box-band] form > [data-focus-ring]:focus-within {
-  outline-color: var(--color-focus-on-dark);
-}
-/* From 1024 px the bar's box keeps its one row: the scope chip keeps its reference whole on one line, and the text
+/* From 1024 px the ask bar's box keeps its one row: the scope chip keeps its reference whole on one line, and the text
    field gives way first. A sample box elsewhere, such as the design gallery's narrow one, wraps as below 1024 px. */
 @media (width >= 64rem) {
   [data-box-band] form > [data-focus-ring] {

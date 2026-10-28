@@ -1,6 +1,6 @@
-// The band's one box with its intent rules (the 14 brief, sections 4.3 and 6): it lists what Enter will
-// do as you type, looks up the records an option needs in the background, and does nothing until you
-// choose. An ID opens its page; "Ask this" asks the question with the page's scope chip and keeps the
+// The one box with its intent rules (the 14 brief, sections 4.3 and 6), in the Ask bar at the page's foot (ticket 113):
+// it lists what Enter will do as you type, looks up the records an option needs in the background, and does nothing
+// until you choose. An ID opens its page; "Ask this" asks the question with the page's scope chip and keeps the
 // question in the box, with focus, so you can refine it.
 //
 // Keys: Down and Up move the option Enter does; Enter does it; Tab closes the list; Escape closes the
@@ -210,7 +210,7 @@ export function IntentBox({
     setActive(0);
     const element = input.current;
     if (!element) return;
-    element.focus();
+    element.focus({ preventScroll: true });
     element.setSelectionRange(element.value.length, element.value.length);
     setOpen(Boolean(asked_mode.text));
   }, [asked_mode?.at]);
@@ -311,7 +311,7 @@ export function IntentBox({
     if (!chip) return;
     removeScope(chip);
     setSaid(copy.box.scopeRemoved);
-    input.current?.focus();
+    input.current?.focus({ preventScroll: true });
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -365,59 +365,58 @@ export function IntentBox({
   };
 
   return (
-    <>
-      <OneBox
-        value={value}
-        inputRef={input}
-        onChange={(next) => {
-          setValue(next);
-          setActive(0);
-          setPicked(-1);
-          setOpen(true);
-        }}
-        options={options}
-        notes={notes}
-        open={open}
-        active={current}
-        scope={chip}
-        scopeKind={scopeKind}
-        onRemoveScope={removeChip}
-        onChoose={(index) => void choose(index)}
-        onKeyDown={onKeyDown}
-        onPointerDown={() => {
-          input.current?.removeAttribute(RETURNING);
-          setOpen(true);
-        }}
-        onFocusChange={(now) => {
-          // Focus the page gave back (AnswerPanel's close) leaves the list shut until a key or a click.
-          const given = input.current?.hasAttribute(RETURNING) ?? false;
-          if (!now) input.current?.removeAttribute(RETURNING);
-          // Leaving the box ends its mode.
-          if (!now && mode) boxMode.set(null);
-          setFocused(now);
-          setPicked(-1);
-          setOpen(now && !given);
-        }}
-        suggestions={
-          suggesting
-            ? {
-                name: copy.box.suggest.group[suggested.page],
-                options: suggested.items.map((item, index) => ({
-                  key: `suggest:${index}:${item.key}`,
-                  icon: MessageSquareText,
-                  label: <Fill template={item.template} slots={{ id: item.id ? mono(item.id) : "" }} />,
-                })),
-              }
-            : null
-        }
-        suggestionActive={suggestion}
-        onChooseSuggestion={chooseSuggestion}
-        modePlaceholder={mode === "plan" ? copy.box.mode.planPlaceholder : mode === "check" ? copy.box.mode.checkPlaceholder : undefined}
-        modeHelp={mode === "plan" ? copy.box.mode.planHelp : undefined}
-      />
+    <OneBox
+      value={value}
+      inputRef={input}
+      onChange={(next) => {
+        setValue(next);
+        setActive(0);
+        setPicked(-1);
+        setOpen(true);
+      }}
+      options={options}
+      notes={notes}
+      open={open}
+      active={current}
+      scope={chip}
+      scopeKind={scopeKind}
+      onRemoveScope={removeChip}
+      onChoose={(index) => void choose(index)}
+      onKeyDown={onKeyDown}
+      onPointerDown={() => {
+        input.current?.removeAttribute(RETURNING);
+        setOpen(true);
+      }}
+      onFocusChange={(now) => {
+        // Focus the page gave back (AnswerPanel's close) leaves the list shut until a key or a click.
+        const given = input.current?.hasAttribute(RETURNING) ?? false;
+        if (!now) input.current?.removeAttribute(RETURNING);
+        // Leaving the box ends its mode.
+        if (!now && mode) boxMode.set(null);
+        setFocused(now);
+        setPicked(-1);
+        setOpen(now && !given);
+      }}
+      suggestions={
+        suggesting
+          ? {
+              name: copy.box.suggest.group[suggested.page],
+              options: suggested.items.map((item, index) => ({
+                key: `suggest:${index}:${item.key}`,
+                icon: MessageSquareText,
+                label: <Fill template={item.template} slots={{ id: item.id ? mono(item.id) : "" }} />,
+              })),
+            }
+          : null
+      }
+      suggestionActive={suggestion}
+      onChooseSuggestion={chooseSuggestion}
+      modePlaceholder={mode === "plan" ? copy.box.mode.planPlaceholder : mode === "check" ? copy.box.mode.checkPlaceholder : undefined}
+      modeHelp={mode === "plan" ? copy.box.mode.planHelp : undefined}
+    >
       <p role="status" className="sr-only">
         {said}
       </p>
-    </>
+    </OneBox>
   );
 }

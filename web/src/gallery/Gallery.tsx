@@ -96,7 +96,8 @@ export function GalleryFrame({
   return (
     <Frame
       menuOpen={menuOpen}
-      nav={<TopNav logo={<LogoSlot />} box={<Box scope={scope} />} viewer={viewer} viewOpen={viewOpen} mode={mode} />}
+      nav={<TopNav logo={<LogoSlot />} viewer={viewer} viewOpen={viewOpen} mode={mode} />}
+      box={<Box scope={scope} />}
       sidebar={
         <Sidebar
           mode={mode}

@@ -11,10 +11,10 @@
 // Ticket 14 adds the box's intents, the answer panel at the top of the page and the evidence drawer
 // beside it. The answer belongs to the history entry it was asked on (web/src/lib/answer.ts).
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import logo from "./assets/world-bank-logo.svg";
 import { Alert } from "./components/Alert";
-import { AnswerPanel } from "./components/AnswerPanel";
+import { AnswerPanel, scrollToAnswer } from "./components/AnswerPanel";
 import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { Frame } from "./components/Frame";
 import { IntentBox } from "./components/IntentBox";
@@ -368,16 +368,22 @@ export function App() {
     return () => observer.disconnect();
   }, [mode.line]);
 
-  const onAsk = (question: string, chip: string | null) =>
-    ask({
-      question,
-      scope: chip,
-      asOf,
-      view: preview,
-      // The language in effect: the link's, your saved choice, your team's or English, as the server said (ticket 42).
-      lang: workingLanguage.get()?.code ?? null,
-      key: address.get().key,
-    });
+  // The panel is drawn at once, so the page can scroll to it: the box floats at the window's foot and the answer opens
+  // at the top of the page column (ticket 113).
+  const onAsk = (question: string, chip: string | null) => {
+    flushSync(() =>
+      ask({
+        question,
+        scope: chip,
+        asOf,
+        view: preview,
+        // The language in effect: the link's, your saved choice, your team's or English, as the server said (ticket 42).
+        lang: workingLanguage.get()?.code ?? null,
+        key: address.get().key,
+      }),
+    );
+    scrollToAnswer();
+  };
 
   const slot = alerts(problem, here.search, language, fresh);
   // The banners (the 40 brief, 3.4): the preview first (whose view), then the date (when). The agency banner names the
@@ -395,12 +401,12 @@ export function App() {
       nav={
         <TopNav
           logo={<img src={logo} width={120} height={24} alt={copy.nav.logo} className="block h-6 w-[120px]" />}
-          box={<IntentBox scope={scope} scopeKind={kind} page={askPage} onAsk={onAsk} />}
           viewer={who}
           mode={navMode}
           modeLineId={MODE_LINE}
         />
       }
+      box={<IntentBox scope={scope} scopeKind={kind} page={askPage} onAsk={onAsk} />}
       sidebar={
         <Sidebar
           mode={navMode}

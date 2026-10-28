@@ -1,7 +1,14 @@
-// The frame every page shares: the navy bar, the sidebar, the page, and the independent-demo footer (DESIGN.md
-// sections 5 and 8). One header (the banner landmark) holds the bar, so the search landmark around the box sits in
-// it, and from 1024 px it sticks to the top of the window (ticket 93). main holds at least the window's height less
-// that bar, so a short page never pulls the footer into the first screen (ticket 94).
+// The frame every page shares: the navy bar, the sidebar, the page, the ask bar and the independent-demo footer
+// (DESIGN.md sections 5 and 8). One header (the banner landmark) holds the bar, and from 1024 px it sticks to the top
+// of the window (ticket 93). main holds at least the window's height less that bar, so a short page never pulls the
+// footer into the first screen (ticket 94).
+//
+// The ask bar (ticket 113, the user's request of October 27, 2026): the one box floats at the bottom center of the page
+// column, the column's last part before the footer, sticking at the window's foot. So it centers in the page column,
+// narrows with it when the evidence drawer opens and never covers the drawer, and at the end of a page it sits above
+// the footer's disclaimer instead of over it. It comes after the page's content in the Tab order, and its form is its
+// own search landmark. It is marked as a part that sticks at the foot, so the frame's one hook counts it in the page's
+// bottom scroll padding, and it floats above a page's own foot bar, such as the draft bar (lib/sticky.ts).
 //
 // Under the bar, the sidebar, the page column and the evidence drawer sit side by side (tickets 14 and 92): the
 // drawer narrows the page instead of covering it. The page column and the drawer sit in the frame, the window less
@@ -49,14 +56,17 @@ export function useMenuSheet(): MenuSheet {
 
 export function Frame({
   nav,
+  box,
   sidebar,
   children,
   aside,
   inertPage = false,
   menuOpen: menuOpenAtStart = false,
 }: {
-  // The top bar, with the box (TopNav.tsx).
+  // The top bar (TopNav.tsx).
   nav: ReactNode;
+  // The one box (IntentBox in the app, OneBox in the gallery), which floats at the page column's foot.
+  box?: ReactNode;
   // The sidebar beside the page from 1024 px, and the Menu sheet below (Sidebar.tsx).
   sidebar?: ReactNode;
   children: ReactNode;
@@ -124,6 +134,11 @@ export function Frame({
               <main id="main" tabIndex={-1} className="min-h-main flex-1 pb-12 focus-visible:outline-none @md/page:pb-16">
                 {children}
               </main>
+              {box && (
+                <div data-box-band data-sticky="bottom" className="ask-bar">
+                  {box}
+                </div>
+              )}
               <Footer />
             </div>
             {/* The drawer keeps its place in the row; it takes no focus while the Menu sheet is open. */}
