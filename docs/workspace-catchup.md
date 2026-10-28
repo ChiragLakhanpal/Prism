@@ -3798,3 +3798,21 @@ A deploy from this commit or a later one also serves ticket 109's step 2, if it 
 ## Tickets 108 and 109, the workspace steps, part 1: the deploy and the agent's sync
 
 **Ran on October 28, 2026 (orchestrator), from a snapshot of 9a8ae27b (ticket 109's done commit, which holds 108).** Step 1: the bundle deploy exited 0 at 01:04 UTC and the Jobs API update put the nightly's window back to 18000 seconds (schedule unchanged). Step 2 (ticket 109): `ops/agent/sync.py --agent orchestrator` made version 10 of strata-orchestrator, and `--check` printed that version 10 matches the repo with no difference in its model, instructions, tools, description or guardrail. Step 3 (ticket 108): `parse_and_embed` alone started as run 260082096321553 at 01:04 UTC with the 120-minute budget; its result, the plan rows and the index sync are recorded in part 2 when it ends. The App's redeploy for ticket 109's smoke question comes with the night's final deploy, after the polish tickets.
+
+## Ticket 116, step 1 of 1: the package demo's recorded answer on the deployed App (after ticket 47's step 2, with the night's final redeploy)
+
+Parked on October 27, 2026 with ticket 116 (merge commit 2d4abf79, branch `deck/recorded-answer` at d5dcaa47). Every key is set, but the merger ran no workspace step. The orchestrator runs the final App redeploy, and the second session runs the checks from a snapshot. Since this ticket, slide 9 reads the recording that ticket 47's step 2 writes, so the heading of that step ("no slide draws them") is out of date: run it before the night's final redeploy, or the deployed deck shows no button.
+
+1. Run "Ticket 47, step 2 of 3" above: `record_demo_live.py` on the paid workspace, then `uv run python -m strata.proposal deck`, then commit `docs/proposal/demo-package.json` and `web/public/deck/data.json` together through the gate.
+2. Redeploy the App from a snapshot of that commit or a later one, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot):
+
+       uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- `python3 -c "import json; c = json.load(open('web/public/deck/data.json'))['demo']['comparables']; print(c['package']['step_reference'], len(c['rows']))"` prints `KE-NWWDA-541055-CW-RFB` and a number above 0.
+- The commit's gate passes, with `web/tests/deck.spec.ts`'s number check over the committed data.
+- The deploy exits 0 and its last line is "Strata is running at <address>" on the paid workspace's App.
+- On `/present/9` of that address, the demo box shows "Show the recorded answer". One press draws the recorded range chart with "Recorded on <date>, for KE-NWWDA-541055-CW-RFB", the coverage line and the source line, and the next press moves to slide 10.
+
+Record the recorder's exit code, the deck commit, the deploy's exit code, last line and deployment id, and whether slide 9 drew the chart, here under ticket 116. If the recording does not land before the final redeploy, the slide is as it was before this ticket, and the demo depends on the live App.
