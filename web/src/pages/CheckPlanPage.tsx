@@ -33,6 +33,7 @@ import { ProjectPaperPanel } from "../components/ProjectPaperPanel";
 import { PROJECT_PAPER_STOPPED } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { useLoad } from "../lib/load";
+import { REVEAL_AFTER_MS, useRevealAfterWait } from "../lib/reveal";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
@@ -210,6 +211,9 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
   const planChanges = usePlanChanges(pid, agencyId, version ?? ready?.plan.plan_date ?? null, search);
   const waiting = ready !== null && (!lookup.settled || !planChanges.settled);
   const checked = waiting ? null : ready;
+  // Ticket 111: the finding enters only when it replaces a narration that showed for at least 400 ms; a faster check,
+  // and every later render, show it at once.
+  const reveal = useRevealAfterWait(load.status === "loading" || waiting, path, REVEAL_AFTER_MS);
   const { changes } = planChanges;
   const listed = changes !== null && changes.state === "compared" && changed(changes.counts);
 
@@ -358,6 +362,7 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
         <PlanCheck
           result={checked}
           findingRef={finding}
+          reveal={reveal}
           changed={changedRows(changes)}
           afterMethod={
             <>

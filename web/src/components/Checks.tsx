@@ -3,7 +3,8 @@
 // Check line: what the verifier checked and what it did not, in the neutral state and never
 // success green, because a green banner reads as "safe". Its text starts on the removed box's text
 // edge, 48 px in (the box's 4 px border, 16 px padding, 16 px icon and 12 px gap), so the two read
-// as one column, with no check-mark icon (ticket 02's round 7 review). Dates the verifier matched
+// as one column. Ticket 111 puts a 16 px tick in ink-muted in that indent beside "Checked", where the box has its
+// icon, hidden from screen readers; the line stays neutral (ticket 02's round 7 review). Dates the verifier matched
 // get their own clause, so "numbers" never counts a date (ticket 14). Three labeled parts, each on
 // its own line, from the firmest kind of checking to none (the 24 brief, section 4.1): "Checked:"
 // (exact matches, counted), "Judged by a model:" (check 4, only when a sentence on screen was
@@ -16,8 +17,9 @@
 // one is listed, the first in the lead and the others below, all visible, as plain text with no
 // dotted numbers and no markers (the 24 brief, section 4.3).
 import { useId, type ReactNode } from "react";
-import { CircleDashed } from "lucide-react";
+import { Check, CircleDashed } from "lucide-react";
 import { copy } from "../copy";
+import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
 import { Button } from "./Button";
 import { Num, numText, type NumCheck } from "./Num";
@@ -70,6 +72,7 @@ export function CheckLine({
   notChecked,
   quoteWords,
   notCheckedText = [],
+  reveal = false,
 }: {
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
@@ -84,6 +87,9 @@ export function CheckLine({
   // Clauses a part of a page adds to what was not checked, already in words, such as section 5's "whether I found
   // every item in your qualification criteria".
   notCheckedText?: string[];
+  // The line arrives with an answer that just streamed: its tick draws left to right 120 ms after the answer lands
+  // (ticket 111). Everywhere else the tick is drawn at once.
+  reveal?: boolean;
 }) {
   const words = copy.checkLine;
   const clauses = [
@@ -96,7 +102,11 @@ export function CheckLine({
   const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
   return (
     <p data-check-line data-numbers className="rounded-md bg-neutral-bg py-2 pr-4 pl-12 text-small text-neutral">
-      <span data-check-part="checked" className="block">
+      <span data-check-part="checked" className="relative block">
+        {/* The tick (ticket 111): 16 px in ink-muted in the 48 px indent beside "Checked", where the removed box has
+            its icon, 28 px before the text. The line's words say "Checked", so a screen reader skips it, and the
+            line stays neutral, never green. */}
+        <Check aria-hidden="true" data-check-tick className={cx("absolute top-0.5 -left-7 size-4 text-ink-muted", reveal && "animate-tick-in")} />
         <strong className="font-semibold">{words.checked}</strong> {checked}
         {words.end}
       </span>{" "}

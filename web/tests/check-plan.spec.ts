@@ -8,6 +8,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
+import { recordTransitions, transitionsOn, type Moved } from "./reveals";
 import { animationsDone } from "./settled";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
@@ -511,6 +512,7 @@ for (const width of [1440, 390]) {
       }).observe(document, { subtree: true, childList: true, characterData: true });
     });
     const seen = () => page.evaluate(() => (window as unknown as { seen: { h1: number; narration: number; said: string[] } }).seen);
+    await recordTransitions(page);
     await page.clock.install();
     await page.goto(PLAN);
 
@@ -548,11 +550,64 @@ for (const width of [1440, 390]) {
     // its rows and source line included, has a byline.
     await expect(page.locator("[data-byline]")).toHaveText(["Strata found"]);
     await expect(page.locator("[data-plan-check] [data-byline] + h2")).toHaveText(FINDING);
-    expect(Math.abs((await box("[data-plan-check] [data-byline]")).top - told.top)).toBeLessThanOrEqual(1);
     // The status said the step once, then how many activities were checked.
     await expect.poll(async () => (await seen()).said).toEqual([NARRATION.running, "Checked nine activities."]);
+    // The narration showed for more than 400 ms, so the finding entered: opacity and a 4 px rise over 200 ms.
+    await animationsDone(page);
+    expect(byProperty(await transitionsOn(page, "findingBlock"))).toEqual(ENTERED);
+    expect(Math.abs((await box("[data-plan-check] [data-byline]")).top - told.top)).toBeLessThanOrEqual(1);
   });
 }
+
+// What the finding's entrance runs, in the order byProperty sorts it (DESIGN.md section 4, Motion; ticket 111).
+const ENTERED = [
+  { property: "opacity", from: "0", duration: 200, delay: 0 },
+  { property: "translate", from: "0px 4px", duration: 200, delay: 0 },
+];
+const byProperty = (moved: Omit<Moved, "on">[]) => [...moved].sort((a, b) => a.property.localeCompare(b.property));
+
+test("a check that arrives before its narration has shown for 400 ms puts the finding up at once", async ({ page }) => {
+  await recordTransitions(page);
+  // When the narration came and went, as the page drew it.
+  await page.addInitScript(() => {
+    const shown = { from: -1, to: -1 };
+    (window as unknown as { shown: typeof shown }).shown = shown;
+    new MutationObserver(() => {
+      const here = document.querySelector("[data-plan-narration]") !== null;
+      if (here && shown.from < 0) shown.from = performance.now();
+      if (!here && shown.from >= 0 && shown.to < 0) shown.to = performance.now();
+    }).observe(document, { subtree: true, childList: true });
+  });
+  await openPlan(page);
+  await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
+  await animationsDone(page);
+  const shown = await page.evaluate(() => (window as unknown as { shown: { from: number; to: number } }).shown);
+  const showed = shown.to - shown.from;
+  // The recorded check answers at once. On a busy computer it can still take 400 ms or more, and then the finding
+  // enters, as after any wait that long; a few milliseconds either side of 400 prove nothing, so they are left out.
+  if (showed < 350) expect(await transitionsOn(page, "findingBlock")).toEqual([]);
+  else if (showed > 450) expect(byProperty(await transitionsOn(page, "findingBlock"))).toEqual(ENTERED);
+});
+
+test("under reduced motion the finding replaces a long narration with no transition", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
+  await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") } });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(`**${API}`, async (route) => {
+    await held;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") });
+  });
+  await recordTransitions(page);
+  await page.clock.install();
+  await page.goto(PLAN);
+  await expect(page.locator("[data-plan-narration]")).toBeVisible();
+  await page.clock.fastForward(2000);
+  release();
+  await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
+  expect(await transitionsOn(page, "findingBlock")).toEqual([]);
+});
 
 test("at 1024 and 390 px the skeleton is as tall as the header, finding and method above the rows, so the rows stay put", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });

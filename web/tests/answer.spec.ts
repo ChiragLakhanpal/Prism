@@ -10,6 +10,7 @@ import { askFromTheBox, box, drawer, ICR_54, landed, marker, open, panel, QUESTI
 import type { Page } from "@playwright/test";
 import { expect, recorded, test } from "./mocked";
 import { animationsDone } from "./settled";
+import { forgetTransitions, recordTransitions, transitionsOn, type Moved } from "./reveals";
 
 const META =
   "Implementation Completion and Results Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 · PDF page 23 of 66";
@@ -267,6 +268,85 @@ test("Back closes a drawer the page opened, and the answer stays", async ({ page
   await expect(panel(page).locator("[data-in-short]")).toBeVisible();
   await page.goForward();
   await expect(drawer(page)).toBeVisible();
+});
+
+// Ticket 111's reveals (DESIGN.md section 4, Motion): what a wait produced enters once, when the wait ends, and is
+// drawn at once everywhere else. The transitions are the browser's own, as it ran them.
+const byProperty = (moved: Omit<Moved, "on">[]) => [...moved].sort((a, b) => a.property.localeCompare(b.property));
+
+test("a streamed answer's Strata, in short block enters over 200 ms and the check line's tick reveals 120 ms later; Back shows both at once", async ({ page }) => {
+  await recordTransitions(page);
+  await open(page, { stream: "ask-ke-nwwda-541055-past-range.sse" });
+  await askFromTheBox(page);
+  await landed(page);
+  await animationsDone(page);
+
+  expect(byProperty(await transitionsOn(page, "inShortBlock"))).toEqual([
+    { property: "opacity", from: "0", duration: 200, delay: 0 },
+    { property: "translate", from: "0px 4px", duration: 200, delay: 0 },
+  ]);
+  expect(await transitionsOn(page, "checkTick")).toEqual([{ property: "clip-path", from: "inset(0px 100% 0px 0px)", duration: 200, delay: 120 }]);
+  // The tick sits in the check line's 48 px indent beside "Checked", where the removed box has its icon, 16 px wide
+  // in ink-muted, and a screen reader hears only the line's words, which say "Checked".
+  const line = panel(page).locator("[data-check-line]");
+  const tick = line.locator("[data-check-tick]");
+  await expect(tick).toHaveAttribute("aria-hidden", "true");
+  await expect(line).toHaveText(/^Checked: /);
+  const [edge, mark, checked] = [(await line.boundingBox())!, (await tick.boundingBox())!, (await line.locator("[data-check-part=checked]").boundingBox())!];
+  expect([Math.round(mark.x - edge.x), Math.round(mark.width)]).toEqual([20, 16]);
+  expect(mark.y).toBeGreaterThanOrEqual(checked.y);
+  expect(mark.y + mark.height).toBeLessThanOrEqual(checked.y + 20);
+  expect(await tick.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(75, 94, 113)");
+
+  // Back to the page the answer was asked on shows it at once.
+  await page.getByRole("main").getByRole("link", { name: "Procurement", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/procurement$/);
+  await forgetTransitions(page);
+  await page.goBack();
+  await expect(panel(page).locator("[data-in-short]")).toBeVisible();
+  await animationsDone(page);
+  expect(await transitionsOn(page, "inShortBlock")).toEqual([]);
+  expect(await transitionsOn(page, "checkTick")).toEqual([]);
+});
+
+test("the evidence drawer enters with opacity and 12 px from the right over 160 ms, moves nothing when its source changes, and closes at once", async ({ page }) => {
+  await recordTransitions(page);
+  await open(page, { stream: "ask-p130164-isr-section.sse" });
+  await askFromTheBox(page);
+  await landed(page);
+  await animationsDone(page);
+  await forgetTransitions(page);
+  const moves = async () => (await page.evaluate(() => (window as unknown as { moved: Moved[] }).moved)).filter((entry) => ["opacity", "translate", "transform"].includes(entry.property));
+
+  await panel(page).locator("[data-sentence-text='3'] [data-citation='4']").click();
+  await expect(drawer(page)).toBeVisible();
+  // It arrives from its own edge without pushing the page sideways.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
+  await animationsDone(page);
+  expect(await transitionsOn(page, "evidenceDrawer")).toEqual([{ property: "opacity", from: "0", duration: 160, delay: 0 }]);
+  expect(await transitionsOn(page, "drawerPanel")).toEqual([{ property: "translate", from: "12px", duration: 160, delay: 0 }]);
+
+  await forgetTransitions(page);
+  await drawer(page).getByRole("tab").first().click();
+  await expect(drawer(page).getByRole("tab").first()).toHaveAttribute("aria-selected", "true");
+  await animationsDone(page);
+  expect(await moves()).toEqual([]);
+
+  await drawer(page).getByRole("button", { name: "Close the source" }).click();
+  await expect(drawer(page)).toHaveCount(0);
+  expect(await moves()).toEqual([]);
+});
+
+test("under reduced motion the answer's block, the check line's tick and the evidence drawer arrive with no transition", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await recordTransitions(page);
+  await open(page, { stream: "ask-ke-nwwda-541055-past-range.sse" });
+  await askFromTheBox(page);
+  await landed(page);
+  await marker(page, 1).click();
+  await expect(drawer(page)).toBeVisible();
+
+  for (const part of ["inShortBlock", "checkTick", "evidenceDrawer", "drawerPanel"]) expect(await transitionsOn(page, part), part).toEqual([]);
 });
 
 test("below 768 px the drawer is a full-screen sheet, and the page behind it is inert", async ({ page }) => {
@@ -753,7 +833,9 @@ test("the check line never uses the success state", async ({ page }) => {
   const line = panel(page).locator("[data-check-line]");
   const look = await line.evaluate((el) => ({ background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
   expect(look).toEqual({ background: "rgb(231, 237, 243)", color: "rgb(61, 76, 92)" });
-  await expect(line.locator("svg")).toHaveCount(0);
+  // Ticket 111: its one icon is the tick beside "Checked", in ink-muted, never success green.
+  await expect(line.locator("svg")).toHaveCount(1);
+  expect(await line.locator("svg[data-check-tick]").evaluate((el) => getComputedStyle(el).color)).toBe("rgb(75, 94, 113)");
 });
 
 for (const width of [1440, 390]) {

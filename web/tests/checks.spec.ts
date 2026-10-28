@@ -6,6 +6,7 @@ import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { askFromTheBox, landed, open, panel } from "./answer-page";
 import { expect, test, windowBeside } from "./mocked";
+import { animationsDone } from "./settled";
 
 async function answered(page: Page, stream: string, width = 1440) {
   const seen = await open(page, { stream, width });
@@ -15,6 +16,8 @@ async function answered(page: Page, stream: string, width = 1440) {
 }
 
 async function axe(page: Page) {
+  // A streamed answer's block fades in over 200 ms (ticket 111), so contrast is measured once it has landed.
+  await animationsDone(page);
   const results = await scan(page, "[data-answer-panel]");
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join("; ")}`);
 }

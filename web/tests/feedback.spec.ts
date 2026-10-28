@@ -42,6 +42,8 @@ async function openAnswer(page: Page, width = 1440, { preview = false, mine = "f
   await landed(page);
   await marker(page, 1).click();
   await expect(drawer(page).locator("[data-feedback-row]")).toBeVisible();
+  // The drawer's panel comes 12 px in from the right (ticket 111): measure once it has stopped.
+  await settle(page);
   return posted;
 }
 

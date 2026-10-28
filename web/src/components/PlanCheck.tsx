@@ -662,8 +662,11 @@ export function checkPill(result: CheckedPlan): ReactNode {
   );
 }
 
-export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source }: {
+export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source, reveal = false }: {
   result: CheckedPlan;
+  // Ticket 111: the finding replaces a narration that showed for at least 400 ms, so its byline, the finding and the
+  // method sentence enter, once: opacity and a 4 px rise over 200 ms.
+  reveal?: boolean;
   // Ticket 38: an upload's check says how it measured delay, and names the upload as its source.
   method?: ReactNode;
   source?: ReactNode;
@@ -726,13 +729,15 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   return (
     <section aria-labelledby={findingId} data-plan-check>
       <EightColumns prose className="mt-6">
-        {/* Strata's own words open with its byline, 8 px above them (ticket 111). */}
-        <Byline kind="found" />
-        <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-h2 text-pretty text-ink-heading focus:outline-none">
-          <Finding result={result} />
-        </h2>
-        <div className="mt-2">
-          {method ?? <Method result={result} />}
+        <div data-finding-block className={cx(reveal && "animate-reveal")}>
+          {/* Strata's own words open with its byline, 8 px above them (ticket 111). */}
+          <Byline kind="found" />
+          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-h2 text-pretty text-ink-heading focus:outline-none">
+            <Finding result={result} />
+          </h2>
+          <div className="mt-2">
+            {method ?? <Method result={result} />}
+          </div>
         </div>
         {afterMethod}
       </EightColumns>
