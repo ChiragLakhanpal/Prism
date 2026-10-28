@@ -20,7 +20,7 @@ export const galleryCopy = {
 
   pages: {
     navigation: {
-      title: "Navigation, box band and footer",
+      title: "Navigation, ask bar and footer",
       purpose: "Every page shares this frame. This page shows Projects as the current section in the sidebar.",
     },
     pages: {
@@ -76,7 +76,7 @@ export const galleryCopy = {
     "answer-panel": {
       title: "Answer panel",
       purpose:
-        "The answer to a question asked from the box, in the page under the band. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
+        "The answer to a question asked from the box, at the top of the page under the bar. Each sample plays an answer stream the server wrote, recorded in tests/fixtures/api.",
     },
     evidence: {
       title: "Evidence card and drawer",
@@ -391,7 +391,7 @@ export const galleryCopy = {
 
   notes: {
     bar:
-      "The navy bar at the top of this page is the sample, with the box and the view switch, and the sidebar beside the page holds Home, the sections and the data stamp under Data. Below 1024 px the sidebar's items move into the Menu, and below 768 px the view switch does too. The footer is the same on every page.",
+      "The navy bar at the top of this page is the sample, with the view switch, the box floats at the foot of the page column, and the sidebar beside the page holds Home, the sections and the data stamp under Data. Below 1024 px the sidebar's items move into the Menu, and below 768 px the view switch does too. The footer is the same on every page.",
   },
 
   sections: {

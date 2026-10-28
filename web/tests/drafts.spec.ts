@@ -445,8 +445,89 @@ test("one hook in the frame writes the document's scroll padding, and DraftPage'
   expect(files).not.toContain("lib/useScrollPadding.ts");
 });
 
-test("tabbing through a draft never leaves the focused element under the bar, the sticky head or the draft bar", async ({ page }) => {
+test("tabbing through a draft never leaves the focused element under the bar, the sticky head, the box or the draft bar", async ({ page }) => {
   await openDraft(page, { width: 1440, height: 900 });
+  const { checked, covered } = await tabUnderStickyParts(page, 30);
+  expect(checked).toBeGreaterThan(30);
+  expect(covered).toEqual([]);
+});
+
+// Ticket 113: where the draft bar sticks at the window's foot, the box floats 16 px above it, and the page's bottom
+// scroll padding reaches 8 px above the box, so it counts both.
+test("on a draft at 1440 by 900 the box floats 16 px above the draft bar, and the bottom scroll padding counts both", async ({ page }) => {
+  await openDraft(page, { width: 1440, height: 900 });
+  const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+  const edge = (await bar(page).boundingBox())!;
+  expect(Math.round(edge.y + edge.height), "the draft bar on the window's bottom edge").toBe(900);
+  expect(Math.round(edge.y - (box.y + box.height)), "the box 16 px above the draft bar").toBe(16);
+  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingBottom)).toBe(`${Math.round(900 - box.y + 8)}px`);
+});
+
+// Round 1's review: near the end of a draft the bar lets go of the window's foot and scrolls up with the page; the box
+// rides up with it, 16 px above, and never covers its controls. Tab from the last link before the bar lands on a
+// control clear of the box.
+test("near the end of a draft the box rides 16 px above the draft bar as it scrolls up, and covers none of its controls", async ({ page }) => {
+  await openDraft(page, { width: 1440, height: 900 });
+  const at = (y: number) =>
+    page.evaluate(
+      (y) =>
+        new Promise<{ gap: number; covered: string[] }>((done) => {
+          window.scrollTo(0, y);
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+              const bar = document.querySelector("[data-draft-bar]")!;
+              const shares = (part: DOMRect) =>
+                Math.min(box.bottom, part.bottom) - Math.max(box.top, part.top) >= 1 && Math.min(box.right, part.right) - Math.max(box.left, part.left) >= 1;
+              done({
+                gap: Math.round(bar.getBoundingClientRect().top - box.bottom),
+                covered: [...bar.querySelectorAll("a, button")].filter((control) => shares(control.getBoundingClientRect())).map((control) => (control.textContent ?? "").trim()),
+              });
+            }),
+          );
+        }),
+      y,
+    );
+  const end = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+  for (let y = end - 300; y <= end; y += 10) {
+    const { gap, covered } = await at(y);
+    expect(gap, `the box 16 px above the draft bar at scrollY ${y}`).toBe(16);
+    expect(covered, `the bar's controls under the box at scrollY ${y}`).toEqual([]);
+  }
+  // At the end the draft's last line, above the bar, is clear of the box too, so the box covers it for good nowhere.
+  const lastLine = await page.evaluate(() => {
+    const bar = document.querySelector("[data-draft-bar]")!;
+    const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+    const before = [...document.querySelectorAll("main p, main li, main a")].filter((el) => el.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING && !el.contains(bar));
+    return Math.round(box.top - before.at(-1)!.getBoundingClientRect().bottom);
+  });
+  expect(lastLine, "the space between the draft's last line and the box at the end").toBeGreaterThanOrEqual(8);
+  // Where the bar has risen 60 px off the window's foot, Tab from the last link before it. At the end of the page the
+  // bar has let go, so its place in the page is where the window shows it.
+  const barFoot = await page.evaluate(() => window.scrollY + document.querySelector("[data-draft-bar]")!.getBoundingClientRect().bottom);
+  await at(Math.round(barFoot - 900 + 60));
+  await page.evaluate(() => {
+    const bar = document.querySelector("[data-draft-bar]")!;
+    const links = [...document.querySelectorAll<HTMLElement>("main a[href]")].filter((link) => link.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING);
+    links.at(-1)!.focus({ preventScroll: true });
+  });
+  await page.keyboard.press("Tab");
+  const place = await page.evaluate(() => {
+    const focused = document.activeElement!;
+    const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+    const rect = focused.getBoundingClientRect();
+    return {
+      inBar: focused.closest("[data-draft-bar]") !== null,
+      shared: Math.min(box.bottom, rect.bottom) - Math.max(box.top, rect.top) >= 1 && Math.min(box.right, rect.right) - Math.max(box.left, rect.left) >= 1,
+    };
+  });
+  expect(place).toEqual({ inBar: true, shared: false });
+});
+
+// Round 1's design review: below 768 px the draft bar sits at the end of the column and does not stick, so its
+// controls keep their own scroll margins and the box's padding brings each one clear of the box.
+test("tabbing through a draft at 390 by 844 never leaves the focused element under the box", async ({ page }) => {
+  await openDraft(page, { width: 390, height: 844 });
   const { checked, covered } = await tabUnderStickyParts(page, 30);
   expect(checked).toBeGreaterThan(30);
   expect(covered).toEqual([]);

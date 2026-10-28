@@ -1,5 +1,5 @@
-// The gallery's navigation, the bar with its box, and the footer match the blueprint's Home wireframe and
-// DESIGN.md sections 5 and 8 (criteria 3 and 4 of ticket 02; ticket 93's top bar).
+// The gallery's navigation, the bar, the ask bar with its box, and the footer match the blueprint's Home wireframe and
+// DESIGN.md sections 5 and 8 (criteria 3 and 4 of ticket 02; ticket 93's top bar; ticket 113's ask bar).
 import { expect, mockApi, recorded, test } from "./mocked";
 import { footerSentence } from "./design-md";
 import { galleryPaths } from "./gallery-pages";
@@ -33,14 +33,14 @@ test("the navy bar is 56 px tall with the logo slot, the wordmark and the view s
   expect(logo.x).toBeGreaterThanOrEqual(clear);
   expect(wordmark.x - (logo.x + logo.width)).toBeGreaterThanOrEqual(clear);
 
-  // Left to right: logo, wordmark, the box, then the view switch 24 px from the right edge (ticket 93).
+  // Left to right: logo, wordmark, then the view switch 24 px from the right edge (ticket 93). The box left the bar for
+  // the page column's foot (ticket 113).
   const pill = page.getByRole("button", { name: "View: World Bank staff" });
   const pillBox = (await pill.boundingBox())!;
-  const search = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
   expect(wordmark.x).toBeGreaterThan(logo.x);
-  expect(search.x).toBeGreaterThan(wordmark.x + wordmark.width);
-  expect(pillBox.x).toBeGreaterThan(search.x + search.width);
+  expect(pillBox.x).toBeGreaterThan(wordmark.x + wordmark.width);
   expect(Math.round(1440 - (pillBox.x + pillBox.width))).toBe(24);
+  await expect(bar.getByRole("combobox")).toHaveCount(0);
   await expect(pill.locator("svg.lucide-chevron-down")).toHaveCount(1);
   // DESIGN.md section 5: the view switch is a 32 px control with a control's 4 px corners, not a 44 px button.
   expect(pillBox.height).toBe(32);
@@ -99,28 +99,24 @@ test("below 360 px the Menu button hides its word from sight and keeps its name,
   expect(await menu.locator("span").evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
 });
 
-// Ticket 93: the box sits in the bar from the page's content edge, 224 + 40 px beside the open sidebar, 640 px wide on a
-// white 4 px rectangle with no border, and the stamp sits at the sidebar's foot. The sidebar rests as the rail (ticket
-// 110), so the gallery draws it open here.
-test("the bar holds the box from the page's content edge, the stamp sits at the sidebar's foot, and / focuses the box", async ({ page }) => {
+// Ticket 113: the box floats at the page column's foot, centered in it, 640 px wide and 16 px above the window's bottom
+// edge, on surface with 4 px corners; the stamp sits at the sidebar's foot. The gallery draws the sidebar open here, so
+// the page column is the window less 224 px. Off the navy bar, its focus ring is focus.
+test("the box floats centered at the page column's foot, the stamp sits at the sidebar's foot, and / focuses the box", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/navigation?sidebar=open");
 
   const box = page.locator("[data-box-band] form > [data-focus-ring]");
-  expect(Object.values((await box.boundingBox())!)).toEqual([264, 8, 640, 40]);
-  expect(await box.evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).borderRadius, getComputedStyle(el).borderTopWidth])).toEqual([
-    "rgb(255, 255, 255)",
-    "4px",
-    "0px",
-  ]);
+  expect(Object.values((await box.boundingBox())!)).toEqual([224 + (1440 - 224 - 640) / 2, 900 - 16 - 40, 640, 40]);
+  expect(await box.evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).borderRadius])).toEqual(["rgb(255, 255, 255)", "4px"]);
   await expect(page.locator("[data-box-band] [data-stamp]")).toHaveCount(0);
   await expect(page.locator("[data-sidebar] [data-stamp] a")).toHaveText("Data through Oct 21");
 
   await page.locator("h1").click();
   await page.keyboard.press("/");
   await expect(page.locator("[data-box-band]").getByRole("combobox", { name: /Open a project/ })).toBeFocused();
-  // While anything in it has focus, the box shows focus-on-dark around it on the navy bar.
-  expect(await box.evaluate((el) => [getComputedStyle(el).outlineStyle, getComputedStyle(el).outlineColor])).toEqual(["solid", "rgb(245, 146, 108)"]);
+  // While anything in it has focus, the box shows the focus ring around it.
+  expect(await box.evaluate((el) => [getComputedStyle(el).outlineStyle, getComputedStyle(el).outlineColor])).toEqual(["solid", "rgb(182, 73, 12)"]);
 });
 
 // Ticket 93: on a package page the box keeps one row from 1024 px, with the chip's reference and "Ask about this package"
@@ -198,8 +194,9 @@ test("below 1024 px the Menu button opens the Menu sheet, a modal dialog; Escape
   await expect(menu).toBeHidden();
 });
 
-// Every label the view switch shows (ticket 40; the 40 brief, 3.2) fits the bar at 1024 px beside a package's box, with
-// WCAG 1.4.12's text spacing too (ticket 93): the label is whole, the bar keeps its one row, and nothing scrolls sideways.
+// Every label the view switch shows (ticket 40; the 40 brief, 3.2) fits the bar at 1024 px, with WCAG 1.4.12's text
+// spacing too (ticket 93): the label is whole, the bar keeps its one row, the package's box at the page's foot keeps its
+// one row (ticket 113), and nothing scrolls sideways.
 const PILLS: [string, string][] = [
   ["", "View: World Bank staff"],
   ["&pill=officer", "View: Agency officer"],
@@ -207,7 +204,7 @@ const PILLS: [string, string][] = [
   ["&pill=public", "Preview: Public"],
 ];
 
-test("at 1024 px the whole bar fits on one row beside a package's box, with every view label, with text spacing too", async ({ page }) => {
+test("at 1024 px the whole bar fits on one row with every view label, and a package's box keeps one row, with text spacing too", async ({ page }) => {
   await page.setViewportSize({ width: 1024, height: 900 });
   for (const spacing of [false, true]) {
     for (const [query, label] of PILLS) {
@@ -219,7 +216,6 @@ test("at 1024 px the whole bar fits on one row beside a package's box, with ever
       expect(await pill.evaluate((el) => el.scrollWidth <= el.clientWidth), `${named}: the label is whole`).toBe(true);
       const at = (await pill.boundingBox())!;
       const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
-      expect(at.x, named).toBeGreaterThanOrEqual(box.x + box.width + 24);
       expect(Math.round(1024 - (at.x + at.width)), named).toBe(24);
       expect(box.height, `${named}: the box keeps one row`).toBe(40);
       expect(await page.locator("[data-bar-row]").evaluate((el) => el.scrollWidth <= el.clientWidth), named).toBe(true);

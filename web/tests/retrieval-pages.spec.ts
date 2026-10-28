@@ -157,6 +157,21 @@ for (const width of [1440, 390]) {
     expect(sent.find((call) => call.method === "PUT")!.body).toEqual({ grade: "answers" });
     if (width === 1440) {
       expect(await page.locator("[data-grade-bar]").evaluate((el) => getComputedStyle(el).position)).toBe("sticky");
+      // Ticket 113: at the page's end the grade bar has let go of the window's foot, and the box still floats 16 px
+      // above it.
+      const gap = await page.evaluate(
+        () =>
+          new Promise<number>((done) => {
+            window.scrollTo(0, document.documentElement.scrollHeight);
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => {
+                const box = document.querySelector("[data-box-band] form > [data-focus-ring]")!.getBoundingClientRect();
+                done(Math.round(document.querySelector("[data-grade-bar]")!.getBoundingClientRect().top - box.bottom));
+              }),
+            );
+          }),
+      );
+      expect(gap, "the box 16 px above the grade bar at the page's end").toBe(16);
     } else {
       expect(await page.locator("[data-grade-bar]").evaluate((el) => getComputedStyle(el).position)).toBe("static");
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

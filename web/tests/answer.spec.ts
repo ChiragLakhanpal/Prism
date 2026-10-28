@@ -53,16 +53,41 @@ test("Ask this streams the answer into the panel under the band: steps one at a 
   await expect(panel(page)).toHaveAttribute("aria-busy", "false");
 });
 
+// Ticket 113: the box floats at the window's foot, and the answer still opens at the top of the page column. Asked from
+// the end of a long page, the page scrolls at once so the question's heading sits under the bar, and focus stays in the
+// box, where people refine a question.
+for (const width of [1440, 390]) {
+  test(`at ${width} px Ask this from the end of a long page scrolls at once so the question heading sits under the bar`, async ({ page }) => {
+    await open(page, { width });
+    await page.addStyleTag({ content: "main { min-height: 4000px; }" });
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(2000);
+
+    await askFromTheBox(page);
+    const heading = panel(page).getByRole("heading", { level: 2 });
+    await expect(heading).toHaveText(QUESTION);
+    await expect(box(page)).toBeFocused();
+    const bar = (await page.locator("[data-nav-bar]").boundingBox())!;
+    const at = (await heading.boundingBox())!;
+    expect(bar.y + bar.height, `${width} px: the bar is in view`).toBeGreaterThan(0);
+    expect(at.y, `${width} px: the heading sits under the bar`).toBeGreaterThanOrEqual(bar.y + bar.height);
+    expect(at.y + at.height, `${width} px: the heading is in view`).toBeLessThanOrEqual(900);
+    // Typing kept the page where the answer opens: the box at the foot never carried it back to the end.
+    await landed(page);
+    expect((await heading.boundingBox())!.y, `${width} px`).toBe(at.y);
+  });
+}
+
 test("the panel sits at the top of the page column under the bar, on columns 1 to 8 from 1024 px, above the page's own title, with In short in label and its sentences in lead", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);
   await landed(page);
 
   const card = (await panel(page).boundingBox())!;
-  const band = (await page.locator("[data-box-band]").boundingBox())!;
+  const bar = (await page.locator("[data-nav-bar]").boundingBox())!;
   const column = (await page.locator("[data-page-column]").boundingBox())!;
   const title = (await page.locator("main h1").boundingBox())!;
-  expect(card.y).toBeGreaterThanOrEqual(band.y + band.height);
+  expect(card.y).toBeGreaterThanOrEqual(bar.y + bar.height);
   // Ticket 94: the first thing in the page column, 40 px under its top from 1024 px, with the window's margin before it.
   expect(Math.round(card.y - column.y)).toBe(40);
   expect(Math.round(card.x - column.x)).toBe(40);

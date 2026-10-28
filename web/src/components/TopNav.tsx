@@ -1,10 +1,11 @@
 // The top bar (DESIGN.md section 5, Top bar; ticket 93): the navy banner that carries the World Bank Group logo, the
-// Strata wordmark (a link to Home), the one box and the view switch. Nouns navigate. The sections are the sidebar beside
-// the page (Sidebar.tsx, ticket 92), and the data stamp sits at its foot.
+// Strata wordmark (a link to Home) and the view switch. Nouns navigate. The sections are the sidebar beside the page
+// (Sidebar.tsx, ticket 92), and the data stamp sits at its foot. The one box floats at the page column's foot (Frame.tsx,
+// ticket 113).
 //
-// From 1024 px (64rem) everything sits on one 56 px row that sticks. Below 1024 px the bar scrolls with the page and has
-// two rows: a labeled Menu button, the logo and the wordmark, with the view switch at the right from 768 px, then the box
-// across the window. Below 768 px the view switch is at the Menu sheet's foot. On navy, focus uses focus-on-dark.
+// The bar is one 56 px row at every width: a labeled Menu button below 1024 px (64rem), the logo, the wordmark, and the
+// view switch at the right from 768 px. From 1024 px it sticks; below, it scrolls with the page. Below 768 px the view
+// switch is at the Menu sheet's foot. On navy, focus uses focus-on-dark.
 //
 // When the window crosses 768 or 1024 px, the control that had focus can vanish with its part of the bar, which would
 // drop focus to the page. Focus moves to the control that now holds the same thing instead: the view switch or its
@@ -369,7 +370,6 @@ export function withModeOf(href: string, search: string): string {
 
 export function TopNav({
   logo,
-  box,
   viewer,
   homeHref = "/",
   viewOpen,
@@ -380,8 +380,6 @@ export function TopNav({
   // before the wordmark, so the two never read as one co-branded name (DESIGN.md section 9). The app and
   // the gallery pass the World Bank's official file (web/src/assets/world-bank-logo.md).
   logo?: ReactNode;
-  // The one box (IntentBox in the app, OneBox in the gallery), in the bar's search slot.
-  box?: ReactNode;
   viewer: Viewer;
   homeHref?: string;
   // For the gallery: open the view popover on the first render.
@@ -459,11 +457,6 @@ export function TopNav({
             {copy.appName}
           </a>
         </div>
-        {box && (
-          <div data-box-band className="bar-box min-w-0">
-            {box}
-          </div>
-        )}
         <div className="bar-view hidden pl-6 md:block lg:pl-0">
           <ViewSwitch viewer={viewer} mode={mode} defaultOpen={viewOpen} menuButton={sheet.button} />
         </div>
