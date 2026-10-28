@@ -36,6 +36,13 @@ def clean_env():
     return env
 
 
+def ctrl_c_on():
+    """Run in a child before it starts (preexec_fn): Ctrl-C works there again. A shell that starts a command with &
+    hands it Ctrl-C ignored, and every process it starts inherits that, so a gate started that way would never see
+    the Ctrl-C a test sends it."""
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+
 def git(repo, *args, check=True):
     return subprocess.run(
         ["git", "-c", "user.name=Gate Test", "-c", "user.email=gate@example.org", *args],
@@ -722,7 +729,7 @@ def test_ctrl_c_stops_every_lane(repo):
     write(repo, "gates/steps.toml", steps_file(steps=[wait("A", 30, lane="one"), wait("B", 30, lane="two")]))
     write(repo, "step.py", STEP)
     gate = subprocess.Popen([".githooks/pre-commit"], cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                            text=True, env=clean_env())
+                            text=True, env=clean_env(), preexec_fn=ctrl_c_on)
     # Wait for both steps to start, however long a busy computer takes to start the gate and its steps.
     deadline = time.monotonic() + 60
     while not ((repo / "log.txt").exists() and len(logged(repo)) == 2) and time.monotonic() < deadline:
@@ -781,7 +788,7 @@ def test_ctrl_c_that_lands_on_a_lane_thread_stops_the_gate_within_one_poll(tmp_p
     write(tmp_path, "driver.py", LANE_SIGINT)
 
     done = subprocess.run(["python3", "driver.py", str(ROOT / "gates" / "offline.py")], cwd=tmp_path,
-                          capture_output=True, text=True, env=clean_env(), timeout=60)
+                          capture_output=True, text=True, env=clean_env(), timeout=60, preexec_fn=ctrl_c_on)
 
     assert done.returncode == 0, done.stdout + done.stderr
     seen = json.loads(done.stdout.splitlines()[-1])  # after the lines the gate prints about its lanes

@@ -97,12 +97,14 @@ lane = "guard"
 # 1,500 processor-seconds: alone, the Playwright tests take about 810, the Python tests in these two lanes 400 to
 # 470, and the other steps about 60. So the lanes' layout changes little; tests that cost less make the gate shorter.
 # With no other session's tests beside it, the gate passed in 117.4, 119.0 and 120.1 seconds when it kept the
-# database, and in 127.6 seconds when it built it, against 140.4 seconds for the gate before ticket 119 (one python
-# lane, DuckDB on every processor), with another worktree's fixture build beside both. With other sessions' tests
-# beside it (another worktree's whole pytest run, fixture build or screenshots), it passed once, in 147.1 seconds, and the
-# limit stopped it four times at 150: three times with the database kept and once when it built it. Earlier gates,
-# run one after another and perhaps with other sessions' tests beside them, took 118 to 142 seconds with the
-# database kept and 149 with it built, and the limit stopped 5 of 17 at 150. Eight, six or four workers per lane
+# database, and a fourth failed after 113.5 seconds when a test in python-1 failed (the log kept no name). It passed
+# in 127.6 seconds when it built the database, against 140.4 seconds for the gate before ticket 119 (one python lane,
+# DuckDB on every processor; its pytest step ran every test and failed only this ticket's checks of the two lanes),
+# with another worktree's fixture build beside both. With other sessions' tests beside it (another worktree's whole
+# pytest run, fixture build or screenshots), it passed twice, in 147.1 and 144.9 seconds, and the limit stopped it
+# four times at 150: three times with the database kept and once when it built it. Earlier gates, run one after
+# another and perhaps with other sessions' tests beside them, took 118 to 142 seconds with the database kept and
+# 149 with it built, and the limit stopped 6 of 17 at 150. Eight, six or four workers per lane
 # changed the tests' processor time by about 5% and the gate's time by less than the runs differ, so the lanes
 # keep eight.
 # When a lane gets slow again, run `uv run --frozen pytest --durations=15 --shard=1/2 tests ops/bundle/tests` (or 2/2)
