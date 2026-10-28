@@ -21,9 +21,9 @@ const MARKED = [
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
 const FINDING = "One needs a look and two are worth watching; three have data notes.";
-// Columns 1 to 8 of the 12-column grid in a 1440 px page area: the window's 40 px margins leave 1360 px, and content
-// stops at 1280 px (ticket 94), so 8 columns of 77.33 px and 7 gutters of 32 px.
-const EIGHT_COLUMNS = 843;
+// Columns 1 to 8 of the 12-column grid in a 1440 px page area: the window's 40 px margins leave 1360 px, all of it
+// content, which may take 1440 px since ticket 110, so 8 columns of 84 px and 7 gutters of 32 px.
+const EIGHT_COLUMNS = 896;
 const widthOf = async (page: Page, selector: string) => Math.round((await page.locator(selector).boundingBox())!.width);
 
 type Answer = { status?: number; body: string };

@@ -376,9 +376,11 @@ test("opening a source counts it in the bar and the Sources list at once, and th
   await expect(bar(page).locator("[data-opened-link]")).toHaveText("You opened 1 of 4 sources");
   await expect(page.locator("[data-source-item$='KE-NWWDA-229129-CW-RFB'] [data-opened]")).toHaveText("You opened this.");
   expect(asked).toContain("POST /api/evidence/opened");
-  // Ticket 94: from a frame of 1200 px the column keeps to columns 1 to 7 of the frame (FRAME_COLUMN below), so the
-  // drawer opens into the free space, a gutter after the column: the notes do not move.
-  expect([before[0], before[2]]).toEqual([224 + 40, FRAME_COLUMN]);
+  // Ticket 94: from a frame of 1200 px the column keeps to columns 1 to 7 of the frame, so the drawer opens into the
+  // free space, a gutter after the column: the notes do not move. At 1440 px beside the rail, where the sidebar rests
+  // (ticket 110), the frame is 1376 px: 40 px margins leave 1296 px, whose 12 columns of 78.67 px and 11 gutters of
+  // 32 px give columns 1 to 7 a width of 743 px, starting 40 px after the rail.
+  expect([before[0], before[2]]).toEqual([64 + 40, 743]);
   const column = await page.locator("[data-document-column]").boundingBox();
   const drawer = await page.getByRole("dialog").boundingBox();
   expect(Math.round(drawer!.x - (column!.x + column!.width))).toBe(32);
@@ -388,7 +390,7 @@ test("opening a source counts it in the bar and the Sources list at once, and th
 });
 
 // Ticket 94: the column is measured against the frame, the window less the sidebar, which the drawer does not change.
-// At 1440 px beside the open sidebar and at 1280 px beside the rail the frame is 1216 px: 40 px margins leave 1136 px,
+// At 1280 px beside the rail the frame is 1216 px: 40 px margins leave 1136 px,
 // whose 12 columns of 62.67 px and 11 gutters of 32 px give columns 1 to 7 a width of 649 px, starting 40 px after the
 // sidebar. The drawer narrows the page area below 48rem, but the breadcrumb keeps its whole trail, as the column keeps
 // its place, so nothing above the notes changes and the window does not move.

@@ -28,6 +28,7 @@ import { PpsdSources } from "../components/PpsdSources";
 import { IdText, ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SourcesList } from "../components/SourcesList";
+import { SpaceLine } from "../components/SpaceLine";
 import { StepRowsDraft } from "../components/StepRowsDraft";
 import { AccessLabel } from "../components/AccessLabel";
 import { DiscardedOn, StateStepper } from "../components/StateStepper";
@@ -213,13 +214,16 @@ export function ppsdSubtitle(title: string, reference: string | null | undefined
 
 // The column: columns 1 to 7 of the frame from a frame of 1200 px, all 12 of the page area below. It is the notes'
 // size container. From that frame it keeps the same place and width when the evidence drawer narrows the page
-// area (the 35 brief, section 3.2; ticket 94; app.css, "A draft's document column").
-export function DocumentColumn({ children }: { children: ReactNode }) {
+// area (the 35 brief, section 3.2; ticket 94; app.css, "A draft's document column"). What a page puts beside it (the
+// space line, ticket 110) takes columns 9 to 12 from that frame, top-aligned with the column, and is not shown below
+// it; both sit in the grid's first row, so hiding it moves nothing.
+export function DocumentColumn({ children, beside }: { children: ReactNode; beside?: ReactNode }) {
   return (
     <div className="layout-grid">
-      <div data-document-column className="@container/doc col-span-12 min-w-0">
+      <div data-document-column className="@container/doc col-span-12 col-start-1 row-start-1 min-w-0">
         {children}
       </div>
+      {beside != null && <div className="col-span-4 col-start-9 row-start-1 hidden min-w-0 @xl/frame:block">{beside}</div>}
     </div>
   );
 }
@@ -581,7 +585,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const writtenIn = d.lang ?? ENGLISH;
   return (
     <WrittenIn.Provider value={writtenIn}>
-    <DocumentColumn>
+    <DocumentColumn beside={<SpaceLine>{copy.evidence.spaceHint.draft}</SpaceLine>}>
       <div data-draft-page={d.state}>
         {conflict && (
           <Alert state="info" live="status" className="mb-6">

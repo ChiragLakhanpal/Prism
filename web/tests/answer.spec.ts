@@ -63,9 +63,9 @@ test("the panel sits at the top of the page column under the bar, on columns 1 t
   expect(Math.round(card.y - column.y)).toBe(40);
   expect(Math.round(card.x - column.x)).toBe(40);
   expect(card.y + card.height).toBeLessThan(title.y);
-  // At 1440 px the page area is 1216 px beside the open sidebar (ticket 92). The window's 40 px margins leave 1136 px
-  // (ticket 94), so columns 1 to 8 are 8 columns of 65.33 px and 7 gutters of 32 px.
-  expect(Math.round(card.width)).toBe(747);
+  // At 1440 px the page area is 1376 px beside the rail, where the sidebar rests (ticket 110). The window's 40 px margins
+  // leave 1296 px (ticket 94), so columns 1 to 8 are 8 columns of 78.67 px and 7 gutters of 32 px.
+  expect(Math.round(card.width)).toBe(853);
   // "In short" in label (13/16, 600) and its sentences in lead (18/28, 400), DESIGN.md section 3.
   const style = (element: Element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight];
   expect(await panel(page).getByRole("heading", { level: 3, name: "In short" }).evaluate(style)).toEqual(["13px", "16px", "600"]);
@@ -154,10 +154,10 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
   await expect(panel(page).locator("[data-sentence-text='0']")).toHaveClass(/bg-tint/);
 
   // On a wide page the drawer is clamp(384px, 40vw, 560px) (ticket 94): 40 percent of 1440 px is 576, so 560 px, and
-  // the page beside it, the 1216 px frame less the drawer, stays usable.
+  // the page beside it, the 1376 px frame beside the rail less the drawer, stays usable.
   const width = Math.round((await drawer(page).boundingBox())!.width);
   expect(width).toBe(560);
-  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(656);
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(816);
   await box(page).click();
   await expect(box(page)).toBeFocused();
   await drawer(page).getByRole("heading", { level: 2 }).focus();

@@ -96,12 +96,17 @@ export async function mockShell(
   });
 }
 
-// Ticket 92: from 1024 px the sidebar sits beside the page, a 64 px rail below 1440 px and 224 px open from there, so a
-// page lays out by the window less the sidebar. A test written for a page area of a given width opens this window;
-// below 1024 px there is no sidebar, and the window is the page area.
+// Ticket 92: from 1024 px the sidebar sits beside the page, so a page lays out by the window less the sidebar. Ticket
+// 110: with no stored choice it rests as the 64 px rail at every width from 1024 px. A test written for a page area of
+// a given width opens this window; below 1024 px there is no sidebar, and the window is the page area.
 export function windowBeside(area: number): number {
-  if (area < 1024) return area;
-  return area + 64 < 1440 ? area + 64 : area + 224;
+  return area < 1024 ? area : area + 64;
+}
+
+// The sidebar as a person leaves it after pressing "Expand the sidebar": open at 224 px from 1024 px, kept in local
+// storage under strata.sidebar, which web/index.html reads before the first paint (ticket 110). Call it before goto.
+export async function openSidebar(page: Page) {
+  await page.addInitScript(() => window.localStorage.setItem("strata.sidebar", "open"));
 }
 
 export { expect };
