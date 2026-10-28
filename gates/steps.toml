@@ -67,28 +67,47 @@ name = "Test the guard hook"
 run = ["python3", ".claude/hooks/test_guard.py"]
 lane = "guard"
 
+# The Python tests under tests/ and ops/bundle/tests/ may read the fixture database, so they run after
+# its build. Since ticket 119 they run in two lanes side by side, python-1 and python-2, and each lane
+# starts with the build. The build keeps the database when nothing its last build read has changed
+# (gates/fixture_cache.py), in about a second instead of 15 to 30, and the lane that starts its build
+# second waits for the other lane's build and keeps what it made. Then each lane runs half of the test
+# files: --shard=1/2 and --shard=2/2, which the root conftest.py reads, sort the files by their paths
+# and give the first half to python-1, the bundle tests among them, and the second half to python-2.
+# So the split is the same on every computer and in every run. On October 27, 2026, the one python
+# lane took 139 to 152 seconds and the gate stopped at its limit there: the build 24 to 31 seconds,
+# then pytest 114 to 121 seconds over 3,443 tests, about 1,360 test-seconds at load averages near 25.
+# The two halves held about 635 and 728 of those test-seconds.
+#
+# Each lane gives its half to eight pytest-xdist workers. --dist worksteal lets a worker that runs out
+# of tests take some from a busy one; xdist's default hands each worker a run of neighbouring tests at
+# the start, so slow tests that sit together in one file land on one or two workers. When a lane gets
+# slow again, run `uv run --frozen pytest --durations=15 --shard=1/2 tests ops/bundle/tests` (or 2/2)
+# to find its slowest tests, since a lane can never take less time than its slowest test. Then try
+# more workers, or a third shard (1/3, 2/3 and 3/3 in three lanes), and keep what gives the lower total
+# gate time over three runs, because the lanes share the processors. Each test must be safe beside the
+# others: README's gate section says how.
 [[step]]
-name = "Build the fixture database"
+name = "Build the fixture database, or keep it when nothing it is built from has changed"
 run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
 show = true
-lane = "python"
+lane = "python-1"
 
 [[step]]
-# These tests may read the fixture database, so they run in its lane, after the build. They take
-# about 220 processor-seconds, so eight pytest-xdist workers share them, in about 30 seconds when
-# nothing else runs and about 55 in the gate beside the browsers. --dist worksteal lets a worker that
-# runs out of tests take some from a busy one; xdist's default hands each worker a run of neighbouring
-# tests at the start, so slow tests that sit together in one file land on one or two workers. On
-# October 25, 2026, with other sessions' tests holding the load average near 30, six, eight, ten and
-# twelve workers gave about the same total gate time (80, 85 and 111 seconds on six; 75, 82, 71 and
-# 74 on eight; 70 and 70 on ten; 73 and 70 on twelve), so the lane keeps eight. When the lane gets
-# slow again, run `uv run --frozen pytest --durations=15 tests ops/bundle/tests` to find the slowest
-# tests, since the lane can never take less time than its slowest test. Then try more workers
-# and keep the number that gives the lower total gate time over three runs, because the lanes share
-# the processors. Each test must be safe beside the others: README's gate section says how.
-name = "Run the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
-run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python", "--numprocesses", "8", "--dist", "worksteal", "tests", "ops/bundle/tests"]
-lane = "python"
+name = "Run the first half of the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
+run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-1", "--numprocesses", "8", "--dist", "worksteal", "--shard=1/2", "tests", "ops/bundle/tests"]
+lane = "python-1"
+
+[[step]]
+name = "Wait for the python-1 lane's build of the fixture database and keep it, or build it when this lane starts first"
+run = ["uv", "run", "--frozen", "python", "gates/build_fixture.py"]
+show = true
+lane = "python-2"
+
+[[step]]
+name = "Run the second half of the Python tests under tests/ and ops/bundle/tests/, which may read the fixture database"
+run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/python-2", "--numprocesses", "8", "--dist", "worksteal", "--shard=2/2", "tests", "ops/bundle/tests"]
+lane = "python-2"
 
 # The wizard tests take about 60 seconds in one process, so six pytest-xdist workers share them.
 # Most of that time is in 16 tests that run the whole wizard, and they sit together at the top of
