@@ -3102,7 +3102,7 @@ It worked if:
 
 Record both exit codes and the commit.
 
-## Ticket 47, step 3 of 3: /present on the deployed App, and How Strata works has no link to it (criteria 1 and 5, live)
+## Ticket 47, step 3 of 3: /present on the deployed App, and How Strata works has no link to it (criteria 1 and 5, live; since ticket 97, the address opens Data readiness)
 
 Parked with step 1, after merge commit bf9c7214. Run it after step 2's commit, on an App deployed from a snapshot of that commit or later. One App deploy serves this block and every earlier block that names one. Deploy with `--keep-secrets` (ticket 70, in the header), after `npm ci --prefix web` in the snapshot:
 
@@ -3113,7 +3113,7 @@ Then, in a browser:
 1. Open `/present/1` on the App's address, which the deploy's last line prints, in a window at least 1008 by 644 px. Press the right arrow through the "Three strata" slides and watch the slide and the address. Then press End.
 2. Open `/present/8`, `/present/9` and `/present/10`, the "Strata at work" demo slides, and click each one's blue button.
 3. Open `/present/16`.
-4. Open `/data/how-strata-works` on the same address. In the DevTools console, run `document.querySelectorAll('a[href*="/present"]').length`.
+4. Open `/data/how-strata-works` on the same address. In the DevTools console, run `document.querySelectorAll('a[href*="/present"]').length`. The address changes to `/data` and Data readiness shows (ticket 97).
 
 It worked if:
 
@@ -3121,7 +3121,7 @@ It worked if:
 - A press brings in one point or one figure step on the slide, and after a slide's last step the next press moves to the next slide and the address follows it. End reaches the last slide, "Thank you". Every slide shows the World Bank logo in its header and the DESIGN.md section 8 footer.
 - Each demo button opens its screen in a new tab and leaves the deck where it was: the plan check of P156634's plan of October 9, 2026, the package workspace with the rural roads sentence, and P130164's project page.
 - `/present/16`'s title reads "No dataset publishes contract awards for fiscal 2017 to 2019". Until the workspace pull measures the award rows, its grey note says the slide fills in once the job counts them.
-- The console prints 0, and How Strata works shows its figures with their captions.
+- The console prints 0, and the address reads `/data` with Data readiness on screen.
 
 Record the deploy's exit code and last line, any slide that did not move or draw, and the console count.
 
@@ -3789,7 +3789,7 @@ It worked if:
 - On `/present/1`, each press brings in one point or one figure step, the address follows the slide, and End reaches "Thank you". Every slide shows the World Bank logo in its header and the DESIGN.md section 8 footer.
 - The blue buttons on `/present/8`, `/present/9` and `/present/10` each open a new tab: the plan check of P156634's plan of October 9, 2026, the package workspace with the rural roads sentence, and P130164's project page.
 - `/present/16`'s title reads "No dataset publishes contract awards for fiscal 2017 to 2019". Until ticket 47's steps 1 and 2 measure the award rows, its grey note says the slide fills in once the job counts them.
-- On `/data/how-strata-works`, `document.querySelectorAll('a[href*="/present"]').length` prints 0, and the page shows its figures with their captions.
+- On `/data/how-strata-works`, `document.querySelectorAll('a[href*="/present"]').length` prints 0, and the address reads `/data` with Data readiness on screen.
 
 A deploy from this commit or a later one also serves ticket 109's step 2, if it has not run yet. The measured slides with the workspace's numbers wait on ticket 47's steps 1 and 2 above. They are proven when `uv run python -m strata.proposal deck` writes a `data.json` with measured results, and the commit's gate passes `web/tests/deck.spec.ts`'s number check over it. Record the deploy's exit code, last line and deployment id, any slide that did not move or draw, and the console count here under ticket 106.
 
@@ -4139,3 +4139,21 @@ It worked if:
 - On the App's Home, hovering 1.23 in the first Worth knowing line shows "The plan row's Estimated Amount (US$), 1,230,000.00, in millions.", its From line and "Select to see the plan row." The verifier read the offline wording as "The plan row's Estimated Amount (US$) is 1,230,000.00. This line gives it in millions."; either wording passes if it names 1,230,000.00 as the plan row's own value. That value appears only when the workspace's plan rows hold KE-NWWDA-541055-CW-RFB's row in the plan of October 9, 2026 (document 40132287). If Home's first line names another package, check that its tooltip gives that plan row's own Estimated Amount (US$) to the cent.
 
 Record the exit code, the App's address and the tooltip's three lines here under ticket 96. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
+
+## Ticket 97, step 1 of 1: redeploy the App, so a refusal says why and /data/how-strata-works opens Data readiness
+
+Parked on October 28, 2026 with ticket 97, which merged into build/strata as 6ed3479b (branch `strata/97-how-strata-works-leaves-data-each-refusal-gives-its` at f5314c7b). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this one from a snapshot that includes this merge (6ed3479b, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the deploy. One deploy from a commit at or after 6ed3479b also serves ticket 96's step 1, if it has not run yet.
+
+What ticket 97 changes on the App: How Strata works is no longer a page, and `/data/how-strata-works` opens Data readiness through a replace. A refusal reads its lead, what I can do instead and its reason, and "See everything I turn down" opens the window "What I turn down". Only the web app changed, so the bundle needs no deploy. Since this merge, ticket 47's step 3 and ticket 106's step 1 above expect Data readiness at the old address, not the page's figures.
+
+The builder's step, in the builder's words:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- It exits 0 with the running line and prints the App's address.
+- Opening `<App URL>/data/how-strata-works` lands on `<App URL>/data`, titled "Data readiness | Strata".
+- A refused question, for example "Which suppliers did the best work on P156634? Rank them for me.", shows its reason sentence and a "See everything I turn down" button that opens "What I turn down" with 10 entries. The refusal needs a connected agent; if the App says there is no agent, record that and check the address alone.
+
+Record the exit code, the App's address, the landing address and title, and the window's entry count here under ticket 97. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.

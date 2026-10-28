@@ -1777,8 +1777,9 @@ const CHECK_SHOTS: Shot[] = [
   answerShot("refusal--wrong-edition", "ask-refuses-wrong-edition.sse", { act: askInBox(REFUSED.wrong_edition) }),
   answerShot("refusal--private-uploads", "ask-refuses-private-uploads.sse", { act: askInBox(REFUSED.private_uploads) }, "/"),
   answerShot("refusal--partial", "ask-refuses-part-supplier-scores.sse", { act: askInBox(PARTIAL) }),
-  answerShot("refusal--focus-link", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), focus("[data-answer-panel] [data-answer=refused] a")) }, "/"),
-  answerShot("refusal--how-strata-works", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), click("[data-answer-panel] [data-answer=refused] a")) }, "/"),
+  // Ticket 97: "See everything I turn down" under the refusal, focused, and the refusal window it opens.
+  answerShot("refusal--focus-link", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), focus("[data-answer-panel] [data-answer=refused] [data-refusal-all]")) }, "/"),
+  answerShot("refusal--why", "ask-refuses-supplier-scores.sse", { full: false, act: then(askInBox(REFUSED.supplier_scores), click("[data-answer-panel] [data-answer=refused] [data-refusal-all]")) }, "/"),
 ];
 
 const pages: Shot[] = Object.keys(galleryCopy.pages).map((slug) => ({ name: slug, path: `/gallery/${slug}` }));
@@ -2035,8 +2036,9 @@ export const SHOTS: Shot[] = [
   app("app--hover-empty-link", "/", {}, { act: hover("[data-empty-state] a") }),
   app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
 
-  // The Data tab (ticket 16): every state of Data readiness, Sources and licenses and How Strata
-  // works, and its focus and hover states. The loading states are the gallery's readiness page.
+  // The Data tab (ticket 16): every state of Data readiness and Sources and licenses, and its focus
+  // and hover states. The loading states are the gallery's readiness page. How Strata works left the
+  // tab in ticket 97.
   data("readiness", "/data"),
   data("filtered", FILTERED, { recorded: "data-readiness-filtered.json" }),
   data("filtered-plan-check", "/data?sources=documents,projects&from=check_plan", { recorded: "data-readiness-plan-check.json" }),
@@ -2050,7 +2052,6 @@ export const SHOTS: Shot[] = [
   data("error", "/data", { status: 502, recorded: "data-readiness-error.json" }),
   data("sources", "/data/sources"),
   data("sources-empty", "/data/sources", undefined, {}, { body: '{"datasets":[],"collections":[],"readiness_rows":0,"known_gaps":0,"kinds":0,"fixes":0}' }),
-  data("how", "/data/how-strata-works"),
   data("focus-subtab", "/data", undefined, { act: focus("[aria-label='Data pages'] a[href='/data/sources']") }),
   data("hover-subtab", "/data", undefined, { widths: WIDE, act: hover("[aria-label='Data pages'] a[href='/data/sources']") }),
   data("focus-show-all", FILTERED, { recorded: "data-readiness-filtered.json" }, { act: focus("main [data-alert=info] a") }),

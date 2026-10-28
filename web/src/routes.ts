@@ -28,6 +28,9 @@ export type Match = {
   linkHref?: string;
   // The address to show instead, such as /projects/P130164 for /projects/p130164.
   canonical?: string;
+  // The address named a page that is gone (RETIRED_DATA_PAGES below), so the section its #fragment named is gone
+  // too: the address shown instead keeps the query and drops the fragment.
+  retired?: boolean;
   // The page a set of tabs shares, such as a project's Summary, Procurement and Documents: the app keeps
   // that page in place when you move between its tabs, so its header and tab row stay where they are.
   frame?: string;
@@ -64,10 +67,12 @@ export function isDay(text: string): boolean {
 }
 
 // The Data tab's sub-pages under /data (the 16 design brief, section 2): Data readiness is /data.
-export const DATA_PAGES = { dataSources: "sources", dataHow: "how-strata-works" } as const;
-export const DATA_HREF = { data: "/data", dataSources: "/data/sources", dataHow: "/data/how-strata-works" } as const;
-// How Strata works' "What I don't do" (ticket 24), where the link under every refusal goes.
-export const WHAT_I_DONT_DO = { id: "what-i-dont-do", href: `${DATA_HREF.dataHow}#what-i-dont-do` } as const;
+export const DATA_PAGES = { dataSources: "sources" } as const;
+export const DATA_HREF = { data: "/data", dataSources: "/data/sources" } as const;
+// Addresses under /data that were pages once, and the page each opens now, through a replace, so an old link lands
+// somewhere true and Back never returns to it. Ticket 97: How Strata works left Data, because the deck at /present
+// shows its figures and the refusal window under an answer lists what I turn down.
+const RETIRED_DATA_PAGES: Readonly<Record<string, string>> = { "how-strata-works": DATA_HREF.data };
 
 // Where a coverage line links (DESIGN.md section 5): Data readiness, showing only the sources behind
 // the answer, by their source registry keys, and the tool that wrote the line, such as
@@ -142,7 +147,9 @@ export function matchRoute(pathname: string): Match {
   if (first === "drafts" && parts.length === 2) return page("draft", "drafts", { id: second });
   if (first === "data" && parts.length === 1) return page("data", "data");
   if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataSources) return page("dataSources", "data");
-  if (first === "data" && parts.length === 2 && second === DATA_PAGES.dataHow) return page("dataHow", "data");
+  if (first === "data" && parts.length === 2 && Object.hasOwn(RETIRED_DATA_PAGES, second)) {
+    return { ...page("data", "data"), canonical: RETIRED_DATA_PAGES[second], retired: true };
+  }
   if (first !== "projects") return page("notFound");
   if (parts.length === 1) return page("projects", "projects");
   // Ticket 37: Following, before a project's address, so "following" is never read as a malformed project ID.

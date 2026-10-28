@@ -263,9 +263,10 @@ export function App() {
     };
   }, []);
 
-  // A lowercase p in a project ID: the address shows the uppercase form, in place.
+  // A lowercase p in a project ID: the address shows the uppercase form, in place. The address of a page that is gone,
+  // such as /data/how-strata-works (ticket 97), shows the page it opens now, without the old page's #fragment.
   useEffect(() => {
-    if (match.canonical) navigate(match.canonical + window.location.search + window.location.hash, { replace: true });
+    if (match.canonical) navigate(match.canonical + window.location.search + (match.retired ? "" : window.location.hash), { replace: true });
   }, [match.canonical]);
 
   // A page with sub-pages, such as the Data tab's, names the sub-page in the browser tab.
@@ -286,8 +287,8 @@ export function App() {
   // A new page brings its scope chip back. Opening or closing the evidence drawer changes only
   // ?evidence=, which is not a route change (routeOf), so it leaves focus where the drawer put it;
   // a change to any other part of the address, such as ?asof=, is one. An address that names a
-  // section of the page, such as How Strata works' #what-i-dont-do from the link under a refusal
-  // (ticket 24), scrolls to that section and focuses its heading instead, on arrival or on load.
+  // section of the page by its #fragment scrolls to that section and focuses its heading instead,
+  // on arrival or on load.
   const route = routeOf(here);
   // The section of the page the address names, by the heading that takes focus.
   const namedSection = () => {
