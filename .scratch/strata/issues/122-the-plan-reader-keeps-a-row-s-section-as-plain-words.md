@@ -28,3 +28,4 @@ Read first: `src/strata/lakehouse/plans.py` (the rows it writes, around line 700
   - Decisions parked for the user: none. The review and the verify list none.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - Unblocks nothing in the tracker: no ticket lists 122 under Blocked by. The demo package's tracker on the App waits for the two parked steps.
+- October 28, 2026, orchestrator (09:07 PDT): steps 1 and 2 ran (the catch-up block "Ticket 122, steps 1 and 2 ran"): the bundle deployed, the rewrite did 13 projects and stopped at P156634 on the inline limit (ticket 123), the 144 tagged sections were cleaned by the reader's rule by hand, and the demo package's steps route answers family goods with six steps.
