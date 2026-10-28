@@ -11,6 +11,10 @@
 #   benchmark     the id of its question in evals/benchmark.yaml. Changing a tool's contract means
 #                 updating that question in the same change (CLAUDE.md rule 4).
 #   sources       the source registry's keys (config/sources.toml) whose rows it reads
+#   max_output_chars   optional: the longest of its results the agent gets whole, in characters of JSON, in place of
+#                 config/thresholds.toml's agent.max_tool_output_chars. A longer result goes to the agent with its
+#                 fields that hold one value, each list's first entries and a note, truncated, on what was left out
+#                 (strata.agent.loop.call_output, ticket 117). The screens and the verifier still get the whole result.
 #
 # [[tools.<name>.parameters]], one table per parameter: name, type (string, date, integer, number
 # or boolean), required, and a description for the agent. key = true marks an optional parameter that
@@ -1068,6 +1072,14 @@ or a bidder failed."""
 adapter = "strata.tools.rebidding_risk:rebidding_risk"
 benchmark = "rebidding-risk-ke-nwwda-541055"
 sources = ["notices", "awards", "documents"]
+# Its own cap (ticket 117): the agent gets a result of up to this many characters of JSON whole, and a longer one as
+# its counts, groups, model and summary whole, with each list cut to its first entries and a field named truncated that
+# says how many each list left out. On October 28, 2026 at 03:01 UTC this tool, asked with every criterion open, sent
+# Foundry 20,831,467 characters, and the answer ended with agent_unavailable. Measured again at 03:20 UTC on the paid
+# workspace, that call gave the same 20,831,467 (975 rows, and a coverage line of 10,050,450 characters that named each
+# package it could not use, which the summary copies), against 52,333 on the fixture. The showcase call, for
+# KE-NWWDA-541055-CW-RFB, measured 80,542 there and 6,920 on the fixture, so it still goes whole.
+max_output_chars = 200000
 
 [[tools.rebidding_risk.parameters]]
 name = "step_reference"

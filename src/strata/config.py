@@ -1162,6 +1162,9 @@ class Tool:
     parameters: tuple[ToolParameter, ...]
     result: ToolResult
     readiness: ToolReadiness | None = None
+    # The longest of its results the agent gets whole, in characters of JSON, in place of the thresholds file's
+    # agent.max_tool_output_chars; a longer one goes trimmed (strata.agent.loop.call_output, ticket 117). None: that one.
+    max_output_chars: int | None = None
 
     def parameter(self, name: str) -> ToolParameter:
         found = [parameter for parameter in self.parameters if parameter.name == name]
@@ -1180,13 +1183,18 @@ def load_tools(path: Path = CONFIG_DIR / "tools.toml") -> dict[str, Tool]:
             raise ConfigError(f"In {path.name}, the tool name {name!r} must be lower case letters, digits and _.")
         entry = _Entry(path, f"tools.{name}", table)
         parameters, result = _tool_parameters(path, name, table), _tool_result(path, name, table)
-        entry.only({"description", "adapter", "benchmark", "sources", "parameters", "result", "readiness"})
+        entry.only({"description", "adapter", "benchmark", "sources", "parameters", "result", "readiness",
+                    "max_output_chars"})
         adapter = entry.text("adapter")
         if not ADAPTER.fullmatch(adapter):
             entry._fail("adapter", f"must name a function as module:function, such as strata.tools.{name}:{name}")
+        longest = entry.integer("max_output_chars", required=False)
+        if longest is not None and longest < 1:
+            entry._fail("max_output_chars", "must be a whole number of characters above 0")
         tools[name] = Tool(name=name, description=entry.text("description"), adapter=adapter,
                            benchmark=entry.text("benchmark"), sources=entry.texts("sources"),
-                           parameters=parameters, result=result, readiness=_tool_readiness(path, name, table))
+                           parameters=parameters, result=result, readiness=_tool_readiness(path, name, table),
+                           max_output_chars=longest)
     return tools
 
 
