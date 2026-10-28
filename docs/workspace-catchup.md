@@ -4013,3 +4013,34 @@ It worked if each run's smoke question passes every check with no judge_unavaila
 ## Ticket 115, step 1 of 1 ran: the tracker shows for the demo package on the App
 
 **Ran on October 28, 2026 (orchestrator), 15:08 UTC.** With the App on 4484310a and the plan rows cleaned (the block above), the steps route answers `state` and `late_days` on every row of `step_dates.steps` (six rows), so `signed.sql` ran on the SQL warehouse, and the package page's "Where the steps stand" has its data: Contract signed done June 22, 2026. Before the clean (11:06 UTC) the same route answered `steps: []` with `family_reason` no_family, which is how ticket 122 was found.
+
+
+## Ticket 120, step 1 of 2: add the financier column to the two loan tables, before the bundle deploy
+
+Parked on October 28, 2026 with ticket 120, which merged into build/strata as f72fb93f (branch `strata/120-a-project-record-s-grants-trust-funds-and-suffixed-loans-are-kept` at 413f2baa). Every key is set, but mergers run no workspace step: the orchestrator runs this step and the next one today, in this order, from a snapshot that includes this merge (f72fb93f, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). The steps below are the builder's, in the builder's words and order.
+
+Run it on the paid workspace's SQL warehouse before the bundle deploy from the commit that merges ticket 120, and before any bronze_to_gold run of that code. CREATE TABLE IF NOT EXISTS adds no column to a table that exists, and silver's insert and gold's MERGE both name the new column, so without this step bronze_to_gold fails on strata.silver.project_loans.
+
+    ALTER TABLE strata.silver.project_loans ADD COLUMNS (financier STRING)
+    ALTER TABLE strata.gold.project_loan ADD COLUMNS (financier STRING)
+
+It worked if both statements end SUCCEEDED and DESCRIBE TABLE on each table lists financier STRING last (the repo's definitions put it last too, because gold compares the query's columns with the table's in order). If one says the column already exists, go on.
+
+The merger's note: run this step and step 2's deploy back to back, outside the nightly window. After the ALTER, a `bronze_to_gold` on the code deployed before this merge fails as well, at gold's sync of `strata.gold.project_loan`: `src/strata/lakehouse/gold/__init__.py`'s `_merge` compares the old four-column query with the five-column table through `SELECT * ... EXCEPT SELECT * FROM strata.gold.project_loan`.
+
+## Ticket 120, step 2 of 2: deploy the bundle, read every projects page again, and find 0 missing pairs (criterion 3, live)
+
+After step 1, from a snapshot of the merge commit, with --env-file pointing at the main checkout's .env:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    databricks jobs run-now --json '{"job_id": 200833746315993, "only": ["bronze_to_gold"]}' -p strata
+
+(or let the next scheduled night run it). The projects transform's VERSION is now 2, so this bronze_to_gold reads every projects page bronze holds once more. A pass that runs out of time leaves pages for the next run. Then, on the SQL warehouse:
+
+    SELECT count(DISTINCT page_hash) AS unread FROM strata.bronze.api_pages WHERE source = 'projects' AND page_hash NOT IN (SELECT page_hash FROM strata.ops.silver_pages WHERE source = 'projects' AND version = 2)
+    WITH named AS (SELECT DISTINCT project_id, loan.financier_loan AS financier_loan FROM strata.bronze.current_pages AS b LATERAL VIEW explode(from_json(b.body, 'struct<projects:map<string,struct<loan_transactions:array<struct<financier_loan:string>>>>>').projects) p AS project_id, record LATERAL VIEW explode(record.loan_transactions) t AS loan WHERE b.source = 'projects' AND loan.financier_loan IS NOT NULL) SELECT count(*) AS pairs, count_if(l.project_id IS NULL) AS missing FROM named AS n LEFT JOIN (SELECT DISTINCT project_id, loan_number_as_written FROM strata.silver.project_loans) AS l ON l.project_id = n.project_id AND l.loan_number_as_written = n.financier_loan
+    SELECT financier, count(*) AS numbers, count_if(loan_number LIKE '%-%') AS kept_as_written FROM strata.gold.project_loan GROUP BY financier ORDER BY numbers DESC
+
+It worked if unread is 0, the comparison returns missing 0 (pairs about 14,686, as the orchestrator's own query found on October 28), and gold's financiers include IDA, IBRD, TF and COFN, with IDA's kept_as_written counting its lettered grants (954 H grants among them). If unread is above 0, run bronze_to_gold again and repeat the queries. Record the counts, the run id and the time here under ticket 120.
+
+The merger's notes, from the verify notes (`.notes/120-verify.md`, findings 2 and 3): if a few pairs are missing, look first for a `financier_loan` of only spaces, which is named but gets no row. And after the run, count the notices whose `loan_number` changed between the run before and after, so a real loss shows: a suffixed loan (IBRD-2075S, IDA-60300A) is now kept as written, so a notice that writes its bare digits no longer finds it.
