@@ -495,7 +495,7 @@ function Unmeasured({ result }: { result: ComparablesResult }) {
   );
 }
 
-function Coverage({ result, check }: { result: ComparablesResult; check?: NumCheck }) {
+function Coverage({ result, check, linked = true }: { result: ComparablesResult; check?: NumCheck; linked?: boolean }) {
   const { coverage } = result;
   const gaps = gapsOf(result, check);
   return (
@@ -512,8 +512,22 @@ function Coverage({ result, check }: { result: ComparablesResult; check?: NumChe
           </>
         ) : undefined
       }
-      href={readinessHref(result)}
+      href={linked ? readinessHref(result) : undefined}
     />
+  );
+}
+
+// Ticket 116: the coverage line and the source line the section prints under its chart, for a slide that draws a
+// recorded answer with RangeFigure. The slide stands in for the app when the app is down, so the coverage line has no
+// link into it.
+export function RangeFigureLines({ result }: { result: ComparablesResult }) {
+  return (
+    <>
+      <Coverage result={result} check={EXPLAIN_COVERAGE} linked={false} />
+      <Source>
+        <SourceLine result={result} />
+      </Source>
+    </>
   );
 }
 

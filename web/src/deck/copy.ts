@@ -89,6 +89,9 @@ export const deckCopy = {
     copy: "Copy the question",
     copied: "Copied the question",
     copyFailed: "Select the question and copy it",
+    // The planning demo's recorded answer, for when the App is down (ticket 116).
+    showRecorded: "Show the recorded answer",
+    hideRecorded: "Hide the recorded answer",
   },
 
   // A number's tooltip and its window (the 46 brief, section 9.2; the 16 brief, section 6): what it counts, its
@@ -97,8 +100,6 @@ export const deckCopy = {
     ratio: (n: string, d: string, noun: string, kind: string, date: string) => `${n} of ${d} ${noun}. ${kind}, measured ${date}.`,
     count: (n: string, noun: string, kind: string, date: string) => `${n} ${noun}. ${kind}, measured ${date}.`,
     setting: (name: string, where: string) => `${name}. Set in ${where}.`,
-    tool: (step: string, date: string) => `Counted from the comparable packages for ${step}, run ${date}.`,
-    estimate: (step: string, date: string) => `From the time estimate for ${step}, run ${date}.`,
     rubric: "Points the assessment brief gives this dimension, in its section 5.",
     definition: (kind: string, table: string) => `${kind}, read from ${table} in the measures snapshot the proposal cites.`,
     settingDefinition: (kind: string) => `${kind}: a value Strata is set to, read from the file that sets it.`,
@@ -240,6 +241,12 @@ export const deckCopy = {
         "Press the button. It fills the box with a rural roads package in Kenya. Show the dots, the hollow ones " +
         "still open, and the plan line. Drag the plan line once, and the count changes with it. Then the evidence " +
         "behind an answer.",
+      // The recorded answer (ticket 116): the comparable packages Strata found for the demo plan's package, recorded
+      // on the workspace. This line goes first under its chart, before the package workspace's own lines.
+      recorded: "Recorded on {date}, for {step}, a package in the Procurement Plan Strata checked.",
+      notesRecorded:
+        "If the App is down, press Show the recorded answer. It shows the comparable packages for {step}, the " +
+        "package from the plan check, as Strata recorded them on {date}. The next press moves on.",
     },
     demoAnswer: {
       title: "Opening the paragraph behind an answer about rebidding",

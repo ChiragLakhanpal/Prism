@@ -16,6 +16,7 @@ import { measured, type DeckData, type DeckResult } from "./data";
 import { Demo, NewTabLink, NotMeasured, Phases, Points, Step, Tiles } from "./layouts";
 import { NoteNum, ResultNum, RubricPoints, SettingWord } from "./nums";
 import { type, type Mode } from "./ramp";
+import { recordingOf, type Recording } from "./Recorded";
 import type { Theme } from "./Frame";
 import type { Part, TopicKey } from "./talk";
 
@@ -45,6 +46,8 @@ export type Slide = {
   hairlineLabel?: string;
   // A chart drawn from the snapshot, with its table twin and the keys of the numbers it draws.
   chart?: { drawing: (mode: Mode, labelledById: string) => ReactNode; table: ReactNode; source: string };
+  // A demo's recorded answer, which a press on the slide swaps in on the canvas (ticket 116; Recorded.tsx).
+  recorded?: Recording;
   notes: ReactNode;
 };
 
@@ -88,6 +91,8 @@ export function buildSlides(data: DeckData): Slide[] {
   const showcase = data.showcase.project_id;
   const planDate = demo.plan_date ? day(demo.plan_date) : "";
   const links = demo.links ?? {};
+  // The package demo's backup, the comparable packages recorded for the demo plan's package (ticket 116).
+  const recording = recordingOf(demo.comparables, demo.step_reference);
 
   // A figure slide: the drawing's steps, then `extra` items of the slide's own.
   const figure = (id: FigureId, extra = 0, wide = true) => {
@@ -227,13 +232,22 @@ export function buildSlides(data: DeckData): Slide[] {
           box={demo.sentence ?? ""}
           action={s.demoPackage.action}
           href={links.planPackage ?? "/packages"}
+          recorded={recording}
           lines={s.demoPackage.lines}
           at={at}
           mode={mode}
         />
       ),
+      recorded: recording,
       source: { lead: deckCopy.noteLead, text: s.demoPackage.note },
-      notes: s.demoPackage.notes,
+      notes: recording ? (
+        <>
+          {s.demoPackage.notes}{" "}
+          <Fill template={s.demoPackage.notesRecorded} slots={{ step: recording.step, date: day(recording.result.as_of) }} />
+        </>
+      ) : (
+        s.demoPackage.notes
+      ),
     },
     {
       id: "demo-answer",

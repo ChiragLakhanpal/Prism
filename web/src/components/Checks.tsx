@@ -147,8 +147,8 @@ export function CoverageLine({
   noun: string;
   // The sentence that says what the rest lacked, with its own numbers.
   gap?: ReactNode;
-  // Data readiness, filtered to the sources behind the line.
-  href: string;
+  // Data readiness, filtered to the sources behind the line. A slide that stands in for the app has none (ticket 116).
+  href?: string;
   // What the counts count, for a reader who checks them.
   check?: NumCheck;
 }) {
@@ -162,8 +162,13 @@ export function CoverageLine({
         </>
       ) : (
         copy.coverage.end
-      )}{" "}
-      <TextLink href={href}>{copy.coverage.link}</TextLink>
+      )}
+      {href && (
+        <>
+          {" "}
+          <TextLink href={href}>{copy.coverage.link}</TextLink>
+        </>
+      )}
     </p>
   );
 }
