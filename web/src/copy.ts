@@ -551,6 +551,9 @@ export const copy = {
     reference: "the STEP reference",
     projectId: "the project ID",
     source: "the source",
+    // The evidence drawer's key copies the source as one line: its heading and its meta line's parts, joined with
+    // this in place of the middle dots.
+    sourceJoin: ", ",
   },
   stamp: {
     loading: "Reading the data date",

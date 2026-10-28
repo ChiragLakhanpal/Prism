@@ -45,6 +45,7 @@ export function Tooltip({
   width = "max-w-(--tooltip-width)",
   quiet = false,
   side = "bottom",
+  pressKeepsOpen = false,
 }: {
   // One element that can take focus, such as a link or a button.
   trigger: ReactNode;
@@ -54,9 +55,15 @@ export function Tooltip({
   quiet?: boolean;
   // Below the trigger, or above it where text under it must stay in view, as under a title's count (ticket 23).
   side?: "top" | "bottom";
+  // A press on the trigger keeps the tooltip open, as the copy key's "Copied" follows its press (ticket 112). Otherwise
+  // a press anywhere closes it.
+  pressKeepsOpen?: boolean;
 }) {
   const [shown, setShown] = useState(false);
   const id = useId();
+  // The last press on the trigger. Radix reports a press outside the card when the click ends, and by then the press's
+  // target may be gone, as the copy key's icon is once it turns into a check, so the press itself is compared.
+  const pressed = useRef<Event | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const hide = useCallback(() => {
@@ -79,6 +86,9 @@ export function Tooltip({
     <RadixPopover.Root open={shown} onOpenChange={(next) => (next ? show() : hide())}>
       <RadixPopover.Anchor
         asChild
+        onPointerDown={(event) => {
+          pressed.current = event.nativeEvent;
+        }}
         aria-describedby={shown ? id : undefined}
         // Focus the app gives back, as when the evidence drawer closes (data-returning, set by
         // web/src/App.tsx), returns the reader to the answer without covering it, and so does the
@@ -111,6 +121,9 @@ export function Tooltip({
           // Radix reads the focus that opened the tooltip as focus outside it, and would close it
           // at once when Tab moves onto its trigger. The trigger's own blur closes it instead.
           onFocusOutside={(event) => event.preventDefault()}
+          onPointerDownOutside={(event) => {
+            if (pressKeepsOpen && event.detail.originalEvent === pressed.current) event.preventDefault();
+          }}
           onPointerEnter={() => clearTimeout(timer.current)}
           onPointerLeave={() => after(hide)}
           className={cx(POPOVER, "px-3 py-2 text-small", width)}

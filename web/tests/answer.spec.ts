@@ -627,6 +627,8 @@ for (const [width, height] of [
     await panel(page).locator("[data-sentence-text='3'] [data-citation='3']").click();
     await expect(drawer(page).locator("[data-passage] mark")).toBeInViewport();
 
+    // From the heading: the copy key (ticket 112), the close, then the first source tab.
+    await page.keyboard.press("Tab");
     await page.keyboard.press("Tab");
     await page.keyboard.press("Tab");
     const tab = drawer(page).getByRole("tab", { name: "ISR, Project Development Objective Indicators" });

@@ -7,6 +7,7 @@ import { copy } from "../copy";
 import type { PackageFacts } from "../lib/api";
 import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
+import { CopyKey } from "./CopyKey";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { planCheckHref } from "./PastRange";
@@ -24,6 +25,7 @@ export function PackageHeader({
   level = 1,
   sticky = true,
   action,
+  copyReference,
 }: {
   title: ReactNode;
   // The STEP reference under the title, or null when the title is the reference itself.
@@ -34,6 +36,8 @@ export function PackageHeader({
   sticky?: boolean;
   // Ticket 36: "Suggest {n} PPSD risk rows" and its caption, at the header's right from 768 px.
   action?: ReactNode;
+  // Ticket 112: the STEP reference the copy key after it copies, once the package has loaded.
+  copyReference?: string;
 }) {
   const Heading = level === 1 ? "h1" : "h2";
   return (
@@ -43,7 +47,13 @@ export function PackageHeader({
           <Heading tabIndex={-1} className="text-h1 text-pretty wrap-anywhere text-ink-heading focus:outline-none">
             {title}
           </Heading>
-          {reference !== null && <p className="mt-1 text-small wrap-anywhere text-ink-muted">{reference}</p>}
+          {reference !== null && (
+            <p className="mt-1 text-small wrap-anywhere text-ink-muted">
+              {reference}
+              {/* The 24 px key keeps the 20 px line's height: 2 px of it lie above the line and 2 px below. */}
+              {copyReference && <CopyKey text={copyReference} what={copy.copyKey.reference} className="-my-0.5 align-top" />}
+            </p>
+          )}
         </div>
         {action}
       </div>
