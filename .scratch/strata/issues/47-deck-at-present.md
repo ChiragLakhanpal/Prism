@@ -67,3 +67,4 @@ Read first: DESIGN.md sections 6, 8, 9 and 11; the blueprint's "Navigation and r
        - A source-level guard is needed for the states that open only inside the app.
        - How Strata works still puts the hairline kernel and the deck's copy in the 1.7 MB first bundle.
   - Ticket 49 waited on 45, 47 and 48. 45 and 48 are done, so it starts from this merge: its Status is now in-progress, with the orchestrator's dispatch comment. The P3 phase gate, which waited on 46 and 47, can run now.
+- October 27, 2026, orchestrator (19:22 PDT): step 2 ran from 050365f9's snapshot (02:07 UTC, exit 0): the demo package's comparables and estimate are recorded and the deck's data rebuilt (the catch-up block "Ticket 47, step 2 of 3 ran").
