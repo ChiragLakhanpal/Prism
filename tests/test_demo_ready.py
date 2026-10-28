@@ -20,6 +20,7 @@ import dataclasses
 import datetime as dt
 import importlib.util
 import io
+import json
 import re
 import shutil
 import sys
@@ -124,15 +125,19 @@ class FakeWorkspace:
     none; a start sets it to NOW), whose health route answers after a number of tries once it runs; the SQL
     warehouse as the fixture database or a copy; the stand-in agent; the examples' seed command, which may write
     rows; and a listing that holds the app, the strata.ops tables the workspace has, and their row counts, counted
-    by the live adapter's own code."""
+    by the live adapter's own code. An app whose deployment the platform dropped (deployed=False, ticket 109) has no
+    source, and its health route never answers until ops/app/deploy_app.py deploys it again (redeploy_app, which
+    answers with deploy_answer: the deploy's exit code and what it printed)."""
 
     def __init__(self, live_db, running=False, started=EARLIER_THIS_MORNING, source=None, health_after=1,
                  healthy=True, agent=None, seeded=(0, ""), listing_error=None, seed_writes=(), missing_tables=(),
-                 compute=None, warehouse="RUNNING", warehouse_answer=None):
+                 compute=None, warehouse="RUNNING", warehouse_answer=None, deployed=True, deploy_answer=(0, "")):
         app = command().deploy_app
+        self.folder = f"/Workspace/Users/ana.example@worldbank.org/{app.FOLDER}"
         self.apps = {"strata": {"description": app.DESCRIPTION, "running": running, "started": started,
-                                "source": source or f"/Workspace/Users/ana.example@worldbank.org/{app.FOLDER}",
-                                "url": URL}}
+                                "source": (source or self.folder) if deployed else None, "url": URL,
+                                "deployed": deployed}}
+        self.deploy_answer = deploy_answer
         self.calls: list[tuple] = []
         self.health_after, self.healthy, self.tries = health_after, healthy, 0
         self.viewer = dataclasses.replace(ANA, token="not-a-real-key")
@@ -186,9 +191,18 @@ class FakeWorkspace:
     def health(self, url):
         self.calls.append(("health", url))
         self.tries += 1
-        if not (self.healthy and self.apps["strata"]["running"] and self.tries >= self.health_after):
+        app = self.apps["strata"]
+        if not (self.healthy and app["running"] and app["deployed"] and self.tries >= self.health_after):
             raise RuntimeError("HTTP Error 502: Bad Gateway")
         return {"status": "ok"}
+
+    def redeploy_app(self, name):
+        self.calls.append(("redeploy", name))
+        code, _ = self.deploy_answer
+        if code in (0, 1):  # exit 1: the deployment was still IN_PROGRESS when the deploy's wait ended
+            self.apps[name].update(deployed=True, source=self.folder, started=NOW)
+            self.tries = 0
+        return self.deploy_answer
 
     def agent_for(self, turn):
         if self.agent is None:
@@ -352,11 +366,60 @@ def test_an_app_that_does_not_run_strata_s_code_is_never_started_or_stopped(fixt
     assert "/Workspace/Users/someone/fairshare-app" in outcome.summary and "I left it alone" in outcome.summary
 
 
-def test_when_day_one_test_6_chose_the_container_apps_copy_the_app_step_says_nothing_checks_it_yet(fixture_db):
-    outcome, _ = app_step(FakeWorkspace(fixture_db), fixture_db, reviewer_path=lambda: "gap fill")
+@pytest.mark.parametrize("choice", ["default", "gap fill"])
+def test_the_app_step_checks_the_databricks_app_whatever_day_one_test_6_chose_and_names_the_choice_in_its_sentence(
+        fixture_db, choice):
+    """Day-one test 6 was recorded as partly passed on October 27, 2026, and dayone.path_kind(6) still answers "gap
+    fill", though no ticket built a Container Apps copy. The workspace holds the Databricks App, so the step checks it
+    either way, and only its sentence names the choice (ticket 109)."""
+    outcome, said = app_step(FakeWorkspace(fixture_db), fixture_db, reviewer_path=lambda: choice)
 
-    assert outcome.state == "failed"
-    assert "Container Apps copy" in outcome.summary
+    assert outcome.state == "passed", outcome
+    assert outcome.summary.startswith("I started it, since it was stopped. It answered its health route after ")
+    named = "Day-one test 6 chose a Container Apps copy for reviewers, which no command checks, so I checked the " \
+            "Databricks App, which the workspace holds."
+    assert (named in outcome.summary) == (choice == "gap fill")
+    assert "Container Apps" not in said
+
+
+def test_a_stopped_app_whose_deployment_the_platform_dropped_is_started_and_deployed_again(fixture_db):
+    """On October 27, 2026 (11:35 and 18:48 UTC) the platform stopped the App's compute "due to workspace or account
+    status" and dropped its deployment, so a start alone runs nothing. The step starts the compute, deploys Strata
+    again with ops/app/deploy_app.py --keep-secrets, then waits for the health route (ticket 109)."""
+    workspace = FakeWorkspace(fixture_db, running=False, deployed=False, health_after=2)
+
+    outcome, said = app_step(workspace, fixture_db)
+
+    assert outcome.state == "passed", outcome
+    assert workspace.calls == [("start", "strata"), ("redeploy", "strata"), ("health", URL), ("health", URL)]
+    assert ("   The app strata's compute was stopped and it had no active deployment, so a start alone would run "
+            "nothing. I started its compute and deployed Strata again with ops/app/deploy_app.py --keep-secrets.") in said
+    assert outcome.summary.startswith("I deployed Strata again, since the platform had dropped its deployment. It "
+                                      "answered its health route after ")
+
+
+@pytest.mark.parametrize(("answer", "state", "health"), [
+    ((1, "Step 5. The deployment 01f1 is still IN_PROGRESS.\nI stop here."), "passed", True),
+    ((2, "I changed nothing, because the SQL warehouse abc123 is STOPPED."), "failed", False),
+], ids=["deployment still in progress", "deploy refused"])
+def test_a_redeploy_that_exits_with_an_error_is_said_and_only_one_that_made_a_deployment_waits_for_health(
+        fixture_db, answer, state, health):
+    """The deploy exits 1 when its deployment is still IN_PROGRESS as its wait ends, which a cold start can outlast
+    (October 27, 2026, 12:31 UTC), so the health route decides. It exits 2 when it changed nothing."""
+    workspace = FakeWorkspace(fixture_db, running=False, deployed=False, deploy_answer=answer)
+
+    outcome, said = app_step(workspace, fixture_db)
+
+    code, printed = answer
+    assert outcome.state == state, outcome
+    assert (("health", URL) in workspace.calls) == health
+    last = printed.splitlines()[-1]
+    if health:
+        assert (f"   The deploy exited {code}, and its last line said: {last} I waited for the health route anyway, "
+                "since a deployment after a cold start can outlast the deploy's own wait.") in said
+    else:
+        assert outcome.summary == (f"I started its compute, and the deploy exited {code} without deploying, saying: "
+                                   f"{last}")
 
 
 def test_a_health_route_that_answers_another_status_is_said_in_words(fixture_db):
@@ -393,6 +456,40 @@ def test_the_thresholds_file_restarts_an_app_after_12_hours_and_waits_longer_tha
 
 
 # ── 2. Genie ─────────────────────────────────────────────────────────────
+
+class InItsOwnWords:
+    """The live agent's second run of the smoke question on October 27, 2026 (ticket 109): it found ICR paragraph 54
+    and wrote the sentence in its own words, with the passage's words only in quote.text. Asked to rewrite, it sends
+    the same answer again."""
+
+    name, version = "strata-orchestrator", "9"
+    claim = {"sentence": "In P130164, 108 of 328 works contracts went through rebidding because the estimates were "
+                         "not based on market rates.", "kind": "quote",
+             "evidence_ids": ["strata.gold.passage:31525018/v1/54"], "numbers": ["108", "328"], "dates": [],
+             "quote": {"text": "108 of 328 cases had to go through rebidding",
+                       "passage_id": "strata.gold.passage:31525018/v1/54"}}
+
+    def respond(self, items, previous_response_id):
+        if previous_response_id is None:
+            return stand_in_agent.reply([{"type": "function_call", "call_id": "call-1", "name": "search_passages",
+                                          "arguments": json.dumps(QUESTIONS[DEMO.smoke_question]["arguments"])}], 1)
+        return stand_in_agent.reply(stand_in_agent.said([self.claim]), 2)
+
+
+def test_a_failed_smoke_question_prints_each_removed_sentence_with_its_quote_and_reasons(fixture_db):
+    """The codes alone did not say what went wrong on October 27, 2026: the step prints each sentence the verifier
+    removed, the words it quoted and from where, and each reason with what it is about (ticket 109)."""
+    said = []
+
+    outcome = command().smoke_step(FakeWorkspace(fixture_db, agent=InItsOwnWords()), setup(fixture_db), said.append)
+
+    assert outcome.state == "failed"
+    assert "The verifier removed one sentence (quote_not_in_sentence)." in outcome.summary
+    assert ('      Removed: "In P130164, 108 of 328 works contracts went through rebidding because the estimates were '
+            'not based on market rates." It quoted "108 of 328 cases had to go through rebidding" from '
+            'strata.gold.passage:31525018/v1/54. Reasons: quote_not_in_sentence (strata.gold.passage:31525018/v1/54), '
+            'number_not_in_records (108), number_not_in_records (328).') in said
+
 
 def test_genie_s_abstention_is_said_as_a_sentence_with_its_reason_not_as_a_dict(fixture_db):
     said = []
@@ -507,7 +604,8 @@ def read_as_the_workspace_did(fixture_db, folder: Path, misread_characters: int)
     """A copy of the fixture with the demo plan's table pages parsed again by a layout parser that misreads the
     showcase reference, as ai_parse_document did on October 26, 2026, then its plan rows written with the plan
     reader's check against the plan's text set to misread_characters, and strata.gold.package synced, as the nightly
-    job's parse_and_embed task does (ticket 78)."""
+    job's parse_and_embed task does (ticket 78). The plan reader reads every plan version, as the fixture build does
+    (ingestion.plan_versions = "all"), so the fixture's other versions stay as they were."""
     from strata.fixture import recorded as fmt
     from strata.lakehouse import gold, plans
     from strata.reader.documents import RecordedDocuments
@@ -518,7 +616,8 @@ def read_as_the_workspace_did(fixture_db, folder: Path, misread_characters: int)
                    "strata.silver.plan_versions WHERE implementing_agency = :agency AND plan_date = :plan_date)",
                    {"agency": DEMO.implementing_agency, "plan_date": DEMO.plan_date})
         plans.run(engine, RecordedDocuments(manifest), misread_layout.MisreadsTheShowcaseReference(manifest),
-                  DEMO.project_id, thresholds=with_values(ingestion={"reference_misread_characters": misread_characters}))
+                  DEMO.project_id, thresholds=with_values(ingestion={"reference_misread_characters": misread_characters,
+                                                                     "plan_versions": plans.EVERY_VERSION}))
         gold.sync(engine, "package")
     return path
 
@@ -589,6 +688,22 @@ def test_a_workspace_that_stopped_the_app_or_the_warehouse_stops_the_command_fir
     assert code == 2
     assert out.splitlines() == [said]
     assert workspace.calls == []
+
+
+def test_an_app_the_workspace_stopped_with_its_deployment_dropped_is_no_refusal_and_step_1_deploys_it_again(
+        tmp_path, fixture_db):
+    """What apps get strata showed at 12:12 UTC on October 27, 2026 on the paid workspace: the compute STOPPED "due to
+    workspace or account status" and no active deployment (docs/workspace-catchup.md). Step 1 cures that, so the
+    command does not stop first (ticket 109)."""
+    workspace = FakeWorkspace(fixture_db, running=False, deployed=False, compute=STOPPED_BY_THE_WORKSPACE)
+
+    code, out = run(workspace, write_env(tmp_path), fixture_db)
+
+    assert code == 0, out
+    assert [call for call in workspace.calls if call[0] in ("start", "stop", "redeploy")] == [
+        ("start", "strata"), ("redeploy", "strata")]
+    assert "6. What changed on the workspace.\n   The app strata runs now, and was stopped before.\n   The app strata " \
+           "was deployed again, after the platform dropped its deployment.\n" in out
 
 
 def test_a_warehouse_that_stopped_when_it_sat_idle_starts_first_and_the_command_prints_what_it_printed_before(
@@ -814,6 +929,24 @@ def test_the_live_adapter_takes_the_app_s_last_start_or_deploy_from_its_active_d
     assert last_start(app(create_time="2026-10-26T12:25:31+02:00")) == dt.datetime(2026, 10, 26, 10, 25, 31, tzinfo=dt.UTC)
     assert last_start(app()) is None
     assert last_start(SimpleNamespace(active_deployment=None)) is None
+
+
+def test_the_live_adapter_says_an_app_is_deployed_while_it_has_an_active_or_a_pending_deployment_and_redeploys_it_from_the_repo():
+    """On October 27, 2026 apps get showed no active deployment after the platform's stop, and a deploy whose wait
+    ended left its deployment IN_PROGRESS, which the Apps API holds as the pending one (ticket 109). The redeploy is
+    ops/app/deploy_app.py with --keep-secrets, from the checkout the command runs in, with the env file it was given."""
+    from types import SimpleNamespace
+
+    adapter = live_adapter()
+    deployed = adapter.deployed
+    some = SimpleNamespace(deployment_id="01f1")
+
+    assert deployed(SimpleNamespace(active_deployment=some, pending_deployment=None)) is True
+    assert deployed(SimpleNamespace(active_deployment=None, pending_deployment=some)) is True
+    assert deployed(SimpleNamespace(active_deployment=None, pending_deployment=None)) is False
+    assert adapter.redeploy_command(Path("/repo/.env")) == [
+        "uv", "run", "--script", "ops/app/deploy_app.py", "--env-file", "/repo/.env", "--keep-secrets"]
+    assert {"app", "start_app", "redeploy_app", "health"} <= set(vars(FakeWorkspace)) & set(vars(adapter.LiveDemo))
 
 
 # ── The live listing ─────────────────────────────────────────────────────

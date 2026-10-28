@@ -296,7 +296,8 @@ class FailsEveryPdf:
 
 def test_a_skipped_document_names_the_address_that_failed(fresh):
     """strata.ops.skipped_documents keeps the address the run could not fetch or read: the PDF's when the PDF
-    failed, not the text's it fetched before."""
+    failed, not the text's it fetched before. The older plans the newest supersedes are listed too, and were never
+    fetched (ticket 108)."""
     limits = load_thresholds()
     limits.values["ingestion"]["passage_documents"] = 3
     manifest = fmt.load_manifest()
@@ -306,7 +307,8 @@ def test_a_skipped_document_names_the_address_that_failed(fresh):
 
     readers.reading(fresh, found, "pdfs", passages._now)
 
-    rows = fresh.run("SELECT reader, url, reason FROM strata.ops.skipped_documents WHERE run_id = 'pdfs'").rows
+    rows = fresh.run("SELECT reader, url, reason FROM strata.ops.skipped_documents WHERE run_id = 'pdfs' "
+                     "AND outcome = 'skipped'").rows
     assert {reader for reader, url, _ in rows if url.endswith(".pdf")} == {"plans", "passages"}
     assert [(url, reason) for _, url, reason in rows if url not in reason] == []
 
@@ -353,18 +355,19 @@ class SlowParser:
 
 
 def test_the_nightly_reading_stops_between_pages_once_its_time_is_spent_and_the_tasks_after_it_run(
-        fresh, monkeypatch):
+        fresh, monkeypatch, every_plan_version):
     """parse_and_embed checks the reading time (config/thresholds.toml, ingestion.document_host_minutes) before each
     page the layout parser reads, not only before each request to the host. Once the time is spent, the reader stops
     after the page it is reading: the pages it read stay in strata.bronze.layout_pages, the document it was reading is
-    listed as unfinished, and the task ends, so the tasks after it run inside the job's window."""
+    listed as unfinished, and the task ends, so the tasks after it run inside the job's window. The plan reader reads
+    every version of P156634's plans here, and each page takes 9 minutes, so the 15 pages outlast the night."""
     from strata import config
     from strata.lakehouse import nightly
     from strata.reader import layout
 
     manifest = fmt.load_manifest()
     ticks = Ticks()
-    slow = SlowParser(RecordedLayout(manifest), ticks)
+    slow = SlowParser(RecordedLayout(manifest), ticks, minutes=9)
     monkeypatch.setitem(layout.PARSERS, config.load_layout_parser(), slow)
 
     def never(url):
@@ -381,26 +384,25 @@ def test_the_nightly_reading_stops_between_pages_once_its_time_is_spent_and_the_
 
     task("parse_and_embed")
 
-    # 60 minutes at 7 a page: the ninth page starts at minute 56, inside the time, and the tenth is never read.
-    assert len(slow.read) == minutes // PAGE_MINUTES + 1 == 9
+    # 120 minutes at 9 a page: the 14th page starts at minute 117, inside the time, and the 15th is never read.
+    assert len(slow.read) == minutes // 9 + 1 == 14
     assert column(fresh, "SELECT document_id || '/' || pdf_page FROM strata.bronze.layout_pages") == {
         f"{document_id}/{page}" for document_id, page in slow.read}
     [(status, started, finished)] = fresh.run("SELECT status, started_at, finished_at FROM strata.ops.pipeline_runs "
                                               "WHERE run_id = 'night' AND task_key = 'parse_and_embed'").rows
     assert status == "succeeded"
-    # It ended one page past the 60 minutes, at minute 63, not at minute 105 after all 15 pages: inside the job's
-    # 150 minutes (bundle/nightly.yml, timeout_seconds), with 87 minutes left for the tasks after it.
-    assert finished - started == dt.timedelta(minutes=9 * PAGE_MINUTES)
+    # It ended one page past the 120 minutes, at minute 126, not at minute 135 after all 15 pages.
+    assert finished - started == dt.timedelta(minutes=14 * 9)
     [(parsed, at_cap, document_id, pdf_page)] = fresh.run(
         "SELECT pages_parsed, stopped_at_cap, stopped_at_document_id, stopped_at_pdf_page FROM strata.ops.parse_runs "
         "WHERE run_id = 'night'").rows
-    assert (parsed, at_cap) == (9, False)
+    assert (parsed, at_cap) == (14, False)
     assert (document_id, pdf_page) not in slow.read
     [(reader, outcome, url, reason)] = fresh.run(
         "SELECT reader, outcome, url, reason FROM strata.ops.skipped_documents WHERE run_id = 'night' "
         "AND document_id = :document_id", {"document_id": document_id}).rows
     assert (reader, outcome) == ("plans", "unfinished") and url.endswith(".pdf")
-    assert f"page {pdf_page}" in reason and "60 minutes" in reason
+    assert f"page {pdf_page}" in reason and "the night's 120 minutes" in reason
     [(measure,)] = fresh.run("SELECT measure FROM strata.ops.data_readiness WHERE run_id = 'night' "
                              "AND source = 'documents' AND subject = 'all'").rows
     assert measure == "document_host_budget_spent"
@@ -426,7 +428,7 @@ class AnyPage:
 
 def test_the_passage_reader_keeps_the_documents_it_wrote_when_the_time_runs_out_inside_a_document(fresh, monkeypatch):
     """The same check inside the passage reader: P130164's two ICR Reviews have no page for the layout parser, so
-    their passages are written; its ICR sends 7 pages to the parser, and at 20 minutes a page the night's 60 minutes
+    their passages are written; its ICR sends 7 pages to the parser, and at 40 minutes a page the night's 120 minutes
     run out after the third. The ICR is listed as unfinished, its 3 pages stay in bronze, and the reading ends."""
     from strata import config
     from strata.reader import layout
@@ -436,7 +438,7 @@ def test_the_passage_reader_keeps_the_documents_it_wrote_when_the_time_runs_out_
     monkeypatch.setattr(passages, "load_thresholds", lambda: limits)
     manifest = fmt.load_manifest()
     ticks = Ticks()
-    slow = SlowParser(AnyPage(), ticks, minutes=20)
+    slow = SlowParser(AnyPage(), ticks, minutes=40)
     monkeypatch.setitem(layout.PARSERS, config.load_layout_parser(), slow)
     host = readers.document_host(lambda url: b"", None, sleep=ticks.sleep, clock=ticks)
     found = readers.Readers(RecordedDocuments(manifest), readers.live_parser(fresh, host, upload=lambda path, data: None),
@@ -452,19 +454,20 @@ def test_the_passage_reader_keeps_the_documents_it_wrote_when_the_time_runs_out_
         f"{icr}/{page}" for _, page in slow.read}
     [(reader, outcome, reason)] = fresh.run("SELECT reader, outcome, reason FROM strata.ops.skipped_documents "
                                             "WHERE run_id = 'night' AND document_id = :icr", {"icr": icr}).rows
-    assert (reader, outcome) == ("passages", "unfinished") and "60 minutes" in reason
+    assert (reader, outcome) == ("passages", "unfinished") and "the night's 120 minutes" in reason
     assert fresh.run("SELECT pages_parsed, stopped_at_cap, stopped_at_document_id FROM strata.ops.parse_runs "
                      "WHERE run_id = 'night'").rows[0] == (3, False, icr)
     assert (done.stopped.measure, done.tally.written) == ("document_host_budget_spent", 2)
 
 
 def test_the_live_run_reads_passages_first_so_plan_pages_that_outlast_the_time_still_leave_passages(
-        fresh, run_live, monkeypatch, capsys):
+        fresh, run_live, monkeypatch, capsys, every_plan_version):
     """On October 26, 2026 the plan reader spent the whole reading time on one plan's scanned pages, and the passage
     reader never started: strata.gold.passage still held no row. The live run (ops/documents/run_live.py) reads the
     slice's reports into passages first, then the Procurement Plans with the time that is left. Here P130164's three
-    documents are read first; then P156634's plan pages, at 7 minutes each, outlast the 60 minutes, and the plan the
-    reader was in is listed as unfinished. The run wrote passages, so it exits 0 and the index is synced after it."""
+    documents are read first; then the pages of every version of P156634's plans, at 7 minutes each, outlast the 120
+    minutes, and the plan the reader was in is listed as unfinished. The run wrote passages, so it exits 0 and the
+    index is synced after it."""
     from strata import config
     from strata.reader import layout
 
@@ -484,16 +487,16 @@ def test_the_live_run_reads_passages_first_so_plan_pages_that_outlast_the_time_s
     printed = capsys.readouterr().out
 
     assert code == 0
-    # P130164's two ICR Reviews and its ICR, whose 7 scanned pages took 49 of the 60 minutes, are written first.
+    # P130164's two ICR Reviews and its ICR, whose 7 scanned pages took 49 of the 120 minutes, are written first.
     icr_reviews, icr = {"34056616", "31906731"}, "31525018"  # tests/ground_truth/values.toml's showcase documents
     assert column(fresh, "SELECT DISTINCT document_id FROM strata.gold.passage") == {*icr_reviews, icr}
-    # Then the plan reader reads P156634's plan pages with the 11 minutes left, and the plan it reaches after them
-    # is listed as unfinished.
+    # Then the plan reader reads P156634's plan pages with the 71 minutes left, 11 of its 15, the last starting at
+    # minute 119, and the plan it reaches after them is listed as unfinished.
     plan_pages = [page for page in slow.read if page[0] != icr]
-    assert len(plan_pages) == 2
+    assert len(plan_pages) == 11
     [(project_id, document_id, reason)] = fresh.run(
         "SELECT project_id, document_id, reason FROM strata.ops.skipped_documents WHERE run_id = 'live' "
         "AND reader = 'plans' AND outcome = 'unfinished'").rows
-    assert project_id == "P156634" and "60 minutes" in reason
+    assert project_id == "P156634" and "the night's 120 minutes" in reason
     assert document_id not in {read for read, _ in slow.read}
-    assert "It stopped before it finished: I spent the night's 60 minutes" in printed
+    assert "It stopped before it finished: I spent the night's 120 minutes" in printed

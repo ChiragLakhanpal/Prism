@@ -5,6 +5,7 @@ The offline adapter is a Foundry project kept in memory. The live adapter, the F
 API and Azure's RAI policies, runs on the workspace with ops/agent/sync.py.
 """
 
+import json
 import re
 import shutil
 
@@ -12,8 +13,11 @@ from strata import config
 from strata.agent import definition as agent_file
 from strata.agent import sync
 from strata.agent.definition import AGENTS_FILE, agent_definition, load_agent
+from strata.agent.claims import parse_answer
 from strata.agent.foundry import LocalFoundry
+from strata.agent.verifier import verify
 from strata.config import load_models
+from strata.harness.facts import Facts
 from strata.tools import registry
 
 
@@ -101,6 +105,33 @@ def test_the_instructions_give_the_agent_design_md_s_rules_for_the_words_a_perso
     assert "in straight double quotes in the sentence, in every language" in instructions
     assert "Put no quote marks, double or single, around words you do not quote word for word." in words
     assert "of any kind" not in instructions
+
+
+def test_the_instructions_show_one_worked_quote_claim_that_passes_the_verifier_and_say_to_copy_the_quote_exactly():
+    """Ticket 109: on October 27, 2026 the live agent found the passage the smoke question needs, then wrote its sentence
+    in its own words, or capitalized the quote's first word, and the verifier removed it both times. So the
+    instructions show one worked quote claim instead of an abstract shape: the passage's text, then a claim whose
+    sentence holds the passage's words in straight double quotes and whose quote.text is those same words. The worked
+    claim must pass the verifier's checks 1 to 3 against that passage, or it teaches the agent a claim the app
+    removes."""
+    instructions = agent_definition(load_agent("orchestrator"), guardrail_id="local/strata-guardrail")[
+        "definition"]["instructions"]
+    rules = instructions.split("## Your tools", 1)[0]
+    [shown] = [line for line in rules.splitlines() if line.startswith('{"claims": [{')]
+    [passage] = [line[2:] for line in rules.splitlines() if line.startswith("> ")]
+    [claim] = json.loads(shown)["claims"]
+    evidence_id = claim["quote"]["passage_id"]
+    words = claim["quote"]["text"]
+    facts = Facts()
+    facts.record(evidence_id, {"evidence_id": evidence_id, "passage_id": evidence_id.split(":", 1)[1],
+                               "text": passage}, tool="search_passages")
+
+    assert "Copy the quote exactly as the passage writes it, starting at a word, with its own first letter." in rules
+    assert (claim["kind"], claim["evidence_ids"]) == ("quote", [evidence_id])
+    assert f'"{words}"' in claim["sentence"] and words in passage
+    verdict = verify(parse_answer(shown).claims, facts)
+    assert [sentence.reasons for sentence in verdict.sentences] == [()]
+    assert verdict.counts()["quotes"] == {"total": 1, "found": 1}
 
 
 def test_the_guardrail_puts_content_filters_and_prompt_shields_on_the_question_and_the_tool_results():

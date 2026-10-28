@@ -48,9 +48,10 @@ passage_documents = 5000
 # night, from its first request (strata.lakehouse.readers.document_host). At 3 seconds a request
 # (config/sources.toml, the documents source's pause_seconds) the first nights' backlog would outlast the job's
 # 150 minutes and cancel every task after it, so the readers stop here, write a data readiness note and go on
-# the next night. Source: the ticket 43 review (B3), which named 90 minutes as an example; 60 leaves the rest of
-# the chain the time it took on the live runs. A value for the owner to confirm.
-document_host_minutes = 60
+# the next night. Source: the ticket 43 review (B3), which named 90 minutes as an example; 60 left the rest of
+# the chain the time it took on the live runs. The user raised it to 120 on October 27, 2026 (decision 95, ticket
+# 108), once the job's window was 300 minutes and the night's run used 126 of them, so the demo plan is read sooner.
+document_host_minutes = 120
 # Of those minutes, the ones the nightly job's plan reader, which reads first, leaves for the passage reader after it
 # (strata.lakehouse.readers.reading). On the paid workspace's first night, October 27, 2026 (run 564462742591748), the
 # plan reader read P130164's plans in 12 minutes, then spent the other 48 fetching 163 of P156634's 240 Procurement
@@ -60,6 +61,17 @@ document_host_minutes = 60
 # Source: ticket 86, which splits ingestion.document_host_minutes between the readers (the choice ticket 72 parked);
 # half is a value for the owner to confirm.
 passage_reader_minutes = 30
+# Which of a project's Procurement Plans the plan reader (src/strata/lakehouse/plans.py) fetches, reads and parses:
+# "newest" reads only the plan the documents API dates newest (docdt), and lists each older plan once in
+# strata.ops.skipped_documents as superseded; "all" reads every plan the project's document list names, newest first.
+# On the paid workspace on October 27, 2026, P156634's 240 plans held 7,872 pages waiting for the layout parser, the
+# plan reader's 30 minutes ended inside a plan of May 2023, and a run that stops before every chosen plan is parsed
+# writes no plan rows, so the October 9, 2026 demo plan had none after three passes. With the newest plan only, the
+# run writes its rows as soon as its pages are parsed. The plan check compares plan versions through the saved
+# baseline (strata.ops.plan_baselines), which the newest plan feeds. The fixture build reads every recorded plan
+# (gates/build_fixture.py), so its tests keep each version. Source: the user's call of October 27, 2026 (decision
+# 95, ticket 108).
+plan_versions = "newest"
 # The bronze pages silver reads in one group (src/strata/lakehouse/silver/__init__.py, read). For each group it reads
 # the pages, checks once which of them its tables hold already, and writes each table once, so a group costs a few
 # statements where a page cost about four for each table. On the paid workspace's first nightly run, October 26,
@@ -113,6 +125,13 @@ min_confidence = 0.9
 # Source: the spec's "The agent and the answer contract" ("this repeats for at most three rounds").
 [agent]
 tool_rounds = 3
+# How many times the loop sends the agent's answer back before the stream's verifier checks it: the loop runs checks
+# 1 to 3 on the answer, and when they would remove a sentence it sends the agent one data-only message that lists
+# each such sentence with its reasons, and takes the next answer as final. The verifier then checks that answer in
+# full, as it checks every answer. 0 turns the round off. Source: ticket 109; on October 27, 2026 the live agent found
+# the passage the smoke question needs and wrote its sentence in its own words, so the verifier removed it in both
+# runs (10:18 and 10:19 UTC).
+rewrite_rounds = 1
 
 # The app (ticket 06). Every warehouse query the server runs as a viewer, the plan check's included,
 # gives up after stamp_timeout_seconds. The data-freshness stamp then shows its error state, and the

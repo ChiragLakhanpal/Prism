@@ -394,12 +394,13 @@ def pdf_of(pages: list[str]) -> bytes:
     return (out + f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n").encode("latin-1")
 
 
-def test_the_live_document_run_s_reader_reads_the_fixture_s_plans_into_the_same_pages_and_rows(run_live, tmp_path):
+def test_the_live_document_run_s_reader_reads_the_fixture_s_plans_into_the_same_pages_and_rows(run_live, tmp_path,
+                                                                                              every_plan_version):
     """A dry run of the live document run's documents source on the fixture: P156634's recorded list, plan texts and
     PDFs (each PDF's text layer written from the recorded page texts) served by a stand-in host, through the paced,
     kept fetch, give the plan reader the same versions, the same 15 Route B pages and the same STEP rows as the
-    fixture's own recorded source. The layout parser is the recorded one on both sides, since ai_parse_document needs
-    the warehouse."""
+    fixture's own recorded source. The plan reader reads every version here (ingestion.plan_versions = "all"). The
+    layout parser is the recorded one on both sides, since ai_parse_document needs the warehouse."""
     import urllib.error
 
     from strata.fixture import recorded as fmt

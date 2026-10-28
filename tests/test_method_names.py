@@ -3,7 +3,8 @@ Regulations' names, at seam 1 (ticket 42).
 
 Cameroon's Procurement Plan of October 10, 2018 (P143940) is in French. Its STEP tables write each method by
 STEP's French name, and its list of abbreviations gives the French plan template's old names (values.toml,
-plan-cm-*). The plan reader runs over the recorded plan as the fixture build runs it over the demo plan.
+plan-cm-*). The plan reader runs over the recorded plan as the fixture build runs it over the demo plan, reading
+every plan version (ingestion.plan_versions = "all"): the fixture does not record the project's newest plan.
 """
 
 import datetime as dt
@@ -30,7 +31,8 @@ def read_cameroon_plan(engine):
     return {row[0]: row[1:] for row in result.rows}
 
 
-def test_a_french_method_name_in_a_plan_is_stored_as_the_current_regulations_name_beside_the_plan_s_words():
+def test_a_french_method_name_in_a_plan_is_stored_as_the_current_regulations_name_beside_the_plan_s_words(
+        every_plan_version):
     with DuckDBEngine.open() as engine:
         found = read_cameroon_plan(engine)
 
@@ -40,7 +42,8 @@ def test_a_french_method_name_in_a_plan_is_stored_as_the_current_regulations_nam
     assert {row[0] for row in found.values()} <= set(load_method_names().current)
 
 
-def test_a_method_name_the_registry_does_not_list_is_kept_as_written_with_a_data_note(monkeypatch, tmp_path):
+def test_a_method_name_the_registry_does_not_list_is_kept_as_written_with_a_data_note(monkeypatch, tmp_path,
+                                                                                     every_plan_version):
     """Without "Demande de prix" in the registry, the plan's words stay as written, the row is not marked mapped,
     and the plan gets a Data note for each such row instead of a guess."""
     registry = (ROOT / "config" / "method_names.toml").read_text().replace(
