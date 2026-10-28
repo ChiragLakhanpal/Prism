@@ -10,9 +10,10 @@ Run it from the main checkout, before and after the bronze_to_gold run that read
     uv run --script ops/notices/contacts_left_live.py --env-file .env --check-zero
 
 It finds the notices with the contacts_left check's own condition and patterns (strata.lakehouse.quality,
-contacts.LEFT_EMAIL and LEFT_PHONE), bound as parameters as the check binds them, and writes nothing. The notices
+contacts.LEFTOVERS), bound as parameters as the check binds them, and writes nothing. The notices
 transform's VERSION is 2 since silver runs the contact removal again on each page it reads, so the first
 bronze_to_gold after the deploy reads again every notices page that ticket 75's record holds under version 1.
+Since ticket 121 every bronze_to_gold also reads again the pages of the notices this counts.
 
 It exits 0 when it counted, 1 when --check-zero was given and the check still finds a notice, and 2 when it could
 not ask. It needs DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and a token or a service principal.

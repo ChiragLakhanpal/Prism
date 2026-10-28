@@ -3,7 +3,8 @@
 Contact details are gone before a page reaches bronze (strata.lakehouse.contacts). This transform
 runs the removal again on the notice's free text, so a page bronze kept before a fix to the removal
 loses what the fix takes out, then once more on the plain text it keeps, the text the nightly check
-reads (ticket 76); it notes which notices lost some. It types each field, parses the STEP
+reads (ticket 76); it notes which notices lost some. A page whose notices the nightly check still
+flags is read again on the next run (read_again, ticket 121). It types each field, parses the STEP
 reference, maps an old method name such as ICB to the current one with the market approach it
 implies (keeping the notice's own words in their own columns), and reads three things from the
 notice's text: the loan or credit number, and for a Contract Award notice, the Contract Signature
@@ -60,6 +61,13 @@ def contacts_left(engine: Engine) -> Flagged:
     """How many notices the nightly check would flag now, and on how many pages."""
     notices, pages = engine.run(FLAGGED, quality.contacts_left_params()).rows[0]
     return Flagged(int(notices), int(pages))
+
+
+def read_again() -> tuple[str, dict[str, str]]:
+    """The notices whose pages silver reads again on the next run (strata.lakehouse.silver): those the nightly check's
+    contacts_left counts, by its own condition and patterns (ticket 121). A rule the removal's last pass gains
+    (contacts.LEFTOVERS) reaches every page bronze kept before it, and only those pages, without a new VERSION."""
+    return quality.CONTACTS_LEFT, quality.contacts_left_params()
 
 
 BREAKS = re.compile(r"<\s*(br|/p|/div|/h\d|/li|/tr)\s*/?\s*>", re.I)

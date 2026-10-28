@@ -25,12 +25,15 @@ counts what it took out:
   (Ph: 98123 45678, Contact: 254 722 123456);
 - a person's name after "Attention" and a title (ATTENTION: Mr. Francis Kombe) is replaced, with
   the label kept; a job title after Attention (Attention: Chief Executive Officer) stays;
-- last, whatever the nightly job's check would still find (LEFT_EMAIL and LEFT_PHONE below) is
-  replaced, with the label kept (Fax:: [contact removed]), so the check never finds what this leaves.
+- last, whatever the nightly job's check would still find (LEFTOVERS below: an email address, a
+  labelled phone number, a name after "Attention" and a title) is replaced, with the label kept
+  (Fax:: [contact removed]), so the check never finds what this leaves.
 
 Silver runs the same removal again on each notices page it reads (strip_again), and the last pass
 once more on the plain text it keeps (strip_left), so a fix here reaches the pages bronze already
-holds when silver reads them again (ticket 76).
+holds when silver reads them again (ticket 76). Silver reads a page again when the nightly check
+finds one of LEFTOVERS in its notices (ticket 121), so a rule added there reaches every page that
+needs it on the next run.
 
 Every other field stays as received. bid_reference_no is STEP's field and, when it holds a STEP
 reference, the join from a notice to its package. A reference such as NWWDA-WSDP-03-2019-2020
@@ -105,23 +108,64 @@ ATTENTION = re.compile(
     r"(?P<name>(?i:mr|mrs|ms|miss|dr|eng|prof)\b\.?(?:[ \t]+[A-Z][A-Za-z'’-]*\.?){1,4})")
 TRAILING = re.compile(r"[ \t()–-]*$")  # what a number's pattern takes after its last digit, kept as written
 
-# One definition of a contact detail left in a notice (CLAUDE.md rule 4; ticket 76). The nightly job's check
-# (strata.lakehouse.quality, contacts_left) counts the notices these find, and the removal's last pass (Stripper.left)
-# takes out all they find, so the check never finds what the removal leaves:
-# - an email address, also with a space before or after its "@" (name@ example.org);
-# - a number of seven digits or more, with spaces, dots, brackets or dashes between them, written after a phone label
-#   (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob, Cell, Fax, Facsimile) with up to 12 other characters
-#   but no digit between (Fax #: , Phone No. , Tel: (-), or with none, the label run into the digits (Phone0722...);
-# - such a number written after one already removed, with a comma, slash, semicolon or dash before it, and maybe the
-#   letter l typed for a 1 ([contact removed]l, 0722...).
-# They are simpler than the patterns above, so the SQL warehouse (Java's regular expressions) and DuckDB (RE2) read
-# them as Python does, and they go to the query as bound parameters, since Spark SQL mangles backslashes in a literal.
-LEFT_EMAIL = r"[A-Za-z0-9._%+-]+ ?@ ?[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,}"
-LEFT_PHONE = (r"(?i)(\b(tel|telephone|telefax|phone|cellphone|mobile|mob|cell|fax|facsimile)(\b[^0-9\n]{0,12})?"
-              r"|\[contact removed\][ \t]*l?[ \t]*[,;/-][ \t]*)\+?[0-9]([ ().-]*[0-9]){6,}")
-# The same two, as the removal reads them. ASCII, because RE2 and Java's \b and (?i) know only ASCII letters.
-CHECKED_EMAIL = re.compile(LEFT_EMAIL, re.A)
-CHECKED_PHONE = re.compile(LEFT_PHONE, re.A)
+
+
+@dataclass(frozen=True)
+class Leftover:
+    """What one of the removal's rules takes out, as the nightly check looks for it in a notice's text.
+
+    The check (strata.lakehouse.quality, contacts_left) counts the notices a leftover's pattern finds, silver reads
+    again the pages those notices came from (strata.lakehouse.silver.notices, read_again), and the removal's last
+    pass (Stripper.left) takes out all the pattern finds, so the check never finds what the removal leaves.
+
+    key      the leftover's name; the check binds its pattern as the parameter :left_<key>
+    kind     what the removal counts it under (KINDS)
+    rule     the removal's own rule (a pattern in this module) whose matches the pattern finds
+    pattern  the pattern, simpler than its rule, so that the SQL warehouse (Java's regular expressions), DuckDB (RE2)
+             and Python read it alike: no lookaround and no named group. Its first group, when it has one, is the
+             label written before the detail, which the removal keeps. The check binds it as a parameter, since
+             Spark SQL mangles the backslashes of a literal.
+    """
+
+    key: str
+    kind: str
+    rule: re.Pattern
+    pattern: str
+
+    @property
+    def parameter(self) -> str:
+        return f"left_{self.key}"
+
+
+# One definition of a contact detail left in a notice (CLAUDE.md rule 4; tickets 76 and 121): every rule of the
+# removal's last pass. A rule the removal gains goes here with its pattern, and the nightly check counts what the
+# pattern finds, silver reads those notices' pages again, and the last pass takes it out, with no other edit.
+LEFTOVERS = (
+    # An email address, also with a stray space after its "@" or inside its domain, or a comma for a dot (name@
+    # example.org, name@g mail.com, name@gmail,com), or with a space before its "@" (JDOE @ EXAMPLE.COM). Its last
+    # part has a letter, as EMAIL's domain does.
+    Leftover("email", "emails", EMAIL,
+             r"[A-Za-z0-9._%+'-]+(?:@ ?[A-Za-z0-9-]+(?: [A-Za-z0-9-]+)?(?:[.,][A-Za-z0-9-]+)*[.,][0-9-]*[A-Za-z]"
+             r"[A-Za-z0-9-]*| @ ?[A-Za-z0-9-]+(?:[.,][A-Za-z0-9-]+)*\.[A-Za-z]{2,})"),
+    # A number of seven digits or more, with spaces, dots, brackets or dashes between them, written after a phone
+    # label (Tel, Telephone, Telefax, Phone, Cellphone, Mobile, Mob, Cell, Fax, Facsimile) with up to 12 other
+    # characters but no digit between (Fax #: , Phone No. , Tel: (-, or a line break), or with none, the label run
+    # into the digits (Phone0722...); or such a number written after one already removed, with a comma, slash,
+    # semicolon or dash before it, and maybe the letter l typed for a 1 ([contact removed]l, 0722...).
+    Leftover("phone", "phones", LABELLED,
+             r"(?i)(\b(?:tel|telephone|telefax|phone|cellphone|mobile|mob|cell|fax|facsimile)(?:\b[^0-9]{0,12})?"
+             r"|\[contact removed\][ \t]*l?[ \t]*[,;/-][ \t]*)\+?[0-9](?:[ ().–-]*[0-9]){6,}"),
+    # A number of nine digits or more after Ph, M, Contact or WhatsApp and a colon or No. (Contact: 254 722 123456).
+    Leftover("short_phone", "phones", SHORT_LABELLED,
+             r"(?i)(\b(?:ph|m|contact|whats\s?app)\b\.?(?:\s*(?:no\.?|number)\s*:?|\s*:)[ \t]*)[(+]{0,2}[0-9]"
+             r"(?:[ ().–-]*[0-9]){8,}"),
+    # A person's name after "Attention" and a title (ATTENTION: Mr. Francis Kombe), the label kept.
+    Leftover("name", "names", ATTENTION,
+             r"(\b(?i:attention)\b[ \t]*:?[ \t]*)(?i:mr|mrs|ms|miss|dr|eng|prof)\b\.?"
+             r"(?:[ \t]+[A-Z][A-Za-z'’-]*\.?){1,4}"),
+)
+# The same patterns, as the removal reads them. ASCII, because RE2 and Java's \b and (?i) know only ASCII letters.
+CHECKED = tuple((leftover, re.compile(leftover.pattern, re.A)) for leftover in LEFTOVERS)
 SIGNS_BEFORE = re.compile(r"[(+][(+ \t–-]*$")  # a number's own bracket or plus, written before its first digit
 
 
@@ -213,20 +257,20 @@ class Stripper:
         return self.left(text)
 
     def left(self, text: str) -> str:
-        """The removal's last pass: every email address and labelled phone number the nightly check looks for
-        (LEFT_EMAIL, LEFT_PHONE), with the label and the words around it kept. A number taken out can leave
-        another written after it ([contact removed]l, 0722...), so it runs until it finds nothing."""
-        text = self._sub(CHECKED_EMAIL, text, "emails")
+        """The removal's last pass: everything the nightly check looks for (LEFTOVERS), rule by rule, with the label
+        and the words around it kept. A number taken out can leave another written after it ([contact removed]l,
+        0722...), so it runs until it finds nothing."""
         while True:
-            found = CHECKED_PHONE.sub(self._checked_number, text)
+            found = text
+            for leftover, pattern in CHECKED:
+                found = pattern.sub(lambda match, kind=leftover.kind: self._leftover(match, kind), found)
             if found == text:
                 return text
             text = found
 
-    def _checked_number(self, match: re.Match) -> str:
-        found = match.group(0)
-        label = SIGNS_BEFORE.sub("", found[:re.search(r"\d", found).start()])
-        self.counts["phones"] += 1
+    def _leftover(self, match: re.Match, kind: str) -> str:
+        label = SIGNS_BEFORE.sub("", match.group(1) or "") if match.re.groups else ""
+        self.counts[kind] += 1
         return label + REMOVED
 
     def _labelled(self, match: re.Match, shortest: int = 7) -> str:

@@ -1,6 +1,6 @@
 -- KPI contacts_left (config/kpis.toml): the notices in which the latest check in the dates chosen found an email
--- address or a labelled phone number that ingestion missed (ticket 43's contacts_left check, which reads
--- strata.lakehouse.contacts' own patterns), out of the rows of the notices table that check read, from the row count
+-- address, a labelled phone number or a name after "Attention" that ingestion missed (ticket 43's contacts_left
+-- check, which reads strata.lakehouse.contacts' own patterns, LEFTOVERS; ticket 121), out of the rows of the notices table that check read, from the row count
 -- check of the same try. Always one row: "None yet" before the first check.
 WITH latest AS (
   SELECT run_id, checked_at
