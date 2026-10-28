@@ -3852,3 +3852,17 @@ Parked on October 27, 2026 with ticket 117 (merge commit 4240b94a). The orchestr
 Run it twice in a row. It worked if the smoke question (search-passages-icr-rebidding) passes its checks in both runs with no agent_unavailable. This is ticket 117's criterion 4. Record both runs here under ticket 117: the time, the exit code and step 3's lines, with any "Removed:" lines word for word.
 
 Also parked from the verify notes (`.notes/117-verify.md`), criterion 1's size on the paid workspace: call rebidding_risk with no arguments on the paid workspace, read-only, and record the result's JSON length (expected 20,831,467, the builder's measure at 03:20 UTC on October 28) and the length of the copy `call_output` sends (expected 200,000 characters or fewer). The same run measures find_comparables with every criterion open (117,400 characters on the fixture; review follow-up 5). No script does this yet: it is the builder's read-only call through `strata.tools.registry.call` on the SQL warehouse, then `strata.agent.loop.call_output` at the tool's cap.
+
+## Ticket 112, step 1 of 1: redeploy the App, so the box suggests the page's questions and the copy keys show
+
+Parked on October 27, 2026 with ticket 112, which merged into build/strata as 6659d4bf (branch `strata/112-one-click-the-box-suggests-questions-for-the-page` at 4bc8fb29). Every key is set, but mergers run no workspace step: the second session runs this step from a snapshot of 6659d4bf or of the done commit that follows it, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`, then link the main checkout's `web/node_modules` into the snapshot). It needs the Databricks keys in the env file and the Foundry and judge secrets in the scope `strata`. A deploy from this commit or a later one also serves ticket 117's step 1 and every earlier block that waits on the night's final redeploy, and the night's final redeploy serves this one.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- The deploy exits 0 and its last line is `Strata is running at https://strata-7405609289499029.9.azure.databricksapps.com`.
+- GET /api/me on that address with the CLI profile's token returns an `ask` list of 8 rows, and the last two have `within` KE-NWWDA-541055-CW-RFB and P130164 (Home's rows, filled from `config/slice.toml`).
+- On the App, pressing "/" on Home shows "Ask, for example" with two questions, and the package page KE-NWWDA-541055-CW-RFB shows a copy key after its STEP reference.
+
+Record the deploy's exit code, last line and deployment id, the `ask` row count, and what Home and the package page showed, here under ticket 112.
