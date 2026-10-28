@@ -42,3 +42,4 @@ Read first: the plan's section 8.4 (the table of where How Strata works' content
   - Unblocks: none yet. Ticket 104 waits on 97 and on 99, and ticket 105 waits on 97 and on 103; 99 and 103 are still ready.
 
 ---
+- October 28, 2026, orchestrator (15:25 PDT): the App redeploy ran from 7f42374f (the catch-up block "Tickets 96, 97, 98 and 99, the App redeploy ran"); the page's check by eye is the owner's.

@@ -50,3 +50,4 @@ Read first: the prototype's Home at 1440, 1024 and 390 px with the Data switch o
   - Unblocks: ticket 103 (Drafts and a draft's page), whose only blocker was 98; it stays `ready` for the orchestrator to dispatch, since it is not one of this wave's tickets.
 
 ---
+- October 28, 2026, orchestrator (15:25 PDT): the App redeploy ran from 7f42374f (the catch-up block "Tickets 96, 97, 98 and 99, the App redeploy ran"); the page's check by eye is the owner's.

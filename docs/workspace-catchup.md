@@ -4203,3 +4203,7 @@ It worked if:
 - Its Summary opens on the finding sentence in large light type.
 
 Record the exit code, the App's address and what the four pages showed here under ticket 99. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
+
+## Tickets 96, 97, 98 and 99, the App redeploy ran: the App runs 7f42374f
+
+**Ran on October 28, 2026 (orchestrator), from a snapshot of 7f42374f.** `ops/app/deploy_app.py --keep-secrets` exited 0 at 22:24 UTC with the running line (the deploy began 22:12 UTC); the watchdog holds 7f42374f; the local copy moved to the same commit at 22:25 UTC and answers at http://127.0.0.1:54112 (`.notes/local-run.md`). The App carries 96 (every number's tooltip), 97 (How Strata works leaves Data), 98 (Home's briefing panel) and 99 (the project sub-pages in the sidebar), with 118 to 123 beneath them. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
