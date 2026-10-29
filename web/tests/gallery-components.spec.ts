@@ -682,6 +682,26 @@ test("the gallery shows the plan check's held change line and section 1's skelet
   expect(asked).toEqual([]);
 });
 
+// The review of round 3, B1: held skeleton words are a typical answer's words, not this page's answer, so they stay
+// unseen in a Windows contrast theme too. There the browser would otherwise paint them in the system text colour and
+// drop their bar, and a reader would see a count or a claim no tool returned while the page loads.
+test("held skeleton words stay unseen, with their bar, when the reader's system forces its own colours", async ({ page }) => {
+  await page.emulateMedia({ forcedColors: "active" });
+  for (const [slug, section] of [
+    ["skeleton", "words"],
+    ["plan-check", "loading-change-line"],
+  ]) {
+    await page.goto(`/gallery/${slug}`);
+    const held = page.locator(`[data-state-section=${section}] [data-skeleton-words]`);
+    await expect(held.first()).toBeAttached();
+    for (const words of await held.all()) {
+      const style = await words.evaluate((el) => ({ color: getComputedStyle(el).color, bar: getComputedStyle(el).backgroundImage }));
+      expect(style.color, `${slug} ${section}`).toBe("rgba(0, 0, 0, 0)");
+      expect(style.bar, `${slug} ${section}`).toContain("gradient");
+    }
+  }
+});
+
 test("the open Menu panel and the view popover pass axe", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/gallery/navigation?menu=open&viewer=loading");

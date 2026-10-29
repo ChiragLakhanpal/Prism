@@ -829,6 +829,9 @@ li[data-row-mark="open"] {
   box-decoration-break: clone;
   border-radius: var(--radius-xs);
   user-select: none;
+  /* A contrast theme would paint the held words in its text colour and drop the bar, so a reader would see a
+     typical answer's counts as this page's (the review of ticket 59's round 3, B1). */
+  forced-color-adjust: none;
 }
 
 /* Text that screen readers skip but a copy keeps, such as the brackets around "[1]". */
