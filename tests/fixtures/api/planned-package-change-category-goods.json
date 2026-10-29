@@ -91,7 +91,7 @@
         "category": "Goods",
         "threshold_usd": 2000000,
         "risk_rating": "High",
-        "source": "Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds",
+        "source": "Starting values I have not yet checked against the World Bank's prior review thresholds",
         "as_of": null
       }
     },

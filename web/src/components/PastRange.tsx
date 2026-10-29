@@ -144,6 +144,7 @@ export function PastRange({
   after,
   estimate,
   planDate,
+  pressedNumber,
 }: {
   state: PastRangeState;
   headingRef?: Ref<HTMLHeadingElement>;
@@ -173,6 +174,9 @@ export function PastRange({
   // whether a "Compare with" segment is pressed (ticket 26), so "Advertised again" can say the comparison leaves
   // its count alone.
   after?: ReactNode | ((comparing: boolean) => ReactNode);
+  // A number already pressed, so the table opens filtered to the rows it counts, as the design gallery shows it
+  // (ticket 101's design review, round 2). On a page a person presses the number.
+  pressedNumber?: RowFilter["key"];
 }) {
   const loading = state.status === "loading";
   const result = state.status === "ready" ? state.result : null;
@@ -323,6 +327,7 @@ export function PastRange({
           comparison={comparison}
           planDate={planDate}
           say={setAnnounce}
+          pressedNumber={pressedNumber}
         />
       )}
       {!body && state.status !== "loading" && (typeof after === "function" ? after(comparison !== null) : after)}
@@ -350,7 +355,13 @@ function kind(result: ComparablesResult): Kind {
 
 // What lane 2 and its parts need from the section: estimate_time's answer, the comparison pressed in the heading
 // row, the plan-date choice, and the section's live region.
-type Lane2Props = { estimate?: EstimateState; comparison: Comparison | null; planDate?: PlanDateProps; say: (text: string) => void };
+type Lane2Props = {
+  estimate?: EstimateState;
+  comparison: Comparison | null;
+  planDate?: PlanDateProps;
+  say: (text: string) => void;
+  pressedNumber?: RowFilter["key"];
+};
 
 function Ready({
   result,
@@ -601,6 +612,7 @@ function Populated({
   figure,
   lead,
   compare,
+  pressedNumber,
 }: {
   result: ComparablesResult;
   open?: OpenComparable;
@@ -627,10 +639,10 @@ function Populated({
   const [text, setText] = useState(planRowMonths === null ? "" : months1(planRowMonths));
   const [invalid, setInvalid] = useState(false);
   const [axisValue, setAxisValue] = useState<number | null>(planRowMonths);
-  const [tableOpen, setTableOpen] = useState(abstained);
+  const [tableOpen, setTableOpen] = useState(abstained || Boolean(pressedNumber));
   const [page, setPage] = useState(0);
   // The rows a pressed number counts (ticket 101), or null for every row.
-  const [filter, setFilter] = useState<RowFilter | null>(null);
+  const [filter, setFilter] = useState<RowFilter | null>(() => (pressedNumber ? rowFilters(result)[pressedNumber] : null));
   const [measure, width] = useWidth<HTMLDivElement>();
   const narrow = usePageNarrow(measure);
   const inputRef = useRef<HTMLInputElement>(null);

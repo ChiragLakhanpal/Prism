@@ -34,6 +34,7 @@ export function PageHead({
   trail,
   back,
   held = false,
+  holdBack = false,
   title,
   titleRef,
   loading = false,
@@ -56,6 +57,9 @@ export function PageHead({
   back?: Crumb;
   // The breadcrumb keeps its whole trail from a frame of 1200 px, as the work keeps its width beside the drawer.
   held?: boolean;
+  // While the object loads, the link back holds two lines in a page column under 21rem, where the parent it will name
+  // wraps, such as a package's project (ticket 101's design review, round 2).
+  holdBack?: boolean;
   title: ReactNode;
   titleRef?: Ref<HTMLHeadingElement>;
   loading?: boolean;
@@ -81,7 +85,7 @@ export function PageHead({
           {alert}
         </div>
       )}
-      {trail && trail.length > 0 && <Breadcrumb trail={trail} back={back} held={held} />}
+      {trail && trail.length > 0 && <Breadcrumb trail={trail} back={back} held={held} holdBack={holdBack} />}
       <div className={cx("flex flex-col gap-4 @head/page:flex-row @head/page:items-start @head/page:justify-between @head/page:gap-8", trail && trail.length > 0 && "mt-2")}>
         <div className="min-w-0 flex-1">
           {createElement(

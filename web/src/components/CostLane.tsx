@@ -11,7 +11,7 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { copy } from "../copy";
 import { costRecordId, type Cost, type CostRow } from "../lib/criteria";
-import { formatAmountText, formatNumber, formatSignedPercent } from "../lib/format";
+import { formatAmountText, formatCount, formatNumber, formatSignedPercent } from "../lib/format";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { FootStrip } from "./FootStrip";
@@ -393,7 +393,7 @@ function CostTable({ cost, open: openId, onOpen, titleId }: {
       title={<CostTitle cost={cost} />}
       labelledBy={titleId}
       countLead
-      count={{ noun: "", total: cost.counts.m, text: cost.counts.m === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatNumber(cost.counts.m, { compact: false })) }}
+      count={{ noun: "", total: cost.counts.m, text: cost.counts.m === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatCount(cost.counts.m)) }}
       columns={columns}
       state={{ status: "ready", rows }}
       rowHeader="package"

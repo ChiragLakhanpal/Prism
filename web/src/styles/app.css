@@ -529,6 +529,11 @@
   font-size: var(--text-caption);
   color: var(--color-ink-muted);
 }
+/* The Note and its label take the strip's ink-muted too; a slide keeps the chart's colours (round 2, item 9). */
+[data-foot-strip] [data-chart-note],
+[data-foot-strip] [data-chart-note] > span {
+  color: var(--color-ink-muted);
+}
 /* A foot strip that ends one part inside an opened zone's body, as zone 5's rejected bids and cost estimate (ticket
    101's critique, round 2): it runs out from the body to the panel's edges, 16 px under the part's last line. */
 [data-zone-body] [data-foot-strip="part"] {

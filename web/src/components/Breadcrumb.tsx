@@ -14,7 +14,7 @@ import { TextLink } from "./TextLink";
 
 export type Crumb = { text: ReactNode; href?: string };
 
-export function Breadcrumb({ trail, back, held = false }: {
+export function Breadcrumb({ trail, back, held = false, holdBack = false }: {
   trail: Crumb[];
   // The step the link back goes to below 768 px, when it is not the last one with a link, such as
   // "Drafts" on a draft's page (the 35 brief, section 3.6).
@@ -23,6 +23,9 @@ export function Breadcrumb({ trail, back, held = false }: {
   // on a draft's page, whose document column keeps its place there when the evidence drawer narrows the page area
   // (ticket 94). Without it, opening the drawer would swap the trail for the link back and move the page up.
   held?: boolean;
+  // While the page's object loads, the link back holds two lines in a page column under 21rem (a 320 px window),
+  // where the parent it will name, such as a project's full name, wraps (ticket 101's design review, round 2).
+  holdBack?: boolean;
 }) {
   const parent = back ?? [...trail].reverse().find((crumb) => crumb.href);
   return (
@@ -44,7 +47,7 @@ export function Breadcrumb({ trail, back, held = false }: {
         ))}
       </ol>
       {parent?.href && (
-        <p className={cx("@md/page:hidden", held && "@xl/frame:hidden")}>
+        <p className={cx("@md/page:hidden", held && "@xl/frame:hidden", holdBack && "@max-[21rem]/page:min-h-10")}>
           <TextLink href={parent.href} className="inline-flex min-h-6 items-center gap-1">
             <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
             <span>{parent.text}</span>

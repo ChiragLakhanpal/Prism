@@ -22,7 +22,7 @@ import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { ExampleNote } from "../components/ExampleNote";
 import { EditorBody, EditorSheet } from "../components/ChipEditor";
-import { CardInstruction, CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, ruleSentence, valueText } from "../components/Criteria";
+import { CardInstruction, CardTop, ChipGroups, GuessCount, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, ruleSentence, valueText } from "../components/Criteria";
 import { FootStrip } from "../components/FootStrip";
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
@@ -906,13 +906,19 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
               ? {
                   open: understoodOpen,
                   onToggle: () => setUnderstoodOpen((now) => !now),
-                  summary: <CardTop sentence={pkg.sentence} guesses={null} preview={preview} named={false} />,
+                  summary: (
+                    <>
+                      <CardTop sentence={pkg.sentence} guesses={null} preview={preview} named={false} />
+                      {!preview && pkg.guesses !== null && pkg.guesses > 0 && <GuessCount guesses={pkg.guesses} />}
+                    </>
+                  ),
                 }
               : undefined
           }
         >
           {folds ? (
-            pkg.guesses !== null && <CardInstruction guesses={pkg.guesses} preview={preview} />
+            // The folded row's summary, which stays above the opened body, already gives the guess count.
+            pkg.guesses !== null && <CardInstruction guesses={0} preview={preview} />
           ) : (
             <CardTop sentence={pkg.sentence} guesses={pkg.guesses} preview={preview} named={false} />
           )}
@@ -1045,7 +1051,9 @@ export function PlanPrompt({
     onPlan(months);
   };
   return (
-    <div className="mt-4 flex flex-col gap-3" style={{ minHeight: CHART_HEIGHT }} data-plan-prompt>
+    // As tall as its words and controls: the chart comes only after your press, so no blank is held for it (ticket
+    // 101's design review, round 2).
+    <div className="mt-4 flex flex-col gap-3" data-plan-prompt>
       <p className="max-w-prose text-body text-ink">{words.section.promptQuestion}</p>
       <p className="text-body text-ink" data-found>
         <Fill template={words.section.promptFound(count, "{n}")} slots={{ n: <Num count={count} /> }} />

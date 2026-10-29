@@ -331,6 +331,16 @@ export function CardInstruction({ guesses, preview = false }: { guesses: number;
   );
 }
 
+// The guess count alone, after the sentence in a folded What I understood, so the row keeps its one call to act while
+// the chips are out of sight (ticket 101's review and design review, round 2).
+export function GuessCount({ guesses }: { guesses: number }) {
+  return (
+    <p className="mt-1 text-small text-ink" data-guess-count>
+      {words.card.guesses(guesses, formatCount(guesses, { capital: true }))}
+    </p>
+  );
+}
+
 export function RefusalAlert() {
   return (
     <Alert state="info" className="mt-4">

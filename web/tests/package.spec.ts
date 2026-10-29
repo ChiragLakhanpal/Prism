@@ -1203,8 +1203,9 @@ test("below 768 px the head's skeleton holds the package's h1 and facts line, so
     answer();
     await expect(page.locator("main h1")).toContainText("Equipping of Exploratory");
     await expect(page.locator("[data-page-head] [data-facts-line] button")).toBeVisible();
-    // At 320 px the facts line wraps to a third line, which a hold for 390 px leaves out: one small line, 20 px.
-    expect(Math.abs((await top()) - held), `${width} px`).toBeLessThanOrEqual(width === 320 ? 20 : 8);
+    // At 320 px the link back to the project wraps to two lines where the loading head's "Packages" took one, so the
+    // loading head holds two below a 20rem page area (ticket 101's design review, round 2, item 13).
+    expect(Math.abs((await top()) - held), `${width} px`).toBeLessThanOrEqual(8);
   }
 });
 
@@ -1355,14 +1356,16 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     await expect(section(page).locator("[data-comparables-table] [data-source]"), where).toHaveCount(0);
     await expect(section(page).locator("[data-foot-strip] [data-source]"), where).toHaveCount(1);
     if (view === "cards") {
-      // Inside zone 1's panel the cards are rows divided by a 1 px line, not boxes (DESIGN.md section 5, Tables).
+      // Inside zone 1's panel the cards are rows divided by a 1 px line, not boxes (DESIGN.md section 5, Tables). The
+      // line runs on the text's edges, 12 px in from the row's tint (ticket 101's design review, round 2, item 10).
       const form = await cards.locator(":scope > li").evaluateAll((items) =>
         items.map((item) => {
           const style = getComputedStyle(item);
-          return [style.borderTopLeftRadius, style.borderLeftWidth, style.borderTopWidth].join(" ");
+          const line = getComputedStyle(item, "::before");
+          return [style.borderTopLeftRadius, style.borderLeftWidth, style.borderTopWidth, line.height, line.left, line.right].join(" ");
         }),
       );
-      expect(form.slice(1).every((f) => f === "0px 0px 1px"), where).toBe(true);
+      expect(form.slice(1).every((f) => f === "0px 0px 0px 1px 12px 12px"), where).toBe(true);
       continue;
     }
 
@@ -1720,6 +1723,11 @@ test("below a frame of 75rem the facts fold into one line whose Show the plan ro
   await expect(page.getByRole("region", { name: "From the plan row" })).toBeHidden();
   const line = page.locator("[data-facts-line]");
   await expect(line.locator("p")).toHaveText(FACTS_LINE);
+  // Each STEP value moves to the next line whole, never as "Pending" / "Implementation" (ticket 101's design review,
+  // round 2, item 12).
+  const values = await line.locator("p > span").evaluateAll((spans) => spans.map((span) => [span.textContent, getComputedStyle(span).whiteSpace]));
+  expect(values.map(([text]) => text).join(", ")).toBe(FACTS_LINE);
+  expect(values.filter(([, space]) => space !== "nowrap")).toEqual([]);
   const show = line.getByRole("button", { name: "Show the plan row" });
   await expect(show).toHaveAttribute("aria-expanded", "false");
   await show.click();
@@ -1947,6 +1955,9 @@ test("zone 1 opens on its finding in the finding style, inside the first screen 
     const strip = section(page).locator("[data-foot-strip]").first();
     const look = (selector: string) => strip.locator(selector).first().evaluate((el) => [getComputedStyle(el).fontSize, getComputedStyle(el).color]);
     expect(await look("[data-coverage-line]"), `${width} px`).toEqual(await look("[data-source]"));
+    // The Note and its label too, not the chart's colours (ticket 101's design review, round 2, item 9).
+    expect(await look("[data-chart-note]"), `${width} px`).toEqual(await look("[data-source]"));
+    expect(await look("[data-chart-note] > span"), `${width} px`).toEqual(await look("[data-source]"));
   }
 });
 
@@ -2038,7 +2049,9 @@ test("when the past range fails, zone 1 shows the error alert under its header a
   // (ticket 101's design review, item 8).
   const options = page.locator("[data-approach-options]");
   await expect(options).toHaveAttribute("data-zone", "row");
-  await expect(options.locator("[data-section-summary]")).toHaveText("I'll list approach options when the comparable packages in section 1 load.");
+  await expect(options.locator("[data-section-summary]")).toHaveText(
+    "I'll list approach options when the comparable packages in section 1 load. Use Try again in section 1.",
+  );
   await expect(options.getByRole("button")).toHaveCount(0);
   await expect(page.getByRole("alert")).toHaveCount(1);
 });

@@ -1094,3 +1094,13 @@ test("a list search, a key hint and a toggle button have a control's 4 px corner
   await openGallery(page, "retrieval");
   expect(await corners(page, [["[data-key-hint]", CONTROL], ["[data-toggle]", CONTROL]])).toEqual([]);
 });
+
+// Ticket 101's design review, round 2: the gallery shows the past range with a number already pressed, the table open
+// at the rows it counts under a count line that repeats it, with "Show all" after it.
+test("the past range's gallery page shows the table filtered to the packages a pressed number counts", async ({ page }) => {
+  await page.goto("/gallery/past-range");
+  const filtered = page.locator("[data-state-section=range-filtered]");
+  await expect(filtered.locator("[data-count-row]")).toContainText("Showing the 7 of 24 packages signed within 4.0 months.");
+  await expect(filtered.getByRole("button", { name: "Show all 24" })).toBeVisible();
+  await expect(filtered.locator("[data-table-view=table] tbody tr")).toHaveCount(7);
+});

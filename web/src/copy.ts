@@ -3751,7 +3751,8 @@ export const copy = {
     factsShow: "Show the plan row",
     // The facts line: the plan row's Method, Market Approach, Estimated Amount (US$) without its cents and Process
     // Status, each it has, in that order, a comma between them.
-    factsLine: (parts: string[]) => parts.join(", "),
+    // Between the facts line's values; each value moves to the next line whole (ticket 101's design review, round 2).
+    factsSeparator: ", ",
     factsAmount: (amount: string) => `US$${amount}`,
     // The side panel's source line, and its marker's name, which opens the plan row in the evidence drawer.
     factsSource: "Procurement Plan, {agency}, {pid}, version of {date}, page {page}.",
@@ -3857,7 +3858,8 @@ export const copy = {
         "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
       helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
       // A package planned from a sentence (ticket 15): the line is the person's plan, the same value as its plan chip.
-      helperPlanned: "The line shows your plan, the same months as Your plan above. Moving the line changes your plan.",
+      // True whether What I understood is folded or open (ticket 101's design review, round 2).
+      helperPlanned: "The line shows your plan. Moving the line changes it.",
       helperPlannedNone: "Type your plan's months, or add your plan in the How group, to see it as a line.",
       invalid: (max: string) => `Type months from 0.5 to ${max}.`,
       reset: (plan: string) => `Use the plan's ${plan} months`,
@@ -3940,7 +3942,8 @@ export const copy = {
     // number, so two numbers in one sentence never share one unless they come from the same record and open the
     // same thing. Where it came from and what a click does are num.from and num.act.
     explain: {
-      within: (plan: string) => `Comparable packages signed within ${plan} months of their notice.`,
+      // A number and its "months" never break apart (ticket 101's design review, round 2): a no-break space joins them.
+      within: (plan: string) => `Comparable packages signed within ${plan}\u00a0months of their notice.`,
       total: (open: number, openWord: string) =>
         open === 0
           ? "All comparable packages in the past range."
@@ -3948,7 +3951,7 @@ export const copy = {
             ? "All comparable packages in the past range, including the one still open."
             : `All comparable packages in the past range, including the ${openWord} still open.`,
       // The "about {in10} in 10" share in the finding.
-      share: (plan: string) => `About how many of every 10 comparable packages were signed within ${plan} months.`,
+      share: (plan: string) => `About how many of every 10 comparable packages were signed within ${plan}\u00a0months.`,
       plan: "The plan's months from notice to signed contract.",
       // The middle half's two ends, the middle one and the 8-in-10 point, each counting the packages still open as
       // not signed yet, which openCounted says after it.
@@ -4326,7 +4329,7 @@ export const copy = {
     waiting: "I'll list the options after you add your plan in section 1, or choose to see the past range without it.",
     empty: "I can't compare approaches for this package, because I have no comparable packages I can measure.",
     error: "I couldn't load the approach options.",
-    sectionFailed: "I'll list approach options when the comparable packages in section 1 load.",
+    sectionFailed: "I'll list approach options when the comparable packages in section 1 load. Use Try again in section 1.",
     tryAgain: "Try again",
   },
 
@@ -4775,7 +4778,8 @@ export const copy = {
     captionNoneAfter: (phrase: string) => `I couldn't date any step after ${phrase}.`,
     captionUndated: "How many days each step took in comparable packages.",
     captionAbstain: (family: string) => `The steps STEP uses for ${family}.`,
-    count: (countWords: string) => `Showing all ${countWords} steps.`,
+    // In the Tables form, as zone 1's count line: no full stop (ticket 101's design review, round 2).
+    count: (countWords: string) => `Showing all ${countWords} steps`,
     columns: {
       step: "Step",
       stepNote: "Short names. Choose one to see STEP's full name.",
@@ -5307,8 +5311,8 @@ export const copy = {
     sourceAsOf: "{sources}. Records as of {asOf}.",
     showTable: "Show the table",
     hideTable: "Hide the table",
-    tableCount: "Showing all {m} packages.",
-    tableCountOne: "Showing the one package.",
+    tableCount: "Showing all {m} packages",
+    tableCountOne: "Showing the one package",
     columns: {
       package: "Package",
       country: "Country",

@@ -322,8 +322,8 @@ test("the computed note states the rules with the thresholds file's values and i
   // The thresholds are the blueprint's until the owner checks them against the World Bank's tables, so the source
   // line says so and gives no date (review round 2, P4).
   await expect(note).toContainText(
-    "Source: Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds. " +
-      "Strata's starting value from the blueprint, not yet checked against the World Bank's thresholds for Kenya.",
+    "Source: Starting values I have not yet checked against the World Bank's prior review thresholds. " +
+      "A starting value I have not yet checked against the World Bank's procurement thresholds for Kenya.",
   );
   // "US$" and its amount are one checkable number, so they never split across lines (review round 2, P13).
   await expect(note.locator("p[data-numbers] [data-num]").first()).toHaveText("US$10 million");
@@ -479,6 +479,9 @@ test("with no plan yet, section 1 names its comparables and asks for the plan be
   );
   await expect(prompt).toContainText("I found 49 comparable packages for these criteria.");
   await expect(page.locator("[data-finding]")).toHaveCount(0);
+  // The prompt is as tall as its words and controls, with no blank held under its buttons for a chart that comes only
+  // after your press (ticket 101's design review, round 2, item 4).
+  expect(await prompt.evaluate((el) => el.getBoundingClientRect().bottom - el.lastElementChild!.getBoundingClientRect().bottom)).toBeLessThan(1);
   await expect(prompt.getByRole("button", { name: "Show the past range" })).toHaveAttribute("data-button", "primary");
   await prompt.getByRole("textbox", { name: "Your plan, in months" }).fill("6");
   await prompt.getByRole("button", { name: "Show the past range" }).click();
@@ -1127,6 +1130,8 @@ test("reopened with its plan, a planned package folds What I understood to your 
     await expect(understood, where).toHaveAttribute("data-zone", "row");
     await expect(understood.locator("[data-you-wrote]")).toContainText(SENTENCE);
     await expect(understood.locator("[data-chip]")).toHaveCount(0);
+    // The folded row keeps its one call to act, the guess to check (ticket 101's review and design review, round 2).
+    await expect(understood.locator("[data-section-summary]")).toContainText("One guess to check.");
     const show = understood.getByRole("button", { name: "Show what I understood" });
     await expect(show).toHaveAttribute("aria-expanded", "false");
     const finding = page.locator("[data-past-range] [data-finding]");
@@ -1138,5 +1143,10 @@ test("reopened with its plan, a planned package folds What I understood to your 
     await expect(understood.getByRole("button", { name: "Hide what I understood" })).toBeFocused();
     await expect(chip(page, "plan_months")).toHaveText("Your plan: 6 months");
     await expect(understood.locator("[data-foot-strip] [data-computed-note]")).toBeVisible();
+    // Opened, the chips' instruction follows, and the guess count is said once.
+    await expect(understood.locator("[data-instruction]")).toHaveText("Choose any part to change it.");
+    expect((await understood.innerText()).match(/guess to check/g), where).toHaveLength(1);
+    // The plan's line says what it shows whether the row is folded or open (ticket 101's design review, round 2).
+    await expect(page.locator("[data-past-range]")).toContainText("The line shows your plan. Moving the line changes it.");
   }
 });

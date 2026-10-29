@@ -469,6 +469,7 @@ export const galleryCopy = {
     draftRows: "The Drafts tab's rows",
     packageHeader: "The header and the package's facts",
     rangeReady: "The past range, with the plan as a line",
+    rangeFiltered: "A number pressed: the table filtered to the packages it counts",
     rangeNoPlan: "A plan row with no planned dates",
     rangeDots: "More than 60 comparables: 20 quantile dots",
     rangeAbstained: "Fewer than 20 comparables: no range, every package",

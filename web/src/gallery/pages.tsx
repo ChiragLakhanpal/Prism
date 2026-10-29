@@ -1446,6 +1446,8 @@ export const PAGES: GalleryPage[] = [
         ),
       },
       { id: "range", title: t.rangeReady, body: <PastRange state={{ status: "ready", result: rangeReady }} /> },
+      // Ticket 101: "2" pressed in the finding opens the table at the two packages signed within the plan.
+      { id: "range-filtered", title: t.rangeFiltered, body: <PastRange state={{ status: "ready", result: rangeReady }} pressedNumber="within" /> },
       { id: "no-plan", title: t.rangeNoPlan, body: <PastRange state={{ status: "ready", result: rangeNoPlan }} /> },
       { id: "dots", title: t.rangeDots, body: <PastRange state={{ status: "ready", result: rangeWide }} /> },
       { id: "abstained", title: t.rangeAbstained, body: <PastRange state={{ status: "ready", result: rangeNarrow }} /> },

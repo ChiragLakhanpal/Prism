@@ -100,8 +100,10 @@ const n = (value: number) => formatNumber(value, { compact: false });
 export const CARD_FIELDS = "grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2";
 export const CARD_FIELD = "flex min-w-0 flex-col justify-end";
 // A card as a row of the panel around it (cardRows): a 1 px line over each card after the first, and 12 px sides that
-// reach into the panel's body, so a selected row's tint keeps its text off its edges.
-const CARD_ROW = "-mx-3 border-t border-line px-3 py-4 first:border-t-0 first:pt-2";
+// reach into the panel's body, so a selected row's tint keeps its text off its edges. The line runs on the text's
+// edges, not the tint's, as the prototype's do (ticket 101's design review, round 2).
+const CARD_ROW =
+  "relative -mx-3 px-3 py-4 first:pt-2 before:absolute before:inset-x-3 before:top-0 before:h-px before:bg-line first:before:hidden";
 const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
 const cardField = (column: Column, shared: boolean) => cx(CARD_FIELD, !(sharesGrid(column) && shared) && "col-span-full");
 

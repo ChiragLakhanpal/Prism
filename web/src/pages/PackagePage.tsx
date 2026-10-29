@@ -110,6 +110,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
       <PageHead
         trail={[packagesCrumb]}
         held
+        holdBack
         title={stepRef}
         id={stepRef}
         loading

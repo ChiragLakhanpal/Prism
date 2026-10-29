@@ -4,7 +4,7 @@
 // the plan check with this row in view. A missing value reads "Not in the plan row". Its source line names the plan
 // version, and its marker opens the plan row in the evidence drawer. Below a frame of 75rem the panel is not drawn and
 // the facts are one line in the page head (factsLine), with "Show the plan row", which opens the same record.
-import { type ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { PackageFacts } from "../lib/api";
 import { formatNumber } from "../lib/format";
@@ -120,8 +120,14 @@ export function FactsPanel({
 // The facts in one line, for the page head below a frame of 75rem: "Request for Bids, Open - National, US$1,230,000.00,
 // Pending Implementation", each value the plan row has. The amount keeps STEP's form with its cents, as the side panel's
 // does, so it is the tool's own rounding (plan section 7.6; CLAUDE.md rule 1; ticket 101's review, follow-up 1).
+// Each value is whole on its line, so a STEP value such as "Pending Implementation" moves to the next line as one.
 export function factsLine(pkg: PackageFacts): ReactNode {
   const amount = pkg.estimated_amount_usd ? words.factsAmount(formatNumber(Number(pkg.estimated_amount_usd), { decimals: 2, compact: false })) : null;
   const parts = [pkg.method, pkg.market_approach, amount, pkg.process_status].filter((part): part is string => Boolean(part));
-  return words.factsLine(parts);
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && words.factsSeparator}
+      <span className="whitespace-nowrap">{part}</span>
+    </Fragment>
+  ));
 }
