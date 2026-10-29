@@ -324,11 +324,14 @@ const LONG_REF = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
 
 async function openPackage(page: Page, ref: string, width: number) {
   await page.setViewportSize({ width, height: 900 });
-  const known = ref === "KE-NWWDA-541055-CW-RFB";
+  // Another reference answers with the same package under that reference: a package the page cannot find is no scope,
+  // so its box has no chip (ticket 60).
+  const found = JSON.parse(await recorded("package-ke-nwwda-541055.json"));
+  found.package.step_reference = ref;
   await mockApi(page, {
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
-    [`/api/packages/${ref}`]: known ? { body: await recorded("package-ke-nwwda-541055.json") } : { status: 404, body: '{"code":"unknown_package"}' },
+    [`/api/packages/${encodeURIComponent(ref)}`]: { body: JSON.stringify(found) },
     [`/api/packages/${ref}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
   });
   await page.goto(`/packages/${encodeURIComponent(ref)}`);

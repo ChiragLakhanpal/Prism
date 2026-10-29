@@ -943,6 +943,9 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
   await page.locator("[data-agency=northern-water-works-development-agency] [data-table-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" }).click();
   const h1 = page.getByRole("main").getByRole("heading", { level: 1 });
   await expect(h1).toBeFocused();
+  // While the check loads, the focused h1 names the plan the address gives, never "Checking this plan.", which is no
+  // heading (WCAG 2.4.6; ticket 60). The status says what I'm doing.
+  await expect(h1).toHaveText("Procurement Plan of October 9, 2026");
 
   release();
 

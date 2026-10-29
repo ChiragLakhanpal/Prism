@@ -7,7 +7,7 @@
 //
 // The header sticks from 1024 px, so the frame keeps a focused control from hiding under it (DESIGN.md section 10;
 // lib/sticky.ts). A visually hidden status says
-// "Checking this plan." and then "Checked nine activities.".
+// what I'm doing while the check runs, and then "Checked nine activities.".
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Alert } from "../components/Alert";
 import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
@@ -313,7 +313,9 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
             // the draft action (ticket 35), which keep one row since ticket 100, a long name takes two lines again
             // below a page area of 75rem.
             <>
-              <span className="sr-only">{words.status.checking}</span>
+              {/* The focused h1 names the plan the address gives, as the error state's does, so nothing is read out
+                  when the agency's name replaces it (WCAG 2.4.6; ticket 60). The status says what I'm doing. */}
+              <span className="sr-only">{version ? planSubtitle(version) : words.agencyUnknown}</span>
               {slotShown ? (
                 <>
                   <SkeletonText className="@xl/page:hidden" widths={["w-full", "w-3/5"]} />

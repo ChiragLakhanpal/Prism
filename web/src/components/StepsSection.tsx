@@ -1101,6 +1101,8 @@ export function StepsSection({
       (error: unknown) => {
         if (controller.signal.aborted) return;
         setState({ status: "error", error: error instanceof ApiError ? error : null, onRetry: () => setAttempt((n) => n + 1) });
+        // The error alert speaks for itself, so the live region drops "Loading the planned dates." (ticket 60).
+        setAnnounce("");
       },
     );
     return () => controller.abort();

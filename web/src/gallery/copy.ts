@@ -279,8 +279,13 @@ export const galleryCopy = {
       bothSides: "A disagreement the draft showed, which changes nothing",
       judgeSilent: "The model that judges sentences did not respond, and some sentences survived",
       judgeSilentNoneKept: "The model that judges sentences did not respond, and nothing survived",
+      judgeSilentSomeFailed: "The model that judges sentences did not respond, and another sentence failed check 1",
+      disagreementsSomeKept: "Check 6 could not ask which reports disagree, and one sentence survived",
+      disagreementsMixed: "Check 6 could not ask which reports disagree, and another sentence failed check 1",
+      uncited: "One sentence removed by check 2, because it cited nothing",
       refusals: "Every refusal",
       partial: "A partial refusal",
+      partialUnchecked: "A partial refusal whose other sentences check 6 could not check",
     },
     labels: {
       acceptance: "Numbers and quotes, find_comparables ran, two sentences judged",

@@ -1120,6 +1120,38 @@ test("the implementing agency view reads the baseline without its saver and offe
   await open(page, `${NWWDA}/2026-10-09?view=public`, 1440, { ...(await p156634()), [`/api${NWWDA}/2026-10-09?view=public`]: { body: JSON.stringify(open_) } });
   await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
   await expect(page.getByRole("region", { name: "Baseline for delay" })).toHaveCount(0);
+  // Ticket 60 (ticket 21's critique, round 4): the public preview's alert says only what the page does. It names the
+  // preview, and never claims the staff view while the page leaves out the baseline the staff view shows.
+  await expect(page.getByRole("region", { name: "Preview" })).toContainText("Preview of what the public sees.");
+  await expect(page.locator("[data-alert-slot]")).not.toContainText("World Bank staff view");
+  await expect(page.locator("[data-alert-slot]")).not.toContainText("can't show the public preview");
+});
+
+// Ticket 60 (ticket 21's verify, round 4, finding 1): the hub's pages apply a typed ?asof=, so no alert says they show
+// today's data while the Summary says it was built as of that date.
+test("a project page opened with ?asof= shows the past-date banner and no alert that says it shows today's data", async ({ page }) => {
+  await open(page, "/projects/P130164?asof=2019-10-15");
+  await expect(page.locator("[data-summary=ready]")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Past date" })).toContainText("I'm showing this page as of October 15, 2019.");
+  await expect(page.getByText("today's data")).toHaveCount(0);
+});
+
+// Ticket 60 (ticket 21's review, round 4, follow-up 2): the drawer reads a record with the page's view, so the public
+// preview cannot open the baseline's record, which the server keeps from that view.
+test("in the public preview the drawer asks for the baseline's record with the view, and says it has no such source", async ({ page }) => {
+  const id = "strata.ops.plan_baselines:P156634/northern-water-works-development-agency";
+  const asked: URL[] = [];
+  await open(page, `${NWWDA}/2026-10-09?view=public`, 1440, await p156634());
+  await page.route("**/api/evidence?**", async (route) => {
+    const url = new URL(route.request().url());
+    asked.push(url);
+    if (url.searchParams.get("view") === "public") return route.fulfill({ status: 404, contentType: "application/json", body: '{"code":"unknown_evidence"}' });
+    return route.fulfill({ status: 200, contentType: "application/json", body: await recorded("baseline-saved.json") });
+  });
+  await page.goto(`${NWWDA}/2026-10-09?view=public&evidence=${encodeURIComponent(id)}`);
+
+  await expect(page.getByRole("dialog")).toContainText("I have no source with this ID. The link may be incomplete.");
+  expect(asked.map((url) => [url.searchParams.get("id"), url.searchParams.get("view")])).toEqual([[id, "public"]]);
 });
 
 // ── The Summary's budget on a throttled 3G profile ──────────────────────

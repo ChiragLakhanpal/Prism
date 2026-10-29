@@ -55,8 +55,9 @@ export type AnswerState =
   | { status: "unsupported"; steps: Step[]; runId: string; message: ReactNode; removed: Removed[]; refusal?: ReactNode }
   | { status: "empty"; steps: Step[]; runId: string; message: ReactNode; action?: ReactNode }
   | { status: "refused"; steps: Step[]; runId: string; message: ReactNode; note?: ReactNode }
-  // runId: the run's ID, shown under the alert so it can be shared; onRetry: no button without it.
-  | { status: "error"; steps: Step[]; message: ReactNode; onRetry?: () => void; runId?: string; removed?: Removed[] };
+  // runId: the run's ID, shown under the alert so it can be shared; onRetry: no button without it. refusal: a partial
+  // refusal's paragraph, which stays above the alert when the rest of the answer could not be checked (ticket 60).
+  | { status: "error"; steps: Step[]; message: ReactNode; onRetry?: () => void; runId?: string; removed?: Removed[]; refusal?: ReactNode };
 
 // A copied answer reads "...rebidding". [1]", without the word joiners that keep each marker on its
 // sentence's line (CitationMarker.tsx), so a pasted sentence matches the one the verifier checked.
@@ -209,11 +210,16 @@ export function Answer({ state, reveal = false }: { state: AnswerState; reveal?:
       return (
         <div data-answer="error">
           {state.steps.length > 0 && <Steps steps={state.steps} rail={false} />}
+          {state.refusal && (
+            <div className={cx(state.steps.length > 0 && "mt-4", "max-w-prose text-body text-ink")} data-refusal>
+              {state.refusal}
+            </div>
+          )}
           {/* The alert keeps the answer's measure, as the check line and the removed box do. */}
           <Alert
             state="error"
             live="alert"
-            className={cx(state.steps.length > 0 && "mt-4", "max-w-prose")}
+            className={cx((state.steps.length > 0 || Boolean(state.refusal)) && "mt-4", "max-w-prose")}
             action={
               state.onRetry && (
                 <Button variant="secondary" onClick={state.onRetry}>

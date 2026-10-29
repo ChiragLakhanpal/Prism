@@ -14,6 +14,8 @@
 // to where the person typed. A reload of /packages/new, with no reading behind it, goes to the Packages tab
 // with the box in plan mode.
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode, type RefObject } from "react";
+import { flushSync } from "react-dom";
+import { missingScope } from "../lib/answer";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { CircleX } from "lucide-react";
 import { Alert } from "../components/Alert";
@@ -458,6 +460,14 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
     return () => controller.abort();
   }, [packageId, attempt]);
 
+  // The box offers nothing about a package the page says it cannot find (ticket 60).
+  const notFound = page.status === "error" && page.error?.status === 404;
+  useEffect(() => {
+    if (!notFound) return;
+    missingScope.set(packageId);
+    return () => missingScope.set(null);
+  }, [notFound, packageId]);
+
   if (page.status === "loading") return <LoadingPackage />;
   if (page.status === "error") {
     if (page.error?.status === 404) {
@@ -671,63 +681,94 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
   const queue = useRef<Promise<unknown>>(Promise.resolve());
   const lastSaved = useRef(initial.package);
   const waiting = useRef<Change[]>([]);
+  // The change whose save failed, until a Try again or a later change of its field saves: it is drawn on top of each
+  // answer, so a later save never makes it vanish while the stamp still says "Not saved" (ticket 60).
+  const failed = useRef<Change | null>(null);
+  // A move of the plan line that waits for its timer, drawn on top of each answer, so the line never jumps back while
+  // another save answers (ticket 60).
+  const pendingMove = useRef<Change | null>(null);
+  // What each answer's recompute changed while later saves still waited, said together once none waits, so a quick
+  // second change never hides the first one's recompute (ticket 60).
+  const recomputed = useRef<PlannedPackage["changed"]>([]);
+  const shownOver = (saved: PlannedPackage) =>
+    [failed.current, ...waiting.current, pendingMove.current]
+      .filter((one): one is Change => one !== null)
+      .reduce((shown, next) => applied(shown, form, next), saved);
   const send = (change: Change) => {
     setSaving({ status: "saving" });
+    // A retry of the failed change, or a newer change of its field, takes its place.
+    if (failed.current && (failed.current === change || failed.current.field === change.field)) {
+      failed.current = null;
+      setFailedChange(null);
+    }
     waiting.current.push(change);
-    queue.current = queue.current.then(() =>
-      savePackage(lastSaved.current.package_id, change).then(
-        ({ package: saved }) => {
-          lastSaved.current = saved;
-          setDescribedKey(estimateKey(saved));
-          waiting.current = waiting.current.filter((one) => one !== change);
-          setPkg(waiting.current.reduce((shown, next) => applied(shown, form, next), saved));
-          if (waiting.current.length > 0) return;
-          setFailedChange(null);
-          setSaving({ status: "saved", at: saved.saved_at });
-          if (saved.changed.length > 0) {
-            // What a recompute changed replaces what was said, so nothing is heard twice.
-            const said = saved.changed.map((one) => {
-              const target = field(one.field);
-              const label = target?.label ?? one.field;
-              const cause = (field(one.cause)?.label ?? one.cause).toLowerCase();
-              return one.to === null
-                ? words.announce.emptied(label, cause)
-                : words.announce.recomputed(label, valueText(target, one.from, form), valueText(target, one.to, form));
-            });
-            setAnnounce(said.join(" "));
-          }
-          if (queryKey(saved) !== fetched.current) fetchComparables(saved);
-          else setUpdating(false);
-        },
-        () => {
-          waiting.current = waiting.current.filter((one) => one !== change);
-          setFailedChange(change);
-          setSaving({ status: "failed" });
-          setUpdating(false);
-          setAnnounce(words.saveFailed);
-        },
-      ),
-    );
+    queue.current = queue.current
+      .then(() =>
+        savePackage(lastSaved.current.package_id, change).then(
+          ({ package: saved }) => {
+            lastSaved.current = saved;
+            setDescribedKey(estimateKey(saved));
+            waiting.current = waiting.current.filter((one) => one !== change);
+            recomputed.current = [...recomputed.current, ...saved.changed];
+            setPkg(shownOver(saved));
+            if (waiting.current.length > 0) return;
+            setFailedChange(failed.current);
+            setSaving(failed.current ? { status: "failed" } : { status: "saved", at: saved.saved_at });
+            const changed = recomputed.current;
+            recomputed.current = [];
+            if (changed.length > 0) {
+              // What a recompute changed replaces what was said, so nothing is heard twice.
+              const said = changed.map((one) => {
+                const target = field(one.field);
+                const label = target?.label ?? one.field;
+                const cause = (field(one.cause)?.label ?? one.cause).toLowerCase();
+                return one.to === null
+                  ? words.announce.emptied(label, cause)
+                  : words.announce.recomputed(label, valueText(target, one.from, form), valueText(target, one.to, form));
+              });
+              setAnnounce(said.join(" "));
+            }
+            if (queryKey(saved) !== fetched.current) fetchComparables(saved);
+            else setUpdating(false);
+          },
+          () => {
+            waiting.current = waiting.current.filter((one) => one !== change);
+            failed.current = change;
+            setFailedChange(change);
+            setSaving({ status: "failed" });
+            setUpdating(false);
+            setAnnounce(words.saveFailed);
+          },
+        ),
+      )
+      // One thrown error in a handler must not stop every later save (ticket 60).
+      .catch((error) => console.error(error));
   };
 
   const commit = (change: Change, options: { keepEditor?: boolean } = {}) => {
     if (preview) return;
     const target = field(change.field);
+    const before = pkg.fields.find((one) => one.key === change.field)?.value ?? null;
     const next = applied(pkg, form, change);
     const value = next.fields.find((one) => one.key === change.field);
-    setPkg(next);
     if (!options.keepEditor) {
-      setOpenKey(null);
-      requestAnimationFrame(() => chips.current[change.field]?.focus());
-    }
+      // The chip takes focus in the same task that closes its editor, so focus never rests on the body for a frame
+      // (ticket 60).
+      flushSync(() => {
+        setPkg(next);
+        setOpenKey(null);
+      });
+      chips.current[change.field]?.focus();
+    } else setPkg(next);
     const label = target.label;
     const shown = value?.value === null || value?.value === undefined ? "" : valueText(target, value.value, form);
     if (change.action === "remove") setAnnounce(words.announce.removed(label));
     else if (change.action === "keep") {
       setAnnounce(`${words.announce.kept(label, shown)} ${next.guesses > 0 ? words.card.guesses(next.guesses, formatCount(next.guesses, { capital: true })) : words.card.noGuesses}`);
-    } else if (target.picks) {
+    } else if (target.picks && (value?.value ?? null) !== before) {
       setUpdating(true);
       setAnnounce(words.announce.setPicks(label, shown));
+      // The value it already held reruns nothing, so it is only set (ticket 60).
     } else setAnnounce(words.announce.set(label, shown));
     send(change);
   };
@@ -736,9 +777,14 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
   // once the movement stops.
   const onPlanMoved = (months: number) => {
     if (preview) return;
-    setPkg((now) => applied(now, form, { field: "plan_months", action: "set", value: months }));
+    const move: Change = { field: "plan_months", action: "set", value: months, plan_before_range: false };
+    pendingMove.current = move;
+    setPkg((now) => applied(now, form, move));
     clearTimeout(planTimer.current);
-    planTimer.current = setTimeout(() => send({ field: "plan_months", action: "set", value: months, plan_before_range: false }), PLAN_SAVE_AFTER_MS);
+    planTimer.current = setTimeout(() => {
+      pendingMove.current = null;
+      send(move);
+    }, PLAN_SAVE_AFTER_MS);
   };
   useEffect(() => () => clearTimeout(planTimer.current), []);
 
@@ -940,12 +986,13 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
           lead={lead}
           more={more}
           quiet
-          after={(comparing) => (
+          after={(comparing, say) => (
             <Rebidding
               path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
               section={section.status === "ready" && !skeleton ? section.result : null}
               sectionFailed={section.status === "error" && !skeleton}
               comparing={comparing}
+              onStatus={say}
             />
           )}
           estimate={pkg.comparables_query ? estimate : undefined}

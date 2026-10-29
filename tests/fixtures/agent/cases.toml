@@ -402,6 +402,20 @@ scope = "P130164"
 as_of = 2026-10-23
 recording = "refuses-part-supplier-scores"
 
+# Ticket 60: the same partial refusal when check 6 cannot ask which reports disagree, so every other sentence is
+# removed and the refusal paragraph is all that stands above the error alert. Checks 1 to 3 prove the showcase
+# sentences, so a judge that did not respond would remove none of them; the data service is the service that fails.
+[[cases]]
+id = "refuses-part-supplier-scores-disagreements-unavailable"
+says = """The partial refusal of supplier_scores, when check 6 cannot ask get_disagreements about P130164. Every \
+sentence of the rest of the answer cites P130164's reports, so none survives: the refusal paragraph stays, and the \
+alert says I couldn't check my answer."""
+question = "Rank the firms that won the works contracts of P130164, and tell me why works contracts were advertised again."
+scope = "P130164"
+as_of = 2026-10-23
+recording = "refuses-part-supplier-scores"
+disagreements = "unavailable"
+
 # Ticket 67: the must-refuse question of "Check your criteria" (evals/benchmark.yaml, refuse-live-tenders-criteria),
 # asked word for word of the orchestrator, as ops/agent/refuse_live.py asks it. Its id does not start with refuses-,
 # because the refuses- cases are one per refusal key.
@@ -638,6 +652,55 @@ scope = "P130164"
 as_of = 2026-10-23
 recording = "p130164-rebidding"
 disagreements = "unavailable"
+
+# Ticket 60: the outage states the answer panel draws, each recorded from a scripted case, never by hand.
+
+[[cases]]
+id = "p130164-summaries-judge-no-response-number"
+says = """The two summary sentences only the judge can check, and the judge does not respond, so both are removed; \
+the agent also adds a number no record holds, which check 1 removes. Nothing survives, and one removal had a cause \
+of its own, so the alert says I couldn't check all of my answer."""
+question = "In a few words, what went wrong with the works contracts in P130164?"
+scope = "P130164"
+as_of = 2026-10-23
+recording = "p130164-summaries"
+judge = "no_response"
+
+[[cases.plant_claims]]
+sentence = "Bids were usually opened within 45 days."
+kind = "record"
+evidence_ids = ["strata.gold.passage:31525018/v1/54"]
+numbers = ["45"]
+dates = []
+
+[[cases]]
+id = "ke-nwwda-541055-disagreements-unavailable"
+says = """The past range's answer, when check 6 cannot ask get_disagreements because the data service fails. The two \
+sentences citing a comparable package's record are removed, since no one could check whether another report \
+disagrees with them; the past range's sentence cites find_comparables' summary, which belongs to no project, so it \
+stands."""
+question = "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?"
+scope = "KE-NWWDA-541055-CW-RFB"
+as_of = 2026-10-22
+recording = "ke-nwwda-541055-past-range"
+disagreements = "unavailable"
+
+[[cases]]
+id = "ke-nwwda-541055-disagreements-unavailable-number"
+says = """The same outage, and the agent also adds a number no record holds, which check 1 removes: the removed \
+box then has two causes, so the note under it says how many check 6 could not check."""
+question = "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?"
+scope = "KE-NWWDA-541055-CW-RFB"
+as_of = 2026-10-22
+recording = "ke-nwwda-541055-past-range"
+disagreements = "unavailable"
+
+[[cases.plant_claims]]
+sentence = "The slowest of them took 21.5 months."
+kind = "record"
+evidence_ids = ["strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"]
+numbers = ["21.5"]
+dates = []
 
 [[cases]]
 id = "p130164-both-sides"

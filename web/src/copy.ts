@@ -2681,7 +2681,6 @@ export const copy = {
     },
     // The visually hidden status that announces steps, not rows.
     status: {
-      checking: "Checking this plan.",
       checked: (count: string) => `Checked ${count} activities.`,
       checkedOne: "Checked 1 activity.",
     },

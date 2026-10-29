@@ -1831,6 +1831,13 @@ const CHECK_SHOTS: Shot[] = [
   answerShot("checks--removed-several", "ask-p130164-several-removed.sse", { act: askInBox() }),
   answerShot("checks--judge-silent", "ask-p130164-judge-no-response.sse", { act: askInBox() }),
   answerShot("checks--judge-silent-nothing-kept", "ask-p130164-judge-no-response-none-kept.sse", { act: askInBox(SUMMARIES) }),
+  // Ticket 60: the outage states, check 2's removal and a partial refusal whose other sentences lost check 6's service,
+  // each from its scripted case's recorded stream, at 1440, 1024 and 390 px.
+  answerShot("checks--judge-silent-some-failed", "ask-p130164-judge-no-response-some-failed.sse", { act: askInBox(SUMMARIES) }),
+  answerShot("checks--removed-check-6-some-kept", "ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--removed-check-6-mixed", "ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--removed-check-2", "ask-p130164-uncited-summary.sse", { act: askInBox() }),
+  answerShot("checks--partial-refusal-unchecked", "ask-refuses-part-supplier-scores-disagreements-unavailable.sse", { act: askInBox(PARTIAL) }),
   answerShot("checks--focus-try-again", "ask-p130164-judge-no-response.sse", { full: false, act: then(askInBox(), focus("[data-removed-box] [data-button]")) }),
   answerShot("checks--disagreement-warning", "ask-p130164-isr-7-rating.sse", { act: askInBox(ISR_7) }),
   answerShot("checks--disagreement-info", "ask-p130164-both-sides.sse", { act: askInBox(BOTH_SIDES) }),

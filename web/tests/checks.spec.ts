@@ -186,13 +186,25 @@ test("when the judging model did not respond and nothing survived, an error says
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
   // Above the alert, the verifier's done line alone: its six checks stay out of the way.
   await expect(panel(page).locator("[data-step-items]")).toHaveCount(0);
-  // The alert speaks, so the status line ends on the last step it said and never adds that the answer is ready.
-  const said = () => page.evaluate(() => (window as unknown as { said: string[] }).said);
-  await expect.poll(async () => (await said()).at(-1)).toBe("I'm asking a model whether two sentences follow from their sources.");
-  // One gap between status lines (ANNOUNCE_GAP_MS, 500 ms, in web/src/components/AnswerPanel.tsx) and a margin.
-  await page.waitForTimeout(700);
-  expect((await said()).filter((line) => line.startsWith("The answer is ready"))).toEqual([]);
+  // The alert speaks, so the status line stops with it and never adds that the answer is ready (ticket 60).
+  await expectOnlyTheAlertSpeaks(page);
 });
+
+// What the answer's status line said, in order (tests/answer-page.ts records each change).
+const said = (page: Page) => page.evaluate(() => (window as unknown as { said: string[] }).said);
+
+// Ticket 60 (WCAG 4.1.3): once the error alert speaks, the status line is empty and says nothing more, so a screen
+// reader hears the alert and not the steps the line had queued behind it.
+async function expectOnlyTheAlertSpeaks(page: Page) {
+  await expect(panel(page).getByRole("alert")).toBeVisible();
+  await expect(panel(page).locator("[data-answer-status]")).toHaveText("");
+  const before = await said(page);
+  // More than one gap between status lines (ANNOUNCE_GAP_MS, 500 ms, in web/src/components/AnswerPanel.tsx).
+  await page.waitForTimeout(700);
+  expect(await said(page)).toEqual(before);
+  await expect(panel(page).locator("[data-answer-status]")).toHaveText("");
+  expect(before.filter((line) => line.startsWith("The answer is ready"))).toEqual([]);
+}
 
 test("when check 6 could not ask which reports disagree and nothing survived, an error says so and offers Try again", async ({ page }) => {
   const seen = await answered(page, "ask-p130164-disagreements-unavailable.sse");
@@ -202,8 +214,66 @@ test("when check 6 could not ask which reports disagree and nothing survived, an
   );
   await expect(panel(page).locator("[data-in-short]")).toHaveCount(0);
   await expect(panel(page).locator("[data-removed-box] [data-removed-lead]")).toHaveText("I removed all three sentences.");
+  // Check 6 fails fast, so the stream ends before the status line has said its steps: a screen reader hears only the
+  // alert (ticket 60).
+  await expectOnlyTheAlertSpeaks(page);
   await panel(page).getByRole("button", { name: "Try again" }).click();
   await expect.poll(() => seen.asked.length).toBe(2);
+});
+
+// Ticket 60: the outage states, each the stream its scripted case gives (tests/fixtures/agent/cases.toml), in the
+// gallery's "Six checks and refusals" and in the capture.
+test("each outage says what I couldn't check, notes the sentences a service left unchecked, and offers Try again", async ({ page }) => {
+  // The judge did not respond and nothing survived, and another sentence failed check 1 on its own.
+  await answered(page, "ask-p130164-judge-no-response-some-failed.sse");
+  await expect(panel(page).getByRole("alert")).toContainText(
+    "I couldn't check all of my answer, because the model that judges sentences did not respond. Your question is still in the box.",
+  );
+  await expect(panel(page).locator("[data-removed-box] [data-removed-lead]")).toHaveText("I removed all three sentences.");
+  await expect(panel(page).getByRole("button", { name: "Try again" })).toBeVisible();
+  await expectOnlyTheAlertSpeaks(page);
+
+  // Check 6 could not ask, and one sentence, which cites no project's report, survived.
+  await answered(page, "ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse");
+  await expect(panel(page).locator("[data-sentence-text]")).toHaveCount(1);
+  await expect(panel(page).locator("[data-removed-box] [data-removed-lead]")).toHaveText("I removed two sentences.");
+  await expect(panel(page).locator("[data-removed-box]")).toContainText("I couldn't find out whether another report disagrees with its sources.");
+  await expect(panel(page).locator("[data-removed-box]").getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect.poll(async () => (await said(page)).at(-1)).toBe(
+    "The answer is ready. I removed two sentences, because I couldn't find out whether other reports disagree with them.",
+  );
+
+  // The same, with a number no record holds: two causes, so the note under the lead counts the unchecked ones.
+  await answered(page, "ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse");
+  await expect(panel(page).locator("[data-removed-box]")).toContainText(
+    "I couldn't find out whether other reports disagree, so I couldn't check two of them.",
+  );
+  await expect(panel(page).locator("[data-removed-box]").getByRole("button", { name: "Try again" })).toBeVisible();
+
+  // Check 2: a summary that cites nothing, when no tool held back, rests on nothing.
+  await answered(page, "ask-p130164-uncited-summary.sse");
+  await expect(panel(page).locator("[data-removed-box]")).toHaveText(
+    "I removed one sentence. It said the contractors were to blame for the rebidding, and it cited no source.",
+  );
+});
+
+// Ticket 60 (ticket 24's review, follow-up 1): a partial refusal whose other sentences all lost the service a check
+// needs keeps its refusal paragraph above the error alert, and the status line never says the answer is ready.
+test("a partial refusal whose other sentences could not be checked keeps its refusal above the alert", async ({ page }) => {
+  await answered(page, "ask-refuses-part-supplier-scores-disagreements-unavailable.sse");
+
+  const refusal = panel(page).locator("[data-answer=error] [data-refusal]");
+  await expect(refusal).toContainText(
+    "I don't score or rank suppliers. The public records show which contracts a supplier signed. They don't show how well it did the work.",
+  );
+  await expect(panel(page).getByRole("alert")).toContainText(
+    "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources.",
+  );
+  // The refusal comes before the alert, in the order of the page.
+  const alert = panel(page).getByRole("alert");
+  expect((await refusal.boundingBox())!.y).toBeLessThan((await alert.boundingBox())!.y);
+  await expectOnlyTheAlertSpeaks(page);
+  expect(await axe(page)).toEqual([]);
 });
 
 test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the agent left it out", async ({ page }) => {

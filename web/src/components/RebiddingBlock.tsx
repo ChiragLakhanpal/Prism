@@ -131,10 +131,6 @@ export function RebiddingView({
       )}
       {(loading || updating) && <RebidSkeleton />}
       {state.status === "error" && <RebidError state={state} />}
-      {/* A failed load is said once, politely; the Alert itself is no alert, so it is not heard twice. */}
-      <p role="status" className="sr-only">
-        {state.status === "error" ? words.error : ""}
-      </p>
       {result && !updating && (
         <Ready
           result={result}
@@ -445,7 +441,7 @@ function RebidError({ state }: { state: Extract<RebidState, { status: "error" }>
 
 // ── The block on a page: it reads, reruns and opens ──────────────────────
 
-export function Rebidding({ path, section, sectionFailed = false, comparing = false }: {
+export function Rebidding({ path, section, sectionFailed = false, comparing = false, onStatus }: {
   // GET .../rebidding with section 1's criteria, or null while the package has none.
   path: string | null;
   // Section 1's result, when it has loaded: the block counts the same comparable packages.
@@ -453,6 +449,9 @@ export function Rebidding({ path, section, sectionFailed = false, comparing = fa
   // Section 1's own request failed: the block comes from its own tool, so it still shows under the error (ticket 101).
   sectionFailed?: boolean;
   comparing?: boolean;
+  // Says a failed load once, politely, in zone 1's one live region (PastRange's after), so the card has no second
+  // status region; the block's Alert is no alert, so it is not heard twice (the 28 brief; ticket 60).
+  onStatus?: (text: string) => void;
 }) {
   const here = useStore(address);
   const seen = useStore(visitedStore);
@@ -498,6 +497,7 @@ export function Rebidding({ path, section, sectionFailed = false, comparing = fa
             return;
           }
           retried.current = false;
+          onStatus?.(words.error);
           setState({
             status: "error",
             requestId: error instanceof ApiError ? (error.body.trace_id ?? null) : null,

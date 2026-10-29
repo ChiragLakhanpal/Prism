@@ -172,8 +172,8 @@ export function PastRange({
   // A block at the end of the card that counts the same comparable packages, such as "Advertised again" (ticket
   // 28), drawn after the result and never in place of a body such as the plan prompt. As a function it learns
   // whether a "Compare with" segment is pressed (ticket 26), so "Advertised again" can say the comparison leaves
-  // its count alone.
-  after?: ReactNode | ((comparing: boolean) => ReactNode);
+  // its count alone, and is given the zone's one polite live region to say its own failure in (ticket 60).
+  after?: ReactNode | ((comparing: boolean, say: (text: string) => void) => ReactNode);
   // A number already pressed, so the table opens filtered to the rows it counts, as the design gallery shows it
   // (ticket 101's design review, round 2). On a page a person presses the number.
   pressedNumber?: RowFilter["key"];
@@ -281,7 +281,8 @@ export function PastRange({
               {words.loading}
             </p>
           )}
-          {populated && (
+          {/* One polite region for the whole zone, its second block's failure included (ticket 60). */}
+          {!loading && (
             <p role="status" className="sr-only" data-live>
               {announce}
             </p>
@@ -330,7 +331,7 @@ export function PastRange({
           pressedNumber={pressedNumber}
         />
       )}
-      {!body && state.status !== "loading" && (typeof after === "function" ? after(comparison !== null) : after)}
+      {!body && state.status !== "loading" && (typeof after === "function" ? after(comparison !== null, setAnnounce) : after)}
     </TaskZone>
   );
 }

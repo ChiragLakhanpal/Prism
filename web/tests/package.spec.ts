@@ -1021,6 +1021,20 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
   expect(await lineCount(reference)).toBe(1);
 });
 
+// Ticket 60 (ticket 12's critique, round 6): a package the page just said does not exist is no scope for a question,
+// so the box draws no chip for it and does not offer to ask about it.
+test("the not-found package page's box has no scope chip and offers nothing about the package", async ({ page }) => {
+  await openPackage(page, { pkg: { status: 404, body: '{"code":"unknown_package"}' } });
+  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" })).toBeVisible();
+
+  const box = page.locator("[data-box-slot]");
+  await expect(box.locator("[data-scope-chip]")).toHaveCount(0);
+  await expect(box.getByRole("combobox")).not.toHaveAttribute("placeholder", "Ask about this package");
+  await page.keyboard.press("/");
+  await page.keyboard.type("Why was it advertised again?");
+  await expect(page.getByRole("listbox", { name: "What Enter will do" })).not.toContainText(REF);
+});
+
 test("a reference too long for the line breaks after a hyphen, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {
   const long = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
   expect(long).toHaveLength(40);

@@ -26,7 +26,7 @@ import { Sidebar } from "./components/Sidebar";
 import { TopNav, type NavMode, type Viewer } from "./components/TopNav";
 import { ViewBanner } from "./components/ViewBanner";
 import { copy } from "./copy";
-import { answer, ask, earlier, removedScopes } from "./lib/answer";
+import { answer, ask, earlier, removedScopes, missingScope } from "./lib/answer";
 import { getJson, type Me } from "./lib/api";
 import { languageName, workingLanguage, type WorkingLanguage } from "./lib/lang";
 import { draftScope } from "./lib/drafts";
@@ -210,7 +210,10 @@ export function App() {
   const narrow = useNarrow();
   const match = matchRoute(here.pathname);
   const draftProject = useStore(draftScope);
-  const { scope, kind, page: askPage } = scopeOf(match, draftProject);
+  const missing = useStore(missingScope);
+  const routeScope = scopeOf(match, draftProject);
+  // A scope the page found no record of is no scope at all (ticket 60).
+  const { scope, kind, page: askPage } = routeScope.scope !== null && routeScope.scope === missing ? { ...routeScope, scope: null, page: null } : routeScope;
   const evidenceId = evidenceIn(here.search);
   const language = useStore(workingLanguage);
   // The language of answers and drafts (ticket 42), and the view and date (ticket 40), follow the address as it changes:

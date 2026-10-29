@@ -450,6 +450,108 @@ test("a change made while the last one is still saving waits for it, so the serv
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
 });
 
+// Ticket 60 (ticket 15's review, R4): a quick second change used to hide the first change's recompute, because the
+// handler returned before announcing while a save still waited. Each answer's recompute is said once nothing waits.
+test("after a smaller amount and then a quick description change, the live region still says what the amount recomputed", async ({ page }) => {
+  await openPackage(page);
+  await changes(page, 600);
+
+  await chip(page, "estimated_amount_usd").click();
+  const amount = page.getByRole("dialog", { name: "Estimated amount" });
+  await amount.getByRole("textbox").fill("5m");
+  await amount.getByRole("button", { name: "Use this" }).click();
+  await chip(page, "description").click();
+  await page.getByRole("dialog", { name: "Description" }).getByRole("textbox").fill("Rural feeder roads");
+  await page.keyboard.press("Enter");
+
+  await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
+  await expect(live(page)).toContainText("Review type changed from Prior review to Post review, computed from the thresholds.");
+});
+
+// Ticket 60 (ticket 15's design review, G4): choosing the value a chip that picks the comparables already holds reruns
+// nothing, so the live region says only that it was set, never "Updating the past range".
+test("choosing the method the package already has says it was set, and no update of the past range", async ({ page }) => {
+  await openPackage(page);
+  await changes(page, 600);
+  await expect(chip(page, "method")).toHaveText("Request for Bids (RFB)");
+
+  await chip(page, "method").click();
+  const editor = page.getByRole("dialog", { name: "Method" });
+  await editor.getByRole("textbox", { name: "Method" }).fill("ICB");
+  await page.keyboard.press("Enter");
+
+  await expect(live(page)).toHaveText("Method set to Request for Bids (RFB).");
+  await expect(page.locator("[data-section-status]")).toHaveCount(0);
+  await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
+  await expect(live(page)).not.toContainText("Updating the past range");
+});
+
+// Ticket 60 (ticket 15's verify, V3): a keyboard commit gives the chip focus in the same task that closes its editor,
+// so no frame passes with focus on the body.
+test("a keyboard commit moves focus from the editor to its chip without resting on the body for a frame", async ({ page }) => {
+  await openPackage(page);
+  await changes(page, 600);
+
+  await chip(page, "description").click();
+  const field = page.getByRole("dialog", { name: "Description" }).getByRole("textbox");
+  await expect(field).toBeFocused();
+  await field.fill("Rural feeder roads");
+  // Every frame from here on, and every focus change, notes whether the body held focus.
+  await page.evaluate(() => {
+    const w = window as unknown as { onBody: number };
+    w.onBody = 0;
+    const note = () => {
+      if (document.activeElement === document.body || document.activeElement === null) w.onBody++;
+    };
+    const frame = () => {
+      note();
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+    document.addEventListener("focusout", () => queueMicrotask(note), true);
+  });
+  await page.keyboard.press("Enter");
+
+  await expect(chip(page, "description")).toBeFocused();
+  await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
+  expect(await page.evaluate(() => (window as unknown as { onBody: number }).onBody)).toBe(0);
+});
+
+// Ticket 60 (ticket 15's review, R1 to R3): a change whose save failed stays on the page, with the stamp's Try again,
+// when a later change saves; and Try again sends it again.
+test("a failed change stays shown and keeps its Try again when a later change saves", async ({ page }) => {
+  await openPackage(page);
+  const sent: Record<string, unknown>[] = [];
+  let calls = 0;
+  await page.route("**/api/planned-packages/pkg-000000000001", async (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    sent.push(route.request().postDataJSON() as Record<string, unknown>);
+    calls += 1;
+    if (calls === 1) return route.fulfill({ status: 503, json: { code: "data_service", trace_id: "0af7651916cd43dd8448eb211c80319c" } });
+    const file = calls === 2 ? "planned-package-change-keep-lots.json" : "planned-package-change-description.json";
+    return route.fulfill({ contentType: "application/json", body: await recorded(file) });
+  });
+
+  await chip(page, "description").click();
+  await page.getByRole("dialog", { name: "Description" }).getByRole("textbox").fill("Rural feeder roads");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("[data-saved-stamp]")).toHaveText(/^Not saved/);
+  await expect(live(page)).toHaveText("I couldn't save your last change.");
+
+  await chip(page, "lots").click();
+  await page.getByRole("dialog", { name: "Number of lots" }).getByRole("button", { name: "Keep 2 lots" }).click();
+  await expect.poll(() => sent.length).toBe(2);
+  // The lots saved, but the description did not: it stays on its chip, and the stamp still offers Try again.
+  await expect(chip(page, "lots")).toHaveText("2 lots");
+  await expect(chip(page, "description")).toHaveText("Rural feeder roads");
+  await expect(page.locator("[data-saved-stamp]")).toHaveText(/^Not saved/);
+
+  await page.locator("[data-saved-stamp]").getByRole("button", { name: "Try again" }).click();
+  await expect.poll(() => sent.map((body) => body.field)).toEqual(["description", "lots", "description"]);
+  await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
+  await expect(chip(page, "description")).toHaveText("Rural feeder roads");
+});
+
 test("below 768 px a save that answers while a bottom sheet is open leaves focus where the person put it", async ({ page }) => {
   await openPackage(page, { width: 390, height: 844 });
   await changes(page, 600);
@@ -940,6 +1042,8 @@ test("a package someone else saved, or that does not exist, says so and links to
   await expect(page.locator("[data-planned-package=not-found]")).toBeVisible();
   await expect(page.getByText("I can't find this package. It may have been removed, or it was saved by someone else.")).toBeVisible();
   await expect(page.getByRole("link", { name: "Go to Packages" })).toHaveAttribute("href", "/packages");
+  // Ticket 60: the box has no scope chip for a package the page cannot find.
+  await expect(page.locator("[data-box-slot] [data-scope-chip]")).toHaveCount(0);
 });
 
 test("in the public view the workspace and the Packages tab are not offered", async ({ page }) => {

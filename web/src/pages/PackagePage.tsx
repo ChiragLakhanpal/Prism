@@ -14,6 +14,7 @@
 // zone 3 then holds "Suggest {n} PPSD risk rows", the page's one primary action for staff. The step tracker (ticket
 // 115) follows zone 1, so the finding leads inside the first screen at 390 by 844 and 1024 by 768.
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { missingScope } from "../lib/answer";
 import { type Crumb } from "../components/Breadcrumb";
 import { CopyKey } from "../components/CopyKey";
 import { ExistingPpsdNotice } from "../components/ExistingDraftNotice";
@@ -100,6 +101,12 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
 
   const packagesCrumb: Crumb = { text: words.breadcrumbPackages, href: "/packages" };
   const notFound = load.status === "error" && load.error?.status === 404;
+  // The box offers nothing about a package the page says does not exist (ticket 60).
+  useEffect(() => {
+    if (!notFound) return;
+    missingScope.set(stepRef);
+    return () => missingScope.set(null);
+  }, [notFound, stepRef]);
 
   let head: ReactNode;
   let side: ReactNode = undefined;
@@ -193,12 +200,13 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           open={opening}
           estimate={estimate}
           planDate={planDate}
-          after={(comparing) => (
+          after={(comparing, say) => (
             <Rebidding
               path={rebiddingPath(base)}
               section={section.status === "ready" ? section.data : null}
               sectionFailed={section.status === "error"}
               comparing={comparing}
+              onStatus={say}
             />
           )}
         />

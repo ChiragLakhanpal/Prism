@@ -241,6 +241,12 @@ test("a failed load says so with Try again and the code, and a route the server 
   await expect(block(page).locator("[data-alert=error]")).toHaveText("I couldn't load the count of packages advertised again.");
   await expect(block(page)).toContainText("If it fails again, quote this code: 0af7651916cd43dd8448eb211c80319c.");
   await expect(block(page).locator("[data-rebid-why]")).toHaveCount(0);
+  // Zone 1 has one polite live region, and the block's failure is said there, not in a second region of its own
+  // (the 28 brief; ticket 60).
+  const zone = page.locator("section[data-section=took]");
+  await expect(zone.getByRole("status")).toHaveCount(1);
+  await expect(zone.getByRole("status")).toHaveText("I couldn't load the count of packages advertised again.");
+  await expect(block(page).getByRole("status")).toHaveCount(0);
 
   await page.route(`**${API}/rebidding`, async (route) => {
     calls += 1;

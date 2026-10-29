@@ -247,6 +247,13 @@ RECORDED_STREAMS = {
     "p130164-judge-no-response": "ask-p130164-judge-no-response.sse",
     "p130164-summaries-judge-no-response": "ask-p130164-judge-no-response-none-kept.sse",
     "refuses-part-supplier-scores": "ask-refuses-part-supplier-scores.sse",
+    # Ticket 60: the outage states, check 2's removal of a summary that cites nothing, and a partial refusal whose
+    # other sentences all lost check 6's service.
+    "p130164-summaries-judge-no-response-number": "ask-p130164-judge-no-response-some-failed.sse",
+    "ke-nwwda-541055-disagreements-unavailable": "ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse",
+    "ke-nwwda-541055-disagreements-unavailable-number": "ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse",
+    "p130164-uncited-summary": "ask-p130164-uncited-summary.sse",
+    "refuses-part-supplier-scores-disagreements-unavailable": "ask-refuses-part-supplier-scores-disagreements-unavailable.sse",
     # Ticket 42: an answer asked for in French.
     "p127203-fr-procurement-delays": "ask-p127203-fr.sse",
     "p127203-en-procurement-delays": "ask-p127203-en-cites-french.sse",

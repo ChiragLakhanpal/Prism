@@ -205,6 +205,10 @@ export function removeScope(scope: string) {
   removedScopes.set((all) => new Set([...all, scope]));
 }
 
+// A scope the page found no record of, such as a package reference no plan lists: the box draws no chip for it and
+// offers nothing about it, since the page just said it does not exist (ticket 60). The page that found it clears it.
+export const missingScope = createStore<string | null>(null);
+
 let serial = 0;
 let stopping: AbortController | null = null;
 
