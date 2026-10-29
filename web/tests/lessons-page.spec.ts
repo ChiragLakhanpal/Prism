@@ -299,12 +299,16 @@ test("a first visit's status sentence is lead, not the finding, and a visit with
   await openLessons(page, "lessons-page-nothing.json");
   await expect(page.locator("main [data-finding]")).toHaveText("Nothing came in since your last visit on October 30, 2026, and no lesson changed.");
   await expect(page.locator("[data-new], [data-strengthened]")).toHaveCount(0);
-  // The notice stays until the author chooses, whatever happened to the last visit, and its zone says the change came
-  // before that visit, so "no lesson changed" above it still reads true.
+  // The notice stays until the author chooses, whatever happened to the last visit. Its zone says why a change can
+  // still show under "no lesson changed", and never says when this change came: no tool says that, and a re-check
+  // decided during this visit would make "before your last visit" false (ticket 102, review round 2).
   await expect(page.locator("[data-version-notice=narrowed]")).toHaveCount(1);
-  await expect(page.locator("[data-changed] [data-zone-caption]")).toHaveText(
-    "This change came before your last visit. Your drafts still cite the version you used, and nothing in a draft changes until you choose.",
+  const caption = page.locator("[data-changed] [data-zone-caption]");
+  await expect(caption).toHaveText(
+    "I keep each change here until you choose what to do, so a change from before your last visit can still show. " +
+      "Your drafts still cite the versions you used, and nothing in a draft changes until then.",
   );
+  await expect(caption).not.toContainText("came before");
   expect(await axe(page)).toEqual([]);
 });
 
@@ -370,13 +374,16 @@ test("at 1440 and 390 px the empty library is a row that says whose lessons they
 
 // Round 1 of ticket 102: as of a past date the page shows only what was disclosed by then (the server's own answer,
 // tests/record_lessons_page_api.py), and says so once, in the alert slot; the library's own sentence is a status line.
+// Round 2: over a library with no current lesson, that line says the library held none then, from the server's own
+// count (library.of is 0), and promises no lesson versions that are not there.
 test("as of a past date the page says so once, and the library holds only what was public then", async ({ page }) => {
+  const asOf = await file("lessons-page-asof.json");
+  expect(JSON.parse(asOf.body).library).toMatchObject({ of: 0, status: "current", narrowed: false });
   await openLessons(page, "lessons-page-asof.json", { "/api/me": await file("me-asof.json") }, "/lessons?asof=2016-08-26");
   await expect(page.locator("[data-alert-slot] [data-alert=info]")).toContainText("August 26, 2016");
   await expect(page.locator("[data-alert]")).toHaveCount(1);
-  await expect(page.locator("main [data-status-lead]")).toHaveText(
-    "You are seeing the library as of August 26, 2016, with each lesson at the version that was current then.",
-  );
+  await expect(page.locator("main [data-status-lead]")).toHaveText("The library held no current lessons on August 26, 2016.");
+  await expect(page.locator("main")).not.toContainText("each lesson at the version");
   expect(await zones(page)).toEqual([["The library", "row"]]);
   await expect(page.locator("main")).not.toContainText(/2019|2023|2026/);
 });

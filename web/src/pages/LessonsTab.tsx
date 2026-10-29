@@ -359,6 +359,11 @@ function FilterBar({ library, onChange, busy }: { library: LibraryAnswer; onChan
   );
 }
 
+// No current lesson and no filter set: the library holds nothing yet (or, as of a past date, held nothing then).
+function libraryIsEmpty(library: LibraryAnswer): boolean {
+  return library.of === 0 && library.status === "current" && !library.narrowed;
+}
+
 function LibrarySection({ initial, search, isReviewerWaiting }: { initial: LibraryAnswer; search: string; isReviewerWaiting: boolean }) {
   const [library, setLibrary] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -402,11 +407,11 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
   const change = (next: Filters) => navigate(libraryHref(next), { replace: true, quiet: true });
   const noun = server.count.nouns[library.status][library.of === 1 ? "one" : "many"];
   const open = evidenceIn(here.search);
-  if (library.of === 0 && library.status === "current" && !library.narrowed) {
-    // The library holds no lesson yet, so its zone is a row (ticket 102) with no title of its own, since the digest
-    // above already says the library is empty. The purpose above says whose lessons these are, so its sentences say
-    // who decides and where the lessons show up on a package's page, and it links where section 3's own empty state
-    // does (ticket 114); a reviewer with lessons waiting is led to them instead.
+  if (libraryIsEmpty(library)) {
+    // The library holds no lesson yet, so its zone is a row named The library (ticket 102), with no empty-state
+    // title, since the digest above already says the library is empty. The purpose above says whose lessons these
+    // are, so its sentences say who decides and where the lessons show up on a package's page, and it links where
+    // section 3's own empty state does (ticket 114); a reviewer with lessons waiting is led to them instead.
     const link = isReviewerWaiting ? { href: QUEUE_HREF, text: copy.lessons.library.reviewerLink } : { href: RISKS_READINESS_HREF, text: copy.pages.lessons.link };
     return (
       <TaskZone
@@ -531,9 +536,10 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
     <div data-lessons-page="ready" className="flex flex-col">
       {page.as_of ? (
         // The alert slot already says the page is as of a date, so this sentence reports the library's state as a
-        // status line, not a second alert (DESIGN.md section 1, principle 6).
+        // status line, not a second alert (DESIGN.md section 1, principle 6). Over no current lesson it says so, from
+        // the server's own count, and promises no lesson versions.
         <p className="max-w-prose text-lead text-pretty text-ink" data-status-lead>
-          <Fill template={w.asOfNote} slots={{ date: <Num date={page.as_of} /> }} />
+          <Fill template={libraryIsEmpty(page.library) ? w.asOfNoteEmpty : w.asOfNote} slots={{ date: <Num date={page.as_of} /> }} />
         </p>
       ) : (
         <>
@@ -546,9 +552,9 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
         {page.notices.length > 0 && (
           <TaskZone panel headingId="lessons-changed" name={w.changedTitle} marks={{ "data-changed": "" }}>
             <ZoneBlock>
-              {/* With nothing new, the digest says no lesson changed, so the zone says its changes came before then. */}
+              {/* With nothing new, the digest says no lesson changed, so the zone says why a change still shows. */}
               <p className="max-w-prose text-caption text-ink-muted" data-zone-caption>
-                {page.digest?.kind === "nothing" ? w.changedEarlierCaption(page.notices.length) : w.changedCaption}
+                {page.digest?.kind === "nothing" ? w.changedEarlierCaption : w.changedCaption}
               </p>
               <ul>
                 {page.notices.map((notice) => (

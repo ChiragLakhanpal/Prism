@@ -6658,7 +6658,10 @@ export const copy = {
     firstCaption: "From your next visit, I start this page with what came in since this one.",
     previewNote:
       "This is a preview, so I leave out what is about you: the drafts you wrote, your reports and the proposed lessons.",
-    asOfNote: "You are seeing the library as of {date}, with each lesson at the version that was current then.",
+    // As of a past date, under the alert that names the date (ticket 102, round 2): what the library held then.
+    // asOfNoteEmpty is for the server's count of current lessons at 0 with no filter set.
+    asOfNote: "I show the library as it was on {date}, with each lesson at the version that was current then.",
+    asOfNoteEmpty: "The library held no current lessons on {date}.",
     // A count word opens the items it counts, in a window named by its heading.
     popovers: {
       reports: "Reports I read since {date}",
@@ -6696,11 +6699,12 @@ export const copy = {
     rests: "Rests on {quotes} quotes from {reports} reports.",
     changedTitle: "Changed where you used it",
     changedCaption: "Your drafts still cite the versions you used. Nothing in a draft changes until you choose.",
-    // The same zone on a visit with nothing new, when the digest above says no lesson changed (ticket 102).
-    changedEarlierCaption: (count: number) =>
-      count === 1
-        ? "This change came before your last visit. Your drafts still cite the version you used, and nothing in a draft changes until you choose."
-        : "These changes came before your last visit. Your drafts still cite the versions you used, and nothing in a draft changes until you choose.",
+    // The same zone on a visit with nothing new, when the digest above says no lesson changed (ticket 102). It says why
+    // a change can still show, never when this one came: no tool says that, and a re-check decided during this visit
+    // would make "before your last visit" false (review round 2).
+    changedEarlierCaption:
+      "I keep each change here until you choose what to do, so a change from before your last visit can still show. " +
+      "Your drafts still cite the versions you used, and nothing in a draft changes until then.",
     newTitle: "New",
     newCaption: "Lessons a lead procurement specialist added to the library since your last visit, newest first.",
     reportsTitle: "Your reports",
