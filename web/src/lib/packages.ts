@@ -227,6 +227,10 @@ export function enterBoxMode(mode: "plan" | "check", text?: string) {
 // ── Opening a comparable in the evidence drawer ──────────────────────────
 
 export const COMPARABLE = "strata.gold.package:";
+// The evidence ids of the comparable packages the past range on this page counts (ticket 101), so the drawer
+// says a package is "in the past range" only when it is. A project's timeline opens the same kind of record for
+// a contract mark, and that page has no past range.
+export const rangeIds = createStore<string[]>([]);
 // A quantile dot's list of the packages it stands for, by the dot's number. It is no source: the page that
 // draws the dots holds the list (rememberDots), so the drawer never asks the server for it.
 export const DOT = "comparables-dot:";

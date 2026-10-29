@@ -49,7 +49,7 @@ import { MethodText } from "./PlanCheck";
 import { planRowCaption, PlanRowRecords, planRowTitle } from "./PlanRowRecords";
 import { isPlanRowCheck, planRowsLoading, planRowSource } from "../lib/planRows";
 import { ComparableDotList, ComparableRecords, dotRegion } from "./ComparableRecords";
-import { COMPARABLE, DOT, type DotEntry } from "../lib/packages";
+import { COMPARABLE, DOT, rangeIds, type DotEntry } from "../lib/packages";
 import { isRiskList, pageRows, REPORTS, rowOf } from "../lib/risks";
 import { AllReportsView, backToReports, RiskReportsView, RowClaim, RowSwitcher } from "./RiskDrawer";
 import { isStepList } from "../lib/steps";
@@ -662,6 +662,8 @@ export function EvidenceDrawerView({
   // A record opened from a row of section 1's "Advertised again" block (ticket 28), or from the address while the
   // row shows: the row's line as the claim, and a tab for each of its records when it has two or more.
   const cases = useStore(pageCases);
+  // The comparable packages the page's past range counts (ticket 101): only these take its caption.
+  const inRange = useStore(rangeIds).includes(id);
   const rebidCase = !claim && !riskRow ? caseOf(id, cases.rows) : null;
   const caseSwitcher = rebidCase && rebidCase.evidence.length > 1 ? rebidCase : null;
   const switcherIds = claim && claim.evidence_ids.length > 1
@@ -766,10 +768,10 @@ export function EvidenceDrawerView({
                 {planRowCaption(evidence)}
               </p>
             )}
-            {/* A comparable package opened from the range chart or its table (ticket 101). A canceled one, which
-                "Advertised again" opens too, is left out of the past range, so it gets no caption: the tool's own
-                rule (_is_canceled) already returns false when canceled_as_still_open keeps it in the range. */}
-            {evidence?.kind === "package" && !evidence.row.canceled && (
+            {/* A package the page's past range counts (ticket 101), however it was opened: from a dot, the table,
+                zone 5 or the steps. A package the range leaves out, such as a canceled one that "Advertised again"
+                opens, or a contract mark on a project's timeline, where no past range shows, gets no caption. */}
+            {evidence?.kind === "package" && inRange && (
               <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
                 {copy.evidence.package.caption}
               </p>

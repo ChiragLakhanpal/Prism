@@ -568,3 +568,17 @@ test("the public preview of a project still under way hides its disagreements, a
   await expect(page.locator("main [data-view-banner=preview]")).toContainText("Preview of what the public sees.");
   await expect(page.locator("main [data-alert]")).toHaveCount(1);
 });
+
+test("a contract mark's package record from a project's timeline has no past-range caption, since the page has no past range", async ({ page }) => {
+  // Ticket 101's review, round 2: "Comparable package in the past range" belongs only to a package that the page's
+  // past range counts. P156634's timeline opens the same record kind for a contract mark, with no past range.
+  await open(page, "/projects/P156634/timeline", 1440, {
+    "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    "/api/projects/P156634/timeline": { body: await recorded("timeline-p156634.json") },
+    "/api/evidence?id=strata.gold.package%3AKE-MOWI-47509-CW-RFB": { body: await recorded("evidence-package-ke-mowi-47509.json") },
+  });
+  await page.getByRole("button", { name: "Show the table" }).click();
+  await page.locator("[data-timeline-table] a[href*='KE-MOWI-47509-CW-RFB']").first().click();
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toContainText("KE-MOWI-47509-CW-RFB");
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveCount(0);
+});
