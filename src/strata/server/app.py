@@ -54,8 +54,8 @@
   preview of another view, or a request no one is signed in for, records nothing, and the answer says
   {"recorded": false}. GET /api/evidence/opened?id=...&id=... says which of those the viewer has opened.
 - GET /api/packages/{step_reference} gives the package workspace's header: the package as its newest
-  public Procurement Plan row states it, with that plan and its project, or 404 with the code
-  unknown_package. GET /api/packages/{step_reference}/comparables runs find_comparables through the
+  public Procurement Plan row states it, with that plan and its project (and the project's display_name,
+  as its page header gives it), or 404 with the code unknown_package. GET /api/packages/{step_reference}/comparables runs find_comparables through the
   tool registry for the workspace's section 1, with the tool's criteria as query parameters
   (?review_type=Prior, ?category=any), ?asof= and ?view=, as the viewer. A past range it sends in the World Bank
   staff view is an exposure, as a time estimate is (ticket 44; src/strata/estimates/exposures.py): a background
@@ -935,6 +935,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             found = read_package(engine, step_reference, as_of)
             if found is None:
                 return JSONResponse({"code": "unknown_package"}, status_code=404)
+            # The project's name as its page header gives it, by the server's one rule, so the crumb reads as Check
+            # a plan's does (the 58 critique, "one project name"); the tool's own project_name is kept.
+            found["display_name"] = projects.display_name(found.get("project_name"))
             return {"as_of": as_of.isoformat(), "package": found}
         return read_for(f"package {step_reference}", viewer, read)
 

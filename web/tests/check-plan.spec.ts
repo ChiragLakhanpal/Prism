@@ -22,7 +22,7 @@ const MARKED = [
   "KE-NWWDA-199461-GO-RFB",
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
-const FINDING = "One needs a look and two are worth watching; three have data notes.";
+const FINDING = "One activity needs a look and two are worth watching; three have data notes.";
 // Ticket 111's narration, word for word: the step, how I check, and why it can take longer.
 const NARRATION = {
   running: "I'm checking the plan.",
@@ -85,9 +85,9 @@ test("the plan check finds every activity, states the finding, and folds the act
 
   await expect(main.getByRole("heading", { level: 1 })).toHaveText("Northern Water Works Development Agency");
   await expect(main.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
-  await expect(main.locator("[data-check-pill]")).toHaveText("9 activities checked");
+  await expect(main.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(main.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
-  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities");
+  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities.");
   await expect(view(page, "table")).toBeVisible();
   expect(await refsIn(page, "table")).toEqual(MARKED);
   const fold = view(page, "table").locator("[data-fold]:visible");
@@ -155,7 +155,7 @@ test("in the public preview the plan check is lit as Projects, its breadcrumb st
   // The finding holds the signals back, so its byline says so (DESIGN.md section 5, Byline).
   await expect(page.locator("[data-finding-block] [data-byline]")).toHaveText("Strata held back");
   const head = page.locator("[data-plan-header]");
-  await expect(head.locator("[data-check-pill]")).toHaveText("9 activities checked");
+  await expect(head.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(head.getByRole("button")).toHaveCount(0);
   await expect(head.locator("[data-draft-slot]")).toHaveCount(0);
   expect(await head.evaluate((el) => getComputedStyle(el).position)).toBe("static");
@@ -187,7 +187,7 @@ test("Show them opens the folded activities by mouse, and Hide them folds them a
   await expect(hide).toHaveAttribute("aria-expanded", "true");
   await expect(hide).toBeFocused();
   expect(await refsIn(page, "table")).toEqual([...MARKED, ...FOLDED]);
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing all 9 activities");
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing all nine activities.");
   for (const ref of FOLDED) {
     await expect(view(page, "table").locator(`tr[id="${ref}"]`)).toContainText("No signals.");
   }

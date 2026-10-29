@@ -231,8 +231,16 @@ def test_typing_icb_into_the_method_chip_stores_request_for_bids_with_an_open_in
     values = {field["key"]: (field["value"], field["provenance"]) for field in changed["fields"]}
     assert values["method"] == ("Request for Bids", "you")
     assert values["market_approach"] == ("Open - International", "you")
+    # The market approach says which old method name set it, so the note can say "You chose ICB, so market approach
+    # is ..." rather than that you set the market approach (ticket 58; the 15 critique, round 3, follow-up 6).
+    [market] = [field for field in changed["fields"] if field["key"] == "market_approach"]
+    assert market["via"] == "ICB"
     reopened = call(app, "GET", f"/api/planned-packages/{package['package_id']}", ANA).json()["package"]
     assert reopened["fields"] == changed["fields"]
+    # Setting the market approach itself leaves no old name behind.
+    direct = call(app, "POST", f"/api/planned-packages/{package['package_id']}", ANA,
+                  json={"field": "market_approach", "action": "set", "value": "Open - National"}).json()["package"]
+    assert "via" not in next(field for field in direct["fields"] if field["key"] == "market_approach")
 
 
 def test_a_saved_package_reopens_with_the_same_chips_and_only_for_the_person_who_made_it(planning):

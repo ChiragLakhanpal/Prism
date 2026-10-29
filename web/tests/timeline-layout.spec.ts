@@ -32,6 +32,6 @@ test("a disagreement's dashed line keeps clear of every mark that is not one of 
 test("a narrow band names its rating by its code with 4 px a side, and a longer label keeps 8 px a side", () => {
   expect(bandLabelFits("MU", 22, 36)).toBe(true);
   expect(bandLabelFits("MU", 22, 29)).toBe(false);
-  expect(bandLabelFits("MU, ISRs 12–13", 90, 100)).toBe(false);
-  expect(bandLabelFits("MU, ISRs 12–13", 90, 106)).toBe(true);
+  expect(bandLabelFits("MU, ISRs 12 to 13", 90, 100)).toBe(false);
+  expect(bandLabelFits("MU, ISRs 12 to 13", 90, 106)).toBe(true);
 });

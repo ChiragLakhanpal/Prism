@@ -195,7 +195,7 @@ test("with a row left out because both its cells failed, the lede and the count 
   // tests/test_ppsd_rows.py's ppsd-rows-a-row-removed: two risks selected, two rows written, one left out.
   await openDraft(page, "drafts-ppsd-row-removed.json");
   await expect(page.locator("[data-lede]")).toHaveText("I drafted rows for one of the two risks you selected.");
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing the one row");
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing the one row.");
   await expect(page.locator("[data-step=done]")).toContainText(["I wrote two rows."]);
 });
 
@@ -319,6 +319,9 @@ test("the Project Paper summary for P156634 is a sheet in three parts, cites its
   await expect(page.locator("[data-sources]")).toContainText(
     "Source: Implementation Completion and Results Report, P130164, October 10, 2019, paragraph 54, page 23.",
   );
+  // The ICR Review's locator is a section, in the name and in its source line alike (the 58 design review, follow-up 6).
+  await expect(page.locator("[data-sources]")).toContainText("ICR Review section 10.b");
+  await expect(page.locator("[data-sources]")).not.toContainText("ICR Review paragraph");
   expect(await axe(page)).toEqual([]);
 });
 

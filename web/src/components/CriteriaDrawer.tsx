@@ -233,7 +233,7 @@ export function LessonClaim({ lesson }: { lesson: LessonEntry }) {
         <p className="text-caption text-ink-muted">{words.fromPage}</p>
         <p className="mt-1 border-l-2 border-line-strong pl-3 text-small font-semibold text-ink-heading">{lesson.statement}</p>
       </div>
-      <IegLine status={lesson.ieg_status} quote={lesson.ieg_quote} />
+      <IegLine status={lesson.ieg_status} quote={lesson.ieg_quote} spelled />
     </div>
   );
 }

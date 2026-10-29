@@ -195,7 +195,7 @@ name_checked = 2026-10-23
 id = "awards_fy2001_2016"
 label = "Contract awards"
 noun = "contract awards for fiscal 2001 to 2016"
-covers = "fiscal 2001–16"
+covers = "fiscal 2001 to 2016"
 coverage = { measure = "coverage_rows", counts = "award rows held", counts_one = "award row held", noun = "award rows", noun_one = "award row", counted_in = "strata.silver.awards_fy2001_2016", years = "coverage_years" }
 linked = { measure = "linked_project", counts = "contracts have their project record", counts_one = "contract has its project record", noun = "contracts", noun_one = "contract", lack = "a project record I hold", counted_in = "strata.gold.contract" }
 fresh = { measure = "fresh_newest_record", counts = "newest signing date", noun = "contracts", counted_in = "strata.bronze.api_pages" }
@@ -556,7 +556,9 @@ id = "reports"
 label = "Project reports"
 noun = "project reports"
 stratum = "Why"
-covers = "with their appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports"
+# What the row's documents are, on its own line under the projects it covers (ticket 58; the 18 design review, round 3,
+# P2), in words that need no abbreviation spelled out.
+covers = "appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports"
 schedule = "as published"
 coverage = { measure = "documents_read", counts = "documents", counts_one = "document", noun = "documents", noun_one = "document", counted_in = "strata.silver.documents", projects = "documents_read_projects", slice_read = "slice_projects_read" }
 linked = { measure = "passages_linked_to_project", counts = "passages with their project record", counts_one = "passage with its project record", noun = "passages", noun_one = "passage", lack = "a project record I hold", counted_in = "strata.gold.passage" }
@@ -564,7 +566,9 @@ read_well_by_route = true
 read_well = { measure = "document_pages_read_well", counts = "pages read well", counts_one = "page read well", noun = "report pages", noun_one = "report page", counted_in = "strata.silver.document_page_routes" }
 fresh = { measure = "documents_fresh", counts = "newest report", noun = "reports", counted_in = "strata.bronze.document_texts" }
 checks = [
-  { measure = "document_pages_paragraph_numbering_found", counts = "body pages with their paragraph numbers found", counts_one = "body page with its paragraph numbers found", noun = "body pages", noun_one = "body page", lack = "paragraph numbers I could find", counted_in = "strata.silver.passages" },
+  # A check of what I found, so its gap says where I found none (not_found) rather than what the pages lack, and its
+  # pages are named as a reader would, not "body pages" (ticket 58; the 18 critique, round 3).
+  { measure = "document_pages_paragraph_numbering_found", counts = "pages of the reports' main text with their paragraph numbers found", counts_one = "page of a report's main text with its paragraph numbers found", noun = "pages of the reports' main text", noun_one = "page of a report's main text", not_found = "paragraph numbers", counted_in = "strata.silver.passages" },
 ]
 routes = [
   { measure = "document_pages_read_route_a", label = "Report pages, published text", noun = "report pages of published text", counted_in = "strata.bronze.document_pages" },
@@ -579,7 +583,7 @@ id = "notice_text"
 label = "Procurement notices' text"
 noun = "procurement notices' text"
 stratum = "What"
-covers = "with their notices' scope and qualification text"
+covers = "scope and qualification text of the notices"
 schedule = "as published"
 published_as = "text"
 coverage = { measure = "notice_text_passages", counts = "sections of notices' text", counts_one = "section of a notice's text", noun = "sections of notices' text", noun_one = "section of a notice's text", counted_in = "strata.silver.passages" }
@@ -587,7 +591,7 @@ linked = { measure = "notice_text_linked", counts = "sections with their project
 
 [[sources.documents.fixes]]
 measure = "document_pages_paragraph_numbering_found"
-sentence = "Use the layout parser on the {missing} body pages where I found no paragraph numbers, so each passage keeps its number."
+sentence = "Use the layout parser on the {missing} pages of the reports' main text where I found no paragraph numbers, so each passage keeps its number."
 
 [[sources.documents.fixes]]
 measure = "latest_activities_with_confirmed_first_listing_read"

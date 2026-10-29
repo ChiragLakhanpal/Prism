@@ -127,7 +127,7 @@ test("Passage reports lists the groups waiting, oldest first, and the decisions 
   await expect(row.getByRole("heading", { level: 3 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 55");
   await expect(page.getByRole("heading", { name: "Decided in the last 90 days" })).toBeVisible();
   await expect(page.locator("[data-reports-decided]")).toContainText("Ranked lower");
-  await expect(page.locator("[data-reports-decided]")).toContainText("Showing 1 decision, newest first");
+  await expect(page.locator("[data-reports-decided]")).toContainText("Showing the one decision, newest first.");
   expect(await axe(page)).toEqual([]);
 });
 
@@ -161,6 +161,19 @@ test("one passage's reports name each sender by role, and Rank it lower needs a 
   expect(sent.filter((call) => call.method === "POST").map((call) => call.body)).toEqual([
     { expected_state: "none", outcome: "rank_lower", reason: "The paragraph is about estimates in general." },
   ]);
+});
+
+// An account that can't read Strata's tables reads what to ask for once: the alert says what failed, and the line under
+// it what to ask (the 58 critique, round 3, "Seen outside this ticket's code").
+test("Judging without read access says once what to ask the workspace admin for", async ({ page }) => {
+  await serve(page, {
+    "/api/lessons/me": await file("retrieval-me-judge-after.json"),
+    "/api/judging/queries": { status: 403, body: '{"code":"permission"}' },
+  });
+  await page.goto("/lessons/judging");
+  const failed = page.locator("[data-load-error=permission]");
+  await expect(failed.getByRole("alert")).toHaveText("Your account can't read Strata's tables, so I can't show the queries.");
+  expect((await failed.textContent())!.split("Ask your workspace admin").length - 1).toBe(1);
 });
 
 test("Judging shows your progress, your agreement with Cohen's kappa, and the queries to judge", async ({ page }) => {
@@ -292,6 +305,22 @@ test("grading the last passage moves focus to the panel that says you graded the
   const finished = page.locator("[data-judging-finished=mine] [data-outcome-panel]");
   await expect(finished).toBeFocused();
   await expect(finished).toContainText("You graded all 40 passages for this query.");
+  // Every passage is graded, so the bar no longer promises to open the next one (ticket 58; the 32 design review, F2).
+  await expect(page.locator("[data-grade-bar]")).toContainText("Choosing a grade saves the change.");
+  await expect(page.locator("[data-grade-bar]")).not.toContainText("opens the next passage");
+});
+
+// Ticket 58 (the 32 design review, round 3, F4): one finished query is "the one query", never "1 queries".
+test("the agreement's tooltip says the one query you both finished", async ({ page }) => {
+  await serve(page, {
+    "/api/lessons/me": await file("retrieval-me-judge-after.json"),
+    "/api/judging/queries": await file("judging-queries.json"),
+  });
+  await page.goto("/lessons/judging");
+  const agree = page.locator("[data-agreement=shown] [data-num]").first();
+  await agree.focus();
+  await expect(page.getByRole("tooltip")).toContainText("Passages you both graded, on the one query you both finished.");
+  await expect(page.getByRole("tooltip")).not.toContainText("1 queries");
 });
 
 test("when the other judge finishes while the query is open, the refused grade says the grades are locked, with no retry", async ({ page }) => {

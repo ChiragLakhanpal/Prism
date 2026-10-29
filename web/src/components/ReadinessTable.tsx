@@ -78,7 +78,7 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // 390 px the kinds' four cards stood 45 px shorter each, the Sources' fifteen 50.7 px and the hardest documents' five
 // 47.2 px. The hardest documents open inside their zone's body now, so in a 1024 px page area their table is narrower
 // and its five rows stood 16 px taller each.
-const ROW_HEIGHT = { kinds: "h-[7.956rem] @xl/page:h-[7.297rem]", sources: "h-[8.1958rem] @xl/page:h-[7.3125rem]", shelf: "h-[9.556rem] @xl/page:h-[7.6707rem]" } as const;
+const ROW_HEIGHT = { kinds: "h-[7.956rem] @xl/page:h-[7.297rem]", sources: "h-[8.3625rem] @xl/page:h-[7.3125rem]", shelf: "h-[9.556rem] @xl/page:h-[7.6707rem]" } as const;
 const CARD_HEIGHT = { kinds: "h-[13.873rem]", sources: "h-[12.9173rem]", shelf: "h-[18.975rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
@@ -111,6 +111,7 @@ export function ReadinessTable({
   spanName,
   headingId,
   closed,
+  after,
 }: {
   // A key for tests and screenshots: kinds, sources or shelf. It names the zone's data-section too.
   id: string;
@@ -130,6 +131,9 @@ export function ReadinessTable({
   headingId?: string;
   // A table most readers skip: a closed row with its one sentence and its Show or Hide button (ticket 104).
   closed?: { summary: ReactNode; toggle: ZoneToggle };
+  // More of the closed row's own content after its table, such as the plan pages the layout parser couldn't read under
+  // the hardest documents (ticket 58).
+  after?: ReactNode;
 }) {
   const generatedId = useId();
   const titleId = headingId ?? generatedId;
@@ -320,6 +324,7 @@ export function ReadinessTable({
           {cardsNote}
           {table}
           {cards}
+          {after}
         </div>
       </TaskZone>
     );

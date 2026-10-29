@@ -40,8 +40,8 @@ const whole = (value: number) => formatNumber(value, { compact: false });
 // sentence ("open national", "3 lots", "prequalification").
 export function optionWords(lever: string, value: string | number): { label: string; inSentence: string } {
   if (lever === "lots") {
-    const text = what.lots(Number(value));
-    return { label: text, inSentence: text };
+    const count = Number(value);
+    return { label: what.lots(count), inSentence: what.lotsInSentence(count, formatCount(count)) };
   }
   const labels = lever === "market_approach" ? what.label_market_approach : what.label_prequalification;
   const inSentence = lever === "market_approach" ? what.inSentence_market_approach : what.inSentence_prequalification;
@@ -507,7 +507,12 @@ function TestYearTable({ result, captionRef }: { result: EstimateResult; caption
         noun: y.noun,
         one: y.nounOne,
         total: years.length,
-        text: years.length === 1 ? y.countOne(String(first)) : y.count(formatCount(years.length), String(first), String(last)),
+        text:
+          years.length === 1
+            ? y.countOne(String(first))
+            : years.length === 2
+              ? y.countBoth(String(first), String(last))
+              : y.count(formatCount(years.length), String(first), String(last)),
       }}
       columns={columns}
       rowHeader="year"

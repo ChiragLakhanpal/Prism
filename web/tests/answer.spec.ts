@@ -156,7 +156,7 @@ test("hovering or focusing a marker shows the evidence card: stratum, title, hig
   const card = page.locator("[data-evidence-card]");
   await expect(card).toBeVisible();
   await expect(card).toContainText("Why · evaluation");
-  await expect(card).toContainText("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(card).toContainText("ICR, Rajasthan Road Sector Modernization, paragraph 54");
   await expect(card.locator("mark")).toHaveText("Highlight starts. 108 of 328 cases had to go through rebidding Highlight ends.");
   await expect(card.locator("[data-source]")).toHaveText(
     "Source: Implementation Completion and Results Report, P130164, October 10, 2019, paragraph 54, page 23.",
@@ -175,7 +175,11 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
 
   await marker(page, 1).click();
 
-  await expect(drawer(page)).toHaveAccessibleName("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
+  // One caption under the title says what kind of source it is, by the report's type, and a hairline closes the head
+  // at rest (ticket 58; the 58 design review, B2).
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
+  expect(await drawer(page).locator("[data-drawer-header]").evaluate((head) => getComputedStyle(head).borderBottomColor)).not.toBe("rgba(0, 0, 0, 0)");
   await expect(drawer(page)).toHaveAttribute("aria-modal", "false");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
   await expect(drawer(page).getByRole("heading", { level: 2 })).toBeFocused();
@@ -253,7 +257,11 @@ test("at 1024 px the drawer takes 40 percent of the window, 410 px, and the page
 test("reloading with the evidence parameter reopens the drawer at that source, with no claim and no switcher", async ({ page }) => {
   await open(page, { path: `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}` });
 
-  await expect(drawer(page)).toHaveAccessibleName("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
+  // One caption under the title says what kind of source it is, by the report's type, and a hairline closes the head
+  // at rest (ticket 58; the 58 design review, B2).
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
+  expect(await drawer(page).locator("[data-drawer-header]").evaluate((head) => getComputedStyle(head).borderBottomColor)).not.toBe("rgba(0, 0, 0, 0)");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
   await expect(drawer(page).locator("[data-claim]")).toHaveCount(0);
   await expect(drawer(page).getByRole("tablist")).toHaveCount(0);
@@ -379,6 +387,40 @@ test("the evidence drawer enters with opacity and 12 px from the right over 160 
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect(await moves()).toEqual([]);
 });
+
+// Ticket 58: a STEP reference in an answer's sentence is a name, not a quote. The agent writes it with no quote marks,
+// and the sentence sets the reference of a record it cites in Roboto Mono 500, as an ID in a sentence, in one box that
+// moves to the next line whole and keeps the comma after it, so it never breaks after "KE-" or "571738-". A reference
+// with a space in it, such as a county's, may break only at that space.
+for (const width of [1440, 390]) {
+  test(`at ${width} px a STEP reference in a sentence is set in Roboto Mono with no quote marks and never breaks inside itself`, async ({ page }) => {
+    await open(page, { stream: "ask-ke-nwwda-541055-past-range.sse", width });
+    await askFromTheBox(page);
+    await landed(page);
+
+    const another = panel(page).locator("[data-sentence-text='2']");
+    await expect(another).toContainText("Another, KE-ICTA-571738-CW-RFB, was still open too.");
+    const reference = another.locator("[data-step-reference]");
+    await expect(reference).toHaveText("KE-ICTA-571738-CW-RFB,");
+    const mono = reference.locator(".font-mono");
+    expect(await mono.evaluate((part) => [getComputedStyle(part).fontFamily.split(",")[0], getComputedStyle(part).fontWeight])).toEqual([
+      '"Roboto Mono"',
+      "500",
+    ]);
+    // One box, on one line, with its comma.
+    const boxes = (sentence: typeof another) =>
+      sentence.locator("[data-step-reference] .inline-block").evaluateAll((all) => all.map((box) => [box.textContent, getComputedStyle(box).display, box.getClientRects().length]));
+    expect(await boxes(another)).toEqual([["KE-ICTA-571738-CW-RFB,", "inline-block", 1]]);
+
+    const newest = panel(page).locator("[data-sentence-text='1']");
+    await expect(newest).toContainText("The newest, KE-MIGORI COUNTY-532367-CW-RFB, was still open 13 days after its notice.");
+    expect(await boxes(newest)).toEqual([
+      ["KE-MIGORI", "inline-block", 1],
+      ["COUNTY-532367-CW-RFB,", "inline-block", 1],
+    ]);
+    await expect(panel(page).locator("[data-sentence-text]")).not.toContainText(['"']);
+  });
+}
 
 test("under reduced motion the answer's block, the check line's tick, the check window and the evidence drawer arrive with no transition", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -570,7 +612,7 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   // An answer's number is the Number tooltip's Plain variant (ticket 96): what it matched and where that came from, and
   // no action line, because the marker beside the sentence opens the source.
   await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
-    "Matches the section Project Development Objective Indicators of the status report for P130164.",
+    "Matches the Project Development Objective Indicators section of the status report for P130164.",
   );
   await expect(page.getByRole("tooltip").locator("[data-num-from]")).toHaveText(
     "From the Implementation Status and Results Report for P130164 of February 22, 2014.",
@@ -591,8 +633,11 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
     "Implementation Status and Results Report · Rajasthan Road Sector Modernization (P130164) · February 22, 2014 · " +
-      "Section Project Development Objective Indicators · PDF page 2 of 4",
+      "Project Development Objective Indicators · PDF page 2 of 4",
   );
+  // A section named in words stands alone, as the title names it; only a numbered one takes "Section" (the 58
+  // critique, round 2, follow-up 10).
+  await expect(drawer(page).locator("[data-meta-line]")).not.toContainText("Section Project");
   // The project's name keeps its ID beside it: the line never breaks between "Modernization" and "(P130164)".
   // The ID is a link to its project page (ticket 21), padded above and below for its hit area, so the two
   // are compared by the middles of their boxes.
@@ -635,7 +680,8 @@ test("a section's closing ID never breaks from its name in the card's source lin
   expect(await text(page.locator("[data-evidence-card] [data-source]"))).toContain("Annex\u00a01.A,");
   await annex.click();
   await expect(drawer(page).getByRole("tab").nth(1)).toHaveAttribute("aria-selected", "true");
-  expect(await text(drawer(page).getByRole("heading", { level: 2 }))).toContain("section Annex\u00a01.A");
+  // "section" keeps its ID too (the 58 critique, follow-up 10).
+  expect(await text(drawer(page).getByRole("heading", { level: 2 }))).toContain("section\u00a0Annex\u00a01.A");
   expect(await text(drawer(page).getByRole("tab").nth(1))).toBe("ICR, Annex\u00a01.A");
   expect(await text(drawer(page).getByRole("tab").first())).toBe("ISR, Project Development Objective Indicators");
 });
@@ -1002,7 +1048,7 @@ test("the answer reflows at 320 px with nothing scrolling sideways", async ({ pa
 
 test("at 320 px a long section name wraps in the sheet's meta line, and the page part keeps to one line", async ({ page }) => {
   await open(page, { width: 320, path: `/projects/P130164?evidence=${encodeURIComponent(ISR_S4)}`, evidence: "evidence-isr-p130164-s4.json" });
-  await expect(drawer(page).locator("[data-meta-line]")).toContainText("Section Project Development Objective Indicators");
+  await expect(drawer(page).locator("[data-meta-line]")).toContainText("Project Development Objective Indicators");
 
   expect(await sheetScrollsSideways(page)).toBe(false);
   const pagePart = drawer(page).locator("[data-meta-part]").filter({ hasText: "PDF page 2 of 4" });

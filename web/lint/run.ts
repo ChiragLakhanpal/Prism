@@ -57,7 +57,11 @@ function options(argv: string[]) {
       given.registry ??
       (custom
         ? []
-        : ["sources.toml", "package_form.toml", "lessons.toml", "editions.toml", "roles.toml", "criteria_items.toml"].map((name) => join(REPO, "config", name))),
+        : // thresholds.toml since ticket 58: the computed note's source line ([review] and [market_approach] source)
+          // reaches the screen word for word.
+          ["sources.toml", "package_form.toml", "lessons.toml", "editions.toml", "roles.toml", "criteria_items.toml", "thresholds.toml"].map((name) =>
+            join(REPO, "config", name),
+          )),
     design: given.design?.[0] ?? join(REPO, "DESIGN.md"),
     custom,
   };
@@ -67,9 +71,9 @@ function options(argv: string[]) {
 // number counts, fix sentences, collections and data sources. Addresses and ids are left out. The package
 // form schema's (ticket 15) are its groups' labels and names, each field's label and add_label, its
 // options' labels and a count's units; STEP's own values and field names are left out, as they are words
-// Strata copies word for word.
+// Strata copies word for word. The thresholds file's source and a check's not_found are read on screen too (ticket 58).
 const REGISTRY_WORDS =
-  /\b(label|phrase|add_label|unit|unit_one|noun|noun_one|covers|note|sentence|counts|counts_one|lack|name|short|publisher|origin|data_source)\s*=\s*"([^"]*)"/g;
+  /\b(label|phrase|add_label|unit|unit_one|noun|noun_one|covers|note|sentence|counts|counts_one|lack|not_found|name|short|publisher|origin|data_source|source)\s*=\s*"([^"]*)"/g;
 
 function registryWords(text: string): { line: number; text: string }[] {
   return text.split("\n").flatMap((line, index) =>

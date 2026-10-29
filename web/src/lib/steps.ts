@@ -118,6 +118,9 @@ export type StepListRow = {
   previous_key: string | null;
   basis: "delay" | "duration";
   records_through: string | null;
+  // The page's as-of date, kept apart from the tool's records_through: the finding and the note name it, as the
+  // section's rows do, and the source line reads "as of" it (the 58 review, round 2, B1).
+  as_of: string | null;
   sources: string[];
   abstain_all: boolean;
   min_comparables: number;
@@ -127,10 +130,14 @@ export type LongestListRow = {
   family: string;
   longest: NonNullable<StepDates["longest"]>;
   records_through: string | null;
+  as_of: string | null;
   sources: string[];
 };
 
-export function stepList(packageKey: string, result: StepsResult, index: number): EvidenceEvent {
+// asOf is the page's as-of date. A list keeps it beside the records' own date: the drawer's finding and note name it, as
+// the section's rows do, so a row and the drawer it opens name one date (the 58 review, P6), and the source line says
+// "as of" it, as the section's line does, never that the records run through it (the 58 review, round 2, B1).
+export function stepList(packageKey: string, result: StepsResult, index: number, asOf: string | null = null): EvidenceEvent {
   const dates = result.step_dates!;
   const row: StepListRow = {
     family: dates.family!,
@@ -138,6 +145,7 @@ export function stepList(packageKey: string, result: StepsResult, index: number)
     previous_key: index > 0 ? dates.steps[index - 1].step_key : null,
     basis: dates.basis!,
     records_through: result.records_through,
+    as_of: asOf,
     sources: result.sources.map((source) => source.dataset_name),
     abstain_all: dates.abstain_all !== null,
     min_comparables: dates.min_comparables,
@@ -145,23 +153,24 @@ export function stepList(packageKey: string, result: StepsResult, index: number)
   return { id: stepListId(packageKey, dates.steps[index].step_key), kind: "steps", tool: "estimate_time", stratum: "How", short_name: null, row, highlights: [] };
 }
 
-export function longestList(packageKey: string, result: StepsResult): EvidenceEvent {
+export function longestList(packageKey: string, result: StepsResult, asOf: string | null = null): EvidenceEvent {
   const dates = result.step_dates!;
   const row: LongestListRow = {
     family: dates.family!,
     longest: dates.longest!,
     records_through: result.records_through,
+    as_of: asOf,
     sources: result.sources.map((source) => source.dataset_name),
   };
   return { id: longestListId(packageKey), kind: "steps-longest", tool: "estimate_time", stratum: "How", short_name: null, row, highlights: [] };
 }
 
 // Hold every list of the answer on screen, so a count opens its list at once and a link to a list reopens it.
-export function rememberStepLists(packageKey: string, result: StepsResult) {
+export function rememberStepLists(packageKey: string, result: StepsResult, asOf: string | null = null) {
   const dates = result.step_dates;
   if (!dates?.family) return;
   dates.steps.forEach((step, index) => {
-    if (!step.is_anchor) remember(stepList(packageKey, result, index));
+    if (!step.is_anchor) remember(stepList(packageKey, result, index, asOf));
   });
-  if (dates.longest) remember(longestList(packageKey, result));
+  if (dates.longest) remember(longestList(packageKey, result, asOf));
 }

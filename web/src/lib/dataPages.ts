@@ -22,6 +22,8 @@ export type Segment =
       role?: "missing" | "days" | null;
       // For a shortfall: what its records lack, so its tooltip can name them.
       lack?: string | null;
+      // A check of what I found: what I found none of, which the tooltip says instead of what the records lack.
+      not_found?: string | null;
     };
 
 export type MeasureRow = {

@@ -163,9 +163,11 @@ function Summary({ item, numbers, onRetried }: { item: ReviewItem; numbers: Map<
     focusFirst.current = false;
   }, [shown]);
 
+  // A decided record whose summary was never written will not get one, so it never asks (ticket 58).
+  const decided = item.stage === "decided";
   // While the writer is still writing, ask every 15 seconds while the tab is visible, for at most 10 minutes.
   useEffect(() => {
-    if (shown.status !== "writing") return;
+    if (shown.status !== "writing" || decided) return;
     const started = Date.now();
     const timer = window.setInterval(async () => {
       if (Date.now() - started > item.limits.summary_poll_minutes * 60_000) return window.clearInterval(timer);
@@ -181,7 +183,7 @@ function Summary({ item, numbers, onRetried }: { item: ReviewItem; numbers: Map<
       }
     }, item.limits.summary_poll_seconds * 1000);
     return () => window.clearInterval(timer);
-  }, [shown.status, item.item_id, item.limits]);
+  }, [shown.status, item.item_id, item.limits, decided]);
 
   const open = { id: evidenceIn(here.search), sentence: null };
   let body: ReactNode;
@@ -202,7 +204,8 @@ function Summary({ item, numbers, onRetried }: { item: ReviewItem; numbers: Map<
         </Button>
       </div>
     );
-  else if (shown.status === "writing") body = <p className="text-body text-ink-muted">{r.summaryWriting}</p>;
+  else if (shown.status === "writing")
+    body = <p className="text-body text-ink-muted">{decided ? r.summaryNoneOnRecord : r.summaryWriting}</p>;
   else if (shown.status === "nothing_to_add") body = <p className="text-body text-ink">{r.summaryNothing}</p>;
   else if (shown.status === "failed")
     body = (

@@ -393,7 +393,12 @@ function CostTable({ cost, open: openId, onOpen, titleId }: {
       title={<CostTitle cost={cost} />}
       labelledBy={titleId}
       countLead
-      count={{ noun: "", total: cost.counts.m, text: cost.counts.m === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatCount(cost.counts.m)) }}
+      count={{
+        noun: "",
+        total: cost.counts.m,
+        text:
+          cost.counts.m === 1 ? words.tableCountOne : cost.counts.m === 2 ? words.tableCountBoth : words.tableCount.replace("{m}", formatCount(cost.counts.m)),
+      }}
       columns={columns}
       state={{ status: "ready", rows }}
       rowHeader="package"
@@ -465,10 +470,11 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
     <p className="max-w-prose text-body text-ink" data-cost-intro>
       <Fill
         template={estimate ? words.intro : words.introNoEstimate}
+        // An amount never breaks between "US$14" and "million" (ticket 58).
         slots={{
-          estimate: estimate ? usd(estimate) : "",
-          low: usd(cost.band.low_usd),
-          high: usd(cost.band.high_usd),
+          estimate: estimate ? <span className="whitespace-nowrap">{usd(estimate)}</span> : "",
+          low: <span className="whitespace-nowrap">{usd(cost.band.low_usd)}</span>,
+          high: <span className="whitespace-nowrap">{usd(cost.band.high_usd)}</span>,
         }}
       />
     </p>

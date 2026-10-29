@@ -16,7 +16,8 @@ const API = `/api/packages/${REF}`;
 const FINDING = "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.";
 // Lane 2 (ticket 26): the demo package's estimated amount, US$1,230,000.00, lies outside what the fixture's model
 // learned from (tests/fixtures/api/estimate-ke-nwwda-541055.json), so lane 2 says so in the first person.
-const OUTSIDE_TRAINING = "I'm not giving a time estimate: this package is larger than any package my model learned from.";
+// No colon joins the two halves (ticket 58; DESIGN.md section 7, rule 16).
+const OUTSIDE_TRAINING = "I'm not giving a time estimate, because this package is larger than any package my model learned from.";
 
 type Answer = { status?: number; body: string };
 type Comparables = { rows: { step_reference: string; months: number; still_open: boolean }[]; [key: string]: unknown };
@@ -134,7 +135,10 @@ test("the workspace names the package, lists its facts in STEP's field names, an
   await expect(page).toHaveTitle(`Package ${REF} | Strata`);
   const crumbs = main.getByRole("navigation", { name: "Breadcrumb" });
   await expect(crumbs.getByRole("link", { name: "Packages" })).toHaveAttribute("href", "/packages");
-  await expect(crumbs.getByRole("link", { name: "Water and Sanitation Development Project (P156634)" })).toHaveAttribute("href", "/projects/P156634");
+  // The crumb names the project as Check a plan's crumb and the project's header do, by the server's display_name (the
+  // 58 critique, rounds 1 to 3, "one project name").
+  await expect(crumbs.getByRole("link", { name: "Water and Sanitation Development (P156634)" })).toHaveAttribute("href", "/projects/P156634");
+  await expect(crumbs).not.toContainText("Development Project");
   const facts = main.locator("[data-package-facts]");
   for (const [label, value] of [
     ["Method", "Request for Bids"],
@@ -210,6 +214,10 @@ test("the chart draws each comparable as a dot on a month axis, hollow if still 
       `3.3 to 7.9 months, the middle one took 4.4, and 8 in 10 were signed within 9.1. ${OUTSIDE_TRAINING} A line marks 1.5 months, ` +
       "and 2 of 49 were signed within it. I left out the three canceled packages, because a canceled package was never signed and is not still open.",
   );
+  // The lane's key writes its counts as the alt text does, one to nine in words (ticket 58).
+  await expect(chart).toContainText("45 signed");
+  await expect(chart).toContainText("four still open");
+  await expect(chart).not.toContainText("4 still open");
 });
 
 test("dragging the plan line, pressing arrow keys on it or typing months updates the readout from the returned rows, and the table agrees", async ({ page }) => {
@@ -497,7 +505,7 @@ test("below 768 px the table's cards say what Months counts once, on the count l
   await expect(cards).not.toContainText("so far if still open");
   await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeVisible();
   // The definition is its own element beside the count, never run on into the count's sentence.
-  await expect(page.locator("[data-comparables-table] p[data-numbers]").first()).toHaveText("Showing 1–20 of 49 packages");
+  await expect(page.locator("[data-comparables-table] p[data-numbers]").first()).toHaveText("Showing 1 to 20 of 49 packages.");
 
   // At 1024 px the zones take the whole frame beside the rail, so the table's frame has its 49rem and shows its rows.
   await page.setViewportSize({ width: 1024, height: 900 });
@@ -882,14 +890,16 @@ test("above 60 comparables the lane draws 20 quantile dots, and the table still 
   await expect(page.getByRole("group", { name: /^20 dots, each 1 in 20 of the 103 comparable packages$/ })).toBeVisible();
   // Open packages are not drawn one by one here, so the key states their count in words, with no hollow glyph.
   const chart = page.locator("[data-chart-drawing]");
-  await expect(chart).toContainText("Each dot is 1 in 20 of the 103 packages.");
+  // The subtitle says what a dot is, once: the key under the lane does not repeat it (ticket 58).
+  await expect(section(page)).toContainText("Each dot is 1 in 20 of the 103 packages, placed by the months");
+  await expect(chart).not.toContainText("Each dot is 1 in 20");
   await expect(chart).toContainText("Eight still open.");
   await expect(chart.locator(":scope > circle")).toHaveCount(0);
   await section(page).getByRole("button", { name: "Show the table" }).click();
   await expect(page.locator("[data-comparables-table] table tbody tr")).toHaveCount(20);
-  await expect(page.locator("[data-comparables-table]")).toContainText("Showing 1–20 of 103 packages");
+  await expect(page.locator("[data-comparables-table]")).toContainText("Showing 1 to 20 of 103 packages");
   await page.getByRole("button", { name: "Next 20" }).click();
-  await expect(page.locator("[data-comparables-table]")).toContainText("Showing 21–40 of 103 packages");
+  await expect(page.locator("[data-comparables-table]")).toContainText("Showing 21 to 40 of 103 packages");
 });
 
 test("a quantile dot the curve never reached is pinned at the plot's edge, so the axis stays readable", async ({ page }) => {
@@ -937,7 +947,7 @@ test("section 1's finding opens with Strata's byline, its abstention with Strata
     estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
   });
   await ready(page);
-  await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range: only seven comparable packages. Here are all seven.");
+  await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range from only seven comparable packages. Here are all seven.");
   await expect(bylines).toHaveText(["Strata held back"]);
 });
 
@@ -950,7 +960,7 @@ test("below 20 comparables there is no range and no share: the copy file's sente
 
   // The finding: the first-person sentence that holds back (ticket 101).
   await expect(section(page).locator("[data-finding]")).toHaveText(
-    "I'm not giving a range: only seven comparable packages. Here are all seven.",
+    "I'm not giving a range from only seven comparable packages. Here are all seven.",
   );
   await expect(page.locator("[data-chart-drawing] [data-dot]")).toHaveCount(7);
   await expect(page.locator("[data-chart-drawing] :is([data-band], [data-middle], [data-in10])")).toHaveCount(0);
@@ -979,7 +989,7 @@ test("when packages matched but none could be measured, the reasons say how many
     "Of the six, two lacked the STEP reference that links notice to contract and four had no specific procurement notice in the records I hold.",
   );
   await expect(section(page)).not.toContainText("Based on");
-  await expect(section(page).getByRole("link", { name: /^See data readiness/ })).toBeVisible();
+  await expect(section(page).getByRole("link", { name: /^See Data readiness/ })).toBeVisible();
   // The count of matching packages can be checked; the counts of what they lacked are plain words, since the sentence
   // says what each one counts and a shared tooltip would say the same of all three (ticket 96).
   const line = section(page).locator("[data-coverage-line]");
@@ -1012,6 +1022,20 @@ test("when the whole page fails, the reference is the heading and is not repeate
   await expect(page.locator("[data-page-head] [data-head-alert]").getByRole("button", { name: "Try again" })).toBeVisible();
 });
 
+// Ticket 58 (the 12 critique, round 11): the no-match state's link and the coverage line's name Data readiness the same
+// way, so one screen never calls the page two names. No recording matches nothing, so the past range's answer is
+// emptied in memory.
+test("with no comparable package the link names Data readiness as the coverage line does", async ({ page }) => {
+  const none = JSON.parse(await recorded("comparables-ke-nwwda-541055.json"));
+  none.rows = [];
+  none.abstention = { reason: "no_comparables" };
+  await openPackage(page, { comparables: { body: JSON.stringify(none) } });
+
+  await expect(section(page)).toContainText("No past package matched this one, so I have nothing to compare it with.");
+  await expect(section(page).getByRole("link", { name: "See Data readiness for these sources" })).toBeVisible();
+  await expect(section(page)).not.toContainText("Open Data readiness");
+});
+
 test("a reference no plan lists stays whole in the not-found sentence at phone width", async ({ page }) => {
   await openPackage(page, { width: 390, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
   const reference = page.locator("main p", { hasText: "No package in Strata has the reference" }).locator(".font-mono");
@@ -1019,6 +1043,10 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
   await expect(reference).toHaveText(REF);
   // The lines its text sits on: one.
   expect(await lineCount(reference)).toBe(1);
+  // The next step is the box, which opens a project by its ID or name (ticket 58).
+  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" })).toContainText(
+    "Check the reference in STEP, or find its project in the box at the bottom of the page.",
+  );
 });
 
 test("a reference too long for the line breaks after a hyphen, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {
@@ -1771,7 +1799,7 @@ for (const [width, height] of [
 
     await all.click();
     await expect(title).toHaveText("All 49 comparable packages, shortest first.");
-    await expect(count).toHaveText("Showing 1–20 of 49 packages");
+    await expect(count).toHaveText("Showing 1 to 20 of 49 packages.");
     await expect(count).toBeFocused();
     await expect(refs).toHaveCount(20);
     await expect(table.getByRole("button", { name: "Show all 49" })).toHaveCount(0);
@@ -1806,7 +1834,7 @@ test("only a pressed number filters the table: hidden and shown again, it lists 
   await expect(count).toHaveText("Showing the 2 of 49 packages signed within 1.5 months.");
   await section(page).getByRole("button", { name: "Hide the table" }).click();
   await section(page).getByRole("button", { name: "Show the table" }).click();
-  await expect(count).toHaveText("Showing 1–20 of 49 packages");
+  await expect(count).toHaveText("Showing 1 to 20 of 49 packages.");
 });
 
 test("each number in the finding and the summary says what a click lands on, and every count line states only the number pressed", async ({ page }) => {
@@ -1825,7 +1853,7 @@ test("each number in the finding and the summary says what a click lands on, and
   );
   const summary = section(page).locator("[data-summary]");
   for (const [where, name, act, line] of [
-    ["finding", "49", "Select to see all 49.", "Showing 1–20 of 49 packages"],
+    ["finding", "49", "Select to see all 49.", "Showing 1 to 20 of 49 packages."],
     ["summary", "3.3", "Select to see the packages in the middle half.", "Showing the packages in the middle half, from 3.3 to 7.9 months."],
     ["summary", "4.4", "Select to see the middle package.", "Showing the middle package, at 4.4 months."],
     ["summary", "9.1", "Select to see the packages signed within 9.1 months.", "Showing the packages signed within 9.1 months."],
@@ -1839,7 +1867,7 @@ test("each number in the finding and the summary says what a click lands on, and
     await expect(count).toHaveText(line);
     await expect(count).toBeFocused();
     // The table's own range, "1–20", is the rows on this page; every other figure is one the tool returned.
-    const figures = (await count.innerText()).replace("Showing 1–20 of", "Showing of").match(/\d+(\.\d+)?/g) ?? [];
+    const figures = (await count.innerText()).replace("Showing 1 to 20 of", "Showing of").match(/\d+(\.\d+)?/g) ?? [];
     for (const figure of figures) expect(returned.has(figure), `${figure} in "${line}"`).toBe(true);
     await page.mouse.move(0, 0);
   }
@@ -1873,7 +1901,7 @@ test("the middle half and the middle list only signed packages, and a middle two
   await median.hover();
   await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to see all 49.");
   await median.click();
-  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing 1–20 of 49 packages");
+  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing 1 to 20 of 49 packages.");
 });
 
 test("the plan's months in the finding open the plan row in the drawer", async ({ page }) => {
@@ -1968,7 +1996,7 @@ test("below 20 comparables the sentence that holds back is zone 1's finding, the
   });
   await ready(page);
   const finding = section(page).locator("[data-finding]");
-  await expect(finding).toHaveText("I'm not giving a range: only seven comparable packages. Here are all seven.");
+  await expect(finding).toHaveText("I'm not giving a range from only seven comparable packages. Here are all seven.");
   expect(await finding.evaluate((el) => [getComputedStyle(el).fontWeight, getComputedStyle(el).fontSize])).toEqual(["300", "28px"]);
   const count = section(page).locator("[data-few-count]");
   await expect(count).toHaveText("None of the seven comparable packages were signed within the plan's 1.5 months.");
@@ -1978,7 +2006,7 @@ test("below 20 comparables the sentence that holds back is zone 1's finding, the
   await expect(section(page).getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   await expect(section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody tr, li")).toHaveCount(7);
   // One to nine in words, as the finding writes the count (DESIGN.md section 7, rule 12; ticket 101's design review).
-  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing all seven packages");
+  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing all seven packages.");
 });
 
 // How far apart, in pixels, the tops of a phrase's characters sit inside an element, with a no-break space read as a

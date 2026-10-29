@@ -7,6 +7,7 @@ import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { CitationMarker } from "../components/CitationMarker";
 import { EvidenceDrawerView } from "../components/EvidenceDrawer";
+import { Unbroken } from "../components/Fill";
 import { FootStrip } from "../components/FootStrip";
 import { Num } from "../components/Num";
 import { PageHead, type FactsLine } from "../components/PageHead";
@@ -203,7 +204,7 @@ export function Sequence() {
         }
         sectionKey="risks"
       />
-      <TaskZone number={4} name={z.approach.name} tag={z.approach.tag} summary={z.approach.sentence} sectionKey="approach" />
+      <TaskZone number={4} name={z.approach.name} tag={z.approach.tag} summary={<Unbroken text={z.approach.sentence} />} sectionKey="approach" />
       <StageLabel>{z.stages.tender}</StageLabel>
       <Toggled number={5} words={z.criteria} startOpen sectionKey="criteria" />
     </div>

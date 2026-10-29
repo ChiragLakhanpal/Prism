@@ -204,7 +204,7 @@ Below 1024px the sidebar's content opens from the left as a modal dialog named "
 ```markdown
 Brand navy `#002244` (`navy`) is used only for the top bar, which carries the logo and the one box, as The Loop keeps it to "main navigation and WB logo"; text on it is white (about 16:1). Brand blue `#009fda` is used sparingly and never for text.
 
-On the bar (Strata, the shell redesign), the view switch has a 1px white border, hovers to a `primary` fill and shows `focus-on-dark`; the box is `surface` with no border, since its edge is 16:1 on navy, and shows `focus-on-dark` around it while anything inside it has focus. A control inside the box shows `focus`.
+On the bar (Strata, the shell redesign), the view switch has a 1px white border, hovers to a `primary-hover` fill and shows `focus-on-dark`; the box is `surface` with no border, since its edge is 16:1 on navy, and shows `focus-on-dark` around it while anything inside it has focus. A control inside the box shows `focus`.
 ```
 
 If the deck's second draft (`deck/second-draft`) has merged and the user kept its navy slides, the first sentence keeps the deck's clause, as the deck session and the orchestrator agreed (`../deck-ticket.md`): "is used only for the top bar, which carries the logo and the one box, and the deck's navy slides, which carry the white logo (section 4, Deck frame)". Whichever of the two merges second writes it, and block 4's principle 2 follows.

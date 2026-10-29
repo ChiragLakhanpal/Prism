@@ -83,9 +83,12 @@ function apiPath(pid: string, doc: string, search: string): string {
   return `/api/projects/${encodeURIComponent(pid)}/documents/${encodeURIComponent(doc)}${rest ? `?${rest}` : ""}`;
 }
 
-// "ICR of Oct 10, 2019", the last crumb.
+// "ICR of Oct 10, 2019", the last crumb, or a plan by its agency, "Kenya National Highways Authority, plan of Sep 24,
+// 2026", as the Documents tab names it.
 function crumbName(document: Doc): string {
-  return fill(words.crumb, { doc: words.short[document.type] ?? words.short.other, date: document.document_date ? table(document.document_date) : "" });
+  const date = document.document_date ? table(document.document_date) : "";
+  if (document.type === "procurement_plan" && document.agency && date) return fill(words.crumbPlan, { agency: document.agency, date });
+  return fill(words.crumb, { doc: words.short[document.type] ?? words.short.other, date });
 }
 
 function heading(document: Doc): string {
@@ -202,8 +205,11 @@ export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; block
   const passages = answer.passages ?? [];
   const highlight = answer.highlight;
   let section: string | null = null;
+  // A plan's STEP rows take the column's width, so each Activity Reference No. stays whole (the 58 critique, round
+  // 3); the text keeps its reading measure.
+  const planRows = (answer.plan_rows ?? []).length > 0;
   return (
-    <div className="flex max-w-[72ch] flex-col gap-4" data-passages>
+    <div className={cx("flex flex-col gap-4", !planRows && "max-w-[72ch]")} data-passages>
       {passages.map((passage) => {
         const newSection = passage.section_path && passage.section_path !== section ? passage.section_path : null;
         section = passage.section_path ?? section;
@@ -215,7 +221,7 @@ export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; block
         );
         const marked = highlight?.passage_id === passage.passage_id;
         return (
-          <div key={passage.passage_id} className="flex flex-col gap-1">
+          <div key={passage.passage_id} className="flex max-w-[72ch] flex-col gap-1">
             {newSection && <p className="text-caption text-ink-muted">{sectionCaption(newSection)}</p>}
             {marked ? (
               <Highlighted
@@ -233,9 +239,9 @@ export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; block
       {(answer.tables ?? []).map((found, index) => (
         <RowsTable key={index} title={found.title} page={answer.page ?? 1} rows={found.rows} highlight={highlight?.passage_id ?? null} blockRef={blockRef} />
       ))}
-      {(answer.plan_rows ?? []).length > 0 && <PlanRows answer={answer} />}
+      {planRows && <PlanRows answer={answer} />}
       {(answer.page_text ?? []).map((line, index) => (
-        <p key={index} className="text-body wrap-anywhere text-ink">
+        <p key={index} className="max-w-[72ch] text-body wrap-anywhere text-ink">
           {line}
         </p>
       ))}
@@ -362,8 +368,9 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
           </caption>
           <thead className="bg-surface-2">
             <tr>
-              {[columns.activity, columns.method, columns.estimated, columns.status].map((head, index) => (
-                <th key={index} scope="col" className={cx("px-3 py-2 align-bottom font-semibold text-ink-heading", index === 2 ? "text-right" : "text-left")}>
+              {/* The Review column, as Check a plan has it, since the route returns each row's Review Type (ticket 58). */}
+              {[columns.activity, columns.method, columns.review, columns.estimated, columns.status].map((head, index) => (
+                <th key={index} scope="col" className={cx("px-3 py-2 align-bottom font-semibold text-ink-heading", index === 3 ? "text-right" : "text-left")}>
                   {head}
                 </th>
               ))}
@@ -373,12 +380,13 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
             {rows.map((row) => (
               <tr key={row.activity_reference_no} className="border-t border-line align-top">
                 <th scope="row" className="px-3 py-2 text-left font-normal">
-                  <span className="block font-mono font-medium wrap-anywhere text-ink">{row.activity_reference_no}</span>
+                  <span className="block font-mono font-medium whitespace-nowrap text-ink">{row.activity_reference_no}</span>
                   {row.description && <span className="mt-1 block text-ink">{drawable(row.description)}</span>}
                 </th>
                 <td className="px-3 py-2">{method(row)}</td>
+                <td className="px-3 py-2">{row.review_type ?? words.noReview}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{amount(row.estimated_amount_usd)}</td>
-                <td className="px-3 py-2">{row.process_status ?? copy.notInPlan}</td>
+                <td className="px-3 py-2">{row.process_status ?? words.noStatus}</td>
               </tr>
             ))}
           </tbody>
@@ -394,12 +402,16 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
               <dd className="text-small text-ink">{method(row)}</dd>
             </div>
             <div>
+              <dt className="text-caption text-ink-muted">{columns.review}</dt>
+              <dd className="text-small text-ink">{row.review_type ?? words.noReview}</dd>
+            </div>
+            <div>
               <dt className="text-caption text-ink-muted">{columns.estimated}</dt>
               <dd className="text-small text-ink tabular-nums">{amount(row.estimated_amount_usd)}</dd>
             </div>
             <div>
               <dt className="text-caption text-ink-muted">{columns.status}</dt>
-              <dd className="text-small text-ink">{row.process_status ?? copy.notInPlan}</dd>
+              <dd className="text-small text-ink">{row.process_status ?? words.noStatus}</dd>
             </div>
           </dl>
         </li>

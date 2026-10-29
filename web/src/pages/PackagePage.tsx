@@ -156,8 +156,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   } else {
     const facts = load.data.package;
     const ppsdPackage = { id: facts.step_reference, title: facts.description ?? facts.step_reference, step_reference: facts.step_reference };
-    const name = facts.project_name ? (
-      <Fill template={copy.breadcrumb.project} slots={{ name: facts.project_name, pid: mono(facts.project_id) }} />
+    // The project's name as Check a plan's crumb and the project's header give it (the 58 critique, round 3).
+    const projectName = facts.display_name ?? facts.project_name;
+    const name = projectName ? (
+      <Fill template={copy.breadcrumb.project} slots={{ name: projectName, pid: mono(facts.project_id) }} />
     ) : (
       <Fill template={copy.breadcrumb.projectId} slots={{ pid: mono(facts.project_id) }} />
     );

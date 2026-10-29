@@ -356,7 +356,7 @@ test("an amount summed over two credits has a marker for each, and the Money tab
   await page.keyboard.press("Escape");
   // The route says the loans data reports more disbursed and canceled than committed; the page never sums.
   await expect(summary.locator("[data-money-note]")).toHaveText(
-    "The loans and credits data reports more disbursed and canceled than committed for this project. I show each amount as it reports it.",
+    "In the loans and credits data, the amounts disbursed and canceled add up to more than the commitment. I show each amount as the data reports it.",
   );
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
@@ -506,14 +506,18 @@ test("P130164's Documents list the PAD, the ISRs, the ICR and the ICR Review re-
   await expect(plan.getByRole("link", { name: /^Procurement Plan of Jun 20, 2018$/ })).toHaveCount(0);
   await expect(plan.locator("td").nth(2)).toHaveText("Not read");
   await expect(icr.getByRole("link", { name: "Open the PDF of Implementation Completion and Results Report, October 10, 2019, on the World Bank's site (opens in a new tab)" })).toHaveAttribute("target", "_blank");
-  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 18 of 61 documents");
+  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 18 of 61 documents.");
 
   // A group's fold opens in place and keeps focus on its button.
   const more = list.getByRole("button", { name: "Show all 13" });
   await more.click();
   await expect(list.locator("[data-group=isr] tr[data-document]")).toHaveCount(13);
   await expect(list.getByRole("button", { name: "Show fewer" })).toBeFocused();
-  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents");
+  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents.");
+  // Every group open, the list shows every document and says "all" (the 58 review, round 2, follow-up 1).
+  await list.getByRole("button", { name: "Show all 15" }).click();
+  await list.getByRole("button", { name: "Show all 30" }).click();
+  await expect(page.locator("[data-documents-count]")).toHaveText("Showing all 61 documents.");
 });
 
 test("Documents keeps each date and count on one line, starts Pages read at a card's left edge, and names a document with no type", async ({ page }) => {
@@ -522,12 +526,18 @@ test("Documents keeps each date and count on one line, starts Pages read at a ca
   const body = JSON.parse(await recorded("documents-p130164.json"));
   const other = body.groups.find((group: { type: string }) => group.type === "other");
   other.documents[0].document_type = "";
+  // A plan whose agency I know names it in one phrase, "the ... plan of ...", not as two items (ticket 58). No
+  // P130164 plan is read, so one takes an agency here.
+  const plans = body.groups.find((group: { type: string }) => group.type === "procurement_plan");
+  const named = plans.documents.find((document: { document_id: string }) => document.document_id !== "30152361");
+  named.agency = "Northern Water Works Development Agency";
   await open(page, "/projects/P130164/documents", 1440, { "/api/projects/P130164/documents": { body: JSON.stringify(body) } });
   const list = page.locator("[data-documents=ready] [data-view=table]");
   await expect(list.locator("[data-document='32604339'] th")).toHaveText("Document of Nov 1, 2020");
   // A PDF link names its document's date once, in full (the 21 design review, round 3, F4).
   await expect(list.locator("[data-document='32604339']").getByRole("link", { name: "Open the PDF of the document of November 1, 2020, on the World Bank's site (opens in a new tab)" })).toHaveCount(1);
   await expect(list.locator("[data-document='30152361']").getByRole("link", { name: "Open the PDF of the Procurement Plan of June 20, 2018, on the World Bank's site (opens in a new tab)" })).toHaveCount(1);
+  await expect(list.locator(`[data-document='${named.document_id}']`).getByRole("link", { name: /^Open the PDF of the Northern Water Works Development Agency plan of [A-Z][a-z]+ \d{1,2}, \d{4}, on the World Bank's site \(opens in a new tab\)$/ })).toHaveCount(1);
 
   // One line box each, however narrow the column: an inline element has one client rect per line.
   const lines = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => element.getClientRects().length);
@@ -639,7 +649,7 @@ test("the drawer's Open at page 23 lands on the source view with paragraph 54 hi
   await expect(block).toBeFocused();
 
   await page.goBack();
-  await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toHaveText("ICR, Rajasthan Road Sector Modernization, paragraph 54");
 });
 
 test("Back from the source view restores the page with its answer and the drawer, with focus on the drawer's heading", async ({ page }) => {
@@ -740,6 +750,28 @@ test("a source page's table, or a plan's STEP rows, is a table in a frame a keyb
     const frame = main(page).getByRole("region", { name: caption });
     await expect(frame).toHaveAttribute("tabindex", "0");
     expect(await axe(page), `${path} at 1440 px`).toEqual([]);
+    if (path.includes(KENHA_PLAN)) {
+      // Ticket 58: the plan's own page says a blank Process status is blank, not that the activity is missing, and
+      // shows each row's Review as Check a plan does.
+      await expect(frame.locator("thead th")).toHaveText(["Activity", "Method and market approach", "Review", "Estimated (US$)", "Process status"]);
+      await expect(frame.locator("tbody tr").first().locator("td")).toContainText(["Prior"]);
+      await expect(frame.locator("tbody tr td:last-child")).toHaveText(Array(rows).fill("No status in the plan"));
+      await expect(frame).not.toContainText("Not in the plan");
+      // The last crumb names the plan by its agency, as the Documents tab does (the 58 critique, round 3, 5b).
+      await expect(page.getByRole("navigation", { name: "Breadcrumb" }).locator("[aria-current=page]")).toHaveText(
+        "Kenya National Highways Authority, plan of Sep 24, 2026",
+      );
+      // Each Activity Reference No. sits whole on one line, and the table takes the column's width rather than a
+      // reading measure (the 58 critique, rounds 2 and 3, follow-up 5a).
+      const references = frame.locator("tbody th .font-mono");
+      expect(await references.evaluateAll((all) => all.map((one) => one.getClientRects().length))).toEqual(Array(rows).fill(1));
+      const widths = await frame.evaluate((one) => {
+        const passages = one.closest("[data-passages]")!;
+        return { frame: Math.round(one.getBoundingClientRect().width), column: Math.round(passages.getBoundingClientRect().width), measure: getComputedStyle(passages).maxWidth };
+      });
+      expect(widths.measure).toBe("none");
+      expect(widths.frame).toBe(widths.column);
+    }
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 900 });
       await expect(frame).toBeHidden();
@@ -783,8 +815,9 @@ test("the Procurement tab says what changed in each agency's latest plan and lin
   const sentence = nwwda.locator("[data-changes-sentence]");
   await expect(sentence).toHaveText("The latest plan is the plan of October 9, 2026. Compared with the plan of March 5, 2026, it re-estimated two activities. See what changed");
   await expect(sentence.getByRole("link", { name: "See what changed" })).toHaveAttribute("href", `${NWWDA}/2026-10-09#changes`);
-  // Source lines on a project's own pages leave its ID out (DESIGN.md section 5, ProjectId).
-  await expect(nwwda.locator("[data-source]")).toHaveText(/^Source: World Bank documents and reports API, Procurement Plans listed for this project, through [A-Z][a-z]+ \d{1,2}, \d{4}\.$/);
+  // Source lines on a project's own pages leave its ID out (DESIGN.md section 5, ProjectId). The one line sits under
+  // the last agency's table (ticket 58).
+  await expect(page.locator("[data-agency] [data-source]")).toHaveText(/^Source: World Bank documents and reports API, Procurement Plans listed for this project, through [A-Z][a-z]+ \d{1,2}, \d{4}\.$/);
   await expect(page.locator("[data-agency=ministry-of-water-and-irrigation] [data-changes-sentence]")).toHaveText(
     "The latest plan is the plan of April 30, 2020. Compared with the plan of November 8, 2019, it added one activity and re-dated one. See what changed",
   );
@@ -843,7 +876,7 @@ test("an agency's version list shows the five newest and the baseline, and folds
   nwwda.shown_count = 5;
   await open(page, "/projects/P156634/procurement", 1440, { ...(await p156634()), "/api/projects/P156634": { body: JSON.stringify(body) } });
   const block = page.locator("[data-agency=northern-water-works-development-agency]");
-  await expect(block.getByText("Showing 5 of 7 versions")).toBeVisible();
+  await expect(block.getByText("Showing 5 of 7 versions.")).toBeVisible();
   await expect(block.locator("[data-table-view=table] tbody th").nth(2)).toHaveText("Plan of Jul 21, 2025 Baseline");
   const more = block.getByRole("button", { name: "Show all 7 versions" });
   await expect(more).toHaveAttribute("aria-expanded", "false");
@@ -851,7 +884,7 @@ test("an agency's version list shows the five newest and the baseline, and folds
   await more.click();
 
   await expect(block.locator("[data-table-view=table] tbody tr")).toHaveCount(7);
-  await expect(block.getByText("Showing all 7 versions")).toBeVisible();
+  await expect(block.getByText("Showing all seven versions.")).toBeVisible();
   const fewer = block.getByRole("button", { name: "Show fewer versions" });
   await expect(fewer).toBeFocused();
   await expect(fewer).toHaveAttribute("aria-expanded", "true");
@@ -861,7 +894,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   const unrecorded = await open(page, "/projects/P156634/procurement", 1440, await p156634());
   const packages = page.locator("[data-packages=ready]");
   await expect(packages.getByRole("heading", { level: 2, name: "Packages" })).toBeVisible();
-  await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 46 packages");
+  await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1 to 20 of 46 packages.");
   const first = packages.locator("[data-table-view=table] tbody tr").first();
   await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB");
   await expect(first.locator("td")).toHaveText(["Northern Water Works Development Agency", "Request for Bids · Open - National", "300,000.00", "Signed"]);
@@ -869,7 +902,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
 
   await packages.getByRole("link", { name: "Next page" }).click();
   await expect(page).toHaveURL(/packages_page=2$/);
-  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21–40 of 46 packages");
+  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21 to 40 of 46 packages.");
 
   // The description reads "Exploratory Bo reholes" in the PDF, and the search still finds "boreholes".
   const field = page.getByRole("searchbox", { name: "Search packages" });

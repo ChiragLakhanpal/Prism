@@ -216,7 +216,7 @@ def test_a_note_sentence_its_row_does_not_support_and_advice_with_no_lesson_are_
     assert files.check_line(checks, load_draft_kinds().kinds["review_notes"]) == (
         "Checked: 6 of 6 numbers match records; 3 of 3 dates match records. "
         "Judged by a model: 1 of 1 sentence follows from its sources. "
-        "The other five needed no model, because everything they stated matched a record or a page. "
+        "The other five needed no model, because every number, date and quote in them matched a record or a page. "
         "Not checked: whether the plan's published records are complete, "
         "or whether these notes are what you would tell the borrower.")
 

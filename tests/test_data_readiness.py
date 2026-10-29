@@ -193,11 +193,16 @@ def test_the_headline_counts_the_kinds_by_status_and_names_the_two_gaps_that_rea
     numbering = latest(engine, "documents", "document_pages_paragraph_numbering_found")
     found, pages = sum(row["count"] for row in numbering), sum(row["denominator"] for row in numbering)
 
-    # Design r3 N1: one status for every kind reads as one clause, not "Of the two ..., two in part".
+    # Design r3 N1: one status for every kind reads as one clause, not "Of the two ..., two in part". The paragraph
+    # numbers' check says what I found, not what the pages lack, and names the pages as a reader would (ticket 58).
     assert result["headline"]["text"] == (
         f"I can answer each of the four kinds of question below in part. The biggest gaps are the {pages - found} "
-        f"of {pages} body pages that lack paragraph numbers I could find and the 75 of 603 contracts that lack a "
-        "reference from Systematic Tracking of Exchanges in Procurement (STEP).")
+        f"of {pages} pages of the reports' main text where I found no paragraph numbers and the 75 of 603 contracts "
+        "that lack a reference from Systematic Tracking of Exchanges in Procurement (STEP).")
+    [search] = [kind for kind in result["kinds"] if kind["kind"] == "document_search"]
+    held = ["".join(segment.get("text") or str(segment.get("number")) for segment in sentence)
+            for sentence in search["holds_back"]]
+    assert f"Of {pages} pages of the reports' main text, I found no paragraph numbers on {pages - found}." in held
     numbers = [segment["number"] for segment in result["headline"]["segments"] if "number" in segment][:1]
     assert numbers == [len(result["kinds"])]
 
@@ -328,6 +333,23 @@ def test_a_shortfall_says_what_its_records_lack_so_its_tooltip_can_name_them(eng
     assert (missing["number"], missing["lack"]) == (
         KENYA["contracts"] - KENYA["with_step_reference"],
         "a reference from Systematic Tracking of Exchanges in Procurement (STEP)")
+
+
+def test_a_lack_that_ends_with_a_period_ends_its_sentence_once():
+    """Ticket 58 (the 16 design review, round 8, P1): STEP's field name "Activity Reference No." ends with a period
+    (config/sources.toml, the plans' linked lack), so on live data the holds sentence and the headline's gaps sentence
+    read "lack an Activity Reference No..". A sentence's own period after a lack that ends with one is left out."""
+    from strata.tools.data_readiness_for import fill, number, text_of, words
+
+    lack = config.load_sources()["documents"].readiness[0].linked.lack
+    assert lack == "an Activity Reference\u00a0No."
+    slots = {"total": number(240), "noun": "plan rows in STEP's format", "missing": number(11), "lack": lack}
+    holds = text_of(fill(words()["holds"]["linked"], slots))
+    assert holds == "Of 240 plan rows in STEP's format, 11 lack an Activity Reference\u00a0No."
+    headline = text_of(fill(words()["gapsOne"], {"gap1": fill(words()["gap"]["linked"], slots)}))
+    assert headline == "The biggest gap is the 11 of 240 plan rows in STEP's format that lack an Activity Reference\u00a0No."
+    # A lack with no period of its own keeps the sentence's.
+    assert text_of(fill(words()["holds"]["linked"], {**slots, "lack": "a reference"})).endswith("lack a reference.")
 
 
 def test_the_plan_pages_each_reading_route_read_well_are_tool_rows_with_their_shares(engine):

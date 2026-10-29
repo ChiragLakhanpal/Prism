@@ -227,7 +227,7 @@ function Ready({
       </h3>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small">
         <p id={countId} className="text-ink-muted" data-count-line>
-          {rows.length === 1 ? words.countOne : words.count(formatCount(rows.length))}
+          {rows.length === 1 ? words.countOne : rows.length === 2 ? words.countBoth : words.count(formatCount(rows.length))}
         </p>
         <p className="text-ink" data-selection-status>
           {chosen === 0 ? words.selectedNone : words.selected(formatNumber(chosen, { compact: false }), formatNumber(rows.length, { compact: false }))}
@@ -315,6 +315,13 @@ function Finding({
   );
   const mText = formatNumber(m, { compact: false });
   const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m, from, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
+  if (m === 1) {
+    // One report: "the one completion report I read", never "1 of 1 completion reports" (the 58 design review, F5).
+    const report = <Num count={m} check={{ tooltip: tips.m, from, act: tips.mActOne, opens: "record", onOpen: onAll }} />;
+    if (one) return <Fill template={words.findingOneReport} slots={{ risk: one.risk_label, m: report }} />;
+    if (tied.length === 2) return <Fill template={words.findingTwoOneReport} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, m: report }} />;
+    return <Fill template={words.findingManyOneReport} slots={{ tied: formatCount(tied.length, { capital: true }), m: report }} />;
+  }
   if (one) return <Fill template={words.finding} slots={{ risk: one.risk_label, k, m: all }} />;
   if (tied.length === 2) return <Fill template={words.findingTwo} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, k, m: all }} />;
   return <Fill template={words.findingMany} slots={{ tied: formatCount(tied.length, { capital: true }), k, m: all }} />;
@@ -331,11 +338,18 @@ function RiskCount({ row, m, onCount, from, stacked }: { row: RiskRow; m: number
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k, from, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
+          check={{
+            tooltip: words.numTips.k,
+            from,
+            act: row.k === 1 ? words.numTips.kActOne : words.numTips.kAct(k),
+            opens: "record",
+            name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label, m === 1),
+            onOpen: (element) => onCount(row, element),
+          }}
         />
       </span>
       {!stacked && " "}
-      <span className="text-caption text-ink-muted">{words.reports}</span>
+      <span className="text-caption text-ink-muted">{m === 1 ? words.reportsOne : words.reports}</span>
     </span>
   );
 }
@@ -487,7 +501,7 @@ function removedOf(rows: RemovedRow[], m: number): Removed[] {
     const reason = words.removed.reasons[row.reason_code] ?? copy.removed.reasons[row.reason_code as keyof typeof copy.removed.reasons] ?? copy.removed.unknownReason;
     const said =
       row.claim_kind === "count"
-        ? words.removed.saidCount(row.risk_label, formatNumber(row.k, { compact: false }), formatNumber(m, { compact: false }))
+        ? words.removed.saidCount(row.risk_label, formatNumber(row.k, { compact: false }), formatNumber(m, { compact: false }), m === 1)
         : words.removed.saidHelped(row.risk_label, row.lesson_text.replace(/[.\s]+$/, ""));
     return { sentence: said, reason: reason.item, reasonJoined: reason.joined };
   });
@@ -505,7 +519,8 @@ function Checks({ result }: { result: RisksResult }) {
         dates={counts.dates}
         quotes={counts.quotes}
         quoteWords={words.quotesInRecords}
-        notChecked={notCheckedFor({ checks_run: counts.checks_run, tools: checks.tools })}
+        // A section of rows: its gap is whether each row follows, not each sentence (ticket 58).
+        notChecked={notCheckedFor({ checks_run: counts.checks_run, tools: checks.tools }).map((clause) => (clause === "sentences" ? "rows" : clause))}
         removed={<RemovedBox removed={removedOf(checks.removed, result.m ?? 0)} lead={words.removed} item={words.removed.item} />}
       />
     </div>
@@ -568,7 +583,7 @@ function Coverage({ result, from }: { result: RisksResult; from: ReactNode }) {
 function SourceLine({ result }: { result: RisksResult }) {
   const date = recordsDate(result);
   const asOf = Boolean(result.as_of && result.data_through && result.as_of < result.data_through);
-  const names = <Joined items={result.source_names} />;
+  const names = <Joined items={[...result.source_names, words.lessonLibrary]} />;
   return (
     <Source>
       <Fill template={asOf ? words.sourceLineAsOf : words.sourceLine} slots={{ names, date: date ? <Num date={date} /> : "" }} />
@@ -619,7 +634,7 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
       );
     case "no_lessons":
       return (
-        <EmptyCard title={result.m === 1 ? e.noLessonsOne : <Fill template={e.noLessons} slots={{ m: <Num value={result.m ?? 0} options={{ compact: false }} /> }} />}>
+        <EmptyCard title={result.m === 1 ? e.noLessonsOne : <Fill template={e.noLessons} slots={{ m: <Num count={result.m ?? 0} /> }} />}>
           <p className="mt-2 max-w-prose text-body text-ink">{e.noLessonsBody}</p>
         </EmptyCard>
       );

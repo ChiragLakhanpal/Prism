@@ -81,8 +81,38 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
   const n = row.step.comparables_n ?? 0;
   const { middle, cautious } = row.step;
   const phrase = step?.phrase ?? "";
+  // The date the row beside it names: the page's as-of date when there is one, else the records' own date.
+  const date = row.as_of ?? row.records_through;
   let finding;
-  if (!row.abstain_all && middle?.days != null && cautious?.days != null && row.step.abstain_reason !== "few_comparables") {
+  if (row.step.abstain_reason === "not_reached" && date) {
+    // Most comparable packages had not reached the step, so they never "recorded" it (ticket 58).
+    const reached = row.step.reached_n ?? 0;
+    finding = (
+      <Fill
+        template={reached === 0 ? words.findingNotReachedNone : words.findingNotReached}
+        slots={{ reached: number(reached), n: number(n), step: phrase, date: <Num date={date} /> }}
+      />
+    );
+  } else if (!row.abstain_all && middle?.days != null && cautious?.days != null && (cautious.longer ?? 0) === 0 && row.step.abstain_reason !== "few_comparables") {
+    // None ran later than the cautious days, so no "0 of 25, about 0 in 10" (ticket 58).
+    finding = (
+      <>
+        <Fill
+          template={row.basis === "delay" ? words.findingNoneLaterDelay : words.findingNoneLater}
+          slots={{ n: number(n), step: phrase, days_c: number(cautious.days), previous: previous?.phrase ?? "" }}
+        />
+        {(middle.longer ?? 0) > 0 && (
+          <>
+            {" "}
+            <Fill
+              template={row.basis === "delay" ? words.findingMiddleDelay : words.findingMiddle}
+              slots={{ longer_m: number(middle.longer ?? 0), about_m: about(middle.in10), days_m: number(middle.days), n: number(n), previous: previous?.phrase ?? "" }}
+            />
+          </>
+        )}
+      </>
+    );
+  } else if (!row.abstain_all && middle?.days != null && cautious?.days != null && row.step.abstain_reason !== "few_comparables") {
     finding = (
       <Fill
         template={row.basis === "delay" ? words.findingDelay : words.findingDuration}
@@ -102,9 +132,9 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
     <div data-step-list={row.step.step_key} className="flex flex-col gap-4">
       {step && <p className="text-caption text-ink-muted">{words.fullName(step.step_name)}</p>}
       <p className="text-body text-ink">{finding}</p>
-      {row.records_through && (
+      {date && (
         <p className="text-caption text-ink-muted">
-          <Fill template={row.basis === "delay" ? words.noteDelay : words.note} slots={{ date: <Num date={row.records_through} /> }} />
+          <Fill template={row.basis === "delay" ? words.noteDelay : words.note} slots={{ date: <Num date={date} /> }} />
         </p>
       )}
       <ul className="flex flex-col divide-y divide-line border-y border-line">
@@ -114,7 +144,7 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
           </Entry>
         ))}
       </ul>
-      <ListSource names={row.sources} through={row.records_through} />
+      <ListSource names={row.sources} through={row.records_through} asOf={row.as_of} />
     </div>
   );
 }
@@ -136,15 +166,18 @@ export function LongestView({ evidence, focusEntry = null, onOpen }: { evidence:
           </Entry>
         ))}
       </ul>
-      <ListSource names={row.sources} through={row.records_through} />
+      <ListSource names={row.sources} through={row.records_through} asOf={row.as_of} />
     </div>
   );
 }
 
-function ListSource({ names, through }: { names: string[]; through: string | null }) {
+// On a page as of a date the line reads "Records as of {asOf}", as the section's line does; otherwise it gives the
+// date the tool's records run through. It never calls the page's date the records' own (the 58 review, round 2, B1).
+function ListSource({ names, through, asOf }: { names: string[]; through: string | null; asOf: string | null }) {
+  const date = asOf ?? through;
   return (
     <Source>
-      <Fill template={copy.stepDates.sourceLine} slots={{ names: <Joined items={names} />, date: through ? <Num date={through} /> : "" }} />
+      <Fill template={asOf ? copy.stepDates.sourceLineAsOf : copy.stepDates.sourceLine} slots={{ names: <Joined items={names} />, date: date ? <Num date={date} /> : "" }} />
     </Source>
   );
 }

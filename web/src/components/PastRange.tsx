@@ -1005,8 +1005,10 @@ function Populated({
             keyLead={Boolean(quantile)}
             labels={{
               lane: c.lane,
-              keySigned: quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed)),
-              keyHollow: open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(whole(open))) : null,
+              // The subtitle says what a quantile dot is, so the key does not say it again (ticket 58); a count in the key
+              // is in words from one to nine, as the alt text and the summary write it (ticket 58; rule 12).
+              keySigned: quantile ? null : c.keySigned(formatCount(counts.signed)),
+              keyHollow: open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(formatCount(open))) : null,
               plan: c.plan,
               middle:
                 range?.q25 != null && range.q75 != null && range.q50 != null
@@ -1465,8 +1467,8 @@ function ComparablesTable({
           total,
           from: from + 1,
           to: from + shown.length,
-          // Every row of a few, one to nine in words, as the finding counts them (DESIGN.md section 7, rule 12).
-          text: filter?.line ?? (!paged && total > 1 && total < 10 ? copy.table.showingAll(spelled(total), t.noun) : undefined),
+          // Every row of a few is in words, as every count line writes one to nine (Table's countText; ticket 58).
+          text: filter?.line,
         }}
         countRef={countRef}
         countAction={

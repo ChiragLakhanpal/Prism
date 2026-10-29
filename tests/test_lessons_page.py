@@ -583,7 +583,8 @@ def test_the_library_filters_by_stage_method_sector_and_status_with_a_count_line
     retired = library(story, status="retired")
 
     assert (everything["total"], everything["of"]) == (2, 2)
-    assert text(everything["count"]) == "Showing all 2 current lessons, newest first."
+    # Two is "both", as every count line writes it (ticket 58; DESIGN.md section 5, Tables).
+    assert text(everything["count"]) == "Showing both current lessons, newest first."
     assert [card["lesson_id"] for card in by_stage["lessons"]] == [story_of.IEG_LESSON]
     assert text(by_stage["count"]) == "Showing 1 of 2 current lessons, newest first."
     # The rebidding lesson names Request for Bids; IEG's lesson names no method, so every method keeps it.

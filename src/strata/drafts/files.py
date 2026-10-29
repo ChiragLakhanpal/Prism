@@ -394,10 +394,16 @@ def check_line(checks: dict, kind: DraftKind) -> str:
     said = [line["notCheckedClauses"][key] for key in clauses]
     joined = line["notCheckedJoin"].join(said) if len(said) <= 2 else \
         line["notCheckedComma"].join(said[:-1]) + line["notCheckedJoin"] + said[-1]
-    text = f"{line['checked']} {line['clauseJoin'].join(parts) if parts else line['sourcesOnly']}{line['end']}"
+    # When no sentence on screen cites a source, there was nothing to match, and when every judged sentence cites
+    # nothing, the model judged it against what a tool could not answer (ticket 58; shown.sources is sent only then).
+    sources = shown.get("sources")
+    nothing = (line["noneCited"]["one" if sources["uncited"] == 1 else "many"]
+               if sources and sources["total"] == 0 else line["sourcesOnly"])
+    text = f"{line['checked']} {line['clauseJoin'].join(parts) if parts else nothing}{line['end']}"
     judged, proven = shown.get("judged", 0), shown.get("proven", 0)
     if judged:
-        text += f" {line['judged']} {ratio(line['judgedSentences'], judged, judged)}{line['end']}"
+        forms = line["judgedUncited"] if sources and sources["uncited"] == judged else line["judgedSentences"]
+        text += f" {line['judged']} {ratio(forms, judged, judged)}{line['end']}"
         if proven:
             others = line["provenOthers"]
             text += " " + (others["one"] if proven == 1 else _fill(others["many"], count=_count(proven)))

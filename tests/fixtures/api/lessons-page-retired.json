@@ -623,13 +623,7 @@
     },
     "count": [
       {
-        "text": "Showing all "
-      },
-      {
-        "number": 1
-      },
-      {
-        "text": " "
+        "text": "Showing the one "
       },
       {
         "text": "current lesson"

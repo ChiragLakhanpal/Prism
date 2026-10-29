@@ -39,6 +39,7 @@ export function EmptyState({
   body,
   more,
   link,
+  also,
   level = 2,
   bare = false,
   className,
@@ -49,6 +50,8 @@ export function EmptyState({
   // ticket 114).
   more?: ReactNode;
   link?: { href: string; text: ReactNode };
+  // A second way on, after the link, such as a project's documents beside Data readiness (ticket 58).
+  also?: { href: string; text: ReactNode };
   level?: Level;
   // Inside a Task zone panel, which is its card already, as All projects' no match (ticket 99): no border, fill or
   // padding of its own, a 20 px circle and the title in h3.
@@ -62,9 +65,10 @@ export function EmptyState({
         {createElement(`h${level}`, { className: cx(bare ? "text-h3" : "text-h2", "text-balance text-ink-heading") }, title)}
         <p className="mt-2 max-w-prose text-body text-pretty text-ink">{body}</p>
         {more && <p className="mt-2 max-w-prose text-body text-pretty text-ink">{more}</p>}
-        {link && (
-          <p className="mt-4">
-            <TextLink href={link.href}>{link.text}</TextLink>
+        {(link || also) && (
+          <p className="mt-4 flex flex-wrap gap-x-6 gap-y-2">
+            {link && <TextLink href={link.href}>{link.text}</TextLink>}
+            {also && <TextLink href={also.href}>{also.text}</TextLink>}
           </p>
         )}
       </div>

@@ -32,6 +32,7 @@ import type { EvidenceEvent } from "../lib/answer";
 import { ApiError, getJson, putJson } from "../lib/api";
 import { cx } from "../lib/cx";
 import { evidenceHref, openEvidence } from "../lib/evidence";
+import { formatCount } from "../lib/format";
 import { refusedAs, useLoad, type Load } from "../lib/load";
 import { LESSONS_HREF } from "../lib/lessons";
 import { navigate } from "../lib/router";
@@ -85,6 +86,8 @@ function NoticeLink({ query }: { query: { notice_id: string; notice_ref: string 
 function Agreement({ list }: { list: JudgingList }) {
   const a = list.agreement;
   if (a.both_done === 0) return null;
+  // One query is "the one query", and a count to nine is a word (ticket 58).
+  const pairsTip = a.both_done === 1 ? w.tooltipPairsOne : fillText(w.tooltipPairs, { done: formatCount(a.both_done) });
   if (a.withheld || a.kappa === null) {
     return (
       <p className="max-w-prose text-small text-ink" data-agreement="withheld">
@@ -98,8 +101,8 @@ function Agreement({ list }: { list: JudgingList }) {
         <Fill
           template={w.agree}
           slots={{
-            agree: <Num value={a.agree} options={{ compact: false }} check={{ tooltip: fillText(w.tooltipPairs, { done: a.both_done }) }} />,
-            pairs: <Num value={a.pairs} options={{ compact: false }} check={{ tooltip: fillText(w.tooltipPairs, { done: a.both_done }) }} />,
+            agree: <Num value={a.agree} options={{ compact: false }} check={{ tooltip: pairsTip }} />,
+            pairs: <Num value={a.pairs} options={{ compact: false }} check={{ tooltip: pairsTip }} />,
             kappaName: w.kappaName,
             kappa: <Num value={a.kappa} options={{ decimals: 2, compact: false }} check={{ tooltip: fillText(w.tooltipKappa, { pairs: a.pairs }) }} />,
           }}
@@ -625,6 +628,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         theirs={passage.other_grade}
         onGrade={grade}
         notice={(wide && failedAlert) || undefined}
+        done={done === pool}
       />
     );
     main = (

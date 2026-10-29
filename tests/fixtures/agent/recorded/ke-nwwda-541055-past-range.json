@@ -1,5 +1,5 @@
 {
- "about": "The Foundry agent strata-orchestrator's answers through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. The first asks find_comparables for the package's comparables and the second states their past range from its summary and quotes two comparables' STEP references from their rows. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
+ "about": "The Foundry agent strata-orchestrator's answers through the Responses API, written by hand in the shape the API documents, because the gate's machine has no key. The first asks find_comparables for the package's comparables and the second states their past range from its summary and names two comparables by their STEP references, with no quote marks, as the instructions ask. Replace them with a recording: uv run --script ops/agent/record.py --env-file .env",
  "recorded": false,
  "recorded_on": null,
  "question": "How long did packages like KE-NWWDA-541055-CW-RFB take from notice to signed contract?",
@@ -41,7 +41,7 @@
       {
        "type": "output_text",
        "annotations": [],
-       "text": "{\"claims\": [{\"sentence\": \"The middle half of the 49 comparable packages took 3.3 to 7.9 months from notice to signed contract, and the middle one took 4.4.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22\"], \"numbers\": [\"49\", \"3.3\", \"7.9\", \"4.4\"], \"dates\": [], \"quote\": null}, {\"sentence\": \"The newest, \\\"KE-MIGORI COUNTY-532367-CW-RFB\\\", was still open 13 days after its notice.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB\"], \"numbers\": [\"13\"], \"dates\": [], \"quote\": null}, {\"sentence\": \"Another, \\\"KE-ICTA-571738-CW-RFB\\\", was still open too.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.package:KE-ICTA-571738-CW-RFB\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}"
+       "text": "{\"claims\": [{\"sentence\": \"The middle half of the 49 comparable packages took 3.3 to 7.9 months from notice to signed contract, and the middle one took 4.4.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22\"], \"numbers\": [\"49\", \"3.3\", \"7.9\", \"4.4\"], \"dates\": [], \"quote\": null}, {\"sentence\": \"The newest, KE-MIGORI COUNTY-532367-CW-RFB, was still open 13 days after its notice.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB\"], \"numbers\": [\"13\"], \"dates\": [], \"quote\": null}, {\"sentence\": \"Another, KE-ICTA-571738-CW-RFB, was still open too.\", \"kind\": \"record\", \"evidence_ids\": [\"strata.gold.package:KE-ICTA-571738-CW-RFB\"], \"numbers\": [], \"dates\": [], \"quote\": null}]}"
       }
      ]
     }

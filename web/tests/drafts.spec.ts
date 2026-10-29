@@ -117,7 +117,7 @@ test("with no activity marked, a preview or an as-of date, Check a plan offers n
   // Ticket 100: with no signal to draft from, the finding says so, the head holds the check pill and no action, and it
   // does not stick; only the data-note rows are marked.
   await expect(page.locator("[data-finding]")).toHaveText("No activity needs a look or is worth watching; three have data notes.");
-  await expect(page.locator("[data-plan-header] [data-check-pill]")).toHaveText("9 activities checked");
+  await expect(page.locator("[data-plan-header] [data-check-pill]")).toHaveText("Nine activities checked");
   await expect(page.locator("[data-draft-slot], [data-draft-action]")).toHaveCount(0);
   expect(await page.locator("[data-plan-header]").evaluate((head) => getComputedStyle(head).position)).toBe("static");
   await expect(page.locator("[data-view=table] tbody tr[id]:visible")).toHaveCount(3);
@@ -328,7 +328,7 @@ test("the draft's notes cite their plan rows, and the bar says what exporting do
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Review notes");
   await expect(page.locator("[data-lede]")).toHaveText("I drafted a note on each of the three activities that need a look or are worth watching.");
   await expect(notes(page).locator("[data-activity-ref]")).toHaveText(MARKED);
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing all 3 activities with a signal");
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing all three activities with a signal.");
   // The check line names what this draft's checks did not cover. A draft passes all six checks (ticket 24),
   // so whether each sentence follows from its sources is no longer a gap.
   await expect(page.locator("[data-check-line]")).toContainText(
@@ -422,7 +422,7 @@ test("a draft's How was that checked? says it counts the two sentences I removed
     "8 of 10 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this draft.",
     "None of the sentences quoted a source.",
-    "The four sentences I kept needed no model, because everything they stated matched a record or a page.",
+    "The four sentences I kept needed no model, because every number, date and quote in them matched a record or a page.",
     "None of the sentences gave advice.",
     "No sentence rested on a report that another report disagrees with.",
   ]);
@@ -1134,6 +1134,10 @@ test("the notes are a table on a wide column, and cards below 560 px of column, 
   await expect(page.locator("[data-draft-notes] [data-view=table]")).toBeHidden();
   // Below 768 px the breadcrumb is a link back to Drafts.
   await expect(page.locator("[data-breadcrumb] p a")).toHaveText("Drafts");
+  // Wider, the crumb names the project as Check a plan's does, without "Project" (ticket 58).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("[data-breadcrumb] ol li").nth(1)).toHaveText("Water and Sanitation Development (P156634)");
+  await page.setViewportSize({ width: 390, height: 844 });
   // Nothing scrolls sideways at 320 px.
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);

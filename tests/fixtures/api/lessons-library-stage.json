@@ -82,13 +82,14 @@
     },
     {
       "number": 1,
-      "capital": false
+      "numeral": true
     },
     {
       "text": " of "
     },
     {
-      "number": 2
+      "number": 2,
+      "numeral": true
     },
     {
       "text": " "

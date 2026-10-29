@@ -14,10 +14,10 @@ event: step
 data: {"id": "check", "kind": "check", "status": "running"}
 
 event: step
-data: {"id": "check-judge", "kind": "judge", "count": 3, "status": "running"}
+data: {"id": "check-judge", "kind": "judge", "count": 2, "status": "running"}
 
 event: step
-data: {"id": "check-judge", "kind": "judge", "count": 3, "status": "done"}
+data: {"id": "check-judge", "kind": "judge", "count": 2, "status": "done"}
 
 event: step
 data: {"id": "check", "kind": "check", "status": "done", "removed": 0}
@@ -26,10 +26,10 @@ event: sentence
 data: {"index": 0, "text": "The middle half of the 49 comparable packages took 3.3 to 7.9 months from notice to signed contract, and the middle one took 4.4.", "kind": "record", "evidence_ids": ["strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"], "numbers": [{"text": "49", "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"}, {"text": "3.3", "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"}, {"text": "7.9", "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"}, {"text": "4.4", "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"}], "dates": [], "quote": null}
 
 event: sentence
-data: {"index": 1, "text": "The newest, \"KE-MIGORI COUNTY-532367-CW-RFB\", was still open 13 days after its notice.", "kind": "record", "evidence_ids": ["strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB"], "numbers": [{"text": "13", "evidence_id": "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB"}], "dates": [], "quote": null}
+data: {"index": 1, "text": "The newest, KE-MIGORI COUNTY-532367-CW-RFB, was still open 13 days after its notice.", "kind": "record", "evidence_ids": ["strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB"], "numbers": [{"text": "13", "evidence_id": "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB"}], "dates": [], "quote": null}
 
 event: sentence
-data: {"index": 2, "text": "Another, \"KE-ICTA-571738-CW-RFB\", was still open too.", "kind": "record", "evidence_ids": ["strata.gold.package:KE-ICTA-571738-CW-RFB"], "numbers": [], "dates": [], "quote": null}
+data: {"index": 2, "text": "Another, KE-ICTA-571738-CW-RFB, was still open too.", "kind": "record", "evidence_ids": ["strata.gold.package:KE-ICTA-571738-CW-RFB"], "numbers": [], "dates": [], "quote": null}
 
 event: sentence
 data: {"index": 3, "text": "Plan for longer than the 1.5 months the plan allows.", "kind": "advice", "evidence_ids": ["strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"], "numbers": [{"text": "1.5", "evidence_id": "strata.tools.find_comparables:KE-NWWDA-541055-CW-RFB@2026-10-22"}], "dates": [], "quote": null}
@@ -44,7 +44,7 @@ event: evidence
 data: {"id": "strata.gold.package:KE-ICTA-571738-CW-RFB", "kind": "record", "tool": "find_comparables", "stratum": "What", "short_name": null, "row": {"evidence_id": "strata.gold.package:KE-ICTA-571738-CW-RFB", "public_from": "2026-09-29", "source": {"project_id": "P170941", "notice_id": "OP00471871", "contract_id": null, "award_notice_id": null, "signed_in": null}, "step_reference": "KE-ICTA-571738-CW-RFB", "project_id": "P170941", "country_code": "KE", "country_name": "Kenya", "notice_id": "OP00471871", "notice_date": "2026-09-29", "signed_on": null, "still_open": true, "days": 23, "months": 0.8, "rank": 2}, "highlights": [], "feedback": {"allowed": false, "why_not": "record", "run_id": "run-0001", "mode": "pilot", "my_report": null, "limits": {"reason_max_chars": 500}}}
 
 event: checks
-data: {"checks_run": [1, 2, 3, 4, 5, 6], "sentences": {"written": 4, "kept": 4, "removed": 0}, "numbers": {"total": 6, "matched": 6}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 2, "found": 2}, "sources": {"total": 3, "returned": 3}, "checked": {"total": 6, "matched": 6}, "shown": {"numbers": {"total": 6, "matched": 6}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 2, "found": 2}, "judged": 3, "proven": 1}, "judge": {"called": true, "responded": true, "judged": 3, "followed": 3, "unjudged": 0, "proven": 1}, "advice": {"total": 1, "cited": 1}, "disagreements": {"disputed": 0, "shown": 0, "attached": 0, "unasked": 0, "warned": 0}, "cited_tools": ["find_comparables"], "tools": ["find_comparables"], "cited_only": ["get_lessons"]}
+data: {"checks_run": [1, 2, 3, 4, 5, 6], "sentences": {"written": 4, "kept": 4, "removed": 0}, "numbers": {"total": 6, "matched": 6}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "sources": {"total": 3, "returned": 3}, "checked": {"total": 6, "matched": 6}, "shown": {"numbers": {"total": 6, "matched": 6}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "judged": 2, "proven": 2}, "judge": {"called": true, "responded": true, "judged": 2, "followed": 2, "unjudged": 0, "proven": 2}, "advice": {"total": 1, "cited": 1}, "disagreements": {"disputed": 0, "shown": 0, "attached": 0, "unasked": 0, "warned": 0}, "cited_tools": ["find_comparables"], "tools": ["find_comparables"], "cited_only": ["get_lessons"]}
 
 event: done
 data: {"run_id": "run-0001", "trace_ids": {"application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}}

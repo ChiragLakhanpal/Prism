@@ -41,6 +41,50 @@ test("the status badge shows Needs a look, Watch and No signals, each with its o
   expect(new Set(Object.values(shapes)).size).toBe(3);
 });
 
+// Ticket 58 (the 31 design review, round 3, P7): "On {date}," is one unit, so "On" never ends a line alone at 390 px,
+// and the field's hint holds "I save" together.
+test("a compared summary's date holds its On, and the paste field's hint holds I save", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/gallery/check-criteria");
+  const summary = page.locator("[data-state-section=collapsed] [data-section-summary]").filter({ hasText: "you compared" }).first();
+  const unit = summary.locator(".whitespace-nowrap").filter({ hasText: /^On [A-Z][a-z]+ \d{1,2}, \d{4},$/ });
+  await expect(unit).toHaveCount(1);
+  // Its boxes all sit on one line (an inline box holding a number's button reports a box per part).
+  expect(await unit.evaluate((element) => new Set([...element.getClientRects()].map((box) => Math.round(box.bottom))).size)).toBe(1);
+  const hint = page.locator("[data-state-section=open]").getByText(/When you compare them, I.save the text/).first();
+  expect(await hint.textContent()).toContain("I\u00a0save the text");
+});
+
+// Ticket 58 (the 31 critique, round 3, follow-up 7): the cost intro's amounts never break between "US$14" and "million".
+test("the cost intro keeps each amount on one line", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/gallery/check-criteria");
+  const intro = page.locator("[data-cost-intro]").first();
+  await expect(intro).toBeVisible();
+  const amounts = intro.locator(".whitespace-nowrap").filter({ hasText: /^US\$/ });
+  expect(await amounts.count()).toBeGreaterThan(0);
+  for (const bottoms of await amounts.evaluateAll((all) => all.map((one) => new Set([...one.getClientRects()].map((box) => Math.round(box.bottom))).size))) {
+    expect(bottoms).toBe(1);
+  }
+});
+
+// The 58 design review, round 2, follow-ups 2 and 3: a table that shows all its rows says "all", and a removed count
+// from the one report read keeps "1 of 1" with the noun in the singular.
+test("the risks table says all three, and a removed count from one report reads 1 of 1 completion report", async ({ page }) => {
+  await page.goto("/gallery/risks");
+  await expect(page.locator("[data-state-section=many-tied]")).toContainText("Showing all three risks, in the order I ranked them.");
+  const removed = page.locator("[data-state-section=removed] [data-removed-box]");
+  await expect(removed).toContainText("came up in 1 of 1 completion report");
+  await expect(removed).not.toContainText("completion reports");
+});
+
+// Ticket 58 (the 30 design review, F11): a lesson IEG wrote itself says so in the risk drawer, rather than no line.
+test("the risk drawer's IEG line says when IEG wrote the lesson itself", async ({ page }) => {
+  await page.goto("/gallery/risks");
+  const section = page.locator("[data-state-section=ieg-lesson]");
+  await expect(section.locator("[data-ieg-line=ieg_lesson]")).toHaveText("IEG wrote this lesson in its ICR Review.");
+});
+
 test("Partial uses the warning state with triangle-alert, and Gap the neutral state with circle-dashed and a dashed border", async ({
   page,
 }) => {
@@ -220,8 +264,8 @@ test("each Num reference row shows the value the tool sent beside what Num shows
 test("the coverage line ends its first sentence with the gap, or with a period when nothing was missing", async ({ page }) => {
   await page.goto("/gallery/citations");
   await expect(page.locator("[data-coverage-line]")).toHaveText([
-    "Based on 37 of 52 matching packages; 15 lacked the STEP reference that links notice to contract. See data readiness for these sources",
-    "Based on 52 of 52 matching packages. See data readiness for these sources",
+    "Based on 37 of 52 matching packages; 15 lacked the STEP reference that links notice to contract. See Data readiness for these sources",
+    "Based on 52 of 52 matching packages. See Data readiness for these sources",
   ]);
 });
 
@@ -230,7 +274,7 @@ test("a table shows its title, count and source lines only with its rows", async
   await page.goto("/gallery/table");
   const ready = page.locator("[data-state-section=ready] [data-table]");
   await expect(ready.getByRole("heading")).toHaveText("Three of the four sample activities were signed after their planned date.");
-  await expect(ready).toContainText("Showing all 4 activities");
+  await expect(ready).toContainText("Showing all four activities.");
   await expect(ready).toContainText("Source: Sample rows made for the gallery, in STEP's columns.");
 
   for (const state of ["loading", "empty", "error"]) {
@@ -776,7 +820,8 @@ async function answerSample(page: Page, section: string) {
 
 test("each answer sample's sentences, table, check line and steps count the same things", async ({ page }) => {
   await page.goto("/gallery/answer");
-  const checked = (line: string) => Number(line.match(/Checked: (\d+) of (\d+) numbers?/)![2]);
+  // A part and its whole are joined by no-break spaces, so the line never breaks between them (the 58 critique, round 2).
+  const checked = (line: string) => Number(line.match(/Checked: (\d+)\sof\s(\d+) numbers?/)![2]);
 
   // Ready: the check line counts the numbers in the sentences that were kept, and the step that
   // wrote them counts the kept sentences and the removed one.
@@ -921,6 +966,13 @@ test("the drawer's head shows no eyebrow or middle dot on any of its views on th
   );
   expect(found.length).toBeGreaterThan(5);
   expect(found.filter((head) => head.text.includes("·") || head.eyebrows > 0)).toEqual([]);
+  // Ticket 58: a passage's or a record's head carries one caption that says what kind of source it is.
+  const captions = await page.locator("[data-drawer-header] [data-drawer-caption]").allTextContents();
+  expect(captions.length).toBeGreaterThan(5);
+  expect(captions.filter((caption) => caption.includes("·"))).toEqual([]);
+  // A report is named by its type, so an appraisal document is never called an evaluation (the 58 design review, B2).
+  expect(captions).toContain("The completion report, written after the project closed");
+  expect(captions.filter((caption) => caption.includes("evaluation that explains"))).toEqual([]);
 });
 
 // Ticket 14's evidence drawer, on the gallery's Evidence page. The record is KE-NWWDA-229129-CW-RFB
@@ -977,7 +1029,8 @@ test("a record's evidence card ends with its drawer's source line, and an ISR se
   );
   await expect(page.locator("[data-card-sample=section] mark")).toHaveText("Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.");
   const section = page.locator("[data-state-section=section] [role=dialog]");
-  await expect(section.getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, section Project Development Objective Indicators");
+  // A section with a name is named alone, with no "section" before it (the 58 design review, follow-up 7).
+  await expect(section.getByRole("heading", { level: 2 })).toHaveText("ISR, Rajasthan Road Sector Modernization, Project Development Objective Indicators");
   await expect(section).toContainText("The whole section, word for word.");
   await expect(section.locator("[data-meta-line]")).not.toContainText("¶");
   // The switcher's tabs name two sections, and a long tab wraps inside its pill.

@@ -1,0 +1,36 @@
+event: step
+data: {"id": "tool-1", "kind": "tool", "tool": "check_plan", "project_id": "P156634", "status": "running"}
+
+event: step
+data: {"id": "tool-1", "kind": "tool", "tool": "check_plan", "project_id": "P156634", "status": "done", "count": 0, "abstention": "version_not_public", "error": null}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "running"}
+
+event: step
+data: {"id": "write", "kind": "write", "status": "done", "count": 2}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "running"}
+
+event: step
+data: {"id": "check-judge", "kind": "judge", "count": 2, "status": "running"}
+
+event: step
+data: {"id": "check-judge", "kind": "judge", "count": 2, "status": "done"}
+
+event: step
+data: {"id": "check", "kind": "check", "status": "done", "removed": 1}
+
+event: sentence
+data: {"index": 0, "text": "That version of the plan was not yet public on the date you chose, so I did not check it.", "kind": "summary", "evidence_ids": [], "numbers": [], "dates": [], "quote": null}
+
+event: checks
+data: {"checks_run": [1, 2, 3, 4, 5, 6], "sentences": {"written": 2, "kept": 1, "removed": 1}, "numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "sources": {"total": 0, "returned": 0}, "checked": {"total": 0, "matched": 0}, "shown": {"numbers": {"total": 0, "matched": 0}, "dates": {"total": 0, "matched": 0}, "quotes": {"total": 0, "found": 0}, "judged": 1, "proven": 0, "sources": {"total": 0, "uncited": 1}}, "judge": {"called": true, "responded": true, "judged": 2, "followed": 1, "unjudged": 0, "proven": 0, "on_abstention": 2}, "advice": {"total": 0, "cited": 0}, "disagreements": {"disputed": 0, "shown": 0, "attached": 0, "unasked": 0, "warned": 0}, "cited_tools": [], "tools": ["check_plan"], "cited_only": ["get_lessons"]}
+
+event: removed
+data: {"index": 1, "sentence": "The agency was late in publishing its plan.", "kind": "summary", "reason": "beyond_abstention", "reasons": [{"check": 4, "code": "beyond_abstention", "text": "The abstention says only that the version was not yet public on the as-of date; it says nothing about the agency being late."}]}
+
+event: done
+data: {"run_id": "run-0001", "trace_ids": {"application_insights": "4bf92f3577b34da6a3ce929d0e0e4736", "mlflow": "tr-0af7651916cd43dd8448eb211c80319c"}}
+

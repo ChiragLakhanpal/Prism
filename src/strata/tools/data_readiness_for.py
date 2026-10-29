@@ -103,19 +103,25 @@ def _date_text(day: dt.date, today: dt.date) -> str:
 
 
 def number(value: int, row: int | None = None, noun: str | None = None, role: str | None = None,
-           noun_one: str | None = None, lack: str | None = None) -> dict:
+           noun_one: str | None = None, lack: str | None = None, not_found: str | None = None) -> dict:
     """A number in a sentence: the result row it comes from, what it counts (plural, and singular for
     a one), and, when it is neither that row's count nor its denominator, what it is (missing, a
     shortfall; days, how late), so its window can show it above the measure's own numbers. A
-    shortfall also says what its records lack, so its tooltip can name them."""
-    return {"number": value, "row": row, "noun": noun, "noun_one": noun_one, "role": role, "lack": lack}
+    shortfall also says what its records lack, so its tooltip can name them, or, for a check of what I found,
+    what I found none of (not_found, sent only then; ticket 58)."""
+    return {"number": value, "row": row, "noun": noun, "noun_one": noun_one, "role": role, "lack": lack,
+            **({"not_found": not_found} if not_found else {})}
 
 
 def fill(template: str, slots: dict) -> Segments:
-    """A template with each {slot} replaced by text or by segments."""
+    """A template with each {slot} replaced by text or by segments. A part of the template that starts with a period
+    drops it when the text before it already ends with one, as STEP's "Activity Reference No." does, so a sentence
+    never ends in two (ticket 58)."""
     out: Segments = []
     for index, part in enumerate(re.split(r"\{(\w+)\}", template)):
         if index % 2 == 0:
+            if part.startswith(".") and out and str(out[-1].get("text", "")).endswith("."):
+                part = part[1:]
             if part:
                 out.append({"text": part})
             continue
@@ -313,11 +319,12 @@ class Page:
         row = self.measures.rows[index]
         whole_missing = form in ("All", "Only")
         return {"missing": number(row["denominator"] - row["count"], index, column.noun, "missing", column.noun_one,
-                                  column.lack),
+                                  column.lack, column.not_found),
                 "total": number(row["denominator"], index, column.noun, "missing" if whole_missing else None,
-                                column.noun_one, column.lack if whole_missing else None),
+                                column.noun_one, column.lack if whole_missing else None,
+                                column.not_found if whole_missing else None),
                 "noun": column.noun_one if row["denominator"] == 1 and column.noun_one else column.noun,
-                "lack": column.lack or ""}
+                "lack": column.lack or column.not_found or ""}
 
     def shortfall_form(self, index: int, template: str) -> str:
         """Which form of a shortfall's words agrees with its numbers: Only when the one record falls
@@ -401,9 +408,11 @@ class Page:
         for check in row.checks:
             index = self.row_ref(source, check)
             if index is not None and self.short(index, "check_min_share"):
-                form = self.shortfall_form(index, "check")
+                # A check of what I found says where I found none, in its own words (ticket 58).
+                template = "checkNotFound" if check.not_found else "check"
+                form = self.shortfall_form(index, template)
                 self.gap(id=f"{row.id}/{check.measure}", type="check", status="partial", row_id=row.id,
-                         source_key=source.key, column=None, measure=check.measure, words="check",
+                         source_key=source.key, column=None, measure=check.measure, words=template,
                          slots=self.shortfall(index, check, form), form=form)
 
     def scope(self, source: Source, row: ReadinessRow, cells: dict) -> dict:
@@ -454,14 +463,14 @@ class Page:
                      if (fix.gap == found.id if found.type == "published"
                          else fix.gap is None and fix.measure == found.measure)), None)
 
-    def noun(self, source: Source, measure: str) -> tuple[str | None, str | None, str | None]:
-        """What a measure of a source counts, plural and singular, and what a record that falls short
-        lacks, from the column that shows it."""
+    def noun(self, source: Source, measure: str) -> tuple[str | None, str | None, str | None, str | None]:
+        """What a measure of a source counts, plural and singular, what a record that falls short lacks, and for a
+        check of what I found, what I found none of, from the column that shows it."""
         for row in source.readiness:
             for column in (*(getattr(row, name) for name in READINESS_COLUMNS), *row.checks):
                 if column and column.measure == measure:
-                    return column.noun, column.noun_one, column.lack
-        return None, None, None
+                    return column.noun, column.noun_one, column.lack, column.not_found
+        return None, None, None, None
 
     def routes(self, in_view: set[str]) -> list[dict]:
         """Each reading route of the rows in view, with the result row of the pages it read well."""
@@ -501,11 +510,11 @@ class Page:
                 continue
             row = self.measures.rows[index]
             count, denominator = row["count"] or 0, row["denominator"] or 0
-            noun, noun_one, lack = (fix.noun, None, None) if fix.noun else self.noun(source, fix.measure)
+            noun, noun_one, lack, not_found = (fix.noun, None, None, None) if fix.noun else self.noun(source, fix.measure)
             known = next((gap for gap in source.known_gaps if gap.id == fix.gap), None)
             slots = {"count": number(count, index, noun, noun_one=noun_one),
                      "denominator": number(denominator, index, noun, noun_one=noun_one),
-                     "missing": number(denominator - count, index, noun, "missing", noun_one, lack),
+                     "missing": number(denominator - count, index, noun, "missing", noun_one, lack, not_found),
                      "fromYear": known.first_fiscal_year if known else "", "toYear": known.last_fiscal_year if known else ""}
             # Projects counted by a measure open it; projects counted as the measure's subjects that
             # fall short have no row of their own.

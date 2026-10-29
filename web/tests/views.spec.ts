@@ -243,6 +243,6 @@ test("Your agency's projects lists each disclosed plan with its check, in the ag
   );
   // The link keeps the preview, so it holds it opened in a new tab too.
   await expect(section.getByRole("link", { name: "Procurement Plan of October 9, 2026" })).toHaveAttribute("href", `${PLAN}?view=piu`);
-  await expect(section.locator("[data-agency-project=P156634]")).toContainText("One needs a look and two are worth watching; three have data notes.");
+  await expect(section.locator("[data-agency-project=P156634]")).toContainText("One activity needs a look and two are worth watching; three have data notes.");
   await expect(section.locator("[data-agency-project]")).toHaveCount(2);
 });

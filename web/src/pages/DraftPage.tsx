@@ -55,6 +55,7 @@ import { evidenceIn, openEvidence, openedAt, origin, remember } from "../lib/evi
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { address } from "../lib/router";
+import { shortProjectName } from "../lib/sources";
 import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
@@ -674,7 +675,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         {ppsd ? (
           <PackageCrumbs title={subject.package_title ?? ""} href={packageHref(subject)} last={kind.crumb("")} />
         ) : (
-          <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
+          // The project's name as its page and Check a plan's crumb give it, without a final "Project": the same rule as
+          // the server's display_name (src/strata/server/projects.py), which a draft's subject does not carry (ticket 58).
+          <DraftCrumbs pid={subject.project_id} name={shortProjectName(subject.project_name)} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
         )}
         <DraftHeader
           title={kind.title}
@@ -733,6 +736,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             dates={(d.checks.shown ?? d.checks).dates}
             quotes={(d.checks.shown ?? d.checks).quotes}
             judged={d.checks.shown ? { judged: d.checks.shown.judged, proven: d.checks.shown.proven } : undefined}
+            sources={d.checks.shown?.sources}
             notChecked={notCheckedFor(d.checks, d.layout.not_checked)}
             how={d.checks.judge && <HowChecked checks={d.checks} id={{ draft: d.draft_id, run: d.writer?.run_id ?? null }} />}
             removed={showRemoved && <RemovedBox removed={removed} />}
@@ -781,7 +785,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         ) : (
           <>
             <p className="mt-6 text-caption text-ink-muted" data-count-line data-numbers>
-              {kind.countLine(signal, whole(signal))}
+              {kind.countLine(signal, formatCount(signal))}
             </p>
             <div className="mt-2">
               <DraftNotes

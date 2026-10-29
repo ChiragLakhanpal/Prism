@@ -26,7 +26,7 @@ API = Path(__file__).parent / "fixtures" / "api"
 # "Ticket 117, steps 1 and 2 ran"), in the error shape its API documents.
 RATE_LIMITED = json.dumps({"error": {"code": "rate_limit_exceeded", "message": (
     "Your requests to gpt-5.4 for gpt-5.4 in eastus have exceeded token rate limit.")}})
-JUDGED_CASE = "ke-nwwda-541055-past-range"  # an answer whose two sentences only the judge can prove
+JUDGED_CASE = "ke-nwwda-541055-past-range"  # an answer with a sentence only the judge can prove
 AZURE = load_thresholds().value("azure")
 # The ticket's starting values, for the tests that count tries and waits, so config/thresholds.toml's [azure] can move
 # without breaking them (CLAUDE.md rule 9). The tests that give no retries= read the shipped [azure].
@@ -69,8 +69,8 @@ def recorded_judge_answer(case_id=JUDGED_CASE):
 
 
 def judged_sentences(case_id=JUDGED_CASE):
-    """The sentences only the judge can prove: "The newest, ... was still open 13 days after its notice." and
-    "Another, ... was still open too.", as the case's recorded judge answer was asked them."""
+    """The sentence only the judge can prove, "Another, KE-ICTA-571738-CW-RFB, was still open too.", which states no
+    number, date or quote for checks 1 to 3 to match, as the case's recorded judge answer was asked it."""
     return json.loads((JUDGED / f"{case_id}.json").read_text())["asked"]
 
 
@@ -86,7 +86,7 @@ def waits_logged(caplog):
 # ── The judge ────────────────────────────────────────────────────────────
 
 def test_a_judge_refused_twice_with_429_then_answered_keeps_its_sentences_after_two_logged_waits(fixture_db, caplog):
-    """The ticket's case: two 429s, then the judge's answer. The answer streams as recorded, both sentences kept."""
+    """The ticket's case: two 429s, then the judge's answer. The answer streams as recorded, its judged sentence kept."""
     caplog.set_level("WARNING")
     clock = FakeClock()
     azure = AzureOpenAIFake(judge_refused(429, {"Retry-After": "7"}), judge_refused(429, {"retry-after-ms": "2500"}),
@@ -129,7 +129,7 @@ def test_a_judge_refused_with_403_gives_up_at_once(fixture_db, caplog):
 
     asked = ask(fixture_db, JUDGED_CASE, judge=live_judge(azure, clock))
 
-    assert [item["reason"] for item in asked.of("removed")] == ["judge_unavailable"] * 2
+    assert [item["reason"] for item in asked.of("removed")] == ["judge_unavailable"]
     assert azure.tries == 1 and clock.waits == [] and waits_logged(caplog) == []
 
 
@@ -144,7 +144,7 @@ def test_a_503_is_tried_again_and_no_wait_passes_max_retry_seconds_nor_all_of_th
     asked = ask(fixture_db, JUDGED_CASE, judge=live_judge(azure, clock, retries=TICKET))
 
     assert azure.tries == 3 and clock.waits == [60, 60]
-    assert [item["reason"] for item in asked.of("removed")] == ["judge_unavailable"] * 2
+    assert [item["reason"] for item in asked.of("removed")] == ["judge_unavailable"]
     assert waits_logged(caplog)[0] == (
         "The judge on Azure OpenAI answered 503, so I am waiting 60 seconds before retry 1 of 3.")
     assert "would pass the 120 seconds one answer may wait, so I stopped trying." in caplog.text
@@ -182,9 +182,10 @@ def test_the_judges_http_transport_hands_azures_status_and_wait_to_the_retries(m
     clock = FakeClock()
     judge = AzureOpenAIJudge("https://judge.example.invalid/openai/v1", "not-a-real-key", "gpt-5.4", sleep=clock.sleep)
 
-    found = judge.judge([Question(index, sentence, ()) for index, sentence in enumerate(judged_sentences(), 1)])
+    # The judge answers by each sentence's index in the answer, and the judged one is its third, index 2.
+    found = judge.judge([Question(index, sentence, ()) for index, sentence in enumerate(judged_sentences(), 2)])
 
-    assert [judgement.follows for judgement in found] == [True, True]
+    assert [judgement.follows for judgement in found] == [True]
     assert clock.waits == [1.5, 1.5] and len(sent) == 3
     assert sent[0] == ("https://judge.example.invalid/openai/v1/chat/completions",
                        load_thresholds().value("verifier.judge_timeout_seconds"))
@@ -314,7 +315,7 @@ def test_the_tries_and_the_waits_come_from_the_thresholds_files_azure_section(tm
 
     asked = ask(fixture_db, JUDGED_CASE, judge=live_judge(azure, clock, retries=retries))
 
-    assert [item["reason"] for item in asked.of("removed")] == ["judge_unavailable"] * 2
+    assert [item["reason"] for item in asked.of("removed")] == ["judge_unavailable"]
     assert azure.tries == 2 and clock.waits == [2]
     assert retries.wait({"Retry-After": "30"}) == 3
     assert retries.wait({"Retry-After": "Wed, 28 Oct 2026 06:00:00 GMT"}) == 2  # a date names no seconds

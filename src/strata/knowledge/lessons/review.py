@@ -895,9 +895,14 @@ class LessonReview:
         noun = found["nouns"][status]["one" if m == 1 else "many"]
         numeral = {"from": {"number": first, "numeral": True}, "to": {"number": last, "numeral": True}}
         if narrowed:
+            # A part of the whole keeps its numerals, "Showing 1 of 2 current lessons" (DESIGN.md section 7, rule 42, and
+            # section 5, Tables; the 58 critique, follow-up 13).
             template = found["narrowedRange"] if pages > 1 else found["narrowed"]
-            return fill(template, {"n": {"number": n, "capital": pages > 1}, "m": {"number": m}, "noun": noun, **numeral})
-        return fill(found["range"] if pages > 1 else found["all"], {"m": {"number": m}, "noun": noun, **numeral})
+            part = {"n": {"number": n, "numeral": True}, "m": {"number": m, "numeral": True}}
+            return fill(template, {**part, "noun": noun, **numeral})
+        # "both" for two and "the one" for one, as every count line (ticket 58; DESIGN.md section 5, Tables).
+        whole = found["range"] if pages > 1 else found["one"] if m == 1 else found["both"] if m == 2 else found["all"]
+        return fill(whole, {"m": {"number": m}, "noun": noun, **numeral})
 
     # ── Writes ───────────────────────────────────────────────────────────
     #

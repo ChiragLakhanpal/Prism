@@ -105,6 +105,9 @@ def test_the_instructions_give_the_agent_design_md_s_rules_for_the_words_a_perso
     assert "in straight double quotes in the sentence, in every language" in instructions
     assert "Put no quote marks, double or single, around words you do not quote word for word." in words
     assert "of any kind" not in instructions
+    # Ticket 58: an ID is a name, not a quote, so the screen can set it in Roboto Mono and keep it on one line.
+    assert ("Write an ID as it is, with no quote marks: a STEP reference, a project ID or a notice ID is a name, "
+            "not a quote.") in words
 
 
 def test_the_instructions_show_one_worked_quote_claim_that_passes_the_verifier_and_say_to_copy_the_quote_exactly():

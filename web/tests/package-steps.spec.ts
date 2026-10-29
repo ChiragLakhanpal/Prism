@@ -232,6 +232,8 @@ async function openSentencePackage(page: Page, width = 1440, address = "/package
 test("a package from a sentence asks for its first step's date, then dates every later step from it, as of the page's date", async ({ page }) => {
   const puts = await openSentencePackage(page, 1440, "/packages/pkg-000000000001?asof=2021-01-15");
 
+  // Before a start date, no step is dated, so the intro says how I date them, in the present (ticket 58).
+  await expect(section(page).locator("[data-step-intro]")).toContainText("I date each step from how long it took in comparable packages");
   await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("How many days each step took in comparable packages.");
   await expect(section(page).locator("[data-planned='undated']:visible").first()).toContainText("Not dated yet");
   await section(page).getByRole("button", { name: "Date the steps" }).click();
@@ -243,6 +245,51 @@ test("a package from a sentence asks for its first step's date, then dates every
   expect(new URL(puts[0].url()).searchParams.get("asof")).toBe("2021-01-15");
   // The summary counts the one step the tool could not date, the contract's completion.
   await expect(section(page).locator("[data-section-summary]")).toContainText("I can't date one of the six steps.");
+
+  // Every comparable package took 30 days or less from the bidding documents to the bid opening, so the date's tooltip
+  // and its drawer say "In all 25", never "0 of 25, about 0 in 10" (ticket 58).
+  const opening = section(page).locator("[data-step-row='bid_opening'] [data-planned] [data-num], [data-step-item='bid_opening'] [data-planned] [data-num]").filter({ visible: true }).first();
+  await opening.focus();
+  await expect(page.getByRole("tooltip")).toContainText("In all 25 comparable packages, the bid opening came no more than 30 days after");
+  await expect(page.getByRole("tooltip")).not.toContainText("0 of 25");
+  await opening.click();
+  await expect(page.getByRole("dialog")).toContainText("In all 25 packages, the bid opening came no more than 30 days after");
+  await expect(page.getByRole("dialog")).not.toContainText("about 0 in 10");
+  // Every sentence says what the step came after, so none ends on "after." (the 58 review, P4).
+  await expect(page.getByRole("dialog")).not.toContainText(/days after\./);
+});
+
+// Ticket 58 (the 27 design review, round 2, R1): a step the comparable packages had not reached names the date the
+// source line names, the records' own when the page has no as-of date, and its drawer never says they recorded it.
+test("a step comparable packages had not reached names the source line's date, and its drawer says they had not reached it", async ({ page }) => {
+  await openSentencePackage(page);
+
+  await expect(section(page).locator("[data-step-notes]")).toContainText("Records run through August 3, 2020.");
+  const completion = section(page).locator("[data-step-row='contract_completed'], [data-step-item='contract_completed']").filter({ visible: true });
+  await expect(completion).toContainText("None of the 25 comparable packages had reached this step by August 3, 2020, so I can't date it yet.");
+  // The count's tooltip says the packages were checked for the step, never that they recorded it (the 58 design
+  // review, round 3, follow-up 1).
+  const count = completion.getByRole("button", { name: /comparable packages for/ });
+  await count.focus();
+  await expect(page.getByRole("tooltip")).toContainText("The comparable packages I checked for the contract's completion.");
+  await expect(page.getByRole("tooltip")).not.toContainText("recorded");
+  await count.click();
+  await expect(page.getByRole("dialog")).toContainText("None of the 25 comparable packages had reached the contract's completion by August 3, 2020. Here are all 25.");
+  await expect(page.getByRole("dialog")).not.toContainText("recorded the contract's completion");
+});
+
+// The 58 review, P6: on a page with an as-of date, the row and the drawer it opens name the same date.
+test("on a page as of a date, a step not reached and its drawer name the same date", async ({ page }) => {
+  await openSentencePackage(page, 1440, "/packages/pkg-000000000001?asof=2021-01-15");
+
+  const completion = section(page).locator("[data-step-row='contract_completed'], [data-step-item='contract_completed']").filter({ visible: true });
+  await expect(completion).toContainText("had reached this step by January 15, 2021");
+  await completion.getByRole("button", { name: /comparable packages for/ }).click();
+  await expect(page.getByRole("dialog")).toContainText("had reached the contract's completion by January 15, 2021.");
+  // The source line keeps the records' own date apart from the page's: it reads "as of" the page's date, as the
+  // section's line does, and never says the records run through a date no tool returned (the 58 review, round 2, B1).
+  await expect(page.getByRole("dialog").locator("[data-source]")).toHaveText(/Records as of January 15, 2021\.$/);
+  await expect(page.getByRole("dialog")).not.toContainText("Records run through January 15, 2021");
 });
 
 // Every list item's labels and values, as text boxes: none of a label's boxes may touch its value's.
@@ -320,11 +367,20 @@ test("when no step can be dated, as on the fixture's demo package, the section o
     "These are the steps STEP uses for goods, works and non-consulting services. I date a step only when 20 or more comparable packages recorded it.",
   );
   await expect(section(page).locator("[data-choice]")).toHaveCount(0);
-  await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("I couldn't date any of these steps.");
-  // The count line in the Tables form: one to nine in words and no full stop, as zone 1's (ticket 101's design review,
-  // round 2, item 8).
-  await expect(section(page).locator("[data-step-count]:visible")).toHaveText("Showing all six steps");
+  // The caption says what the table holds, since the intro above names the steps and the summary says none could be
+  // dated (ticket 58; the 58 critique, follow-up 7).
+  await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("Each step, and how many comparable packages recorded it.");
+  // The count line in the Tables form: one to nine in words and a full stop, as every count line (ticket 58).
+  await expect(section(page).locator("[data-step-count]:visible")).toHaveText("Showing all six steps.");
   await expect(section(page).locator("[data-section-summary]")).toContainText("I have too few comparable packages to date any of the six.");
+  // The date column says what dating takes, not how often packages ran later over six refusals (ticket 58): in the
+  // list here, each step's label, and in the table, the column head with its note.
+  await expect(section(page).locator("[data-step-list]")).toBeVisible();
+  const labels = section(page).locator("[data-step-list] dt").filter({ hasText: /^Planned date/ });
+  await expect(labels).toHaveCount(6);
+  await expect(labels.first()).toHaveText("Planned date");
+  await expect(section(page).locator("[data-step-table] [data-choice-header]")).toHaveText("Planned dateDated only when 20 or more comparable packages recorded the step.");
+  await expect(section(page)).not.toContainText("Planned date, cautious");
 });
 
 test("beside the side panel at 1440 px the steps are a list sized by the zone's own width, so no planned-date sentence runs past two lines", async ({ page }) => {
