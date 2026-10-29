@@ -2025,7 +2025,7 @@ export const SHOTS: Shot[] = [
   { name: "navigation--hover-menu", path: "/gallery/navigation", widths: NARROW, act: hover("[data-menu-button]") },
   { name: "navigation--focus-menu", path: "/gallery/navigation", widths: NARROW, act: focus("[data-menu-button]") },
   { name: "navigation--menu-open", path: "/gallery/navigation?menu=open", widths: NARROW },
-  // Ticket 59: the sheet's view button pressed, its view lines and language choice under it.
+  // Ticket 59: the sheet's view button pressed, its popover with the view lines and language choice above it.
   { name: "navigation--menu-view-open", path: "/gallery/navigation?menu=open&menuview=open", widths: [390] },
   { name: "navigation--menu-row-focus", path: "/gallery/navigation?menu=open", widths: NARROW, act: focus("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--menu-row-hover", path: "/gallery/navigation?menu=open", widths: NARROW, act: hover("[data-sidebar] [data-nav-item=drafts]") },

@@ -189,7 +189,7 @@ function ChangeLine({ changes, onSee }: { changes: PlanChanges; onSee: () => voi
 // "Compared with the plan of March 5, 2026, this version re-estimated two activities. See what changed", held as
 // skeleton words, unseen and unheard, so the activities panel starts where it will (ticket 59; the critique of round 1).
 // An agency's plan almost always has a change line: one that answers with none moves the panel up by its lines.
-function HeldChangeLine() {
+export function HeldChangeLine() {
   const line = words.changes;
   const typical = `${fill(line.line, {
     prev_date: wholeDate(formatDate("2026-03-05", { style: "sentence" })),

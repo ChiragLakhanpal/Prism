@@ -596,9 +596,10 @@ test("the view popover says who is signed in and offers each view as a link, wit
 
 // Ticket 59, the pm's routed item from ticket 93's critique: below 768 px the Menu sheet's foot held the whole view panel,
 // about three times the navigation's height, with a second current mark. Now the foot holds Data, the stamp under it and
-// one view button, the bar's view switch, pinned to the sheet's bottom; the view rows and the language choice show only
-// once it is pressed, and it says so with aria-expanded.
-test("at 390 px the Menu sheet's foot holds one view button under Data and the stamp, and its rows show when it is pressed", async ({ page }) => {
+// one view button, the bar's view switch, pinned to the sheet's bottom. Pressed, it opens the view switch's popover above
+// it (round 3: the rows opened in place, which moved the button 355 px up and drew a second mark), and the button stays
+// where the thumb is. The chosen view is marked by its check alone, so the page's item keeps the one tint and bar.
+test("at 390 px the Menu sheet's foot holds one view button under Data and the stamp, and it opens its popover above it", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/");
@@ -618,14 +619,68 @@ test("at 390 px the Menu sheet's foot holds one view button under Data and the s
   expect(box.y + box.height - (button.y + button.height), "pinned to the sheet's bottom").toBeLessThanOrEqual(24);
   // One current mark: the page's item.
   await expect(sheet.locator("[aria-current]")).toHaveCount(1);
+  // The marks a reader sees: a tinted link row, or one with the 3 px bar.
+  const marks = () =>
+    sheet.evaluate((root) =>
+      [...root.querySelectorAll("a")]
+        .filter((element) => element.getClientRects().length > 0)
+        .filter((element) => getComputedStyle(element).backgroundColor !== "rgba(0, 0, 0, 0)" || getComputedStyle(element, "::before").backgroundColor.startsWith("rgb("))
+        .map((element) => (element.textContent ?? "").trim().split(/\s{2,}|\n/)[0]),
+    );
+  expect(await marks()).toEqual(["Home"]);
 
   await view.click();
   await expect(view).toHaveAttribute("aria-expanded", "true");
-  await expect(sheet.locator("[data-view-row]")).toHaveCount(3);
-  await expect(sheet.getByText("See Strata as", { exact: true })).toBeVisible();
+  const popover = sheet.getByRole("dialog", { name: "Your view" });
+  await expect(popover.locator("[data-view-row]")).toHaveCount(3);
+  await expect(popover.getByText("See Strata as", { exact: true })).toBeVisible();
+  // Focus lands on the current view's row, as in the bar's popover.
+  await expect(popover.locator("[data-view-row=staff]")).toBeFocused();
+  await expect(popover.locator("[data-view-row=staff] svg")).toHaveCount(1);
+  // The button has not moved, and the popover sits 8 px above it on its left edge, as wide as it is.
+  const pressed = (await view.boundingBox())!;
+  expect(Math.round(pressed.y), "the view button stays put").toBe(Math.round(button.y));
+  const above = (await popover.boundingBox())!;
+  expect(Math.round(pressed.y - (above.y + above.height)), "8 px above the button").toBe(8);
+  expect(Math.round(above.x), "on the button's left edge").toBe(Math.round(pressed.x));
+  expect(Math.round(above.width), "as wide as the button").toBe(Math.round(pressed.width));
+  // Still one mark: the chosen view has its check alone, with no tint and no bar.
+  expect(await marks()).toEqual(["Home"]);
+
+  // Escape closes the popover only, and focus goes back to the button.
+  await page.keyboard.press("Escape");
+  await expect(popover).toBeHidden();
+  await expect(sheet).toBeVisible();
   await expect(view).toBeFocused();
+  await expect(view).toHaveAttribute("aria-expanded", "false");
+  await view.click();
+  await expect(popover.locator("[data-view-row]")).toHaveCount(3);
   await view.click();
   await expect(sheet.locator("[data-view-row]")).toHaveCount(0);
+});
+
+// On the smallest phone the popover keeps to the room above the button and scrolls inside itself, so the language choice
+// can still be reached.
+test("at 320 x 568 the Menu sheet's view popover fits above its button and scrolls to the language choice", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: "Menu" });
+  const view = sheet.getByRole("button", { name: "View: World Bank staff", exact: true });
+  await view.click();
+  const popover = sheet.getByRole("dialog", { name: "Your view" });
+  await expect(popover).toBeVisible();
+  const above = (await popover.boundingBox())!;
+  const button = (await view.boundingBox())!;
+  const close = (await sheet.getByRole("button", { name: "Close the menu" }).boundingBox())!;
+  expect(above.y, "clear of the sheet's head, so Close the menu stays in reach").toBeGreaterThanOrEqual(close.y + close.height + 8);
+  expect(above.y + above.height, "above the button").toBeLessThanOrEqual(button.y);
+  const last = popover.locator("[data-language-choice] label").last();
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport();
+  const at = (await last.boundingBox())!;
+  expect(at.y + at.height, "the last language above the button").toBeLessThanOrEqual(button.y);
 });
 
 // Ticket 110, from the user's review of October 27, 2026: "See Strata as" names the group in the label style (DESIGN.md

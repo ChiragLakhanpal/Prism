@@ -336,6 +336,9 @@ export const galleryCopy = {
     missing: "Missing",
     slow: "Loading, after one second",
     slowTwo: "Loading, after two seconds",
+    // Ticket 59, round 2: the held states the page draws while its answers load.
+    loadingChangeLine: "Loading, with the change line's place held under the narration",
+    loadingWithAgain: "Loading, with Advertised again's skeleton under the past range's",
     withText: "With text",
     opened: "Opened before",
     active: "Open in the drawer",

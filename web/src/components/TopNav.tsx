@@ -118,8 +118,9 @@ function WhoLine({ viewer, id }: { viewer: Viewer; id?: string }) {
   );
 }
 
-// One view as a link row: its label and what it is, the current one marked with a check, tint and a 3 px bar.
-function ViewRow({ view, mode, current }: { view: View; mode: NavMode; current: boolean }) {
+// One view as a link row: its label and what it is, the current one marked with a check, tint and a 3 px bar. In the
+// Menu sheet the check alone marks it, so the page's item keeps the sheet's one tint and bar (ticket 59).
+function ViewRow({ view, mode, current, checkOnly = false }: { view: View; mode: NavMode; current: boolean; checkOnly?: boolean }) {
   const desc = useId();
   const rows = copy.nav.view.rows;
   const own = view === mode.own;
@@ -137,7 +138,7 @@ function ViewRow({ view, mode, current }: { view: View; mode: NavMode; current: 
         className={cx(
           "relative flex min-h-12 items-start gap-2 rounded-sm px-3 py-2 transition-paint duration-150",
           "before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-sm",
-          current ? "bg-tint before:bg-primary" : "hover:bg-tint-hover",
+          current && !checkOnly ? "bg-tint before:bg-primary" : "hover:bg-tint-hover",
         )}
       >
         <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center">
@@ -213,7 +214,20 @@ function DateForm({ mode, onDone }: { mode: NavMode; onDone: () => void }) {
 // only the error line (the 40 brief, 7.1). "See Strata as" names the group in the label style, so it never reads as a
 // fourth view: 16 px under the signed-in line, as between blocks, and 8 px over the first row (ticket 110). Nothing in
 // the panel is bold, since DESIGN.md keeps 700 for the h1 and the wordmark.
-export function ViewPanel({ viewer, mode, onDone, whoId }: { viewer: Viewer; mode: NavMode; onDone: () => void; whoId?: string }) {
+export function ViewPanel({
+  viewer,
+  mode,
+  onDone,
+  whoId,
+  checkOnly = false,
+}: {
+  viewer: Viewer;
+  mode: NavMode;
+  onDone: () => void;
+  whoId?: string;
+  // The current view marked by its check alone, as the Menu sheet shows it.
+  checkOnly?: boolean;
+}) {
   const group = useId();
   const current: View = mode.preview ?? mode.own;
   if (viewer.status === "error") return <WhoLine viewer={viewer} id={whoId} />;
@@ -227,7 +241,7 @@ export function ViewPanel({ viewer, mode, onDone, whoId }: { viewer: Viewer; mod
         {mode.offered.length > 0 ? (
           <ul aria-labelledby={group} className="mt-2 flex flex-col gap-1">
             {mode.offered.map((view) => (
-              <ViewRow key={view} view={view} mode={mode} current={view === current} />
+              <ViewRow key={view} view={view} mode={mode} current={view === current} checkOnly={checkOnly} />
             ))}
           </ul>
         ) : (

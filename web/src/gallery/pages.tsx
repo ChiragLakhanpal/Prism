@@ -80,10 +80,13 @@ import type { Section } from "../components/sections";
 import { FactsPanel, factsLine } from "../components/PackageFacts";
 import { PageHead } from "../components/PageHead";
 import { PastRange } from "../components/PastRange";
+import { Rebidding } from "../components/RebiddingBlock";
+import { rebiddingPath } from "../lib/rebidding";
 import { copy } from "../copy";
 import type { Readiness, ReadinessState, RegistryState, Segment, ShelfEntry } from "../lib/dataPages";
 import type { Comparable, ComparablesResult, PackageFacts } from "../lib/api";
 import { formatDate } from "../lib/format";
+import { HeldChangeLine } from "../pages/CheckPlanPage";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { RefusalWindow, WhatIDontDo } from "../components/WhatIDontDo";
@@ -1419,6 +1422,8 @@ export const PAGES: GalleryPage[] = [
       { id: "open", title: t.planOpen, body: <PlanCheck result={planSample} defaultOpen /> },
       { id: "partial", title: t.planPartial, body: <PlanCheck result={partialSample} /> },
       { id: "loading", title: s.loading, body: <PlanCheckSkeleton /> },
+      // Ticket 59, round 2: what changed has not answered either, so its line's place is held under the narration.
+      { id: "loading-change-line", title: s.loadingChangeLine, body: <PlanCheckSkeleton afterNarration={<HeldChangeLine />} /> },
       { id: "slow", title: s.slowTwo, body: <PlanCheckSkeleton slow /> },
     ],
   },
@@ -1498,6 +1503,18 @@ export const PAGES: GalleryPage[] = [
         ),
       },
       { id: "loading", title: s.loading, body: <PastRange state={{ status: "loading" }} /> },
+      // Ticket 59, round 2: on the package page, Advertised again holds its own skeleton under the past range's while
+      // section 1 loads. With no section yet, it sends no request.
+      {
+        id: "loading-with-again",
+        title: s.loadingWithAgain,
+        body: (
+          <PastRange
+            state={{ status: "loading" }}
+            after={() => <Rebidding path={rebiddingPath("/api/packages/sample")} section={null} sectionLoading />}
+          />
+        ),
+      },
       {
         id: "error",
         title: s.error,

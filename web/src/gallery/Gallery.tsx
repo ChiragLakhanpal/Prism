@@ -84,7 +84,7 @@ export function GalleryFrame({
   viewer?: Viewer;
   menuOpen?: boolean;
   viewOpen?: boolean;
-  // The Menu sheet's view lines, shown under its view button below 768 px (?menuview=open; ticket 59).
+  // The Menu sheet's view popover, open above its view button below 768 px (?menuview=open; ticket 59).
   menuViewOpen?: boolean;
   mode?: NavMode;
   // The sidebar's resting state, open or rail, whatever the width (?sidebar=open or ?sidebar=rail).
@@ -199,7 +199,7 @@ function Index() {
 }
 
 // The frame's own states come from the address, so the capture command can open each one:
-// ?menu=open opens the Menu sheet, ?menuview=open its view lines under its view button (ticket 59), ?view=open the view
+// ?menu=open opens the Menu sheet, ?menuview=open its view popover above its view button (ticket 59), ?view=open the view
 // popover, ?viewer=loading,
 // ?viewer=signed-out or ?viewer=error sets what the view lines say, ?pill=officer, ?pill=piu, ?pill=public or
 // ?pill=officer-public shows that view's pill and sections (ticket 40), ?pill=loading the sidebar before the view is known

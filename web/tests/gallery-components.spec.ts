@@ -21,8 +21,10 @@ async function axe(page: Page) {
 // Ticket 59 (the 31 review, round 3, F5): above 60 comparable packages the cost lane draws the tool's 20 quantile dots,
 // each at its share's middle difference, under brief 12's key line, and a dot's press opens the table twin, which keeps
 // every package. The sample is a mock the fixture cannot hold, and says so.
+const QUANTILE_MOCK = new URL("../../tests/fixtures/api/criteria-cost-mock-quantile-dots.json", import.meta.url);
+
 test("above 60 packages the cost lane draws one dot per quantile with its key line, and a dot opens every package in the table", async ({ page }) => {
-  const mock = JSON.parse(await readFile(new URL("../../tests/fixtures/api/criteria-cost-mock-quantile-dots.json", import.meta.url), "utf8"));
+  const mock = JSON.parse(await readFile(QUANTILE_MOCK, "utf8"));
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/check-criteria");
   const sample = page.locator("[data-cost-sample=quantile]");
@@ -57,11 +59,13 @@ test("above 60 packages the cost lane draws one dot per quantile with its key li
 // not count them. They are r 4 below 400 px, and move off the centre line far enough that each dot's 2 px surface ring
 // keeps 1 px clear of the next (centres at least 2r + 3 apart).
 test("the cost lane's quantile dots never touch, at 390 and 320 px as at 1440", async ({ page }) => {
+  // As many dots as the tool returned (the review of round 2, F2).
+  const mock = JSON.parse(await readFile(QUANTILE_MOCK, "utf8"));
   await page.goto("/gallery/check-criteria");
   for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     const circles = page.locator("[data-cost-sample=quantile] [data-cost-drawing] circle");
-    await expect(circles).toHaveCount(20);
+    await expect(circles).toHaveCount(mock.quantile_dots.length);
     await expect
       .poll(
         () =>
@@ -635,12 +639,30 @@ test("a term opens GLOSSARY.md's definition in a window, focus moves to its titl
   await expect(term).toBeFocused();
 });
 
+// The review of round 2, F1: the gallery shows the two held states round 2 added. The plan check's skeleton holds the
+// change line's place under the narration, and section 1's skeleton has Advertised again's under it, which sends no
+// request while section 1 has no result.
+test("the gallery shows the plan check's held change line and section 1's skeleton with Advertised again's under it", async ({ page }) => {
+  const asked: string[] = [];
+  page.on("request", (request) => new URL(request.url()).pathname.startsWith("/api/") && asked.push(request.url()));
+  await page.goto("/gallery/plan-check");
+  const plan = page.locator("[data-state-section=loading-change-line]");
+  await expect(plan.getByRole("heading", { name: "Loading, with the change line's place held under the narration" })).toBeVisible();
+  await expect(plan.locator("[data-change-line-held]")).toBeVisible();
+  await expect(plan.locator("[data-change-line-held] [data-skeleton-words]")).toHaveAttribute("aria-hidden", "true");
+  await page.goto("/gallery/past-range");
+  const range = page.locator("[data-state-section=loading-with-again]");
+  await expect(range.getByRole("heading", { name: "Loading, with Advertised again's skeleton under the past range's" })).toBeVisible();
+  await expect(range.locator("[data-rebidding=loading]")).toBeVisible();
+  expect(asked).toEqual([]);
+});
+
 test("the open Menu panel and the view popover pass axe", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/gallery/navigation?menu=open&viewer=loading");
   await expect(page.locator("[data-menu-panel]")).toBeVisible();
   expect(await axe(page)).toEqual([]);
-  // The sheet's view button pressed, its view lines and language choice shown under it (ticket 59).
+  // The sheet's view button pressed, its popover with the view lines and language choice above it (ticket 59).
   await page.goto("/gallery/navigation?menu=open&menuview=open");
   await expect(page.locator("[data-menu-panel] [data-view-row]")).toHaveCount(3);
   expect(await axe(page)).toEqual([]);

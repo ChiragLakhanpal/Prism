@@ -9,8 +9,8 @@
 //
 // Below 1024 px the same element is the Menu sheet: a modal dialog named "Menu" that slides in from the left, with
 // the page and the bar inert behind it (Frame.tsx holds its state), the stamp under Data and, below 768 px, the bar's
-// view switch as one button pinned to its foot, which shows the view lines and the language choice in place when it is
-// pressed (ticket 59, from ticket 93's critique). It closes on Escape, on "Close the menu" and on
+// view switch as one button pinned to its foot, which opens the view lines and the language choice in a popover above
+// it when it is pressed (ticket 59, from ticket 93's critique). It closes on Escape, on "Close the menu" and on
 // the scrim, and focus goes back to the Menu button. When the window narrows past 1024 px, focus on an item moves
 // to the Menu button.
 //
@@ -19,7 +19,8 @@
 // all done it says so and leads to Home's strip, where Remove stays. As a rail it shows its icon and the short count,
 // and its tooltip says the rest. App.tsx decides when it shows (lib/startHere.ts).
 import { useEffect, useId, useLayoutEffect, useRef, useState, type FocusEvent } from "react";
-import { ChevronDown, ChevronUp, ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
+import * as RadixPopover from "@radix-ui/react-popover";
+import { ChevronUp, ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
@@ -30,6 +31,7 @@ import { Fill } from "./Fill";
 import { fillText } from "./LessonParts";
 import { useMenuSheet, WIDE } from "./Frame";
 import { LanguageChoice } from "./LanguageChoice";
+import { POPOVER } from "./Popover";
 import { FOOT_SECTION, HOME_ITEM, SECTIONS, type Section, type SubItem, type SubItems } from "./sections";
 import { Skeleton } from "./Skeleton";
 import { pillLabel, ViewPanel, withModeOf, type NavMode, type Viewer } from "./TopNav";
@@ -72,6 +74,8 @@ function useRest(forced?: Rest): [Rest, () => void] {
 }
 
 const pathOf = (href: string) => href.split("?")[0];
+// The Menu sheet's head, its title and "Close the menu": 8 + 44 + 8 px and the 1 px line under it.
+const SHEET_HEAD = 61;
 
 // A tooltip's label, and a second line under it: the stamp's words on the Data item.
 type Tip = { text: string; line: string | null; top: number; instant: boolean };
@@ -122,13 +126,16 @@ export function Sidebar({
   rest?: Rest;
   // Start here's examples and the ones followed (ticket 114), while the item shows; App.tsx decides when.
   startHere?: StartHereList | null;
-  // For the gallery: the Menu sheet's view lines start shown.
+  // For the gallery: the Menu sheet's view popover starts open.
   viewOpen?: boolean;
 }) {
   const sheet = useMenuSheet();
-  // Below 768 px the sheet's view button shows the view lines in place; they fold away again when the sheet closes.
+  // Below 768 px the sheet's view button opens the view switch's popover above it; it closes when the sheet closes.
   const [viewShown, setViewShown] = useState(viewOpen);
-  const viewLinesId = useId();
+  const viewContent = useRef<HTMLDivElement>(null);
+  const whoId = useId();
+  const sheetOpen = useRef(sheet.open);
+  sheetOpen.current = sheet.open;
   useEffect(() => {
     if (!sheet.open) setViewShown(viewOpen);
   }, [sheet.open, viewOpen]);
@@ -419,37 +426,59 @@ export function Sidebar({
                 </button>
               </div>
         </nav>
-        {/* Below 768 px the bar's view switch sits at the sheet's foot as one button, under Data and the stamp; pressed, it
-            shows the view lines and the language of answers and drafts in place under it (tickets 40, 42; ticket 59, from
-            ticket 93's critique). From 768 px the view switch is in the bar (ticket 93). */}
+        {/* Below 768 px the bar's view switch sits at the sheet's foot as one button, under Data and the stamp, pinned to
+            the sheet's bottom. Pressed, it opens the view switch's popover above it, with the view lines and the language
+            of answers and drafts, so the button stays under the thumb (tickets 40, 42; ticket 59, from ticket 93's
+            critique). The popover stays inside the sheet, which is modal, and the current view has its check alone. From
+            768 px the view switch is in the bar (ticket 93). */}
         <div data-menu-panel className="border-t border-line px-2 py-3 md:hidden">
           {mode.unknown ? (
             <Skeleton className="h-11 w-full" radius="rounded-sm" />
           ) : (
-            <button
-              type="button"
-              data-menu-view
-              aria-expanded={viewShown}
-              aria-controls={viewLinesId}
-              onClick={() => setViewShown((shown) => !shown)}
-              className={cx(ITEM, "min-h-11 justify-between text-ink hover:bg-surface-2")}
-            >
-              <span className="min-w-0">{pillLabel(mode)}</span>
-              {viewShown ? <ChevronUp aria-hidden="true" className="size-4 shrink-0" /> : <ChevronDown aria-hidden="true" className="size-4 shrink-0" />}
-            </button>
-          )}
-          <div id={viewLinesId} hidden={!viewShown || mode.unknown} className="px-2 pt-4 pb-1">
-            {viewShown && !mode.unknown && (
-              <>
-                <ViewPanel viewer={viewer} mode={mode} onDone={() => sheet.setOpen(false, false)} />
+            <RadixPopover.Root open={viewShown && sheet.open} onOpenChange={setViewShown}>
+              <RadixPopover.Trigger
+                data-menu-view
+                aria-haspopup="dialog"
+                className={cx(ITEM, "min-h-11 justify-between text-ink hover:bg-surface-2")}
+              >
+                <span className="min-w-0">{pillLabel(mode)}</span>
+                <ChevronUp aria-hidden="true" className={cx("size-4 shrink-0 transition-transform duration-150", viewShown && "rotate-180")} />
+              </RadixPopover.Trigger>
+              <RadixPopover.Content
+                ref={viewContent}
+                data-sheet-layer
+                side="top"
+                align="start"
+                sideOffset={8}
+                avoidCollisions={false}
+                // It keeps the sheet's head clear, 8 px under it, so "Close the menu" stays in reach.
+                collisionPadding={{ top: SHEET_HEAD + 8 }}
+                aria-label={copy.nav.view.dialog}
+                aria-describedby={whoId}
+                onOpenAutoFocus={(event) => {
+                  // Focus lands on the current view's row, as in the bar's popover (the 40 brief, 8.2).
+                  event.preventDefault();
+                  const row = viewContent.current?.querySelector<HTMLElement>("[data-view-row][aria-current]");
+                  (row ?? viewContent.current?.querySelector<HTMLElement>("a, input, button"))?.focus();
+                }}
+                onCloseAutoFocus={(event) => {
+                  // Closing the sheet closes the popover too, and focus then goes to the Menu button, not back here.
+                  if (!sheetOpen.current) event.preventDefault();
+                }}
+                className={cx(
+                  POPOVER,
+                  "max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) overflow-y-auto overscroll-contain p-4",
+                )}
+              >
+                <ViewPanel viewer={viewer} mode={mode} whoId={whoId} checkOnly onDone={() => sheet.setOpen(false, false)} />
                 {viewer.status !== "error" && (
                   <div className="mt-4 border-t border-line pt-4">
                     <LanguageChoice />
                   </div>
                 )}
-              </>
-            )}
-          </div>
+              </RadixPopover.Content>
+            </RadixPopover.Root>
+          )}
         </div>
         {tip && (
           <span
