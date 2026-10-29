@@ -198,6 +198,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
               path={rebiddingPath(base)}
               section={section.status === "ready" ? section.data : null}
               sectionFailed={section.status === "error"}
+              sectionLoading={section.status === "loading"}
               comparing={comparing}
             />
           )}

@@ -3846,7 +3846,7 @@ export const copy = {
     },
     subtitle: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
     subtitleDots:
-      "Each dot is 1 in 20 of the {total} packages, placed by the months from the specific procurement notice to the signed contract.",
+      "Each dot is 1 in {dots} of the {total} packages, placed by the months from the specific procurement notice to the signed contract.",
     summary: {
       middle: "The middle half of these packages took {q25} to {q75} months, and the middle one took {q50}.",
       // With no plan dates the title already gives the middle half, so the summary starts here.
@@ -3910,7 +3910,7 @@ export const copy = {
       lane: "What happened",
       keySigned: (count: string) => `${count} signed`,
       keyOpen: (count: string) => `${count} still open`,
-      keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages.`,
+      keyDots: (total: string, dots: string) => `Each dot is 1 in ${dots} of the ${total} packages.`,
       // Open packages are not drawn one by one among quantile dots, so their count is words alone.
       keyOpenDots: (count: string) => `${count} still open.`,
       plan: "Plan",
@@ -3922,7 +3922,7 @@ export const copy = {
       in10: (q80: string) => `8 in 10 within ${q80}`,
       axisLast: (months: string) => `${months} months`,
       group: (total: string) => `${total} comparable packages, one dot each`,
-      groupDots: (total: string) => `20 dots, each 1 in 20 of the ${total} comparable packages`,
+      groupDots: (total: string, dots: string) => `${dots} dots, each 1 in ${dots} of the ${total} comparable packages`,
       groupHelp: "Use the arrow keys to move between packages. Press Escape to hide the details.",
       // Where a dot opens its package's records in the evidence drawer (ticket 15).
       groupHelpOpen: "Use the arrow keys to move between packages. Press Enter to open a package's records, or Escape to hide the details.",
@@ -3938,10 +3938,10 @@ export const copy = {
       // the tooltip's sentence, where it came from and what Enter does (said), then its place among the dots.
       dotName: (ref: string, months: string, said: string, index: string, total: string) =>
         `${ref}, ${months} months. ${said} Dot ${index} of ${total}.`,
-      dotQuantile: (k: string, total: string, months: string) =>
-        `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. This one is at ${months} months.`,
-      dotQuantileOpen: (k: string, total: string, months: string) =>
-        `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
+      dotQuantile: (k: string, dots: string, total: string, months: string) =>
+        `Dot ${k} of ${dots}. Each dot is 1 in ${dots} of the ${total} comparable packages. This one is at ${months} months.`,
+      dotQuantileOpen: (k: string, dots: string, total: string, months: string) =>
+        `Dot ${k} of ${dots}. Each dot is 1 in ${dots} of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
       tipMonths: (months: string) => `${months} months`,
       tipPast: (months: string) => `Past ${months} months`,
       // A dot's sentence, with its dates in full (DESIGN.md section 7, rule 13). The country leads, as it follows the
@@ -3949,8 +3949,8 @@ export const copy = {
       tipSigned: (country: string, notice: string, signed: string) =>
         `${country}. Its notice was published ${notice}, and its contract was signed ${signed}.`,
       tipOpen: (country: string, notice: string) => `${country}. Its notice was published ${notice}, and the records I hold show no signed contract.`,
-      tipQuantile: (k: string) => `Dot ${k} of 20`,
-      tipQuantileLine: (total: string) => `Each dot is 1 in 20 of the ${total} comparable packages.`,
+      tipQuantile: (k: string, dots: string) => `Dot ${k} of ${dots}`,
+      tipQuantileLine: (total: string, dots: string) => `Each dot is 1 in ${dots} of the ${total} comparable packages.`,
       tipQuantileOpen: "Too many of these packages are still open to place this dot.",
       slider: "Planned months",
       valueText: (months: string, within: string, total: string) =>
@@ -3963,8 +3963,8 @@ export const copy = {
         `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed and ${open} still open.`,
       altAllSigned: (total: string, axisMax: string, signed: string) =>
         `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed.`,
-      altDots: (total: string, axisMax: string) =>
-        `Dot chart of 20 dots, each 1 in 20 of the ${total} comparable packages, on a month axis from 0 to ${axisMax} months.`,
+      altDots: (total: string, dots: string, axisMax: string) =>
+        `Dot chart of ${dots} dots, each 1 in ${dots} of the ${total} comparable packages, on a month axis from 0 to ${axisMax} months.`,
       altRange: (q25: string, q75: string, q50: string, q80: string) =>
         `The middle half took ${q25} to ${q75} months, the middle one took ${q50}, and 8 in 10 were signed within ${q80}.`,
       altMiddle: (q25: string, q75: string, q50: string) => `The middle half took ${q25} to ${q75} months, and the middle one took ${q50}.`,
@@ -5320,6 +5320,11 @@ export const copy = {
       "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
     introNoEstimate:
       "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
+    // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), so the intro says so.
+    introQuantile:
+      "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. Its place shows how far above or below its own cost estimate the middle package of its group was signed.",
+    introNoEstimateQuantile:
+      "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. Its place shows how far above or below its own cost estimate the middle package of its group was signed.",
     amount: (amount: string) => `US$${amount}`,
     title: "{above} of {m} comparable packages were signed above their cost estimates.",
     titleOne: "One of the {m} comparable packages was signed above its cost estimate.",
@@ -5372,13 +5377,15 @@ export const copy = {
     tooltipOpenTouch: "Open its records",
     dotName: (ref: string, diff: string) => `${ref}, signed ${diff} its cost estimate`,
     // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), as on the past range.
-    keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages.`,
+    keyDots: (total: string, dots: string) => `Each dot is 1 in ${dots} of the ${total} packages.`,
     dotQuantile: (k: string, dots: string, count: string, total: string, diff: string) =>
-      `Dot ${k} of ${dots}: ${count} of the ${total} packages, their middle one signed ${diff} its cost estimate`,
+      `Dot ${k} of ${dots} stands for ${count} of the ${total} packages. Their middle one was signed ${diff} its cost estimate.`,
     tipQuantile: (count: string) => `${count} packages`,
-    tipQuantileLine: "The middle one's signed amount against its cost estimate.",
+    tipQuantileLine: "The middle package's signed amount against its cost estimate.",
     tooltipOpenDots: "Press Enter or click to see every package in the table.",
     alt: "One dot for each of {m} comparable packages, placed by how far its signed amount was from its own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
+    altQuantile:
+      "{dots} dots, each standing for 1 in {dots} of the {m} comparable packages, placed by how far above or below its own cost estimate the middle package of each group was signed. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altMiddle: "The middle half ran from {q25} to {q75}, and the middle package was {q50}.",
     countTooltip: "Comparable packages with both a cost estimate and a signed contract.",
     countAct: "Select to see the table.",

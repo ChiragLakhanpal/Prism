@@ -37,6 +37,7 @@ import { currentLanguage, ENGLISH, languageName, workingLanguage } from "../lib/
 import { OneBox, type BoxOption } from "./OneBox";
 import { Fill } from "./Fill";
 import { MonoWords } from "./MonoWords";
+import { wholeDate } from "./NumFrom";
 import { RETURNING } from "./Popover";
 
 const LOOKUP_DELAY_MS = 150;
@@ -58,7 +59,8 @@ function foundLine(found: Found): ReactNode {
   const words = copy.box.option;
   if (found.kind === "project") return words.projectLine(found.name, found.country);
   if (found.kind === "loan") return <Fill template={words.loanLine} slots={{ pcode: mono(found.pcode), name: found.name ?? "" }} />;
-  return <Fill template={words.activityLine(found.agency, formatDate(found.planDate))} slots={{ pcode: mono(found.pcode) }} />;
+  // A plan's date never breaks inside itself (ticket 59, criterion 5).
+  return <Fill template={words.activityLine(found.agency, wholeDate(formatDate(found.planDate)))} slots={{ pcode: mono(found.pcode) }} />;
 }
 
 export type Choice = { kind: "ask" } | { kind: "id"; intent: Intent } | { kind: "plan"; held?: boolean } | { kind: "go"; href: string };
@@ -85,7 +87,7 @@ export function boxList(
       const options: BoxOption[] = plans.map((plan) => ({
         key: `check:${plan.agencyId}`,
         icon: Table2,
-        label: copy.box.option.checkPlan(plan.agency, formatDate(plan.planDate)),
+        label: copy.box.option.checkPlan(plan.agency, wholeDate(formatDate(plan.planDate))),
         line: <Fill template={copy.box.option.checkPlanLine} slots={{ pcode: mono(project.id) }} />,
       }));
       const choices: Choice[] = plans.map((plan) => ({ kind: "go", href: `/projects/${project.id}/procurement/${plan.agencyId}` }));

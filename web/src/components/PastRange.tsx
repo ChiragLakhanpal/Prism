@@ -197,10 +197,6 @@ export function PastRange({
 }) {
   const loading = state.status === "loading";
   const result = state.status === "ready" ? state.result : null;
-  // Once the section has drawn a result, a rerun's skeleton keeps the block after it, which shows its own skeleton,
-  // so the page under it does not jump (ticket 59; the 28 review, follow-up 2).
-  const drawnBefore = useRef(false);
-  if (!loading) drawnBefore.current = true;
   // Where a dot opens the drawer, each quantile dot's list is held for it (ticket 15). A link to a dot's list
   // that these comparables have no dots for closes the drawer, rather than leave it waiting.
   const canOpen = Boolean(open);
@@ -346,7 +342,10 @@ export function PastRange({
           pressedNumber={pressedNumber}
         />
       )}
-      {!body && (!loading || drawnBefore.current) && (typeof after === "function" ? after(comparison !== null) : after)}
+      {/* The block after the result is drawn in every state but a body, the loading one too: it decides itself what
+          stands in its place while the section loads, its own skeleton or nothing, so the card ends where it will and
+          a rerun keeps it (ticket 59; the 28 review, follow-up 2; the critique of round 1). */}
+      {!body && (typeof after === "function" ? after(comparison !== null) : after)}
     </TaskZone>
   );
 }
@@ -898,12 +897,14 @@ function Populated({
         months: dot.months,
         hollow: !dot.reached,
         beyond: !dot.reached,
-        name: [(dot.reached ? c.dotQuantile : c.dotQuantileOpen)(whole(dot.k), whole(total), months1(dot.months)), dotFrom, dotAct].filter(Boolean).join(" "),
+        name: [(dot.reached ? c.dotQuantile : c.dotQuantileOpen)(whole(dot.k), whole(quantile.length), whole(total), months1(dot.months)), dotFrom, dotAct]
+          .filter(Boolean)
+          .join(" "),
         tip: {
-          header: c.tipQuantile(whole(dot.k)),
+          header: c.tipQuantile(whole(dot.k), whole(quantile.length)),
           mono: false,
           number: dot.reached ? c.tipMonths(months1(dot.months)) : c.tipPast(months1(dot.months)),
-          line: dot.reached ? c.tipQuantileLine(whole(total)) : c.tipQuantileOpen,
+          line: dot.reached ? c.tipQuantileLine(whole(total), whole(quantile.length)) : c.tipQuantileOpen,
           from: dotFromTip,
         },
       }))
@@ -911,7 +912,7 @@ function Populated({
 
   const altParts = [
     quantile
-      ? c.altDots(whole(total), whole(axis.max))
+      ? c.altDots(whole(total), whole(quantile.length), whole(axis.max))
       : open > 0
         ? c.alt(spelled(total), whole(axis.max), spelled(counts.signed), spelled(open))
         : c.altAllSigned(spelled(total), whole(axis.max), spelled(counts.signed)),
@@ -1024,7 +1025,7 @@ function Populated({
             keyLead={Boolean(quantile)}
             labels={{
               lane: c.lane,
-              keySigned: quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed)),
+              keySigned: quantile ? c.keyDots(whole(total), whole(quantile.length)) : c.keySigned(whole(counts.signed)),
               keyHollow: open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(whole(open))) : null,
               plan: c.plan,
               middle:
@@ -1034,7 +1035,7 @@ function Populated({
               in10: range?.q80 != null ? c.in10(months1(range.q80)) : null,
               axisLast: c.axisLast(whole(axis.max)),
               alt: altParts.join(" "),
-              group: quantile ? c.groupDots(whole(total)) : c.group(whole(total)),
+              group: quantile ? c.groupDots(whole(total), whole(quantile.length)) : c.group(whole(total)),
               groupHelp: opening ? (quantile ? c.groupHelpOpenDots : c.groupHelpOpen) : c.groupHelp,
               slider: c.slider,
               openHint: quantile ? c.openHintDots : c.openHint,
@@ -1135,7 +1136,7 @@ function Populated({
         {abstained && more}
         {narrow && <div className="mt-2">{summaryBlock}</div>}
         <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
-          {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}
+          {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total), dots: whole(quantile.length) }} /> : words.subtitle}
         </p>
         <div className="mt-4">{control}</div>
         {compare}

@@ -84,7 +84,9 @@ function titleText(cost: Cost): string {
 function altText(cost: Cost): string {
   const n = (value: number) => formatNumber(value, { compact: false });
   const { m, below, at, above } = cost.counts;
-  const base = words.alt.replace("{m}", n(m)).replace("{below}", n(below)).replace("{at}", n(at)).replace("{above}", n(above));
+  // Quantile dots each stand for an equal share of the packages, and the text alternative says so (ticket 59).
+  const template = cost.quantile_dots ? words.altQuantile.replaceAll("{dots}", n(cost.quantile_dots.length)) : words.alt;
+  const base = template.replace("{m}", n(m)).replace("{below}", n(below)).replace("{at}", n(at)).replace("{above}", n(above));
   if (!cost.quartiles) return base;
   const say = (value: number) => formatSignedPercent(value, { style: "words" });
   return `${base} ${words.altMiddle.replace("{q25}", say(cost.quartiles.q25)).replace("{q75}", say(cost.quartiles.q75)).replace("{q50}", say(cost.quartiles.q50))}`;
@@ -499,7 +501,13 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
   const intro = cost.band && (
     <p className="max-w-prose text-body text-ink" data-cost-intro>
       <Fill
-        template={estimate ? words.intro : words.introNoEstimate}
+        template={
+          cost.quantile_dots
+            ? (estimate ? words.introQuantile : words.introNoEstimateQuantile).replace("{dots}", formatNumber(cost.quantile_dots.length, { compact: false }))
+            : estimate
+              ? words.intro
+              : words.introNoEstimate
+        }
         slots={{
           estimate: estimate ? usd(estimate) : "",
           low: usd(cost.band.low_usd),
@@ -544,7 +552,7 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
       {/* With quantile dots, brief 12's key line says what a dot stands for. */}
       {cost.quantile_dots && (
         <p className="text-chart-text-subtle" style={{ fontSize: type.s }} data-cost-key>
-          {words.keyDots(formatNumber(cost.counts.m, { compact: false }))}
+          {words.keyDots(formatNumber(cost.counts.m, { compact: false }), formatNumber(cost.quantile_dots.length, { compact: false }))}
         </p>
       )}
       <Lane cost={cost} onOpen={onOpen} onTable={showTable} title={titleText(cost)} width={width} />

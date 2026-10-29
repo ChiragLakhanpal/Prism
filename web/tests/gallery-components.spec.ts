@@ -26,12 +26,27 @@ test("above 60 packages the cost lane draws one dot per quantile with its key li
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/check-criteria");
   const sample = page.locator("[data-cost-sample=quantile]");
-  await expect(sample.locator("[data-cost-key]")).toHaveText(`Each dot is 1 in 20 of the ${mock.counts.m} packages.`);
+  const share = mock.quantile_dots.length;
+  await expect(sample.locator("[data-cost-key]")).toHaveText(`Each dot is 1 in ${share} of the ${mock.counts.m} packages.`);
+  // The intro and the drawing's text alternative say what a quantile dot stands for, and never that a dot is one
+  // package (ticket 59's round 1 reviews: the review's B1, the design review's B2).
+  const intro = sample.locator("[data-cost-intro]");
+  await expect(intro).toContainText(`Each dot below stands for 1 in ${share} of them.`);
+  await expect(intro).not.toContainText("one of them");
+  const drawing = sample.locator("[data-cost-drawing]");
+  await expect(drawing).toHaveAccessibleName(
+    new RegExp(`^${share} dots, each standing for 1 in ${share} of the ${mock.counts.m} comparable packages, placed by how far above or below`),
+  );
+  await expect(drawing).toHaveAccessibleName(
+    new RegExp(`${mock.counts.below} were signed below, ${mock.counts.at} at, and ${mock.counts.above} above their cost estimates\\.`),
+  );
   const dots = sample.locator("[data-cost-dot]");
   await expect(dots).toHaveCount(mock.quantile_dots.length);
   await expect(sample.locator("[data-cost-drawing] circle")).toHaveCount(mock.quantile_dots.length);
   const first = mock.quantile_dots[0];
-  await expect(dots.first()).toHaveAccessibleName(new RegExp(`^Dot 1 of 20: ${first.count} of the ${mock.counts.m} packages, their middle one signed `));
+  await expect(dots.first()).toHaveAccessibleName(
+    new RegExp(`^Dot 1 of ${share} stands for ${first.count} of the ${mock.counts.m} packages\\. Their middle one was signed `),
+  );
   await dots.first().focus();
   await expect(sample.locator("[data-cost-tooltip]")).toContainText(`${first.count} packages`);
   await page.keyboard.press("Enter");

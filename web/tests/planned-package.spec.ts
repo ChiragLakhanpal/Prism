@@ -908,7 +908,8 @@ test("the Packages tab's buttons put the one box into plan mode or check mode an
   await expect(box(page)).toBeFocused();
   await expect(page.locator("[data-box-slot] [data-placeholder]")).toHaveText("Type a project ID, such as P156634");
   await page.keyboard.type("P156634");
-  await expect(options(page).first()).toHaveAccessibleName(/^Check the Northern Water Works Development Agency plan of October 9, 2026/);
+  // The plan's date is kept whole with no-break spaces (ticket 59, criterion 5), which \s matches.
+  await expect(options(page).first()).toHaveAccessibleName(/^Check the Northern Water Works Development Agency plan of October\s9,\s2026/);
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL("/projects/P156634/procurement/northern-water-works-development-agency");
 });

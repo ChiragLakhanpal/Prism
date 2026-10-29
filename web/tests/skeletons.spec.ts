@@ -16,16 +16,38 @@ const shell = async (): Promise<Record<string, Answer>> => ({
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 
-test("the plan check's head and narration hold the head and the finding's place", async ({ page }) => {
-  await mockApi(page, await shell());
+// The plan check answers with two requests: the check, and what changed since the version before (/changes), whose
+// line sits under the method sentence. Both are answered from their recordings, so the test measures the page a person
+// sees: the section runs from the head's top to the activities panel's name, under the finding and the change line.
+const planAnswers = async (): Promise<Record<string, Answer>> => ({
+  ...(await shell()),
+  [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+  [`/api${PLAN}/changes`]: { body: await recorded("changes-nwwda-2026-10-09.json") },
+});
+const toActivities = { from: "[data-plan-header]", to: "[data-section=activities] [data-zone-name]" };
+
+test("the plan check's head and narration hold the head, the finding and the change line's place", async ({ page }) => {
+  await mockApi(page, await planAnswers());
   const shifts = await skeletonShift(page, {
     path: PLAN,
     hold: `**/api${PLAN}`,
     answer: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
-    // From the head's top to the end of the narration, which the byline, the finding and the method sentence replace;
-    // the activities' rows start right under it.
-    skeleton: { from: "[data-plan-header]", to: "[data-plan-narration]" },
-    drawn: { from: "[data-plan-header]", to: "[data-finding-block]" },
+    skeleton: toActivities,
+    drawn: toActivities,
+    loaded: "[data-plan-check]",
+  });
+  expect(jumps(shifts)).toEqual([]);
+});
+
+// The critique of round 1: when the comparison is the slower answer, the skeleton holds its line's place too.
+test("while what changed is still loading, the plan check's skeleton holds the change line's place", async ({ page }) => {
+  await mockApi(page, await planAnswers());
+  const shifts = await skeletonShift(page, {
+    path: PLAN,
+    hold: `**/api${PLAN}/changes`,
+    answer: { body: await recorded("changes-nwwda-2026-10-09.json") },
+    skeleton: toActivities,
+    drawn: toActivities,
     loaded: "[data-plan-check]",
   });
   expect(jumps(shifts)).toEqual([]);
@@ -51,6 +73,23 @@ test("the past range's skeleton puts the chart where it will start and ends the 
     // From the chart's top to the end of the block's foot strip, before "Advertised again".
     skeleton: { from: "[data-chart-skeleton]", to: "[data-past-range] [data-block=took] + [data-foot-strip]" },
     drawn: { from: "[data-range-chart]", to: "[data-past-range] [data-block=took] + [data-foot-strip]" },
+  });
+  expect(jumps(shifts)).toEqual([]);
+});
+
+// Item 55 and the critique of round 1: the card that holds both blocks, the past range and "Advertised again", ends
+// within 48 px of where its skeleton ended, so "Where the steps stand" and sections 2 to 5 stay put when the comparables
+// arrive. On the first load "Advertised again" holds its own skeleton under the past range's.
+test("section 1's card ends where its skeleton ended, with Advertised again's skeleton under the past range's", async ({ page }) => {
+  await mockApi(page, await packageAnswers());
+  const shifts = await skeletonShift(page, {
+    path: "/packages/KE-NWWDA-541055-CW-RFB",
+    hold: `**${PACKAGE}/comparables`,
+    answer: { body: await recorded("comparables-ke-nwwda-541055.json") },
+    skeleton: { from: "[data-section=took]", to: "[data-section=took]" },
+    drawn: { from: "[data-section=took]", to: "[data-section=took]" },
+    loaded: "[data-range-chart]",
+    ready: (page) => expect(page.locator("[data-rebidding=found]")).toBeVisible(),
   });
   expect(jumps(shifts)).toEqual([]);
 });

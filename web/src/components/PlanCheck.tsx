@@ -994,7 +994,12 @@ function typicalFinding(): string {
 // finding and the method sentence (ticket 111), then the activities panel with its real name and column heads over
 // five skeleton rows, or three skeleton cards below a frame of 34rem. Nothing moves when the rows arrive, and nothing
 // shimmers.
-export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
+export function PlanCheckSkeleton({ slow, afterNarration }: {
+  slow?: boolean;
+  // The change line under the narration (ticket 59; the critique of round 1): the line itself once what changed has
+  // answered, which needs nothing from the check, or its held lines until then, so the panel below stays put.
+  afterNarration?: ReactNode;
+}) {
   const rows = [0, 1, 2, 3, 4];
   // The narration (ticket 111): the answer panel's own steps, with one running step and how I check under it, then,
   // after two seconds, why it can take longer. The page's polite status says the step, so the steps announce nothing.
@@ -1025,6 +1030,7 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
             <Steps steps={[narration]} announce={false} />
           </div>
         </div>
+        {afterNarration}
       </EightColumns>
       <div className="mt-8">
         <ActivitiesZone busy tag={<SkeletonLine className="text-caption" width="w-40" />}>

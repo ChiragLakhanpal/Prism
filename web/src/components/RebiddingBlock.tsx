@@ -172,6 +172,20 @@ export function RebiddingView({
       )}
       </div>
     </div>
+    {/* While the block loads, the foot strip holds the source line's lines: three in the card from a 26rem page area,
+        a fourth below it and a fifth below 22.5rem, as the fixture's source line takes (ticket 59; the critique of round
+        1, measured at 320 to 1440 px). */}
+    {loading && (
+      <FootStrip>
+        <div aria-hidden="true" data-rebid-source-skeleton>
+          <SkeletonLine className="text-caption" width="w-full" />
+          <SkeletonLine className="text-caption" width="w-full" />
+          <SkeletonLine className="hidden text-caption @max-[26rem]/page:flex" width="w-full" />
+          <SkeletonLine className="hidden text-caption @max-[22.5rem]/page:flex" width="w-full" />
+          <SkeletonLine className="text-caption" width="w-2/5" />
+        </div>
+      </FootStrip>
+    )}
     {/* While a rerun shows the skeleton, the foot strip keeps its place with the last source line unseen. */}
     {result && (
       <FootStrip>
@@ -474,11 +488,15 @@ function RebidError({ state }: { state: Extract<RebidState, { status: "error" }>
 
 // ── The block on a page: it reads, reruns and opens ──────────────────────
 
-export function Rebidding({ path, section, sectionFailed = false, comparing = false }: {
+export function Rebidding({ path, section, sectionFailed = false, sectionLoading = false, comparing = false }: {
   // GET .../rebidding with section 1's criteria, or null while the package has none.
   path: string | null;
   // Section 1's result, when it has loaded: the block counts the same comparable packages.
   section: ComparablesResult | null;
+  // Section 1 is loading its first result: the block holds its own skeleton under the past range's, so the card ends
+  // where it will and the sections under it stay put (ticket 59; the critique of round 1). A page whose first result
+  // may be a prompt in place of the range, such as a planned package, leaves it unset.
+  sectionLoading?: boolean;
   // Section 1's own request failed: the block comes from its own tool, so it still shows under the error (ticket 101).
   sectionFailed?: boolean;
   comparing?: boolean;
@@ -561,6 +579,7 @@ export function Rebidding({ path, section, sectionFailed = false, comparing = fa
     if (focusInside.current && block && !block.contains(document.activeElement)) heading.current?.focus();
   }, [state]);
 
+  if (!shown && sectionLoading && path !== null) return <RebiddingView state={{ status: "loading" }} numbers={numbers} headingRef={heading} />;
   if (!shown || hidden) return null;
   const fallback = () => heading.current;
   const handlers: RebidHandlers = {

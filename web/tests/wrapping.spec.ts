@@ -3,6 +3,7 @@
 // at 320, 390, 1024 and 1440 px. Each test opens its page once and turns the window to each width. The answers are
 // the server's own, recorded in tests/fixtures/api.
 import type { Page } from "@playwright/test";
+import { askFromTheBox, landed, open as openAnswer } from "./answer-page";
 import { hubApi } from "./hub-api";
 import { expect, mockApi, mockShell, recorded, test } from "./mocked";
 import { fontsLoaded } from "./settled";
@@ -55,6 +56,41 @@ test("the box list and the answer panel keep a STEP reference whole, and the che
     const label = await brokenInside(page, "[data-answer-panel] [data-check-line]", WHOLE.notChecked);
     expect(label.found, `${width} px: the check line's label`).toBe(1);
     expect(label.broken, `${width} px`).toEqual([]);
+  });
+});
+
+// The review of round 1, F3: the answer panel keeps its dates whole too. The ISR answer on P130164 names an ISR's date.
+// The panel writes no "page N" of its own: a source's page shows in the evidence drawer.
+test("the answer panel keeps each date whole", async ({ page }) => {
+  await openAnswer(page, { stream: "ask-p130164-isr-section.sse", width: 320 });
+  await askFromTheBox(page);
+  await landed(page);
+  await atEachWidth(page, async (width) => {
+    const dates = await brokenInside(page, "[data-answer-panel]", WHOLE.date);
+    expect(dates.found, `${width} px: the answer's dates`).toBeGreaterThan(0);
+    expect(dates.broken, `${width} px`).toEqual([]);
+  });
+});
+
+// The design review of round 1, B1: a STEP reference's option names its plan's date, "In the Northern Water Works
+// Development Agency plan of October 9, 2026, P156634", which broke after "October" at 390 px.
+test("the box list keeps a plan's date whole on a STEP reference's option", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    "/api/lookup/activity": { body: await recorded("lookup-activity-ke-nwwda-541055-cw-rfb.json") },
+  });
+  await page.goto("/");
+  await expect(page.locator("main h1")).toBeVisible();
+  await page.keyboard.press("/");
+  await page.keyboard.type(PACKAGE);
+  const list = page.getByRole("listbox", { name: "What Enter will do" });
+  await expect(list.getByRole("option").first()).toContainText("October 9, 2026");
+  await atEachWidth(page, async (width) => {
+    const { found, broken } = await brokenInside(page, "[data-box-popup] [role=option]", WHOLE.date);
+    expect(found, `${width} px: the dates in the list`).toBeGreaterThan(0);
+    expect(broken, `${width} px`).toEqual([]);
   });
 });
 

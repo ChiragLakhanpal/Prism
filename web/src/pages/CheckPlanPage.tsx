@@ -23,6 +23,7 @@ import { PageAlert } from "../components/PageAlert";
 import { BaselinePanel, useBaselineView } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
 import { Num } from "../components/Num";
+import { wholeDate } from "../components/NumFrom";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonWords } from "../components/Skeleton";
@@ -184,6 +185,23 @@ function ChangeLine({ changes, onSee }: { changes: PlanChanges; onSee: () => voi
   );
 }
 
+// While what changed has not answered, its line's place: a typical change line from the copy file's own template,
+// "Compared with the plan of March 5, 2026, this version re-estimated two activities. See what changed", held as
+// skeleton words, unseen and unheard, so the activities panel starts where it will (ticket 59; the critique of round 1).
+// An agency's plan almost always has a change line: one that answers with none moves the panel up by its lines.
+function HeldChangeLine() {
+  const line = words.changes;
+  const typical = `${fill(line.line, {
+    prev_date: wholeDate(formatDate("2026-03-05", { style: "sentence" })),
+    change_list: changeList({ added: 0, dropped: 0, redated: 0, reestimated: 2 }),
+  })} ${line.link}`;
+  return (
+    <p className="mt-2 text-body" data-change-line-held>
+      <SkeletonWords text={typical} />
+    </p>
+  );
+}
+
 // The agency's name as its address writes it, such as "northern-water-works-development-agency", in the words and the
 // capitals a name takes: "Northern Water Works Development Agency". It only holds the name's place while the check
 // loads, unseen (SkeletonWords), so its lines break where the real name's will.
@@ -341,7 +359,18 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           }
           sticky={false}
         />
-        <PlanCheckSkeleton slow={load.status === "loading" && load.slow} />
+        <PlanCheckSkeleton
+          slow={load.status === "loading" && load.slow}
+          afterNarration={
+            changes ? (
+              <ChangeLine changes={changes} onSee={seeChanges} />
+            ) : planChanges.failed ? (
+              <ChangeLineError />
+            ) : planChanges.settled ? null : (
+              <HeldChangeLine />
+            )
+          }
+        />
       </>
     );
   } else if (load.status === "error") {
