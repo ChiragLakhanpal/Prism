@@ -51,6 +51,9 @@ ROUTES = [
     ("/api/evidence?id=strata.silver.notices:OP00083890", "evidence-notice-op00083890.json"),
     ("/api/evidence?id=strata.silver.plan_rows:40001676/KE-KIMAWASCO-157517-CW-RFB",
      "evidence-plan-row-ke-kimawasco-157517.json"),
+    # The package's own plan row, as the marker of its facts opens it (ticket 101).
+    ("/api/evidence?id=strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+     "evidence-plan-row-ke-nwwda-541055.json"),
 ]
 
 

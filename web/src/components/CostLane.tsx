@@ -11,9 +11,10 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
 import { copy } from "../copy";
 import { costRecordId, type Cost, type CostRow } from "../lib/criteria";
-import { formatAmountText, formatNumber, formatSignedPercent } from "../lib/format";
+import { formatAmountText, formatCount, formatNumber, formatSignedPercent } from "../lib/format";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
+import { FootStrip } from "./FootStrip";
 import { MonoWords } from "./MonoWords";
 import { Num } from "./Num";
 import { fromLine, toolFrom } from "./NumFrom";
@@ -392,12 +393,15 @@ function CostTable({ cost, open: openId, onOpen, titleId }: {
       title={<CostTitle cost={cost} />}
       labelledBy={titleId}
       countLead
-      count={{ noun: "", total: cost.counts.m, text: cost.counts.m === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatNumber(cost.counts.m, { compact: false })) }}
+      count={{ noun: "", total: cost.counts.m, text: cost.counts.m === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatCount(cost.counts.m)) }}
       columns={columns}
       state={{ status: "ready", rows }}
       rowHeader="package"
       level={4}
       selected={selected}
+      // Cards below a 49rem frame, as the past range's table (ticket 101's critique, round 2), so a STEP reference
+      // never breaks at a hyphen in the work column.
+      cardsBelow="fit"
     />
   );
 }
@@ -469,17 +473,23 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
       />
     </p>
   );
+  // The coverage and source lines end the part in its foot strip, after the table (ticket 101's critique, round 2).
+  const foot = (
+    <FootStrip part>
+      <Coverage cost={cost} readinessHref={readinessHref} />
+      {(cost.records_through || asOf) && (
+        <Source>
+          {partSource({ sources: cost.sources, through: cost.records_through, asOf: asOf ? cost.as_of : null, template: words.source,
+            templateAsOf: words.sourceAsOf })}
+        </Source>
+      )}
+    </FootStrip>
+  );
   if (!cost.rows.length) {
     return (
       <div ref={root} className="flex flex-col gap-2" data-cost="none">
         <p className="max-w-prose text-body text-ink">{words.none}</p>
-        <Coverage cost={cost} readinessHref={readinessHref} />
-        {(cost.records_through || asOf) && (
-          <Source>
-            {partSource({ sources: cost.sources, through: cost.records_through, asOf: asOf ? cost.as_of : null, template: words.source,
-              templateAsOf: words.sourceAsOf })}
-          </Source>
-        )}
+        {foot}
       </div>
     );
   }
@@ -492,7 +502,7 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
       </p>
       {abstain && (
         <p className="max-w-prose text-body text-pretty text-ink" data-cost-abstain>
-          {cost.counts.m === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ m: <Num value={cost.counts.m} /> }} />}
+          {cost.counts.m === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ m: <Num count={cost.counts.m} /> }} />}
         </p>
       )}
       <p className="text-chart-text-subtle" style={{ fontSize: type.m }}>{words.subtitle}</p>
@@ -515,13 +525,6 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
           {cost.counts.at === 1 ? words.atOne : <Fill template={words.at} slots={{ at: <Num count={cost.counts.at} capital /> }} />}
         </p>
       )}
-      <Coverage cost={cost} readinessHref={readinessHref} />
-      {(cost.records_through || asOf) && (
-        <Source>
-          {partSource({ sources: cost.sources, through: cost.records_through, asOf: asOf ? cost.as_of : null, template: words.source,
-            templateAsOf: words.sourceAsOf })}
-        </Source>
-      )}
       <div>
         <Button variant="ghost" flush aria-expanded={table} onClick={() => setTable((value) => !value)}>
           {table ? words.hideTable : words.showTable}
@@ -532,6 +535,7 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
           <CostTable cost={cost} open={open} onOpen={onOpen} titleId={titleId} />
         </div>
       )}
+      {foot}
     </div>
   );
 }

@@ -53,6 +53,7 @@ import { SegmentedControl } from "./SegmentedControl";
 import { Source } from "./Source";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
+import { FootStrip } from "./FootStrip";
 
 const words = copy.stepDates;
 const SLOW_MS = 400;
@@ -374,7 +375,7 @@ function abstention(row: Row, recordsDate: string): ReactNode {
   const n = row.step.comparables_n ?? 0;
   switch (row.step.abstain_reason) {
     case "few_comparables":
-      return n === 0 ? words.abstainNone : n === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ n: number(n) }} />;
+      return n === 0 ? words.abstainNone : n === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ n: <Num count={n} /> }} />;
     case "not_reached": {
       const reached = row.step.reached_n ?? 0;
       const slots = { reached: number(reached), n: number(n), date: <Num date={recordsDate} /> };
@@ -497,7 +498,7 @@ function Comparables({ row, onOpen, side }: { row: Row; onOpen: Opener; side?: "
   );
 }
 
-// The step's label: from a 768 px page area a DefinitionWindow with STEP's full name that opens on hover, keyboard
+// The step's label: in a zone of 49rem or wider a DefinitionWindow with STEP's full name that opens on hover, keyboard
 // focus or a click (criterion 4), which a screen reader hears with the label (aria-describedby); below it the name is
 // printed (the list's own rendering).
 function StepLabel({ row }: { row: Row }) {
@@ -750,7 +751,7 @@ function Caption({ dates, family, rows, choice, onOpen }: { dates: StepDates; fa
       <span className="block text-h2 text-ink-heading" data-step-caption>
         {title}
       </span>
-      <span className="block text-caption text-ink-muted">{words.count(formatCount(count))}</span>
+      <span className="block text-caption text-ink-muted" data-step-count>{words.count(formatCount(count))}</span>
     </span>
   );
 }
@@ -773,7 +774,8 @@ function Notes({ dates, family, choice, kind, result, asOf, from }: { dates: Ste
   const plain = (value: number) => <Num value={value} options={{ compact: false }} />;
   const date = asOf ?? result.records_through;
   return (
-    <div className="mt-4 flex max-w-prose flex-col gap-2 text-caption text-ink-muted" data-step-notes>
+    // In the zone's foot strip (ticket 101's design review), which gives it its place and its caption type.
+    <div className="flex max-w-prose flex-col gap-2 text-caption text-ink-muted" data-step-notes>
       {family.abbreviation_note && <p>{family.abbreviation_note}</p>}
       {track && (
         <p data-track-record>
@@ -912,7 +914,7 @@ export function StepsView({
   const controls = dates !== null && !dates.abstain_all && !dates.none_dated;
   const body =
     state.status === "loading" ? (
-      <div className="mt-6">
+      <div className="mt-6 @container/steps">
         <StepsSkeleton kind={kind} />
       </div>
     ) : dates && family && result ? (
@@ -945,8 +947,10 @@ export function StepsView({
             <ChoiceControl dates={dates} choice={choice} onChoose={onChoose} preview={preview} saveFailed={saveFailed} />
           </div>
         )}
-        <div className="mt-6" aria-busy={start.committing || undefined}>
-          <div className="hidden @md/page:block">
+        {/* The table or the list by the zone's own width, as zone 3's risks switch (ticket 101's critique, round 2): beside
+            the side panel the work column is under 49rem, where four columns put one sentence on five lines. */}
+        <div className="mt-6 @container/steps" aria-busy={start.committing || undefined}>
+          <div className="hidden @min-[49rem]/steps:block">
             <StepTable
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={`${captionId}-wide`}
@@ -954,7 +958,7 @@ export function StepsView({
               from={from}
             />
           </div>
-          <div className="@md/page:hidden">
+          <div className="@min-[49rem]/steps:hidden">
             <StepList
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={captionId}
@@ -963,13 +967,18 @@ export function StepsView({
             />
           </div>
         </div>
-        <Notes dates={dates} family={family} choice={choice} kind={kind} result={result} asOf={asOf} from={from} />
       </div>
     ) : null;
+  // The zone's note, coverage line and source line end it in its foot strip, as zones 1 and 3 end theirs (ticket 101).
+  const foot =
+    state.status !== "loading" && dates && family && result ? (
+      <FootStrip>
+        <Notes dates={dates} family={family} choice={choice} kind={kind} result={result} asOf={asOf} from={from} />
+      </FootStrip>
+    ) : undefined;
   return (
     <CollapsedSection
       id="planned-dates"
-      eyebrow={words.eyebrow}
       number={words.number}
       heading={words.heading}
       summary={summary}
@@ -984,6 +993,7 @@ export function StepsView({
       busy={state.status === "loading" && open}
       headingRef={headingRef}
       sectionKey="steps"
+      foot={foot}
       live={
         <p className="sr-only" role="status" aria-live="polite">
           {announce}
@@ -995,7 +1005,7 @@ export function StepsView({
   );
 }
 
-// Opened before the answer came: the intro as two bars, then the table's real header from a 768 px page area, and six
+// Opened before the answer came: the intro as two bars, then the table's real header from a 49rem zone, and six
 // 48 px rows, since the family, and so its count of steps, comes with the answer (the 27 brief, section 7.5). Static.
 function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
   const plan = kind === "step";
@@ -1007,7 +1017,7 @@ function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
         <span className="block h-4 w-9/10 rounded-xs bg-surface-2" />
         <span className="block h-4 w-9/20 rounded-xs bg-surface-2" />
       </span>
-      <table className="hidden w-full table-fixed border-collapse @md/page:table">
+      <table className="hidden w-full table-fixed border-collapse @min-[49rem]/steps:table">
         <colgroup>
           {(plan ? ["32%", "24%", "26%", "18%"] : ["40%", "36%", "24%"]).map((width, index) => (
             <col key={index} style={{ width }} />
@@ -1029,7 +1039,7 @@ function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
           ))}
         </tbody>
       </table>
-      <span className="flex flex-col @md/page:hidden">
+      <span className="flex flex-col @min-[49rem]/steps:hidden">
         {rows.map((index) => (
           <span key={index} className="block h-12 border-t border-line" />
         ))}

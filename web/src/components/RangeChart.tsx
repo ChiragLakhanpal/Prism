@@ -466,6 +466,7 @@ export function RangeChart({
   matching = null,
   compareKey = null,
   readOnly = false,
+  messageBelow = false,
 }: {
   width: number;
   marks: RangeMark[];
@@ -509,6 +510,9 @@ export function RangeChart({
   // Ticket 47: the drawing alone, as a slide shows it (the 47 brief, section 4.4): no plan slider, no dot tab
   // stops and no tooltips, so the chart is one picture named by its alt text, and nothing in it takes focus.
   readOnly?: boolean;
+  // Ticket 101: the page draws lane 2's abstention under the chart in body, so the lane keeps only its label. A slide
+  // (ticket 47) keeps it in the lane.
+  messageBelow?: boolean;
 }) {
   const {
     lane: laneLabel,
@@ -1354,7 +1358,7 @@ export function RangeChart({
       {/* Lane 2's messages, after the drawing so they are read with the chart: an abstention or an error over the
           lane and row E, as HTML so it wraps, with the plan line passing behind it; and, while comparing with an
           option too few went with, row E's sentence in place of its labels. */}
-      {lane2?.kind === "message" && (
+      {lane2?.kind === "message" && !(messageBelow && lane2.tone === "abstain") && (
         <div
           data-lane2-message={lane2.tone}
           className="absolute flex items-start gap-2 bg-surface p-1 text-chart-text"

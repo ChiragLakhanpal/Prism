@@ -399,7 +399,7 @@ track_record_batch_projects = 500
 # Until then the source says so, and there is no as_of (a parked decision, ticket 15's review round 2).
 [review]
 risk_rating = "High"
-source = "Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds"
+source = "Starting values I have not yet checked against the World Bank's prior review thresholds"
 
 [review.prior_from_usd.High]
 Works = 10_000_000
@@ -415,7 +415,7 @@ Goods = 2_000_000
 # Kenya's works; a starting value for the owner to confirm, with other countries and categories added
 # beside it. As for [review], the source says the value is unchecked, and as_of waits for the check.
 [market_approach]
-source = "Strata's starting value from the blueprint, not yet checked against the World Bank's thresholds for Kenya"
+source = "A starting value I have not yet checked against the World Bank's procurement thresholds for Kenya"
 
 [market_approach.international_from_usd.KE]
 Works = 15_000_000

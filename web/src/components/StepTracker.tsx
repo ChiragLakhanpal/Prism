@@ -10,10 +10,11 @@
 //   move focus along the nodes.
 // - The next node's fill enters over 160 ms when the steps arrive (DESIGN.md section 4, Motion), and nothing moves
 //   under reduced motion.
-// - From a 768 px page area five or six nodes sit in a row, on a grid whose four rows (node, label, state, date) every
+// - From a card 36rem wide five or six nodes sit in a row, on a grid whose four rows (node, label, state, date) every
 //   step shares, so the state words line up across the row however the labels wrap; below it they stack, with the
 //   line running down beside them. A consulting firm's nine steps would leave each about 90 px, narrower than one
-//   date, so they stay a list at every width, each step's label, state and date on one line from a 768 px page area.
+//   date, so they stay a list at every width, each step's label, state and date on one line from a 36rem card.
+// - The source line ends the card in its foot strip, as each block of evidence ends (ticket 101's critique, round 2).
 //   The stretch of line between two done steps is drawn in the done colour.
 // - While the steps load it holds its place with static bars; when they fail, it keeps its card with one sentence
 //   that points to section 2, which says why and offers Try again.
@@ -24,6 +25,7 @@ import { cx } from "../lib/cx";
 import type { StepDate, StepState } from "../lib/steps";
 import { familyStep, stepFamily } from "../steps";
 import { Fill } from "./Fill";
+import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
 import { Source } from "./Source";
 import type { StepsState } from "./StepsSection";
@@ -36,7 +38,7 @@ const stepDate = (iso: string) => <Num date={iso} style="table" />;
 // A date in the sentences under the list, in the sentence form.
 const date = (iso: string) => <Num date={iso} />;
 
-// The most steps that share one row from a 768 px page area; more stay a list (the design review's R2-B1).
+// The most steps that share one row from a 36rem card; more stay a list (the design review's R2-B1).
 const ROW_MOST = 6;
 
 // The state in words on one line, then on the next the date it rests on, so every step's state stays level and short.
@@ -84,7 +86,7 @@ function Node({ state, row }: { state: StepState; row: boolean }) {
     <span
       aria-hidden="true"
       data-step-node={state}
-      className={cx("relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border-2", row && "@md/page:mb-2", NODE[state])}
+      className={cx("relative z-10 flex size-6 shrink-0 items-center justify-center rounded-full border-2", row && "@min-[36rem]/tracker:mb-2", NODE[state])}
     >
       {state === "done" && <Check data-node-tick className="size-4" strokeWidth={3} />}
       {state === "next" && <span data-node-fill className="animate-fill-in absolute inset-0.5 rounded-full bg-primary" />}
@@ -102,24 +104,28 @@ const KEYS: Record<string, (index: number, last: number) => number> = {
   End: (_, last) => last,
 };
 
-// 16 px above and below, and the Card's own sides, 24 px from a 768 px page area, so its text keeps the other cards' edge.
-const CARD = "rounded-md border border-line bg-surface px-4 py-4 @md/page:px-6";
+// The card reads its own width (ticket 101's critique, round 2): beside the evidence drawer at 1280 px the page area
+// narrows but the card does not, so it keeps its row of steps. Its sides are 16 px, and 24 px from a 48rem window, as
+// a Task zone's are, so its text keeps the zones' edge; its foot strip takes the same sides (app.css, "Task zones").
+const FRAME = "@container/tracker rounded-md border border-line bg-surface";
+const INSIDE = "px-4 py-4 md:px-6";
+const CARD = `${FRAME} ${INSIDE}`;
 
 // The list's classes in its two layouts. In both, the steps stand 8 px apart with 8 px under each, so a focused step's
 // ring (2 px out, 2 px wide) clears the next node, and each step's part of the line runs on through the gap to it.
 const LAYOUT = {
   row: {
-    list: "mt-4 flex flex-col gap-2 @md/page:grid @md/page:auto-cols-fr @md/page:grid-flow-col @md/page:grid-rows-[repeat(4,auto)] @md/page:gap-0",
-    item: "@md/page:row-span-4 @md/page:grid @md/page:grid-cols-1 @md/page:grid-rows-subgrid @md/page:justify-items-center @md/page:gap-0 @md/page:px-1 @md/page:pb-0 @md/page:text-center",
-    line: "@md/page:bottom-auto @md/page:left-1/2 @md/page:h-0.5 @md/page:w-full @md/page:translate-x-0 @md/page:-translate-y-1/2",
-    words: "@md/page:contents",
+    list: "mt-4 flex flex-col gap-2 @min-[36rem]/tracker:grid @min-[36rem]/tracker:auto-cols-fr @min-[36rem]/tracker:grid-flow-col @min-[36rem]/tracker:grid-rows-[repeat(4,auto)] @min-[36rem]/tracker:gap-0",
+    item: "@min-[36rem]/tracker:row-span-4 @min-[36rem]/tracker:grid @min-[36rem]/tracker:grid-cols-1 @min-[36rem]/tracker:grid-rows-subgrid @min-[36rem]/tracker:justify-items-center @min-[36rem]/tracker:gap-0 @min-[36rem]/tracker:px-1 @min-[36rem]/tracker:pb-0 @min-[36rem]/tracker:text-center",
+    line: "@min-[36rem]/tracker:bottom-auto @min-[36rem]/tracker:left-1/2 @min-[36rem]/tracker:h-0.5 @min-[36rem]/tracker:w-full @min-[36rem]/tracker:translate-x-0 @min-[36rem]/tracker:-translate-y-1/2",
+    words: "@min-[36rem]/tracker:contents",
   },
   list: {
     list: "mt-4 flex flex-col gap-2",
     item: "",
     line: "",
     words:
-      "@md/page:grid @md/page:grid-cols-[minmax(0,16rem)_minmax(0,9rem)_minmax(0,1fr)] @md/page:items-baseline @md/page:gap-x-4 @md/page:pt-0.5",
+      "@min-[36rem]/tracker:grid @min-[36rem]/tracker:grid-cols-[minmax(0,16rem)_minmax(0,9rem)_minmax(0,1fr)] @min-[36rem]/tracker:items-baseline @min-[36rem]/tracker:gap-x-4 @min-[36rem]/tracker:pt-0.5",
   },
 };
 
@@ -163,7 +169,8 @@ export function StepTracker({ state }: { state: StepsState }) {
 
   return (
     // Not a named region: the list carries the heading's name, so a screen reader hears it once.
-    <section data-step-tracker className={CARD}>
+    <section data-step-tracker className={FRAME}>
+      <div className={INSIDE}>
       <h2 id={headingId} className="text-h3 text-ink-heading">
         {words.heading}
       </h2>
@@ -194,7 +201,7 @@ export function StepTracker({ state }: { state: StepsState }) {
               />
             )}
             <Node state={step.state} row={layout === LAYOUT.row} />
-            {/* From a 768 px page area, in a row the label, state and date each take their row of the step's subgrid,
+            {/* From a 36rem card, in a row the label, state and date each take their row of the step's subgrid,
                 so an empty line keeps its row and the next step's words stay level; in a list they share one line. */}
             <span className={cx("flex min-w-0 flex-col", layout.words)}>
               <span className="text-small font-semibold text-balance wrap-break-word text-ink">{familyStep(family, step.step_key)?.label ?? step.step_key}</span>
@@ -204,28 +211,37 @@ export function StepTracker({ state }: { state: StepsState }) {
           </li>
         ))}
       </ol>
-      {dates.status_reason && (
+      {!plan && dates.status_reason && (
         <p data-tracker-status className="mt-4 text-caption text-ink-muted">
           <Fill template={words.status} slots={{ status: dates.status_reason }} />
         </p>
       )}
-      {plan ? (
-        <Source className={dates.status_reason ? "mt-1" : "mt-4"}>
-          <Fill template={source} slots={{ plan: date(plan) }} /> <Fill template={counted} slots={{ date: date(state.result.as_of) }} />
-        </Source>
-      ) : (
-        <p data-tracker-note className="mt-4 text-caption text-ink-muted">
+      {!plan && (
+        <p data-tracker-note className={cx(dates.status_reason ? "mt-1" : "mt-4", "text-caption text-ink-muted")}>
           {words.none}
         </p>
+      )}
+      </div>
+      {plan && (
+        <FootStrip>
+          {dates.status_reason && (
+            <p data-tracker-status>
+              <Fill template={words.status} slots={{ status: dates.status_reason }} />
+            </p>
+          )}
+          <Source>
+            <Fill template={source} slots={{ plan: date(plan) }} /> <Fill template={counted} slots={{ date: date(state.result.as_of) }} />
+          </Source>
+        </FootStrip>
       )}
     </section>
   );
 }
 
-// One line of words as a static bar, at the caption's 20 px line height. A wide line shows only from a 768 px page area,
+// One line of words as a static bar, at the caption's 20 px line height. A wide line shows only from a 36rem card,
 // where a label and a date take two lines in their narrow column; a narrow one only below it, where the source line
 // takes up to three, as it does when it names the contract awards data too.
-const SHOWN = { always: "flex", wide: "hidden @md/page:flex", narrow: "flex @md/page:hidden" };
+const SHOWN = { always: "flex", wide: "hidden @min-[36rem]/tracker:flex", narrow: "flex @min-[36rem]/tracker:hidden" };
 function Bar({ width, kind = "always" }: { width: string; kind?: keyof typeof SHOWN }) {
   return (
     <span className={cx("h-5 items-center", SHOWN[kind])}>
@@ -242,15 +258,15 @@ export function TrackerSkeleton() {
       <span className="flex h-6 items-center">
         <span className="block h-4 w-48 rounded-xs bg-surface-2" />
       </span>
-      <span className="mt-4 flex flex-col @md/page:flex-row">
+      <span className="mt-4 flex flex-col @min-[36rem]/tracker:flex-row">
         {Array.from({ length: 6 }, (_, index) => (
-          <span key={index} className="flex gap-3 pb-4 last:pb-0 @md/page:flex-1 @md/page:flex-col @md/page:items-center @md/page:gap-2 @md/page:px-1 @md/page:pb-0">
+          <span key={index} className="flex gap-3 pb-4 last:pb-0 @min-[36rem]/tracker:flex-1 @min-[36rem]/tracker:flex-col @min-[36rem]/tracker:items-center @min-[36rem]/tracker:gap-2 @min-[36rem]/tracker:px-1 @min-[36rem]/tracker:pb-0">
             <span className="block size-6 shrink-0 rounded-full bg-surface-2" />
-            <span className="flex flex-col @md/page:items-center">
-              <Bar width="w-32 @md/page:w-16" />
+            <span className="flex flex-col @min-[36rem]/tracker:items-center">
+              <Bar width="w-32 @min-[36rem]/tracker:w-16" />
               <Bar width="w-12" kind="wide" />
-              <Bar width="w-24 @md/page:w-16" />
-              <Bar width="w-40 @md/page:w-16" />
+              <Bar width="w-24 @min-[36rem]/tracker:w-16" />
+              <Bar width="w-40 @min-[36rem]/tracker:w-16" />
               <Bar width="w-12" kind="wide" />
             </span>
           </span>

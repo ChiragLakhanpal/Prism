@@ -87,12 +87,21 @@ async function openPackage(page: Page, { width = 1440, risks = "risks-ke-nwwda-5
 
 test("the workspace's one solid button suggests a row for each risk you selected, and starts the writer for the package with no risk keys", async ({ page }) => {
   const asked = await openPackage(page);
-  const action = page.locator("[data-ppsd-action][data-placement=header]");
+  // Ticket 101: the page's one primary action sits in zone 3, after the risks it drafts from, at every width; the head
+  // holds none.
+  const action = page.locator("section#risks [data-ppsd-action][data-placement=zone]");
   await expect(action.getByRole("button")).toHaveText("Suggest 1 PPSD risk row");
   await expect(action.getByRole("button")).toHaveAttribute("data-button", "primary");
   await expect(action).toContainText("The draft waits in Drafts for you to check. I send nothing.");
-  // Only one copy is in the accessibility tree: the one under section 3 is for page areas below 768 px.
-  await expect(page.locator("[data-ppsd-action][data-placement=inline]")).toBeHidden();
+  await expect(page.locator("[data-ppsd-action]")).toHaveCount(1);
+  await expect(page.locator("[data-page-head] [data-ppsd-action]")).toHaveCount(0);
+  // The check line touches the risks it checks, and the zone ends on its action (ticket 101's design review).
+  expect(
+    await page.locator("section#risks").evaluate((zone) => {
+      const checks = zone.querySelector("[data-risk-checks]")!;
+      return Boolean(checks.compareDocumentPosition(zone.querySelector("[data-ppsd-action]")!) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }),
+  ).toBe(true);
 
   // Selecting the second risk counts it at once.
   await page.locator("section#risks [data-risk-view]:visible").getByRole("checkbox", { name: new RegExp(PERMITS) }).check();
@@ -108,18 +117,16 @@ test("the workspace's one solid button suggests a row for each risk you selected
   expect(JSON.stringify(sent)).not.toContain("cost_estimates");
 });
 
-test("with no risk selected the action is held with its reason, and below 768 px it sits under section 3's last risk", async ({ page }) => {
+test("with no risk selected the action is held with its reason, under zone 3's last risk at every width", async ({ page }) => {
   await openPackage(page, { risks: "risks-ke-nwwda-541055-india.json" });
-  const held = page.locator("[data-ppsd-action][data-placement=header]").getByRole("button");
+  const held = page.locator("section#risks [data-ppsd-action][data-placement=zone]").getByRole("button");
   await expect(held).toHaveText("Suggest PPSD risk rows");
   await expect(held).toHaveAttribute("aria-disabled", "true");
-  await expect(held).toHaveAccessibleDescription("Select the risks you want in section 3 first.");
+  await expect(held).toHaveAccessibleDescription("Select at least one risk above first.");
 
   await page.setViewportSize({ width: 390, height: 900 });
-  const inline = page.locator("[data-ppsd-action][data-placement=inline]");
-  await expect(inline).toBeVisible();
-  await expect(page.locator("[data-ppsd-action][data-placement=header]")).toBeHidden();
-  await expect(inline.getByRole("button")).toHaveAccessibleDescription("Select at least one risk above first.");
+  await expect(held).toBeVisible();
+  await expect(held).toHaveAccessibleDescription("Select at least one risk above first.");
 });
 
 // A package from a sentence (tests/record_packages_api.py's pkg-000000000001), with section 3 serving the India rows
@@ -127,7 +134,7 @@ test("with no risk selected the action is held with its reason, and below 768 px
 const PLANNED = "pkg-000000000001";
 const PLANNED_API = `/api/planned-packages/${PLANNED}`;
 
-test("a package planned from a sentence offers the same action, next to No STEP reference yet, and posts its id", async ({ page }) => {
+test("a package planned from a sentence offers the same action in zone 3, and posts its id", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const asked = await serve(page, {
     "/api/me": { body: await recorded("me-staff.json") },
@@ -143,10 +150,12 @@ test("a package planned from a sentence offers the same action, next to No STEP 
 
   const header = page.locator("[data-package-header]");
   await expect(header).toContainText("No STEP reference yet");
-  const action = header.locator("[data-ppsd-action][data-placement=header]");
+  // Ticket 101: the action sits in zone 3, as on a STEP row's page.
+  await expect(header.locator("[data-ppsd-action]")).toHaveCount(0);
+  const action = page.locator("section#risks [data-ppsd-action][data-placement=zone]");
   await expect(action.getByRole("button")).toHaveText("Suggest 1 PPSD risk row");
   await expect(action.getByRole("button")).toHaveAttribute("data-button", "primary");
-  await expect(page.locator("[data-ppsd-action][data-placement=inline]")).toBeHidden();
+  await expect(page.locator("[data-ppsd-action]")).toHaveCount(1);
   // While the action is live it is the screen's one solid button, so "Show the past range" turns secondary.
   await expect(page.locator("[data-plan-prompt]").getByRole("button", { name: "Show the past range" })).toHaveAttribute("data-button", "secondary");
 

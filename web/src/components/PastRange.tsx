@@ -2,6 +2,14 @@
 // a card with the finding as its title, the plan control, lane 1 of the range chart, the summary,
 // the note on what "comparable" meant, the coverage line, the source line and a "Show the table" twin.
 //
+// Since ticket 101 it is zone 1, a Task zone panel numbered 1 (DESIGN.md section 5, Task zone): its first block opens
+// on the finding in the finding style, and its Note, coverage line and source line end the block in its foot strip;
+// "Advertised again" (ticket 28) is its second block. A number in the finding or the summary opens "Show the table"
+// filtered to the rows it counts, scrolls the table's title under the bar and moves focus to the count line, which
+// repeats the pressed number and no other, with "Show all {total}" after it. When the time estimate holds back, its
+// first-person sentence sits under the chart in body, never inside lane 2. A failed request is the error alert in the
+// zone's body under its header, and "Advertised again", which comes from its own tool, stays.
+//
 // States: loading (static skeletons sized like the content), populated (20 to 60 comparables, one dot
 // each), more than 60 (20 quantile dots), no plan dates (no line until you type a number), the
 // abstention below 20 comparables (no band, no middle, no 8-in-10 line and no "in 10" anywhere, and
@@ -15,13 +23,15 @@
 //
 // Every width here is the page area's, not the window's, since the evidence drawer narrows it
 // (DESIGN.md section 4): the classes are container queries on the page column (@md/page:, @lg/page:),
-// and the summary's place follows the page column's width too. The one exception is the table twin,
-// which reads its own frame's width (@table-fit/table:, 49rem), as the comment at its columns says.
+// and the summary's place follows the page column's width too. The exceptions are the table twin,
+// which reads its own frame's width (@table-fit/table:, 49rem), as the comment at its columns says, and,
+// in the workspace from a frame of 75rem, the summary's place and the plan control's reset button, which
+// keep theirs when the drawer opens (usePageNarrow), as the zones keep their width.
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult, Comparison } from "../lib/api";
-import { forgetDotList, openWentWith, rememberDots, type OpenComparable } from "../lib/packages";
+import { forgetDotList, openPlanRow, openWentWith, rangeIds, rememberDots, type OpenComparable } from "../lib/packages";
 import {
   CompareControl,
   dotComparisonName,
@@ -43,14 +53,16 @@ import { Button } from "./Button";
 import { Byline } from "./Byline";
 import { CoverageLine } from "./Checks";
 import { Fill, Joined } from "./Fill";
+import { FootStrip } from "./FootStrip";
 import { LoadError } from "./LoadError";
 import { MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { FromLine, fromText, planFrom, recordsFrom, wholeDate } from "./NumFrom";
-import { axisFor, chartType, RangeChart, titleSize, type PlanMove, type RangeMark } from "./RangeChart";
+import { axisFor, chartType, RangeChart, type PlanMove, type RangeMark } from "./RangeChart";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { Table, type Column, type Row } from "./Table";
+import { TaskZone, ZoneBlock } from "./TaskZone";
 import { TextLink } from "./TextLink";
 
 const words = copy.pastRange;
@@ -75,17 +87,24 @@ export type PastRangeState =
 // there is none. The first guess is the window's, and the page column's width replaces it before the
 // first paint, so the summary never moves on screen. It reads the exact width, as the container
 // queries do, since clientWidth rounds and a page area beside the drawer has fractions of a pixel.
+// In the workspace layout, from a frame of 75rem the zones keep their place and width when the drawer narrows
+// the page area (app.css, "The workspace layout"), so the summary keeps its place too: there the page is never
+// narrow, and a dot and its records share one screen with nothing moving (principle 5; ticket 101's critique).
 function usePageNarrow(element: RefObject<HTMLElement | null>): boolean {
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(width < 48rem)").matches);
   useLayoutEffect(() => {
-    const column = element.current?.closest<HTMLElement>("[data-page-column]") ?? document.documentElement;
+    const node = element.current;
+    const column = node?.closest<HTMLElement>("[data-page-column]") ?? document.documentElement;
+    const frame = node?.closest("[data-workspace]") ? node.closest<HTMLElement>("[data-frame]") : null;
     const update = () => {
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      setNarrow(column.getBoundingClientRect().width < 48 * rem);
+      const steady = frame !== null && frame.getBoundingClientRect().width >= 75 * rem;
+      setNarrow(!steady && column.getBoundingClientRect().width < 48 * rem);
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(column);
+    if (frame) observer.observe(frame);
     return () => observer.disconnect();
   }, [element]);
   return narrow;
@@ -125,6 +144,7 @@ export function PastRange({
   after,
   estimate,
   planDate,
+  pressedNumber,
 }: {
   state: PastRangeState;
   headingRef?: Ref<HTMLHeadingElement>;
@@ -154,8 +174,10 @@ export function PastRange({
   // whether a "Compare with" segment is pressed (ticket 26), so "Advertised again" can say the comparison leaves
   // its count alone.
   after?: ReactNode | ((comparing: boolean) => ReactNode);
+  // A number already pressed, so the table opens filtered to the rows it counts, as the design gallery shows it
+  // (ticket 101's design review, round 2). On a page a person presses the number.
+  pressedNumber?: RowFilter["key"];
 }) {
-  const headingId = useId();
   const loading = state.status === "loading";
   const result = state.status === "ready" ? state.result : null;
   // Where a dot opens the drawer, each quantile dot's list is held for it (ticket 15). A link to a dot's list
@@ -165,6 +187,8 @@ export function PastRange({
     if (!canOpen || !result) return;
     if (result.quantile_dots) rememberDots(result);
     else forgetDotList();
+    rangeIds.set(result.rows.map((row) => row.evidence_id));
+    return () => rangeIds.set([]);
   }, [canOpen, result]);
 
   // The section's one polite live region, which says steps and results (the 12 brief), the comparisons too.
@@ -220,39 +244,68 @@ export function PastRange({
     compareSlot = <CompareControl result={estimateResult} pressed={pressed} onPress={press} />;
   }
 
+  // A status line under the zone's name, such as "Finding comparable packages for your new criteria.", or a line
+  // before the finding, such as the criteria find_comparables used, which the status replaces while it shows.
+  const leadLine = status ? (
+    <p className="text-small text-ink-muted" data-section-status>
+      {status}
+    </p>
+  ) : lead && (body || state.status === "ready") ? (
+    <div>{lead}</div>
+  ) : null;
+  // "Compare with" sits just above the chart it changes (the 26 brief, section 3.1), in the block's flow, since a
+  // zone's header holds only its name and its tag (DESIGN.md section 5, Task zone).
+  const compare = compareSlot && (
+    <div className="mt-4 max-w-full min-w-0" data-compare>
+      {compareSlot}
+    </div>
+  );
+
   return (
-    <section
-      aria-labelledby={headingId}
-      aria-busy={loading || busy || undefined}
-      data-past-range={body ? "custom" : state.status === "ready" ? kind(state.result) : state.status}
-      data-lane2={estimate ? estimate.status : undefined}
-      className="rounded-md border border-line bg-surface p-4 @md/page:p-6"
+    <TaskZone
+      number={words.number}
+      name={words.heading}
+      panel
+      headingRef={headingRef}
+      busy={loading || busy}
+      sectionKey="took"
+      className="scroll-mt-24"
+      marks={{
+        "data-past-range": body ? "custom" : state.status === "ready" ? kind(state.result) : state.status,
+        "data-lane2": estimate ? estimate.status : undefined,
+      }}
+      live={
+        <>
+          {loading && !quiet && (
+            <p role="status" className="sr-only">
+              {words.loading}
+            </p>
+          )}
+          {populated && (
+            <p role="status" className="sr-only" data-live>
+              {announce}
+            </p>
+          )}
+        </>
+      }
     >
-      <p className="text-label text-ink-muted">{words.eyebrow}</p>
-      {/* "Compare with" sits in the heading row, beside what it changes, and wraps under the heading when the row
-          is too narrow (the 26 brief, section 3.1). */}
-      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-3" data-heading-row>
-        <h2 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
-          <span aria-hidden="true">{words.number} </span>
-          {words.heading}
-        </h2>
-        {compareSlot && (
-          <div className="min-w-0 max-w-full" data-compare>
-            {compareSlot}
+      {body ? (
+        <ZoneBlock data-block="took">
+          <div>
+            {leadLine}
+            {body}
           </div>
-        )}
-      </div>
-      {status ? (
-        <p className="mt-2 text-small text-ink-muted" data-section-status>
-          {status}
-        </p>
-      ) : (
-        lead && (body || state.status === "ready") && <div className="mt-2">{lead}</div>
-      )}
-      {body}
-      {!body && state.status === "loading" && <PastRangeSkeleton twoLanes={estimate !== undefined} />}
-      {!body && state.status === "error" && (
-        <div className="mt-4">
+        </ZoneBlock>
+      ) : state.status === "loading" ? (
+        <ZoneBlock data-block="took">
+          <div>
+            {leadLine}
+            <PastRangeSkeleton twoLanes={estimate !== undefined} />
+          </div>
+        </ZoneBlock>
+      ) : state.status === "error" ? (
+        // A failed block's error alert takes the block's place; the header and "Advertised again" stay.
+        <ZoneBlock data-block="took">
           <LoadError
             error={state.error}
             message={state.message ?? words.error}
@@ -261,32 +314,24 @@ export function PastRange({
             retrying={state.retrying}
             attempt={state.attempt}
           />
-        </div>
-      )}
-      {!body && result && (
+        </ZoneBlock>
+      ) : (
         <Ready
-          result={result}
+          result={state.result}
           open={open}
           planned={planned}
           more={more}
+          lead={leadLine}
+          compare={compare}
           estimate={estimate}
           comparison={comparison}
           planDate={planDate}
           say={setAnnounce}
+          pressedNumber={pressedNumber}
         />
       )}
-      {!body && result && (typeof after === "function" ? after(comparison !== null) : after)}
-      {loading && !quiet && (
-        <p role="status" className="sr-only">
-          {words.loading}
-        </p>
-      )}
-      {populated && (
-        <p role="status" className="sr-only" data-live>
-          {announce}
-        </p>
-      )}
-    </section>
+      {!body && state.status !== "loading" && (typeof after === "function" ? after(comparison !== null) : after)}
+    </TaskZone>
   );
 }
 
@@ -310,19 +355,27 @@ function kind(result: ComparablesResult): Kind {
 
 // What lane 2 and its parts need from the section: estimate_time's answer, the comparison pressed in the heading
 // row, the plan-date choice, and the section's live region.
-type Lane2Props = { estimate?: EstimateState; comparison: Comparison | null; planDate?: PlanDateProps; say: (text: string) => void };
+type Lane2Props = {
+  estimate?: EstimateState;
+  comparison: Comparison | null;
+  planDate?: PlanDateProps;
+  say: (text: string) => void;
+  pressedNumber?: RowFilter["key"];
+};
 
 function Ready({
   result,
   open,
   planned,
   more,
+  lead,
+  compare,
   ...lane2
-}: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode } & Lane2Props) {
+}: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode; lead?: ReactNode; compare?: ReactNode } & Lane2Props) {
   const abstention = result.abstention;
   if (abstention?.reason === "no_public_notice") {
     return (
-      <NoChart title={words.empty.notMeasurableTitle}>
+      <NoChartBlock lead={lead} title={words.empty.notMeasurableTitle}>
         <p className="mt-2 max-w-prose text-body text-ink">
           <Fill template={words.empty.notMeasurableBody} slots={{ field: abstention.field, value: abstention.value }} />
         </p>
@@ -331,12 +384,13 @@ function Ready({
             <TextLink href={planCheckHref(result.package)}>{words.empty.notMeasurableLink}</TextLink>
           </p>
         )}
-      </NoChart>
+      </NoChartBlock>
     );
   }
   if (abstention?.reason === "none_measurable") {
     return (
-      <NoChart
+      <NoChartBlock
+        lead={lead}
         title={
           <Fill
             template={words.empty.unmeasuredTitle(abstention.matched)}
@@ -348,32 +402,32 @@ function Ready({
           <Unmeasured result={result} />
         </div>
         {more}
-      </NoChart>
+      </NoChartBlock>
     );
   }
   if (abstention?.reason === "no_comparables" || abstention?.reason === "unknown_package" || result.rows.length === 0) {
     // A planned package's criteria are the person's, so the state says how to compare with more (the 15 brief).
     if (planned) {
       return (
-        <NoChart title={copy.packageWorkspace.section.noneFound}>
+        <NoChartBlock lead={lead} title={copy.packageWorkspace.section.noneFound}>
           <p className="mt-4">
             <TextLink href={dataReadinessHref(result.sources.map((source) => source.key), result.tool)}>{words.empty.noneLink}</TextLink>
           </p>
-        </NoChart>
+        </NoChartBlock>
       );
     }
     return (
-      <NoChart title={words.empty.noneTitle}>
+      <NoChartBlock lead={lead} title={words.empty.noneTitle}>
         <p className="mt-2 max-w-prose text-body text-ink">
           <Looked result={result} />
         </p>
         <p className="mt-4">
           <TextLink href={dataReadinessHref(result.sources.map((source) => source.key), result.tool)}>{words.empty.noneLink}</TextLink>
         </p>
-      </NoChart>
+      </NoChartBlock>
     );
   }
-  return <Populated result={result} open={open} planned={planned} more={more} {...lane2} />;
+  return <Populated result={result} open={open} planned={planned} more={more} lead={lead} compare={compare} {...lane2} />;
 }
 
 // Ticket 47: the range chart for a slide, from a recorded find_comparables answer and, for lane 2, a recorded
@@ -383,16 +437,21 @@ export function RangeFigure({ result, estimate, twin }: { result: ComparablesRes
   return <Populated result={result} estimate={estimate} comparison={null} say={SILENT} figure={{ twin }} />;
 }
 
-// A state with no chart: a first-person title beside the dashed circle of the neutral state.
-function NoChart({ title, children }: { title: ReactNode; children: ReactNode }) {
+// A state with no chart: a first-person title beside the dashed circle of the neutral state, as zone 1's one block.
+function NoChartBlock({ title, lead, children }: { title: ReactNode; lead?: ReactNode; children: ReactNode }) {
   return (
-    <div className="mt-4 flex gap-3" data-no-chart>
-      <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
-      <div className="min-w-0">
-        <h3 className="text-h2 text-balance text-ink-heading">{title}</h3>
-        {children}
+    <ZoneBlock data-block="took">
+      <div>
+        {lead}
+        <div className={cx("flex gap-3", lead ? "mt-4" : undefined)} data-no-chart>
+          <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
+          <div className="min-w-0">
+            <h3 className="text-h2 text-balance text-ink-heading">{title}</h3>
+            {children}
+          </div>
+        </div>
       </div>
-    </div>
+    </ZoneBlock>
   );
 }
 
@@ -551,7 +610,19 @@ function Populated({
   planDate,
   say: setAnnounce,
   figure,
-}: { result: ComparablesResult; open?: OpenComparable; planned?: PlannedMonths; more?: ReactNode; figure?: { twin: boolean } } & Lane2Props) {
+  lead,
+  compare,
+  pressedNumber,
+}: {
+  result: ComparablesResult;
+  open?: OpenComparable;
+  planned?: PlannedMonths;
+  more?: ReactNode;
+  figure?: { twin: boolean };
+  // The line before the finding, and "Compare with", from the zone (PastRange).
+  lead?: ReactNode;
+  compare?: ReactNode;
+} & Lane2Props) {
   const abstained = result.abstention?.reason === "too_few_comparables";
   const rows = result.rows;
   const total = rows.length;
@@ -568,12 +639,15 @@ function Populated({
   const [text, setText] = useState(planRowMonths === null ? "" : months1(planRowMonths));
   const [invalid, setInvalid] = useState(false);
   const [axisValue, setAxisValue] = useState<number | null>(planRowMonths);
-  const [tableOpen, setTableOpen] = useState(abstained);
+  const [tableOpen, setTableOpen] = useState(abstained || Boolean(pressedNumber));
   const [page, setPage] = useState(0);
+  // The rows a pressed number counts (ticket 101), or null for every row.
+  const [filter, setFilter] = useState<RowFilter | null>(() => (pressedNumber ? rowFilters(result)[pressedNumber] : null));
   const [measure, width] = useWidth<HTMLDivElement>();
   const narrow = usePageNarrow(measure);
   const inputRef = useRef<HTMLInputElement>(null);
   const captionRef = useRef<HTMLSpanElement>(null);
+  const countRef = useRef<HTMLParagraphElement>(null);
   // Ticket 26: the test years under the track record, and the table twin's time estimate table.
   const [yearsOpen, setYearsOpen] = useState(false);
   const yearsCaptionRef = useRef<HTMLSpanElement>(null);
@@ -655,29 +729,45 @@ function Populated({
     inputRef.current?.focus();
   };
 
-  const showRows = () => {
+  // A pressed number opens the table filtered to the rows it counts (ticket 101): its title scrolls under the bar and
+  // focus moves to the count line, which repeats the pressed number. "Show all" brings every row back.
+  const landOnRows = (shown: RowFilter | null) => {
+    setFilter(shown);
+    setPage(0);
     setTableOpen(true);
-    requestAnimationFrame(() => captionRef.current?.focus());
+    requestAnimationFrame(() => {
+      captionRef.current?.scrollIntoView({ block: "start" });
+      countRef.current?.focus({ preventScroll: true });
+    });
   };
+  // The filters the tool's own numbers can name: the plan row's months and its count, and the past range's points.
+  const filters = rowFilters(result);
+  const toRows = (shown: RowFilter | null) => () => landOnRows(shown);
   // Each number in the finding and the summary has its own What sentence (DESIGN.md, Number tooltip), comes from the
-  // notices and contract awards the tool counted, and opens the table of all the comparable packages.
+  // notices and contract awards the tool counted, and opens the table at the rows it counts, as its action line says.
   const records = recordsFrom(result.sources, result.records_through);
   const fromRecords = records ? <FromLine words={records} /> : undefined;
-  const toTable = { from: fromRecords, act: copy.num.act.all(whole(total)), opens: "rows", onOpen: showRows } as const;
-  const explainWithin: NumCheck | undefined = planRowMonths === null ? undefined : { tooltip: words.explain.within(months1(planRowMonths)), ...toTable };
-  const explainShare: NumCheck | undefined = planRowMonths === null ? undefined : { tooltip: words.explain.share(months1(planRowMonths)), ...toTable };
-  const explainTotal: NumCheck = { tooltip: words.explain.total(open, spelled(open)), ...toTable };
+  const opensRows = (act: ReactNode, shown: RowFilter | null) => ({ from: fromRecords, act, opens: "rows", onOpen: toRows(shown) }) as const;
+  const toAll = opensRows(copy.num.act.all(abstained ? spelled(total) : whole(total)), null);
+  const withinRows = result.plan && filters.within ? opensRows(words.act.within(result.plan.within, spelled(result.plan.within)), filters.within) : toAll;
+  const explainWithin: NumCheck | undefined = planRowMonths === null ? undefined : { tooltip: words.explain.within(months1(planRowMonths)), ...withinRows };
+  const explainShare: NumCheck | undefined = planRowMonths === null ? undefined : { tooltip: words.explain.share(months1(planRowMonths)), ...withinRows };
+  const explainTotal: NumCheck = { tooltip: words.explain.total(open, spelled(open)), ...toAll };
   // The middle half, the middle one and the 8-in-10 point count the packages still open as not signed yet.
-  const statistic = (what: string): NumCheck => ({
+  const statistic = (what: string, rows: ReturnType<typeof opensRows>): NumCheck => ({
     tooltip: open > 0 ? <>{what} {words.explain.openCounted(open, spelled(open))}</> : what,
-    ...toTable,
+    ...rows,
   });
-  const explainMiddle = statistic(words.explain.middle(whole(total)));
-  const explainMedian = statistic(words.explain.median);
-  const explainIn10 = statistic(words.explain.in10);
-  const explainPlan: NumCheck | undefined = pkg
-    ? { tooltip: words.explain.plan, from: <FromLine words={planFrom(pkg.plan.implementing_agency, pkg.plan.plan_date)} /> }
-    : undefined;
+  const explainMiddle = statistic(words.explain.middle(whole(total)), filters.middle ? opensRows(words.act.middle, filters.middle) : toAll);
+  const explainMedian = statistic(words.explain.median, filters.median ? opensRows(words.act.median, filters.median) : toAll);
+  const explainIn10 = statistic(words.explain.in10, filters.in10 && range?.q80 != null ? opensRows(words.act.in10(months1(range.q80)), filters.in10) : toAll);
+  // The plan's months open the plan row they came from in the evidence drawer.
+  const planWhat = pkg ? { tooltip: words.explain.plan, from: <FromLine words={planFrom(pkg.plan.implementing_agency, pkg.plan.plan_date)} /> } : null;
+  const explainPlan: NumCheck | undefined = !pkg || !planWhat
+    ? undefined
+    : pkg.evidence_id && !figure
+      ? { ...planWhat, act: copy.num.act.planRow, opens: "record", onOpen: (element: HTMLElement) => openPlanRow(pkg.evidence_id, element) }
+      : planWhat;
 
   const type = chartType(width || 800);
 
@@ -685,13 +775,30 @@ function Populated({
   const count = (value: number, check?: NumCheck) => <Num value={value} options={{ compact: false }} check={check} />;
   const q = (value: number | null, check: NumCheck) => (value === null ? null : <Num value={value} options={{ decimals: 1, compact: false }} check={check} />);
   let title: ReactNode;
+  // Below 20 comparable packages the count of those signed within the plan follows the finding in body (ticket 101).
+  let fewCount: ReactNode = null;
   if (abstained) {
     title =
       total === 1 ? (
         words.title.abstainOne
       ) : (
-        <Fill template={words.title.abstain} slots={{ n: <Num count={total} /> }} />
+        <Fill template={words.title.abstain} slots={{ n: <Num count={total} check={explainTotal} /> }} />
       );
+    if (result.plan) {
+      const w = result.plan.within;
+      const f = words.fewCount;
+      const template = total === 1 ? (w === 0 ? f.noneOne : f.allOne) : w === 0 ? f.none : w === total ? f.all : f.some;
+      fewCount = (
+        <Fill
+          template={template}
+          slots={{
+            within: <Num count={w} capital check={explainWithin} />,
+            total: <Num count={total} />,
+            plan: <Num value={result.plan.months} options={{ decimals: 1, compact: false }} check={explainPlan} />,
+          }}
+        />
+      );
+    }
   } else if (result.plan) {
     const w = result.plan.within;
     const t = words.title;
@@ -841,6 +948,7 @@ function Populated({
       notice={result.plan?.planned_notice_on ?? null}
       signing={result.plan?.planned_signing_on ?? null}
       planned={Boolean(planned)}
+      narrow={narrow}
       onType={onType}
       onReset={reset}
     />
@@ -930,6 +1038,7 @@ function Populated({
             }
             opened={opening?.opened ?? null}
             lane2={estimate ? lane2For(estimate, comparison) : undefined}
+            messageBelow={!figure}
             matching={comparison && !quantile ? new Set(comparison.matching_ids) : null}
             compareKey={
               comparison
@@ -950,7 +1059,17 @@ function Populated({
     return (
       <div ref={measure} data-range-figure={figure.twin ? "table" : "chart"}>
         {figure.twin ? (
-          <ComparablesTable result={result} plan={plan} page={page} onPage={setPage} captionRef={captionRef} comparison={null} />
+          // A slide's twin lists every row at once up to the quantile dots' threshold, as before the page's 20-row pages
+          // (ticket 101's review, follow-up 3).
+          <ComparablesTable
+            result={result}
+            plan={plan}
+            page={page}
+            onPage={setPage}
+            captionRef={captionRef}
+            comparison={null}
+            pageAbove={result.thresholds.quantile_dots_above}
+          />
         ) : (
           <>
             {chart}
@@ -961,74 +1080,112 @@ function Populated({
     );
   }
 
+  // When the time estimate holds back, its first-person sentence sits under the chart in body, with the neutral
+  // dashed circle, never inside lane 2 (ticket 101; DESIGN.md section 5, Range chart).
+  const lane2 = estimate ? lane2For(estimate, comparison) : undefined;
+  const heldBack = lane2?.kind === "message" && lane2.tone === "abstain" ? lane2.text : null;
+
   return (
-    <div ref={measure} className="mt-4">
-      {/* Strata's own words open with its byline, 8 px above them (ticket 111): what it found, or that it held back. */}
-      <Byline kind={abstained ? "heldBack" : "found"} />
-      <h3 id={ids.title} className="mt-2 font-bold text-pretty text-ink-heading" style={{ fontSize: titleSize(type), lineHeight: 1.3 }} data-finding>
-        {title}
-      </h3>
-      {abstained && more}
-      {narrow && <div className="mt-2">{summaryBlock}</div>}
-      <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
-        {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}
-      </p>
-      <div className="mt-4">{control}</div>
-      <figure aria-labelledby={ids.title} className="mt-4" data-chart-figure>
-        {chart}
-        {placeholder}
-      </figure>
-      {!narrow && <div className="mt-4">{summaryBlock}</div>}
-      {/* Ticket 26: the track record, its test years and the plan-date choice, about lane 2, after the chart. */}
-      {estimate && (
-        <div className="mt-4" style={{ fontSize: type.s }}>
-          <EstimateExtras
-            state={estimate}
-            planDate={planDate}
-            yearsOpen={yearsOpen}
-            onToggleYears={() => setYearsOpen((now) => !now)}
-            onOpenYears={openYears}
-            yearsCaptionRef={yearsCaptionRef}
-          />
-        </div>
-      )}
-      <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
-        <Note result={result} />
-        <Coverage result={result} check={coverageCheck(result)} />
-        <Source>
-          <SourceLine result={result} />
-        </Source>
-      </div>
-      <div className="mt-4">
-        <Button
-          variant="ghost"
-          flush
-          aria-expanded={tableOpen}
-          aria-controls={ids.table}
-          onClick={() => setTableOpen((now) => !now)}
-        >
-          {tableOpen ? words.table.hide : words.table.show}
-        </Button>
-      </div>
-      <div id={ids.table} hidden={!tableOpen} className="mt-2" data-comparables-table>
-        {tableOpen && described && (
-          <div ref={estimateCaptionRef} className="mb-6">
-            <TimeEstimateTable result={described} comparison={comparison} />
+    <ZoneBlock
+      data-block="took"
+      foot={
+        // The block's Note, its coverage line and its source line end it, in its foot strip.
+        <FootStrip>
+          <Note result={result} />
+          <Coverage result={result} check={coverageCheck(result)} />
+          <Source>
+            <SourceLine result={result} />
+          </Source>
+        </FootStrip>
+      }
+    >
+      <div ref={measure}>
+        {lead && <div className="mb-4">{lead}</div>}
+        {/* Strata's own words open with its byline, 8 px above them (ticket 111): what it found, or that it held back. */}
+        <Byline kind={abstained ? "heldBack" : "found"} />
+        {/* The finding, the page's largest type (DESIGN.md section 1, principle 6): or, below 20 comparable packages,
+            the first-person sentence that holds back, with the count after it in body. */}
+        <p id={ids.title} className="mt-2 max-w-[22.5em] text-finding text-balance text-ink-heading" data-finding>
+          {title}
+        </p>
+        {fewCount && (
+          <p className="mt-3 max-w-prose text-body text-ink" data-few-count>
+            {fewCount}
+          </p>
+        )}
+        {abstained && more}
+        {narrow && <div className="mt-2">{summaryBlock}</div>}
+        <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
+          {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}
+        </p>
+        <div className="mt-4">{control}</div>
+        {compare}
+        <figure aria-labelledby={ids.title} className="mt-4" data-chart-figure>
+          {chart}
+          {placeholder}
+        </figure>
+        {heldBack && (
+          <div className="mt-4 flex items-start gap-2" data-lane2-message="abstain">
+            <CircleDashed aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-line-strong" />
+            <p className="min-w-0 max-w-prose text-body text-ink">{heldBack}</p>
           </div>
         )}
-        {tableOpen && (
-          <ComparablesTable
-            result={result}
-            plan={plan}
-            page={page}
-            onPage={setPage}
-            captionRef={captionRef}
-            open={opening}
-            comparison={comparison}
-          />
+        {!narrow && <div className="mt-4">{summaryBlock}</div>}
+        {/* Ticket 26: the track record, its test years and the plan-date choice, about lane 2, after the chart. */}
+        {estimate && (
+          <div className="mt-4" style={{ fontSize: type.s }}>
+            <EstimateExtras
+              state={estimate}
+              planDate={planDate}
+              yearsOpen={yearsOpen}
+              onToggleYears={() => setYearsOpen((now) => !now)}
+              onOpenYears={openYears}
+              yearsCaptionRef={yearsCaptionRef}
+            />
+          </div>
         )}
+        <div className="mt-4">
+          <Button
+            variant="ghost"
+            flush
+            aria-expanded={tableOpen}
+            aria-controls={ids.table}
+            onClick={() => {
+              // Only a pressed number filters the table: opened by this button, it lists every package from the first
+              // page (ticket 101's review, follow-up 4).
+              if (!tableOpen) {
+                setFilter(null);
+                setPage(0);
+              }
+              setTableOpen(!tableOpen);
+            }}
+          >
+            {tableOpen ? words.table.hide : words.table.show}
+          </Button>
+        </div>
+        <div id={ids.table} hidden={!tableOpen} className="mt-2" data-comparables-table>
+          {tableOpen && described && (
+            <div ref={estimateCaptionRef} className="mb-6">
+              <TimeEstimateTable result={described} comparison={comparison} />
+            </div>
+          )}
+          {tableOpen && (
+            <ComparablesTable
+              result={result}
+              plan={plan}
+              page={page}
+              onPage={setPage}
+              captionRef={captionRef}
+              countRef={countRef}
+              filter={filter}
+              onShowAll={() => landOnRows(null)}
+              open={opening}
+              comparison={comparison}
+            />
+          )}
+        </div>
       </div>
-    </div>
+    </ZoneBlock>
   );
 }
 
@@ -1076,11 +1233,14 @@ function PlanControl({
   notice,
   signing,
   planned = false,
+  narrow,
   onType,
   onReset,
 }: {
   // A package planned from a sentence: the line is the person's own plan, with no plan row behind it.
   planned?: boolean;
+  // Whether the page lays out narrow (usePageNarrow), which places the reset button.
+  narrow: boolean;
   ids: { input: string; helper: string; error: string };
   inputRef: Ref<HTMLInputElement>;
   text: string;
@@ -1134,14 +1294,14 @@ function PlanControl({
           />
           <span className="text-small text-ink">{w.unit}</span>
         </span>
-        {resetButton("hidden @md/page:inline", false)}
+        {resetButton(narrow ? "hidden" : "inline", false)}
       </div>
       {/* One caption line is kept for the error, so it appears without moving the chart. */}
       <p id={ids.error} className="mt-1 min-h-lh text-caption text-error">
         {invalid && w.invalid(whole(maxMonths))}
       </p>
-      <div className="grid @md/page:block">
-      <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && "invisible @md/page:visible")}>
+      <div className={narrow ? "grid" : "block"}>
+      <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && narrow && "invisible")}>
         {planned ? (
           plan !== null ? w.helperPlanned : w.helperPlannedNone
         ) : notice && signing ? (
@@ -1153,7 +1313,7 @@ function PlanControl({
           w.helperNoPlan
         )}
       </p>
-      {resetButton("col-start-1 row-start-1 self-start @md/page:hidden", true)}
+      {resetButton(cx("col-start-1 row-start-1 self-start", !narrow && "hidden"), true)}
       </div>
     </div>
   );
@@ -1161,28 +1321,79 @@ function PlanControl({
 
 // ── The table twin ───────────────────────────────────────────────────────
 
+// The rows a number in the finding or the summary counts (ticket 101), and the count line that says so: it repeats the
+// pressed number and no other, so it never states a number the tool did not return. The rows are chosen by the same
+// months the table's last column and the chart's dots show.
+export type RowFilter = { key: "within" | "middle" | "median" | "in10"; line: string; keep: (row: Comparable) => boolean };
+
+function rowFilters(result: ComparablesResult): Record<RowFilter["key"], RowFilter | null> {
+  const shown = words.table.shown;
+  const plan = result.plan;
+  const range = result.abstention ? null : result.past_range;
+  const total = whole(result.counts?.comparables ?? result.rows.length);
+  const q25 = range?.q25 ?? null;
+  const q75 = range?.q75 ?? null;
+  const q50 = range?.q50 ?? null;
+  const q80 = range?.q80 ?? null;
+  // A filter that would leave no row is not offered: its number opens every row instead.
+  const some = (filter: RowFilter | null) => (filter && result.rows.some(filter.keep) ? filter : null);
+  // Nor is "the middle package" when two or more packages share the middle's months, at one decimal.
+  const one = (filter: RowFilter | null) => (filter && result.rows.filter(filter.keep).length === 1 ? filter : null);
+  // The quartiles are Kaplan-Meier days on which a package was signed, and a package still open is censored, so every
+  // statistic's rows are signed packages, as the plan's count is (ticket 101's review, follow-up 2).
+  const signed = (row: Comparable) => !row.still_open;
+  return {
+    // The plan's count is the tool's own (plan.within); a plan of none counted opens no rows.
+    within: some(
+      plan && plan.within > 0
+        ? { key: "within", line: shown.within(whole(plan.within), total, months1(plan.months)), keep: (row) => signed(row) && row.months <= plan.months }
+        : null,
+    ),
+    middle: some(
+      q25 !== null && q75 !== null
+        ? { key: "middle", line: shown.middle(months1(q25), months1(q75)), keep: (row) => signed(row) && row.months >= q25 && row.months <= q75 }
+        : null,
+    ),
+    median: one(q50 !== null ? { key: "median", line: shown.median(months1(q50)), keep: (row) => signed(row) && row.months === q50 } : null),
+    in10: some(q80 !== null ? { key: "in10", line: shown.in10(months1(q80)), keep: (row) => signed(row) && row.months <= q80 } : null),
+  };
+}
+
 function ComparablesTable({
   result,
   plan,
   page,
   onPage,
   captionRef,
+  countRef,
+  filter = null,
+  onShowAll,
   open,
   comparison = null,
+  pageAbove = PAGE,
 }: {
   result: ComparablesResult;
   plan: number | null;
+  // Above how many rows the table pages, 20 at a time.
+  pageAbove?: number;
   page: number;
   onPage: (page: number) => void;
   captionRef: Ref<HTMLSpanElement>;
+  // The count line, which takes focus when a pressed number lands on the rows it counts.
+  countRef?: Ref<HTMLParagraphElement>;
+  // The rows a pressed number counts, and the button after its count line that shows every row again.
+  filter?: RowFilter | null;
+  onShowAll?: () => void;
   open?: OpenComparable;
   // Ticket 26: while comparing, a column says whether each package went with the option.
   comparison?: Comparison | null;
 }) {
   const t = words.table;
-  const rows = result.rows;
-  const total = rows.length;
-  const paged = total > result.thresholds.quantile_dots_above;
+  const all = result.rows;
+  const rows = filter ? all.filter(filter.keep) : all;
+  const total = all.length;
+  // Twenty rows a page (ticket 101; the plan's section 7.4: "Show all 49" shows the first 20 of 49).
+  const paged = rows.length > pageAbove;
   const from = paged ? page * PAGE : 0;
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
   // With one line per cell the six columns need about 776 px, so the table shows when its frame has
@@ -1211,6 +1422,7 @@ function ComparablesTable({
     ...(plan === null ? [] : [{ key: "within", header: t.columns.within(months1(plan)), short: true }]),
     ...(comparison ? [{ key: "wentWith", header: copy.whatIf.table.column(optionWords(comparison.lever, comparison.value).inSentence), short: true }] : []),
   ];
+  // Its source line is the zone's foot strip's, or a slide's RangeFigureLines', so the table repeats none (ticket 101).
   const tableRows: Row[] = shown.map((row) => ({
     id: row.step_reference,
     cells: {
@@ -1243,25 +1455,41 @@ function ComparablesTable({
       <Table
         title={
           <span ref={captionRef} tabIndex={-1} className="focus:outline-none" data-table-caption>
-            {total === 1 ? t.captionOne : t.caption(spelled(total))}
+            {total === 1 ? t.captionOne : filter ? t.captionFiltered : t.caption(spelled(total))}
           </span>
         }
         level={4}
-        count={{ noun: t.noun, one: t.nounOne, total, from: from + 1, to: from + shown.length }}
+        count={{
+          noun: t.noun,
+          one: t.nounOne,
+          total,
+          from: from + 1,
+          to: from + shown.length,
+          // Every row of a few, one to nine in words, as the finding counts them (DESIGN.md section 7, rule 12).
+          text: filter?.line ?? (!paged && total > 1 && total < 10 ? copy.table.showingAll(spelled(total), t.noun) : undefined),
+        }}
+        countRef={countRef}
+        countAction={
+          filter && (
+            <Button variant="ghost" flush onClick={onShowAll} data-show-all>
+              {t.showAll(whole(total))}
+            </Button>
+          )
+        }
         columns={columns}
         rowHeader="package"
         cardsBelow="fit"
+        cardRows
         cardsNote={t.columns.monthsCards}
         selected={open?.opened ?? null}
         state={{ status: "ready", rows: tableRows }}
-        source={<SourceLine result={result} />}
       />
       {paged && (
         <div className="mt-3 flex flex-wrap gap-3">
           <Button variant="secondary" disabled={page === 0} onClick={() => onPage(page - 1)}>
             {t.previous}
           </Button>
-          <Button variant="secondary" disabled={from + PAGE >= total} onClick={() => onPage(page + 1)}>
+          <Button variant="secondary" disabled={from + PAGE >= rows.length} onClick={() => onPage(page + 1)}>
             {t.next}
           </Button>
         </div>
@@ -1282,11 +1510,11 @@ function PastRangeSkeleton({ twoLanes = false }: { twoLanes?: boolean }) {
   const lines = (count: number, last = "w-3/5") => Array.from({ length: count }, (_, index) => (index === count - 1 ? last : "w-full"));
   // The title and the summary hold checkable numbers, whose buttons make each line a little taller: pb-2.
   return (
-    <div ref={measure} aria-hidden="true" className="mt-4" data-past-range-skeleton>
-      {/* The byline's line over the title (ticket 111). */}
+    <div ref={measure} aria-hidden="true" data-past-range-skeleton>
+      {/* The byline's line over the finding (ticket 111), and the finding's lines in its own style (ticket 101). */}
       <SkeletonLine className="mb-2 text-label" width="w-24" />
-      <SkeletonText className="pb-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: titleSize(type), lineHeight: 1.3 }} />
-      <SkeletonText className="hidden pb-2 @md/page:flex" widths={lines(2)} style={{ fontSize: titleSize(type), lineHeight: 1.3 }} />
+      <SkeletonText className="max-w-[22.5em] pb-2 text-finding @md/page:hidden" widths={lines(4)} />
+      <SkeletonText className="hidden max-w-[22.5em] pb-2 text-finding @md/page:flex" widths={lines(2)} />
       <SkeletonText className="mt-2 pb-2 text-body @md/page:hidden" widths={lines(7, "w-2/5")} />
       <SkeletonText className="mt-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: type.m }} />
       <SkeletonLine className="mt-2 hidden @md/page:flex" width="w-4/5" style={{ fontSize: type.m }} />

@@ -16,6 +16,8 @@ Each answer comes from the fixture database as of October 22, 2026, the date sec
   Request for Bids in Kenya, as /api/comparables takes them.
 - evidence-notice-op00083890.json and evidence-plan-row-ke-kimawasco-157517.json: a notice whose words a row
   quotes, and a canceled plan row, as the evidence drawer opens them.
+- evidence-plan-row-ke-nwwda-541055.json: the demo package's own plan row, which the marker of the package page's
+  facts, "From the plan row", and its "Show the plan row" open in the evidence drawer (ticket 101).
 
 The block's other states (the model shown, a group of more than five, a second notice under the same STEP
 reference, a reason in French, the error) are not in the fixture. They are mocks in tests/fixtures/api whose names
@@ -47,6 +49,7 @@ ANSWERS = {
     "rebidding-planned-works-rfb-ke.json": "/api/rebidding?category=Works&country=KE&method=Request%20for%20Bids",
     "evidence-notice-op00083890.json": "/api/evidence?id=strata.silver.notices:OP00083890",
     "evidence-plan-row-ke-kimawasco-157517.json": "/api/evidence?id=strata.silver.plan_rows:40001676/KE-KIMAWASCO-157517-CW-RFB",
+    "evidence-plan-row-ke-nwwda-541055.json": "/api/evidence?id=strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
 }
 
 

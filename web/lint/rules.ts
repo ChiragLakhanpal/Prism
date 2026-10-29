@@ -126,6 +126,8 @@ export const NON_COPY_PROPS = new Set([
   "kind",
   "state",
   "status",
+  // PastRange's number already pressed in the design gallery: a row filter's key, such as within (ticket 101).
+  "pressedNumber",
   "role",
   "lang",
   // A text's language and direction (ticket 42): BCP 47 codes and "rtl", never words a person reads. Lang's code

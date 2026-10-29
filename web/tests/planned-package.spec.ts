@@ -322,8 +322,8 @@ test("the computed note states the rules with the thresholds file's values and i
   // The thresholds are the blueprint's until the owner checks them against the World Bank's tables, so the source
   // line says so and gives no date (review round 2, P4).
   await expect(note).toContainText(
-    "Source: Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds. " +
-      "Strata's starting value from the blueprint, not yet checked against the World Bank's thresholds for Kenya.",
+    "Source: Starting values I have not yet checked against the World Bank's prior review thresholds. " +
+      "A starting value I have not yet checked against the World Bank's procurement thresholds for Kenya.",
   );
   // "US$" and its amount are one checkable number, so they never split across lines (review round 2, P13).
   await expect(note.locator("p[data-numbers] [data-num]").first()).toHaveText("US$10 million");
@@ -479,6 +479,9 @@ test("with no plan yet, section 1 names its comparables and asks for the plan be
   );
   await expect(prompt).toContainText("I found 49 comparable packages for these criteria.");
   await expect(page.locator("[data-finding]")).toHaveCount(0);
+  // The prompt is as tall as its words and controls, with no blank held under its buttons for a chart that comes only
+  // after your press (ticket 101's design review, round 2, item 4).
+  expect(await prompt.evaluate((el) => el.getBoundingClientRect().bottom - el.lastElementChild!.getBoundingClientRect().bottom)).toBeLessThan(1);
   await expect(prompt.getByRole("button", { name: "Show the past range" })).toHaveAttribute("data-button", "primary");
   await prompt.getByRole("textbox", { name: "Your plan, in months" }).fill("6");
   await prompt.getByRole("button", { name: "Show the past range" }).click();
@@ -701,6 +704,9 @@ test("when a rerun has redrawn the dot that opened the records away, closing the
 test("a row of the table twin opens the same records, and the row stays marked while they show", async ({ page }) => {
   await openChart(page);
   await page.getByRole("button", { name: "Show the table" }).click();
+  // Twenty rows a page (ticket 101): the longest package is on the last of the three.
+  await page.getByRole("button", { name: "Next 20" }).click();
+  await page.getByRole("button", { name: "Next 20" }).click();
   const row = page.locator(`[data-open-row="${MOWI}"]:visible`);
   await expect(row).toHaveAccessibleName(`Open the records for ${MOWI}`);
 
@@ -997,6 +1003,8 @@ for (const width of [1440, 1024, 390]) {
     await expect(chip(page, "method")).toBeFocused();
 
     await page.getByRole("button", { name: "Show the table" }).click();
+    await page.getByRole("button", { name: "Next 20" }).click();
+    await page.getByRole("button", { name: "Next 20" }).click();
     await page.locator(`[data-open-row="${MOWI}"]:visible`).click();
     await expect(drawer(page)).toBeVisible();
     await expect(drawer(page)).toHaveAttribute("data-evidence-drawer", width < 768 ? "sheet" : "drawer");
@@ -1066,4 +1074,79 @@ test("in a list of choices the arrow keys move between options without choosing,
   await expect(editor).toHaveCount(0);
   await expect.poll(() => sent).toEqual([{ field: "method", action: "set", value: "Request for Quotations" }]);
   await expect(chip(page, "method")).toBeFocused();
+});
+
+// ── Ticket 101: the planned package on the workspace layout ──────────────
+
+test("a planned package puts What I understood in an unnumbered panel before the stage label and the numbered zones, under a head that holds no action", async ({ page }) => {
+  await openPackage(page);
+  const understood = card(page);
+  await expect(understood).toHaveAttribute("data-zone", "panel");
+  await expect(understood).not.toHaveAttribute("data-numbered", "");
+  await expect(understood).toHaveAccessibleName("What I understood");
+  await expect(understood.locator("[data-zone-number]")).toHaveCount(0);
+  // The page's order: What I understood, the stage label "Planning", zones 1 to 4, "Tender design" and zone 5.
+  const order = await page.locator("[data-zones] > [data-zone], [data-zones] > [data-stage-label]").evaluateAll((all) =>
+    all.map((el) =>
+      el.hasAttribute("data-stage-label")
+        ? el.textContent
+        : `${el.querySelector("[data-zone-number]")?.textContent?.trim() ?? "-"} ${el.querySelector("[data-zone-name]")?.lastChild?.textContent}`,
+    ),
+  );
+  expect(order).toEqual([
+    "- What I understood",
+    "Planning",
+    "1 How long it took",
+    "2 Planned date for each step",
+    "3 Procurement risks and what helped",
+    "4 Procurement approach options",
+    "Tender design",
+    "5 Check your criteria",
+  ]);
+  // The head does not stick and holds no action; "No STEP reference yet" stands in the ID line's place.
+  const head = page.locator("[data-page-head]");
+  await expect(head.locator("[data-id-line]")).toContainText("No STEP reference yet");
+  await expect(head.locator("button[data-button=primary]")).toHaveCount(0);
+  expect(await page.locator("[data-package-header]").evaluate((element) => getComputedStyle(element).position)).toBe("static");
+  // The computed note and its source line end the panel in its foot strip, provenance's one place (ticket 101's critique).
+  await expect(understood.locator("[data-foot-strip] [data-computed-note]")).toBeVisible();
+});
+
+// Reopened with its plan set, the package folds What I understood to the sentence you wrote and a Show button, so zone
+// 1's finding leads the first screen (DESIGN.md section 1, principle 6; ticket 101's critique, hierarchy). A package
+// whose plan you set while you read keeps the panel open, so nothing above zone 1 moves while you work in it.
+test("reopened with its plan, a planned package folds What I understood to your sentence, and zone 1's finding is in the first screen", async ({ page }) => {
+  const withPlan = JSON.stringify({
+    ...JSON.parse(await recorded("planned-package-rural-roads.json")),
+    package: JSON.parse(await recorded("planned-package-change-plan.json")).package,
+  });
+  for (const [width, height] of [
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    const where = `${width} by ${height}`;
+    await openPackage(page, { width, height, answers: { "GET /api/planned-packages/pkg-000000000001": { body: withPlan } } });
+    const understood = card(page);
+    await expect(understood, where).toHaveAttribute("data-zone", "row");
+    await expect(understood.locator("[data-you-wrote]")).toContainText(SENTENCE);
+    await expect(understood.locator("[data-chip]")).toHaveCount(0);
+    // The folded row keeps its one call to act, the guess to check (ticket 101's review and design review, round 2).
+    await expect(understood.locator("[data-section-summary]")).toContainText("One guess to check.");
+    const show = understood.getByRole("button", { name: "Show what I understood" });
+    await expect(show).toHaveAttribute("aria-expanded", "false");
+    const finding = page.locator("[data-past-range] [data-finding]");
+    await expect(finding).toBeVisible();
+    expect((await finding.boundingBox())!.y, where).toBeLessThan(height);
+
+    await show.click();
+    await expect(understood).toHaveAttribute("data-zone", "panel");
+    await expect(understood.getByRole("button", { name: "Hide what I understood" })).toBeFocused();
+    await expect(chip(page, "plan_months")).toHaveText("Your plan: 6 months");
+    await expect(understood.locator("[data-foot-strip] [data-computed-note]")).toBeVisible();
+    // Opened, the chips' instruction follows, and the guess count is said once.
+    await expect(understood.locator("[data-instruction]")).toHaveText("Choose any part to change it.");
+    expect((await understood.innerText()).match(/guess to check/g), where).toHaveLength(1);
+    // The plan's line says what it shows whether the row is folded or open (ticket 101's design review, round 2).
+    await expect(page.locator("[data-past-range]")).toContainText("The line shows your plan. Moving the line changes it.");
+  }
 });

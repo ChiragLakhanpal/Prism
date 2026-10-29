@@ -5,7 +5,7 @@
 // here so the test checks the screen against an independent source.
 import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
-import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
+import { expect, mockApi, openSidebar, recorded, test, windowBeside } from "./mocked";
 import { fontsLoaded } from "./settled";
 
 const REF = "KE-NWWDA-541055-CW-RFB";
@@ -26,10 +26,23 @@ const ICR_54 = "strata.gold.passage:31525018/v1/54";
 
 async function openPackage(
   page: Page,
-  options: { width?: number; comparables?: Answer | null; pkg?: Answer | null; ref?: string; evidence?: boolean; estimate?: Answer | null } = {},
+  options: {
+    width?: number;
+    height?: number;
+    comparables?: Answer | null;
+    pkg?: Answer | null;
+    ref?: string;
+    evidence?: boolean;
+    estimate?: Answer | null;
+    // The drawer answers with the package's own plan row (ticket 101), as the facts' marker opens it.
+    planRow?: boolean;
+    rebidding?: Answer;
+    // The recording the drawer answers with, such as a comparable package's records.
+    drawer?: string;
+  } = {},
 ) {
   const { width = 1440, ref = REF } = options;
-  await page.setViewportSize({ width, height: 900 });
+  await page.setViewportSize({ width, height: options.height ?? 900 });
   const api = `/api/packages/${ref}`;
   const pkgFile = ref === REF ? "package-ke-nwwda-541055.json" : "package-ke-nwwda-541062.json";
   const comparablesFile = ref === REF ? "comparables-ke-nwwda-541055.json" : "comparables-ke-nwwda-541062.json";
@@ -51,6 +64,15 @@ async function openPackage(
   else answering.delete(page);
   if (options.evidence) {
     answers["/api/evidence"] = { body: await recorded("evidence-icr-p130164-54.json") };
+    answers["/api/evidence/opened"] = { body: '{"opened":[],"recorded":true}' };
+  }
+  if (options.planRow) {
+    answers["/api/evidence"] = { body: await recorded("evidence-plan-row-ke-nwwda-541055.json") };
+    answers["/api/evidence/opened"] = { body: '{"opened":[],"recorded":true}' };
+  }
+  if (options.rebidding) answers[`${api}/rebidding`] = options.rebidding;
+  if (options.drawer) {
+    answers["/api/evidence"] = { body: await recorded(options.drawer) };
     answers["/api/evidence/opened"] = { body: '{"opened":[],"recorded":true}' };
   }
   await mockApi(page, answers);
@@ -108,7 +130,7 @@ test("the workspace names the package, lists its facts in STEP's field names, an
   const main = page.getByRole("main");
 
   await expect(main.getByRole("heading", { level: 1 })).toContainText("Equipping of Exploratory");
-  await expect(main.locator("[data-package-header]")).toContainText(REF);
+  await expect(main.locator("[data-page-head]")).toContainText(REF);
   await expect(page).toHaveTitle(`Package ${REF} | Strata`);
   const crumbs = main.getByRole("navigation", { name: "Breadcrumb" });
   await expect(crumbs.getByRole("link", { name: "Packages" })).toHaveAttribute("href", "/packages");
@@ -128,9 +150,9 @@ test("the workspace names the package, lists its facts in STEP's field names, an
     `/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09#${REF}`,
   );
 
-  await expect(section(page).getByText("Planning", { exact: true })).toBeVisible();
+  await expect(page.locator("[data-stage-label]").first()).toHaveText("Planning");
   await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("How long it took");
-  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(FINDING);
+  await expect(section(page).locator("[data-finding]")).toHaveText(FINDING);
   await expect(page.getByRole("figure", { name: FINDING })).toBeVisible();
   await expect(section(page).locator("[data-summary]")).toHaveText(
     "The middle half of these packages took 3.3 to 7.9 months, and the middle one took 4.4. 8 in 10 were signed within 9.1 months. " +
@@ -156,7 +178,7 @@ test("the title states the plan's share in the words find_comparables returned w
   });
   await openPackage(page, { comparables: about });
   await ready(page);
-  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
+  await expect(section(page).locator("[data-finding]")).toHaveText(
     "2 of 49 comparable packages, about 1 in 10, were signed within the plan's 1.5 months.",
   );
 });
@@ -226,8 +248,14 @@ test("dragging the plan line, pressing arrow keys on it or typing months updates
   await section(page).getByRole("button", { name: "Show the table" }).click();
   const table = page.locator("[data-comparables-table] table");
   await expect(table.locator("thead")).toContainText("Signed within 6.5 months");
-  await expect(table.locator("tbody tr")).toHaveCount(49);
-  await expect(table.locator("tbody td:last-child").filter({ hasText: /^Yes$/ })).toHaveCount(await signedWithin(6.5));
+  // Twenty rows a page (ticket 101): the Yes cells on the three pages add up to the readout's count.
+  let yes = 0;
+  for (const rows of [20, 20, 9]) {
+    await expect(table.locator("tbody tr")).toHaveCount(rows);
+    yes += await table.locator("tbody td:last-child").filter({ hasText: /^Yes$/ }).count();
+    if (rows === 20) await page.getByRole("button", { name: "Next 20" }).click();
+  }
+  expect(yes).toBe(await signedWithin(6.5));
 
   await page.getByRole("button", { name: "Use the plan's 1.5 months" }).click();
   await expect(input).toHaveValue("1.5");
@@ -464,14 +492,15 @@ test("below 768 px the table's cards say what Months counts once, on the count l
   await section(page).getByRole("button", { name: "Show the table" }).click();
   const cards = page.locator("[data-comparables-table] [data-table-view=cards]");
 
-  await expect(cards.locator("li")).toHaveCount(49);
+  // Twenty a page (ticket 101).
+  await expect(cards.locator("li")).toHaveCount(20);
   await expect(cards).not.toContainText("so far if still open");
   await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeVisible();
   // The definition is its own element beside the count, never run on into the count's sentence.
-  await expect(page.locator("[data-comparables-table] p[data-numbers]").first()).toHaveText("Showing all 49 packages");
+  await expect(page.locator("[data-comparables-table] p[data-numbers]").first()).toHaveText("Showing 1–20 of 49 packages");
 
-  // A 1440 px page area: beside the open sidebar (ticket 92) the window is wider.
-  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
+  // At 1024 px the zones take the whole frame beside the rail, so the table's frame has its 49rem and shows its rows.
+  await page.setViewportSize({ width: 1024, height: 900 });
   await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeHidden();
   await expect(page.locator("[data-comparables-table] thead")).toContainText("From notice to signature, or so far if still open");
 });
@@ -899,7 +928,7 @@ test("section 1's finding opens with Strata's byline, its abstention with Strata
   await ready(page);
   const bylines = page.locator("[data-byline]");
   await expect(bylines).toHaveText(["Strata found"]);
-  await expect(section(page).getByRole("heading", { level: 3, name: FINDING })).toBeVisible();
+  await expect(section(page).locator("[data-finding]")).toHaveText(FINDING);
   const [over, under] = [(await bylines.boundingBox())!, (await section(page).locator("[data-finding]").boundingBox())!];
   expect(Math.round(under.y - (over.y + over.height))).toBe(8);
 
@@ -919,8 +948,8 @@ test("below 20 comparables there is no range and no share: the copy file's sente
   });
   await ready(page);
 
-  // The first h3: section 1's card ends with the "Advertised again" block's own h3 (ticket 28).
-  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
+  // The finding: the first-person sentence that holds back (ticket 101).
+  await expect(section(page).locator("[data-finding]")).toHaveText(
     "I'm not giving a range: only seven comparable packages. Here are all seven.",
   );
   await expect(page.locator("[data-chart-drawing] [data-dot]")).toHaveCount(7);
@@ -977,7 +1006,10 @@ test("when the whole page fails, the reference is the heading and is not repeate
   await openPackage(page, { pkg: { status: 503, body: SERVICE_DOWN } });
   await expect(page.locator("main h1")).toHaveText(REF);
 
-  await expect(page.locator("[data-package-header]")).toHaveText(REF);
+  // The head has no ID line under the h1, and its alert slot holds the page's error with Try again (ticket 101).
+  await expect(page.locator("[data-page-head] [data-id-line]")).toHaveCount(0);
+  await expect(page.locator("[data-page-head] [data-head-alert]")).toContainText("I couldn't load this package.");
+  await expect(page.locator("[data-page-head] [data-head-alert]").getByRole("button", { name: "Try again" })).toBeVisible();
 });
 
 test("a reference no plan lists stays whole in the not-found sentence at phone width", async ({ page }) => {
@@ -1150,6 +1182,33 @@ test("from 768 px the heading's skeleton holds the Description's two lines, so t
   }
 });
 
+// Below 768 px the head holds the demo package's three h1 lines and its facts line's two lines over the 44 px row of
+// "Show the plan row", so zone 1 stays put when the package arrives (DESIGN.md section 1, principle 5; ticket 101's
+// design review, item 3).
+test("below 768 px the head's skeleton holds the package's h1 and facts line, so zone 1 stays put when the package arrives", async ({ page }) => {
+  for (const width of [390, 320]) {
+    let answer: () => void = () => {};
+    const arrived = new Promise<void>((resolve) => (answer = resolve));
+    await openPackage(page, { width, height: 844, pkg: null });
+    await page.unroute(`**${API}`);
+    await page.route(`**${API}`, async (route) => {
+      await arrived;
+      await route.fulfill({ contentType: "application/json", body: await recorded("package-ke-nwwda-541055.json") });
+    });
+    await page.reload();
+    const top = () => page.locator("[data-zones]").evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    await expect(page.locator("[data-page-head] [data-facts-line]")).toBeAttached();
+    const held = await top();
+
+    answer();
+    await expect(page.locator("main h1")).toContainText("Equipping of Exploratory");
+    await expect(page.locator("[data-page-head] [data-facts-line] button")).toBeVisible();
+    // At 320 px the link back to the project wraps to two lines where the loading head's "Packages" took one, so the
+    // loading head holds two below a 20rem page area (ticket 101's design review, round 2, item 13).
+    expect(Math.abs((await top()) - held), `${width} px`).toBeLessThanOrEqual(8);
+  }
+});
+
 test("the section's skeleton holds the chart where the chart arrives, with the summary first below 768 px", async ({ page }) => {
   for (const width of [390, 1440]) {
     let answer: () => void = () => {};
@@ -1184,9 +1243,9 @@ test("below 768 px the section's sentence leads the chart in the page's order, s
 
 // DESIGN.md section 4: under the band a page lays out by the page area's width, because the
 // evidence drawer narrows it. At 1024 px the rail takes 64 px (ticket 92) and the drawer 40 percent of the window,
-// 410 px (ticket 94), which leaves a 550 px page area, so the workspace shows what a 550 px window shows: a header
-// that does not stick, facts in two columns, the sentence before the chart, the reset button in the helper's place
-// and the table as cards.
+// 410 px (ticket 94), which leaves a 550 px page area, so the workspace shows what a 550 px window shows: a head that
+// does not stick, the facts in one line (ticket 101), the sentence before the chart, the reset button in the helper's
+// place and the table as cards.
 test("at 1024 px with the evidence drawer open, the workspace lays out as its page area is wide, not the window", async ({ page }) => {
   await openPackage(page, { width: 1024, evidence: true });
   await ready(page);
@@ -1198,8 +1257,8 @@ test("at 1024 px with the evidence drawer open, the workspace lays out as its pa
     const chart = document.querySelector("[data-chart-figure]")!;
     return {
       summaryFirst: Boolean(summary.compareDocumentPosition(chart) & Node.DOCUMENT_POSITION_FOLLOWING),
-      header: getComputedStyle(document.querySelector("[data-package-header]")!).position,
-      factColumns: getComputedStyle(document.querySelector("[data-package-facts]")!).gridTemplateColumns.split(" ").length,
+      header: getComputedStyle(document.querySelector("[data-page-head]")!).position,
+      factsLine: getComputedStyle(document.querySelector("[data-facts-line]")!).display,
       scrollPadding: document.documentElement.style.scrollPaddingTop,
       resets: [...document.querySelectorAll("[data-plan-reset]")].map((el) => getComputedStyle(el).display),
       scrollWidth: document.documentElement.scrollWidth,
@@ -1209,7 +1268,7 @@ test("at 1024 px with the evidence drawer open, the workspace lays out as its pa
   expect(layout.header).not.toBe("sticky");
   // Only the bar sticks, so focus lands 8 px under its 56 px (ticket 94's one hook in the frame).
   expect(layout.scrollPadding).toBe("64px");
-  expect(layout.factColumns).toBe(2);
+  expect(layout.factsLine).toBe("flex");
   // The input row's button is display: none; the helper's place keeps the other.
   expect(layout.resets).toEqual(["none", "block"]);
   expect(layout.scrollWidth).toBeLessThanOrEqual(1024);
@@ -1220,15 +1279,17 @@ test("at 1024 px with the evidence drawer open, the workspace lays out as its pa
 });
 
 // At a browser zoom such as 110 percent, the page area beside the drawer can be a fraction of a pixel
-// under 768 px. The sentence's place reads the same exact width the container queries read.
+// under 768 px. The sentence's place reads the same exact width the container queries read. At 1024 px the
+// frame is under 75rem, where the zones take the page area's width (from a frame of 75rem they keep theirs, and
+// the summary keeps its place: the drawer test at 1440 and 1280 px).
 test("a page area a fraction of a pixel under 768 px puts the sentence first, as the header and facts lay out narrow", async ({ page }) => {
-  await openPackage(page);
+  await openPackage(page, { width: 1024 });
   await ready(page);
   await page.locator("[data-page-column]").evaluate((column) => {
     column.style.flex = "none";
     column.style.width = "767.6px";
   });
-  await expect(page.locator("[data-package-header]")).not.toHaveCSS("position", "sticky");
+  await expect(page.locator("[data-page-head]")).not.toHaveCSS("position", "sticky");
   await expect
     .poll(() =>
       page.evaluate(() => {
@@ -1268,19 +1329,18 @@ async function spillOf(frame: Locator) {
 
 test("the past range's table shows its rows where its frame has 49rem, every cell's text inside its cell, and cards where it has less", async ({ page }) => {
   const body = JSON.parse(await recorded("comparables-ke-nwwda-541055.json")) as Comparables;
-  const withoutSpace = body.rows.filter((row) => !row.step_reference.includes(" ")).length;
+  // The first page of twenty rows (ticket 101).
+  const first = body.rows.slice(0, 20);
+  const withoutSpace = first.filter((row) => !row.step_reference.includes(" ")).length;
+  // Ticket 101: below a frame of 75rem zone 1 takes the page area's width, so the table's frame has its 49rem from a
+  // page area of about 870 px; from that frame the zones keep to the work's columns, under 49rem, so the rows are cards.
   for (const [width, evidence, view] of [
     [1024, false, "table"],
-    [1416, false, "table"],
-    [1440, false, "table"],
-    [1600, false, "table"],
+    [1100, false, "table"],
+    [960, false, "table"],
     [1200, false, "cards"],
-    [1280, false, "cards"],
-    // From about 1360 px the page's content is its 1280 px most (ticket 94), so the frame is 793 px, beside the drawer
-    // too once the page area has that much.
-    [1366, false, "table"],
-    [1920, true, "table"],
-    [1440, true, "cards"],
+    [1440, false, "cards"],
+    [1920, true, "cards"],
     [834, false, "cards"],
   ] as const) {
     const where = `${width} px${evidence ? " beside the drawer" : ""}`;
@@ -1292,7 +1352,22 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     const cards = section(page).locator("[data-table-view=cards]");
     await expect(view === "table" ? table : cards, where).toBeVisible();
     await expect(view === "table" ? cards : table, where).toBeHidden();
-    if (view === "cards") continue;
+    // The zone's foot strip holds the one source line, so the table repeats none of its own (ticket 101's critique).
+    await expect(section(page).locator("[data-comparables-table] [data-source]"), where).toHaveCount(0);
+    await expect(section(page).locator("[data-foot-strip] [data-source]"), where).toHaveCount(1);
+    if (view === "cards") {
+      // Inside zone 1's panel the cards are rows divided by a 1 px line, not boxes (DESIGN.md section 5, Tables). The
+      // line runs on the text's edges, 12 px in from the row's tint (ticket 101's design review, round 2, item 10).
+      const form = await cards.locator(":scope > li").evaluateAll((items) =>
+        items.map((item) => {
+          const style = getComputedStyle(item);
+          const line = getComputedStyle(item, "::before");
+          return [style.borderTopLeftRadius, style.borderLeftWidth, style.borderTopWidth, line.height, line.left, line.right].join(" ");
+        }),
+      );
+      expect(form.slice(1).every((f) => f === "0px 0px 0px 1px 12px 12px"), where).toBe(true);
+      continue;
+    }
 
     // No cell's text runs past its cell, and the frame does not scroll sideways.
     expect(await spillOf(table), where).toEqual({ scroll: 0, cells: [] });
@@ -1318,7 +1393,7 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     expect(spaceless.filter(([, count]) => count !== 1), where).toEqual([]);
     // So does each date, in the Notice and Signed columns.
     const dates = await lines("tbody td:nth-child(3), tbody td:nth-child(4)");
-    expect(dates.length, where).toBe(2 * body.rows.length);
+    expect(dates.length, where).toBe(2 * first.length);
     expect(dates.filter(([, count]) => count !== 1), `${where}: dates on more than one line`).toEqual([]);
 
     // With WCAG 1.4.12's text spacing, a cell's text may wrap, but none runs into the next column.
@@ -1528,7 +1603,8 @@ test("a reference with a county's name breaks only at its spaces, in a dot's det
 
   for (const [width, view, selector] of [
     [1024, "table", "tbody th"],
-    [1440, "table", "tbody th"],
+    // In the work's columns from a frame of 75rem the rows are cards (ticket 101).
+    [1440, "cards", "li > :first-child"],
     [390, "cards", "li > :first-child"],
     [320, "cards", "li > :first-child"],
   ] as const) {
@@ -1552,7 +1628,7 @@ test("a plan row with no planned dates has no plan line until you type months", 
   await openPackage(page, { comparables: await derived("comparables-ke-nwwda-541055.json", noPlan) });
   await ready(page);
 
-  await expect(section(page).getByRole("heading", { level: 3 }).first()).toHaveText(
+  await expect(section(page).locator("[data-finding]")).toHaveText(
     "The middle half of the 49 comparable packages took 3.3 to 7.9 months from notice to signature.",
   );
   // The title already gives the middle half, so the summary starts with the middle one.
@@ -1585,5 +1661,451 @@ test("each Check a plan row links to its package's past range, named with its re
     const link = page.getByRole("link", { name: `See the past range for ${REF}` }).filter({ visible: true });
     await expect(link).toHaveAttribute("href", PATH);
     await expect(link).toHaveText("See the past range");
+  }
+});
+
+// ── Ticket 101: the package workspace as numbered task zones, with its facts in a side panel ──────────
+
+// The facts line below a frame of 75rem: STEP's values for the package's plan row in tests/fixtures/api/package-ke-nwwda-541055.json,
+// with its Estimated Amount (US$) of 1,230,000.00 in STEP's form with its cents, as the plan's section 7.6 says facts keep
+// it (ticket 101's review, follow-up 1: the tool's rounding, CLAUDE.md rule 1).
+const FACTS_LINE = "Request for Bids, Open - National, US$1,230,000.00, Pending Implementation";
+
+test("with the sidebar open, a side panel label that wraps keeps its value on the row's line", async ({ page }) => {
+  await openSidebar(page);
+  await openPackage(page);
+  await ready(page);
+  const side = page.getByRole("region", { name: "From the plan row" });
+  const value = (label: string) => side.locator("[data-side-fact]", { has: page.getByText(label, { exact: true }) }).locator("dd");
+  const post = (await value("Review Type").boundingBox())!;
+  const amount = (await value("Estimated Amount (US$)").boundingBox())!;
+  // The two share a row of the panel's two columns, so their values line up.
+  expect(amount.x).toBeGreaterThan(post.x);
+  expect(Math.round(amount.y)).toBe(Math.round(post.y));
+});
+
+test("from a frame of 75rem the facts are the side panel From the plan row, whose marker opens the plan row in the drawer in its place while the zones keep their place", async ({ page }) => {
+  await openPackage(page, { planRow: true });
+  await ready(page);
+  const side = page.getByRole("region", { name: "From the plan row" });
+  await expect(side).toBeVisible();
+  for (const [label, value] of [
+    ["Method", "Request for Bids"],
+    ["Market Approach", "Open - National"],
+    ["Review Type", "Post"],
+    ["Estimated Amount (US$)", "1,230,000.00"],
+    ["Process Status", "Pending Implementation"],
+    ["In the plan", "Northern Water Works Development Agency plan of October 9, 2026"],
+  ]) {
+    await expect(side.locator("[data-side-fact]", { has: page.getByText(label, { exact: true }) }).locator("dd")).toHaveText(value);
+  }
+  // The facts line stands in for the panel only below that frame.
+  await expect(page.locator("[data-facts-line]")).toBeHidden();
+  const zones = page.locator("[data-zones]");
+  const before = (await zones.boundingBox())!;
+
+  const marker = side.getByRole("link", { name: /^Source 1: / });
+  await marker.click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.getByRole("heading", { level: 2 })).toContainText(REF);
+  await expect(drawer).toContainText("Pending Implementation");
+  await expect(side).toBeHidden();
+  const after = (await zones.boundingBox())!;
+  expect([after.x, after.width]).toEqual([before.x, before.width]);
+  await page.keyboard.press("Escape");
+  await expect(marker).toBeFocused();
+  await expect(side).toBeVisible();
+});
+
+test("below a frame of 75rem the facts fold into one line whose Show the plan row opens the same record", async ({ page }) => {
+  await openPackage(page, { width: 1024, planRow: true });
+  await ready(page);
+  await expect(page.getByRole("region", { name: "From the plan row" })).toBeHidden();
+  const line = page.locator("[data-facts-line]");
+  await expect(line.locator("p")).toHaveText(FACTS_LINE);
+  // Each STEP value moves to the next line whole, never as "Pending" / "Implementation" (ticket 101's design review,
+  // round 2, item 12).
+  const values = await line.locator("p > span").evaluateAll((spans) => spans.map((span) => [span.textContent, getComputedStyle(span).whiteSpace]));
+  expect(values.map(([text]) => text).join(", ")).toBe(FACTS_LINE);
+  expect(values.filter(([, space]) => space !== "nowrap")).toEqual([]);
+  const show = line.getByRole("button", { name: "Show the plan row" });
+  await expect(show).toHaveAttribute("aria-expanded", "false");
+  await show.click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.getByRole("heading", { level: 2 })).toContainText(REF);
+  await expect(show).toHaveAttribute("aria-expanded", "true");
+});
+
+// values.toml [past_range]: the two packages signed within the plan's 1.5 months, shortest first.
+const WITHIN_PLAN = ["KE-WAJWASCO-372776-CW-RFB", "KE-WAJWASCO-356671-CW-RFB"];
+
+for (const [width, height] of [
+  [1440, 900],
+  [390, 844],
+] as const) {
+  test(`at ${width} by ${height} pressing 2 lands on the two packages signed within the plan, under a count line that repeats it, and Show all 49 brings back the first 20`, async ({ page }) => {
+    await openPackage(page, { width, height });
+    await ready(page);
+    const finding = section(page).locator("[data-finding]");
+    const two = finding.getByRole("button", { name: "2", exact: true });
+    await two.hover();
+    await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to see the two packages.");
+    await two.click();
+
+    const table = section(page).locator("[data-comparables-table]");
+    const view = table.locator("[data-table-view]:visible");
+    const count = table.locator("[data-count-row] p").first();
+    await expect(count).toHaveText("Showing the 2 of 49 packages signed within 1.5 months.");
+    await expect(count).toBeFocused();
+    const all = table.getByRole("button", { name: "Show all 49" });
+    await expect(all).toBeVisible();
+    // The button follows the count line in the reading order.
+    expect(await count.evaluate((line, button) => Boolean(line.compareDocumentPosition(button!) & Node.DOCUMENT_POSITION_FOLLOWING), await all.elementHandle())).toBe(true);
+    // The rows are cards wherever the table's own frame is under 49rem, as in the work's columns at 1440 px.
+    const refs = view.locator("tbody th, li > :first-child");
+    await expect(refs).toHaveText(WITHIN_PLAN);
+    await expect(refs.first()).toBeInViewport({ ratio: 1 });
+    // While filtered the title claims no "All 49": the count line says which rows show (ticket 101's critique, 7a).
+    const title = table.locator("[data-table-caption]").last();
+    await expect(title).toHaveText("Comparable packages, shortest first.");
+
+    await all.click();
+    await expect(title).toHaveText("All 49 comparable packages, shortest first.");
+    await expect(count).toHaveText("Showing 1–20 of 49 packages");
+    await expect(count).toBeFocused();
+    await expect(refs).toHaveCount(20);
+    await expect(table.getByRole("button", { name: "Show all 49" })).toHaveCount(0);
+  });
+}
+
+// A keyboard press carries focus down to the count line, so the line shows the focus ring every control shows; a
+// pointer's press shows none (ticket 101's design review, item 4).
+test("a number pressed from the keyboard lands on a count line that shows its focus ring, and a click shows none", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  const two = section(page).locator("[data-finding]").getByRole("button", { name: "2", exact: true });
+  const count = section(page).locator("[data-comparables-table] [data-count-row] p").first();
+  const ring = () => count.evaluate((el) => getComputedStyle(el).outlineStyle);
+  await two.focus();
+  await page.keyboard.press("Enter");
+  await expect(count).toBeFocused();
+  expect(await ring()).not.toBe("none");
+
+  await section(page).getByRole("button", { name: "Show all 49" }).click();
+  await section(page).getByRole("button", { name: "Hide the table" }).click();
+  await two.click();
+  await expect(count).toBeFocused();
+  expect(await ring()).toBe("none");
+});
+
+test("only a pressed number filters the table: hidden and shown again, it lists every package", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  await section(page).locator("[data-finding]").getByRole("button", { name: "2", exact: true }).click();
+  const count = section(page).locator("[data-comparables-table] [data-count-row] p").first();
+  await expect(count).toHaveText("Showing the 2 of 49 packages signed within 1.5 months.");
+  await section(page).getByRole("button", { name: "Hide the table" }).click();
+  await section(page).getByRole("button", { name: "Show the table" }).click();
+  await expect(count).toHaveText("Showing 1–20 of 49 packages");
+});
+
+test("each number in the finding and the summary says what a click lands on, and every count line states only the number pressed", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  const tool = JSON.parse(await recorded("comparables-ke-nwwda-541055.json")) as {
+    past_range: { q25: number; q50: number; q75: number; q80: number };
+    plan: { months: number; within: number };
+    counts: { comparables: number };
+  };
+  // The numbers find_comparables returned, as the screen writes them.
+  const returned = new Set(
+    [tool.past_range.q25, tool.past_range.q50, tool.past_range.q75, tool.past_range.q80, tool.plan.months]
+      .map((n) => n.toFixed(1))
+      .concat([tool.plan.within, tool.counts.comparables].map(String)),
+  );
+  const summary = section(page).locator("[data-summary]");
+  for (const [where, name, act, line] of [
+    ["finding", "49", "Select to see all 49.", "Showing 1–20 of 49 packages"],
+    ["summary", "3.3", "Select to see the packages in the middle half.", "Showing the packages in the middle half, from 3.3 to 7.9 months."],
+    ["summary", "4.4", "Select to see the middle package.", "Showing the middle package, at 4.4 months."],
+    ["summary", "9.1", "Select to see the packages signed within 9.1 months.", "Showing the packages signed within 9.1 months."],
+  ] as const) {
+    const scope = where === "finding" ? section(page).locator("[data-finding]") : summary;
+    const number = scope.getByRole("button", { name, exact: true }).first();
+    await number.hover();
+    await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText(act);
+    await number.click();
+    const count = section(page).locator("[data-comparables-table] [data-count-row] p").first();
+    await expect(count).toHaveText(line);
+    await expect(count).toBeFocused();
+    // The table's own range, "1–20", is the rows on this page; every other figure is one the tool returned.
+    const figures = (await count.innerText()).replace("Showing 1–20 of", "Showing of").match(/\d+(\.\d+)?/g) ?? [];
+    for (const figure of figures) expect(returned.has(figure), `${figure} in "${line}"`).toBe(true);
+    await page.mouse.move(0, 0);
+  }
+  // The middle package's row is the one at the middle's months.
+  await summary.getByRole("button", { name: "4.4", exact: true }).click();
+  await expect(section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody th, li > :first-child")).toHaveText(["KE-TAVEVO-151330-CW-RFB"]);
+});
+
+// The quartiles are Kaplan-Meier days on which a package was signed, and a package still open is censored (ticket 15),
+// so the middle half and the middle count only signed packages; and two packages at the middle's months are not "the
+// middle package", so its number opens every row (ticket 101's review, follow-up 2). A derived answer puts a still-open
+// package inside the middle half and a second signed package at the middle's months.
+test("the middle half and the middle list only signed packages, and a middle two packages share opens every row", async ({ page }) => {
+  const body = JSON.parse(await recorded("comparables-ke-nwwda-541055.json")) as Comparables & { past_range: { q25: number; q50: number; q75: number } };
+  const { q25, q50, q75 } = body.past_range;
+  const open = body.rows.find((row) => row.still_open)!;
+  open.months = 5;
+  body.rows.find((row) => !row.still_open && row.months > q25 && row.months < q50)!.months = q50;
+  await openPackage(page, { comparables: { body: JSON.stringify(body) } });
+  await ready(page);
+  const summary = section(page).locator("[data-summary]");
+  const refs = section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody th, li > :first-child");
+
+  await summary.getByRole("button", { name: "3.3", exact: true }).first().click();
+  const middle = body.rows.filter((row) => !row.still_open && row.months >= q25 && row.months <= q75).map((row) => row.step_reference);
+  await expect(refs).toHaveText(middle.slice(0, 20));
+  expect(middle).not.toContain(open.step_reference);
+
+  await page.mouse.move(0, 0);
+  const median = summary.getByRole("button", { name: "4.4", exact: true });
+  await median.hover();
+  await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to see all 49.");
+  await median.click();
+  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing 1–20 of 49 packages");
+});
+
+test("the plan's months in the finding open the plan row in the drawer", async ({ page }) => {
+  await openPackage(page, { planRow: true });
+  await ready(page);
+  const months = section(page).locator("[data-finding]").getByRole("button", { name: "1.5", exact: true });
+  await months.hover();
+  await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to see the plan row.");
+  await months.click();
+  await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toContainText(REF);
+});
+
+test("the five sections are Task zones numbered 1 to 5 in two stages, with the PPSD sections as tags and no eyebrow or middle-dot heading at 1440, 1024 and 390 px", async ({ page }) => {
+  for (const width of [1440, 1024, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    await expect(page.locator("[data-step-tracker] li")).toHaveCount(6);
+    const zones = page.locator("[data-zones] > [data-zone], [data-zones] > [data-stage-label]");
+    // The page's order: the stage, zones 1 to 4, the next stage and zone 5, each zone with its number and its name.
+    const order = await zones.evaluateAll((all) =>
+      all.map((el) =>
+        el.hasAttribute("data-stage-label")
+          ? `stage: ${el.textContent}`
+          : `${el.getAttribute("data-zone")}: ${el.querySelector("[data-zone-number]")?.textContent?.trim()} ${el.querySelector("[data-zone-name]")?.lastChild?.textContent}` +
+            (el.querySelector("[data-zone-tag]") ? ` [${el.querySelector("[data-zone-tag]")!.textContent}]` : ""),
+      ),
+    );
+    expect(order, `${width} px`).toEqual([
+      "stage: Planning",
+      "panel: 1 How long it took",
+      "row: 2 Planned date for each step",
+      "row: 3 Procurement risks and what helped [PPSD section 3]",
+      "row: 4 Procurement approach options [PPSD section 6]",
+      "stage: Tender design",
+      "row: 5 Check your criteria",
+    ]);
+    // Each zone is a section named by its h2, whose number screen readers do not hear.
+    const names = ["How long it took", "Planned date for each step", "Procurement risks and what helped", "Procurement approach options", "Check your criteria"];
+    for (const [index, name] of names.entries()) {
+      await expect(page.locator("[data-zones] > [data-zone]").nth(index)).toHaveAccessibleName(name);
+    }
+    // No eyebrow in capitals and no middle dot in a heading, a label or a tag of the page's work.
+    const marks = await page.locator("[data-zones], [data-page-head], [data-side-slot]").evaluateAll((roots) =>
+      roots.flatMap((root) =>
+        [...root.querySelectorAll<HTMLElement>("h1, h2, h3, [data-stage-label], [data-zone-tag], .text-label")]
+          .filter((el) => el.offsetParent !== null && !el.closest("[data-range-chart]"))
+          .filter((el) => el.textContent!.includes("·") || getComputedStyle(el).textTransform === "uppercase")
+          .map((el) => el.textContent),
+      ),
+    );
+    expect(marks, `${width} px`).toEqual([]);
+  }
+});
+
+test("zone 1 opens on its finding in the finding style, inside the first screen at 390 by 844 and 1024 by 768", async ({ page }) => {
+  for (const [width, height] of [
+    [390, 844],
+    [1024, 768],
+  ] as const) {
+    await openPackage(page, { width, height });
+    await ready(page);
+    const finding = section(page).locator("[data-finding]");
+    await expect(finding).toHaveText(FINDING);
+    // The finding style (DESIGN.md section 3): Open Sans Light, 28/36, 24/32 below 48rem, heading ink.
+    const style = await finding.evaluate((el) => {
+      const css = getComputedStyle(el);
+      return [css.fontWeight, css.fontSize, css.lineHeight, css.color];
+    });
+    expect(style).toEqual(["300", width < 768 ? "24px" : "28px", width < 768 ? "32px" : "36px", "rgb(1, 39, 64)"]);
+    const top = (await finding.boundingBox())!.y;
+    expect(top, `${width} by ${height}`).toBeLessThan(height);
+    // It is the largest type on the page.
+    const largest = await page.locator("main").evaluate((main) =>
+      Math.max(...[...main.querySelectorAll<HTMLElement>("*")].filter((el) => el.offsetParent !== null && el.childNodes.length && [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent!.trim())).map((el) => parseFloat(getComputedStyle(el).fontSize))),
+    );
+    expect(largest).toBe(width < 768 ? 24 : 28);
+    // The foot strip's three lines share one style, caption in ink-muted (DESIGN.md, Foot strip), the coverage line's
+    // 24 px line box aside, which holds its numbers' buttons (ticket 101's design review).
+    const strip = section(page).locator("[data-foot-strip]").first();
+    const look = (selector: string) => strip.locator(selector).first().evaluate((el) => [getComputedStyle(el).fontSize, getComputedStyle(el).color]);
+    expect(await look("[data-coverage-line]"), `${width} px`).toEqual(await look("[data-source]"));
+    // The Note and its label too, not the chart's colours (ticket 101's design review, round 2, item 9).
+    expect(await look("[data-chart-note]"), `${width} px`).toEqual(await look("[data-source]"));
+    expect(await look("[data-chart-note] > span"), `${width} px`).toEqual(await look("[data-source]"));
+  }
+});
+
+test("below 20 comparables the sentence that holds back is zone 1's finding, the count follows in body, the chart has dots and no range, and the table is open", async ({ page }) => {
+  await openPackage(page, {
+    comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
+    estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
+  });
+  await ready(page);
+  const finding = section(page).locator("[data-finding]");
+  await expect(finding).toHaveText("I'm not giving a range: only seven comparable packages. Here are all seven.");
+  expect(await finding.evaluate((el) => [getComputedStyle(el).fontWeight, getComputedStyle(el).fontSize])).toEqual(["300", "28px"]);
+  const count = section(page).locator("[data-few-count]");
+  await expect(count).toHaveText("None of the seven comparable packages were signed within the plan's 1.5 months.");
+  expect(await count.evaluate((el) => getComputedStyle(el).fontSize)).toBe("16px");
+  await expect(page.locator("[data-chart-drawing] [data-dot]")).toHaveCount(7);
+  await expect(page.locator("[data-chart-drawing] :is([data-band], [data-middle], [data-in10])")).toHaveCount(0);
+  await expect(section(page).getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
+  await expect(section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody tr, li")).toHaveCount(7);
+  // One to nine in words, as the finding writes the count (DESIGN.md section 7, rule 12; ticket 101's design review).
+  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing all seven packages");
+});
+
+// How far apart, in pixels, the tops of a phrase's characters sit inside an element, with a no-break space read as a
+// space: 0 when the phrase keeps to one line, a line's height or more when it breaks.
+const phraseSpread = (element: Locator, phrase: string) =>
+  element.evaluate((el, phrase) => {
+    const chars: { node: Text; at: number; ch: string }[] = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+      for (let at = 0; at < node.data.length; at++) chars.push({ node, at, ch: node.data[at] });
+    }
+    const start = chars.map((c) => (c.ch === "\u00a0" ? " " : c.ch)).join("").indexOf(phrase);
+    if (start < 0) return -1;
+    const tops = chars.slice(start, start + phrase.length).filter((c) => c.ch.trim() !== "").map((c) => {
+      const range = document.createRange();
+      range.setStart(c.node, c.at);
+      range.setEnd(c.node, c.at + 1);
+      return range.getBoundingClientRect().top;
+    });
+    return Math.round(Math.max(...tops) - Math.min(...tops));
+  }, phrase);
+
+// Block 9 of the redesign's DESIGN.md text: a number and its "months" never break apart, a share of 10 stays whole, and
+// no line starts with the full stop after a number you can press (ticket 101's design review and critique, round 1).
+test("a number keeps its months, a share of 10 keeps its words, and a full stop stays with the number before it", async ({ page }) => {
+  for (const width of [1440, 1280, 1024, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    const finding = section(page).locator("[data-finding]");
+    const summary = section(page).locator("[data-summary]");
+    expect(await phraseSpread(finding, "1 in 10,"), `${width} px`).toBeLessThan(8);
+    expect(await phraseSpread(finding, "1.5 months."), `${width} px`).toBeLessThan(8);
+    expect(await phraseSpread(summary, "4.4."), `${width} px`).toBeLessThan(8);
+    expect(await phraseSpread(summary, "9.1 months."), `${width} px`).toBeLessThan(8);
+  }
+  for (const width of [1440, 1024, 390]) {
+    await openPackage(page, {
+      width,
+      comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
+      estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
+    });
+    await ready(page);
+    expect(await phraseSpread(section(page).locator("[data-few-count]"), "1.5 months."), `${width} px`).toBeLessThan(8);
+  }
+});
+
+test("when the past range fails, zone 1 shows the error alert under its header and Advertised again still shows", async ({ page }) => {
+  await openPackage(page, {
+    comparables: { status: 503, body: SERVICE_DOWN },
+    rebidding: { body: await recorded("rebidding-ke-nwwda-541055.json") },
+  });
+  const zone = section(page);
+  await expect(zone).toHaveAttribute("data-past-range", "error");
+  await expect(zone.getByRole("heading", { level: 2 })).toHaveAccessibleName("How long it took");
+  const alert = zone.locator("[data-block=took]").getByText("I couldn't load the comparable packages for this section.");
+  await expect(alert).toBeVisible();
+  await expect(zone.getByRole("button", { name: "Try again" })).toBeVisible();
+  // The alert sits under the zone's header, and Advertised again after it, in the same zone.
+  const [head, error, again] = [
+    (await zone.locator("[data-zone-head]").boundingBox())!,
+    (await alert.boundingBox())!,
+    (await zone.getByRole("heading", { level: 3, name: "Advertised again" }).boundingBox())!,
+  ];
+  expect(head.y + head.height).toBeLessThanOrEqual(error.y);
+  expect(error.y).toBeLessThan(again.y);
+  await expect(zone.locator("[data-rebid-count]")).toHaveText("3 of the 52 comparable packages were advertised again.");
+  // Zone 4 waits on the same request, so it says so in one sentence, and zone 1's alert is the one place to try again
+  // (ticket 101's design review, item 8).
+  const options = page.locator("[data-approach-options]");
+  await expect(options).toHaveAttribute("data-zone", "row");
+  await expect(options.locator("[data-section-summary]")).toHaveText(
+    "I'll list approach options when the comparable packages in section 1 load. Use Try again in section 1.",
+  );
+  await expect(options.getByRole("button")).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveCount(1);
+});
+
+for (const [width, open, least] of [
+  [1440, true, 560],
+  [1280, false, 560],
+  [1024, false, 800],
+] as const) {
+  test(`the chart is at least ${least} px wide at ${width} px with the sidebar ${open ? "open" : "as a rail"}`, async ({ page }) => {
+    if (open) await openSidebar(page);
+    await openPackage(page, { width });
+    await ready(page);
+    // With no stored choice the sidebar rests as the rail (ticket 110).
+    if (open) await expect(page.locator("html")).toHaveAttribute("data-sidebar-rest", "open");
+    else await expect(page.locator("html")).not.toHaveAttribute("data-sidebar-rest", "open");
+    const chart = (await page.locator("[data-range-chart]").boundingBox())!;
+    expect(chart.width).toBeGreaterThanOrEqual(least);
+  });
+}
+
+test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones keep their left edge and width, and the opened dot keeps its ring", async ({ page }) => {
+  for (const width of [1440, 1280]) {
+    await openPackage(page, { width, drawer: "evidence-package-ke-mowi-47509.json" });
+    await ready(page);
+    const zones = page.locator("[data-zones]");
+    const before = (await zones.boundingBox())!;
+    const zone1 = section(page);
+    const zone1Height = (await zone1.boundingBox())!.height;
+    const tracker = page.locator("[data-step-tracker]");
+    await expect(tracker.locator("[data-step-state]").first()).toBeVisible();
+    const trackerHeight = (await tracker.boundingBox())!.height;
+    await expect(page.getByRole("region", { name: "From the plan row" })).toBeVisible();
+    const dot = page.locator('[data-dot-target][aria-label^="KE-MOWI-47509-CW-RFB,"]');
+    await dot.scrollIntoViewIfNeeded();
+    const spot = (await dot.boundingBox())!;
+    await page.mouse.click(spot.x + spot.width / 2, spot.y + spot.height / 2);
+    const drawer = page.getByRole("dialog");
+    await expect(drawer).toBeVisible();
+    await expect(drawer.locator("[data-drawer-caption]")).toHaveText("Comparable package in the past range");
+    await expect(page.getByRole("region", { name: "From the plan row" })).toBeHidden();
+    const after = (await zones.boundingBox())!;
+    expect([after.x, after.width], `${width} px`).toEqual([before.x, before.width]);
+    // Nothing in zone 1 moves either (principle 5): the summary keeps its place under the chart, so the dot you
+    // clicked stays where it was, beside its records (ticket 101's critique, round 1).
+    expect(Math.round((await dot.boundingBox())!.y), `${width} px`).toBe(Math.round(spot.y));
+    expect((await zone1.boundingBox())!.height, `${width} px`).toBeCloseTo(zone1Height, 0);
+    // The step tracker reads its own width, so it keeps its row of six too (ticket 101's critique, round 2).
+    expect((await tracker.boundingBox())!.height, `${width} px`).toBeCloseTo(trackerHeight, 0);
+    // The drawer sits where the side panel was, beside the zones.
+    expect((await drawer.boundingBox())!.x).toBeGreaterThan(after.x + after.width);
+    // The opened dot keeps its 2 px info-icon ring while the drawer shows it.
+    const ring = page.locator("[data-opened-ring]");
+    await expect(ring).toBeAttached();
+    expect(await ring.evaluate((el) => [getComputedStyle(el).stroke, getComputedStyle(el).strokeWidth])).toEqual(["rgb(0, 113, 188)", "2px"]);
   }
 });

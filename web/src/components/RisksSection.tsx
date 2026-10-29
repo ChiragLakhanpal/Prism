@@ -1,5 +1,6 @@
-// Section 3 of the package workspace, "Procurement risks and what helped" (ticket 30; the 30 brief). It is
-// open by default, the same Card as section 1, with the eyebrow "Planning · PPSD section 3".
+// Section 3 of the package workspace, "Procurement risks and what helped" (ticket 30; the 30 brief). Since ticket 101
+// it is zone 3, tagged "PPSD section 3": a panel when it has risks, and a row while it holds only its first-person
+// sentence and one link. Its notes, coverage line and source line end the panel in its foot strip.
 //
 // At most five risks, each counted in the completion reports of projects with comparable packages, each with a
 // current lesson on what helped and the reports that say so. The risk-table builder
@@ -22,7 +23,7 @@
 // - A rerun after a criterion change replaces the table in place under 400 ms, and over 400 ms shows the
 //   skeleton at the section's height until the result arrives (the 15 brief).
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref } from "react";
-import { CircleDashed, CircleX } from "lucide-react";
+import { CircleX } from "lucide-react";
 import { copy } from "../copy";
 import { ApiError, getJson, putJson } from "../lib/api";
 import { cx } from "../lib/cx";
@@ -44,16 +45,19 @@ import {
   type RisksResult,
 } from "../lib/risks";
 import { useStore } from "../lib/store";
+import { useFocusWithin } from "../lib/useFocusWithin";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "./Checks";
 import { Fill, Joined } from "./Fill";
+import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
 import { FromLine, reportsFrom } from "./NumFrom";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { SourcePill } from "./SourcePill";
+import { TaskZone, ZoneBlock } from "./TaskZone";
 import { TextLink } from "./TextLink";
 
 const words = copy.packageRisks;
@@ -119,50 +123,63 @@ export function RisksView({
   announce = "",
   action,
 }: RisksViewProps) {
-  const headingId = useId();
   const result = state.status === "ready" ? state.result : null;
   const populated = Boolean(result && result.rows.length > 0 && !result.empty_reason);
+  // Zone 3 (ticket 101): a row while it holds only its sentence (no completion report, no lesson, no comparable
+  // package, or a criterion still missing), and a panel when it has risks, or a removed box when every row was
+  // removed, since a zone that holds a removed sentence is never closed.
+  const sentence = result && !updating && result.empty_reason && SENTENCE_ONLY.has(result.empty_reason) ? result : null;
+  const live = (
+    <p role="status" className="sr-only" data-risks-live>
+      {announce}
+    </p>
+  );
+  const zone = {
+    id: "risks",
+    number: words.number,
+    name: words.heading,
+    tag: words.ppsdTag,
+    headingRef,
+    busy: state.status === "loading" || updating,
+    sectionKey: "risks",
+    className: "scroll-mt-24",
+    marks: { "data-risks": state.status === "ready" ? (result!.empty_reason ?? "rows") : state.status },
+    live,
+  };
+  if (state.status === "loading" && !updating) return <TaskZone {...zone} state="loading" />;
+  if (state.status === "error") return <TaskZone {...zone} state="error" error={<RisksError state={state} />} />;
+  if (sentence) return <TaskZone {...zone} state="empty" summary={<Empty result={sentence} kind={kind} missingList={missingList} />} />;
   return (
-    <section
-      id="risks"
-      aria-labelledby={headingId}
-      aria-busy={state.status === "loading" || updating || undefined}
-      data-risks={state.status === "ready" ? (result!.empty_reason ?? "rows") : state.status}
-      className="rounded-md border border-line bg-surface p-4 @md/page:p-6"
-    >
-      <div className="@container/risks">
-        <p className="text-label text-ink-muted">{words.eyebrow}</p>
-        <h2 ref={headingRef} id={headingId} tabIndex={-1} className="mt-2 text-h2 text-ink-heading focus:outline-none">
-          <span aria-hidden="true">{words.number} </span>
-          {words.heading}
-        </h2>
-        <p className="mt-2 max-w-prose text-body text-ink">{words.intro}</p>
-        {populated && !updating && <p className="mt-2 max-w-prose text-body text-ink">{words.instruction}</p>}
-        {(state.status === "loading" || updating) && <RisksSkeleton />}
-        {state.status === "error" && <RisksError state={state} />}
-        {result && !updating && (
-          <Ready
-            result={result}
-            packageKey={packageKey}
-            kind={kind}
-            selected={selected}
-            onToggle={onToggle}
-            preview={preview}
-            saveFailed={saveFailed}
-            onRetrySave={onRetrySave}
-            missingList={missingList}
-            opened={opened}
-            handlers={handlers}
-            action={action}
-          />
-        )}
-        <p role="status" className="sr-only" data-risks-live>
-          {announce}
-        </p>
-      </div>
-    </section>
+    <TaskZone {...zone} panel>
+      <ZoneBlock data-block="risks" foot={populated && result && !updating ? <FootStrip><Notes result={result} /></FootStrip> : undefined}>
+        <div className="@container/risks">
+          <p className="max-w-prose text-body text-ink">{words.intro}</p>
+          {populated && !updating && <p className="mt-2 max-w-prose text-body text-ink">{words.instruction}</p>}
+          {updating && <RisksSkeleton />}
+          {result && !updating && (
+            <Ready
+              result={result}
+              packageKey={packageKey}
+              kind={kind}
+              selected={selected}
+              onToggle={onToggle}
+              preview={preview}
+              saveFailed={saveFailed}
+              onRetrySave={onRetrySave}
+              missingList={missingList}
+              opened={opened}
+              handlers={handlers}
+              action={action}
+            />
+          )}
+        </div>
+      </ZoneBlock>
+    </TaskZone>
   );
 }
+
+// The empty states that are one sentence and at most one link, so the zone is a row.
+const SENTENCE_ONLY = new Set(["missing_criteria", "no_comparables", "no_reports", "no_lessons"]);
 
 // ── Populated ────────────────────────────────────────────────────────────
 
@@ -202,7 +219,6 @@ function Ready({
   const m = result.m ?? 0;
   const chosen = rows.filter((row) => selected.includes(row.risk_key)).length;
   const dropped = result.selected_not_shown.filter((entry) => selected.includes(entry.risk_key));
-  const ppar = rows.some((row) => row.sources.some((source) => source.doc_short === "PPAR"));
   const from = risksFrom(result);
   return (
     <>
@@ -248,9 +264,11 @@ function Ready({
         from={from}
       />
       <RiskList rows={rows} m={m} findingId={findingId} selected={selected} onToggle={onToggle} preview={preview} opened={opened} handlers={handlers} packageKey={packageKey} from={from} />
-      {action && <div className="mt-4 @md/page:hidden">{action}</div>}
       <Checks result={result} />
-      <Notes result={result} ppar={ppar} from={from} />
+      {/* "Suggest {n} PPSD risk rows", the page's one primary action for staff, in the flow after the risks it drafts
+          from and their check line, which touches what it checks, so the zone ends on its action (ticket 101; DESIGN.md
+          section 5, Task zone: an action other than Show or Hide follows its sentence). */}
+      {action && <div className="mt-4">{action}</div>}
     </>
   );
 }
@@ -363,7 +381,7 @@ function RiskColumns() {
 
 function Pills({ row, opened, onPill }: { row: RiskRow; opened: Opened; onPill: (source: RiskSource, element: HTMLElement) => void }) {
   return (
-    <ul aria-label={words.pillsLabel} className="flex flex-col items-start gap-2 @max-[40rem]/risks:flex-row @max-[40rem]/risks:flex-wrap">
+    <ul aria-label={words.pillsLabel} className="flex flex-col items-start gap-2 @max-[49rem]/risks:flex-row @max-[49rem]/risks:flex-wrap">
       {pillsOf(row.sources).map(({ source, withProject }) => (
         <li key={source.evidence_id} className="max-w-full">
           <SourcePill
@@ -399,11 +417,12 @@ type TableProps = {
   from: ReactNode;
 };
 
-// At 640 px of card content and wider. table-layout: fixed, so nothing shifts when values change or a row is
-// selected: Select 48 px, then Risk, How often, What helped and Sources share the rest.
+// At 49rem of card content and wider, as a Table with cardsBelow="fit" (ticket 101). table-layout: fixed, so nothing
+// shifts when values change or a row is selected: Select 48 px, then Risk, How often, What helped and Sources share
+// the rest.
 function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, opened, handlers, from }: TableProps) {
   return (
-    <div data-risk-view="table" className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
+    <div data-risk-view="table" className="mt-3 hidden rounded-md border border-line @min-[49rem]/risks:block">
       <table aria-labelledby={findingId} aria-describedby={countId} className="w-full table-fixed border-collapse text-small">
         <RiskColumns />
         <tbody>
@@ -434,10 +453,10 @@ function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, o
   );
 }
 
-// Below 640 px of card content: an ordered list, each risk's name the checkbox's label.
+// Below 49rem of card content: an ordered list, each risk's name the checkbox's label.
 function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, handlers, from }: TableProps) {
   return (
-    <ol aria-labelledby={findingId} data-risk-view="list" className="mt-3 border-t border-line @min-[40rem]/risks:hidden">
+    <ol aria-labelledby={findingId} data-risk-view="list" className="mt-3 border-t border-line @min-[49rem]/risks:hidden">
       {rows.map((row) => (
         <li key={row.risk_key} data-risk-row={row.risk_key} data-open={rowIsOpen(row, opened) || undefined} className={cx("border-b border-line py-4", rowIsOpen(row, opened) && "-mx-2 rounded-md bg-tint px-2")}>
           <Checkbox checked={selected.includes(row.risk_key)} onChange={(checked) => onToggle(row.risk_key, checked)} name={words.checkbox(row.risk_label)} readOnly={preview}>
@@ -492,9 +511,12 @@ function Checks({ result }: { result: RisksResult }) {
   );
 }
 
-function Notes({ result, ppar, from }: { result: RisksResult; ppar: boolean; from: ReactNode }) {
+// The zone's Note, its abbreviations, its coverage line and its source line, in its foot strip (ticket 101).
+function Notes({ result }: { result: RisksResult }) {
+  const ppar = result.rows.some((row) => row.sources.some((source) => source.doc_short === "PPAR"));
+  const from = risksFrom(result);
   return (
-    <div className="mt-4 flex flex-col gap-2" data-risk-notes>
+    <div className="flex flex-col gap-2" data-risk-notes>
       <p className="max-w-prose text-caption text-ink-muted">
         <span className="font-semibold">{words.noteLabel}</span> {words.note(formatCount(result.max_rows))}
       </p>
@@ -555,14 +577,15 @@ function SourceLine({ result }: { result: RisksResult }) {
 
 // ── Empty, loading and error ─────────────────────────────────────────────
 
+// The first-person sentence and its one link: all a row holds (ticket 101), or the start of the panel whose rows were
+// all removed.
 function EmptyCard({ title, children }: { title: ReactNode; children?: ReactNode }) {
   return (
-    <div className="mt-6 flex gap-3" data-no-risks>
-      <CircleDashed aria-hidden="true" className="size-6 shrink-0 text-line-strong" />
-      <div className="min-w-0">
-        <h3 className="max-w-prose text-h2 text-balance text-ink-heading">{title}</h3>
-        {children}
-      </div>
+    <div data-no-risks>
+      <p className="max-w-prose text-body text-ink" data-no-risks-title>
+        {title}
+      </p>
+      {children}
     </div>
   );
 }
@@ -578,7 +601,7 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
         <EmptyCard title={e.noComparables}>
           <p className="mt-2 max-w-prose text-body text-ink">{kind === "planned" ? e.noComparablesPlanned : e.noComparablesStep}</p>
           {kind === "step" && (
-            <p className="mt-4">
+            <p className="mt-2">
               <TextLink href={readiness}>{e.noComparablesLink}</TextLink>
             </p>
           )}
@@ -586,9 +609,9 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
       );
     case "no_reports":
       return (
-        <EmptyCard title={result.p === 1 ? e.noReportsOne : <Fill template={e.noReports} slots={{ p: <Num value={result.p ?? 0} options={{ compact: false }} /> }} />}>
+        <EmptyCard title={result.p === 1 ? e.noReportsOne : <Fill template={e.noReports} slots={{ p: <Num count={result.p ?? 0} /> }} />}>
           <p className="mt-2 max-w-prose text-body text-ink">{e.noReportsBody}</p>
-          <p className="mt-4">
+          <p className="mt-2">
             <TextLink href={readiness}>{e.noReportsLink}</TextLink>
           </p>
         </EmptyCard>
@@ -624,7 +647,7 @@ export function RisksSkeleton() {
     <div aria-hidden="true" data-risks-skeleton>
       <SkeletonText className="mt-6 max-w-prose text-h2" widths={["w-[90%]", "w-1/2"]} />
       <SkeletonLine className="mt-2 text-caption" width="w-2/5" />
-      <div className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
+      <div className="mt-3 hidden rounded-md border border-line @min-[49rem]/risks:block">
         <table className="w-full table-fixed border-collapse text-small">
           <RiskColumns />
           <tbody>
@@ -651,7 +674,7 @@ export function RisksSkeleton() {
           </tbody>
         </table>
       </div>
-      <ol className="mt-3 border-t border-line @min-[40rem]/risks:hidden">
+      <ol className="mt-3 border-t border-line @min-[49rem]/risks:hidden">
         {[0, 1, 2].map((n) => (
           <li key={n} className="flex h-42 gap-4 border-b border-line py-4">
             <Skeleton className="size-5 shrink-0" />
@@ -674,7 +697,7 @@ export function RisksSkeleton() {
 function RisksError({ state }: { state: Extract<RisksState, { status: "error" }> }) {
   const code = state.error?.body.trace_id;
   return (
-    <div className="mt-6 flex flex-col gap-4" data-risks-error>
+    <div className="flex flex-col gap-4" data-risks-error>
       <Alert state="error">{words.error}</Alert>
       <div>
         <Button variant="secondary" onClick={state.onRetry}>
@@ -736,9 +759,11 @@ export function RisksSection({
   const [attempt, setAttempt] = useState(0);
   const pending = useRef<Record<string, boolean>>({});
   const heading = useRef<HTMLHeadingElement>(null);
-  const root = useRef<HTMLDivElement>(null);
-  const focusInside = useRef(false);
   const last = useRef<RisksResult | null>(null);
+  // The zone is the section its heading names (ticket 101), with no element of the page's around it, so the zones
+  // keep their spacing; whether focus is inside it is tracked from the document.
+  const root = () => heading.current?.closest<HTMLElement>("section") ?? null;
+  const focusInside = useFocusWithin(root);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -803,7 +828,8 @@ export function RisksSection({
 
   // If a rerun removed the element that had focus, focus moves to the section's heading.
   useLayoutEffect(() => {
-    if (focusInside.current && root.current && !root.current.contains(document.activeElement)) heading.current?.focus();
+    const zone = root();
+    if (focusInside.current && zone && !zone.contains(document.activeElement)) heading.current?.focus();
   }, [state]);
 
   const save = () => {
@@ -841,32 +867,22 @@ export function RisksSection({
   };
 
   return (
-    <div
-      ref={root}
-      onFocus={() => {
-        focusInside.current = true;
-      }}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) focusInside.current = false;
-      }}
-    >
-      <RisksView
-        state={state}
-        packageKey={packageKey}
-        kind={kind}
-        selected={selected}
-        onToggle={toggle}
-        preview={previewing}
-        saveFailed={saveFailed}
-        onRetrySave={save}
-        updating={updating}
-        missingList={missingList}
-        opened={opened}
-        handlers={handlers}
-        headingRef={heading}
-        announce={announce}
-        action={action}
-      />
-    </div>
+    <RisksView
+      state={state}
+      packageKey={packageKey}
+      kind={kind}
+      selected={selected}
+      onToggle={toggle}
+      preview={previewing}
+      saveFailed={saveFailed}
+      onRetrySave={save}
+      updating={updating}
+      missingList={missingList}
+      opened={opened}
+      handlers={handlers}
+      headingRef={heading}
+      announce={announce}
+      action={action}
+    />
   );
 }

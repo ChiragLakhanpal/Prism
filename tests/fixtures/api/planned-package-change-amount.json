@@ -91,14 +91,14 @@
         "country": "KE",
         "category": "Works",
         "threshold_usd": 15000000,
-        "source": "Strata's starting value from the blueprint, not yet checked against the World Bank's thresholds for Kenya",
+        "source": "A starting value I have not yet checked against the World Bank's procurement thresholds for Kenya",
         "as_of": null
       },
       "review": {
         "category": "Works",
         "threshold_usd": 10000000,
         "risk_rating": "High",
-        "source": "Strata's starting values from the blueprint, not yet checked against the World Bank's prior review thresholds",
+        "source": "Starting values I have not yet checked against the World Bank's prior review thresholds",
         "as_of": null
       }
     },

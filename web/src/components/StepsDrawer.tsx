@@ -88,7 +88,7 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
       />
     );
   } else if (n < row.min_comparables) {
-    finding = n === 1 ? <Fill template={words.findingAbstainOne} slots={{ step: phrase }} /> : <Fill template={words.findingAbstain} slots={{ step: phrase, n: number(n) }} />;
+    finding = n === 1 ? <Fill template={words.findingAbstainOne} slots={{ step: phrase }} /> : <Fill template={words.findingAbstain} slots={{ step: phrase, n: <Num count={n} /> }} />;
   } else {
     finding = <Fill template={words.findingCounts} slots={{ step: phrase, n: number(n) }} />;
   }

@@ -523,10 +523,44 @@
 [data-foot-strip] :has(button[data-num]) {
   line-height: calc(var(--spacing) * 6);
 }
-[data-zone="panel"] > [data-foot-strip]:last-child {
+/* The coverage line (Checks.tsx's CoverageLine) is small ink where it stands alone; in a foot strip it is caption in
+   ink-muted, as the Note and the Source beside it are (ticket 101's design review). */
+[data-foot-strip] [data-coverage-line] {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+}
+/* The Note and its label take the strip's ink-muted too; a slide keeps the chart's colours (round 2, item 9). */
+[data-foot-strip] [data-chart-note],
+[data-foot-strip] [data-chart-note] > span {
+  color: var(--color-ink-muted);
+}
+/* A foot strip that ends one part inside an opened zone's body, as zone 5's rejected bids and cost estimate (ticket
+   101's critique, round 2): it runs out from the body to the panel's edges, 16 px under the part's last line. */
+[data-zone-body] [data-foot-strip="part"] {
+  margin: calc(var(--spacing) * 4) calc(-1 * var(--zone-pad)) 0 calc(-1 * (var(--zone-pad) + var(--zone-indent)));
+}
+[data-zone="panel"] > [data-foot-strip]:last-child,
+[data-step-tracker] > [data-foot-strip]:last-child {
   border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
 }
+/* The step tracker's card (StepTracker.tsx) is no zone, but its source line ends it in a foot strip on the card's own
+   sides, 16 px and 24 px from a 48rem window, as a zone's are (ticket 101's critique, round 2). */
+[data-step-tracker] {
+  --zone-pad: calc(var(--spacing) * 4);
+  --zone-indent: 0px;
+}
+@media (width >= 48rem) {
+  [data-step-tracker] {
+    --zone-pad: calc(var(--spacing) * 6);
+  }
+}
 [data-foot-strip] + [data-zone-body] {
+  border-top: 1px solid var(--color-line);
+  padding-top: calc(var(--spacing) * 6);
+}
+/* Two blocks with no foot strip between them, as zone 1's failed past range and its "Advertised again" (ticket 101):
+   the same 1 px line divides them. */
+[data-zone-body][data-block] + [data-zone-body][data-block] {
   border-top: 1px solid var(--color-line);
   padding-top: calc(var(--spacing) * 6);
 }

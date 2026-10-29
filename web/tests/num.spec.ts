@@ -83,6 +83,8 @@ test("hovering 49 shows nothing at 60 ms and its three parts by 260 ms, and 2 th
   // Along the sentence to "2": its own sentence, at once, with no movement.
   await pointAt(page, num(finding(page), "2"));
   await expect(tooltip(page).locator("[data-num-what]")).toHaveText("Comparable packages signed within 1.5 months of their notice.");
+  // A number and its "months" never break apart, in a tooltip too (ticket 101's design review, round 2, item 11).
+  expect(await tooltip(page).locator("[data-num-what]").textContent()).toContain("1.5\u00a0months");
   await expect(tooltip(page)).toHaveAttribute("data-instant", "");
 
   // Off the numbers: it hides 100 ms after the pointer leaves, and a number reached within 300 ms opens at once.

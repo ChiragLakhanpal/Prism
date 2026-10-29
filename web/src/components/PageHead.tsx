@@ -16,7 +16,7 @@ import { cx } from "../lib/cx";
 import { Breadcrumb, type Crumb } from "./Breadcrumb";
 import { Button } from "./Button";
 import { MonoWords } from "./MonoWords";
-import { LoadingLabel, SkeletonText } from "./Skeleton";
+import { LoadingLabel, SkeletonLine, SkeletonText } from "./Skeleton";
 
 export type FactsLine = {
   // The object's facts in one line, such as its method, market approach, amount and status.
@@ -34,10 +34,14 @@ export function PageHead({
   trail,
   back,
   held = false,
+  holdBack = false,
   title,
   titleRef,
   loading = false,
+  narrowLines = 2,
   id,
+  idAction,
+  meta,
   purpose,
   facts,
   action,
@@ -53,11 +57,22 @@ export function PageHead({
   back?: Crumb;
   // The breadcrumb keeps its whole trail from a frame of 1200 px, as the work keeps its width beside the drawer.
   held?: boolean;
+  // While the object loads, the link back holds two lines in a page column under 21rem, where the parent it will name
+  // wraps, such as a package's project (ticket 101's design review, round 2).
+  holdBack?: boolean;
   title: ReactNode;
   titleRef?: Ref<HTMLHeadingElement>;
   loading?: boolean;
+  // How many h1 lines the skeleton holds below a 48rem page area, where a long title wraps more, such as a package's
+  // Description (3; ticket 101's design review). From 48rem it holds two.
+  narrowLines?: number;
   // An object's ID, such as its STEP reference.
   id?: string;
+  // What follows the ID on its line, such as the copy key that copies it (ticket 112; the package page, ticket 101).
+  idAction?: ReactNode;
+  // An object with no ID yet: the line that stands in the ID line's place, such as a planned package's "No STEP
+  // reference yet" and its saved stamp (ticket 101).
+  meta?: ReactNode;
   purpose?: ReactNode;
   facts?: FactsLine;
   action?: ReactNode;
@@ -65,11 +80,12 @@ export function PageHead({
   return (
     <div data-page-head>
       {alert && (
-        <div data-head-alert className="mb-6 flex flex-col gap-2">
+        // A notice that draws nothing, such as the package page's notice of suggested PPSD rows with none, leaves no gap.
+        <div data-head-alert className="mb-6 flex flex-col gap-2 empty:hidden">
           {alert}
         </div>
       )}
-      {trail && trail.length > 0 && <Breadcrumb trail={trail} back={back} held={held} />}
+      {trail && trail.length > 0 && <Breadcrumb trail={trail} back={back} held={held} holdBack={holdBack} />}
       <div className={cx("flex flex-col gap-4 @head/page:flex-row @head/page:items-start @head/page:justify-between @head/page:gap-8", trail && trail.length > 0 && "mt-2")}>
         <div className="min-w-0 flex-1">
           {createElement(
@@ -82,19 +98,38 @@ export function PageHead({
             },
             loading ? (
               <>
-                <SkeletonText className="text-h1" widths={["w-full", "w-3/5"]} />
+                <SkeletonText className="text-h1 @md/page:hidden" widths={[...Array.from({ length: narrowLines - 1 }, () => "w-full"), "w-3/5"]} />
+                <SkeletonText className="hidden text-h1 @md/page:flex" widths={["w-full", "w-3/5"]} />
                 <LoadingLabel />
               </>
             ) : (
               title
             ),
           )}
+          {/* While the object loads, its ID line and its facts line keep their places (ticket 101). */}
+          {id && loading && <SkeletonLine className="mt-1 text-small" width="w-48" />}
           {id && !loading && (
             <p data-id-line className="mt-1 text-small text-ink-muted">
               <MonoWords text={id} />
+              {idAction}
             </p>
           )}
+          {!id && meta != null && (
+            <div data-id-line className="mt-1">
+              {meta}
+            </div>
+          )}
           {purpose != null && <p className="mt-3 max-w-prose text-body text-pretty text-ink-muted">{purpose}</p>}
+          {/* The facts line's place: below a 48rem page area its two lines over "Show the plan row"'s 44 px row, from
+              48rem one row (ticket 101's design review). */}
+          {facts && loading && (
+            <div data-facts-line aria-hidden="true" className="mt-3">
+              <SkeletonText className="text-small @md/page:hidden" widths={["w-full", "w-2/5"]} />
+              <div className="flex min-h-11 items-center">
+                <SkeletonLine className="hidden text-small @md/page:flex" width="w-4/5" />
+              </div>
+            </div>
+          )}
           {facts && !loading && (
             <div data-facts-line className="mt-3 flex flex-wrap items-center gap-x-3">
               <p className="text-small text-ink">{facts.line}</p>

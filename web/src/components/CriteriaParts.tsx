@@ -20,6 +20,7 @@ import { useStore } from "../lib/store";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
+import { FootStrip } from "./FootStrip";
 import { highlighted } from "./Document";
 import { Fill, Joined } from "./Fill";
 import { Num } from "./Num";
@@ -282,8 +283,8 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
   );
 }
 
-// The notes under the table, in the brief's order: the parts not compared, how items are put in order, the
-// coverage line and the source line. No currency note: no notice's amount was converted (fx_count is 0).
+// The notes under the table, in its foot strip, in the brief's order: the parts not compared, how items are put in
+// order, the coverage line and the source line. No currency note: no notice's amount was converted (fx_count is 0).
 export function CriteriaNotes({ comparison, readinessHref, asOf = null }: { comparison: Comparison; readinessHref: string; asOf?: string | null }) {
   const [shown, setShown] = useState(false);
   const listId = useId();
@@ -294,8 +295,10 @@ export function CriteriaNotes({ comparison, readinessHref, asOf = null }: { comp
     if (shown) firstPart.current?.focus();
   }, [shown]);
   const toggle = k === 1 ? (shown ? words.items.hideIt : words.items.showIt) : shown ? words.items.hideThem : words.items.showThem;
+  // The notes end the part in its foot strip, as each block of evidence ends (ticket 101's critique, round 2).
   return (
-    <div className="mt-4 flex flex-col gap-2 text-caption text-ink-muted" data-criteria-notes>
+    <FootStrip part>
+    <div className="flex flex-col gap-2" data-criteria-notes>
       {k > 0 && (
         <div>
           <p>
@@ -349,6 +352,7 @@ export function CriteriaNotes({ comparison, readinessHref, asOf = null }: { comp
         })}
       </Source>
     </div>
+    </FootStrip>
   );
 }
 
@@ -557,10 +561,12 @@ export function RejectedBids({ rejected, numbers, yourItems, perGroup, readiness
         </>
       )}
       {(rejected.records_through || asOf) && (
-        <Source className="mt-2">
-          {partSource({ sources: rejected.sources, through: rejected.records_through, asOf, template: words.rejected.source,
-            templateAsOf: words.rejected.sourceAsOf })}
-        </Source>
+        <FootStrip part>
+          <Source>
+            {partSource({ sources: rejected.sources, through: rejected.records_through, asOf, template: words.rejected.source,
+              templateAsOf: words.rejected.sourceAsOf })}
+          </Source>
+        </FootStrip>
       )}
     </div>
   );

@@ -186,7 +186,7 @@ test("on the package workspace every number and every dot opens what its action 
   for (const show of await page.locator("main [data-zone] button[aria-expanded=false]").all()) {
     if (await show.isVisible()) await show.click();
   }
-  await expect(page.locator("section#planned-dates [data-step-caption]").first()).toBeVisible();
+  await expect(page.locator("section#planned-dates [data-step-caption]:visible")).toBeVisible();
 
   const seen = await checkPage(page);
   expect(seen.filter((one) => one.act).map((one) => one.label)).toEqual(expect.arrayContaining(["2", "49", "3.3", "7.9", "4.4", "9.1", "3", "52"]));
@@ -235,7 +235,20 @@ test("on the package workspace every number and every dot opens what its action 
     return { count: dots.length, wrong, said };
   });
   expect({ count: walked.count, wrong: walked.wrong }).toEqual({ count: 49, wrong: [] });
-  expect(await unshown(page, walked.said), "numbers a dot's tooltip names that the page does not show").toEqual([]);
+  // The table shows every package, twenty a page (ticket 101): a number a dot names is shown when one of the pages
+  // shows it.
+  const table = page.locator("[data-comparables-table]");
+  const showAll = table.getByRole("button", { name: /^Show all \d+$/ });
+  if (await showAll.count()) await showAll.click();
+  let missing = await unshown(page, walked.said);
+  const next = table.getByRole("button", { name: "Next 20" });
+  // Forty-nine packages: two more pages after the first.
+  for (let turn = 0; turn < 2 && missing.length > 0; turn += 1) {
+    await next.click();
+    const here = new Set(await unshown(page, walked.said));
+    missing = missing.filter((one) => here.has(one));
+  }
+  expect(missing, "numbers a dot's tooltip names that the page does not show").toEqual([]);
 });
 
 test("on the plan check every number says what it is and where it came from, and none opens what it does not name", async ({ page }) => {

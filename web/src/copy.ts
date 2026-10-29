@@ -1083,9 +1083,8 @@ export const copy = {
   // stratum and its document's short name come from the answer stream.
   evidence: {
     // The space line (ticket 110): what columns 9 to 12 are for while no drawer is open, on the pages that keep them
-    // free for the drawer.
+    // free for the drawer. The package page holds its side panel there instead (ticket 101).
     spaceHint: {
-      package: "Select a dot on the chart or a numbered source, and its records open here.",
       draft: "Select a numbered source, and its record opens here.",
     },
     eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
@@ -1330,7 +1329,8 @@ export const copy = {
     // stratum's, as for any record.
     package: {
       region: (ref: string) => `Records for comparable package ${ref}`,
-      eyebrow: "What · record",
+      // The one caption sentence under the drawer's title, which says what the records are (ticket 101).
+      caption: "Comparable package in the past range",
       meta: "{project} ({pcode})",
       findingSigned: "This package took {months} months from its notice on {notice} to its signed contract on {signed}.",
       // A still-open package's months run to the page's as-of date ({counted}), which can be later than the
@@ -3744,30 +3744,64 @@ export const copy = {
     // {ref} carries its own full stop, so the two move to a new line together.
     notFoundBody: "No package in Strata has the reference {ref} Check the reference in STEP, or find its project in All projects.",
     notFoundLink: "All projects",
+    // The package's facts beside its zones, from a frame of 75rem (DESIGN.md section 5, Side panel; ticket 101).
+    factsTitle: "From the plan row",
+    // Below that frame the facts fold into one line in the page head, with this button, which opens the plan row in
+    // the evidence drawer (the plan's section 7.6).
+    factsShow: "Show the plan row",
+    // The facts line: the plan row's Method, Market Approach, Estimated Amount (US$) without its cents and Process
+    // Status, each it has, in that order, a comma between them.
+    // Between the facts line's values; each value moves to the next line whole (ticket 101's design review, round 2).
+    factsSeparator: ", ",
+    factsAmount: (amount: string) => `US$${amount}`,
+    // The side panel's source line, and its marker's name, which opens the plan row in the evidence drawer.
+    factsSource: "Procurement Plan, {agency}, {pid}, version of {date}, page {page}.",
+    factsMarker: (ref: string) => `Procurement Plan row ${ref}`,
+    // The stage labels before the zones (DESIGN.md section 5, Stage label): "Planning" before zone 1, "Tender design"
+    // before zone 5. They replace the sections' eyebrows.
+    stages: { planning: "Planning", tender: "Tender design" },
   },
 
   // Section 1 of the package workspace, "How long it took": the past range of comparable packages
   // (the 12 brief). Every number is find_comparables', written by web/src/lib/format.ts; the screen
   // only counts rows for the plan line's readout. Strings with {slots} are filled with Num elements.
   pastRange: {
-    eyebrow: "Planning",
-    // Hidden from screen readers, so the heading reads "How long it took".
-    number: "1 ·",
+    // The zone's number, hidden from screen readers, so the heading reads "How long it took".
+    number: "1",
     heading: "How long it took",
     loading: "Loading the comparable packages.",
     error: "I couldn't load the comparable packages for this section.",
     permission: "Your account can't read Strata's tables, so I can't show the comparable packages.",
-    // The finding, at the plan row's own months.
+    // The finding, at the plan row's own months. A number keeps its "months" and a share of 10 its words, with no-break
+    // spaces, and Fill keeps a pressed number with the full stop after it (ticket 101's design review).
     title: {
-      about: "{within} of {total} comparable packages, about {in10} in 10, were signed within the plan's {plan} months.",
-      none: "None of the {total} comparable packages were signed within the plan's {plan} months.",
-      all: "All {total} comparable packages were signed within the plan's {plan} months.",
-      fewerThanOne: "{within} of {total} comparable packages, fewer than 1 in 10, were signed within the plan's {plan} months.",
-      moreThanNine: "{within} of {total} comparable packages, more than 9 in 10, were signed within the plan's {plan} months.",
-      noPlan: "The middle half of the {total} comparable packages took {q25} to {q75} months from notice to signature.",
+      about: "{within} of {total} comparable packages, about {in10}\u00a0in\u00a010, were signed within the plan's {plan}\u00a0months.",
+      none: "None of the {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      all: "All {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      fewerThanOne: "{within} of {total} comparable packages, fewer than 1\u00a0in\u00a010, were signed within the plan's {plan}\u00a0months.",
+      moreThanNine: "{within} of {total} comparable packages, more than 9\u00a0in\u00a010, were signed within the plan's {plan}\u00a0months.",
+      noPlan: "The middle half of the {total} comparable packages took {q25} to {q75}\u00a0months from notice to signature.",
       noPlanNoRange: "I found {total} comparable packages, but so many are still open that I can't place their middle half.",
       abstain: "I'm not giving a range: only {n} comparable packages. Here are all {n}.",
       abstainOne: "I'm not giving a range: only one comparable package. Here it is.",
+    },
+    // Below 20 comparable packages the sentence that holds back is the finding, and the count follows it in body, with
+    // no share of 10 (DESIGN.md section 7, rule 15). {total} is in words up to nine.
+    fewCount: {
+      none: "None of the {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      some: "{within} of the {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      all: "All {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      noneOne: "The one comparable package was not signed within the plan's {plan}\u00a0months.",
+      allOne: "The one comparable package was signed within the plan's {plan}\u00a0months.",
+    },
+    // What a click on each number in the finding and the summary does: it opens the table filtered to the rows the
+    // number counts (ticket 101), as its tooltip's action line says.
+    act: {
+      within: (count: number, words: string) => (count === 1 ? "Select to see the package." : `Select to see the ${words} packages.`),
+      middle: "Select to see the packages in the middle half.",
+      median: "Select to see the middle package.",
+      // With the tool's own number, so a tooltip read alone leaves nothing open (ticket 101's design review).
+      in10: (q80: string) => `Select to see the packages signed within ${q80}\u00a0months.`,
     },
     subtitle: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
     subtitleDots:
@@ -3775,8 +3809,8 @@ export const copy = {
     summary: {
       middle: "The middle half of these packages took {q25} to {q75} months, and the middle one took {q50}.",
       // With no plan dates the title already gives the middle half, so the summary starts here.
-      middleOnly: "The middle one took {q50} months.",
-      in10: "8 in 10 were signed within {q80} months.",
+      middleOnly: "The middle one took {q50}\u00a0months.",
+      in10: "8\u00a0in\u00a010 were signed within {q80}\u00a0months.",
       noIn10: "Fewer than 8 in 10 of these packages have been signed so far, so I can't say when 8 in 10 were signed.",
       noUpper: "So many of these packages are still open that I can't place the upper edge of the middle half.",
       openMany: "{open} of the {total} are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was.",
@@ -3824,7 +3858,8 @@ export const copy = {
         "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
       helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
       // A package planned from a sentence (ticket 15): the line is the person's plan, the same value as its plan chip.
-      helperPlanned: "The line shows your plan, the same months as Your plan above. Moving the line changes your plan.",
+      // True whether What I understood is folded or open (ticket 101's design review, round 2).
+      helperPlanned: "The line shows your plan. Moving the line changes it.",
       helperPlannedNone: "Type your plan's months, or add your plan in the How group, to see it as a line.",
       invalid: (max: string) => `Type months from 0.5 to ${max}.`,
       reset: (plan: string) => `Use the plan's ${plan} months`,
@@ -3907,7 +3942,8 @@ export const copy = {
     // number, so two numbers in one sentence never share one unless they come from the same record and open the
     // same thing. Where it came from and what a click does are num.from and num.act.
     explain: {
-      within: (plan: string) => `Comparable packages signed within ${plan} months of their notice.`,
+      // A number and its "months" never break apart (ticket 101's design review, round 2): a no-break space joins them.
+      within: (plan: string) => `Comparable packages signed within ${plan}\u00a0months of their notice.`,
       total: (open: number, openWord: string) =>
         open === 0
           ? "All comparable packages in the past range."
@@ -3915,7 +3951,7 @@ export const copy = {
             ? "All comparable packages in the past range, including the one still open."
             : `All comparable packages in the past range, including the ${openWord} still open.`,
       // The "about {in10} in 10" share in the finding.
-      share: (plan: string) => `About how many of every 10 comparable packages were signed within ${plan} months.`,
+      share: (plan: string) => `About how many of every 10 comparable packages were signed within ${plan}\u00a0months.`,
       plan: "The plan's months from notice to signed contract.",
       // The middle half's two ends, the middle one and the 8-in-10 point, each counting the packages still open as
       // not signed yet, which openCounted says after it.
@@ -3932,7 +3968,18 @@ export const copy = {
     table: {
       show: "Show the table",
       hide: "Hide the table",
+      // The count line once a number was pressed: it repeats the pressed number and no other (ticket 101).
+      shown: {
+        within: (within: string, total: string, months: string) => `Showing the ${within} of ${total} packages signed within ${months}\u00a0months.`,
+        middle: (q25: string, q75: string) => `Showing the packages in the middle half, from ${q25} to ${q75}\u00a0months.`,
+        median: (q50: string) => `Showing the middle package, at ${q50}\u00a0months.`,
+        in10: (q80: string) => `Showing the packages signed within ${q80}\u00a0months.`,
+      },
+      // The flush button after a pressed number's count line, which shows every row again.
+      showAll: (total: string) => `Show all ${total}`,
       caption: (total: string) => `All ${total} comparable packages, shortest first.`,
+      // While a pressed number filters the rows, the count line says which show, so the title claims no "All".
+      captionFiltered: "Comparable packages, shortest first.",
       captionOne: "The one comparable package.",
       noun: "packages",
       nounOne: "package",
@@ -3945,7 +3992,7 @@ export const copy = {
         monthsNote: "From notice to signature, or so far if still open",
         // Cards have no column heads, so the Months definition ends the count line's row once.
         monthsCards: "Months run from notice to signature, or so far if still open.",
-        within: (months: string) => `Signed within ${months} months`,
+        within: (months: string) => `Signed within ${months}\u00a0months`,
       },
       stillOpen: "Still open",
       yes: "Yes",
@@ -4219,8 +4266,9 @@ export const copy = {
   // Section 4 of the package workspace, "Procurement approach options" (ticket 26; the 26 brief, section 7.7). PPSD
   // is spelled out in section 3's instruction sentence, which comes first on the page.
   approachOptions: {
-    eyebrow: "Planning, PPSD section 6",
-    number: "4 ·",
+    // The zone's tag, at its header's right (DESIGN.md section 5, Task zone), written as section 3's is.
+    ppsdTag: "PPSD section 6",
+    number: "4",
     heading: "Procurement approach options",
     summary: "Comparable packages went with {count} approaches. The most common was {option1}, with {k1} of {n}.",
     summaryAllowed:
@@ -4237,8 +4285,6 @@ export const copy = {
       ruled === 1
         ? "The one comparable package that records its market approach, lots and qualification went with an approach the thresholds rule out for this package, so I can't list approach options."
         : "The {ruled} comparable packages that record their market approach, lots and qualification went with approaches the thresholds rule out for this package, so I can't list approach options.",
-    show: "Show the options",
-    hide: "Hide the options",
     title: "{k1} of the {n} comparable packages went with {option1}, the most common approach.",
     // When the thresholds rule out approaches some comparable packages went with, the tool doesn't count each of
     // those, so the caption claims only the most common approach of those the thresholds allow.
@@ -4283,6 +4329,7 @@ export const copy = {
     waiting: "I'll list the options after you add your plan in section 1, or choose to see the past range without it.",
     empty: "I can't compare approaches for this package, because I have no comparable packages I can measure.",
     error: "I couldn't load the approach options.",
+    sectionFailed: "I'll list approach options when the comparable packages in section 1 load. Use Try again in section 1.",
     tryAgain: "Try again",
   },
 
@@ -4307,9 +4354,6 @@ export const copy = {
       agencyDescription:
         "I write a Risk Description and a Description of mitigation for each risk you selected, for your Project " +
         "Procurement Strategy for Development (PPSD).",
-      // "section 3" links to the risks section.
-      heldNone: "Select the risks you want in {section} first.",
-      heldNoneLink: "section 3",
       heldNoneInline: "Select at least one risk above first.",
       heldSaveFailed: "I couldn't save your selection, so I can't draft from it yet. Try again in section 3.",
       heldPreview: "This is a preview, so you can't start a draft.",
@@ -4347,6 +4391,10 @@ export const copy = {
       instruction: "Choose any part to change it.",
       guesses: (count: number, words: string) => (count === 1 ? `${words} guess to check.` : `${words} guesses to check.`),
       noGuesses: "No guesses left to check.",
+      // A package reopened with its plan set starts with the panel folded to your sentence, so zone 1's finding leads
+      // the first screen (ticket 101's critique).
+      show: "Show what I understood",
+      hide: "Hide what I understood",
     },
     // A chip's words, by the kind of its field. The suffixes say a chip's state in words (DESIGN.md section 10).
     chip: {
@@ -4504,10 +4552,10 @@ export const copy = {
   // never counts, ranks or picks the most common risk. Risk names are the closed list's labels
   // (config/lessons.toml), in straight double quotes inside a sentence.
   packageRisks: {
-    // The ticket's exact words, shown as written: capitals appear only in a chart's labels (DESIGN.md section 3).
-    eyebrow: "Planning · PPSD section 3",
+    // The zone's tag, at its header's right (DESIGN.md section 5, Task zone), written as section 4's is.
+    ppsdTag: "PPSD section 3",
     // Hidden from screen readers, so the heading reads "Procurement risks and what helped".
-    number: "3 ·",
+    number: "3",
     heading: "Procurement risks and what helped",
     intro:
       "These risks came up again and again in the completion reports of projects with comparable packages. Each one has a lesson on what helped and the reports that say so.",
@@ -4668,9 +4716,8 @@ export const copy = {
   // steps' labels, STEP's full names, their phrases and stages are in the step-label registry, web/src/steps.ts.
   // Templates in braces are Fill templates whose numbers and dates are Num values from the tool.
   stepDates: {
-    eyebrow: "Planning",
     // Hidden from screen readers, so the heading reads "Planned date for each step".
-    number: "2 ·",
+    number: "2",
     heading: "Planned date for each step",
     // {first} and {last} are the family's first and last steps' phrases; the count is the registry's, in words.
     summarySteps: (countWords: string) => `${countWords} steps, from {first} to {last}.`,
@@ -4731,7 +4778,8 @@ export const copy = {
     captionNoneAfter: (phrase: string) => `I couldn't date any step after ${phrase}.`,
     captionUndated: "How many days each step took in comparable packages.",
     captionAbstain: (family: string) => `The steps STEP uses for ${family}.`,
-    count: (countWords: string) => `Showing all ${countWords} steps.`,
+    // In the Tables form, as zone 1's count line: no full stop (ticket 101's design review, round 2).
+    count: (countWords: string) => `Showing all ${countWords} steps`,
     columns: {
       step: "Step",
       stepNote: "Short names. Choose one to see STEP's full name.",
@@ -5004,8 +5052,7 @@ export const copy = {
   // "qualification criteria" for the bidding document's requirements, so it is never read as the criteria that
   // chose the comparable packages, and "cost estimate" in full.
   criteria: {
-    eyebrow: "Tender design",
-    number: "5 ·",
+    number: "5",
     heading: "Check your criteria",
     // The collapsed summary's first sentence holds the ticket's words: "optional. Paste your qualification
     // criteria to compare them with N packages whose criteria are public."
@@ -5264,8 +5311,8 @@ export const copy = {
     sourceAsOf: "{sources}. Records as of {asOf}.",
     showTable: "Show the table",
     hideTable: "Hide the table",
-    tableCount: "Showing all {m} packages.",
-    tableCountOne: "Showing the one package.",
+    tableCount: "Showing all {m} packages",
+    tableCountOne: "Showing the one package",
     columns: {
       package: "Package",
       country: "Country",
@@ -5311,7 +5358,8 @@ export const copy = {
     intro:
       "Lessons from completion reports that a lead procurement specialist added to the library. I rank them by how well they fit this package and how strong their evidence is, never by how often people open them.",
     groups: { cost_estimates: "Cost estimates", designs_and_specifications: "Specifications" } as Record<string, string>,
-    eyebrow: "Why · evaluation",
+    // The drawer's card form, the one word, so zone 5 shows no middle-dot label (ticket 101's design review, item 12).
+    eyebrow: "Why",
     quoted: (quote: string) => `"${quote}"`,
     sourceLead: "Source:",
     // The first ICR and IEG on the screen are spelled out (DESIGN.md section 7, rule 22).

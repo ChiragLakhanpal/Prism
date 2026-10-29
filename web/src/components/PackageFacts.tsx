@@ -1,129 +1,133 @@
-// The package workspace's header and facts (the 12 brief): the package's Description as the page's h1
-// over its STEP reference, sticky from a page area of 768 px, and the package's facts as a definition list in STEP's
-// field names, word for word, which are the defaults find_comparables started from. A missing value
-// reads "Not in the plan row". "In the plan" links back to the plan check with this row in view.
-import { type ReactNode } from "react";
+// The package workspace's facts (the 12 brief; ticket 101; DESIGN.md section 5, Package header and facts): the side
+// panel "From the plan row", in STEP's field names word for word, which are the defaults find_comparables started
+// from: Method, Market Approach, Review Type, Estimated Amount (US$), Process Status and "In the plan", a link back to
+// the plan check with this row in view. A missing value reads "Not in the plan row". Its source line names the plan
+// version, and its marker opens the plan row in the evidence drawer. Below a frame of 75rem the panel is not drawn and
+// the facts are one line in the page head (factsLine), with "Show the plan row", which opens the same record.
+import { Fragment, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { PackageFacts } from "../lib/api";
-import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
-import { CopyKey } from "./CopyKey";
+import { CitationMarker } from "./CitationMarker";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { planCheckHref } from "./PastRange";
-import { SkeletonText } from "./Skeleton";
+import { ProjectId } from "./ProjectId";
+import { SidePanel, type SideFact } from "./SidePanel";
+import { Source } from "./Source";
 import { TextLink } from "./TextLink";
 
 const words = copy.packagePage;
 
 export const mono = (text: string) => <span className="font-mono font-medium">{text}</span>;
 
-export function PackageHeader({
-  title,
-  reference,
-  level = 1,
-  sticky = true,
-  action,
-  copyReference,
-}: {
-  title: ReactNode;
-  // The STEP reference under the title, or null when the title is the reference itself.
-  reference: ReactNode | null;
-  // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
-  level?: 1 | 2;
-  sticky?: boolean;
-  // Ticket 36: "Suggest {n} PPSD risk rows" and its caption, at the header's right from 768 px.
-  action?: ReactNode;
-  // Ticket 112: the STEP reference the copy key after it copies, once the package has loaded.
-  copyReference?: string;
-}) {
-  const Heading = level === 1 ? "h1" : "h2";
-  return (
-    <div data-package-header data-sticky={sticky ? "top" : undefined} className={sticky ? "border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10" : "border-b border-line bg-page py-4"}>
-      <div className="flex items-start justify-between gap-x-6">
-        <div className="min-w-0 flex-1">
-          <Heading tabIndex={-1} className="text-h1 text-pretty wrap-anywhere text-ink-heading focus:outline-none">
-            {title}
-          </Heading>
-          {reference !== null && (
-            <p className="mt-1 text-small wrap-anywhere text-ink-muted">
-              {reference}
-              {/* The 24 px key keeps the 20 px line's height: 2 px of it lie above the line and 2 px below. */}
-              {copyReference && <CopyKey text={copyReference} what={copy.copyKey.reference} className="-my-0.5 align-top" />}
-            </p>
-          )}
-        </div>
-        {action}
-      </div>
-    </div>
-  );
-}
-
-// The package's facts in STEP's field names, word for word: the defaults find_comparables started from.
-export function PackageFactsList({ pkg }: { pkg: PackageFacts }) {
+// The package's facts in STEP's field names, word for word.
+function factsOf(pkg: PackageFacts): SideFact[] {
   const f = words.facts;
   const missing = <span className="text-ink-muted">{words.missing}</span>;
   const value = (text: string | null) => text ?? missing;
-  const planHref = planCheckHref(pkg);
-  const facts: [string, ReactNode][] = [
-    [f.method, value(pkg.method)],
-    [f.marketApproach, value(pkg.market_approach)],
-    [f.reviewType, value(pkg.review_type)],
-    [f.estimated, pkg.estimated_amount_usd ? formatNumber(Number(pkg.estimated_amount_usd), { decimals: 2, compact: false }) : missing],
-    [f.processStatus, value(pkg.process_status)],
-    [
-      f.inPlan,
-      <TextLink href={planHref}>
-        <Fill
-          template={words.inPlan}
-          slots={{
-            agency: pkg.plan.implementing_agency,
-            // The date moves to the next line whole, as Num keeps a date in a sentence, and breaks at its
-            // space only when it is wider than the column, as with WCAG 1.4.12's text spacing at 320 px.
-            // An inline block takes no underline from its link, so it inherits the link's own.
-            date: (
-              <span className="inline-block max-w-full [text-decoration:inherit] [&>[data-num]]:whitespace-normal">
-                <Num date={pkg.plan.plan_date} />
-              </span>
-            ),
-          }}
-        />
-      </TextLink>,
-    ],
+  return [
+    { label: f.method, value: value(pkg.method) },
+    { label: f.marketApproach, value: value(pkg.market_approach) },
+    { label: f.reviewType, value: value(pkg.review_type) },
+    {
+      label: f.estimated,
+      // STEP's form with its cents, never shortened (DESIGN.md section 6).
+      value: pkg.estimated_amount_usd ? (
+        <span className="whitespace-nowrap tabular-nums">{formatNumber(Number(pkg.estimated_amount_usd), { decimals: 2, compact: false })}</span>
+      ) : (
+        missing
+      ),
+    },
+    { label: f.processStatus, value: value(pkg.process_status), wide: true },
+    {
+      label: f.inPlan,
+      wide: true,
+      value: (
+        <TextLink href={planCheckHref(pkg)}>
+          <Fill
+            template={words.inPlan}
+            slots={{
+              agency: pkg.plan.implementing_agency,
+              // The date moves to the next line whole, as Num keeps a date in a sentence. An inline block takes no
+              // underline from its link, so it inherits the link's own.
+              date: (
+                <span className="inline-block max-w-full [text-decoration:inherit] [&>[data-num]]:whitespace-normal">
+                  <Num date={pkg.plan.plan_date} />
+                </span>
+              ),
+            }}
+          />
+        </TextLink>
+      ),
+    },
   ];
+}
+
+// The facts' labels over value bars, while the package loads.
+const LOADING_FACTS: SideFact[] = [
+  { label: words.facts.method, value: null },
+  { label: words.facts.marketApproach, value: null },
+  { label: words.facts.reviewType, value: null },
+  { label: words.facts.estimated, value: null },
+  { label: words.facts.processStatus, value: null, wide: true },
+  { label: words.facts.inPlan, value: null, wide: true },
+];
+
+// The side panel. opened: the drawer shows the plan row now; onOpen opens it from the marker.
+export function FactsPanel({
+  pkg,
+  opened = false,
+  onOpen,
+}: {
+  pkg: PackageFacts | null;
+  opened?: boolean;
+  onOpen?: (marker: HTMLElement) => void;
+}) {
+  if (!pkg) return <SidePanel title={words.factsTitle} facts={LOADING_FACTS} loading source={<span />} />;
   return (
-    <dl className="grid grid-cols-2 gap-x-6 gap-y-3 @md/page:grid-cols-3" data-package-facts data-numbers>
-      {facts.map(([label, shown]) => (
-        <div key={label} className="flex min-w-0 flex-col">
-          <dt className="text-caption text-ink-muted">{label}</dt>
-          <dd className="text-small wrap-break-word text-ink">{shown}</dd>
-        </div>
-      ))}
-    </dl>
+    <div data-package-facts>
+      <SidePanel
+        title={words.factsTitle}
+        facts={factsOf(pkg)}
+        source={
+          <Source>
+            <Fill
+              template={words.factsSource}
+              slots={{
+                agency: pkg.plan.implementing_agency,
+                pid: <ProjectId pid={pkg.project_id} />,
+                date: <Num date={pkg.plan.plan_date} />,
+                page: String(pkg.plan.pdf_page),
+              }}
+            />
+            <CitationMarker
+              n={1}
+              source={words.factsMarker(pkg.step_reference)}
+              href={`?evidence=${encodeURIComponent(pkg.evidence_id)}`}
+              drawerId="evidence-drawer"
+              active={opened}
+              onOpen={onOpen}
+              evidenceId={pkg.evidence_id}
+            />
+          </Source>
+        }
+      />
+    </div>
   );
 }
 
-// The facts' real labels over skeleton values. "In the plan" holds the agency's full name, which
-// takes two lines from a page area of 768 px and three below, and Process Status two lines below it.
-const SKELETON_LINES: Partial<Record<keyof typeof words.facts, { narrow: number; wide: number }>> = {
-  processStatus: { narrow: 2, wide: 1 },
-  inPlan: { narrow: 3, wide: 2 },
-};
-
-export function FactsSkeleton() {
-  const lines = (count: number) => Array.from({ length: count }, (_, index) => (index === count - 1 && count > 1 ? "w-3/5" : "w-4/5"));
-  return (
-    <div aria-hidden="true" className="grid grid-cols-2 gap-x-6 gap-y-3 @md/page:grid-cols-3">
-      {(Object.entries(words.facts) as [keyof typeof words.facts, string][]).map(([key, label]) => {
-        const held = SKELETON_LINES[key] ?? { narrow: 1, wide: 1 };
-        return (
-          <div key={label} className="flex flex-col">
-            <span className="text-caption text-ink-muted">{label}</span>
-            <SkeletonText className="text-small @md/page:hidden" widths={lines(held.narrow)} />
-            <SkeletonText className="hidden text-small @md/page:flex" widths={lines(held.wide)} />
-          </div>
-        );
-      })}
-    </div>
-  );
+// The facts in one line, for the page head below a frame of 75rem: "Request for Bids, Open - National, US$1,230,000.00,
+// Pending Implementation", each value the plan row has. The amount keeps STEP's form with its cents, as the side panel's
+// does, so it is the tool's own rounding (plan section 7.6; CLAUDE.md rule 1; ticket 101's review, follow-up 1).
+// Each value is whole on its line, so a STEP value such as "Pending Implementation" moves to the next line as one.
+export function factsLine(pkg: PackageFacts): ReactNode {
+  const amount = pkg.estimated_amount_usd ? words.factsAmount(formatNumber(Number(pkg.estimated_amount_usd), { decimals: 2, compact: false })) : null;
+  const parts = [pkg.method, pkg.market_approach, amount, pkg.process_status].filter((part): part is string => Boolean(part));
+  return parts.map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && words.factsSeparator}
+      <span className="whitespace-nowrap">{part}</span>
+    </Fragment>
+  ));
 }

@@ -126,6 +126,9 @@ export function TaskZone({
       className={className}
       {...marks}
     >
+      {/* The live region comes first, out of sight, so the panel's last foot strip stays its last child and takes its
+          rounded corners (ticket 101). */}
+      {live}
       <div data-zone-head>
         <h2 ref={headingRef} id={headingId} tabIndex={-1} data-zone-name className={cx(leadName ? "text-lead" : "text-h2", "text-ink-heading focus:outline-none")}>
           {number != null && (
@@ -176,7 +179,6 @@ export function TaskZone({
       )}
       {toggle && open && foot}
       {!toggle && children}
-      {live}
     </section>
   );
 }

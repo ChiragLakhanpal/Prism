@@ -1,20 +1,22 @@
 // Section 4 of the package workspace, "Procurement approach options" (ticket 26; the 26 brief, sections 6.4 and
 // 7.7), for section 6 of the borrower's PPSD: up to three approaches comparable packages went with, as
 // estimate_time returned them, most first, each with how many went with it and the time estimate for this package
-// with it. A Collapsed section, closed by default; its summary still says the finding. Every number is the tool's.
+// with it. Since ticket 101 it is zone 4, tagged "PPSD section 6": a row while it holds only its sentence, and a panel
+// with the approaches once it has options, their notes and source in its foot strip. Every number is the tool's.
 //
 // Its table is four columns, and becomes one card per approach when its own frame is under 480 px (30rem), as the
 // brief's container rule says, so the evidence drawer can narrow it. A time estimate that abstains takes one cell
 // across both estimate columns. Each "{k} of {n}" opens the evidence drawer's list of the packages it names.
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { Approach, ComparablesResult, EstimateResult } from "../lib/api";
 import { formatCount, formatNumber } from "../lib/format";
 import { openWentWith } from "../lib/packages";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
-import { CollapsedSection, type CollapsedState } from "./CollapsedSection";
 import { Fill, Joined } from "./Fill";
+import { FootStrip } from "./FootStrip";
+import { TaskZone, ZoneBlock, type ZoneState } from "./TaskZone";
 import { Num } from "./Num";
 import { fromLine, recordsFrom } from "./NumFrom";
 import { Source } from "./Source";
@@ -28,20 +30,22 @@ export type ApproachOptionsState =
   | { kind: "loading" }
   | { kind: "waiting" }
   | { kind: "empty" }
+  // Section 1's comparables failed: zone 1's alert is the one place to try again, so this zone says it waits on them.
+  | { kind: "blocked" }
   | { kind: "error"; onRetry: () => void }
   | { kind: "ready"; comparables: ComparablesResult; estimate: EstimateResult };
 
 // The state section 4 takes from section 1's two answers and the page: the comparables, the time estimate, and
-// whether section 1 is still asking for the plan.
+// whether section 1 is still asking for the plan. A failed time estimate keeps its own "Try again"; failed comparables
+// are tried again from zone 1's alert.
 export function approachState(
   comparables: { status: "loading" } | { status: "error" } | { status: "ready"; result: ComparablesResult },
   estimate: EstimateState | undefined,
   waiting: boolean,
-  onRetry: () => void,
 ): ApproachOptionsState {
   if (waiting) return { kind: "waiting" };
   if (comparables.status === "loading") return { kind: "loading" };
-  if (comparables.status === "error") return { kind: "error", onRetry };
+  if (comparables.status === "error") return { kind: "blocked" };
   const reason = comparables.result.abstention?.reason;
   if (reason === "no_comparables" || reason === "none_measurable" || reason === "no_public_notice" || reason === "unknown_package") {
     return { kind: "empty" };
@@ -192,7 +196,6 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
           ))}
         </ul>
       </div>
-      <Notes comparables={comparables} estimate={estimate} />
     </div>
   );
 }
@@ -231,16 +234,17 @@ function Notes({ comparables, estimate }: { comparables: ComparablesResult; esti
 }
 
 export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
-  const [open, setOpen] = useState(false);
-  // Ticket 31's Collapsed section: "empty" shows the summary alone with no button, for every state with nothing to
-  // open (waiting for the plan, no comparables, an abstention or one approach only).
-  let shown: CollapsedState = "empty";
+  // Zone 4: "empty" shows the summary alone as a row, for every state with nothing to compare (waiting for the plan, no
+  // comparables, an abstention or one approach only); "ready" is a panel with the approaches.
+  let shown: ZoneState = "empty";
   let summary: ReactNode = null;
   let error: ReactNode = null;
   let content: ReactNode = null;
   if (state.kind === "loading") shown = "loading";
   else if (state.kind === "waiting") summary = words.waiting;
   else if (state.kind === "empty") summary = words.empty;
+  // One failed request draws one alert and one "Try again", in zone 1 (ticket 101's design review, item 8).
+  else if (state.kind === "blocked") summary = words.sectionFailed;
   else if (state.kind === "error") {
     shown = "error";
     error = (
@@ -303,30 +307,43 @@ export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
         />
       );
       content = (
-        <div className="mt-4">
-          <OptionsTable comparables={comparables} estimate={estimate} />
-        </div>
+        <ZoneBlock
+          data-block="options"
+          foot={
+            <FootStrip>
+              <Notes comparables={comparables} estimate={estimate} />
+            </FootStrip>
+          }
+        >
+          <div>
+            <p className="max-w-prose text-body text-ink" data-section-summary>
+              {summary}
+            </p>
+            <div className="mt-4">
+              <OptionsTable comparables={comparables} estimate={estimate} />
+            </div>
+          </div>
+        </ZoneBlock>
       );
     }
   }
+  // A row while it holds only its sentence, and a panel once it has options to compare (ticket 101).
+  const panel = shown === "ready";
   return (
-    <div data-approach-options={state.kind}>
-      <CollapsedSection
-        id="approach-options"
-        eyebrow={words.eyebrow}
-        number={words.number}
-        heading={words.heading}
-        summary={summary}
-        error={error}
-        state={shown}
-        open={open && shown === "ready"}
-        onToggle={() => setOpen((now) => !now)}
-        showLabel={words.show}
-        hideLabel={words.hide}
-        sectionKey="approach-options"
-      >
-        {content}
-      </CollapsedSection>
-    </div>
+    <TaskZone
+      id="approach-options"
+      number={words.number}
+      name={words.heading}
+      tag={words.ppsdTag}
+      panel={panel}
+      summary={panel ? undefined : summary}
+      error={error}
+      state={panel ? "ready" : shown}
+      sectionKey="approach-options"
+      marks={{ "data-approach-options": state.kind }}
+      className="scroll-mt-24"
+    >
+      {content}
+    </TaskZone>
   );
 }

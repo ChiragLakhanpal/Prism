@@ -204,7 +204,8 @@ export function ruleSentence(field: FormField, pkg: PlannedPackage, form: Packag
 // The computed note under the chips (the 15 brief, section 7.4), in its order: what a recompute changed, the
 // rules and their thresholds from the thresholds file, the risk rating assumed, each computed field the person
 // set themselves, then the source line.
-export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: PackageForm }) {
+// In a panel's foot strip, the strip gives it its place, so it takes no margin of its own (inStrip).
+export function ComputedNote({ pkg, form, inStrip = false }: { pkg: PlannedPackage; form: PackageForm; inStrip?: boolean }) {
   const n = words.note;
   const field = (key: string) => form.fields.find((one) => one.key === key);
   const text = (key: string, value: string | number | null) => {
@@ -225,7 +226,7 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
   const yours = pkg.fields.filter((value) => field(value.key)?.source === "computed" && value.provenance === "you" && value.computed !== null);
   const sources = [review, market].filter((rule): rule is NonNullable<typeof rule> => Boolean(rule));
   return (
-    <div className="mt-4 flex flex-col gap-1 text-caption text-ink-muted" data-computed-note>
+    <div className={cx("flex flex-col gap-1 text-caption text-ink-muted", !inStrip && "mt-4")} data-computed-note>
       {pkg.changed.map((change) => (
         <p key={change.field} data-recomputed className="text-ink">
           {change.to === null
@@ -290,22 +291,53 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
 
 // The card's top: its heading, the sentence the person wrote, and the instruction with the guess count. In a
 // preview nothing can be changed, so the instruction says so instead.
-export function CardTop({ sentence, guesses, headingId, preview = false }: { sentence: string; guesses: number | null; headingId?: string; preview?: boolean }) {
+// named: the card draws its own h2; in a Task zone (ticket 101) the zone's name is the heading, so it draws none.
+export function CardTop({
+  sentence,
+  guesses,
+  headingId,
+  preview = false,
+  named = true,
+}: {
+  sentence: string;
+  guesses: number | null;
+  headingId?: string;
+  preview?: boolean;
+  named?: boolean;
+}) {
   return (
     <>
-      <h2 id={headingId} className="text-h2 text-ink-heading">
-        {words.card.heading}
-      </h2>
-      <p className="mt-2 text-small text-ink" data-you-wrote>
+      {named && (
+        <h2 id={headingId} className="text-h2 text-ink-heading">
+          {words.card.heading}
+        </h2>
+      )}
+      <p className={named ? "mt-2 text-small text-ink" : "text-small text-ink"} data-you-wrote>
         <span className="text-ink-muted">{words.card.youWrote}</span> {words.card.quoted(sentence)}
       </p>
-      {guesses !== null && (
-        <p className="mt-1 text-small text-ink" data-instruction>
-          {preview ? words.preview : words.card.instruction}
-          {!preview && guesses > 0 && <> {words.card.guesses(guesses, formatCount(guesses, { capital: true }))}</>}
-        </p>
-      )}
+      {guesses !== null && <CardInstruction guesses={guesses} preview={preview} />}
     </>
+  );
+}
+
+// The instruction with the guess count, which follows the sentence: on its own where the sentence is a folded panel's
+// summary (ticket 101).
+export function CardInstruction({ guesses, preview = false }: { guesses: number; preview?: boolean }) {
+  return (
+    <p className="mt-1 text-small text-ink" data-instruction>
+      {preview ? words.preview : words.card.instruction}
+      {!preview && guesses > 0 && <> {words.card.guesses(guesses, formatCount(guesses, { capital: true }))}</>}
+    </p>
+  );
+}
+
+// The guess count alone, after the sentence in a folded What I understood, so the row keeps its one call to act while
+// the chips are out of sight (ticket 101's review and design review, round 2).
+export function GuessCount({ guesses }: { guesses: number }) {
+  return (
+    <p className="mt-1 text-small text-ink" data-guess-count>
+      {words.card.guesses(guesses, formatCount(guesses, { capital: true }))}
+    </p>
   );
 }
 

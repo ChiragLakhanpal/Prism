@@ -77,10 +77,13 @@ const shown = (locator: Locator) =>
     }),
   );
 
-test("the section carries its eyebrow and lists the cost estimates risk, what helped, its count and its sources", async ({ page }) => {
-  await openPackage(page);
+test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped, its count and its sources", async ({ page }) => {
+  // The table's form, with its column heads, shows where the zone gives it 49rem: at 1024 px.
+  await openPackage(page, { width: 1024 });
 
-  await expect(section(page).locator("p").first()).toHaveText("Planning · PPSD section 3");
+  await expect(section(page).locator("[data-zone-tag]")).toHaveText("PPSD section 3");
+  // Ticket 101: with risks to select, zone 3 is a panel.
+  await expect(section(page)).toHaveAttribute("data-zone", "panel");
   await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("Procurement risks and what helped");
   const cost = row(page, "cost_estimates");
   await expect(cost.getByRole("rowheader")).toHaveText(RISK);
@@ -177,7 +180,9 @@ test("a failed save keeps the selection on the page and offers Try again", async
 test("on the fixture's Kenya comparables the section says no completion report could be read", async ({ page }) => {
   await openPackage(page, { risks: "risks-ke-nwwda-541055.json" });
 
-  await expect(section(page).locator("[data-no-risks] h3")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
+  // Ticket 101: holding only its sentence and one link, zone 3 is a row.
+  await expect(section(page)).toHaveAttribute("data-zone", "row");
+  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the three projects with comparable packages has a completion report I could read.");
   await expect(section(page).getByRole("link", { name: "See which completion reports I have read" })).toHaveAttribute(
     "href",
     "/data?sources=notices,awards,documents,projects&from=package_risks",
@@ -211,8 +216,8 @@ async function openPlanned(page: Page, risks: Answer, save: Answer = { body: '{"
 test("the rural roads package from a sentence reaches no completion report on the fixture, and says so", async ({ page }) => {
   await openPlanned(page, { body: await recorded("risks-planned-rural-roads.json") });
 
-  await expect(section(page).locator("p").first()).toHaveText("Planning · PPSD section 3");
-  await expect(section(page).locator("[data-no-risks] h3")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
+  await expect(section(page).locator("[data-zone-tag]")).toHaveText("PPSD section 3");
+  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the three projects with comparable packages has a completion report I could read.");
 });
 
 test("on a package from a sentence, a selection saves with the package under the saved stamp", async ({ page }) => {
@@ -225,11 +230,14 @@ test("on a package from a sentence, a selection saves with the package under the
   expect(puts.map((request) => request.postDataJSON())).toEqual([{ changes: { cost_estimates: true } }]);
 });
 
-for (const width of [1440, 1024, 390]) {
-  test(`the section is a ${width >= 1024 ? "table" : "list"} at ${width} px, and axe finds no WCAG 2.2 AA violation`, async ({ page }) => {
+// The table shows where the zone gives it 49rem, as the past range's does (DESIGN.md section 5, Tables): at 1024 px. At
+// 1440 px the zones keep to the work's seven columns beside the side panel, so the risks are a list there, as at 390
+// px, and no column head runs to six lines (ticket 101's design review and critique).
+for (const [width, form] of [[1440, "list"], [1024, "table"], [390, "list"]] as const) {
+  test(`the section is a ${form} at ${width} px, and axe finds no WCAG 2.2 AA violation`, async ({ page }) => {
     await openPackage(page, { width });
 
-    await expect(view(page)).toHaveAttribute("data-risk-view", width >= 1024 ? "table" : "list");
+    await expect(view(page)).toHaveAttribute("data-risk-view", form);
     expect(await axe(page)).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });

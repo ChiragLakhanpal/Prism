@@ -102,7 +102,8 @@ test("the package head's copy key copies the STEP reference", async ({ page }) =
     [`/api/packages/${REF}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
   });
   await page.goto(`/packages/${REF}`);
-  const head = page.locator("[data-package-header]");
+  // The page head (ticket 101): the copy key follows the STEP reference on its ID line.
+  const head = page.locator("[data-page-head]");
   const key = head.getByRole("button", { name: "Copy the STEP reference" });
   await expect(key).toBeVisible();
   const id = head.locator("p").getByText(REF, { exact: true });

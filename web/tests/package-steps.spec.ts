@@ -54,6 +54,10 @@ async function openPackage(page: Page, { width = 1440, steps = "steps-ke-hand-90
   return puts;
 }
 
+// The zone draws its table from 49rem of its own width (ticket 101's critique, round 2): at 1024 px there is no side
+// panel, so the work column holds the four columns; beside the side panel at 1440 px the zone is a list.
+const TABLE_WIDTH = 1024;
+
 const section = (page: Page) => page.locator("section#planned-dates");
 const disclosure = (page: Page) => section(page).locator("[data-section-toggle]");
 const view = (page: Page) => section(page).locator("[data-step-table]:visible, [data-step-list]:visible").first();
@@ -82,6 +86,10 @@ test("collapsed by default, the summary takes its step count and ran-longest cou
   await expect(disclosure(page)).toHaveText("Hide the steps");
   await expect(disclosure(page)).toBeFocused();
   await expect(view(page)).toBeVisible();
+  // The opened zone ends its evidence in its foot strip, as zones 1 and 3 do: provenance has one place (ticket 101's
+  // design review, item 6).
+  await expect(section(page).locator("[data-foot-strip] [data-step-notes]")).toBeVisible();
+  await expect(section(page).locator("[data-section-body] [data-step-notes]")).toHaveCount(0);
   await page.keyboard.press("Space");
   await expect(disclosure(page)).toHaveAttribute("aria-expanded", "false");
   await expect(disclosure(page)).toHaveText("Show the steps");
@@ -90,7 +98,7 @@ test("collapsed by default, the summary takes its step count and ran-longest cou
 const FULL_NAME = 'STEP calls this step "Bid Evaluation Report and Recommendation for Award".';
 
 test("the steps carry the blueprint's labels for goods, works and non-consulting services, with STEP's full name on hover and on focus", async ({ page }) => {
-  await openPackage(page);
+  await openPackage(page, { width: TABLE_WIDTH });
   await disclosure(page).focus();
   await page.keyboard.press("Enter");
 
@@ -124,7 +132,7 @@ test("the steps carry the blueprint's labels for goods, works and non-consulting
 const row = (page: Page, key: string) => view(page).locator(`[data-step-row='${key}']`);
 
 test("each step's planned date is the cautious one by default, names its comparables and abstains below 20, and the middle dates show at once", async ({ page }) => {
-  const puts = await openPackage(page);
+  const puts = await openPackage(page, { width: TABLE_WIDTH });
   await disclosure(page).click();
 
   await expect(view(page).locator("[data-choice-header]")).toContainText("Planned date, cautious");
@@ -150,7 +158,7 @@ test("Strata writes no actual date into a step: every date on screen is a planne
     [`${API}/comparables`]: { body: await recorded("comparables-ke-hand-900000.json") },
     [`${API}/risks`]: { body: await recorded("risks-ke-hand-900000.json") },
     [`${API}/steps`]: { body: withActuals },
-  });
+  }, TABLE_WIDTH);
   await page.goto(`/packages/${REF}`);
   await disclosure(page).click();
 
@@ -173,23 +181,25 @@ test("Strata writes no actual date into a step: every date on screen is a planne
 });
 
 test("a count opens the evidence drawer at the step's comparable packages, and Escape gives focus back to it", async ({ page }) => {
-  // A 1440 px page area, so the table stays a table beside the drawer: the open sidebar (ticket 92) widens the window.
+  // A 1440 px page area: the zone is a list beside the side panel, and the drawer takes the side panel's place, so it
+  // stays a list (ticket 101). The open sidebar (ticket 92) widens the window.
   await openPackage(page, { width: windowBeside(1440) });
   await disclosure(page).click();
 
-  const count = row(page, "contract_signed").locator("td").last().getByRole("button");
+  const item = section(page).locator("[data-step-item='contract_signed']");
+  const count = item.getByRole("button", { name: "25 comparable packages for Contract signed" });
   await expect(count).toHaveAccessibleName("25 comparable packages for Contract signed");
   await count.click();
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Comparable packages for the signed contract");
   await expect(drawer.locator("[data-step-entry]")).toHaveCount(25);
-  await expect(row(page, "contract_signed")).toHaveClass(/bg-tint/);
+  await expect(item).toHaveClass(/bg-tint/);
   await page.keyboard.press("Escape");
   await expect(count).toBeFocused();
 });
 
 test("under 20 comparable packages in all, the section gives the steps and their counts with no dates and no controls", async ({ page }) => {
-  await openPackage(page, { steps: "steps-ke-hand-900000-few.json" });
+  await openPackage(page, { width: TABLE_WIDTH, steps: "steps-ke-hand-900000-few.json" });
 
   await expect(section(page).locator("[data-section-summary]")).toContainText(
     "I'm not giving planned dates, because I found only 12 comparable packages.",
@@ -311,7 +321,30 @@ test("when no step can be dated, as on the fixture's demo package, the section o
   );
   await expect(section(page).locator("[data-choice]")).toHaveCount(0);
   await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("I couldn't date any of these steps.");
+  // The count line in the Tables form: one to nine in words and no full stop, as zone 1's (ticket 101's design review,
+  // round 2, item 8).
+  await expect(section(page).locator("[data-step-count]:visible")).toHaveText("Showing all six steps");
   await expect(section(page).locator("[data-section-summary]")).toContainText("I have too few comparable packages to date any of the six.");
+});
+
+test("beside the side panel at 1440 px the steps are a list sized by the zone's own width, so no planned-date sentence runs past two lines", async ({ page }) => {
+  // Ticket 101's critique, round 2: the four-column table squeezed into the 657 px work column put one sentence on
+  // five lines in each of six cells. The zone switches to the list below 49rem of its own width, as zone 3 does.
+  const DEMO = "/api/packages/KE-NWWDA-541055-CW-RFB";
+  await serve(page, {
+    [DEMO]: { body: await recorded("package-ke-nwwda-541055.json") },
+    [`${DEMO}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+    [`${DEMO}/risks`]: { body: await recorded("risks-ke-nwwda-541055.json") },
+    [`${DEMO}/steps`]: { body: await recorded("steps-ke-nwwda-541055.json") },
+  });
+  await page.goto("/packages/KE-NWWDA-541055-CW-RFB");
+  await disclosure(page).click();
+  await expect(section(page).locator("[data-step-list]")).toBeVisible();
+  await expect(section(page).locator("[data-step-table]")).toBeHidden();
+  const sentences = section(page).locator("[data-abstains]:visible");
+  await expect(sentences).toHaveCount(6);
+  const heights = await sentences.evaluateAll((all) => all.map((one) => one.getBoundingClientRect().height));
+  expect(heights.filter((height) => height > 48)).toEqual([]);
 });
 
 test("axe finds no WCAG 2.2 AA violations collapsed and open, and at 390 px the steps are a list with STEP's full names printed", async ({ page }) => {

@@ -81,12 +81,15 @@ async function openSection(page: Page) {
   await expect(section(page).getByRole("button", { name: copy.criteria.hide })).toBeFocused();
 }
 
-test("collapsed, the section reads the ticket's words with N from the tool, under the eyebrow Tender design", async ({ page }) => {
+test("collapsed, zone 5 reads the ticket's words with N from the tool, after the stage label Tender design", async ({ page }) => {
   const summary = JSON.parse(await recorded("criteria-summary-ke-cwsb-224323.json"));
   await open(page, CONSULTANT);
 
-  await expect(section(page).getByText(copy.criteria.eyebrow, { exact: true })).toBeVisible();
-  await expect(section(page).getByRole("heading", { level: 2 })).toHaveText(`${copy.criteria.number} ${copy.criteria.heading}`);
+  // Ticket 101: the stage label stands once before zone 5, in place of the zone's eyebrow, and the zone is a row.
+  await expect(page.locator("[data-stage-label]").last()).toHaveText("Tender design");
+  await expect(section(page)).toHaveAttribute("data-zone", "row");
+  await expect(section(page).getByRole("heading", { level: 2 })).toHaveText("5 Check your criteria");
+  await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("Check your criteria");
   await expect(section(page).locator("[data-summary-text]")).toContainText(
     `optional. Paste your qualification criteria to compare them with ${summary.public_criteria_count} packages whose criteria are public.`,
   );
@@ -268,13 +271,17 @@ test("below 20 comparables the cost estimate abstains in the first person and li
   await openSection(page);
 
   const part = section(page).locator("[data-criteria-part=cost]");
+  // A count standing alone is one to nine in words (DESIGN.md section 7, rule 12; ticket 101's design review).
+  const alone = (n: number) => (n >= 1 && n <= 9 ? ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"][n - 1] : String(n));
   await expect(part.locator("[data-cost-abstain]")).toHaveText(
-    copy.cost.abstain.replaceAll("{m}", String(run.cost.rows.length)),
+    copy.cost.abstain.replaceAll("{m}", alone(run.cost.rows.length)),
   );
   await expect(part.locator("[data-cost-title]")).toHaveText(
     copy.cost.title.replace("{above}", String(run.cost.counts.above)).replace("{m}", String(run.cost.counts.m)),
   );
-  // The table twin is open by default with every package, and no range or middle half is drawn.
+  // The table twin is open by default with every package, and no range or middle half is drawn. Its count line is in
+  // the Tables form, one to nine in words and no full stop (ticket 101's design review, round 2, item 8).
+  await expect(part.locator("[data-cost-table] [data-count-row] p").first()).toHaveText(`Showing all ${alone(run.cost.counts.m)} packages`);
   await expect(part.locator("[data-cost-table] tbody tr")).toHaveCount(run.cost.rows.length);
   await expect(part.locator("[data-cost-middle]")).toHaveCount(0);
   await expect(part.locator("[data-cost-dot]")).toHaveCount(run.cost.rows.length);
@@ -282,6 +289,54 @@ test("below 20 comparables the cost estimate abstains in the first person and li
   const diffs: number[] = run.cost.rows.map((row: any) => row.diff_pct);
   await expect(part.locator("[data-cost-table]")).toContainText(`+${Math.max(...diffs)}%`);
   await expect(part.locator("[data-cost-table]")).toContainText(`\u2212${Math.abs(Math.min(...diffs))}%`);
+});
+
+test("in the work column at 1440 px the cost table's packages are cards, so no STEP reference breaks across lines", async ({ page }) => {
+  // Ticket 101's critique, round 2: the cost table broke "KE-KIMAWASCO-141042-CW-" from "RFB". The table reads its own
+  // frame, as the past range's does (Table's cardsBelow="fit").
+  await open(page, WORKS);
+  await openSection(page);
+  const part = section(page).locator("[data-criteria-part=cost]");
+  await expect(part.locator("[data-cost-table]")).toBeVisible();
+  await expect(part.locator("[data-cost-table] [data-table-view=table]")).toBeHidden();
+  const lines = await part.locator("[data-cost-table]").evaluate((root) => {
+    const found: Record<string, number> = {};
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      const text = node.textContent?.trim() ?? "";
+      if (!/^KE-[A-Z0-9 -]+-(CW|GO|CS|NC)-[A-Z]+$/.test(text)) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      const boxes = [...range.getClientRects()].filter((box) => box.width > 0);
+      if (boxes.length) found[text] = new Set(boxes.map((box) => Math.round(box.top))).size;
+    }
+    return found;
+  });
+  expect(Object.keys(lines).length).toBeGreaterThan(0);
+  expect(Object.entries(lines).filter(([, count]) => count > 1)).toEqual([]);
+});
+
+test("rejected bids and the cost estimate each end in a foot strip across the panel, holding the coverage and source lines", async ({ page }) => {
+  // Ticket 101's critique, round 2: provenance has one place on the page, the foot strip that ends each block of
+  // evidence, as zones 1 to 3 end theirs.
+  await open(page, WORKS);
+  await openSection(page);
+  const zone = (await section(page).boundingBox())!;
+  for (const part of ["rejected", "cost"]) {
+    const strip = section(page).locator(`[data-criteria-part=${part}] [data-foot-strip]`);
+    await expect(strip, part).toHaveCount(1);
+    await expect(strip.locator("[data-source]"), part).toHaveCount(1);
+    await expect(section(page).locator(`[data-criteria-part=${part}] [data-source]`), part).toHaveCount(1);
+    const box = (await strip.boundingBox())!;
+    // The panel's full width inside its 1 px edge.
+    expect(Math.abs(box.x - (zone.x + 1)), part).toBeLessThanOrEqual(1);
+    expect(Math.abs(box.x + box.width - (zone.x + zone.width - 1)), part).toBeLessThanOrEqual(1);
+  }
+  await expect(section(page).locator("[data-criteria-part=cost] [data-foot-strip] [data-coverage-line]")).toHaveCount(1);
+  // The cost estimate's strip ends the part, after its table.
+  const cost = section(page).locator("[data-criteria-part=cost]");
+  const [table, strip] = [(await cost.locator("[data-cost-table]").boundingBox())!, (await cost.locator("[data-foot-strip]").boundingBox())!];
+  expect(strip.y).toBeGreaterThan(table.y + table.height);
 });
 
 test("every disagreement check 6 attached to a lesson's quote shows under it, as many cards as the check line counts", async ({ page }) => {
@@ -295,6 +350,8 @@ test("every disagreement check 6 attached to a lesson's quote shows under it, as
   await openSection(page);
 
   const card = section(page).locator("[data-criteria-part=lessons] [data-lesson-card]").first();
+  // Its label is the drawer card's one word, with no middle dot (ticket 101's design review, item 12).
+  await expect(card.locator("p").first()).toHaveText("Why");
   const cards = card.locator("[data-criteria-disagreement]");
   await expect(cards).toHaveCount(2);
   await expect(cards.first()).toContainText("ICR");

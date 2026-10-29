@@ -31,10 +31,12 @@ import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { dataReadinessHref } from "../routes";
 import type { ComparablesResult } from "../lib/api";
+import { useFocusWithin } from "../lib/useFocusWithin";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { Fill, Joined } from "./Fill";
+import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
 import { FromLine, modelFrom, recordsFrom, settingsFrom, testsFrom } from "./NumFrom";
 import { ReasonGroup } from "./ReasonsList";
@@ -105,13 +107,17 @@ export function RebiddingView({
   const headingId = useId();
   const result = state.status === "ready" ? state.result : null;
   const loading = state.status === "loading";
+  // Zone 1's second block (ticket 101): its body, then its source line in its own foot strip.
   return (
+    <>
     <div
       aria-labelledby={headingId}
       aria-busy={loading || updating || undefined}
       data-rebidding={state.status === "ready" ? (result!.n > 0 ? "found" : "none") : state.status}
-      className="mt-6 border-t border-line pt-6"
+      data-zone-body
+      data-block="again"
     >
+      <div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <h3 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
           {words.heading}
@@ -141,7 +147,29 @@ export function RebiddingView({
           initiallyOpen={initiallyOpen}
         />
       )}
+      </div>
     </div>
+    {result && !updating && (
+      <FootStrip>
+        <RebidSource result={result} asOf={asOf} />
+      </FootStrip>
+    )}
+    </>
+  );
+}
+
+function RebidSource({ result, asOf }: { result: RebiddingResult; asOf: string | null }) {
+  return (
+    <Source>
+      {asOf ? (
+        <Fill template={words.sourceAsOf} slots={{ sources: <Joined items={result.sources.map((source) => source.dataset_name)} />, asOf: <Num date={asOf} /> }} />
+      ) : (
+        <Fill
+          template={words.source}
+          slots={{ sources: <Joined items={result.sources.map((source) => source.dataset_name)} />, through: result.records_through ? <Num date={result.records_through} /> : "" }}
+        />
+      )}
+    </Source>
   );
 }
 
@@ -168,19 +196,22 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
   // Each count comes from every record set the tool read (a package canceled in the Procurement Plan comes from the
   // plan's rows, in Documents & Reports) and, when any was advertised again, opens the list below (ticket 96).
   const records = recordsFrom(result.sources, result.records_through, result.sources.map((source) => source.key));
-  const count = (value: number, tooltip: string, act: string) => {
+  // A count standing alone is one to nine in words; "{n} of the {m}" keeps its numerals (DESIGN.md section 7, rule 12).
+  const count = (value: number, tooltip: string, act: string, alone = false) => {
     const base = { tooltip, from: records ? <FromLine words={records} /> : undefined };
-    return <Num value={value} options={{ compact: false }} check={n > 0 ? { ...base, act, opens: "rows", onOpen: toRows } : base} />;
+    const check = n > 0 ? { ...base, act, opens: "rows" as const, onOpen: toRows } : base;
+    return alone ? <Num count={value} check={check} /> : <Num value={value} options={{ compact: false }} check={check} />;
   };
   const nNum = count(n, words.tips.n, words.tips.nAct);
   const mNum = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct);
+  const mAlone = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct, true);
   const sentence =
     n === 0 ? (
-      <Fill template={words.countNone} slots={{ m: mNum }} />
+      <Fill template={words.countNone} slots={{ m: mAlone }} />
     ) : n === m ? (
-      <Fill template={words.countAll} slots={{ m: mNum }} />
+      <Fill template={words.countAll} slots={{ m: mAlone }} />
     ) : n === 1 ? (
-      <Fill template={words.countOne} slots={{ m: mNum }} />
+      <Fill template={words.countOne} slots={{ m: mAlone }} />
     ) : (
       <Fill template={words.count} slots={{ n: nNum, m: mNum }} />
     );
@@ -215,7 +246,7 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
             onClick={() => setOpen((now) => !now)}
             data-rebid-disclosure
           >
-            {open ? (n === 1 ? words.listHideOne : words.listHide) : n === 1 ? words.listShowOne : <Fill template={words.listShow} slots={{ n: String(n) }} />}
+            {open ? (n === 1 ? words.listHideOne : words.listHide) : n === 1 ? words.listShowOne : <Fill template={words.listShow} slots={{ n: formatCount(n) }} />}
           </Button>
         </div>
       ) : (
@@ -248,16 +279,6 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
           </div>
         ))}
       </div>
-      <Source className="mt-4">
-        {asOf ? (
-          <Fill template={words.sourceAsOf} slots={{ sources: <Joined items={result.sources.map((source) => source.dataset_name)} />, asOf: <Num date={asOf} /> }} />
-        ) : (
-          <Fill
-            template={words.source}
-            slots={{ sources: <Joined items={result.sources.map((source) => source.dataset_name)} />, through: result.records_through ? <Num date={result.records_through} /> : "" }}
-          />
-        )}
-      </Source>
     </>
   );
 }
@@ -424,11 +445,13 @@ function RebidError({ state }: { state: Extract<RebidState, { status: "error" }>
 
 // ── The block on a page: it reads, reruns and opens ──────────────────────
 
-export function Rebidding({ path, section, comparing = false }: {
+export function Rebidding({ path, section, sectionFailed = false, comparing = false }: {
   // GET .../rebidding with section 1's criteria, or null while the package has none.
   path: string | null;
   // Section 1's result, when it has loaded: the block counts the same comparable packages.
   section: ComparablesResult | null;
+  // Section 1's own request failed: the block comes from its own tool, so it still shows under the error (ticket 101).
+  sectionFailed?: boolean;
   comparing?: boolean;
 }) {
   const here = useStore(address);
@@ -436,16 +459,18 @@ export function Rebidding({ path, section, comparing = false }: {
   const params = new URLSearchParams(here.search);
   const asOf = params.get("asof");
   const view = params.get("view");
-  const shown = countsComparables(section) && path !== null;
+  const shown = (sectionFailed || countsComparables(section)) && path !== null;
   const [state, setState] = useState<RebidState>({ status: "loading" });
   const [hidden, setHidden] = useState(false);
   const [updating, setUpdating] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
-  const root = useRef<HTMLDivElement>(null);
-  const focusInside = useRef(false);
   const last = useRef<RebiddingResult | null>(null);
   const retried = useRef(false);
+  // The block is zone 1's second block, with no element of its own around it (ticket 101): its body is the one its
+  // heading sits in, and focus is tracked from the document.
+  const body = () => heading.current?.closest<HTMLElement>("[data-block=again]") ?? null;
+  const focusInside = useFocusWithin(body);
 
   useEffect(() => {
     if (!shown) return;
@@ -503,7 +528,8 @@ export function Rebidding({ path, section, comparing = false }: {
 
   // If a rerun removed the element that had focus, focus moves to the block's heading.
   useLayoutEffect(() => {
-    if (focusInside.current && root.current && !root.current.contains(document.activeElement)) heading.current?.focus();
+    const block = body();
+    if (focusInside.current && block && !block.contains(document.activeElement)) heading.current?.focus();
   }, [state]);
 
   if (!shown || hidden) return null;
@@ -514,26 +540,16 @@ export function Rebidding({ path, section, comparing = false }: {
       openEvidence(`${COMPARABLE}${stepReference}`, { serial: null, sentence: null, marker: element, runId: null, fallback: fallback() }),
   };
   return (
-    <div
-      ref={root}
-      onFocus={() => {
-        focusInside.current = true;
-      }}
-      onBlur={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) focusInside.current = false;
-      }}
-    >
-      <RebiddingView
-        state={state}
-        numbers={numbers}
-        asOf={asOf}
-        comparing={comparing}
-        updating={updating}
-        openId={evidenceIn(here.search)}
-        visited={seen}
-        handlers={handlers}
-        headingRef={heading}
-      />
-    </div>
+    <RebiddingView
+      state={state}
+      numbers={numbers}
+      asOf={asOf}
+      comparing={comparing}
+      updating={updating}
+      openId={evidenceIn(here.search)}
+      visited={seen}
+      handlers={handlers}
+      headingRef={heading}
+    />
   );
 }

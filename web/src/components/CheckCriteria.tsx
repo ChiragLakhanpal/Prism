@@ -440,7 +440,6 @@ export function CheckCriteriaView(props: ViewProps) {
     <>
       <CollapsedSection
         id={props.sectionId ?? SECTION_ID}
-        eyebrow={words.eyebrow}
         number={words.number}
         heading={words.heading}
         headingRef={headingRef}
