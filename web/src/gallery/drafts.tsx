@@ -99,6 +99,9 @@ export function draftsPage(plan: CheckedPlan): GalleryPage {
             <Labeled label={ds.stepDiscarded}>
               <DiscardedOn date={day(DISCARDED.discarded!.at)} />
             </Labeled>
+            <Labeled label={ds.stepColumn}>
+              <StateStepper state="checked" layout="column" />
+            </Labeled>
           </div>
         ),
       },

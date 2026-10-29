@@ -687,6 +687,12 @@
     }
   }
 }
+/* The draft bar's foot (ticket 103; DESIGN.md section 5, Draft bar): 12 px under its buttons, plus the phone's safe
+   area, so on a tablet or a phone held sideways, where the bar sticks to the window's foot, its buttons clear the home
+   indicator. The safe area is 0 on a screen without one. */
+@utility foot-safe {
+  padding-bottom: calc(var(--spacing) * 3 + env(safe-area-inset-bottom, 0px));
+}
 
 /* The plan check's marked rows (DESIGN.md section 5, Plan check table and Evidence drawer; ticket 100): the rows a
    count word in the finding counts, and a row a link's hash named, take tint; the row whose records the drawer shows

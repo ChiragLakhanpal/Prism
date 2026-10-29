@@ -68,7 +68,7 @@ export const ROUTES: Route[] = [
       body: "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you to check.",
       link: ["Go to Packages", "/packages"],
     },
-    // Ticket 35 built the Drafts tab: with no drafts, it shows brief 06's empty-state card.
+    // Ticket 35 built the Drafts tab; since ticket 103, with no drafts it shows one Task zone row marked as the empty state.
     api: { "/api/drafts": '{"groups":{"to_check":[],"checked":[],"exported":[]},"counts":{"to_check":0,"checked":0,"exported":0},"discarded":[],"discarded_count":0,"total":0}' },
   },
 ];

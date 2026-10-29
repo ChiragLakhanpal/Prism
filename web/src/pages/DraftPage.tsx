@@ -4,10 +4,17 @@
 // columns 1 to 7 of the frame from a frame of 1200 px, so the evidence drawer opens beside the notes; the notes
 // are a table when the column is at least 560 px wide, and cards below that.
 //
-// The header sticks from 1024 px; the draft bar sticks to the bottom of a window at least 768 px wide and
-// 640 px tall, while its column is at least 30rem wide. The frame's one hook keeps a focused control clear of
-// both (DESIGN.md section 10; lib/sticky.ts), measured as their heights change. Only the draft's author acts;
-// the server holds the state machine, and the page changes state only when the server says so.
+// Since ticket 103 it takes the workspace layout (plan 7.8; DESIGN.md section 4, Page layouts): from that frame the
+// side panel "State of this draft" in columns 9 to 12 holds the state stepper, what the draft was made from, when it
+// was drafted and, once checked, who checked it and when; it hides while the drawer is open, which opens in its place.
+// Below that frame the stepper takes one line in the head, under the subtitle, and the rest of the panel follows the
+// draft, so the lede stays in the first screen.
+//
+// The header sticks in a window at least 1024 px wide and 50rem tall (the head-sticks variant); the draft bar sticks to
+// the bottom of a window at least 768 px wide and 640 px tall, while its column is at least 30rem wide. The frame's one
+// hook keeps a focused control clear of both (DESIGN.md section 10; lib/sticky.ts), measured as their heights change.
+// Only the draft's author acts; the server holds the state machine, and the page changes state only when the server
+// says so.
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Alert } from "../components/Alert";
 import { StepsTaken } from "../components/Answer";
@@ -15,7 +22,7 @@ import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { ExampleNote } from "../components/ExampleNote";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
-import { BAR_BUTTONS, BAR_MAIN, BAR_ROOM, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
+import { BAR_BUTTONS, BAR_MAIN, BAR_ROOM, checkedLine, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
 import { DraftNotes, NoteSentences, WrittenIn, type NoteRow } from "../components/DraftNotes";
 import { ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { citedInParts, MissionBriefParts } from "../components/MissionBriefParts";
@@ -28,9 +35,10 @@ import { PaperSheet } from "../components/PaperSheet";
 import { PpsdRows } from "../components/PpsdRows";
 import { PpsdSources } from "../components/PpsdSources";
 import { IdText, ProjectId, ProjectIdText } from "../components/ProjectId";
+import { PageHead } from "../components/PageHead";
+import { SidePanel, type SideFact } from "../components/SidePanel";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { SourcesList } from "../components/SourcesList";
-import { SpaceLine } from "../components/SpaceLine";
 import { StepRowsDraft } from "../components/StepRowsDraft";
 import { AccessLabel } from "../components/AccessLabel";
 import { DiscardedOn, StateStepper } from "../components/StateStepper";
@@ -126,15 +134,18 @@ function stepsOf(draft: Draft, kind: KindWords): Step[] {
   ];
 }
 
-// The sticky header: it sticks from a page area of 1024 px, and in a frame of 1200 px or more, where the
-// column keeps its place beside the evidence drawer. It must be a direct child of the tall page, with its
-// margin on itself (className), or sticky has no room to move. Its type sets a height such as 134.89 px, and
-// a stuck header whose bottom edge falls inside a pixel lets the notes under it show through that pixel, so
-// its bottom padding takes up the fraction and the header ends on a whole pixel.
-export function DraftHeader({ title, subtitle, state, className }: {
+// The sticky header: it sticks under the bar in a window at least 1024 px wide and 50rem tall (the head-sticks variant
+// in app.css), so in a short window the bar, the header and the draft bar never leave the notes a quarter of it (ticket
+// 93's review, routed to ticket 103). It must be a direct child of the tall page, with its margin on itself
+// (className), or sticky has no room to move. Its type sets a height such as 134.89 px, and a stuck header whose bottom
+// edge falls inside a pixel lets the notes under it show through that pixel, so its bottom padding takes up the
+// fraction and the header ends on a whole pixel. What the page puts under the subtitle (under), such as a draft's
+// state stepper below a frame of 75rem, takes a line of its own.
+export function DraftHeader({ title, subtitle, state, under, className }: {
   title: ReactNode;
   subtitle: ReactNode;
-  state: ReactNode;
+  state?: ReactNode;
+  under?: ReactNode;
   className?: string;
 }) {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
@@ -157,17 +168,20 @@ export function DraftHeader({ title, subtitle, state, className }: {
       ref={ref}
       data-draft-header
       data-sticky="top"
-      className={cx("border-b border-line bg-page pt-2 pb-4 @lg/page:sticky @lg/page:top-(--frame-top) @lg/page:z-10 @xl/frame:sticky @xl/frame:top-(--frame-top) @xl/frame:z-10", className)}
+      className={cx("border-b border-line bg-page pt-2 pb-4 head-sticks:sticky head-sticks:top-(--frame-top) head-sticks:z-10", className)}
     >
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-2">
         <div className="min-w-0">
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">
             {title}
           </h1>
-          <p className="mt-2 text-body text-ink-muted">{subtitle}</p>
+          <p className="mt-2 text-body text-ink-muted" data-subtitle>
+            {subtitle}
+          </p>
         </div>
-        <div className="min-w-0 @lg/page:mt-2 @xl/frame:mt-2">{state}</div>
+        {state != null && <div className="min-w-0 @lg/page:mt-2 @xl/frame:mt-2">{state}</div>}
       </div>
+      {under}
     </div>
   );
 }
@@ -213,18 +227,85 @@ export function ppsdSubtitle(title: string, reference: string | null | undefined
 
 // The column: columns 1 to 7 of the frame from a frame of 1200 px, all 12 of the page area below. It is the notes'
 // size container. From that frame it keeps the same place and width when the evidence drawer narrows the page
-// area (the 35 brief, section 3.2; ticket 94; app.css, "The workspace layout"). What a page puts beside it (the
-// space line, ticket 110) takes columns 9 to 12 from that frame, top-aligned with the column, and is not shown below
-// it; both sit in the grid's first row, so hiding it moves nothing.
-export function DocumentColumn({ children, beside }: { children: ReactNode; beside?: ReactNode }) {
+// area (the 35 brief, section 3.2; ticket 94; app.css, "The workspace layout"). A side panel (side; ticket 103) takes
+// columns 9 to 12 from that frame, top-aligned with the column, and sticks 24 px under the bar, as Workspace.tsx places
+// one; it hides while the drawer is open, since the drawer opens in its place (app.css, data-side-slot). Below that
+// frame it follows the column. The column holds the page's sticky header and draft bar, so it stays one tall grid
+// area: a sticky part moves only inside its parent.
+export function DocumentColumn({ children, side }: { children: ReactNode; side?: ReactNode }) {
   return (
     <div className="layout-grid">
       <div data-document-column className="@container/doc col-span-12 col-start-1 row-start-1 min-w-0">
         {children}
       </div>
-      {beside != null && <div className="col-span-4 col-start-9 row-start-1 hidden min-w-0 @xl/frame:block">{beside}</div>}
+      {side != null && (
+        <div
+          data-side-slot
+          data-fold="after"
+          className={cx(
+            "col-span-12 mt-8 min-w-0",
+            "@xl/frame:col-span-4 @xl/frame:col-start-9 @xl/frame:row-start-1",
+            "@xl/frame:sticky @xl/frame:top-[calc(var(--frame-top)+1.5rem)] @xl/frame:mt-0 @xl/frame:self-start",
+          )}
+        >
+          {side}
+        </div>
+      )}
     </div>
   );
+}
+
+// What a draft was made from (ticket 103): its kind's sentence, linked to the page it was made from where there is one.
+function MadeFrom({ draft, kind }: { draft: Draft; kind: KindWords }) {
+  const subject = draft.subject;
+  if (draft.kind === "step_rows") return <Fill template={kind.madeFrom} slots={{ date: day(subject.plan_date) }} />;
+  if (draft.kind === "mission_brief") {
+    return (
+      <TextLink href={`/projects/${subject.project_id}`}>
+        <Fill template={kind.madeFrom} slots={{ date: formatDate(subject.data_through ?? subject.as_of ?? draft.created_at.slice(0, 10)) }} />
+      </TextLink>
+    );
+  }
+  if (isPpsdKind(draft.kind)) {
+    return (
+      <TextLink href={`${packageHref(subject)}#risks`}>
+        <Fill template={kind.madeFrom} slots={{ title: subject.package_title ?? "" }} />
+      </TextLink>
+    );
+  }
+  return (
+    <TextLink href={`/projects/${subject.project_id}/procurement/${subject.agency_id}/${subject.plan_date}`}>
+      <Fill template={kind.madeFrom} slots={{ agency: subject.implementing_agency, date: day(subject.plan_date) }} />
+    </TextLink>
+  );
+}
+
+// The side panel "State of this draft" (ticket 103; plan 7.8): the stepper, shown from a frame of 75rem (below it the
+// head holds it), then what the draft was made from, when it was drafted and, once checked, who checked it and when,
+// in the bar's own words. A discarded draft says when it was discarded in the stepper's place.
+function DraftState({ draft, kind }: { draft: Draft; kind: KindWords }) {
+  const facts: SideFact[] = [
+    { label: words.side.madeFrom, value: <MadeFrom draft={draft} kind={kind} />, wide: true },
+    { label: words.side.drafted, value: draft.author.you ? kind.metaYou(day(draft.created_at)) : kind.metaTeammate(draft.author.name ?? "", day(draft.created_at)), wide: true },
+  ];
+  const checked = draft.state === "checked" || draft.state === "exported" ? checkedLine(draft) : null;
+  if (checked) facts.push({ label: words.side.checked, value: checked, wide: true });
+  return (
+    <SidePanel
+      title={words.state.label}
+      before={
+        <div className="mt-3 hidden @xl/frame:block">
+          <StepperOf draft={draft} layout="column" />
+        </div>
+      }
+      facts={facts}
+    />
+  );
+}
+
+function StepperOf({ draft, layout }: { draft: Draft; layout: "row" | "column" }) {
+  if (draft.state === "discarded" && draft.discarded) return <DiscardedOn date={day(draft.discarded.at)} />;
+  return <StateStepper state={draft.state === "discarded" ? "draft" : draft.state} checkedBy={draft.author.you ? null : draft.author.name} layout={layout} />;
 }
 
 export function DraftPage({ draftId, search }: { draftId: string; search: string }) {
@@ -377,19 +458,23 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
     );
   }
   if (loaded.status === "error") {
+    // The page's one request failed (plan 8.5): the error alert in the alert slot above the head, "Drafts" as the h1,
+    // and nothing else. A draft that never loaded names no project, so the box has no scope chip.
     return (
       <DocumentColumn>
         <div data-draft-page="error">
-          <h1 tabIndex={-1} className="sr-only">
-            {copy.pages.draft.title}
-          </h1>
-          <LoadError
-            error={loaded.error}
-            message={storeFailed(loaded.error) ? words.page.draftStore : words.page.error}
-            permission={words.page.permission}
-            onRetry={reload}
-            retrying={loaded.retrying}
-            attempt={loaded.attempt}
+          <PageHead
+            title={copy.pages.drafts.title}
+            alert={
+              <LoadError
+                error={loaded.error}
+                message={storeFailed(loaded.error) ? words.page.draftStore : words.page.error}
+                permission={words.page.permission}
+                onRetry={reload}
+                retrying={loaded.retrying}
+                attempt={loaded.attempt}
+              />
+            }
           />
         </div>
       </DocumentColumn>
@@ -579,7 +664,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   const writtenIn = d.lang ?? ENGLISH;
   return (
     <WrittenIn.Provider value={writtenIn}>
-    <DocumentColumn beside={<SpaceLine>{copy.evidence.spaceHint.draft}</SpaceLine>}>
+    <DocumentColumn side={<DraftState draft={d} kind={kind} />}>
       <div data-draft-page={d.state}>
         {conflict && (
           <Alert state="info" live="status" className="mb-6">
@@ -596,12 +681,11 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           subtitle={brief ? (
             <Fill template={kind.subtitle} slots={{ name: subject.project_name, pid: <ProjectId pid={subject.project_id} />, country: subject.country ?? "" }} />
           ) : ppsd ? ppsdSubtitle(subject.package_title ?? "", subject.step_reference) : subtitleOf(kind, subject.implementing_agency, subject.plan_date)}
-          state={
-            d.state === "discarded" && d.discarded ? (
-              <DiscardedOn date={day(d.discarded.at)} />
-            ) : (
-              <StateStepper state={d.state === "discarded" ? "draft" : d.state} checkedBy={d.author.you ? null : d.author.name} />
-            )
+          // Below a frame of 75rem the stepper takes one line under the subtitle; from it the side panel holds it.
+          under={
+            <div className="mt-3 @xl/frame:hidden">
+              <StepperOf draft={d} layout="row" />
+            </div>
           }
         />
         {agencyDraft && <AccessLabel className="mt-2" />}
@@ -613,7 +697,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         )}
         <div className="mt-6 max-w-[72ch]">
           {/* The page's finding: the lede count's tooltip opens under all of it (DESIGN.md, Number tooltip). */}
-          <h2 id={ledeId} tabIndex={-1} className="text-h2 text-pretty text-ink-heading focus:outline-none" data-lede data-finding>
+          <h2 id={ledeId} tabIndex={-1} className="max-w-[22.5em] text-finding text-pretty text-ink-heading focus:outline-none" data-lede data-finding>
             {lede}
           </h2>
           <p className="mt-2 text-body text-ink">
@@ -742,9 +826,6 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted" data-not-visible>
           {copy.checkPlan.notVisible}
         </p>
-        <p className="mt-2 text-caption text-ink-muted" data-meta>
-          {d.author.you ? kind.metaYou(created) : kind.metaTeammate(d.author.name ?? "", created)}
-        </p>
         {end}
         <p role="status" className="sr-only" data-page-status>
           {announced}
@@ -771,8 +852,24 @@ function DraftSkeleton() {
       <SkeletonText className={cx(className, "hidden md:flex")} widths={wide} />
     </>
   );
+  // The side panel's labels over value bars, and the stepper's three steps from a frame of 75rem.
+  const side = (
+    <SidePanel
+      title={words.state.label}
+      loading
+      before={
+        <div className="mt-3 hidden @xl/frame:block">
+          <SkeletonText className="text-small" widths={["w-16", "w-28", "w-20"]} />
+        </div>
+      }
+      facts={[
+        { label: words.side.madeFrom, value: null, wide: true },
+        { label: words.side.drafted, value: null, wide: true },
+      ]}
+    />
+  );
   return (
-    <DocumentColumn>
+    <DocumentColumn side={side}>
       <div data-draft-page="loading" aria-busy="true">
         <p role="status" className="sr-only">
           {words.page.loading}
@@ -780,17 +877,17 @@ function DraftSkeleton() {
         <nav aria-hidden="true" className="flex h-7 items-center text-caption">
           <Skeleton className="h-[1em] w-16 md:w-[200px] md:max-w-full" />
         </nav>
-        {/* The h1, the subtitle and the stepper, which the subtitle's length puts on a line of its own. */}
+        {/* The h1, the subtitle and, below a frame of 75rem, the stepper on a line of its own under it. */}
         <div className="border-b border-line pt-2 pb-4">
           <h1 tabIndex={-1} className="text-h1 focus:outline-none">
             <span className="sr-only">{copy.pages.draft.title}</span>
             <SkeletonLine width="w-[200px] max-w-full" />
           </h1>
           {lines(["w-full", "w-3/5"], ["w-[280px] max-w-full"], "mt-2 text-body")}
-          <SkeletonLine className="mt-2 text-small @lg/page:mt-4" width="w-[300px] max-w-full" />
+          <SkeletonLine className="mt-3 text-small @xl/frame:hidden" width="w-[300px] max-w-full" />
         </div>
         <div className="mt-6 max-w-[72ch]">
-          {lines(["w-full", "w-full", "w-1/2"], ["w-full", "w-2/5"], "text-h2")}
+          {lines(["w-full", "w-full", "w-1/2"], ["w-full", "w-2/5"], "max-w-[22.5em] text-finding")}
           {lines(["w-full", "w-full", "w-full", "w-3/5"], ["w-full", "w-4/5"], "mt-2 text-body")}
         </div>
         <div className="mt-4 flex max-w-prose flex-col gap-2">
@@ -857,7 +954,7 @@ function DraftSkeleton() {
         </div>
         <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{copy.checkPlan.notVisible}</p>
         <SkeletonLine className="mt-2 text-caption" width="w-64 max-w-full" />
-        <section aria-label={words.bar.label} className={cx("z-10 border-t border-line bg-surface px-4 py-3 md:px-6", BAR_ROOM, STICKY)}>
+        <section aria-label={words.bar.label} className={cx("z-10 border-t border-line bg-surface px-4 pt-3 foot-safe md:px-6", BAR_ROOM, STICKY)}>
           <p className="max-w-[80ch] text-small text-ink">
             {/* The kind's lead sentence before the consequence, and the opened count and hold line after it,
                 each in two parts, so they wrap over as many lines as the words will. */}

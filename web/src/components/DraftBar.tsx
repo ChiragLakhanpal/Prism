@@ -10,7 +10,8 @@
 // export is held. Row 2 has Discard at the left edge, set apart
 // by the whole row, and Export to Word and the solid button at the right. In Draft the solid button is
 // Mark as checked and Export to Word is held; once checked, and with no hold left, Export to Word is the
-// solid button. Only the author acts: a teammate reads one line instead of the buttons.
+// solid button. Only the author acts: a teammate reads one line instead of the buttons. Once the notes are checked, a
+// line after row 1 says who checked them and when (ticket 103). Its bottom padding adds the phone's safe area.
 //
 // A busy button shows its busy label within 100 ms and keeps its width, and the bar is aria-busy until
 // the server answers. The state changes only when the server confirms it. A status line announces each
@@ -21,7 +22,7 @@ import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import type { Action, Draft } from "../lib/drafts";
 import { fileHref } from "../lib/drafts";
-import { formatCount, formatNumber } from "../lib/format";
+import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
@@ -179,6 +180,7 @@ export const DraftBar = forwardRef(function DraftBar(
     onAct("export");
   };
   const describedBy = hold ? holdId : undefined;
+  const decided = checked ? checkedLine(draft) : null;
   return (
     <section
       ref={ref}
@@ -186,7 +188,7 @@ export const DraftBar = forwardRef(function DraftBar(
       aria-busy={busy !== null}
       data-draft-bar={draft.state}
       data-sticky="bottom"
-      className={cx("z-10 border-t border-line bg-surface px-4 py-3 md:px-6", STICKY, className)}
+      className={cx("z-10 border-t border-line bg-surface px-4 pt-3 foot-safe md:px-6", STICKY, className)}
     >
       <p className="max-w-[80ch] text-small text-ink" data-bar-lead>
         {mine ? words.barLead : words.barLeadTeammate(author)} <Consequence />{" "}
@@ -203,6 +205,13 @@ export const DraftBar = forwardRef(function DraftBar(
           </>
         )}
       </p>
+      {/* Who checked the notes, and when (ticket 103; plan 9, pattern 9): once checked, the hold line gives way to this
+          line, by role, with the server's date. It changes at once, with nothing that fades. */}
+      {decided && (
+        <p className="mt-1 text-small font-semibold text-ink-heading" data-decided-line>
+          {decided}
+        </p>
+      )}
       {failed && (
         <p role="alert" className="mt-2 flex items-start gap-2 text-small text-error">
           <CircleX aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-error-icon" />
@@ -270,6 +279,15 @@ export const DraftBar = forwardRef(function DraftBar(
     </section>
   );
 });
+
+// "Checked by you on October 23, 2026.", or the teammate's name in its place: the Drafts list's words for the same act
+// (copy.draft.tab), with the date the server recorded. Null before the notes are checked.
+export function checkedLine(draft: Draft): string | null {
+  if (!draft.checked) return null;
+  const date = formatDate(draft.checked.at.slice(0, 10));
+  const words = copy.draft.tab;
+  return draft.checked.you ? words.checkedYou(date) : words.checkedOther(draft.checked.by ?? draft.author.name ?? "", date);
+}
 
 // The bar's "You opened" link moves focus to the Sources heading, in the page.
 function focusSources() {

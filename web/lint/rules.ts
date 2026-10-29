@@ -123,6 +123,8 @@ export const NON_COPY_PROPS = new Set([
   "key",
   "type",
   "variant",
+  // The state stepper's layout, "row" or "column" (ticket 103).
+  "layout",
   "kind",
   "state",
   "status",
