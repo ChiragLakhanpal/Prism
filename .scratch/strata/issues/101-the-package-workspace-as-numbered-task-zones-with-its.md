@@ -6,7 +6,7 @@ Read first: the prototype's package page at 1440, 1280, 1024 and 390 px, with th
 
 **Blocked by:** 100 (Packages and the plan check: the plan check under Packages, and rows that open their records); 96 (The number tooltip: what a number is, where it came from, and what a click does, with its gate test)
 
-**Status:** ready
+**Status:** done
 **Area:** app
 **Phase:** P4
 **Design review:** yes
@@ -27,5 +27,48 @@ Read first: the prototype's package page at 1440, 1280, 1024 and 390 px, with th
 - October 27, 2026, pm: routed from the reviews of ticket 91:
   - The package page mixes label case: sections 1 and 3 read in sentence case, while sections 2, 4 and 5 keep capitals through `CollapsedSection.tsx` line 85 (the critic's typography 3). When the eyebrows go and the PPSD sections become tags, check that no capitals are left. (ticket 91, `.notes/91-critique.md` and `.notes/91-verify.md`, deferred)
   - Section 4's label reads "Planning, PPSD section 6" (`approachOptions.eyebrow` in `web/src/copy.ts`) and section 3's reads "Planning · PPSD section 3" (`packageRisks.eyebrow`); write the two PPSD tags the same way. (ticket 91, `.notes/91-critique.md`)
+
+- October 28, 2026, merger: merged strata/101-the-package-workspace-as-numbered-task-zones-with-its (head 6298a725, 9 commits on d5879a8e) into build/strata as merge commit 98da05ac, with history, since the branch's commits hold no key-shaped line. The worktree that built it was `.claude/worktrees/wf_fcb3b966-9eb-55`; I remove it right after this commit and keep the branch. The merge changes 69 files (2,598 lines in, 1,074 out): `web/src/pages/PackagePage.tsx` and `PlannedPackagePage.tsx`; 23 components (`ApproachOptions`, `Breadcrumb`, `CheckCriteria`, `CollapsedSection`, `CostLane`, `Criteria`, `CriteriaParts`, `EvidenceDrawer`, `Fill`, `FootStrip`, `PackageFacts`, `PageHead`, `PastRange`, `PpsdAction`, `RangeChart`, `RebiddingBlock`, `RisksSection`, `SidePanel`, `StepTracker`, `StepsDrawer`, `StepsSection`, `Table`, `TaskZone`); `web/src/lib/packages.ts` and the new `useFocusWithin.ts`; `copy.ts`, `routes.ts`, `app.css`, the gallery (`copy.ts`, `pages.tsx`), `web/capture/shots.ts`, `web/lint/rules.ts`; DESIGN.md (block 9); `config/thresholds.toml` (the `[review]` and `[market_approach]` sources in the first person); the new recorded answer `tests/fixtures/api/evidence-plan-row-ke-nwwda-541055.json`, with its entries in `tests/record_rebidding_api.py` and `tests/test_package_routes.py`; 13 re-recorded planned-package answers; and 17 specs (`package`, `planned-package`, `package-risks`, `package-steps`, `package-rebidding`, `package-tracker`, `criteria`, `time-estimate`, `ppsd`, `box`, `timeline`, `num`, `num-actions`, `gallery-components`, `deck`, `copy-key`, `space-line`). No dependency, SQL or gate file changed and the merge had no conflicts, so `scripts/install` had no package to add and I did not run its `npm ci`.
+  - The gate: I committed through the orchestrator's quiet-window script. Its first look, at 22:25 PDT, saw a load of 2. Its first try passed in 128.1 seconds and made 98da05ac at 22:27. The fixture build took 24.9 s and rebuilt the database, because `config/thresholds.toml` changed. Then the Python tests took 93.1 s and 98.6 s, Playwright 92.9 s and 95.9 s, and the secret scan 3.2 s. `git log --parents -1` shows the two parents 9251b5b6 and 6298a725.
+  - By hand on build/strata at 98da05ac: the gate passed in 124.9 seconds, from 22:27:39 to 22:29:44 PDT, while the load rose from 22 to 34. The fixture database was kept. The Python tests took 116.6 s and 120.3 s, Playwright 98.3 s and 102.8 s, and the secret scan 3.3 s. So the history scan has read the merged history, 25.1 seconds under the 150-second limit.
+  - Notes that passed, at 6298a725:
+    - The code review approved round 3 with nothing blocking and no follow-up (`.notes/101-review-r3.md`). Round 2's B1 is fixed: a project timeline's contract mark no longer says "Comparable package in the past range". The new `rangeIds` store marks only the past range's own rows, and a test in `timeline.spec.ts` proves it.
+    - The design lead passed it with polish: nothing blocking, seven polish items (`.notes/101-design-r3.md`). axe found nothing in 36 runs at 1440, 1024 and 390 px.
+    - The design critic did not block, and the lowest score was 4 (`.notes/101-critique-r3.md`). Round 2's two scores of 3 are fixed.
+  - Verify (`.notes/101-verify-r3.md`): pass on all six criteria, with the visual parts listed below deferred to the design pass. The worktree's gate passed in 123.7 seconds. The ten named specs gave 261 passed in 40.7 s on four workers.
+    - Criterion 1: the order of stages, zones and PPSD tags was read at 1440, 1024 and 390 px, and no heading, tag or label holds a middle dot or capitals.
+    - Criterion 2: the exact finding is in the `finding` style. It sits wholly inside the first screen: y 537 to 665 at 390 by 844, and y 469 to 541 at 1024 by 768.
+    - Criterion 3: pressing "2" from the keyboard showed exactly KE-WAJWASCO-372776-CW-RFB and KE-WAJWASCO-356671-CW-RFB, with the count line focused. The first row was at y 176 of 900 and y 172 of 844. "Show all 49" showed 20 rows with focus on "Showing 1–20 of 49 packages". The verifier then pressed every number in the finding and the summary, and every count was one find_comparables returned.
+    - Criterion 4: in the few state, 7 dots and no band, middle or 8-in-10 line. With a 503 on the past range, one alert stood in zone 1 and "Advertised again" still showed. The one "49" left there is rebidding_risk's own `past_range_total`.
+    - Criterion 5: the chart measured 563 px at 1440 with the sidebar open, 563 px at 1280 and 657 px at 1440 as a rail. The ring is 2 px `info-icon`. The marker opened plan row KE-NWWDA-541055-CW-RFB at 1440 with and without the sidebar and at 1280, with the zones' left edge and width unchanged.
+    - Criterion 6: 11 states were scanned with axe at three widths, with no violation.
+    - As of a date: no record public after the as-of date is cited. As of October 8, 2026 the page reads plan version 40090127. As of September 30, 2023 the tool held back with `unknown_package`.
+    - Numbers checked against their source rows. The two packages signed within 1.5 months took 34 and 46 days. The plan's 1.5 months is 45 days. The side panel's 1,230,000.00 matches `strata.silver.plan_rows` document 40132287. The Kaplan-Meier quartiles, recomputed from the 49 rows, are 3.3, 4.4, 7.9 and 9.1 months, which matches the tool and `values.toml`. The refusal tests passed (23 and 7).
+  - Workspace results: none run and none parked. The builder named no workspace step, and the verifier parked none, since every criterion runs offline on the fixture and the recorded answers. Every key is set (`guard.py --env-keys`), but mergers run no workspace step. The next App redeploy from a snapshot at or after 98da05ac carries this ticket; the orchestrator or the second session runs it.
+  - Deferred to the design pass:
+    - The ticket comment's gallery states (`past-range` at three widths, filtered and in the few state) and its captures (the package page loading, ready, drawer open, few and error, and the planned package's reading state). The verifier took captures at 1440 only and measured the other widths the criteria name.
+    - The round 3 design review's follow-ups 1 to 7 (`.notes/101-design-r3.md`):
+      1. Zone 5's cost cards drawn as rows (`cardRows`).
+      2. The criteria strip's "Show it" hover and focus ring.
+      3. Zone 2's table at 1024 px.
+      4. The step tracker's skeleton height.
+      5. Zone 1's 8 px shift at 320 px.
+      6. The planned package's source line saying one thing twice.
+      7. The gallery's cost strips with no padding.
+    - The round 3 critique's follow-ups 1 to 9 (`.notes/101-critique-r3.md`):
+      1. Zone 2's step cards on the card grid (the top change: each step's label and value sit about 400 px apart at 1440 and 1280, and five of six cards repeat one sentence).
+      2. Zone 5's cost cards as panel rows, with the number tooltip on their coverage line.
+      3. The source line as one sentence.
+      4. The planned package's tracker before any date.
+      5. One layout for the count line.
+      6. Hiding "Country: Kenya" on every card.
+      7. Zones 2 and 5 while zone 1 has failed.
+      8. The small copy items.
+      9. The 8 px shift at 320 px.
+    - A margin to watch: the chart is 563 px at 1440 with the sidebar open and at 1280, only 3 px over criterion 5's 560 px floor. A design-pass change that adds padding to zone 1 would fail that criterion's test.
+  - For the pm (from `.notes/101-review-r3.md`): this ticket wrote the first-person `source` wording in `[review]` and `[market_approach]`, so ticket 58's line 77 should now ask only for the lint: add `"thresholds.toml"` to the copy lint's file list in `web/lint/run.ts` and `source` to `REGISTRY_WORDS`.
+  - Decisions parked for the user: none. The builder passed on none, and the review, design review, critique and verify notes each park none.
+  - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message. The main checkout was clean before the merge.
+  - Unblocks: none. No ticket lists 101 as a blocker.
 
 ---
