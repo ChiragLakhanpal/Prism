@@ -17,4 +17,4 @@ Read first: `src/strata/lakehouse/engine.py` (`WarehouseEngine.run`, `Result`, t
 
 ## Comments
 
-- October 29, 2026, orchestrator: opened at 13:05 PDT from the owner's report of the timeline page; the traceback came from running the route against the warehouse by hand.
+- October 29, 2026, orchestrator: opened at 12:20 PDT from the owner's report of the timeline page; the traceback came from running the route against the warehouse by hand.
