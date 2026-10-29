@@ -34,6 +34,7 @@ export function TaskZone({
   panel,
   summary,
   state = "ready",
+  loading,
   error,
   toggle,
   corner,
@@ -59,6 +60,9 @@ export function TaskZone({
   // The zone's one sentence: a closed zone's summary, or all a row holds.
   summary?: ReactNode;
   state?: ZoneState;
+  // What holds the summary's place while it loads, such as the lines a zone's most common answer takes (ticket 59); two
+  // skeleton lines when unset.
+  loading?: ReactNode;
   // The alert, its "Try again" and its code line, in place of the summary when the summary could not load.
   error?: ReactNode;
   toggle?: ZoneToggle;
@@ -154,7 +158,7 @@ export function TaskZone({
           {(summary != null || state !== "ready") && (
             <div data-section-summary className="max-w-prose text-body text-ink">
               {state === "loading" ? (
-                <SkeletonText className="text-body" widths={["w-[90%]", "w-[45%]"]} />
+                (loading ?? <SkeletonText className="text-body" widths={["w-[90%]", "w-[45%]"]} />)
               ) : state === "error" ? (
                 error
               ) : (

@@ -8,8 +8,9 @@
 // stamp hides, and the Data item's tooltip and description carry its words.
 //
 // Below 1024 px the same element is the Menu sheet: a modal dialog named "Menu" that slides in from the left, with
-// the page and the bar inert behind it (Frame.tsx holds its state), the stamp under Data and, below 768 px, the view
-// switch's lines at its foot. It closes on Escape, on "Close the menu" and on
+// the page and the bar inert behind it (Frame.tsx holds its state), the stamp under Data and, below 768 px, the bar's
+// view switch as one button pinned to its foot, which shows the view lines and the language choice in place when it is
+// pressed (ticket 59, from ticket 93's critique). It closes on Escape, on "Close the menu" and on
 // the scrim, and focus goes back to the Menu button. When the window narrows past 1024 px, focus on an item moves
 // to the Menu button.
 //
@@ -18,7 +19,7 @@
 // all done it says so and leads to Home's strip, where Remove stays. As a rail it shows its icon and the short count,
 // and its tooltip says the rest. App.tsx decides when it shows (lib/startHere.ts).
 import { useEffect, useId, useLayoutEffect, useRef, useState, type FocusEvent } from "react";
-import { ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
+import { ChevronDown, ChevronUp, ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
@@ -31,7 +32,7 @@ import { useMenuSheet, WIDE } from "./Frame";
 import { LanguageChoice } from "./LanguageChoice";
 import { FOOT_SECTION, HOME_ITEM, SECTIONS, type Section, type SubItem, type SubItems } from "./sections";
 import { Skeleton } from "./Skeleton";
-import { ViewPanel, withModeOf, type NavMode, type Viewer } from "./TopNav";
+import { pillLabel, ViewPanel, withModeOf, type NavMode, type Viewer } from "./TopNav";
 
 export type Rest = "open" | "rail";
 
@@ -101,6 +102,7 @@ export function Sidebar({
   freshness,
   rest: forced,
   startHere,
+  viewOpen = false,
 }: {
   // The view the server applied: its sections, the pages it hides, and the address's mode, which every link keeps.
   mode: NavMode;
@@ -120,8 +122,16 @@ export function Sidebar({
   rest?: Rest;
   // Start here's examples and the ones followed (ticket 114), while the item shows; App.tsx decides when.
   startHere?: StartHereList | null;
+  // For the gallery: the Menu sheet's view lines start shown.
+  viewOpen?: boolean;
 }) {
   const sheet = useMenuSheet();
+  // Below 768 px the sheet's view button shows the view lines in place; they fold away again when the sheet closes.
+  const [viewShown, setViewShown] = useState(viewOpen);
+  const viewLinesId = useId();
+  useEffect(() => {
+    if (!sheet.open) setViewShown(viewOpen);
+  }, [sheet.open, viewOpen]);
   const wide = useMedia(WIDE);
   const [rest, toggle] = useRest(forced);
   const titleId = useId();
@@ -344,7 +354,8 @@ export function Sidebar({
           aria-label={copy.nav.label}
           onScroll={hideTip}
           // On the rail the items sit 12 px from its edges, as the prototype draws them (ticket 59).
-          className="flex flex-none flex-col px-2 py-3 rail:px-3 lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
+          // In the Menu sheet it grows, so Data, the stamp and the view button under it sit at the sheet's bottom (ticket 59).
+          className="flex flex-none flex-col px-2 py-3 max-lg:grow rail:px-3 lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
         >
           {sections === null ? (
             // Until GET /api/me says which sections the view has: static bars at the items' height and in their places,
@@ -408,15 +419,37 @@ export function Sidebar({
                 </button>
               </div>
         </nav>
-        {/* Below 768 px the view lines and the language of answers and drafts sit at the sheet's foot (tickets 40, 42);
-            from 768 px the view switch is in the bar (ticket 93). */}
-        <div data-menu-panel className="border-t border-line px-4 pt-4 pb-4 md:hidden">
-          <ViewPanel viewer={viewer} mode={mode} onDone={() => sheet.setOpen(false, false)} />
-          {viewer.status !== "error" && (
-            <div className="mt-4 border-t border-line pt-4">
-              <LanguageChoice />
-            </div>
+        {/* Below 768 px the bar's view switch sits at the sheet's foot as one button, under Data and the stamp; pressed, it
+            shows the view lines and the language of answers and drafts in place under it (tickets 40, 42; ticket 59, from
+            ticket 93's critique). From 768 px the view switch is in the bar (ticket 93). */}
+        <div data-menu-panel className="border-t border-line px-2 py-3 md:hidden">
+          {mode.unknown ? (
+            <Skeleton className="h-11 w-full" radius="rounded-sm" />
+          ) : (
+            <button
+              type="button"
+              data-menu-view
+              aria-expanded={viewShown}
+              aria-controls={viewLinesId}
+              onClick={() => setViewShown((shown) => !shown)}
+              className={cx(ITEM, "min-h-11 justify-between text-ink hover:bg-surface-2")}
+            >
+              <span className="min-w-0">{pillLabel(mode)}</span>
+              {viewShown ? <ChevronUp aria-hidden="true" className="size-4 shrink-0" /> : <ChevronDown aria-hidden="true" className="size-4 shrink-0" />}
+            </button>
           )}
+          <div id={viewLinesId} hidden={!viewShown || mode.unknown} className="px-2 pt-4 pb-1">
+            {viewShown && !mode.unknown && (
+              <>
+                <ViewPanel viewer={viewer} mode={mode} onDone={() => sheet.setOpen(false, false)} />
+                {viewer.status !== "error" && (
+                  <div className="mt-4 border-t border-line pt-4">
+                    <LanguageChoice />
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
         {tip && (
           <span

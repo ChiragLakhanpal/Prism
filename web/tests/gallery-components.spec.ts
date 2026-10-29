@@ -640,6 +640,10 @@ test("the open Menu panel and the view popover pass axe", async ({ page }) => {
   await page.goto("/gallery/navigation?menu=open&viewer=loading");
   await expect(page.locator("[data-menu-panel]")).toBeVisible();
   expect(await axe(page)).toEqual([]);
+  // The sheet's view button pressed, its view lines and language choice shown under it (ticket 59).
+  await page.goto("/gallery/navigation?menu=open&menuview=open");
+  await expect(page.locator("[data-menu-panel] [data-view-row]")).toHaveCount(3);
+  expect(await axe(page)).toEqual([]);
 
   await page.setViewportSize({ width: 1440, height: 900 });
   for (const viewer of ["", "&viewer=loading", "&viewer=signed-out", "&viewer=error"]) {

@@ -594,6 +594,40 @@ test("the view popover says who is signed in and offers each view as a link, wit
   await expect(dialog.getByRole("group")).toHaveAccessibleName("Language of answers and drafts");
 });
 
+// Ticket 59, the pm's routed item from ticket 93's critique: below 768 px the Menu sheet's foot held the whole view panel,
+// about three times the navigation's height, with a second current mark. Now the foot holds Data, the stamp under it and
+// one view button, the bar's view switch, pinned to the sheet's bottom; the view rows and the language choice show only
+// once it is pressed, and it says so with aria-expanded.
+test("at 390 px the Menu sheet's foot holds one view button under Data and the stamp, and its rows show when it is pressed", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: "Menu" });
+  const view = sheet.getByRole("button", { name: "View: World Bank staff", exact: true });
+  await expect(view).toHaveAttribute("aria-expanded", "false");
+  await expect(sheet.locator("[data-view-row]")).toHaveCount(0);
+  await expect(sheet.getByText("See Strata as", { exact: true })).toHaveCount(0);
+  // Data, then the stamp, then the view button, which ends the sheet.
+  const data = (await sheet.locator("[data-nav-item=data]").boundingBox())!;
+  const stamp = (await sheet.locator("[data-sidebar-stamp]").boundingBox())!;
+  const button = (await view.boundingBox())!;
+  const box = (await sheet.boundingBox())!;
+  expect(stamp.y, "the stamp under Data").toBeGreaterThanOrEqual(data.y + data.height - 1);
+  expect(button.y, "the view button under the stamp").toBeGreaterThan(stamp.y + stamp.height - 1);
+  expect(box.y + box.height - (button.y + button.height), "pinned to the sheet's bottom").toBeLessThanOrEqual(24);
+  // One current mark: the page's item.
+  await expect(sheet.locator("[aria-current]")).toHaveCount(1);
+
+  await view.click();
+  await expect(view).toHaveAttribute("aria-expanded", "true");
+  await expect(sheet.locator("[data-view-row]")).toHaveCount(3);
+  await expect(sheet.getByText("See Strata as", { exact: true })).toBeVisible();
+  await expect(view).toBeFocused();
+  await view.click();
+  await expect(sheet.locator("[data-view-row]")).toHaveCount(0);
+});
+
 // Ticket 110, from the user's review of October 27, 2026: "See Strata as" names the group in the label style (DESIGN.md
 // section 3: 13/16, 600, ink-muted), so it no longer reads as a fourth view. It sits 16 px under the signed-in line
 // (between blocks) and 8 px above the first view row (a heading to its first line; section 4). DESIGN.md keeps 700 for
@@ -605,6 +639,8 @@ for (const width of [1440, 390]) {
     await page.goto("/");
     const sheet = width < 768;
     await page.getByRole("button", { name: sheet ? "Menu" : "View: World Bank staff", exact: true }).click();
+    // In the Menu sheet the view rows show once its view button is pressed (ticket 59).
+    if (sheet) await page.locator("[data-menu-panel]").getByRole("button", { name: "View: World Bank staff", exact: true }).click();
     const panel = sheet ? page.locator("[data-menu-panel]") : page.getByRole("dialog", { name: "Your view" });
     const label = panel.getByText("See Strata as", { exact: true });
     await expect(label).toBeVisible();
@@ -752,6 +788,7 @@ for (const width of [390, 320]) {
 
     // The Menu's view rows wrap with text-pretty, so no description ends on one word (ticket 40).
     await page.getByRole("button", { name: "Menu", exact: true }).click();
+    await page.locator("[data-menu-panel]").getByRole("button", { name: "View: World Bank staff", exact: true }).click();
     const view = page.locator("[data-menu-panel]").getByText("A preview of what a member of the public sees. It has projects, lessons and data only.");
     await expect(view).toBeVisible();
     expect((await view.evaluate(lastLine)).words).toBeGreaterThan(1);

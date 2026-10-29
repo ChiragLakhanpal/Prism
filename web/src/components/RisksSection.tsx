@@ -30,7 +30,7 @@ import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
 import { evidenceIn, openEvidence, origin, visited as visitedStore } from "../lib/evidence";
 import { address } from "../lib/router";
-import { dataReadinessHref } from "../routes";
+import { dataReadinessHref, fill } from "../routes";
 import {
   allReportsId,
   forgetRisks,
@@ -54,7 +54,7 @@ import { Fill, Joined } from "./Fill";
 import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
 import { FromLine, reportsFrom } from "./NumFrom";
-import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { Skeleton, SkeletonLine, SkeletonText, SkeletonWords } from "./Skeleton";
 import { Source } from "./Source";
 import { SourcePill } from "./SourcePill";
 import { TaskZone, ZoneBlock } from "./TaskZone";
@@ -147,7 +147,7 @@ export function RisksView({
     marks: { "data-risks": state.status === "ready" ? (result!.empty_reason ?? "rows") : state.status },
     live,
   };
-  if (state.status === "loading" && !updating) return <TaskZone {...zone} state="loading" />;
+  if (state.status === "loading" && !updating) return <TaskZone {...zone} state="loading" loading={kind === "step" ? <NoReportsHeld /> : undefined} />;
   if (state.status === "error") return <TaskZone {...zone} state="error" error={<RisksError state={state} />} />;
   if (sentence) return <TaskZone {...zone} state="empty" summary={<Empty result={sentence} kind={kind} missingList={missingList} />} />;
   // A rerun over 400 ms keeps the instruction, holds the ready part's last height with the skeleton, and keeps the foot
@@ -684,6 +684,27 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
 
 // Static surface-2 blocks where the finding, the count line and three rows will be: the real header and 88 px
 // rows in table form, 168 px items in list form.
+// A package's first load holds the lines of its most common answer, that none of the comparables' projects has a
+// completion report yet (the fixture's demo package): the sentence, its body and its link from the copy file, held as
+// skeleton words, so the zone ends within a few pixels of where it will (ticket 59; the critique of round 1, follow-up
+// 2). A package whose risks come back is longer, and its zone grows when they arrive.
+function NoReportsHeld() {
+  const e = words.empty;
+  return (
+    <div aria-hidden="true" data-risks-held>
+      <p className="max-w-prose text-body">
+        <SkeletonWords text={fill(e.noReports, { p: formatCount(3) })} />
+      </p>
+      <p className="mt-2 max-w-prose text-body">
+        <SkeletonWords text={e.noReportsBody} />
+      </p>
+      <p className="mt-2">
+        <SkeletonWords text={e.noReportsLink} />
+      </p>
+    </div>
+  );
+}
+
 export function RisksSkeleton() {
   return (
     <div aria-hidden="true" data-risks-skeleton>

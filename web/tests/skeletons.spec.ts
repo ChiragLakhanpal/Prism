@@ -107,6 +107,21 @@ test("Advertised again's skeleton holds the block's place under section 1", asyn
   expect(jumps(shifts)).toEqual([]);
 });
 
+// The critique of round 1, follow-up 2: the risks zone's first-load skeleton held two lines, and the demo package's
+// answer, no completion report among its comparables, drew a sentence, its body and a link. It holds those lines now.
+test("the risks zone's first skeleton holds the no-report answer's lines", async ({ page }) => {
+  await mockApi(page, await packageAnswers());
+  const shifts = await skeletonShift(page, {
+    path: "/packages/KE-NWWDA-541055-CW-RFB",
+    hold: `**${PACKAGE}/risks`,
+    answer: { body: await recorded("risks-ke-nwwda-541055.json") },
+    skeleton: "[data-section=risks]",
+    drawn: "[data-section=risks]",
+    loaded: "[data-section=risks] [data-no-risks]",
+  });
+  expect(jumps(shifts)).toEqual([]);
+});
+
 test("a project's head holds the name's lines and one agency line", async ({ page }) => {
   await mockApi(page, await hubApi());
   const shifts = await skeletonShift(page, {
