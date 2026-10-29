@@ -50,6 +50,9 @@ async function openPackage(page: Page, { width = 1440, steps = "steps-ke-hand-90
     width,
   );
   await page.goto(`/packages/${REF}`);
+  // Section 2 holds skeleton words while the steps load, so the summary has text before the answer lands: wait for the
+  // zone to stop loading first (ticket 59, round 4 review, B1).
+  await expect(section(page)).not.toHaveAttribute("data-zone-state", "loading");
   await expect(section(page).locator("[data-section-summary]")).not.toBeEmpty();
   return puts;
 }
