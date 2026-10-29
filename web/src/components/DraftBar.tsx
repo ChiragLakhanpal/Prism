@@ -4,9 +4,10 @@
 // The bar is a section named "Check and export" at the end of the document column, held to it, on
 // surface with a 1px line on top. It sticks to the bottom of the window only when the window is at least
 // 768 px wide and 640 px tall and the document column at least 30rem wide; otherwise it sits at the end of
-// the page with its buttons stacked, because a sticky bar this tall would cover the note you are checking. It always has two rows. Row 1 says what exporting does and is
-// not: the kind's lead sentence, the fixed consequence sentence, how many sources you opened (a link to
-// the Sources list), and the hold line when export is held. Row 2 has Discard at the left edge, set apart
+// the page with its buttons stacked, because a sticky bar this tall would cover the note you are checking.
+// It always has two rows. Row 1 says what exporting does and is not: the kind's lead sentence, the fixed
+// consequence sentence, how many sources you opened (a link to the Sources list), and the hold line when
+// export is held. Row 2 has Discard at the left edge, set apart
 // by the whole row, and Export to Word and the solid button at the right. In Draft the solid button is
 // Mark as checked and Export to Word is held; once checked, and with no hold left, Export to Word is the
 // solid button. Only the author acts: a teammate reads one line instead of the buttons.

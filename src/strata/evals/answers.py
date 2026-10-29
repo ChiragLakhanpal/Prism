@@ -83,8 +83,10 @@ def in_top_three(result, question) -> dict[str, list[str]]:
     it left out because Prompt Shields found an attack or never screened them, and which a passage reviewer
     ranked lower for the query's kind of question (ticket 32)."""
     top = {row["evidence_id"] for row in result["rows"][:3]}
+    from strata.knowledge.shields import LEFT_OUT
+
     left_out = [evidence for entry in result["coverage"]["not_used"]
-                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
+                if entry["reason"] in LEFT_OUT for evidence in entry["evidence_ids"]]
     found = {"top_three_include": sorted(set(question["expected"]["top_three_include"]) & top),
              "left_out": sorted(left_out)}
     if "ranked_lower" in question["expected"]:
@@ -143,8 +145,8 @@ def past_range(result, question) -> dict[str, list]:
         "past_range_months": [result["summary"]["past_range"][name] for name in ("q25", "q50", "q75", "q80")],
         "cited_as": [result["summary"]["evidence_id"]],
         "still_open": sorted(row["step_reference"] for row in result["rows"] if row["still_open"]),
-        "canceled_left_out": sorted(evidence.split(":", 1)[1] for entry in result["coverage"]["not_used"]
-                                    if entry["reason"] == "canceled" for evidence in entry["evidence_ids"]),
+        "canceled_left_out": sorted(reference for entry in result["coverage"]["not_used"]
+                                    if entry["reason"] == "canceled" for reference in entry["step_references"]),
         "eight_in_ten": result["summary"]["frequencies"]["q80"],
     }
     if result["plan"] is not None:
@@ -165,8 +167,10 @@ def disagreement_answer(result, question) -> dict[str, list]:
     them (ticket 64), and, from the summary record the agent cites them by, the runs of the trajectory, each as
     [rating, first ISR, last ISR], and the count of assertions the run left out."""
     evidence = {side["assertion_id"]: side["evidence_id"] for row in result["rows"] for side in row["sides"]}
+    from strata.knowledge.shields import LEFT_OUT
+
     left_out = [evidence for entry in result["coverage"]["not_used"]
-                if entry["reason"] in ("prompt_shields_hit", "not_screened") for evidence in entry["evidence_ids"]]
+                if entry["reason"] in LEFT_OUT for evidence in entry["evidence_ids"]]
     return {"disagreements": [[side["evidence_id"] for side in row["sides"]] for row in result["rows"]],
             "leans_on": [evidence[row["lean_assertion_id"]] for row in result["rows"]],
             "rules": [row["rule_id"] for row in result["rows"]],

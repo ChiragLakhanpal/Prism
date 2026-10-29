@@ -4,6 +4,8 @@ from, and how a reading, a person's change and the thresholds file set them (tic
 Where a value came from (its provenance):
 - sentence: the package reader read it from the person's sentence;
 - default: the sentence did not say, so the field took the schema's default;
+- unlisted: the sentence named a value the schema does not list, such as a method STEP has no name for, so the
+  field took the schema's default, and read_as keeps the sentence's words;
 - guess: the reader guessed it, for a field the schema says may be guessed, and the person has not kept it;
 - computed: a computed field's value, from the thresholds file's rule;
 - you: the person set it, kept a guess, or set a computed field themselves.
@@ -20,7 +22,7 @@ from strata.config import Thresholds
 from strata.packages import compute
 from strata.packages.form import Field, Form, Invalid, old_method, value as checked
 
-SENTENCE, DEFAULT, GUESS, COMPUTED, YOU = "sentence", "default", "guess", "computed", "you"
+SENTENCE, DEFAULT, UNLISTED, GUESS, COMPUTED, YOU = "sentence", "default", "unlisted", "guess", "computed", "you"
 ACTIONS = ("set", "remove", "keep", "use_computed")
 
 
@@ -68,9 +70,14 @@ def recompute(form: Form, criteria: Criteria, thresholds: Thresholds, cause: str
     return changed
 
 
-def from_reading(form: Form, read: dict[str, dict], dividing: bool, thresholds: Thresholds) -> Criteria:
+def from_reading(form: Form, read: dict[str, dict], dividing: bool, thresholds: Thresholds,
+                 unlisted: dict[str, str] | None = None) -> Criteria:
     """The criteria from the package reader's checked values: each typed field it read is from the sentence and
-    each it left out takes the schema's default; a guessed field is a guess unless the sentence said it."""
+    each it left out takes the schema's default; a guessed field is a guess unless the sentence said it. unlisted
+    holds the words the reader gave a field that the schema does not take, such as a method STEP has no name for:
+    that field takes the default too, and says the sentence named something else (ticket 15's verification round 3,
+    V4)."""
+    unlisted = unlisted or {}
     criteria = Criteria(refusal="dividing" if dividing else None)
     for field in form.fields:
         found = read.get(field.key)
@@ -81,6 +88,9 @@ def from_reading(form: Form, read: dict[str, dict], dividing: bool, thresholds: 
             _set(criteria, field.key, found["value"], SENTENCE if stated else GUESS)
             if field.kind == "amount":
                 criteria.approximate = bool(found.get("approximate"))
+        elif field.default is not None and field.key in unlisted:
+            _set(criteria, field.key, field.default, UNLISTED)
+            criteria.values[field.key]["read_as"] = unlisted[field.key]
         elif field.default is not None:
             _set(criteria, field.key, field.default, DEFAULT)
         else:
@@ -108,7 +118,7 @@ def change(form: Form, before: Criteria, key: str, action: str, raw, thresholds:
     after.changed = []
     after.refusal = before.refusal
     if action == "set":
-        _set(after, key, checked(field, raw, country_codes, max_months), YOU)
+        _set(after, key, checked(field, raw, country_codes, max_months, thresholds), YOU)
         method = old_method(str(raw)) if field.aliases else None
         if method is not None and method.market_approach and form.has("market_approach"):
             _set(after, "market_approach", method.market_approach, YOU)
@@ -142,7 +152,10 @@ def view(form: Form, criteria: Criteria, thresholds: Thresholds) -> dict:
             rules[field.rule] = result.rule
         fields.append({"key": field.key, "group": field.group, "value": criteria.get(field.key),
                        "provenance": criteria.provenance(field.key),
-                       "computed": result.value if result else None})
+                       "computed": result.value if result else None,
+                       # The sentence's own words for a value the schema does not list.
+                       **({"read_as": criteria.values[field.key].get("read_as")}
+                          if criteria.provenance(field.key) == UNLISTED else {})})
         if field.picks:
             if criteria.get(field.key) is None:
                 missing.append(field.key)

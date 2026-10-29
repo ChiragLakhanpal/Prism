@@ -242,6 +242,7 @@
               "days_to_close": 8,
               "evidence_ids": [
                 "strata.silver.plan_rows:31998332/MOWS-WSDP-02-2019-2020",
+                "strata.silver.plan_rows:31362180/MOWS-WSDP-02-2019-2020",
                 "strata.gold.project:P156634"
               ]
             }
@@ -293,6 +294,7 @@
               "days_to_close": 8,
               "evidence_ids": [
                 "strata.silver.plan_rows:31998332/NWWDA-WSDP-03-2019-2020",
+                "strata.silver.plan_rows:31541426/NWWDA-WSDP-03-2019-2020",
                 "strata.gold.project:P156634"
               ]
             }

@@ -881,5 +881,17 @@ def test_the_recorded_model_routes_are_the_routes_the_server_tags_as_calling_a_m
     from strata.server.app import model_routes
 
     routes = model_routes(create_app(engine_for=None))
-    assert {"method": "POST", "path": "/api/ask"} in routes
+    # The answer stream, the draft writers, the package reader, the lesson writer's rewrite (ticket 21's verification
+    # round 4, finding 2), and the routes that run the criteria reader or the judge.
+    assert [route for route in [
+        {"method": "POST", "path": "/api/ask"}, {"method": "POST", "path": "/api/drafts"},
+        {"method": "POST", "path": "/api/drafts/{draft_id}/{action}"},
+        {"method": "POST", "path": "/api/drafts/{draft_id}/rows/{row_key}/lesson"},
+        {"method": "POST", "path": "/api/planned-packages"},
+        {"method": "POST", "path": "/api/lessons/review/{item_id}/summary"},
+        {"method": "POST", "path": "/api/packages/{key}/criteria/compare"},
+        {"method": "POST", "path": "/api/packages/{key}/criteria/run"},
+        {"method": "GET", "path": "/api/packages/{step_reference}/risks"},
+        {"method": "GET", "path": "/api/planned-packages/{package_id}/risks"},
+    ] if route not in routes] == []
     assert recorded("model-routes.json") == {"routes": routes}

@@ -22,8 +22,9 @@ import { ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "l
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
+import { isShown, useMedia, useMediaChange } from "../lib/media";
 import { markDone, progressOf, START_HERE_HREF, type StartHereList } from "../lib/startHere";
-import { FreshnessStamp, stampWords, type Freshness } from "./BoxBand";
+import { FreshnessStamp, stampWords, type Freshness } from "./OneBox";
 import { Fill } from "./Fill";
 import { fillText } from "./LessonParts";
 import { useMenuSheet, WIDE } from "./Frame";
@@ -41,18 +42,6 @@ const AT_REST: Rest = "rail";
 // How long a hover waits before the first tooltip opens, and how soon after one closes the next opens at once.
 const TIP_DELAY = 150;
 const TIP_RUN = 300;
-
-function useMedia(query: string): boolean {
-  const [matches, setMatches] = useState(() => window.matchMedia(query).matches);
-  useEffect(() => {
-    const media = window.matchMedia(query);
-    const update = () => setMatches(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, [query]);
-  return matches;
-}
 
 // The person's choice, as web/index.html's first script wrote it on the root from local storage.
 function chosenRest(): Rest | null {
@@ -105,7 +94,7 @@ const START_ITEM = cx(
 export function Sidebar({
   mode,
   viewer,
-  current,
+  currentKey: current,
   pathname,
   projectsHref,
   subItems,
@@ -118,7 +107,7 @@ export function Sidebar({
   // Who is viewing, for the view lines at the Menu sheet's foot below 1024 px.
   viewer: Viewer;
   // The item that holds the page: Home, or the section routes.ts names; none on a page that is not found.
-  current?: Section | "home";
+  currentKey?: Section | "home";
   // The page's path, to tell the section's own page ("page") from a page inside it ("true").
   pathname: string;
   // Where Projects goes: Following for World Bank staff (ticket 37), All projects for everyone else.
@@ -159,17 +148,12 @@ export function Sidebar({
   }, [sheet.open, wide]);
 
   // Narrowing the window past 1024 px hides the sidebar, so focus on one of its items moves to the Menu button.
-  useEffect(() => {
-    const media = window.matchMedia(WIDE);
-    const changed = () => {
-      const active = document.activeElement;
-      const focused = active instanceof HTMLElement && box.current?.contains(active) ? active : active === document.body ? hidden.current : null;
-      hidden.current = null;
-      if (!media.matches && focused) sheet.button.current?.focus();
-    };
-    media.addEventListener("change", changed);
-    return () => media.removeEventListener("change", changed);
-  }, [sheet.button]);
+  useMediaChange([WIDE], () => {
+    const active = document.activeElement;
+    const focused = active instanceof HTMLElement && box.current?.contains(active) ? active : active === document.body ? hidden.current : null;
+    hidden.current = null;
+    if (!window.matchMedia(WIDE).matches && focused) sheet.button.current?.focus();
+  });
 
   const hideTip = () => {
     window.clearTimeout(tipTimer.current);
@@ -207,7 +191,7 @@ export function Sidebar({
   const sections = mode.tabs === null ? null : SECTIONS.filter((section) => mode.tabs!.includes(section.key));
   const hrefOf = (key: Section, href: string) => (key === "projects" && projectsHref ? projectsHref : href);
   const subsOf = (key: Section): SubItem[] =>
-    current === key ? (subItems?.[key] ?? []).filter((item) => !mode.hidden.includes(item.page)) : [];
+    current === key ? (subItems?.[key] ?? []).filter((item) => !mode.hidden.includes(item.pageKey)) : [];
 
   const item = (key: Section | "home", href: string, icon: LucideIcon, label: string, line: string | null = null) => {
     const subs = key === "home" ? [] : subsOf(key);
@@ -232,11 +216,11 @@ export function Sidebar({
             {subs.map((sub) => {
               const here = pathOf(sub.href) === pathname;
               return (
-                <li key={sub.page}>
+                <li key={sub.pageKey}>
                   <a
                     href={withModeOf(sub.href, mode.search)}
                     aria-current={here ? "page" : undefined}
-                    data-sub-item={sub.page}
+                    data-sub-item={sub.pageKey}
                     className={cx("relative flex min-h-8 items-center rounded-sm py-1 pr-3 pl-10 text-small transition-paint", here ? CURRENT : "text-ink hover:bg-surface-2")}
                   >
                     {sub.label}
@@ -314,7 +298,7 @@ export function Sidebar({
         }}
         onBlur={(event) => {
           const target = event.target as HTMLElement;
-          if (event.relatedTarget || target.checkVisibility({ visibilityProperty: true })) return;
+          if (event.relatedTarget || isShown(target)) return;
           hidden.current = target;
           requestAnimationFrame(() => (hidden.current = null));
         }}

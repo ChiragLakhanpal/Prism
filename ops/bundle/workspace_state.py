@@ -10,8 +10,11 @@ sentence when the workspace cannot run them.
 refusal() takes any object with these methods, and the offline tests pass fakes:
 
 - app_compute(name): the App's compute as {"state", "message"}, as apps get gives it, or None when there is no such App;
+- start_app(name): start the App's compute and wait until it runs, or raise with what the workspace answered;
 - warehouse_state(): the env file's SQL warehouse as {"id", "state", "message"}, as warehouses get gives it;
 - start_warehouse(): start the warehouse and wait until it runs, or raise with what the workspace answered.
+
+A command that cannot read the state says so in one sentence (unreadable) instead of a traceback.
 
 The live readers below take the SDK's WorkspaceClient, so the three live adapters share one copy. They read the SDK's
 objects by their attributes and import the SDK only to tell a missing App from another error, so importing this file
@@ -24,8 +27,12 @@ import datetime as dt
 
 # apps get's compute_status message when the workspace, not a person, stopped the App (October 26, 2026, 13:01 UTC).
 BY_THE_WORKSPACE = "workspace or account status"
-USUAL_CAUSE = "which on Free Edition usually means the workspace reached its daily compute limit"
+# On the paid workspace a stop "due to workspace or account status" that will not start again points to the account
+# (ticket 81's review, follow-up 5).
+USUAL_CAUSE = ("which on Free Edition usually means the workspace reached its daily compute limit, and on a paid "
+               "workspace that the account or its subscription needs attention")
 STARTING_MINUTES = 10  # how long a stopped warehouse may take to start; a serverless one takes seconds
+APP_STARTING_MINUTES = 20  # how long the App's compute may take to start, as ops/app/app_live.py allows
 
 
 def one_line(text) -> str:
@@ -40,13 +47,19 @@ def app_stopped_by_the_workspace(compute: dict | None) -> bool:
 
 def refusal(workspace, app: str | None = None) -> str | None:
     """The one sentence that says why the workspace cannot run the command now, or None when it can. With app, the
-    App's compute comes first. A stopped warehouse is asked to start, since a warehouse that stopped when it sat idle
-    starts again on the first statement; only one that will not start is a refusal."""
+    App's compute comes first. An App the workspace stopped, and a stopped warehouse, are each asked to start, since
+    apps get may keep the workspace's message after the workspace runs again (ticket 81's review, follow-up 1) and a
+    warehouse that stopped when it sat idle starts again on the first statement; only one that will not start is a
+    refusal."""
     if app is not None:
         compute = workspace.app_compute(app)
         if app_stopped_by_the_workspace(compute):
-            return (f"I changed nothing, because the app {app}'s compute is STOPPED with the message "
-                    f"\"{one_line(compute['message'])}\", {USUAL_CAUSE}.")
+            try:
+                workspace.start_app(app)
+            except Exception as error:  # the workspace refused the start, or the compute stopped again
+                return (f"I changed nothing, because the app {app}'s compute is STOPPED with the message "
+                        f"\"{one_line(compute['message'])}\" and would not start when I asked, saying "
+                        f"\"{one_line(error) or type(error).__name__}\", {USUAL_CAUSE}.")
     warehouse = workspace.warehouse_state()
     if warehouse.get("state") == "STOPPED":
         try:
@@ -55,6 +68,13 @@ def refusal(workspace, app: str | None = None) -> str | None:
             return (f"I changed nothing, because the SQL warehouse {warehouse['id']} is STOPPED and would not start "
                     f"when I asked, saying \"{one_line(error) or type(error).__name__}\", {USUAL_CAUSE}.")
     return None
+
+
+def unreadable(error: BaseException) -> str:
+    """The one sentence a deploy says when it could not read the App's compute or the warehouse's state, before it
+    exits 2 having changed nothing (ticket 81's review, follow-up 2)."""
+    return (f"I changed nothing, because I could not read the app's compute or the SQL warehouse's state: "
+            f"{type(error).__name__}: {one_line(error).rstrip('.')}.")
 
 
 def refused_statement(workspace, statement: str, error: BaseException) -> tuple[list[str], bool]:
@@ -110,6 +130,12 @@ def app_compute(w, name: str) -> dict | None:
         raise
     status = found.compute_status
     return {"state": _text(status.state) if status else None, "message": (status.message or "") if status else ""}
+
+
+def start_app(w, name: str, minutes: int = APP_STARTING_MINUTES) -> None:
+    """Start the App's compute and wait until it runs. The SDK raises when the workspace refuses the start, when the
+    compute stops again, or when it is not running within the minutes."""
+    w.apps.start_and_wait(name, timeout=dt.timedelta(minutes=minutes))
 
 
 def warehouse_state(w, warehouse_id: str) -> dict:

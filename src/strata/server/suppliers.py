@@ -2,7 +2,7 @@
 
 - review_list(engine) reads the review list as the viewer: each candidate pair that waits for a person
   (strata.ops.supplier_review_list), with both sides' names, countries and contracts, why it waits,
-  and the model's judgement when it gave one.
+  the model's judgement when it gave one, and the latest decision a person made on it, without who made it.
 - labeling_list(engine, limit, labeled_pairs_target) reads the labeling tool's next pairs as the
   viewer: candidate pairs of the latest run with no label yet on their two names, most likely first,
   without where Strata sent them, and how many pairs are labeled of how many found, beside
@@ -47,15 +47,25 @@ def _side(row: dict, side: str) -> dict:
             "contracts": contracts.split(", ") if contracts else []}
 
 
+def _day(value) -> str | None:
+    """The day of a timestamp, which DuckDB gives as a datetime and the warehouse as text."""
+    if value is None or value == "":
+        return None
+    return value.date().isoformat() if isinstance(value, dt.datetime) else str(value)[:10]
+
+
 def review_list(engine: Engine) -> dict:
-    """Each pair that waits for a person."""
+    """Each pair that waits for a person, with the latest decision a person made on it, if any: a merge the run
+    could not apply sends the pair back here (ticket 19's verification round 3, O1)."""
     pairs = []
     for row in _dicts(engine, "review_list"):
         model = None if row["model_decision"] is None else {
             "decision": row["model_decision"], "confidence": row["model_confidence"], "reason": row["model_reason"]}
+        decided = None if row["latest_decision"] is None else {
+            "decision": row["latest_decision"], "reason": row["latest_reason"], "on": _day(row["latest_decided_at"])}
         pairs.append({"pair_id": row["pair_id"], "left": _side(row, "left"), "right": _side(row, "right"),
                       "match_probability": row["match_probability"], "review_reason": row["review_reason"],
-                      "model": model})
+                      "model": model, "latest_decision": decided})
     return {"pairs": pairs, "count": len(pairs)}
 
 

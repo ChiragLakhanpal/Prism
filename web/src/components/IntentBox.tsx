@@ -35,7 +35,7 @@ import { navigate } from "../lib/router";
 import { allows, appliedView } from "../lib/view";
 import { useStore } from "../lib/store";
 import { currentLanguage, ENGLISH, languageName, workingLanguage } from "../lib/lang";
-import { OneBox, type BoxOption } from "./BoxBand";
+import { OneBox, type BoxOption } from "./OneBox";
 import { Fill } from "./Fill";
 import { RETURNING } from "./Popover";
 

@@ -441,7 +441,7 @@ def test_on_the_fixture_the_latest_test_year_has_too_few_unseen_packages_for_a_t
 
 
 def test_the_track_record_and_the_plan_dates_ran_longer_counts_come_from_the_newest_public_run_that_registered_the_version(
-        fixture_db, tmp_path):
+        fixture_db, tmp_path, monkeypatch):
     """A later backtest run that registered the version the estimate came from, stored as the replay harness stores
     one, gives the track record and the plan dates' counts; as of a day before it was public, the fixture's own run
     still answers. A run that registered another version, a challenger's, changes nothing (tests/test_promotion.py)."""
@@ -449,6 +449,8 @@ def test_the_track_record_and_the_plan_dates_ran_longer_counts_come_from_the_new
 
     from strata.estimates import backtest, harness
 
+    # The run is stored on October 30, 2026, which is today here: a call's date after today is read as today.
+    monkeypatch.setattr(registry, "today", lambda: dt.date(2026, 10, 30))
     target = tmp_path / "fixture.duckdb"
     shutil.copy(fixture_db, target)
     ran_at = dt.datetime(2026, 10, 30, 6, 0, tzinfo=dt.UTC)

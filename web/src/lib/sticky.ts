@@ -29,9 +29,13 @@ import { useLayoutEffect, type RefObject } from "react";
 export const STICKY_GAP = 8;
 
 // The frame's ask bar (Frame.tsx), the one part at the foot that is not a page's own.
-const ASK_BAR = "data-box-band";
+const ASK_BAR = "data-box-slot";
 
-const sticks = (element: HTMLElement) => getComputedStyle(element).position === "sticky";
+// Whether a part that can stick sticks now: a draft's header, its bar or the discarded notice sit in the page like any
+// other block on a phone, in a short window, or beside the open drawer below about 960 px. The one definition, which the
+// pages read too (ticket 94's review, F8).
+export const sticks = (element: HTMLElement | null | undefined): element is HTMLElement =>
+  Boolean(element && getComputedStyle(element).position === "sticky");
 
 // The tallest part on that edge that sticks now, or null when none does.
 function stuckHeight(parts: HTMLElement[]): number | null {

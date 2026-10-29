@@ -99,7 +99,7 @@ test("/present serves the talk outside the app's frame: the bookends, five topic
   const drawn = await page.locator("section[data-slide] [data-deck-hairline]").evaluateAll((boxes) => boxes.map((box) => box.getAttribute("data-deck-hairline")));
   expect(drawn).toEqual(["core-sample", "plan-rows", "passages", "filter", "sediment", "sediment"]);
   // No navy bar, no box: the deck is not an app page.
-  await expect(page.locator("[data-nav-bar], [data-box-band]")).toHaveCount(0);
+  await expect(page.locator("[data-nav-bar], [data-box-slot]")).toHaveCount(0);
 });
 
 test("every slide carries one World Bank logo, unaltered, at 24 px or more with clear space, the light file on light slides and the white one on navy slides, and the footer sentence word for word", async ({ page }) => {

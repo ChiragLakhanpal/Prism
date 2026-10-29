@@ -93,7 +93,8 @@ export function passageFields(evidence: EvidenceEvent): PassageFields {
 
 // The record a What citation names: its STEP reference or other key, from the row a tool returned.
 export function recordReference(evidence: EvidenceEvent): string {
-  const row = evidence.row;
+  // A disagreement's side named before its row arrives has none (ticket 28's design review, F10).
+  const row = evidence.row ?? {};
   return String(row.activity_reference_no ?? row.reference ?? evidence.id.split(":").slice(1).join(":"));
 }
 
@@ -121,7 +122,7 @@ export function recordKind(evidence: EvidenceEvent): string {
   if (own) return own;
   // A notice a package advertised again cites (ticket 28) is named by its type.
   if (table === "strata.silver.notices") {
-    const type = ((evidence.row.source ?? {}) as Record<string, unknown>).document_type;
+    const type = ((evidence.row?.source ?? {}) as Record<string, unknown>).document_type;
     return type === "Contract Award" ? copy.evidence.noticeRecordKinds.award : copy.evidence.noticeRecordKinds.other;
   }
   return copy.evidence.recordKinds[table] ?? copy.evidence.summaryRecordKinds[table] ?? copy.evidence.recordKindOther;
@@ -129,7 +130,7 @@ export function recordKind(evidence: EvidenceEvent): string {
 
 // The source_key a project's Summary gives each record it cites (ticket 21), such as projects_api.
 export function summarySourceKey(evidence: EvidenceEvent): string | null {
-  const source = (evidence.row.source ?? {}) as Record<string, any>;
+  const source = (evidence.row?.source ?? {}) as Record<string, any>;
   return typeof source.source_key === "string" ? source.source_key : null;
 }
 
@@ -137,11 +138,11 @@ export type RecordSource = { docType: string; agency: string | null; pcode: stri
 
 // Where a record came from, from the source fields its tool returned with it.
 export function recordSource(evidence: EvidenceEvent): RecordSource {
-  const source = (evidence.row.source ?? {}) as Record<string, any>;
+  const source = (evidence.row?.source ?? {}) as Record<string, any>;
   return {
     docType: String(source.document_type ?? ""),
     agency: (source.implementing_agency ?? null) as string | null,
-    pcode: String(source.project_id ?? evidence.row.project_id ?? ""),
+    pcode: String(source.project_id ?? evidence.row?.project_id ?? ""),
     date: (source.plan_date ?? source.document_date ?? null) as string | null,
     page: (source.pdf_page ?? null) as number | null,
   };

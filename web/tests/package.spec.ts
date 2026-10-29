@@ -72,6 +72,14 @@ const ready = async (page: Page) => {
 };
 const readout = (page: Page) => page.locator("[data-readout]");
 
+// How many lines an element's text sits on: its text's boxes, by their tops (ticket 12's review, Standards).
+const lineCount = (element: Locator) =>
+  element.evaluate((el) => {
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
+  });
+
 async function derived(name: string, edit: (body: Comparables) => void): Promise<Answer> {
   const body = JSON.parse(await recorded(name)) as Comparables;
   edit(body);
@@ -978,12 +986,7 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
 
   await expect(reference).toHaveText(REF);
   // The lines its text sits on: one.
-  const lines = await reference.evaluate((el) => {
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    return new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size;
-  });
-  expect(lines).toBe(1);
+  expect(await lineCount(reference)).toBe(1);
 });
 
 test("a reference too long for the line breaks after a hyphen, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {

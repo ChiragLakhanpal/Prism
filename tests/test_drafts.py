@@ -652,3 +652,16 @@ def test_with_no_plan_date_the_lookup_names_the_open_draft_on_each_plan_version(
                                     "author": {"name": "Ana Example", "you": False}}}
     assert other_agency == {"by_plan_date": {}}
     assert call(app, "GET", "/api/drafts/existing", CY, params=asked).json() == {"by_plan_date": {}}
+
+
+@pytest.mark.parametrize("named", ["Northern Water Works Development Agency", "NORTHERN-WATER-WORKS-DEVELOPMENT-AGENCY"])
+def test_the_lookup_finds_the_open_draft_whatever_form_of_the_agency_s_name_or_id_the_address_uses(drafting, named):
+    """check_plan takes the agency's name or its id in any case, so a typed address opens the same plan check; its
+    open draft is found the same way, and nobody starts a second one (ticket 35's review round 4, P1)."""
+    app = drafting()
+    _, draft_id = draft_review_notes(app)
+
+    found = call(app, "GET", "/api/drafts/existing", BEN, params={
+        "kind": "review_notes", "project_id": "P156634", "agency_id": named, "plan_date": "2026-10-09"}).json()
+
+    assert found["draft"]["draft_id"] == draft_id

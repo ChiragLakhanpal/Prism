@@ -95,8 +95,10 @@ def dataset(key: str) -> dict:
 
 
 def notice_url(notice_id: str) -> str | None:
-    address = load_sources()["notices"].record_url
-    return address.replace("{id}", notice_id) if address else None
+    """A notice's own page on the World Bank's site (search_passages.notice_page, the one definition)."""
+    from strata.tools.search_passages import notice_page
+
+    return notice_page(notice_id)
 
 
 def activity_href(project_id: str | None, reference: str | None) -> str | None:
@@ -465,7 +467,11 @@ def activity_trail(engine: Engine, project_id: str, reference: str, as_of: dt.da
 # ── The drawer's records ─────────────────────────────────────────────────
 
 def read_notice(engine: Engine, key: str, as_of: dt.date) -> dict | None:
-    """A procurement notice of any type, opened from the trail: its own fields, never a contact."""
+    """A procurement notice of any type, opened from the trail or from a package advertised again: its own fields,
+    never a contact, and, when its text says why the package went out again, that sentence word for word,
+    highlighted, as the rebidding block quoted it (ticket 28's review, follow-up 6)."""
+    from strata.estimates.rebidding import reason_in
+
     found = _rows(engine, "notice", notice_id=key, as_of=as_of)
     if not found:
         return None
@@ -473,12 +479,14 @@ def read_notice(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     award = row["notice_type"] == AWARD
     price = (f"{row['signed_contract_currency']} {_money(row['signed_contract_price'])}"
              if award and row["signed_contract_price"] is not None and row["signed_contract_currency"] else None)
+    given = reason_in(row["notice_text"] or "")
     fields = _fields(_field("notice_type", row["notice_type"]), _field("published", _iso(row["notice_date"]), "date"),
                      _field("bid_reference", row["bid_reference_no"]),
                      _field("procurement_method", row["procurement_method_as_written"]),
                      _field("submission_deadline", _iso(row["submission_deadline"]), "date") if not award else None,
                      _field("contract_signature_date", _iso(row["contract_signature_date"]), "date") if award else None,
-                     _field("signed_contract_price", price), _field("bid_description", row["bid_description"]))
+                     _field("signed_contract_price", price), _field("bid_description", row["bid_description"]),
+                     {"key": "notice_says", "value": given[1], "kind": "text", "highlight": True} if given else None)
     return {"kind": "record", "row": {
         "reference": row["notice_id"], "notice_id": row["notice_id"], "record_kind": "award_notice" if award else "notice",
         "fields": fields, "public_from": _iso(row["public_from"]), "step_reference": row["step_reference"],

@@ -645,7 +645,7 @@ export function scrollToAnswer() {
   if (!section || !heading) return;
   const end = heading.getBoundingClientRect().bottom + window.scrollY;
   // The box's top: the page shows nothing under the box at the window's foot.
-  const limit = document.querySelector("[data-box-band] form")?.getBoundingClientRect().top ?? window.innerHeight;
+  const limit = document.querySelector("[data-box-slot] form")?.getBoundingClientRect().top ?? window.innerHeight;
   if (end <= limit) window.scrollTo({ top: 0, behavior: "instant" });
   else section.scrollIntoView({ block: "start", behavior: "instant" });
 }
@@ -684,7 +684,7 @@ export function AnswerPanel({
   // you return to until you press Down, type or click in it (the 14 brief, section 6.4).
   const close = () => {
     closeAnswer(run);
-    const box = document.querySelector<HTMLInputElement>("[data-box-band] [role=combobox]");
+    const box = document.querySelector<HTMLInputElement>("[data-box-slot] [role=combobox]");
     box?.setAttribute(RETURNING, "");
     // The box always shows, at the window's foot (ticket 113), so giving it focus scrolls nothing.
     box?.focus({ preventScroll: true });

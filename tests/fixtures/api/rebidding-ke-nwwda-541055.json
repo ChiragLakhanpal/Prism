@@ -130,7 +130,8 @@
           "strata.gold.contract:1670533",
           "strata.gold.contract:1878691",
           "strata.gold.contract:1903099"
-        ]
+        ],
+        "step_references": []
       },
       {
         "reason": "no_notice",
@@ -146,6 +147,18 @@
           "strata.gold.package:KE-SIAYA COUNTY-554186-CW-RFB",
           "strata.gold.package:KE-VIHIGA COUNTY-519405-CW-RFB",
           "strata.gold.package:KE-VIHIGA COUNTY-519423-CW-RFB"
+        ],
+        "step_references": [
+          "KE-BUSIA COUNTY-561519-CW-RFB",
+          "KE-EMBU COUNTY-493078-CW-RFB",
+          "KE-EMBU COUNTY-493099-CW-RFB",
+          "KE-ICTA-459492-CW-RFB",
+          "KE-KIAMBU COUNTY-492369-CW-RFB",
+          "KE-KIAMBU COUNTY-510866-CW-RFB",
+          "KE-SIAYA COUNTY-519173-CW-RFB",
+          "KE-SIAYA COUNTY-554186-CW-RFB",
+          "KE-VIHIGA COUNTY-519405-CW-RFB",
+          "KE-VIHIGA COUNTY-519423-CW-RFB"
         ]
       }
     ]
@@ -298,7 +311,8 @@
             "strata.gold.contract:1670533",
             "strata.gold.contract:1878691",
             "strata.gold.contract:1903099"
-          ]
+          ],
+          "step_references": []
         },
         {
           "reason": "no_notice",
@@ -314,6 +328,18 @@
             "strata.gold.package:KE-SIAYA COUNTY-554186-CW-RFB",
             "strata.gold.package:KE-VIHIGA COUNTY-519405-CW-RFB",
             "strata.gold.package:KE-VIHIGA COUNTY-519423-CW-RFB"
+          ],
+          "step_references": [
+            "KE-BUSIA COUNTY-561519-CW-RFB",
+            "KE-EMBU COUNTY-493078-CW-RFB",
+            "KE-EMBU COUNTY-493099-CW-RFB",
+            "KE-ICTA-459492-CW-RFB",
+            "KE-KIAMBU COUNTY-492369-CW-RFB",
+            "KE-KIAMBU COUNTY-510866-CW-RFB",
+            "KE-SIAYA COUNTY-519173-CW-RFB",
+            "KE-SIAYA COUNTY-554186-CW-RFB",
+            "KE-VIHIGA COUNTY-519405-CW-RFB",
+            "KE-VIHIGA COUNTY-519423-CW-RFB"
           ]
         }
       ]

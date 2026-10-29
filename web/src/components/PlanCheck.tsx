@@ -28,6 +28,7 @@ import { evidenceIn, openEvidence, remember } from "../lib/evidence";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { planRowCheckId } from "../lib/planRows";
 import { address } from "../lib/router";
+import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { Button } from "./Button";
 import { Byline } from "./Byline";
@@ -186,6 +187,8 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       );
     case "actual_amount_zero":
       return <Fill template={r.actual_amount_zero} slots={{ status: reason.process_status, actual: amount(reason.actual_amount_usd!) }} />;
+    case "method_unknown":
+      return <Fill template={r.method_unknown} slots={{ method: reason.method }} />;
     case "no_planned_date":
       return <Fill template={r.no_planned_date} slots={{ step: reason.step }} />;
     case "no_estimate":
@@ -607,11 +610,11 @@ function bringIntoView(target: HTMLElement) {
   };
   const activity = target.closest("tr, li") ?? target;
   const row = place(activity);
-  const sticks = (element: HTMLElement | null) => (element && getComputedStyle(element).position === "sticky" ? element.offsetHeight : 0);
+  const stuckHeight = (element: HTMLElement | null) => (sticks(element) ? element.offsetHeight : 0);
   const bar = document.querySelector<HTMLElement>("[data-nav-bar]")?.closest("header") ?? null;
-  const barStuck = sticks(bar);
+  const barStuck = stuckHeight(bar);
   const header = document.querySelector<HTMLElement>("[data-plan-header]");
-  const stuck = barStuck + sticks(header);
+  const stuck = barStuck + stuckHeight(header);
   const gap = landingGap(activity);
   const fits = (from: number) => row.bottom + gap - from <= window.innerHeight;
   let top = fits(0) ? 0 : row.top - stuck - gap;
@@ -648,7 +651,7 @@ function bringIntoView(target: HTMLElement) {
   window.scrollTo({ top: Math.max(0, top) });
 }
 
-export function PlanCheckHeader({ agency, plan, pill, action, feedforward, headerRef, level = 1, sticky = false, rule = true }: {
+export function PlanCheckHeader({ agency, plan, pill, action, feedforward, level = 1, sticky = false, rule = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
   plan?: ReactNode;
@@ -657,7 +660,6 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
   // caption right-aligned on the subtitle's line. Below 1024 px they follow the pill, 8 px apart.
   action?: ReactNode;
   feedforward?: ReactNode;
-  headerRef?: Ref<HTMLDivElement>;
   // The page's h1. The design gallery shows it one level down, under its own h1, and not sticky.
   level?: 1 | 2;
   // Whether it sticks under the bar where the window allows (app.css, head-sticks). It sticks only while it holds the
@@ -668,7 +670,6 @@ export function PlanCheckHeader({ agency, plan, pill, action, feedforward, heade
 }) {
   return (
     <div
-      ref={headerRef}
       data-plan-header
       data-sticky={sticky ? "top" : undefined}
       className={cx("bg-page pt-2 pb-4", rule && "border-b border-line", sticky && "head-sticks:@head/page:sticky head-sticks:@head/page:top-(--frame-top) head-sticks:@head/page:z-10")}

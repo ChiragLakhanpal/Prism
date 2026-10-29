@@ -43,10 +43,11 @@ import { ApiError, getJson } from "../lib/api";
 import type { RemovedEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
 import { act, draftScope, fileHref, isPpsdKind, preloaded, refusalOf, setField, setForm, storeFailed, type Action, type Draft } from "../lib/drafts";
-import { evidenceIn, openEvidence, openedAt, origin, recordOpened, remember } from "../lib/evidence";
+import { evidenceIn, openEvidence, openedAt, origin, remember } from "../lib/evidence";
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { address } from "../lib/router";
+import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 
@@ -96,9 +97,6 @@ function useDraft(draftId: string): [Loaded, (draft: Draft) => void, () => void,
   return [loaded, replace, reload, held !== null];
 }
 
-// Whether this sticky part of the page sticks now: the header, the bar or the discarded notice sit in the
-// page like any other block on a phone, in a short window, or beside the open drawer below about 960 px.
-const sticks = (element: HTMLElement | null | undefined) => Boolean(element && getComputedStyle(element).position === "sticky");
 
 // What the removed box lists, for a saved draft or a writing that saved nothing (DraftNewPage, WritingDatesPage).
 export function removedItems(holder: { removed: RemovedEvent[] }, kind: KindWords): Removed[] {
@@ -133,24 +131,23 @@ function stepsOf(draft: Draft, kind: KindWords): Step[] {
 // margin on itself (className), or sticky has no room to move. Its type sets a height such as 134.89 px, and
 // a stuck header whose bottom edge falls inside a pixel lets the notes under it show through that pixel, so
 // its bottom padding takes up the fraction and the header ends on a whole pixel.
-export function DraftHeader({ title, subtitle, state, headerRef, className }: {
+export function DraftHeader({ title, subtitle, state, className }: {
   title: ReactNode;
   subtitle: ReactNode;
   state: ReactNode;
-  headerRef?: (element: HTMLDivElement | null) => void;
   className?: string;
 }) {
   const [element, setElement] = useState<HTMLDivElement | null>(null);
-  const ref = useCallback((node: HTMLDivElement | null) => {
-    setElement(node);
-    headerRef?.(node);
-  }, [headerRef]);
+  const ref = useCallback((node: HTMLDivElement | null) => setElement(node), []);
   useLayoutEffect(() => {
     if (!element) return;
+    // The class's own bottom padding, read before this sets any, so no number of it is written here (ticket 35's
+    // review round 4, P2).
+    const own = parseFloat(getComputedStyle(element).paddingBottom) || 0;
     // The content box only, so the padding this sets never sets it off again.
     const observer = new ResizeObserver(([entry]) => {
       const content = entry.contentRect.height;
-      element.style.paddingBottom = `calc(var(--spacing) * 4 + ${Math.ceil(content) - content}px)`;
+      element.style.paddingBottom = `${own + Math.ceil(content) - content}px`;
     });
     observer.observe(element);
     return () => observer.disconnect();
@@ -662,10 +659,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
               view={dates}
               lists={d.evidence}
               onOpen={(listId, element) => {
-                // The drawer records no step's list it opens elsewhere (section 2 holds those), so the draft records
-                // its own: the bar's count of lists opened moves at once, and the evidence pack says it was opened.
+                // The drawer records each step's list it opens (its steps: ids), so the bar's count of lists opened
+                // moves at once and the evidence pack says it was opened.
                 openEvidence(listId, { serial: null, sentence: null, marker: element, runId: null });
-                recordOpened(listId, null);
               }}
               editable={d.author.you && d.state === "draft" && view !== "piu" && view !== "public"}
               onChoice={async (choice) => {

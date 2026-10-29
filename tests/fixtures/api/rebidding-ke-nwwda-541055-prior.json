@@ -17,6 +17,14 @@
           "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
           "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
           "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB"
+        ],
+        "step_references": [
+          "KE-GAWASCO-111742-CW-RFB",
+          "KE-GAWASCO-54771-CW-RFB",
+          "KE-ICTA-571738-CW-RFB",
+          "KE-KAJIADO COUNTY-567787-CW-RFB",
+          "KE-MIGORI COUNTY-532367-CW-RFB",
+          "KE-UASIN GISHU COUNTY-571338-CW-RFB"
         ]
       }
     ]
@@ -140,6 +148,14 @@
             "strata.gold.package:KE-KAJIADO COUNTY-567787-CW-RFB",
             "strata.gold.package:KE-MIGORI COUNTY-532367-CW-RFB",
             "strata.gold.package:KE-UASIN GISHU COUNTY-571338-CW-RFB"
+          ],
+          "step_references": [
+            "KE-GAWASCO-111742-CW-RFB",
+            "KE-GAWASCO-54771-CW-RFB",
+            "KE-ICTA-571738-CW-RFB",
+            "KE-KAJIADO COUNTY-567787-CW-RFB",
+            "KE-MIGORI COUNTY-532367-CW-RFB",
+            "KE-UASIN GISHU COUNTY-571338-CW-RFB"
           ]
         }
       ]

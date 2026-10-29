@@ -22,7 +22,7 @@ export const WCAG_22_AA = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa
 // against the box as the page scrolls is tested on its own, by Tab (tests/sticky.ts). The override is there for
 // target-size alone: no other rule changed with where the box floats. A new part that floats over the page needs its own
 // Tab test, as tests/sticky.ts gives the box.
-const BOX_COVERS_NOTHING = "[data-box-band] { position: relative !important; bottom: auto !important; }";
+const BOX_COVERS_NOTHING = "[data-box-slot] { position: relative !important; bottom: auto !important; }";
 
 export async function scan(page: Page, within?: string) {
   const frames = page.frames().length - 1;

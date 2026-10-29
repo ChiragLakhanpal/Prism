@@ -181,7 +181,7 @@ Strata runs as a Databricks App that acts as each viewer. After the wizard and t
 
     uv run --script ops/app/deploy_app.py --env-file .env
 
-Before step 1, it reads the app's compute and the SQL warehouse's state through the SDK, with no SQL. It stops when the workspace stopped the app's compute ("due to workspace or account status"), or when the warehouse is stopped and will not start when asked. It then prints one sentence that names the state, uploads nothing and exits 2. On Free Edition the usual cause is the workspace's daily compute limit (ticket 81). A warehouse that stopped because it sat idle starts, and an app that someone stopped starts in step 5.
+Before step 1, it reads the app's compute and the SQL warehouse's state through the SDK, with no SQL. It stops when the workspace stopped the app's compute ("due to workspace or account status") and the app will not start when asked, or when the warehouse is stopped and will not start when asked. It then prints one sentence that names the state, uploads nothing and exits 2. On Free Edition the usual cause is the workspace's daily compute limit, and on a paid workspace the account or its subscription (ticket 81). When it cannot read the state at all, it says so in one sentence and exits 2. A warehouse that stopped because it sat idle starts, and an app that someone stopped starts in step 5.
 
 It takes these steps, in order:
 
@@ -189,7 +189,7 @@ It takes these steps, in order:
 2. It finds the app that `ops/dayone/dayone.toml` names, or makes it.
 3. It gives the app the SQL warehouse, the Application Insights secret and each viewer's SQL token. It saves the Foundry agent's and the judge's keys from `.env` in the secret scope `strata`, unless you pass `--keep-secrets`.
 4. It uploads the app with its lean requirements file (`ops/app/requirements.txt`) and `ops/app/app.yaml`.
-5. It deploys the app and waits for it. Then it reads the app's deployments and names the one this run made, with its time. It stops with exit 1 unless a deployment made since the run started has the state SUCCEEDED, because on a stopped workspace the deploy call can come back with no deployment registered. After the app's compute starts cold, the deployment can still show IN_PROGRESS when the deploy call comes back, so the deploy reads its state again every 10 seconds, for up to 20 minutes, before it stops.
+5. It deploys the app and waits for it. Then it reads the app's deployments and names the one this run made, with its time. It stops with exit 1 unless a deployment it did not list just before the deploy call has the state SUCCEEDED, because on a stopped workspace the deploy call can come back with no deployment registered. After the app's compute starts cold, the deployment can still show IN_PROGRESS when the deploy call comes back, so the deploy reads its state again every 10 seconds, for up to 20 minutes, before it stops.
 6. It lets the app's own service principal write usage events and agent runs. When the SQL warehouse refuses a statement here, it names the warehouse's state before the warehouse's answer and stops. A stopped warehouse refuses every statement with an error, such as `TABLE_DOES_NOT_EXIST` for a table that exists.
 7. It masks the columns that say who sent each passage report and who asked each question.
 8. It prints the app's address.

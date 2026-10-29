@@ -97,6 +97,76 @@ def test_the_one_reason_in_words_is_quoted_word_for_word_with_its_notice(engine)
     assert quoted["evidence_id"] == quoted["evidence"][0]["evidence_id"]
 
 
+AWARD_NOTICE = "OP90000377"  # made up: a Contract Award notice no recorded file holds
+
+
+@pytest.fixture
+def with_an_award_notice(fixture_db, tmp_path):
+    """A copy of the fixture with one more notice for KE-KIMAWASCO-377450-CW-RFB, one of the three advertised again:
+    a Contract Award notice of June 3, 2024 whose text says all bids were rejected (ticket 28's review, follow-up
+    4)."""
+    import shutil
+
+    target = tmp_path / "fixture.duckdb"
+    shutil.copy(fixture_db, target)
+    day = dt.date(2024, 6, 3)
+    with DuckDBEngine.open(target) as copy:
+        copy.insert_rows("strata.gold.notice", ("notice_id", "notice_type", "notice_date", "step_reference", "project_id",
+                                                "public_from"),
+                         [(AWARD_NOTICE, "Contract Award", day, "KE-KIMAWASCO-377450-CW-RFB", "P156634", day)])
+        copy.insert_rows("strata.silver.notices", ("notice_id", "notice_type", "notice_text", "notice_language",
+                                                   "contact_details_removed", "page_hash", "fetched_at", "public_from"),
+                         [(AWARD_NOTICE, "Contract Award", "Bids were opened on 3 March 2024. All bids were rejected.",
+                           "English", False, "not-a-real-hash", dt.datetime(2024, 6, 3, tzinfo=dt.UTC), day)])
+    with DuckDBEngine.open(target, read_only=True) as engine:
+        yield engine
+
+
+def test_an_award_notice_that_says_why_is_quoted_and_cited_as_section_5_cites_it(with_an_award_notice):
+    """Ticket 28's review, follow-ups 4 and 6: the award notice's sentence is quoted word for word, and the row cites
+    the notice as strata.gold.notice:{id}, the id section 5's rejected bids cite it by, so one record keeps one
+    marker. The drawer opens it with that sentence highlighted."""
+    from strata.server import evidence
+
+    rows = {row["step_reference"]: row for row in rebidding(with_an_award_notice, step_reference=REF)["rows"]}
+    quoted = rows["KE-KIMAWASCO-377450-CW-RFB"]
+    opened = evidence.read(with_an_award_notice, quoted["evidence_id"], REBIDDING["as_of"])
+
+    assert (quoted["row_kind"], quoted["reason_code"]) == ("quote", "all_bids_rejected")
+    assert quoted["quote"] == {"text": "All bids were rejected.", "lang": "en", "notice_id": AWARD_NOTICE}
+    assert [(item["record_kind"], item["evidence_id"]) for item in quoted["evidence"]] == [
+        ("award_notice", f"strata.gold.notice:{AWARD_NOTICE}")]
+    assert quoted["evidence_id"] == f"strata.gold.notice:{AWARD_NOTICE}"
+    assert [field["value"] for field in opened["row"]["fields"] if field.get("highlight")] == ["All bids were rejected."]
+
+
+@pytest.mark.parametrize("text, found", [
+    ("Bids were opened on 3 March 2024. All bids were rejected.", ("all_bids_rejected", "All bids were rejected.")),
+    ("Reason for Rejection: Non Responsive", None),  # one bidder's reason in an award notice, not why it went again
+    ("Late bids will be rejected.", None),  # an Invitation for Bids' own rule
+], ids=["all-rejected", "a-bidder-s-reason", "a-rule-for-late-bids"])
+def test_a_notice_gives_a_reason_for_advertising_again_only_when_a_sentence_says_one(text, found):
+    from strata.estimates import rebidding as labels
+
+    assert labels.reason_in(text) == found
+
+
+def test_the_drawer_opens_a_reason_s_notice_with_its_page_and_a_plan_row_with_its_plan(engine):
+    """Ticket 28's design review, F1: a notice opened from a reason links to its page on the World Bank's site, as a
+    comparable package's notice does, and a plan row to Check a plan on its plan version, as the trail's does."""
+    from strata.config import load_sources
+    from strata.server import evidence
+
+    notice = evidence.read(engine, f"strata.silver.notices:{REBIDDING['quote_notice']}", REBIDDING["as_of"])
+    plan = evidence.read(engine, f"strata.silver.plan_rows:{REBIDDING['canceled_in_document_id']}/KE-KIMAWASCO-157517-CW-RFB",
+                         REBIDDING["as_of"])
+
+    assert notice["row"]["url"] == load_sources()["notices"].record_url.replace("{id}", REBIDDING["quote_notice"])
+    assert plan["row"]["plan_href"] == (f"/projects/{plan['row']['source']['project_id']}/procurement/"
+                                        f"kilifi-mariakani-water-and-sewerage-company-ltd/"
+                                        f"{REBIDDING['canceled_plan_date'].isoformat()}#KE-KIMAWASCO-157517-CW-RFB")
+
+
 def test_the_other_two_cite_their_canceled_plan_row_with_its_process_status_word_for_word(engine):
     rows = {row["step_reference"]: row for row in rebidding(engine, step_reference=REF)["rows"]}
 

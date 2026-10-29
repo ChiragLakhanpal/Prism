@@ -9,7 +9,7 @@ import type { Page, Request } from "@playwright/test";
 import { askFromTheBox, landed, open as openAnswer, panel } from "./answer-page";
 import { scan } from "./axe";
 import { hubApi } from "./hub-api";
-import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
+import { expect, mockApi, modelRoutes, recorded, test, windowBeside } from "./mocked";
 
 const PDO = "disagreement:437378890475ef48";
 // The ICR and the ICR Review on efficiency: the ICR's side is a paragraph, so the card names it two ways.
@@ -173,9 +173,9 @@ test("P130164's timeline places each report, event and record at its date, names
   expect(await linesThroughLabels(page)).toEqual([]);
   expect(await axe(page)).toEqual([]);
   // No request to a route that calls a model.
-  const models: { method: string; path: string }[] = JSON.parse(await recorded("model-routes.json")).routes;
+  const { callsAModel } = await modelRoutes();
   const called = requests.map((request) => ({ method: request.method(), path: new URL(request.url()).pathname }));
-  expect(called.filter((one) => models.some((model) => model.method === one.method && model.path === one.path))).toEqual([]);
+  expect(called.filter((one) => callsAModel(one.method, one.path))).toEqual([]);
   expect(unrecorded).toEqual([]);
 });
 

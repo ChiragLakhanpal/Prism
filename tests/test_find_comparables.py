@@ -70,6 +70,28 @@ def test_the_default_criteria_return_every_comparable_in_the_ground_truth_with_i
                                 "canceled": TRUTH["comparables"]["canceled"], "canceled_as_still_open": False}
 
 
+def test_each_package_left_out_is_named_by_its_step_reference_beside_its_evidence_id(engine):
+    """Ticket 28's review, follow-up 12: a caller such as rebidding_risk reads which packages were left out without
+    taking their evidence ids apart."""
+    result = find(engine)
+
+    [canceled] = [entry for entry in result["coverage"]["not_used"] if entry["reason"] == "canceled"]
+    assert canceled["step_references"] == [c["reference"] for c in COMPARABLES if "canceled_in" in c]
+    assert canceled["evidence_ids"] == [package_id(reference) for reference in canceled["step_references"]]
+
+
+def test_the_drawer_says_a_package_is_left_out_as_canceled_by_the_caller_s_rule_or_else_the_file_s(engine):
+    """Ticket 15's review round 3, R6: read_comparable follows _select's canceled rule with the caller's
+    canceled_as_still_open, and reads the thresholds file only when the caller gives none."""
+    from strata.tools.find_comparables import read_comparable
+
+    [first] = [c["reference"] for c in COMPARABLES if "canceled_in" in c][:1]
+
+    assert read_comparable(engine, first, AS_OF)["canceled"] is True  # the file counts none as still open
+    assert read_comparable(engine, first, AS_OF, canceled_as_still_open=True)["canceled"] is False
+    assert read_comparable(engine, first, AS_OF, canceled_as_still_open=False)["canceled"] is True
+
+
 def test_the_past_range_is_the_kaplan_meier_quantiles_in_the_ground_truth_with_open_packages_censored(engine):
     result = find(engine)
 

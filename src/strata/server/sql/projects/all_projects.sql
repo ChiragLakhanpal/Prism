@@ -1,5 +1,6 @@
 -- All projects (the 10 brief, section 4): every project Strata holds a record for, public by the
--- as-of date, active projects first and then by name, A to Z. The route sorts; the browser does not.
+-- as-of date, active projects first and then by name, A to Z whatever the case, so Kenya comes
+-- before KTDA. The route sorts; the browser does not.
 --
 -- The projects API changes a status in place, and gold keeps only the newest record, so a status
 -- counts as public from the day that record was last updated, as check_plan's project.sql reads the
@@ -31,5 +32,6 @@ FROM listed AS p
 LEFT JOIN strata.gold.country AS c ON c.country_code = p.country_code
 ORDER BY
   CASE WHEN p.record_current AND p.status = 'Active' THEN 0 ELSE 1 END,
+  lower(p.project_name),
   p.project_name,
   p.project_id

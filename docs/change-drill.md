@@ -78,6 +78,8 @@ Write the dataset name without a number in it. The proposal's Annex 3 credits ev
 
 A threshold that changes a mark on the demo plan also changes the benchmark answers and the screen tests that state the mark. For example, `[plan_check] completion_passed_min_estimated_usd` above 1,230,000 would take Needs a look off KE-NWWDA-541055-CW-RFB.
 
+The rehearsal's value changes no outcome on the fixture. A value that changes which projects need a look, or which signals fire, also changes four tests that state those outcomes: `tests/test_project_signals.py`, `tests/test_mission_brief.py`, `tests/test_hazard.py` and `tests/test_signals_track.py`. Run them after step 2 and change each expected outcome the new value moves, with the project and the signal it names.
+
 A new signal is a check added to `src/strata/tools/project_signals.py`, not a threshold. A check that can fail to run takes its reason from `NOT_RUN` in that file, and `tests/test_project_signals.py` fails when a reason there is missing from `config/tools.toml` or from the Following page's words, so the gate finds it before the live page would answer HTTP 500.
 
 **On the workspace.** The tool's description names `{signals.look_min}`, so run `uv run --script ops/agent/sync.py --env-file .env`. Then deploy the App, which reads the file when it starts: `uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets`.
@@ -143,7 +145,7 @@ docs/PLAN.md section 5 and the spec describe the ladder in words. When the panel
 
 1. Add a `[[fields]]` entry: its key, group, kind, source, label, the chip's words while it is empty, and STEP's field name. Its words live in this file, and the copy lint reads them.
 2. Run `uv run --frozen python gates/build_fixture.py`, then `uv run --frozen python tests/record_packages_api.py` and `uv run --frozen python tests/record_steps_api.py`. Each planned package's answer carries the form.
-3. `web/tests/planned-package.spec.ts` types the wireframe's chips under How. Add the new chip's words, "Add the contract type".
+3. `web/tests/planned-package.spec.ts` types the wireframe's chips under How. Add the new chip's words, "Add the contract type". A field under What instead goes in the test's What chip lists, the one it types after it removes the lots among them.
 4. Commit.
 
 **On the workspace.** Deploy the App. The package reader is asked for the new field with no other change, unless its entry says `asked = false`.
@@ -174,7 +176,12 @@ docs/PLAN.md section 5 and the spec describe the ladder in words. When the panel
 1. Add the question at the end of the file: its id, kind, tool, the question as a person would ask it, the tool's arguments, the expected answer or citations, and its source in `tests/ground_truth/values.toml`.
 2. Commit. The gate asks the tool the question on the fixture and checks the expected answer.
 
-A must-refuse question for a refusal that has one already is not one entry yet. `tests/test_refusals.py` expects one question per refusal key, each asked word for word by a scripted case in `tests/fixtures/agent/cases.toml`, which `uv run --script ops/agent/record.py --env-file .env` records from the live agent.
+A must-refuse question, for a new refusal or for one that has a question already, takes two more steps before the commit:
+
+1. Add a scripted case to `tests/fixtures/agent/cases.toml` that asks the question word for word, and record it from the live agent with `uv run --script ops/agent/record.py --env-file .env`. `tests/test_refusals.py` asks every must-refuse question in the benchmark file through the case that asks it, and checks the refusal key the question expects.
+2. A new refusal key also needs its entry in `src/strata/agent/refusals.py`, its sentences in `web/src/copy.ts` and a line in the orchestrator's instructions, which `tests/test_refusals.py` checks.
+
+`tests/test_live_scripts.py` counts the benchmark's must-refuse questions, so the live must-refuse check (`ops/agent/refuse_live.py`) needs no change.
 
 **On the workspace.** `uv run --with azure-identity python ops/evals/full_gate.py --env-file .env` asks every question, the new one too, of the live agent.
 

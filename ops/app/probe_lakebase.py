@@ -8,14 +8,14 @@ Run it from the main checkout after the wizard, before ticket 15 writes the firs
 
     uv run --script ops/app/probe_lakebase.py --env-file .env
 
-It times the same small job in each store: write one row, then read it back, ten times, after it
-gets each store ready, which it times on its own. For Lakebase, that includes starting or making
-the database. It applies the rule in docs/app-state.md, with the
-budget in config/thresholds.toml (app_state.round_trip_budget_ms), and writes the times and the
-chosen store into docs/app-state.md. When Lakebase wins, it also writes an ADR named
-NNNN-app-state-lives-in-lakebase.md in docs/adr, numbered one after the highest ADR there. It never
-overwrites a file: when that ADR is already there, from an earlier run, it leaves it alone.
---dry-run prints a result from canned times and writes nothing.
+It times the same small job in each store: write one row, then read it back, ten times, after it gets
+each store ready, which it times on its own. For Lakebase, that includes starting or making the
+database. It applies the rule in docs/app-state.md, with the budget in config/thresholds.toml
+(app_state.round_trip_budget_ms), and writes the times and the chosen store into docs/app-state.md.
+When Lakebase wins, it also writes an ADR named NNNN-app-state-lives-in-lakebase.md in docs/adr,
+numbered one after the highest ADR there. It never overwrites a file: when that ADR is already there,
+from an earlier run, it leaves it alone. --dry-run prints a result from canned times and writes
+nothing.
 """
 
 from __future__ import annotations

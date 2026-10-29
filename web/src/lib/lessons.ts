@@ -76,6 +76,11 @@ export type LessonCard = {
   region: string | null;
   quote: string | null;
   evidence: LessonEvidence[];
+  // The most source chips the card shows (config/thresholds.toml's lesson_review.card_chips_max), and how many fold
+  // behind "Show {n} more sources": the server counts them, so the browser holds no threshold (ticket 29's review
+  // round 3, P5).
+  chips_max: number;
+  folded: number;
   // Ticket 39: procurement categories and selection methods, and a retired lesson's date and the lead's reason.
   categories?: Item[];
   methods?: Item[];

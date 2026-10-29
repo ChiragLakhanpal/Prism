@@ -48,11 +48,12 @@ from strata.knowledge import shields
 from strata.knowledge.assertions import (CONTRACT_SIGNING, PASSAGES, REPORT_PERIOD, WHOLE_PROJECT, Assertion, from_row,
                                         overlap, typed)
 from strata.tools.registry import Call
+from strata.tools.search_passages import SOURCE_COLUMNS, passage_source
 from strata.tools.withheld import WITHHELD, withheld
 
 TABLE = "strata.gold.disagreement"
 NOT_A_MOMENT = (REPORT_PERIOD, WHOLE_PROJECT, CONTRACT_SIGNING)  # periods that name no single moment
-PASSAGE_FIELDS = ("paragraph", "paragraph_numbered", "printed_page", "doc_key", "text")
+PASSAGE_FIELDS = ("paragraph", "paragraph_numbered", "printed_page", "doc_key", "text", "section_path", "language", "kind")
 
 
 def _sql(name: str) -> str:
@@ -83,13 +84,16 @@ def _boolean(value) -> bool | None:
 
 
 def _passage(row: dict) -> dict:
-    """What a side gives of the passage it rests on: its paragraph, printed page, document key and text, and, when
-    Prompt Shields found an attack in it or never screened it, the reason in place of its text. A record rests on
-    no passage, so all of these are empty."""
+    """What a side gives of the passage it rests on: its paragraph, printed page, document key, section, language,
+    kind and text, its source line as search_passages gives a passage's, and, when Prompt Shields found an attack
+    in it or never screened it, the reason in place of its text. A record rests on no passage, so all of these are
+    empty."""
     found = {key: row[key] for key in PASSAGE_FIELDS}
     found["text_left_out"] = shields.held_back(row["attack_detected"]) if row["text"] is not None else None
     if found["text_left_out"]:
         found["text"] = None
+    found["source"] = (passage_source({column: row[f"passage_{column}"] for column in SOURCE_COLUMNS})
+                       if row["passage_document_id"] is not None else None)
     return found
 
 
@@ -97,6 +101,10 @@ def _side(assertion: Assertion, moment: dt.date | None, passage: dict) -> dict:
     return {
         "assertion_id": assertion.assertion_id,
         "evidence_id": assertion.evidence_id,
+        "project_id": assertion.project_id,
+        # A side that rests on a passage gives its source line as search_passages gives a passage's, so its evidence
+        # card names the report, its date and its PDF (ticket 20's review round 3, F1); a record's is empty.
+        "source": passage.get("source"),
         "evidence_tier": assertion.evidence_tier,
         "form": assertion.form,
         "source_key": assertion.source_key,
@@ -114,6 +122,9 @@ def _side(assertion: Assertion, moment: dt.date | None, passage: dict) -> dict:
         "paragraph_numbered": _boolean(passage.get("paragraph_numbered")),
         "printed_page": passage.get("printed_page"),
         "doc_key": passage.get("doc_key"),
+        "section_path": passage.get("section_path"),
+        "language": passage.get("language"),
+        "kind": passage.get("kind"),
         # The passage's text, which a claim quotes from; empty for a record, which backs its own values, and for a
         # passage in which Prompt Shields found an attack or that it never screened: text_left_out says which.
         "text": passage.get("text"),
@@ -199,13 +210,15 @@ def trajectories(held: list[Assertion]) -> list[dict]:
 def get_disagreements(call: Call, subject_id: str, attribute: str | None = None) -> dict:
     """The disagreements and trajectories about the subject, as of call.as_of."""
     subject_id = subject_id.strip()
-    subject_id = subject_id.upper() if subject_id[:1].lower() == "p" and subject_id[1:].isdigit() else subject_id
-    common = {"subject_id": subject_id, "package": "package"}
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "trajectories": [],
              "rejected": {"count": 0, "reasons": []}}
-    held = _rows(call, "subject.sql", project="project", **common)
+    # A project ID or a STEP reference in any case, named from here on as Strata holds it (ticket 20's verification
+    # round 3, V2).
+    held = _rows(call, "subject.sql", project="project", package="package", subject_id=subject_id)
     if not held:
         return {**empty, "subject": None, "abstention": {"reason": "unknown_subject", "subject_id": subject_id}}
+    subject_id = held[0]["subject_id"]
+    common = {"subject_id": subject_id, "package": "package"}
     kind = "project" if any(row["subject_kind"] == "project" for row in held) else "package"
     project_id = held[0]["project_id"]
     subject = {"kind": kind, "id": subject_id, "project_id": project_id}

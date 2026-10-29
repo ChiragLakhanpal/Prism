@@ -134,6 +134,29 @@ def test_limit_caps_the_rows_and_the_coverage_line_says_how_many_more_matched(en
     assert below and below[0]["count"] == result["coverage"]["matched"] - 3
 
 
+def test_a_hit_the_viewer_s_table_does_not_hold_is_not_counted_as_matched_or_ranked_below_the_limit(engine, monkeypatch):
+    """Ticket 11's review round 2, P5: the index can name a passage strata.gold.passage no longer holds, such as one
+    a re-issue replaced. It is left out of the rows, and of the coverage line's counts: here three hits, one the table
+    does not hold, and a limit of 1."""
+    from strata.knowledge.search import Hit, Hits
+    from strata.tools import search_passages
+
+    class NamesOneUnknownPassage:
+        name = "a stand-in searcher"
+
+        def search(self, query, filters, depth):
+            return Hits(3, [Hit("31525018/v1/54", 0.9), Hit("99999999/v1/1", 0.8), Hit("31525018/v1/55", 0.7)],
+                        "Three hits, one of a passage no table holds.")
+
+    monkeypatch.setattr(search_passages, "searcher_for", lambda call: NamesOneUnknownPassage())
+
+    result = search(engine, query=REBIDDING, limit=1)
+
+    assert [row["passage_id"] for row in result["rows"]] == ["31525018/v1/54"]
+    assert (result["coverage"]["matched"], result["coverage"]["used"]) == (2, 1)
+    assert result["coverage"]["not_used"] == [{"reason": "ranked_below_limit", "count": 1, "evidence_ids": []}]
+
+
 @pytest.mark.parametrize("arguments, reason", [
     ({"document_type": "Board Report"}, "unknown_document_type"),
     ({"sector": "energy"}, "unknown_sector"),

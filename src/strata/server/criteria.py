@@ -42,6 +42,7 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import Event
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.server.engines import EngineFor
+from strata.server.tags import MODEL
 from strata.tools import registry, search_passages
 
 log = logging.getLogger("strata.server.criteria")
@@ -174,14 +175,14 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: CriteriaSto
                     return package
                 return read_summary(viewer, package, view, asof)
 
-            @app.post(f"{prefix}/criteria/run", name=f"criteria_run_{kind}")
+            @app.post(f"{prefix}/criteria/run", name=f"criteria_run_{kind}", tags=[MODEL])
             def criteria_run(key: str, body: RunRequest, viewer: Viewer = Depends(current_viewer)):
                 package = resolve(viewer, kind, key)
                 if isinstance(package, JSONResponse):
                     return package
                 return start_run(viewer, package, body)
 
-            @app.post(f"{prefix}/criteria/compare", name=f"criteria_compare_{kind}")
+            @app.post(f"{prefix}/criteria/compare", name=f"criteria_compare_{kind}", tags=[MODEL])
             def criteria_compare(key: str, body: CompareRequest, viewer: Viewer = Depends(current_viewer)):
                 package = resolve(viewer, kind, key)
                 if isinstance(package, JSONResponse):

@@ -12,10 +12,11 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from strata.agent.claims import ClaimsError
-from strata.packages.form import Form, Invalid, value as checked
+from strata.config import Thresholds
+from strata.packages.form import Form, Invalid, text_limit, value as checked
 
 log = logging.getLogger("strata.packages")
 
@@ -25,6 +26,8 @@ class Reading:
     package: bool
     dividing: bool
     values: dict[str, dict]  # key -> {"value": ..., "stated": bool, "approximate": bool}
+    # key -> the words the reader gave a choice the schema does not list, such as a method STEP has no name for
+    unlisted: dict[str, str] = field(default_factory=dict)
 
 
 def message(sentence: str, form: Form) -> dict:
@@ -41,9 +44,9 @@ def message(sentence: str, form: Form) -> dict:
     return {"task": "read_package", "sentence": sentence, "fields": fields}
 
 
-def read(text: str, form: Form, country_codes: dict[str, str], max_months: float) -> Reading:
-    """The reader's answer, checked against the schema. ClaimsError when it is not the JSON its
-    instructions ask for."""
+def read(text: str, form: Form, country_codes: dict[str, str], max_months: float, thresholds: Thresholds) -> Reading:
+    """The reader's answer, checked against the schema and the thresholds file's limits. ClaimsError when it is not
+    the JSON its instructions ask for."""
     try:
         answer = json.loads(text)
     except (TypeError, json.JSONDecodeError) as error:
@@ -53,16 +56,20 @@ def read(text: str, form: Form, country_codes: dict[str, str], max_months: float
     given = answer.get("fields") or {}
     if not isinstance(given, dict):
         raise ClaimsError("The package reader's fields must be an object.")
-    values = {}
+    values, unlisted = {}, {}
     for key, entry in given.items():
         if not form.has(key) or not form.field(key).asked or not isinstance(entry, dict):
             continue
-        field = form.field(key)
+        chosen = form.field(key)
         try:
-            kept = checked(field, entry.get("value"), country_codes, max_months)
+            kept = checked(chosen, entry.get("value"), country_codes, max_months, thresholds)
         except Invalid:
             log.info("The package reader gave %s a value the schema does not take; the chip will ask for it.", key)
+            words = entry.get("value")
+            if chosen.kind == "choice" and isinstance(words, str) and words.strip():
+                unlisted[key] = " ".join(words.split())[:text_limit(thresholds)]
             continue
         values[key] = {"value": kept, "stated": bool(entry.get("stated", True)),
                        "approximate": bool(entry.get("approximate", False))}
-    return Reading(answer["package"], bool(answer.get("dividing", False)), values if answer["package"] else {})
+    found = answer["package"]
+    return Reading(found, bool(answer.get("dividing", False)), values if found else {}, unlisted if found else {})

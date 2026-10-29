@@ -80,7 +80,10 @@ def test_all_projects_lists_active_projects_first_then_by_name(fixture_app):
     active = [row["status"] == "Active" for row in rows]
     assert active == sorted(active, reverse=True)
     names = [row["project_name"] for row in rows if row["status"] == "Active"]
-    assert names == sorted(names)
+    # A to Z whatever the case, as a reader sorts names (ticket 10's critique, round 5): "Kenya Digital Economy
+    # Acceleration Project" comes before "KTDA Small Hydro Programme of Activities".
+    assert names == sorted(names, key=str.casefold)
+    assert names.index("Kenya Digital Economy Acceleration Project") < names.index("KTDA Small Hydro Programme of Activities")
     assert body["records_through"] == "2026-10-23"
 
 

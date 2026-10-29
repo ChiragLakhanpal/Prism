@@ -302,11 +302,13 @@ function Finding({
   return <Fill template={words.findingMany} slots={{ tied: formatCount(tied.length, { capital: true }), k, m: all }} />;
 }
 
-function CountCell({ row, m, onCount, from }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void; from: ReactNode }) {
+// A row's "{k} of {m}" with " completion reports" in caption: stacked and right-aligned in the table's cell, on one
+// line where it fits in the list. One Num with one check for both (ticket 30's review, F10).
+function RiskCount({ row, m, onCount, from, stacked }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void; from: ReactNode; stacked: boolean }) {
   const k = formatNumber(row.k, { compact: false });
   return (
-    <span data-count={row.risk_key} className="inline-flex flex-col items-end text-right">
-      <span className="text-small font-semibold text-ink tabular-nums">
+    <span data-count={row.risk_key} className={stacked ? "inline-flex flex-col items-end text-right" : undefined}>
+      <span className={cx("font-semibold text-ink tabular-nums", stacked && "text-small")}>
         <Num
           part={row.k}
           whole={m}
@@ -314,8 +316,48 @@ function CountCell({ row, m, onCount, from }: { row: RiskRow; m: number; onCount
           check={{ tooltip: words.numTips.k, from, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
         />
       </span>
+      {!stacked && " "}
       <span className="text-caption text-ink-muted">{words.reports}</span>
     </span>
+  );
+}
+
+// The table's columns and header, which the skeleton draws too, so the table takes its place without a shift: Select
+// 48 px, then Risk, How often, What helped and Sources share the rest.
+function RiskColumns() {
+  const c = words.columns;
+  return (
+    <>
+      <colgroup>
+        <col className="w-12" />
+        <col className="w-[23%]" />
+        <col className="w-[15%]" />
+        <col className="w-[34%]" />
+        <col />
+      </colgroup>
+      <thead className="bg-surface-2 text-left align-bottom">
+        <tr>
+          <th scope="col" className="p-3">
+            <span className="sr-only">{c.select}</span>
+          </th>
+          <th scope="col" className="p-3 font-semibold text-ink-heading">
+            {c.risk}
+          </th>
+          <th scope="col" className="p-3 text-right font-semibold text-ink-heading">
+            {c.often}
+            <span className="block text-caption font-normal text-ink-muted">{c.oftenNote}</span>
+          </th>
+          <th scope="col" className="p-3 font-semibold text-ink-heading">
+            {c.helped}
+            <span className="block text-caption font-normal text-ink-muted">{c.helpedNote}</span>
+          </th>
+          <th scope="col" className="p-3 font-semibold text-ink-heading">
+            {c.sources}
+            <span className="block text-caption font-normal text-ink-muted">{c.sourcesNote}</span>
+          </th>
+        </tr>
+      </thead>
+    </>
   );
 }
 
@@ -360,39 +402,10 @@ type TableProps = {
 // At 640 px of card content and wider. table-layout: fixed, so nothing shifts when values change or a row is
 // selected: Select 48 px, then Risk, How often, What helped and Sources share the rest.
 function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, opened, handlers, from }: TableProps) {
-  const c = words.columns;
   return (
     <div data-risk-view="table" className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
       <table aria-labelledby={findingId} aria-describedby={countId} className="w-full table-fixed border-collapse text-small">
-        <colgroup>
-          <col className="w-12" />
-          <col className="w-[23%]" />
-          <col className="w-[15%]" />
-          <col className="w-[34%]" />
-          <col />
-        </colgroup>
-        <thead className="bg-surface-2 text-left align-bottom">
-          <tr>
-            <th scope="col" className="p-3">
-              <span className="sr-only">{c.select}</span>
-            </th>
-            <th scope="col" className="p-3 font-semibold text-ink-heading">
-              {c.risk}
-            </th>
-            <th scope="col" className="p-3 text-right font-semibold text-ink-heading">
-              {c.often}
-              <span className="block text-caption font-normal text-ink-muted">{c.oftenNote}</span>
-            </th>
-            <th scope="col" className="p-3 font-semibold text-ink-heading">
-              {c.helped}
-              <span className="block text-caption font-normal text-ink-muted">{c.helpedNote}</span>
-            </th>
-            <th scope="col" className="p-3 font-semibold text-ink-heading">
-              {c.sources}
-              <span className="block text-caption font-normal text-ink-muted">{c.sourcesNote}</span>
-            </th>
-          </tr>
-        </thead>
+        <RiskColumns />
         <tbody>
           {rows.map((row) => (
             <tr key={row.risk_key} data-risk-row={row.risk_key} data-open={rowIsOpen(row, opened) || undefined} className={cx("border-t border-line align-top", rowIsOpen(row, opened) && "bg-tint")}>
@@ -403,7 +416,7 @@ function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, o
                 {row.risk_label}
               </th>
               <td className="p-3 text-right">
-                <CountCell row={row} m={m} onCount={handlers.onCount} from={from} />
+                <RiskCount row={row} m={m} onCount={handlers.onCount} from={from} stacked />
               </td>
               <td className="p-3">
                 <p className="max-w-[65ch] text-body text-ink" data-helped>
@@ -432,7 +445,7 @@ function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, han
           </Checkbox>
           <div className="mt-1 flex flex-col gap-2 pl-8">
             <p className="text-small">
-              <ListCount row={row} m={m} onCount={handlers.onCount} from={from} />
+              <RiskCount row={row} m={m} onCount={handlers.onCount} from={from} stacked={false} />
             </p>
             <div>
               <p className="text-caption text-ink-muted">{words.helpedLabel}</p>
@@ -445,24 +458,6 @@ function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, han
         </li>
       ))}
     </ol>
-  );
-}
-
-// "{k} of {m}" in small 600, then " completion reports" in caption on the same line where it fits.
-function ListCount({ row, m, onCount, from }: { row: RiskRow; m: number; onCount: (row: RiskRow, element: HTMLElement) => void; from: ReactNode }) {
-  const k = formatNumber(row.k, { compact: false });
-  return (
-    <span data-count={row.risk_key}>
-      <span className="font-semibold text-ink tabular-nums">
-        <Num
-          part={row.k}
-          whole={m}
-          show="count"
-          check={{ tooltip: words.numTips.k, from, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
-        />
-      </span>{" "}
-      <span className="text-caption text-ink-muted">{words.reports}</span>
-    </span>
   );
 }
 
@@ -625,29 +620,13 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
 // Static surface-2 blocks where the finding, the count line and three rows will be: the real header and 88 px
 // rows in table form, 168 px items in list form.
 export function RisksSkeleton() {
-  const c = words.columns;
   return (
     <div aria-hidden="true" data-risks-skeleton>
       <SkeletonText className="mt-6 max-w-prose text-h2" widths={["w-[90%]", "w-1/2"]} />
       <SkeletonLine className="mt-2 text-caption" width="w-2/5" />
       <div className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
         <table className="w-full table-fixed border-collapse text-small">
-          <colgroup>
-            <col className="w-12" />
-            <col className="w-[23%]" />
-            <col className="w-[15%]" />
-            <col className="w-[34%]" />
-            <col />
-          </colgroup>
-          <thead className="bg-surface-2 text-left align-bottom">
-            <tr>
-              <th className="p-3" />
-              <th className="p-3 font-semibold text-ink-heading">{c.risk}</th>
-              <th className="p-3 text-right font-semibold text-ink-heading">{c.often}</th>
-              <th className="p-3 font-semibold text-ink-heading">{c.helped}</th>
-              <th className="p-3 font-semibold text-ink-heading">{c.sources}</th>
-            </tr>
-          </thead>
+          <RiskColumns />
           <tbody>
             {[0, 1, 2].map((n) => (
               <tr key={n} className="h-22 border-t border-line align-top">

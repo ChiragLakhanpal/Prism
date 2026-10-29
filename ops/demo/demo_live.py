@@ -165,7 +165,7 @@ class LiveDemo:
         self.w.apps.stop_and_wait(name, timeout=dt.timedelta(minutes=MINUTES))
 
     def start_app(self, name: str) -> None:
-        self.w.apps.start_and_wait(name, timeout=dt.timedelta(minutes=MINUTES))
+        workspace_state.start_app(self.w, name, MINUTES)
 
     def health(self, url: str) -> dict:
         return call_app(self.env, self.config, url, "/api/health", attempts=1)

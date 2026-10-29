@@ -23,7 +23,8 @@
           "strata.gold.contract:1814225",
           "strata.gold.contract:1848572",
           "strata.gold.contract:1872371"
-        ]
+        ],
+        "step_references": []
       },
       {
         "reason": "no_notice",
@@ -44,6 +45,23 @@
           "strata.gold.package:KE-TRANS NZOIA COUNTY-400281-CW-RFQ",
           "strata.gold.package:KE-WAJWASCO-380658-CW-RFQ",
           "strata.gold.package:KE-WAJWASCO-503126-CW-RFQ"
+        ],
+        "step_references": [
+          "KE-BUSIA COUNTY-441544-CW-RFQ",
+          "KE-BUSIA COUNTY-531857-CW-RFQ",
+          "KE-HOMABAY COUNTY-440636-CW-RFQ",
+          "KE-KAJIADO COUNTY-429306-CW-RFQ",
+          "KE-KIAMBU COUNTY-423779-GO-RFQ",
+          "KE-KISII COUNTY-423778-CW-RFQ",
+          "KE-MIGORI COUNTY-425987-CW-RFQ",
+          "KE-NANDI COUNTY-425085-CW-RFQ",
+          "KE-NAROK COUNTY-426505-CW-RFQ",
+          "KE-NWWDA-541062-CW-RFQ",
+          "KE-NYAMIRA COUNTY-424306-CW-RFQ",
+          "KE-THARAKA NITHI COUNTY-426315-CW-RFQ",
+          "KE-TRANS NZOIA COUNTY-400281-CW-RFQ",
+          "KE-WAJWASCO-380658-CW-RFQ",
+          "KE-WAJWASCO-503126-CW-RFQ"
         ]
       }
     ]
@@ -145,7 +163,8 @@
             "strata.gold.contract:1814225",
             "strata.gold.contract:1848572",
             "strata.gold.contract:1872371"
-          ]
+          ],
+          "step_references": []
         },
         {
           "reason": "no_notice",
@@ -166,6 +185,23 @@
             "strata.gold.package:KE-TRANS NZOIA COUNTY-400281-CW-RFQ",
             "strata.gold.package:KE-WAJWASCO-380658-CW-RFQ",
             "strata.gold.package:KE-WAJWASCO-503126-CW-RFQ"
+          ],
+          "step_references": [
+            "KE-BUSIA COUNTY-441544-CW-RFQ",
+            "KE-BUSIA COUNTY-531857-CW-RFQ",
+            "KE-HOMABAY COUNTY-440636-CW-RFQ",
+            "KE-KAJIADO COUNTY-429306-CW-RFQ",
+            "KE-KIAMBU COUNTY-423779-GO-RFQ",
+            "KE-KISII COUNTY-423778-CW-RFQ",
+            "KE-MIGORI COUNTY-425987-CW-RFQ",
+            "KE-NANDI COUNTY-425085-CW-RFQ",
+            "KE-NAROK COUNTY-426505-CW-RFQ",
+            "KE-NWWDA-541062-CW-RFQ",
+            "KE-NYAMIRA COUNTY-424306-CW-RFQ",
+            "KE-THARAKA NITHI COUNTY-426315-CW-RFQ",
+            "KE-TRANS NZOIA COUNTY-400281-CW-RFQ",
+            "KE-WAJWASCO-380658-CW-RFQ",
+            "KE-WAJWASCO-503126-CW-RFQ"
           ]
         }
       ]

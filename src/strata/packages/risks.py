@@ -51,21 +51,23 @@ from strata.harness.facts import Facts
 from strata.knowledge.lessons.review import IEG_STATUSES
 from strata.lakehouse.engine import Engine
 from strata.tools import registry
+from strata.tools.get_lessons import ieg_quote
 
 TOOLS = ("find_comparables", "get_lessons")
-PACKAGE = "strata.gold.package:"
 # Why the section has no rows, as the page's empty states say it (web/src/copy.ts packageRisks.empty).
 EMPTY_REASONS = ("missing_criteria", "no_comparables", "no_reports", "no_lessons", "all_removed")
 
 
 @dataclass(frozen=True)
 class RiskTable:
-    """What the builder made: the section's payload, every row the tools returned, and the verifier's verdict on
-    the rows' claims (None when no row was written)."""
+    """What the builder made: the section's payload, every row the tools returned, the verifier's verdict on the
+    rows' claims (None when no row was written), and find_comparables' abstention when it gave one, such as
+    unknown_package for a STEP reference no plan lists, which the route answers with 404 (ticket 30's review, F9)."""
 
     payload: dict
     facts: Facts
     verdict: Verdict | None
+    abstention: dict | None = None
 
 
 def rank(candidate: tuple[dict, dict]) -> tuple:
@@ -85,15 +87,6 @@ def _source(evidence: Mapping, project_name: str | None) -> dict:
             "project_name": project_name, "date": evidence["document_date"], "para": evidence["paragraph"],
             "locator": {"kind": evidence["locator"], "text": evidence["paragraph"]}, "page": evidence["page"],
             "quote": evidence["quote"], "public_from": evidence["public_from"]}
-
-
-def ieg_quote(lesson: Mapping) -> dict | None:
-    """IEG's words that restate the lesson, for the drawer's IEG line, when IEG's review restated it."""
-    if lesson["ieg_status"] != "restated":
-        return None
-    said = next((row for row in lesson["evidence"] if row["role"] == "restatement" and row["restated_by_ieg"]), None)
-    return None if said is None else {"text": said["quote"], "lang": None, "doc_short": said["doc_short"],
-                                      "evidence_id": said["evidence_id"]}
 
 
 def _row(factor: dict, lesson: dict) -> dict:
@@ -172,6 +165,8 @@ def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, wo
                "source_names": list(dict.fromkeys(names[key].dataset_name for key in registry_sources)),
                "data_through": None, "as_of": as_of.isoformat() if as_of else None}
 
+    abstention = None  # find_comparables', once it has answered
+
     def finish(verdict: Verdict | None = None, **changes) -> RiskTable:
         payload.update(changes)
         shown = {row["risk_key"] for row in payload["rows"]}
@@ -179,7 +174,7 @@ def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, wo
         payload["selected_not_shown"] = [
             {"risk_key": key, "risk_label": (lists.risk_factor(key).label if lists.risk_factor(key) else key)}
             for key in stored if key not in shown]
-        return RiskTable(payload, facts, verdict)
+        return RiskTable(payload, facts, verdict, abstention)
 
     def run(name: str, arguments: Mapping) -> dict:
         result = registry.call(name, {key: value for key, value in arguments.items() if value is not None}, context,
@@ -190,12 +185,12 @@ def build(engine: Engine, viewer: Viewer, *, as_of, criteria: Mapping | None, wo
     if criteria is None:
         return finish(empty_reason="missing_criteria")
     comparables = run("find_comparables", criteria)
+    abstention = comparables["abstention"]
     payload["as_of"], payload["data_through"] = comparables["as_of"], comparables["records_through"]
     # A package from a STEP row is described by its plan row, which find_comparables read.
     words = words or (comparables.get("package") or {}).get("description")
     packages = [row["step_reference"] for row in comparables["rows"]] + [
-        evidence[len(PACKAGE):] for entry in comparables["coverage"]["not_used"] for evidence in entry["evidence_ids"]
-        if evidence.startswith(PACKAGE)]
+        reference for entry in comparables["coverage"]["not_used"] for reference in entry["step_references"]]
     if not packages:
         return finish(empty_reason="no_comparables")
 

@@ -248,6 +248,29 @@ def test_a_saved_package_reopens_with_the_same_chips_and_only_for_the_person_who
     assert (theirs.status_code, theirs.json()["code"]) == (404, "unknown_package")
 
 
+def test_a_change_to_someone_else_s_package_or_one_that_does_not_exist_is_not_found(planning):
+    """Ticket 15's review round 3, R5: the server checks the package is the viewer's before it makes a change."""
+    app = planning()
+    _, package = plan(app)
+    change = {"field": "method", "action": "set", "value": "ICB"}
+
+    theirs = call(app, "POST", f"/api/planned-packages/{package['package_id']}", BEN, json=change)
+    nobody = call(app, "POST", "/api/planned-packages/pkg-no-such-package", ANA, json=change)
+
+    assert [(answer.status_code, answer.json()["code"]) for answer in (theirs, nobody)] == [(404, "unknown_package")] * 2
+
+
+@pytest.mark.parametrize("sentence", ["   ", "\t\n"])
+def test_a_sentence_of_only_spaces_is_refused_and_nothing_is_planned(planning, sentence):
+    """Ticket 15's review round 3, R11: the length is counted after the spaces at each end are removed."""
+    app = planning()
+
+    response = call(app, "POST", "/api/planned-packages", ANA, json={"sentence": sentence})
+
+    assert response.status_code == 422
+    assert call(app, "GET", "/api/planned-packages", ANA).json()["rows"] == []
+
+
 def test_a_sentence_with_no_package_in_it_saves_nothing(planning):
     app = planning(case="package-no-package")
 
@@ -270,6 +293,26 @@ def test_a_reader_that_does_not_answer_saves_nothing_and_says_so(planning):
     assert ("error", {"code": "no_reader"}) in plan(no_reader)[0]
     assert ("error", {"code": "agent_unavailable"}) in plan(unavailable)[0]
     assert call(unavailable, "GET", "/api/planned-packages", ANA).json()["rows"] == []
+
+
+def test_a_method_the_form_does_not_list_takes_the_default_and_says_the_sentence_named_another(planning):
+    """Ticket 15's verification round 3, V4: a sentence that names "Reverse auction", which the form's Method does
+    not list, gets the default, Request for Bids, and the chip says the sentence named a method I don't list, with
+    its words, never that the sentence did not say."""
+    class NamesAReverseAuction:
+        name, version = "strata-package-reader", None
+
+        def respond(self, items, previous_response_id):
+            fields = {"category": {"value": "Works", "stated": True}, "country": {"value": "KE", "stated": True},
+                      "method": {"value": "Reverse auction", "stated": True}}
+            text = json.dumps({"package": True, "dividing": False, "fields": fields})
+            return {"id": "resp-reverse-auction",
+                    "output": [{"type": "message", "content": [{"type": "output_text", "text": text}]}]}
+
+    _, package = plan(planning(reader=NamesAReverseAuction), sentence="works in Kenya by reverse auction")
+
+    [method] = [field for field in package["fields"] if field["key"] == "method"]
+    assert (method["value"], method["provenance"], method["read_as"]) == ("Request for Bids", "unlisted", "Reverse auction")
 
 
 def test_a_sentence_that_asks_for_lots_to_stay_under_review_gets_the_refusal_and_review_from_the_whole_package(planning):
@@ -575,3 +618,23 @@ def test_the_form_tells_the_workspace_its_limits(planning):
     form = call(app, "GET", f"/api/planned-packages/{package['package_id']}", ANA).json()["form"]
 
     assert (form["max_months"], form["max_count"], form["text_limit"]) == (60.0, 99, 200)
+
+
+def test_the_most_lots_and_the_longest_description_come_from_the_thresholds_file(planning, tmp_path):
+    """Ticket 15's review round 3, R12: [package_form] in config/thresholds.toml holds both limits (CLAUDE.md rule
+    9). With at most 3 lots and descriptions of at most 10 characters, the form says so and the server refuses more."""
+    text = (ROOT / "config" / "thresholds.toml").read_text()
+    narrower = tmp_path / "thresholds.toml"
+    narrower.write_text(text.replace("\ntext_limit = 200\n", "\ntext_limit = 10\n").replace("\nmax_count = 99\n",
+                                                                                         "\nmax_count = 3\n"))
+    app = planning(thresholds=load_thresholds(narrower))
+    _, package = plan(app)
+    path = f"/api/planned-packages/{package['package_id']}"
+
+    form = call(app, "GET", path, ANA).json()["form"]
+    lots = call(app, "POST", path, ANA, json={"field": "lots", "action": "set", "value": 4})
+    words = call(app, "POST", path, ANA, json={"field": "description", "action": "set", "value": "Rural roads in Kenya"})
+
+    assert (form["max_count"], form["text_limit"]) == (3, 10)
+    assert [(answer.status_code, answer.json()["code"]) for answer in (lots, words)] == [(422, "invalid_value")] * 2
+    assert call(app, "POST", path, ANA, json={"field": "lots", "action": "set", "value": 3}).status_code == 200

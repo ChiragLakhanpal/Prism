@@ -6,7 +6,7 @@
 // copied here so the screens are checked against an independent source.
 import type { Page, Request } from "@playwright/test";
 import { scan } from "./axe";
-import { expect, mockApi, recorded, test } from "./mocked";
+import { expect, mockApi, modelRoutes, recorded, test } from "./mocked";
 import { ICR_54, KENYA, SHOWCASE, trailApi } from "./trail-api";
 
 type Answer = { status?: number; body: string };
@@ -71,9 +71,9 @@ test("KE-NWWDA-229129-CW-RFB's trail shows its plan row, notice, bids and contra
   await expect(page.locator("[data-report]").first()).toContainText("Six paragraphs");
   await expect(page.locator("[data-paragraph-card] [data-source]")).toHaveCount(18);
 
-  const models: { method: string; path: string }[] = JSON.parse(await recorded("model-routes.json")).routes;
+  const { callsAModel } = await modelRoutes();
   const called = requests.map((request) => ({ method: request.method(), path: new URL(request.url()).pathname }));
-  expect(called.filter((request) => models.some((model) => model.method === request.method && model.path === request.path))).toEqual([]);
+  expect(called.filter((request) => callsAModel(request.method, request.path))).toEqual([]);
   expect(await axe(page)).toEqual([]);
   expect(unrecorded).toEqual([]);
 });

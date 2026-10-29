@@ -45,10 +45,16 @@ import { viewOf } from "../lib/view";
 
 const words = copy.packagePage;
 
+// Section 1's criteria on a STEP row's page, by find_comparables' own parameter names: none, so the tool reads the
+// package's own from its plan row. Section 2 sends the same query, so the two count the same comparables (ticket 27's
+// review round 2, follow-up 5).
+const SECTION_1_CRITERIA = new URLSearchParams();
+
 export function PackagePage({ stepRef }: { stepRef: string }) {
   const base = `/api/packages/${encodeURIComponent(stepRef)}`;
+  const criteria = SECTION_1_CRITERIA.toString();
   const [load, retry] = useLoad<PackageResult>(base);
-  const [section, retrySection] = useLoad<ComparablesResult>(`${base}/comparables`);
+  const [section, retrySection] = useLoad<ComparablesResult>(`${base}/comparables${criteria ? `?${criteria}` : ""}`);
   // Ticket 26: estimate_time beside find_comparables, so lane 1 can draw before lane 2 arrives.
   const [estimateLoad, retryEstimate] = useLoad<EstimateResult>(`${base}/estimate`);
   const estimate: EstimateState =
@@ -196,7 +202,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         </div>
         {/* Section 2, the planned date for each STEP step (ticket 27), collapsed until opened. */}
         <div className="mt-6 @lg/page:mt-8">
-          <StepsSection packageKey={facts.step_reference} kind="step" onState={setSteps} />
+          <StepsSection packageKey={facts.step_reference} kind="step" criteria={criteria} onState={setSteps} />
         </div>
         {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria; it tells the
             page what is selected, for "Suggest {n} PPSD risk rows" (ticket 36). */}

@@ -13,8 +13,8 @@
   holds gets 404 unknown_package, as the GET does, and nothing is kept.
 - PUT /api/packages/{step_reference}/step-start and PUT /api/planned-packages/{package_id}/step-start take
   {"start_date": "2026-11-02"}, keep it for the viewer (strata.app.step_start_dates) and answer with the steps
-  dated from it, as of ?asof= like the GET, so a page as of a past date dates its steps from the comparables of
-  then. A date outside the thresholds file's range gets 422 bad_request, and a package whose plan dates its steps
+  dated from it, as of ?asof= and with section 1's criteria in the query like the GET, so a page as of a past date
+  dates its steps from the comparables of then. A date outside the thresholds file's range gets 422 bad_request, and a package whose plan dates its steps
   (the delay basis) gets 409 no_start_needed: it has no start date to keep.
 
 Both are written as the app's own service principal; a preview changes nothing (403 preview). A read the store
@@ -183,9 +183,14 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PackageStor
         return known(viewer, step_reference) or choose(viewer, body, STEP_ROW, step_reference)
 
     @app.put("/api/packages/{step_reference}/step-start")
-    def step_row_start(step_reference: str, body: StartRequest, asof: dt.date | None = None,
+    def step_row_start(step_reference: str, body: StartRequest, request: Request, asof: dt.date | None = None,
                        viewer: Viewer = Depends(current_viewer)):
-        return start_from(viewer, body, asof, {"step_reference": step_reference}, STEP_ROW, step_reference)
+        # Section 1's criteria, as the GET reads them, so the dates count the comparables section 1 shows (ticket 27's
+        # review round 2, follow-up 5).
+        criteria = comparables_criteria(request)
+        if isinstance(criteria, JSONResponse):
+            return criteria
+        return start_from(viewer, body, asof, {**criteria, "step_reference": step_reference}, STEP_ROW, step_reference)
 
     @app.get("/api/planned-packages/{package_id}/steps")
     def planned_steps(package_id: str, asof: dt.date | None = None, view: str = STAFF,

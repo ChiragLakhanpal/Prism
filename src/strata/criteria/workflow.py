@@ -42,8 +42,8 @@ from strata.config import CriteriaItems, Thresholds, load_criteria_items
 from strata.criteria.store import COMPARISON, PACKAGE_RUN, CriteriaStore
 from strata.dbx import Viewer
 from strata.harness.facts import Facts
-from strata.packages.risks import ieg_quote
 from strata.harness.turn import Event
+from strata.tools.get_lessons import ieg_quote
 
 log = logging.getLogger("strata.criteria")
 # The refusal keys the reader may give: the two of src/strata/agent/refusals.py's keys (ticket 24) that this

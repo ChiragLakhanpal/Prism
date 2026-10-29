@@ -374,7 +374,7 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
               <tr key={row.activity_reference_no} className="border-t border-line align-top">
                 <th scope="row" className="px-3 py-2 text-left font-normal">
                   <span className="block font-mono font-medium wrap-anywhere text-ink">{row.activity_reference_no}</span>
-                  {row.description && <span className="mt-1 block text-ink">{row.description}</span>}
+                  {row.description && <span className="mt-1 block text-ink">{drawable(row.description)}</span>}
                 </th>
                 <td className="px-3 py-2">{method(row)}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{amount(row.estimated_amount_usd)}</td>
@@ -387,7 +387,7 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
       cards={rows.map((row) => (
         <li key={row.activity_reference_no} className="rounded-md border border-line bg-surface p-4">
           <h2 className="font-mono text-small font-semibold wrap-anywhere text-ink-heading">{row.activity_reference_no}</h2>
-          {row.description && <p className="mt-1 text-small text-ink">{row.description}</p>}
+          {row.description && <p className="mt-1 text-small text-ink">{drawable(row.description)}</p>}
           <dl className="mt-2 flex flex-col gap-2">
             <div>
               <dt className="text-caption text-ink-muted">{columns.method}</dt>

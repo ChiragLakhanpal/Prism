@@ -49,6 +49,8 @@ const manySources = {
     ...card.evidence,
     ...Array.from({ length: 6 }, (_, n) => ({ ...card.evidence[0], evidence_id: `${card.evidence[0].evidence_id}-${n}`, locator: { kind: "paragraph" as const, text: String(60 + n) } })),
   ],
+  // The sample's own count of what folds, as the server counts it for a real card (lesson_review.card_chips_max).
+  folded: card.evidence.length + 6 - card.chips_max,
 };
 const nothing = () => undefined;
 const lists = DECIDE.lists;

@@ -25,6 +25,7 @@ import datetime as dt
 
 from strata.config import load_criteria_items
 from strata.criteria.reading import reason_item, rejection_reasons
+from strata.estimates.rebidding import reason_in
 from strata.lakehouse.passages import LANGUAGES
 from strata.tools import common
 from strata.tools.common import iso as _iso
@@ -37,8 +38,17 @@ OTHER = "other"
 LANGUAGE_CODES = {name.lower(): code for name, code in LANGUAGES.items()}
 
 
+NOTICE_TABLE = "strata.gold.notice"
+
+
+def award_notice_evidence_id(notice_id: str) -> str:
+    """An award notice as a whole, as rebidding_risk cites one whose text says why its package went out again."""
+    return f"{NOTICE_TABLE}:{notice_id}"
+
+
 def reason_evidence_id(notice_id: str, place: int) -> str:
-    return f"strata.gold.notice:{notice_id}/reason/{place}"
+    """One Reason for Rejection of an award notice, by its place among the notice's reasons."""
+    return f"{award_notice_evidence_id(notice_id)}/reason/{place}"
 
 
 def notice_reasons(text: str) -> list[tuple[str, int]]:
@@ -71,6 +81,11 @@ def read_award_notice(engine, key: str, as_of: dt.date) -> dict | None:
         reason, bids = reasons[place - 1]
         fields += [{"key": "reason_for_rejection", "value": reason, "kind": "text", "highlight": True},
                    {"key": "bids_rejected", "value": str(bids), "kind": "text"}]
+    # The sentence that says why the package went out again, as the rebidding block quotes it, highlighted (ticket
+    # 28's review, follow-up 6).
+    given = reason_in(notice["notice_text"] or "")
+    if given:
+        fields.append({"key": "notice_says", "value": given[1], "kind": "text", "highlight": True})
     return {"kind": "record", "row": {
         "reference": notice_id, "notice_id": notice_id, "fields": fields, "public_from": _iso(notice["public_from"]),
         "source": {"source_key": "award_notices", "document_type": "Contract Award", "project_id": notice["project_id"],

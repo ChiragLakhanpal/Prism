@@ -29,6 +29,9 @@ from strata.harness.sse import events
 from strata.lakehouse.engine import DuckDBEngine
 
 ROOT = Path(__file__).resolve().parents[1]
+# The must-refuse questions ops/agent/refuse_live.py asks: every question of kind refusals in the benchmark file.
+MUST_REFUSE = sum(question["kind"] == "refusals"
+                  for question in yaml.safe_load((ROOT / "evals" / "benchmark.yaml").read_text())["questions"])
 ANSWER_STREAM_SCRIPTS = ("ops/agent/refuse_live.py", "ops/agent/ask_live.py")
 # The env file as the wizard writes it, with made-up values. The process's environment holds none of them.
 ENV = {"FOUNDRY_PROJECT_ENDPOINT": "https://wb-strata.services.ai.azure.com/api/projects/strata",
@@ -241,11 +244,11 @@ def test_the_must_refuse_check_gives_search_passages_the_env_file_s_settings(age
 
     printed = capsys.readouterr().out.splitlines()
     assert code == 0, printed
-    assert len(printed) == 11 and all(line.startswith("Holds. ") for line in printed)
+    assert len(printed) == MUST_REFUSE and all(line.startswith("Holds. ") for line in printed)
     # Each question's search reached AI Search on the env file's workspace, as the env file's token, and embedded
     # its query with the env file's Azure OpenAI endpoint and key; the fixture's passages came back.
-    assert the_workspace["workspace"] == [(ENV["DATABRICKS_HOST"], ENV["DATABRICKS_TOKEN"])] * 11
-    assert the_workspace["embeddings"] == [(ENV["AZURE_OPENAI_ENDPOINT"], ENV["AZURE_OPENAI_API_KEY"])] * 11
+    assert the_workspace["workspace"] == [(ENV["DATABRICKS_HOST"], ENV["DATABRICKS_TOKEN"])] * MUST_REFUSE
+    assert the_workspace["embeddings"] == [(ENV["AZURE_OPENAI_ENDPOINT"], ENV["AZURE_OPENAI_API_KEY"])] * MUST_REFUSE
     assert all(result.get("rows") and "error" not in result for result in the_workspace["tool_results"])
 
 
@@ -272,9 +275,9 @@ def test_the_must_refuse_check_holds_while_the_workspace_has_no_passage_index_ye
 
     printed = capsys.readouterr().out.splitlines()
     assert code == 0, printed
-    assert len(printed) == 11 and all(line.startswith("Holds. ") for line in printed)
+    assert len(printed) == MUST_REFUSE and all(line.startswith("Holds. ") for line in printed)
     # Every question's agent searched, and each search came back with no passages and the missing index as its reason.
-    assert len(the_workspace["tool_results"]) == 11
+    assert len(the_workspace["tool_results"]) == MUST_REFUSE
     assert all(result["rows"] == [] and result["abstention"]["reason"] == "index_not_available"
                for result in the_workspace["tool_results"])
 

@@ -15,9 +15,10 @@
 // lane with the middle half, the middle, the 8-in-10 line and the dots, the statistics' labels (C), and
 // the axis. From 400 px wide, a readout that takes two lines makes row B, and the chart, 16 px taller.
 // A swarm too tall for the lane makes the lane taller in 16 px steps before the first paint, and never
-// after. A reader's text spacing can make rows A, B and C taller too. Each dot's centre is exactly its months, and dots
-// that would overlap move up or down from the lane's centre in a fixed order, so the same data always
-// draws the same picture and no dot sits on the wrong side of the plan line the readout counts against.
+// after. A reader's text spacing can make rows A, B and C taller too. Each dot's centre is exactly its
+// months, and dots that would overlap move up or down from the lane's centre in a fixed order, so the
+// same data always draws the same picture and no dot sits on the wrong side of the plan line the
+// readout counts against.
 //
 // Every number arrives from the tool, written by the caller with web/src/lib/format.ts; the chart only
 // places it. Text over marks has a surface halo. There is no animation.
@@ -334,6 +335,9 @@ function Knockout({ kind, box, floor }: { kind: string; box: Box | undefined; fl
   if (!box || box.width === 0) return null;
   const top = box.y - 2;
   const bottom = Math.min(box.y + box.height + 2, floor);
+  // A box from the last measure can sit below this render's floor for one render, until the next measure; a
+  // negative height logs an error, so nothing is drawn then (ticket 12's review round 11, P2).
+  if (bottom <= top) return null;
   return <rect data-knockout={kind} x={box.x - 2} y={top} width={box.width + 4} height={bottom - top} className="fill-surface" />;
 }
 
@@ -414,6 +418,32 @@ function Ghost({ points, x, centre }: { points: Lane2Points; x: (months: number)
 
 const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), Math.max(low, high));
 
+// The words the chart draws or names, each from the copy file through its caller.
+export type RangeLabels = {
+  // Row A: the lane's label, and the key: the signed count beside a filled dot and the open count beside a hollow one.
+  lane: string;
+  keySigned: string | null;
+  keyHollow: string | null;
+  // The plan line's label, and the statistics' labels: the middle half with its middle, and the 8-in-10 line.
+  plan: string;
+  middle: string | null;
+  in10: string | null;
+  // The axis's last tick, and the drawing's alt text.
+  axisLast: string;
+  alt: string;
+  // The dots' group, with its help line, and the plan slider's name.
+  group: string;
+  groupHelp: string;
+  slider: string;
+  // The tooltip's last line for a pointer, and the touch tooltip's button.
+  openHint?: string;
+  open?: string;
+  // Lane 2's label, and the same in fewer words, for a chart its full label would not fit in, as at 320 px with a
+  // reader's text spacing.
+  lane2?: string;
+  lane2Short?: string;
+};
+
 export function RangeChart({
   width,
   marks,
@@ -426,27 +456,13 @@ export function RangeChart({
   readout,
   readoutLines,
   readoutWidest,
-  keySigned,
-  keyHollow,
   keyLead = false,
-  laneLabel,
-  planLabel,
-  middleLabel,
-  in10Label,
-  axisLastLabel,
-  alt,
-  groupName,
-  groupHelp,
-  sliderName,
+  labels,
   valueText,
   onPlan,
   onOpen,
   opened = null,
-  openHint,
-  openLabel,
   lane2,
-  lane2Label = "",
-  lane2LabelShort = "",
   matching = null,
   compareKey = null,
   readOnly = false,
@@ -470,21 +486,11 @@ export function RangeChart({
   // as the copy's two: every package signed, by the band's last month. The readout's lines are chosen
   // from them, so row B stays the same while the line moves.
   readoutWidest: ReadoutBand[];
-  // The key: the signed count beside a filled dot and the open count beside a hollow one. With
-  // keyLead, the key is words alone, with no glyphs: a lead, "Each dot is 1 in 20 of the 103 packages.",
+  // With keyLead, the key is words alone, with no glyphs: a lead, "Each dot is 1 in 20 of the 103 packages.",
   // then the open count, because quantile dots do not draw open packages one by one.
-  keySigned: string | null;
-  keyHollow: string | null;
   keyLead?: boolean;
-  laneLabel: string;
-  planLabel: string;
-  middleLabel: string | null;
-  in10Label: string | null;
-  axisLastLabel: string;
-  alt: string;
-  groupName: string;
-  groupHelp: string;
-  sliderName: string;
+  // Every word the chart draws or names, as one object (RangeLabels; ticket 12's review, Standards).
+  labels: RangeLabels;
   valueText: string | null;
   onPlan: (value: number, how: PlanMove) => void;
   // Ticket 15: a click on a dot, Enter on the focused dot, or a tapped dot's "Open its records" button
@@ -493,15 +499,9 @@ export function RangeChart({
   // such as a quantile dot's, leave these out.
   onOpen?: (key: string, element: HTMLElement) => void;
   opened?: string | null;
-  // The tooltip's last line for a pointer, and the touch tooltip's button.
-  openHint?: string;
-  openLabel?: string;
-  // Ticket 26: lane 2, the time estimate, under lane 1 on the same axis, and its label. Without it the chart
-  // draws lane 1 alone, as ticket 12 built it.
+  // Ticket 26: lane 2, the time estimate, under lane 1 on the same axis. Without it the chart draws lane 1 alone, as
+  // ticket 12 built it.
   lane2?: Lane2;
-  lane2Label?: string;
-  // The label in fewer words, for a chart its full label would not fit in, as at 320 px with a reader's text spacing.
-  lane2LabelShort?: string;
   // While comparing: the marks of the packages that went with the option keep their look, every other dot turns
   // grey300 at r 3, and row A's key says how many went with it ("{k} went with 3 lots", "{rest} others").
   matching?: ReadonlySet<string> | null;
@@ -510,6 +510,23 @@ export function RangeChart({
   // stops and no tooltips, so the chart is one picture named by its alt text, and nothing in it takes focus.
   readOnly?: boolean;
 }) {
+  const {
+    lane: laneLabel,
+    plan: planLabel,
+    middle: middleLabel,
+    in10: in10Label,
+    axisLast: axisLastLabel,
+    alt,
+    group: groupName,
+    groupHelp,
+    slider: sliderName,
+    keySigned,
+    keyHollow,
+    openHint,
+    open: openLabel,
+    lane2: lane2Label = "",
+    lane2Short: lane2LabelShort = "",
+  } = labels;
   const twoLanes = lane2 !== undefined;
   const altId = useId();
   const helpId = useId();

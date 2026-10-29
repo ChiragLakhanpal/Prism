@@ -58,3 +58,36 @@ def test_a_page_asof_later_than_the_apps_today_is_read_as_of_the_apps_today(app_
     response = get(app_on_its_own_clock, "/api/projects/P156634/packages?asof=2026-10-26")
 
     assert response.json()["as_of"] == "2026-10-23"
+
+
+NWWDA_PLAN = "/api/projects/P156634/procurement/northern-water-works-development-agency"
+# Each route that reads a page's as-of date, with an ?asof= after the app's today (ticket 12's verification round 11,
+# V1): KE-KAJIADO COUNTY-567787-CW-RFB was "still open after 108 days" as of 2027-01-01, time that had not passed.
+LATER = [f"/api/packages/{CONSULTANT}", f"/api/packages/{CONSULTANT}/comparables",
+         f"/api/packages/{CONSULTANT}/rebidding", "/api/rebidding?category=Works&country=KE&method=Request%20for%20Bids",
+         NWWDA_PLAN, f"{NWWDA_PLAN}/2025-07-21", "/api/projects", "/api/projects/P156634", "/api/data/readiness",
+         "/api/comparables?category=Works&country=KE&method=Request%20for%20Bids"]
+
+
+@pytest.mark.parametrize("path", LATER)
+def test_an_asof_after_the_apps_today_is_read_as_of_the_apps_today(app_on_its_own_clock, path):
+    """A date after today is read as today (ADR 0002; STATUS decision 15 keeps "as of today" over HTTP 422)."""
+    response = get(app_on_its_own_clock, f"{path}{'&' if '?' in path else '?'}asof=2030-01-01")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["as_of"] == "2026-10-23"
+
+
+# The Lessons routes read no date as today and show the reader's own parts only then (ticket 39), so a date after
+# today must answer as no date does, not as a date that has not come (ticket 62's review round 1, B1).
+LESSONS = ["/api/lessons/page", "/api/lessons/library"]
+
+
+@pytest.mark.parametrize("path", LESSONS)
+def test_a_lessons_asof_after_the_apps_today_answers_as_no_date_does(app_on_its_own_clock, path):
+    later = get(app_on_its_own_clock, f"{path}?asof=2030-01-01")
+    undated = get(app_on_its_own_clock, path)
+
+    assert later.status_code == 200, later.text
+    assert later.json()["as_of"] == undated.json()["as_of"]
+    assert later.json().get("digest") == undated.json().get("digest")

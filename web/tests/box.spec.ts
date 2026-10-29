@@ -32,13 +32,13 @@ async function open(page: Page, path = "/", extra: Record<string, { status?: num
   return { asked, unrecorded };
 }
 
-const box = (page: Page) => page.locator("[data-box-band]").getByRole("combobox");
+const box = (page: Page) => page.locator("[data-box-slot]").getByRole("combobox");
 const options = (page: Page) => page.getByRole("listbox", { name: "What Enter will do" }).getByRole("option");
 
 // Ticket 113: the box floats at the window's foot, so its list opens above it, at its width.
 async function listAboveTheBox(page: Page) {
   const list = (await page.locator("[data-box-popup]").boundingBox())!;
-  const form = (await page.locator("[data-box-band] form").boundingBox())!;
+  const form = (await page.locator("[data-box-slot] form").boundingBox())!;
   expect([list.x, list.width], "the list at the box's width").toEqual([form.x, form.width]);
   expect(list.y + list.height, "the list above the box").toBeLessThanOrEqual(form.y);
 }
@@ -225,7 +225,7 @@ test("an ID no record holds says so under the list, and Ask this is the only opt
 
 // DESIGN.md section 3: Roboto Mono for IDs, wherever the box writes one.
 async function idFaces(page: Page, id: string) {
-  return page.locator("[data-box-band]").evaluate(
+  return page.locator("[data-box-slot]").evaluate(
     (band, wanted) =>
       Array.from(band.querySelectorAll("*"))
         .filter((element) => element.children.length === 0 && element.textContent === wanted)
@@ -285,7 +285,7 @@ test("on a project page the box carries a removable scope chip, and Backspace in
 
   await expect(box(page)).toHaveAccessibleName("Open a project or package, or ask a question");
   await expect(box(page)).toHaveAccessibleDescription(/Questions you ask here cover P130164 only\./);
-  await expect(page.locator("[data-box-band]").getByText("Ask about this project")).toBeVisible();
+  await expect(page.locator("[data-box-slot]").getByText("Ask about this project")).toBeVisible();
   const remove = page.getByRole("button", { name: "Remove the scope P130164" });
   await expect(remove).toBeVisible();
 
@@ -297,7 +297,7 @@ test("on a project page the box carries a removable scope chip, and Backspace in
   await page.keyboard.press("Backspace");
 
   await expect(remove).toHaveCount(0);
-  await expect(page.locator("[data-box-band] [role=status]")).toHaveText(
+  await expect(page.locator("[data-box-slot] [role=status]")).toHaveText(
     "The scope is removed. Questions now cover all projects.",
   );
   await page.keyboard.type("Why?");
@@ -341,19 +341,19 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
   test(`at every width the scope chip keeps ${ref.length === 22 ? "a STEP reference" : "a 40-character reference"} whole inside the box, and the box stays wide enough to type in`, async ({ page }) => {
     for (const width of [320, 390, 768, 1024, 1440]) {
       await openPackage(page, ref, width);
-      const chip = page.locator("[data-box-band] [data-scope-chip]");
+      const chip = page.locator("[data-box-slot] [data-scope-chip]");
       await expect(chip).toContainText(ref);
 
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
-      const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
-      const inner = await rect(page, "[data-box-band] [data-scope-chip]");
+      const outer = await rect(page, "[data-box-slot] form > [data-focus-ring]");
+      const inner = await rect(page, "[data-box-slot] [data-scope-chip]");
       expect(inner.x, `${width} px: the chip's left edge`).toBeGreaterThanOrEqual(outer.x);
       expect(inner.x + inner.width, `${width} px: the chip's right edge`).toBeLessThanOrEqual(outer.x + outer.width);
       // Below 1024 px, room for about ten characters of a question, and for the whole placeholder on a package page.
       // From 1024 px one row of 40 px, the chip's reference on one line, and room for about six characters; the
       // placeholder of a reference this long gives way there (gallery-frame.spec.ts proves the real one's is whole).
-      const field = await rect(page, "[data-box-band] input");
-      const cut = await page.locator("[data-box-band] [data-placeholder]").evaluate((el) => el.scrollWidth > el.clientWidth);
+      const field = await rect(page, "[data-box-slot] input");
+      const cut = await page.locator("[data-box-slot] [data-placeholder]").evaluate((el) => el.scrollWidth > el.clientWidth);
       if (width < 1024) {
         expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(96);
         expect(cut, `${width} px: the placeholder is cut`).toBe(false);
@@ -364,7 +364,7 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
         if (ref.length === 22) expect(cut, `${width} px: the placeholder is cut`).toBe(false);
       }
       // The "/" hint, where a keyboard is assumed, stays at the end of the text field's row.
-      const hint = page.locator("[data-box-band] kbd");
+      const hint = page.locator("[data-box-slot] kbd");
       if (await hint.isVisible()) {
         const key = await hint.boundingBox();
         expect(Math.round(key!.y + key!.height / 2), `${width} px: the / hint`).toBe(Math.round(field.y + field.height / 2));
@@ -376,7 +376,7 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
 test("a reference wider than its row breaks after a hyphen inside the chip, and one that fits a line moves there whole", async ({ page }) => {
   for (const [width, wider] of [[320, true], [390, true], [768, false]] as const) {
     await openPackage(page, LONG_REF, width);
-    const lines = await page.locator("[data-box-band] [data-scope-chip] .font-mono").evaluate((element) => {
+    const lines = await page.locator("[data-box-slot] [data-scope-chip] .font-mono").evaluate((element) => {
       const rows = new Map<number, string>();
       const text = element.firstChild!;
       for (let i = 0; i < text.textContent!.length; i++) {
@@ -395,8 +395,8 @@ test("a reference wider than its row breaks after a hyphen inside the chip, and 
     // A chip that fills its row takes the box's whole row inside its padding: 12 px on the left, where the text under
     // it starts too, and 4 px on the right, where the remove button sits (ticket 93).
     if (wider) {
-      const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
-      const chip = await rect(page, "[data-box-band] [data-scope-chip]");
+      const outer = await rect(page, "[data-box-slot] form > [data-focus-ring]");
+      const chip = await rect(page, "[data-box-slot] [data-scope-chip]");
       expect(Math.round(chip.x - outer.x), `${width} px: the chip's left inset`).toBe(12);
       expect(Math.round(outer.x + outer.width - (chip.x + chip.width)), `${width} px: the chip's right inset`).toBe(4);
     }
@@ -409,11 +409,11 @@ test("a reference wider than its row breaks after a hyphen inside the chip, and 
 
 test("a press on the empty part of the chip's row puts the cursor in the text field, as a press on the field would", async ({ page }) => {
   await openPackage(page, "KE-NWWDA-541055-CW-RFB", 390);
-  const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
-  const chip = await rect(page, "[data-box-band] [data-scope-chip]");
-  expect(await page.locator("[data-box-band] form > [data-focus-ring]").evaluate((el) => getComputedStyle(el).cursor)).toBe("text");
+  const outer = await rect(page, "[data-box-slot] form > [data-focus-ring]");
+  const chip = await rect(page, "[data-box-slot] [data-scope-chip]");
+  expect(await page.locator("[data-box-slot] form > [data-focus-ring]").evaluate((el) => getComputedStyle(el).cursor)).toBe("text");
   await page.mouse.click(outer.x + outer.width - 24, chip.y + chip.height / 2);
-  await expect(page.locator("[data-box-band] input")).toBeFocused();
+  await expect(page.locator("[data-box-slot] input")).toBeFocused();
 });
 
 // The whole box shows the text cursor, so a press anywhere in it outside the chip acts as a press on
@@ -421,28 +421,28 @@ test("a press on the empty part of the chip's row puts the cursor in the text fi
 test("a press on the box's / hint or its search icon puts the cursor in the text field, and the chip keeps its own cursor", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page);
-  const input = page.locator("[data-box-band] input");
+  const input = page.locator("[data-box-slot] input");
   for (const part of ["kbd", "svg"]) {
     // Focus leaves the box for the h1 (a press would land on the box's suggestions, which lie over it; ticket 112).
     await page.locator("main h1").focus();
     await expect(input, part).not.toBeFocused();
-    const target = page.locator(`[data-box-band] form > [data-focus-ring] ${part}`).first();
+    const target = page.locator(`[data-box-slot] form > [data-focus-ring] ${part}`).first();
     await expect(target, part).toBeVisible();
     await target.click();
     await expect(input, part).toBeFocused();
   }
 
   await openPackage(page, "KE-NWWDA-541055-CW-RFB", 1440);
-  expect(await page.locator("[data-box-band] [data-scope-chip]").evaluate((el) => getComputedStyle(el).cursor)).toBe("auto");
+  expect(await page.locator("[data-box-slot] [data-scope-chip]").evaluate((el) => getComputedStyle(el).cursor)).toBe("auto");
 });
 
 test("a P-code's chip on a phone and a STEP reference's chip on a wide screen sit on one row with the text, in a 40 px box", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await open(page, "/projects/P130164");
   const single = async (label: string) => {
-    const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
-    const chip = await rect(page, "[data-box-band] [data-scope-chip]");
-    const field = await rect(page, "[data-box-band] input");
+    const outer = await rect(page, "[data-box-slot] form > [data-focus-ring]");
+    const chip = await rect(page, "[data-box-slot] [data-scope-chip]");
+    const field = await rect(page, "[data-box-slot] input");
     expect(Math.round(outer.height), label).toBe(40);
     expect(Math.round(chip.height), label).toBe(32);
     expect(Math.round(chip.y + chip.height / 2), label).toBe(Math.round(field.y + field.height / 2));
@@ -460,8 +460,8 @@ test("a P-code's chip on a phone and a STEP reference's chip on a wide screen si
 // hides, for the field's room.
 const PLACEHOLDER = async (page: Page) =>
   page.evaluate(() => {
-    const shown = [...document.querySelectorAll<HTMLElement>("[data-box-band] [data-placeholder]")].find((el) => el.getClientRects().length > 0)!;
-    const field = document.querySelector<HTMLElement>("[data-box-band] input")!;
+    const shown = [...document.querySelectorAll<HTMLElement>("[data-box-slot] [data-placeholder]")].find((el) => el.getClientRects().length > 0)!;
+    const field = document.querySelector<HTMLElement>("[data-box-slot] input")!;
     return { text: shown.textContent, width: shown.scrollWidth, field: field.getBoundingClientRect().width };
   });
 
@@ -469,11 +469,11 @@ for (const width of [390, 320]) {
   test(`below 1024 px the box has its own row, and at ${width} px its placeholder is narrower than the field on Home and on a package page`, async ({ page }) => {
     await page.setViewportSize({ width, height: 900 });
     await open(page);
-    const outer = await rect(page, "[data-box-band] form > [data-focus-ring]");
+    const outer = await rect(page, "[data-box-slot] form > [data-focus-ring]");
     const logo = await rect(page, "[data-nav-bar] img");
     expect(outer.y, "the box's own row").toBeGreaterThanOrEqual(logo.y + logo.height);
     expect([outer.x, outer.width]).toEqual([16, width - 32]);
-    await expect(page.locator("[data-box-band] form svg.lucide-search")).toBeVisible({ visible: width >= 360 });
+    await expect(page.locator("[data-box-slot] form svg.lucide-search")).toBeVisible({ visible: width >= 360 });
     const home = await PLACEHOLDER(page);
     expect(home.text).toBe("Open a project or package, or ask");
     expect(home.width, `Home at ${width} px`).toBeLessThan(home.field);
@@ -490,12 +490,12 @@ for (const width of [390, 320]) {
 test("at 390 px a chip with the fixture's longest reference takes its own row, with the text under it", async ({ page }) => {
   const ref = "KE-UASIN GISHU COUNTY-571338-CW-RFB";
   await openPackage(page, ref, 390);
-  const chip = page.locator("[data-box-band] [data-scope-chip]");
+  const chip = page.locator("[data-box-slot] [data-scope-chip]");
   await expect(chip).toContainText("KE-UASIN GISHU COUNTY-571338-CW-RFB");
   const [outer, inner, field] = [
-    await rect(page, "[data-box-band] form > [data-focus-ring]"),
-    await rect(page, "[data-box-band] [data-scope-chip]"),
-    await rect(page, "[data-box-band] input"),
+    await rect(page, "[data-box-slot] form > [data-focus-ring]"),
+    await rect(page, "[data-box-slot] [data-scope-chip]"),
+    await rect(page, "[data-box-slot] input"),
   ];
   expect(Math.round(inner.x - outer.x), "the chip starts the box's first row").toBe(12);
   expect(field.y, "the text under the chip").toBeGreaterThanOrEqual(inner.y + inner.height);
@@ -521,7 +521,7 @@ const SUGGESTED = {
     "Why did so many works contracts in P130164 go through rebidding?",
   ],
 };
-const group = (page: Page, name: string) => page.locator("[data-box-band]").getByRole("group", { name });
+const group = (page: Page, name: string) => page.locator("[data-box-slot]").getByRole("group", { name });
 
 // A move inside the app, as Back and Forward make one, so one page load serves every page.
 async function moveTo(page: Page, path: string) {
@@ -561,7 +561,7 @@ test("focused and empty, each page's box keeps its hint and suggests the page's 
   }
 
   await page.keyboard.type("P1");
-  await expect(page.locator("[data-box-band]").getByRole("group")).toHaveCount(0);
+  await expect(page.locator("[data-box-slot]").getByRole("group")).toHaveCount(0);
   await expect(options(page).first()).toHaveAccessibleName("Ask this Within P156634");
   expect(asked).toEqual([]);
 });

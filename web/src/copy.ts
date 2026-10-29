@@ -2712,6 +2712,8 @@ export const copy = {
       method_differs_from_reference:
         "The reference ends in {code} ({referenceMethod}), but the Method column says {method}. I use the Method column.",
       actual_amount_zero: "{status}, but Actual Amount reads {actual}.",
+      // A Method cell whose name the method-name registry does not list (ticket 42), kept in the plan's own words.
+      method_unknown: "The Method column says {method}, a name I don't know, so I kept the plan's words.",
       no_planned_date: "The plan gives no planned date for {step}, so I couldn't check its timing.",
       no_estimate: "The plan gives no Estimated Amount, so I couldn't compare the signed amount with it.",
       // Ticket 38: the data notes on an upload's rows (the 38 brief, 5.4). The officer's own cell values are quoted on
@@ -4359,6 +4361,7 @@ export const copy = {
       from: {
         sentence: "From your sentence",
         default: "The default, since your sentence did not say",
+        unlisted: "The default, since I don't list what your sentence named",
         guess: "My guess",
         computed: "Computed from the thresholds",
         you: "You set this",
@@ -4430,6 +4433,8 @@ export const copy = {
     editor: {
       fromSentence: "From your sentence.",
       fromDefault: "Your sentence did not say, so I used the default.",
+      // A value the form does not list, such as a method STEP has no name for (ticket 15's verification round 3, V4).
+      fromUnlisted: (words: string) => `Your sentence said ${words}, which I don't list, so I used the default.`,
       fromComputed: "I computed this from the thresholds.",
       fromGuess: "This is my guess. Your sentence did not say.",
       fromYou: "You set this.",
@@ -5687,9 +5692,9 @@ export const copy = {
       noneKnownOne: "I don't have a fix to suggest for this source.",
     },
     // The window a number opens, by its measure, for each measure that fills no column of the
-    // Sources table: a source's checks and the measures behind its fixes (config/sources.toml). A
-    // number from a column's measure opens that column's window instead. web/tests/lint.spec.ts
-    // fails when a check or a fix's own measure has no entry here.
+    // Sources table: a source's checks and the measures behind its fixes (config/sources.toml), and a
+    // kind's Ready for measure (config/tools.toml). A number from a column's measure opens that
+    // column's window instead. web/tests/lint.spec.ts fails when any of these has no entry here.
     measureWindows: {
       // The quote check on proposed lessons (ticket 29), which Lessons > Waiting for review links to.
       lessons_verified: {

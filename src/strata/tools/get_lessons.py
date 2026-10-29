@@ -65,6 +65,17 @@ def _bool(value) -> bool:
     return value if isinstance(value, bool) else str(value).lower() == "true"
 
 
+def ieg_quote(lesson: dict) -> dict | None:
+    """IEG's words that restate a lesson this tool returned, for the drawer's IEG line, when IEG's review restated
+    it. Section 3's risks and section 5's lessons both read it here, beside the rows it reads (ticket 31's review
+    round 3, F6)."""
+    if lesson["ieg_status"] != "restated":
+        return None
+    said = next((row for row in lesson["evidence"] if row["role"] == "restatement" and row["restated_by_ieg"]), None)
+    return None if said is None else {"text": said["quote"], "lang": None, "doc_short": said["doc_short"],
+                                      "evidence_id": said["evidence_id"]}
+
+
 def evidence_row(row: dict) -> dict:
     """One quote a lesson rests on, with the passage it is in and the fields of its source line."""
     template = template_for(row["document_type"] or "")

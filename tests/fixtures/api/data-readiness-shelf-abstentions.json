@@ -3769,6 +3769,7 @@
     {
       "key": "p130164_pad",
       "kind": "scan_annex",
+      "rule": null,
       "position": 1,
       "row_id": "reports",
       "state": "read",
@@ -3803,6 +3804,7 @@
     {
       "key": "longest_pad",
       "kind": "longest_pad",
+      "rule": "longest",
       "position": 2,
       "row_id": "reports",
       "state": "no_document",
@@ -3828,6 +3830,7 @@
     {
       "key": "long_plan",
       "kind": "large_plan",
+      "rule": null,
       "position": 3,
       "row_id": "plans",
       "state": "stopped_at_cap",
@@ -3862,6 +3865,7 @@
     {
       "key": "french_report",
       "kind": "other_language",
+      "rule": null,
       "position": 4,
       "row_id": "reports",
       "state": "not_read",
@@ -3887,6 +3891,7 @@
     {
       "key": "over_parser_limit",
       "kind": "over_parser_limit",
+      "rule": "over_parser_limit",
       "position": 5,
       "row_id": "reports",
       "state": "no_document",

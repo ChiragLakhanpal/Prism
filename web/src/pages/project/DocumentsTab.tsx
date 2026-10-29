@@ -61,8 +61,16 @@ function GroupCount({ count }: { count: number }) {
   );
 }
 
-// A document's name in the list, from the copy file by its type, never the API's long title.
-export function documentName(document: Pick<ListedDocument, "type" | "document_type" | "document_date" | "sequence" | "agency">): string {
+type Named = Pick<ListedDocument, "type" | "document_type" | "document_date" | "sequence" | "agency">;
+
+// A document's name in the list, from the copy file by its type, never the API's long title. The "sentence" form is
+// the name as a sentence says it, with its date in full, for a name that holds its date, such as an unread plan's
+// or an untyped document's ("the document of November 1, 2020"), and null for any other (the PDF link's name; the
+// 21 design review, round 3, F4; ticket 21's review round 4, follow-up 5).
+export function documentName(document: Named): string;
+export function documentName(document: Named, form: "sentence"): string | null;
+export function documentName(document: Named, form: "list" | "sentence" = "list"): string | null {
+  if (form === "sentence") return nameInSentence(document);
   const date = document.document_date ? table(document.document_date) : "";
   const name = words.name;
   switch (document.type) {
@@ -164,21 +172,30 @@ function PagesCell({ document, align = "end" }: { document: ListedDocument; alig
   );
 }
 
-// The PDF link's name: the document's name with its date in full, said once. A name that holds its date,
-// such as an unread plan's or an untyped document's, says it inside the sentence ("the document of November
-// 1, 2020"); any other name is followed by the date (the 21 design review, round 3, F4).
-function pdfLabel(document: ListedDocument): string {
+// A name that holds its date, as a sentence says it, with the date in full; null for any other name.
+function nameInSentence(document: Named): string | null {
   const date = document.document_date ? formatDate(document.document_date) : "";
+  if (!date) return null;
   const inSentence = words.pdfOf;
-  let dated: string | null = null;
-  if (date) {
-    if (document.type === "project_paper") dated = fill(inSentence.project_paper, { date });
-    else if (document.type === "isr" && document.sequence === null) dated = fill(inSentence.isrUndated, { date });
-    else if (document.type === "procurement_plan")
-      dated = document.agency ? fill(inSentence.procurement_plan, { agency: document.agency, date }) : fill(inSentence.procurementPlanUnnamed, { date });
-    else if (document.type === "other" && !document.document_type) dated = fill(inSentence.untyped, { date });
+  switch (document.type) {
+    case "project_paper":
+      return fill(inSentence.project_paper, { date });
+    case "isr":
+      return document.sequence === null ? fill(inSentence.isrUndated, { date }) : null;
+    case "procurement_plan":
+      return document.agency ? fill(inSentence.procurement_plan, { agency: document.agency, date }) : fill(inSentence.procurementPlanUnnamed, { date });
+    case "other":
+      return document.document_type ? null : fill(inSentence.untyped, { date });
+    default:
+      return null;
   }
-  return dated ? words.pdfName(dated, "") : words.pdfName(documentName(document), date);
+}
+
+// The PDF link's name: the document's name with its date in full, said once. A name that holds its date says it
+// inside the sentence; any other name is followed by the date (the 21 design review, round 3, F4).
+function pdfLabel(document: ListedDocument): string {
+  const dated = documentName(document, "sentence");
+  return dated ? words.pdfName(dated, "") : words.pdfName(documentName(document), document.document_date ? formatDate(document.document_date) : "");
 }
 
 function PdfCell({ document }: { document: ListedDocument }) {

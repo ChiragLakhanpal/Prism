@@ -275,7 +275,7 @@ test("at 1024 px with a 15 px scrollbar the navy bar fits on one line", async ({
 // over it.
 async function boxClearOfFooter(page: Page, named: string) {
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  const box = (await page.locator("[data-box-band] form > [data-focus-ring]").boundingBox())!;
+  const box = (await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!;
   const footer = (await page.getByRole("contentinfo").boundingBox())!;
   expect(footer.y + footer.height, `${named}: the footer ends the page`).toBeLessThanOrEqual(900 + 1);
   expect(box.y + box.height, `${named}: the box above the footer`).toBeLessThanOrEqual(footer.y);

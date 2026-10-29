@@ -283,6 +283,13 @@ test("the gate fails when a component renders a string that is not from the copy
     // Words a component writes into the page itself, outside JSX.
     `export function A() { document.title = "Packages, Strata"; return null; }`,
     `export function A({ el }: { el: HTMLElement }) { el.textContent = "Nothing here yet."; return null; }`,
+    // Ticket 02's review round 10 and verification round 12, N3: a string in a template's slot, one behind a non-null
+    // assertion, a DOM text property written by its name in brackets, a field's value, and words joined with concat.
+    `export const A = () => <p>{\`\${"Nothing here yet."}\`}</p>;`,
+    `const words: { empty?: string } = { empty: "Nothing here yet." }; export const A = () => <p>{words.empty!}</p>;`,
+    `export function A({ el }: { el: HTMLElement }) { el["textContent"] = "Nothing here yet."; return null; }`,
+    `export function A({ el }: { el: HTMLInputElement }) { el.value = "Nothing here yet."; return null; }`,
+    `export const A = ({ state }: { state: string }) => <p>{"Opened ".concat(state)}</p>;`,
   ];
   for (const component of cases) {
     const failed = lint({ component });
@@ -310,6 +317,9 @@ test("a component that takes every string from the copy file passes the string l
     `  </section>`,
     `);`,
     `export function B({ el }: { el: HTMLElement }) { el.className = "p-4"; el.textContent = copy.title; document.title = copy.title; }`,
+    // A template's slots and concat that hold no words of their own, and a field emptied or given the copy's words.
+    `export const C = ({ n }: { n: number }) => <p className={\`\${"p-4"} gap-2\`}>{\`\${copy.title} \${n}\`}{copy.title.concat(copy.read)}</p>;`,
+    `export function D({ el }: { el: HTMLInputElement }) { el.value = ""; el.value = copy.title; el["textContent"] = copy.title; }`,
   ].join("\n");
   const passed = lint({ component });
   expect(passed.output).toBe("");
@@ -379,6 +389,8 @@ test("the class lint refuses uppercase outside a chart label, text-title and rou
     "src/deck/Slide.tsx": div("text-label uppercase") + div("text-title rounded-box"),
     // The file the frozen list last exempted, with the eyebrow it used to keep.
     "src/components/CollapsedSection.tsx": div("text-label text-ink-muted uppercase"),
+    // Capitals with a trailing important mark, and as an arbitrary property (ticket 90's review, follow-up 2).
+    "src/components/Loud.tsx": div("text-label uppercase!") + div("text-label [text-transform:uppercase]"),
   });
   expect(failed.code, failed.output).toBe(1);
   const problems = failed.output.trim().split("\n");
@@ -390,6 +402,8 @@ test("the class lint refuses uppercase outside a chart label, text-title and rou
     "Slide.tsx:2 text-title",
     "Slide.tsx:2 rounded-box",
     "CollapsedSection.tsx:1 uppercase",
+    "Loud.tsx:1 uppercase!",
+    "Loud.tsx:2 [text-transform:uppercase]",
   ]);
   expect(problems[0]).toContain("sentence case");
   expect(problems[1]).toContain('Use "text-h2"');
@@ -400,6 +414,9 @@ test("the class lint refuses uppercase outside a chart label, text-title and rou
     "src/components/Old.tsx": div("text-h2 text-ink-heading") + div("rounded-sm border"),
     "src/components/Chart.tsx": div("text-chart-label uppercase"),
     "src/components/CollapsedSection.tsx": div("text-caption text-ink-muted"),
+    // A class that is a plain object's own key name, such as constructor, is no retired class (ticket 90's review,
+    // follow-up 1): the lint looks retired classes up with Object.hasOwn.
+    "src/components/Odd.tsx": div("constructor toString p-3"),
   });
   expect(passed.output).toBe("");
   expect(passed.code).toBe(0);

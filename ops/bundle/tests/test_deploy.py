@@ -22,6 +22,7 @@ sys.path.insert(0, str(REPO / "ops" / "app"))
 import bundle_live  # noqa: E402
 import deploy  # noqa: E402
 import deploy_app  # noqa: E402
+from workspace_fakes import FREE_DAILY_LIMIT, USUAL_CAUSE, WorkspaceStateFake  # noqa: E402
 
 from strata.lakehouse import bundle, catalog, nightly  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine, EngineError  # noqa: E402
@@ -35,11 +36,11 @@ INDEX_OBJECTS = ("strata.gold.passage_index", f"strata.gold.event_log_{INDEX_ID}
                  f"strata.gold.__{INDEX_ID}___online_index_view")
 
 
-class FakeWorkspace:
+class FakeWorkspace(WorkspaceStateFake):
     """A workspace that holds fairshare's catalog and, once the bundle deploys, Strata's. With app, it also holds
     the app that ops/dayone/dayone.toml names, as apps get returns it."""
 
-    def __init__(self, deploy_fails=False, touch_fairshare=False, app=None, warehouse="RUNNING", warehouse_answer=None):
+    def __init__(self, deploy_fails=False, touch_fairshare=False, app=None, **state):
         self.deploys = 0
         self.deploy_fails, self.touch_fairshare = deploy_fails, touch_fairshare
         self.deployed = None
@@ -50,19 +51,8 @@ class FakeWorkspace:
         self.granted = []  # each grant the deploy wrote after the bundle's
         self.dashboards = {}  # display name -> the file the bundle wrote and when it wrote it
         self.edit = ""  # a change to every dashboard file, as a new commit of src/strata/dashboard makes one
-        # The env file's SQL warehouse, as warehouses get gives it, which answers a start with warehouse_answer when a
-        # test sets it (ticket 81).
-        self.warehouse = {"id": "wh-1", "state": warehouse, "message": ""}
-        self.warehouse_answer, self.warehouse_starts = warehouse_answer, 0
-
-    def warehouse_state(self):
-        return dict(self.warehouse)
-
-    def start_warehouse(self):
-        self.warehouse_starts += 1
-        if self.warehouse_answer:
-            raise RuntimeError(self.warehouse_answer)
-        self.warehouse["state"] = "RUNNING"
+        # The env file's SQL warehouse, as warehouses get gives it (ticket 81; workspace_fakes.py).
+        self.hold_state(**state)
 
     def deploy_bundle(self):
         self.deploys += 1
@@ -189,11 +179,7 @@ def test_with_an_app_the_deploy_gives_its_service_principal_back_use_catalog_and
     assert "No changes." in out
 
 
-# Ticket 81: what databricks warehouses start answered at 10:33 UTC on October 25, 2026, when Free Edition's daily limit
-# had stopped the warehouse (docs/workspace-catchup.md, ticket 11).
-FREE_DAILY_LIMIT = "Sorry, cannot run the resource because you have hit your free daily limit. Please come back again tomorrow."
-
-
+# Ticket 81: a stopped warehouse that will not start, as Free Edition's daily limit left it on October 25, 2026.
 def test_a_stopped_warehouse_that_will_not_start_stops_the_deploy_before_it_changes_anything(capsys):
     workspace = FakeWorkspace(warehouse="STOPPED", warehouse_answer=FREE_DAILY_LIMIT)
 
@@ -202,8 +188,20 @@ def test_a_stopped_warehouse_that_will_not_start_stops_the_deploy_before_it_chan
     assert code == 2
     assert out.splitlines() == [
         "I changed nothing, because the SQL warehouse wh-1 is STOPPED and would not start when I asked, saying \"Sorry, "
-        "cannot run the resource because you have hit your free daily limit. Please come back again tomorrow.\", which "
-        "on Free Edition usually means the workspace reached its daily compute limit."]
+        f"cannot run the resource because you have hit your free daily limit. Please come back again tomorrow.\", {USUAL_CAUSE}"]
+    assert workspace.deploys == 0 and workspace.granted == []
+
+
+def test_a_warehouse_state_the_deploy_cannot_read_stops_it_before_it_changes_anything_with_one_sentence(capsys):
+    """Ticket 81's review, follow-up 2: a failed read said a Python traceback."""
+    workspace = FakeWorkspace(warehouse_answer=RuntimeError("HTTP Error 503: Service Unavailable"))
+
+    code, out = deploy_into(workspace, capsys)
+
+    assert code == 2
+    assert out.splitlines() == [
+        "I changed nothing, because I could not read the app's compute or the SQL warehouse's state: RuntimeError: "
+        "HTTP Error 503: Service Unavailable."]
     assert workspace.deploys == 0 and workspace.granted == []
 
 
@@ -248,7 +246,8 @@ def test_the_live_workspace_adds_the_app_s_privilege_and_removes_no_other_grant(
          {"changes": [{"principal": APP_PRINCIPAL, "add": ["USE_CATALOG"]}]}),
         ("PATCH", "/api/2.1/unity-catalog/permissions/schema/strata.ops",
          {"changes": [{"principal": APP_PRINCIPAL, "add": ["USE_SCHEMA"]}]})]
-    called = {name for name in vars(FakeWorkspace) if not name.startswith("_")}
+    # The bundle deploy reads only the warehouse's state; the App's compute is the App deploy's.
+    called = {name for name in vars(FakeWorkspace) if not name.startswith("_")} | {"warehouse_state", "start_warehouse"}
     assert called <= {name for name in vars(bundle_live.LiveWorkspace) if not name.startswith("_")}
 
 

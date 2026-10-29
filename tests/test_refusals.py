@@ -30,6 +30,12 @@ COPY = (ROOT / "web" / "src" / "copy.ts").read_text()
 CASES = sorted(case_id for case_id in load_cases() if case_id.startswith("refuses-"))
 FULL = [case_id for case_id in CASES if not case_id.startswith("refuses-part-")]
 RESTRICTED = restricted_values(RECORDED)
+# The answer stream's must-refuse questions in the benchmark file, each with the scripted case that asks it word for
+# word. The gate asks every one, so a second question for a key is asked too (the P4 gate's verify notes, O3).
+QUESTIONS = yaml.safe_load((ROOT / "evals" / "benchmark.yaml").read_text())["questions"]
+MUST_REFUSE = {question["id"]: question for question in QUESTIONS
+               if question["kind"] == "refusals" and question["expected"]["must_refuse"] and "path" not in question}
+CASE_FOR = {case.question: case_id for case_id, case in load_cases().items()}
 
 
 def refusal_copy() -> dict[str, dict[str, str]]:
@@ -47,16 +53,18 @@ def test_the_scan_has_contact_details_and_individual_consultants_to_look_for():
 
 
 def test_each_refusal_key_has_a_scripted_case_and_a_partial_refusal_has_one_too():
-    assert sorted(case_id.removeprefix("refuses-").replace("-", "_") for case_id in FULL) == sorted(REFUSALS)
-    assert len(CASES) == len(FULL) + 1
+    assert set(REFUSALS) <= {case_id.removeprefix("refuses-").replace("-", "_") for case_id in FULL}
+    assert "refuses-part-supplier-scores" in CASES
 
 
-@pytest.mark.parametrize("case_id", FULL)
-def test_each_refusal_is_a_first_person_refusal_from_the_copy_file_with_no_restricted_data(fixture_db, case_id):
-    asked = ask(fixture_db, case_id)
+@pytest.mark.parametrize("question_id", sorted(MUST_REFUSE))
+def test_each_must_refuse_question_gets_a_first_person_refusal_from_the_copy_file_with_no_restricted_data(
+        fixture_db, question_id):
+    question = MUST_REFUSE[question_id]
+    asked = ask(fixture_db, CASE_FOR[question["question"]])
 
-    key = case_id.removeprefix("refuses-").replace("-", "_")
-    assert asked.of("refusal") == [{"key": key, "partial": False}]
+    key = question["expected"]["refusal"]
+    assert asked.of("refusal") == [{"key": key, "partial": question["expected"]["partial"]}]
     assert asked.of("sentence") == [] and asked.of("removed") == []
     # Nothing was checked, so the checks event says no check ran.
     assert [checks["checks_run"] for checks in asked.of("checks")] == [[]]
@@ -165,7 +173,8 @@ def test_every_refusal_key_is_a_must_refuse_question_in_the_benchmark_file():
     # The answer stream's set: a question that names another path, such as section 5's criteria reader
     # (path: check_your_criteria, ticket 31), is asked of that workflow, by its own scripted case.
     refusals = [question for question in questions if question["kind"] == "refusals" and "path" not in question]
-    assert sorted(question["expected"]["refusal"] for question in refusals) == sorted(REFUSALS)
+    # At least one question for each key, and a key for each question; a key may have more than one.
+    assert {question["expected"]["refusal"] for question in refusals} == set(REFUSALS)
     assert all(question["expected"]["must_refuse"] is True and question["question"] for question in refusals)
     # Each is also a scripted case, asked word for word, so the offline gate answers it.
     asked = {case.question for case in load_cases().values()}

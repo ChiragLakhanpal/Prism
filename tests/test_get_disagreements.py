@@ -81,6 +81,25 @@ def test_isr_7_and_the_icrs_paragraph_78_come_back_as_one_disagreement_leaning_o
                                   "field_name": "Progress towards achievement of PDO", "period_event": "mid_term_review"}
 
 
+def test_a_side_read_from_a_passage_carries_the_passage_s_source_line_as_search_passages_gives_it(engine):
+    """Ticket 20's review round 3, F1: a cited side is a passage, so it comes with the source line a passage from
+    search_passages has, and its project, and its evidence card names the report and its date, where it read ",
+    paragraph 78"."""
+    from strata.config import load_tools
+
+    [row] = about(get_disagreements(engine, subject_id="P130164"), "pdo_progress")
+    isr_7, paragraph = row["sides"]
+
+    source = paragraph["source"]
+    assert set(source) == set(load_tools()["search_passages"].result.source_fields)
+    assert (source["project_name"], source["document_date"], source["paragraph"], source["pdf_page"]) == (
+        value("project-p130164-name"), value("icr-date").isoformat(), str(TRUTH["icr-para-78"]["paragraph"]),
+        TRUTH["icr-para-78"]["pdf_page"])
+    assert (isr_7["source"]["document_date"], isr_7["source"]["paragraph_numbered"]) == (
+        value("isr-7-date").isoformat(), False)
+    assert (paragraph["project_id"], isr_7["project_id"]) == ("P130164", "P130164")
+
+
 def test_isrs_1_to_13_come_back_as_a_trajectory_not_a_disagreement(engine):
     """Criterion 2: ISRs 1 to 9 Satisfactory, 10 and 11 Moderately Satisfactory, 12 and 13 Moderately
     Unsatisfactory."""
@@ -315,6 +334,20 @@ def test_every_rule_tier_and_reason_the_tool_can_return_has_its_words_in_the_cop
     assert set(config.load_tools()["get_disagreements"].result.reasons) <= copy_keys("reasons")
 
 
+def test_every_code_the_run_rejects_an_assertion_with_is_listed_in_the_tool_s_registry_entry():
+    """Ticket 20's verification round 3, V3: rejected.reasons can hold any of the batch's codes, so the registry's
+    entry names each, where a reader of the tool's result looks for them."""
+    import re
+
+    written = set(re.findall(r'reject\(item, "([a-z_]+)"\)',
+                             (ROOT / "src" / "strata" / "knowledge" / "assertions.py").read_text()))
+    after = (ROOT / "config" / "tools.toml").read_text().split("\n[tools.get_disagreements]")[1]
+    entry = re.split(r"\n\[tools\.(?!get_disagreements[.\]])", after)[0]
+
+    assert {"quote_not_on_page", "passage_not_found"} <= written  # the scan still works
+    assert [code for code in sorted(written) if code not in entry] == []
+
+
 def test_the_rejected_assertion_is_counted_for_the_project(engine):
     """Criterion 7 at seam 2: the timeline states how many assertions the run left out (brief 23)."""
     result = get_disagreements(engine, subject_id="P130164")
@@ -327,3 +360,15 @@ def test_a_subject_strata_does_not_hold_is_an_abstention(engine):
 
     assert result["rows"] == [] and result["trajectories"] == []
     assert result["abstention"] == {"reason": "unknown_subject", "subject_id": "P999999"}
+
+
+@pytest.mark.parametrize("asked", ["ke-mowasco-307378-go-rfb", "Ke-Mowasco-307378-Go-Rfb"])
+def test_a_step_reference_in_any_case_names_its_package_as_a_project_id_in_any_case_does(engine, asked):
+    """Ticket 20's verification round 3, V2: a lowercase STEP reference was unknown_subject, while a lowercase project
+    ID was read. The subject is named as Strata holds it."""
+    result = get_disagreements(engine, subject_id=asked)
+
+    assert result["subject"] == {"kind": "package", "id": "KE-MOWASCO-307378-GO-RFB",
+                                 "project_id": get_disagreements(engine, subject_id="KE-MOWASCO-307378-GO-RFB")[
+                                     "subject"]["project_id"]}
+    assert (result["abstention"] or {}).get("reason") != "unknown_subject"

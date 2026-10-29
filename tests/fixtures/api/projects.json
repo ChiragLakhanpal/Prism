@@ -45,12 +45,6 @@
       "status": "Active"
     },
     {
-      "project_id": "P160157",
-      "project_name": "KTDA Small Hydro Programme of Activities",
-      "country": "Kenya",
-      "status": "Active"
-    },
-    {
       "project_id": "P170941",
       "project_name": "Kenya Digital Economy Acceleration Project",
       "country": "Kenya",
@@ -95,6 +89,12 @@
     {
       "project_id": "P160009",
       "project_name": "Kenya: Off-grid Solar Access Project for Underserved Counties",
+      "country": "Kenya",
+      "status": "Active"
+    },
+    {
+      "project_id": "P160157",
+      "project_name": "KTDA Small Hydro Programme of Activities",
       "country": "Kenya",
       "status": "Active"
     },

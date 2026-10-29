@@ -49,6 +49,7 @@
               "planned_signing_plan_date": "2021-04-21",
               "evidence_ids": [
                 "strata.silver.plan_rows:40031468/KE-NWWDA-229129-CW-RFB",
+                "strata.silver.plan_rows:33014836/KE-NWWDA-229129-CW-RFB",
                 "strata.ops.plan_baselines:P156634/northern-water-works-development-agency"
               ],
               "baseline": {

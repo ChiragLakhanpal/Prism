@@ -151,10 +151,10 @@ max_tool_output_chars = 400000
 
 # The app (ticket 06). Every warehouse query the server runs as a viewer, the plan check's included,
 # gives up after stamp_timeout_seconds. The data-freshness stamp then shows its error state, and the
-# plan check answers 503. Source: the 06 design brief ("Error (timeout
-# after 30 seconds, set in the app config, or a server error)"). Usage events wait at most
-# usage_flush_seconds before the server writes them to strata.ops.usage_events in one insert, so a
-# page never waits for the warehouse to log it; 10 is a starting value for the owner to confirm.
+# plan check answers 503. Source: the 06 design brief ("Error (timeout after 30 seconds, set in the
+# app config, or a server error)"). Usage events wait at most usage_flush_seconds before the server
+# writes them to strata.ops.usage_events in one insert, so a page never waits for the warehouse to
+# log it; 10 is a starting value for the owner to confirm.
 [app]
 stamp_timeout_seconds = 30
 usage_flush_seconds = 10
@@ -181,7 +181,8 @@ round_trip_budget_ms = 1000
 # starting value for the owner to confirm.
 [plan_check]
 # Needs a look: an activity with no signed contract whose planned completion passed. The planned
-# completion is the first published planned date of its Contract Completion step. Only activities
+# completion is the first published planned date of its Contract Completion step, or the version's
+# own planned date when the first listing gives none or is not yet public. Only activities
 # estimated at this many US dollars or more get this mark, so the mark stays on the packages where
 # a missed date matters most. A smaller activity still pending near closing gets Watch from
 # days_before_closing. The wireframe marks the US$1,230,000.00 package and leaves the
@@ -281,6 +282,16 @@ same_middle_months = 0.5
 # between the two middles. Source: the 26 design brief, section 6.6 ("A reason without counts is not
 # returned"); "mainly because" needs at least half, a starting value for the owner to confirm.
 reason_min_share = 0.5
+
+# A package planned from a sentence (ticket 15): the limits a value in the package form must keep, whether the
+# package reader or the person gave it. strata.packages.form reads them and hands them to the package workspace in
+# the form's payload, so the browser checks the same ones. Source: ticket 15's starting values for the owner to
+# confirm; a STEP Description rarely runs past 200 characters, and no plan lists 99 lots for one package.
+[package_form]
+# The longest description, in characters.
+text_limit = 200
+# The most lots.
+max_count = 99
 
 # What-ifs (tickets 25 and 26): a range for the comparables that went with one option, such as
 # prequalification or 3 lots.
@@ -462,11 +473,12 @@ read_well_min_share = 0.9
 check_min_share = 0.9
 # A share is written only from this many rows; below it, a cell shows the count alone ("6 of 12"),
 # as DESIGN.md section 7, rules 6 and 15 say. web/src/lib/format.ts's FEWEST_FOR_A_FREQUENCY holds
-# the same rule until ticket 12 reads it from here, and tests/test_data_readiness.py checks they agree.
+# the same rule, because the Node test runner that checks format.ts cannot read this file (ticket 12
+# kept the copy), and tests/test_data_readiness.py checks they agree.
 fewest_for_a_share = 20
 # From this many rows a share is a whole percent ("528 of 603, 88%"); from fewest_for_a_share up to
 # it, "about N in 10" (DESIGN.md section 7, rule 15). The dashboard charts a share only from here.
-# format.ts's FEWEST_FOR_A_PERCENTAGE holds the same value until ticket 12, and the test checks it.
+# format.ts's FEWEST_FOR_A_PERCENTAGE holds the same value, for the same reason, and the test checks it.
 fewest_for_a_percentage = 50
 # Partial when late: a source's latest fetch is older than its schedule allows plus this many days.
 # Daily data are on time when they are less than two days old.
@@ -650,6 +662,10 @@ statement_max_chars = 80
 # get_lessons returns at most this many lessons, best first. Source: none; a starting value for the owner
 # to confirm, as many lessons as one page of the library shows and more.
 get_lessons_max_results = 20
+# A lesson card shows at most this many source chips; the rest fold behind "Show {n} more sources", and the
+# card says how many fold. Source: the 29 design brief's Lesson card ("the seventh chip onward fold behind
+# 'Show {n} more sources'").
+card_chips_max = 6
 # Lesson cards on one page of the library, and decisions on one page of the decided table. Source:
 # DESIGN.md section 5 (eight cards to a group at most) and the 29 design brief, section 2.4.
 library_page_size = 8

@@ -31,7 +31,7 @@ You need the Databricks CLI 0.287.0 or later, because only the direct deployment
 
 The command signs the Databricks CLI in with the host and token (or service principal) from the environment file alone: it points the CLI's config file at nothing, so the default profile in `~/.databrickscfg` never applies. On October 26, 2026 a deploy meant for the new paid workspace landed on the old one because the CLI's bundle commands took that default profile over the environment (ticket 82).
 
-Before it changes anything, it reads the SQL warehouse's state through the SDK. When the warehouse is stopped and will not start when asked, it prints one sentence that names the state and exits 2 (ticket 81). On Free Edition the usual cause is the workspace's daily compute limit.
+Before it changes anything, it reads the SQL warehouse's state through the SDK. When the warehouse is stopped and will not start when asked, it prints one sentence that names the state and exits 2 (ticket 81). On Free Edition the usual cause is the workspace's daily compute limit, and on a paid workspace the account or its subscription. When it cannot read the state at all, it says so in one sentence and exits 2.
 
 It lists what the workspace holds, deploys the bundle, gives the app back its way in to the catalog (below), creates the tables, and prints what changed, a dashboard the bundle rewrote among them. A second run prints "No changes." It also lists fairshare's catalog before and after, and fails if the two listings differ. If fairshare's catalog has another name, pass it with `--fairshare-catalog`.
 

@@ -2363,6 +2363,7 @@
     {
       "key": "long_plan",
       "kind": "large_plan",
+      "rule": null,
       "position": 3,
       "row_id": "plans",
       "state": "read",

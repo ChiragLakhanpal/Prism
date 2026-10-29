@@ -143,6 +143,20 @@ def test_a_start_date_dates_the_steps_as_of_the_pages_date(hand_made_app):
     assert (today.status_code, today.json()["code"]) == (422, "bad_request")
 
 
+def test_the_start_date_of_a_step_row_package_is_dated_with_section_1_s_criteria_as_the_get_is(hand_made_app):
+    """Ticket 27's review round 2, follow-up 5: PUT .../step-start reads section 1's criteria from its query, by
+    find_comparables' own parameter names, as GET .../steps does, so a criterion the tool does not take is refused by
+    both, and a section 2 answered after a start date counts the same comparables as section 1."""
+    start = {"start_date": KNOWN["duration_start"].isoformat()}
+
+    read = call(hand_made_app, "GET", f"{TARGET}/steps?asof={KNOWN['as_of']}&colour=blue", ANA)
+    started = call(hand_made_app, "PUT", f"{TARGET}/step-start?asof={KNOWN['as_of']}&colour=blue", ANA, json=start)
+
+    for answer in (read, started):
+        assert (answer.status_code, answer.json()["code"]) == (422, "bad_request")
+        assert "colour" in answer.json()["detail"]
+
+
 def test_the_server_refuses_a_choice_for_an_unknown_package_and_a_start_date_its_plan_does_not_need(hand_made_app):
     unknown = call(hand_made_app, "PUT", "/api/packages/KE-HAND-999999-CW-RFB/plan-dates", ANA, json={"choice": "middle"})
     dated_by_plan = call(hand_made_app, "PUT", f"{TARGET}/step-start?asof={KNOWN['as_of']}", ANA,

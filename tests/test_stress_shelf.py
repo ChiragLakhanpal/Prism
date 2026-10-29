@@ -72,6 +72,16 @@ def test_the_page_lists_the_five_hardest_documents_in_the_slice_file_order_with_
     assert result["rows"][last["longest_row"]]["count"] == SHELF["over_parser_limit"]["longest_pages"]
 
 
+def test_each_entry_a_rule_fills_names_its_rule_as_the_slice_file_does(fixture):
+    """Ticket 18's review round 3, P10: the slice file says which entries a rule fills at run time, so the page reads
+    entry.rule rather than keeping its own list of kinds."""
+    result, *_ = fixture
+
+    assert {entry["kind"]: entry["rule"] for entry in result["stress_shelf"]} == {
+        "scan_annex": None, "longest_pad": "longest", "large_plan": None, "other_language": None,
+        "over_parser_limit": "over_parser_limit"}
+
+
 def test_the_project_reports_count_the_projects_of_their_documents_and_the_pilot_projects_read(fixture):
     """Coverage's projects are the documents' own (design review r2 B1): the fixture's reports belong to the
     showcase (India), the French report's project (Haiti) and P156634, the one pilot project of the 17 whose

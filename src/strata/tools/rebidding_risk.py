@@ -32,8 +32,10 @@ import datetime as dt
 from strata.config import load_rebidding_reasons
 from strata.estimates import rebidding
 from strata.estimates.rebidding import CANCELED_ROW, NO_AWARD, SAME_REFERENCE, Label, Reason
-from strata.tools import common, find_comparables
+from strata.tools import common, find_comparables, rejected_bids
+from strata.tools.check_plan import agency_id
 from strata.tools.registry import Call
+from strata.tools.search_passages import notice_page
 
 TOOL = "rebidding_risk"
 # The groups a label gives when no notice gives a reason in words, in their order after the reasons in words.
@@ -66,6 +68,8 @@ def read_notice(engine, key: str, as_of: dt.date) -> dict | None:
         fields.append({"key": "notice_says", "value": given[1], "kind": "text", "highlight": True})
     return {"kind": "record", "row": {
         "reference": key, "notice_id": key, "fields": fields, "public_from": common.iso(notice["public_from"]),
+        # Its page on the World Bank's site, the drawer's way out to the source (ticket 28's design review, F1).
+        "url": notice_page(key),
         "source": {"source_key": "award_notices" if award else "notices", "document_type": notice["notice_type"],
                    "project_id": notice["project_id"], "document_date": common.iso(notice["notice_date"])}}}
 
@@ -87,26 +91,35 @@ def read_plan_row(engine, key: str, as_of: dt.date) -> dict | None:
               {"key": "review_type", "value": row["review_type"], "kind": "text"},
               {"key": "estimated_amount_usd", "value": None if amount is None else str(amount), "kind": "usd"},
               {"key": "process_status", "value": row["process_status"], "kind": "text", "highlight": True}]
+    plan_date = common.iso(row["plan_date"])
     return {"kind": "record", "row": {
         "reference": reference, "activity_reference_no": reference,
         "fields": [field for field in fields if field["value"] not in (None, "")],
         "public_from": common.iso(row["public_from"]),
+        # Check a plan on this plan version, at this row: the drawer's way out to the source, as the trail's plan card
+        # has (ticket 28's design review, F1).
+        "plan_href": (f"/projects/{row['project_id']}/procurement/{agency_id(row['implementing_agency'])}/{plan_date}"
+                      f"#{reference}") if row["implementing_agency"] and plan_date else None,
         "source": {"document_type": "Procurement Plan", "implementing_agency": row["implementing_agency"],
                    "project_id": row["project_id"], "document_id": document_id,
                    "document_date": common.iso(row["plan_date"]), "pdf_page": int(row["pdf_page"])}}}
 
 
 def _canceled_left_out(found: dict) -> list[str]:
-    return [evidence.split(":", 1)[1] for entry in found["coverage"]["not_used"] if entry["reason"] == "canceled"
-            for evidence in entry["evidence_ids"]]
+    return [reference for entry in found["coverage"]["not_used"] if entry["reason"] == "canceled"
+            for reference in entry["step_references"]]
 
 
 def _case(label: Label, reason: Reason | None) -> dict:
     """One package advertised again, as a row."""
     if reason is not None:
         code, kind = reason.code, "quote"
-        evidence = [rebidding.Evidence(rebidding.notice_evidence_id(reason.notice_id), reason.public_from,
-                                       "award_notice" if reason.notice_type == "Contract Award" else "notice",
+        # An award notice is cited by the id section 5's rejected bids cite it by, so one record keeps one marker
+        # number and one visited state across the page (ticket 28's review, follow-up 6).
+        award = reason.notice_type == "Contract Award"
+        cited = rejected_bids.award_notice_evidence_id(reason.notice_id) if award else \
+            rebidding.notice_evidence_id(reason.notice_id)
+        evidence = [rebidding.Evidence(cited, reason.public_from, "award_notice" if award else "notice",
                                        reason.notice_id, reason.notice_date)]
         quote = {"text": reason.text, "lang": reason.lang, "notice_id": reason.notice_id}
     else:
@@ -120,7 +133,7 @@ def _case(label: Label, reason: Reason | None) -> dict:
         "evidence_id": evidence[0].evidence_id,
         "public_from": max(item.public_from for item in evidence),
         "source": {"project_id": label.project_id, "notice_id": label.notice_id,
-                   "plan_document_id": plan.evidence_id.split(":", 1)[1].split("/")[0] if plan else None},
+                   "plan_document_id": plan.document_id if plan else None},
         "step_reference": label.step_reference,
         "project_id": label.project_id,
         "country_name": label.country_name,

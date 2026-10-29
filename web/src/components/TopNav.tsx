@@ -21,6 +21,7 @@ import * as RadixPopover from "@radix-ui/react-popover";
 import { Check, ChevronDown, CircleX, Menu as MenuIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
+import { isShown, useMediaChange } from "../lib/media";
 import { navigate } from "../lib/router";
 import { withMode, type Preview, type View } from "../lib/view";
 import { Button } from "./Button";
@@ -31,7 +32,6 @@ import { SECTIONS, type Section } from "./sections";
 import { Skeleton } from "./Skeleton";
 import { SkipLink } from "./SkipLink";
 
-export { SECTIONS, type Section };
 
 export type Viewer =
   | { status: "loading" }
@@ -85,24 +85,13 @@ export function pillLabel(mode: NavMode): string {
 // The view switch is in the bar from 768 px (48rem), and at the Menu sheet's foot below.
 export const VIEW_IN_BAR = "(min-width: 48rem)";
 
-// Calls back each time the window crosses one of the queries' widths. The callbacks here use only state setters and
-// refs, which never change, so the first one is kept.
-function useWidthChange(queries: string[], onChange: () => void) {
-  useEffect(() => {
-    const media = queries.map((query) => window.matchMedia(query));
-    media.forEach((one) => one.addEventListener("change", onChange));
-    return () => media.forEach((one) => one.removeEventListener("change", onChange));
-  }, []);
-}
-
-const shown = (element: Element) => element.getClientRects().length > 0 && element.checkVisibility({ visibilityProperty: true });
 
 // The control Tab reaches after this one in the page's order, leaving out what is hidden or inert and the popover
 // itself, which is portaled to the end of the page.
 function nextInPage(from: HTMLElement): HTMLElement | null {
   const tabbable = [
     ...document.querySelectorAll<HTMLElement>("a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex='-1'])"),
-  ].filter((element) => element === from || (!element.closest("[data-radix-popper-content-wrapper], [inert]") && shown(element)));
+  ].filter((element) => element === from || (!element.closest("[data-radix-popper-content-wrapper], [inert]") && isShown(element)));
   const at = tabbable.indexOf(from);
   return at < 0 ? null : (tabbable[at + 1] ?? null);
 }
@@ -274,7 +263,7 @@ function ViewSwitch({
   const after = useRef<HTMLElement | null>(null);
 
   // Narrowing the window below 768 px hides the view switch, so the popover closes with it.
-  useWidthChange([VIEW_IN_BAR], () => !window.matchMedia(VIEW_IN_BAR).matches && setOpen(false));
+  useMediaChange([VIEW_IN_BAR], () => !window.matchMedia(VIEW_IN_BAR).matches && setOpen(false));
   if (mode.unknown) {
     // Before the viewer is known, an outline button with no text, since an officer's label differs from staff's.
     return <Skeleton className="block h-8 w-[193px] border border-surface bg-transparent" radius="rounded-sm" />;
@@ -397,7 +386,7 @@ export function TopNav({
 
   // A focused control that the new width hides hands focus to the one that now holds the same thing: the view switch
   // when it shows, and the Menu button otherwise.
-  useWidthChange([VIEW_IN_BAR, WIDE], () => {
+  useMediaChange([VIEW_IN_BAR, WIDE], () => {
     const active = document.activeElement;
     const root = bar.current;
     const focused = active instanceof HTMLElement && root?.contains(active) ? active : active === document.body ? hidden.current : null;

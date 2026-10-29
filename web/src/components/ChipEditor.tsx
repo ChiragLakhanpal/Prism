@@ -66,6 +66,7 @@ function provenanceLine(field: FormField, value: FieldValue, form: PackageForm, 
   if (value.value === null) return words.empty;
   if (value.provenance === "sentence") return words.fromSentence;
   if (value.provenance === "default") return words.fromDefault;
+  if (value.provenance === "unlisted") return words.fromUnlisted(value.read_as ?? "");
   if (value.provenance === "guess") return words.fromGuess;
   if (value.provenance === "computed") return rule ? <>{words.fromComputed} {rule}</> : words.fromComputed;
   return field.source === "computed" && value.computed !== null

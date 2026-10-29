@@ -141,7 +141,10 @@ def summary(listing: dict) -> str:
 
 
 def deploy(workspace, fairshare: str = FAIRSHARE) -> int:
-    stopped = workspace_state.refusal(workspace)
+    try:
+        stopped = workspace_state.refusal(workspace)
+    except Exception as error:  # the warehouses API refused the read itself
+        stopped = workspace_state.unreadable(error)
     if stopped:
         print(stopped)
         return 2

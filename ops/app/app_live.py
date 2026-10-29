@@ -78,8 +78,8 @@ class LiveApps:
                                           resources=[apps.AppResource.from_dict(r) for r in resources],
                                           user_api_scopes=scopes))
 
-    def start(self, name: str) -> None:
-        self.w.apps.start_and_wait(name, timeout=dt.timedelta(minutes=MINUTES))
+    def start_app(self, name: str) -> None:
+        workspace_state.start_app(self.w, name, MINUTES)
 
     def upload(self, folder: str, files: dict[str, bytes]) -> None:
         from databricks.sdk.service import workspace as ws

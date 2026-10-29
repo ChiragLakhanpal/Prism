@@ -190,6 +190,29 @@ def test_the_rural_roads_package_in_kenya_reaches_no_completion_report_on_the_fi
     assert payload["rows"] == []
 
 
+def test_the_rural_roads_package_with_widened_criteria_reaches_icr_paragraph_54_in_its_own_words(library):
+    """Ticket 30's review, F1: the rural roads package's own words ("Rural roads", as the package reader read them)
+    with its criteria widened to any country and notices from 2013 reach P130164's works package, so the paragraph 54
+    row comes with its two sources, the ICR and the ICR Review, and its count of 1 (icr-para-54)."""
+    widened = {**RURAL_ROADS_KENYA, "country": "any", "notice_from": "2013-01-01"}
+
+    row = row_of(build(library, widened, words="Rural roads"), "Cost estimates below market rates")
+
+    assert row["k"] == 1
+    assert [(source["doc_short"], source["pcode"], source["locator"]) for source in row["sources"]] == [
+        ("ICR", "P130164", {"kind": "paragraph", "text": "54"}), ("ICR Review", "P130164", {"kind": "section", "text": "10.b"})]
+
+
+def test_the_day_before_two_people_decided_the_lessons_the_table_has_counts_and_no_lesson(library):
+    """Ticket 30's review, F2: as of October 26, 2026, the day before the lessons were decided, the reports are read
+    but no lesson is in the library yet, so the table says it has no lesson; nothing public later reaches it."""
+    table = build(library, INDIA_WORKS, as_of=dt.date(2026, 10, 26))
+
+    assert (table.payload["empty_reason"], table.payload["m"]) == ("no_lessons", 1)
+    for evidence_id, row in table.facts.items():
+        assert str(row["public_from"]) <= "2026-10-26", evidence_id
+
+
 def test_as_of_p130164_s_approval_date_nothing_public_later_reaches_the_table(library):
     approved = VALUES["approval-p130164"]["value"]
     table = build(library, INDIA_WORKS, as_of=approved)
@@ -292,6 +315,13 @@ def test_the_screens_recorded_risk_answers_are_what_the_routes_answer(fixture_db
 
     for name, text in answers(tmp_path).items():
         assert text == (ROOT / "tests" / "fixtures" / "api" / name).read_text(), f"{name} is out of date"
+
+
+def test_a_step_reference_no_plan_lists_answers_404_as_the_package_does(app):
+    """Ticket 30's review, F9: GET /api/packages/NOPE-1 answers 404, so its risks do too, not an empty table."""
+    response = call(app, "GET", "/api/packages/NOPE-1/risks", ANA)
+
+    assert (response.status_code, response.json()) == (404, {"code": "unknown_package"})
 
 
 def test_a_step_row_package_s_section_follows_section_1_s_criteria(app):

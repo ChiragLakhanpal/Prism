@@ -3,6 +3,50 @@
     {
       "method": "POST",
       "path": "/api/ask"
+    },
+    {
+      "method": "POST",
+      "path": "/api/drafts"
+    },
+    {
+      "method": "POST",
+      "path": "/api/drafts/{draft_id}/rows/{row_key}/lesson"
+    },
+    {
+      "method": "POST",
+      "path": "/api/drafts/{draft_id}/{action}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/lessons/review/{item_id}/summary"
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/{key}/criteria/compare"
+    },
+    {
+      "method": "POST",
+      "path": "/api/packages/{key}/criteria/run"
+    },
+    {
+      "method": "GET",
+      "path": "/api/packages/{step_reference}/risks"
+    },
+    {
+      "method": "POST",
+      "path": "/api/planned-packages"
+    },
+    {
+      "method": "POST",
+      "path": "/api/planned-packages/{key}/criteria/compare"
+    },
+    {
+      "method": "POST",
+      "path": "/api/planned-packages/{key}/criteria/run"
+    },
+    {
+      "method": "GET",
+      "path": "/api/planned-packages/{package_id}/risks"
     }
   ]
 }

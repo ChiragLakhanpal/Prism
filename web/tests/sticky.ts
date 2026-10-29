@@ -16,7 +16,7 @@ function placeOfFocus() {
   // not reached its place yet sits below the element and covers nothing. The ask bar covers only its box: the page
   // shows through its margins.
   const sticking = (part: Element | null): part is Element => part !== null && getComputedStyle(part).position === "sticky";
-  const ask = document.querySelector("[data-box-band]");
+  const ask = document.querySelector("[data-box-slot]");
   const inFootBar = focused.closest('[data-sticky="bottom"]') !== null;
   const parts = inFootBar
     ? []
