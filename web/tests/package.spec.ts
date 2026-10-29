@@ -542,6 +542,13 @@ test("the dots are one tab stop with arrow keys between them, each names its pac
   await page.keyboard.press("ArrowRight");
   const fourth = group.getByRole("img").nth(3);
   await expect(fourth).toBeFocused();
+  // Ticket 60: the focused dot sits whole in the window and in its chart, its 2 px ring at a 2 px offset included.
+  const [dotBox, chartBox] = [(await fourth.boundingBox())!, (await page.locator("[data-range-chart]").boundingBox())!];
+  const ring = { top: dotBox.y - 4, bottom: dotBox.y + dotBox.height + 4, left: dotBox.x - 4, right: dotBox.x + dotBox.width + 4 };
+  expect(ring.top).toBeGreaterThanOrEqual(Math.max(0, chartBox.y) - 0.5);
+  expect(ring.bottom).toBeLessThanOrEqual(Math.min(900, chartBox.y + chartBox.height) + 0.5);
+  expect(ring.left).toBeGreaterThanOrEqual(chartBox.x - 0.5);
+  expect(ring.right).toBeLessThanOrEqual(chartBox.x + chartBox.width + 0.5);
   await expect(fourth).toHaveAccessibleName(
     "KE-WAJWASCO-372776-CW-RFB, 1.1 months. Kenya. Its notice was published September 2, 2023, and its contract was signed " +
       `October 6, 2023. ${from} Select to see its records. Dot 4 of 49.`,

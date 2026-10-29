@@ -274,6 +274,12 @@ test("a partial refusal whose other sentences could not be checked keeps its ref
   expect((await refusal.boundingBox())!.y).toBeLessThan((await alert.boundingBox())!.y);
   await expectOnlyTheAlertSpeaks(page);
   expect(await axe(page)).toEqual([]);
+  // The new state passes axe at the other two widths too (ticket 60's first criterion).
+  for (const width of [1024, 390]) {
+    await answered(page, "ask-refuses-part-supplier-scores-disagreements-unavailable.sse", width);
+    await expect(panel(page).locator("[data-answer=error] [data-refusal]")).toBeVisible();
+    expect(await axe(page), `${width} px`).toEqual([]);
+  }
 });
 
 test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the agent left it out", async ({ page }) => {
