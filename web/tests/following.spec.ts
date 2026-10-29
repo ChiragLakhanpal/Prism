@@ -351,7 +351,7 @@ test("each source of the brief says which record it is, and the disbursement tab
   await expect(titles.nth(7)).toHaveText("ISR 19, Overall Implementation Progress (IP)");
   await expect(page.locator("[data-sources] [data-source-item]").nth(3)).toContainText("Strata's totals of this project's records, as of");
   await expect(page.locator("[data-brief-part=disbursement]")).toContainText(
-    "The loans and credits data reports more disbursed and canceled than committed for this project.");
+    "In the loans and credits data, the amounts disbursed and canceled add up to more than the commitment.");
   await expect(page.getByText("I wrote each part from public records through October 23, 2026")).toBeVisible();
   // "US$" stays on the line of its amount.
   await expect(page.locator("[data-brief-part=awards] [data-note] .whitespace-nowrap").filter({ hasText: "US$" }).first()).toHaveText("US$2.5");

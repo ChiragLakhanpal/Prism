@@ -362,8 +362,9 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
           </caption>
           <thead className="bg-surface-2">
             <tr>
-              {[columns.activity, columns.method, columns.estimated, columns.status].map((head, index) => (
-                <th key={index} scope="col" className={cx("px-3 py-2 align-bottom font-semibold text-ink-heading", index === 2 ? "text-right" : "text-left")}>
+              {/* The Review column, as Check a plan has it, since the route returns each row's Review Type (ticket 58). */}
+              {[columns.activity, columns.method, columns.review, columns.estimated, columns.status].map((head, index) => (
+                <th key={index} scope="col" className={cx("px-3 py-2 align-bottom font-semibold text-ink-heading", index === 3 ? "text-right" : "text-left")}>
                   {head}
                 </th>
               ))}
@@ -377,8 +378,9 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
                   {row.description && <span className="mt-1 block text-ink">{drawable(row.description)}</span>}
                 </th>
                 <td className="px-3 py-2">{method(row)}</td>
+                <td className="px-3 py-2">{row.review_type ?? copy.notInPlan}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{amount(row.estimated_amount_usd)}</td>
-                <td className="px-3 py-2">{row.process_status ?? copy.notInPlan}</td>
+                <td className="px-3 py-2">{row.process_status ?? words.noStatus}</td>
               </tr>
             ))}
           </tbody>
@@ -394,12 +396,16 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
               <dd className="text-small text-ink">{method(row)}</dd>
             </div>
             <div>
+              <dt className="text-caption text-ink-muted">{columns.review}</dt>
+              <dd className="text-small text-ink">{row.review_type ?? copy.notInPlan}</dd>
+            </div>
+            <div>
               <dt className="text-caption text-ink-muted">{columns.estimated}</dt>
               <dd className="text-small text-ink tabular-nums">{amount(row.estimated_amount_usd)}</dd>
             </div>
             <div>
               <dt className="text-caption text-ink-muted">{columns.status}</dt>
-              <dd className="text-small text-ink">{row.process_status ?? copy.notInPlan}</dd>
+              <dd className="text-small text-ink">{row.process_status ?? words.noStatus}</dd>
             </div>
           </dl>
         </li>

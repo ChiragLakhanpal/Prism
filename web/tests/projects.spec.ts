@@ -303,6 +303,10 @@ test("a project's Procurement tab shows each agency's plan versions newest first
   ]);
   await expect(nwwda.locator("[data-table-view=table] tbody tr").first().locator("td")).toHaveText(["Oct 9, 2026", "9"]);
   await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText("Showing 1 version")).toBeVisible();
+  // One source line, under the last agency's table, not the same line under each (ticket 58).
+  const sources = main.locator("[data-agency] [data-source]");
+  await expect(sources).toHaveCount(1);
+  expect(await sources.evaluate((line) => line.closest("[data-agency]") === [...document.querySelectorAll("[data-agency]")].filter((agency) => agency.querySelector("table")).at(-1))).toBe(true);
   // The agencies with no plan share one block after the ones with plans, rather than ten alike.
   const others = main.locator("[data-other-agencies]");
   await expect(others.getByRole("heading", { level: 3 })).toHaveText("Other implementing agencies");
@@ -441,6 +445,9 @@ test("a project with no plans says so, and a project with no record is not found
   // P130164's Documents tab lists 15 Procurement Plans I haven't read, so the title says I haven't read one,
   // as the Packages line does, rather than that I have none (the 21 critique, round 3, item 7).
   await expect(page.locator("[data-empty-state] h3")).toHaveText("I haven't read a Procurement Plan for this project yet.");
+  // Its Documents tab lists them, so the card links there beside Data readiness (ticket 58).
+  await expect(page.locator("[data-empty-state]").getByRole("link", { name: "This project's documents" })).toHaveAttribute("href", "/projects/P130164/documents");
+  await expect(page.locator("[data-empty-state]").getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data");
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "no plans at 390 px").toEqual([]);
 

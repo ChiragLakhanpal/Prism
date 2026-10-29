@@ -77,7 +77,7 @@ const NOT_FOUND: Route[] = [
   {
     path: "/nowhere",
     h1: "Page not found",
-    purpose: "I don't have a page at this address. Check the address, or go to Home.",
+    purpose: "I don't have a page at this address. Check the address.",
     link: ["Go to Home", "/"],
   },
   // The deck is /present, /present/{n}, /present/page and /present/notes (ticket 47); any other address under
@@ -85,7 +85,7 @@ const NOT_FOUND: Route[] = [
   {
     path: "/present/nowhere",
     h1: "Page not found",
-    purpose: "I don't have a page at this address. Check the address, or go to Home.",
+    purpose: "I don't have a page at this address. Check the address.",
     link: ["Go to Home", "/"],
   },
   {

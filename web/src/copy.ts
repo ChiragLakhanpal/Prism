@@ -348,7 +348,8 @@ export const copy = {
     },
     notFound: {
       title: "Page not found",
-      purpose: "I don't have a page at this address. Check the address, or go to Home.",
+      // The link below carries the action, so the purpose does not say it again (ticket 58; the 06 critique, round 3).
+      purpose: "I don't have a page at this address. Check the address.",
       link: "Go to Home",
     },
     notAProject: {
@@ -2150,6 +2151,8 @@ export const copy = {
       "I can check a plan only after the World Bank discloses it and I have read it. Data readiness shows how much of " +
       "each source I have read.",
     projectEmptyLink: "Data readiness",
+    // The documents the project lists, plans among them, which I may not have read yet (ticket 58).
+    projectEmptyDocuments: "This project's documents",
     // Ticket 21: what changed in each agency's latest plan, the Baseline mark and the fold.
     changes: {
       // Two sentences with long dates, so neither is dense (DESIGN.md section 7 rule 13; unslop rule 28).
@@ -2355,9 +2358,10 @@ export const copy = {
     } as Record<string, string>,
     // Under the Money table, when the loans data reports more disbursed and canceled than committed.
     money: {
+      // The nouns are said, not left to the reader (ticket 58; unslop rule 33).
       exceeds:
-        "The loans and credits data reports more disbursed and canceled than committed for this project. I show each " +
-        "amount as it reports it.",
+        "In the loans and credits data, the amounts disbursed and canceled add up to more than the commitment. I show " +
+        "each amount as the data reports it.",
     },
     // The commitment's tooltip: each loan or credit, then the total the route summed.
     loanLine: "{loan}: US${amount} million",
@@ -2444,7 +2448,8 @@ export const copy = {
     pdfOf: {
       project_paper: "the Project Paper of {date}",
       isrUndated: "the ISR of {date}",
-      procurement_plan: "{agency}, plan of {date}",
+      // One item, "the Northern Water Works Development Agency plan of October 9, 2026" (ticket 58).
+      procurement_plan: "the {agency} plan of {date}",
       procurementPlanUnnamed: "the Procurement Plan of {date}",
       untyped: "the document of {date}",
     },
@@ -2513,6 +2518,9 @@ export const copy = {
     table: "A table on page {page}, as I read it into rows.",
     tableTitled: "{title}, a table on page {page}, as I read it into rows.",
     planRows: "The activities on page {page}, as I read them from the plan's table.",
+    // A blank Process status on the plan's own page, where "Not in the plan" would read as if the activity were missing
+    // (ticket 58; the 21 critique, round 4).
+    noStatus: "No status in the plan",
     rowField: "Column",
     rowValue: "Value",
     reissueCurrent: "This is the re-issue of {reissue_date}. It replaces the version of {original_date}.",

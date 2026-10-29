@@ -55,6 +55,7 @@ import { evidenceIn, openEvidence, openedAt, origin, remember } from "../lib/evi
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { address } from "../lib/router";
+import { shortProjectName } from "../lib/sources";
 import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
@@ -674,7 +675,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         {ppsd ? (
           <PackageCrumbs title={subject.package_title ?? ""} href={packageHref(subject)} last={kind.crumb("")} />
         ) : (
-          <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
+          // The project's name as its page and Check a plan's crumb give it, without a final "Project": the same rule as
+          // the server's display_name (src/strata/server/projects.py), which a draft's subject does not carry (ticket 58).
+          <DraftCrumbs pid={subject.project_id} name={shortProjectName(subject.project_name)} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
         )}
         <DraftHeader
           title={kind.title}

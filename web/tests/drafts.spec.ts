@@ -1134,6 +1134,10 @@ test("the notes are a table on a wide column, and cards below 560 px of column, 
   await expect(page.locator("[data-draft-notes] [data-view=table]")).toBeHidden();
   // Below 768 px the breadcrumb is a link back to Drafts.
   await expect(page.locator("[data-breadcrumb] p a")).toHaveText("Drafts");
+  // Wider, the crumb names the project as Check a plan's does, without "Project" (ticket 58).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("[data-breadcrumb] ol li").nth(1)).toHaveText("Water and Sanitation Development (P156634)");
+  await page.setViewportSize({ width: 390, height: 844 });
   // Nothing scrolls sideways at 320 px.
   await page.setViewportSize({ width: 320, height: 800 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
