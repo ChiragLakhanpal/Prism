@@ -9,7 +9,7 @@ import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { dataReadinessHref } from "../src/routes";
 import { expect, mockShell, openSidebar, recorded, test, windowBeside } from "./mocked";
-import { placements } from "./registries";
+import { placements, readRegistry, type SourceRegistry } from "./registries";
 import { fontsLoaded } from "./settled";
 
 type Answer = { status?: number; file: string };
@@ -212,18 +212,14 @@ test("What you can ask and Sources are panels, and the last three sections are c
     await expect(zone(key).getByRole("heading", { level: 2 })).toHaveText(name);
   }
   const rows = page.locator("[data-readiness] [data-zone=row]");
-  await expect(rows.getByRole("heading", { level: 2 })).toHaveText([
-    "The hardest documents I read",
-    "Plan pages the layout parser couldn't read",
-    "Fixes that would unlock the most",
-  ]);
+  // Ticket 58: the plan pages the layout parser couldn't read are part of the hardest documents' section, not a second
+  // section about the parser right after it. The fixture's run read every plan page, so its sentence says so.
+  await expect(rows.getByRole("heading", { level: 2 })).toHaveText(["The hardest documents I read", "Fixes that would unlock the most"]);
   await expect(rows.locator("[data-section-summary]")).toHaveText([
-    "I use these documents as a stress test for my reading.",
-    // The fixture's run read every plan page, so the row says so and has nothing to open.
-    "The layout parser read every Procurement Plan page it tried.",
+    "I use these documents as a stress test for my reading. The layout parser read every Procurement Plan page it tried.",
     "I rank each fix by how many projects it would add evidence to.",
   ]);
-  await expect(zone("failures").getByRole("button")).toHaveCount(0);
+  await expect(zone("failures")).toHaveCount(0);
   await expect(page.locator("[data-readiness-table=shelf] [data-table-view], [data-fixes] li")).toHaveCount(0);
 
   for (const [key, show, hide, inside] of [
@@ -454,7 +450,10 @@ test("every number's tooltip names what it counts, and its window shows the numb
   // (critique r6; ticket 18 made paragraph numbers a check of the reports' row).
   const unread = table(page, "kinds").locator("[data-cell='document_search:holds'] [data-num]", { hasText: /^70$/ });
   await unread.focus();
-  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("70 of 264 body pages lack paragraph numbers I could find.");
+  // Ticket 58: a check of what I found says where I found none, and names the pages as a reader would.
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
+    "I found no paragraph numbers on 70 of 264 pages of the reports' main text.",
+  );
   await page.keyboard.press("Escape");
 
   await shortfall.click();
@@ -544,10 +543,38 @@ test("the document search's Ready for number opens a window named for the passag
 
   await table(page, "kinds").locator("[data-cell='document_search:readyFor'] [data-num]").click();
   const window = page.getByRole("dialog", { name: "Passages you can search" });
-  await expect(window).toContainText("How many of the passages I read you can search.");
+  // Ticket 58 (the 16 review, round 8, P1): what the count is, and when a replaced version is found.
+  await expect(window).toContainText(
+    "How many of the passages I read are in the search index. I count them out of every passage I read. A search finds an older version of a report only as of a date before the newer one came out.",
+  );
   await expect(window).not.toContainText("fiscal years");
   await expect(window.locator(".font-mono")).toHaveText("strata.gold.passage");
 });
+
+// Ticket 58 (the 16 design review, round 8, P1): STEP's "Activity Reference No." ends with a period, so a shortfall's
+// tooltip that names it ends with one period, not two.
+test("a shortfall whose records lack a field name ending in a period ends its tooltip once", async ({ page }) => {
+  const answer = JSON.parse(await recorded("data-readiness.json"));
+  const lack = "an Activity Reference\u00a0No.";
+  for (const segment of answer.headline.segments) if (segment.role === "missing") segment.lack = lack;
+  await mockData(page, FULL);
+  await page.route("**/api/data/readiness*", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(answer) }));
+  await open(page);
+
+  await page.locator("[data-headline] [data-num]", { hasText: /^75$/ }).focus();
+  const said = page.getByRole("tooltip").locator("[data-num-what]");
+  await expect(said).toHaveText("75 of 603 contracts lack an Activity Reference No.");
+  expect(await said.textContent()).not.toContain("..");
+});
+
+// The Read well measures the registry splits by route (read_well_by_route), whose window has its own definition.
+const byRoute = new Set(
+  Object.values(readRegistry<SourceRegistry>("sources.toml").sources).flatMap((source) =>
+    (source.readiness ?? [])
+      .filter((row) => (row as { read_well_by_route?: boolean }).read_well_by_route)
+      .map((row) => (row as { read_well?: { measure: string } }).read_well?.measure ?? ""),
+  ),
+);
 
 // Review r7: three rounds each found a number whose window named another measure. This opens every
 // number's window on each view and checks it against the registries, not the page's own choice: a
@@ -580,9 +607,13 @@ for (const [name, path, answer] of SWEPT) {
       const placement = placed.get(key);
       expect(placement, `number ${index} counts ${key}, which no registry places`).toBeTruthy();
       const measure = key.slice(key.indexOf("/") + 1);
-      const want = placement?.column
-        ? { title: words.sources.columns[placement.column].label, definition: words.sources.definitions[placement.column] }
-        : words.measureWindows[measure];
+      // A document collection's Read well counts pages across both routes, so its window says what counts on each
+      // (ticket 58): the registry marks that row read_well_by_route.
+      const want = byRoute.has(measure) && placement?.column === "read_well"
+        ? { title: words.sources.columns.read_well.label, definition: words.sources.readWellDocuments }
+        : placement?.column
+          ? { title: words.sources.columns[placement.column].label, definition: words.sources.definitions[placement.column] }
+          : words.measureWindows[measure];
       expect(want, `number ${index} counts ${key}, which fills no column and has no window words`).toBeTruthy();
       await number.click();
       const window = page.getByRole("dialog");

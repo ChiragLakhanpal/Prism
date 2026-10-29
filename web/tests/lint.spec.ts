@@ -180,6 +180,9 @@ test("every measure a number on /data can open that fills no column has its own 
   const words = copy.dataReadiness.measureWindows;
   const missing = needed.filter((measure) => !words[measure]?.title || !words[measure]?.definition);
   expect(missing, "add each to copy.dataReadiness.measureWindows").toEqual([]);
+  // And no window's words wait for a measure no number opens, such as slice_projects once Coverage stopped showing it
+  // (ticket 58; CLAUDE.md rule 4).
+  expect(Object.keys(words).filter((measure) => !needed.includes(measure)), "delete words no number opens").toEqual([]);
   expect([...placed].filter(([, placement]) => !placement.table).map(([key]) => key), "every window names its table").toEqual([]);
   // Review r6 P3: the words are keyed by measure name alone, and a column's measure names repeat
   // across sources, so words for one would retitle every cell of that column that counts it.

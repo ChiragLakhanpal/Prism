@@ -57,7 +57,8 @@ const FINDING = "max-w-[22.5em] text-finding text-balance text-ink-heading";
 // at 1440, 1024 and 390 px (six from a 768 px page area, where its 22.5em holds it at 1440 and 1024 alike, and nine
 // below), so nothing moves when it arrives.
 const lines = (count: number) => [...Array.from({ length: count - 1 }, () => "w-full"), "w-3/5"];
-const HEADLINE_LINES = { wide: lines(6), narrow: lines(9) };
+// Ten lines below 768 px since ticket 58's paragraph-number gap ("where I found no paragraph numbers") runs a line longer.
+const HEADLINE_LINES = { wide: lines(6), narrow: lines(10) };
 
 const plain = (count: number) => <Num count={count} />;
 const day = (iso: string, today: string, style: "sentence" | "table" = "sentence") => <Num date={iso} style={style} today={today} />;
@@ -92,7 +93,7 @@ function routeRows(cell: Cell, measures: Measures): { label: string; value: Reac
     const n = (value: number) => numText({ value, options: { compact: false } });
     return [{ label: words.sources.routes[route], value: words.sources.routeRead(n(found.count), n(found.denominator)) }];
   });
-  return rows.length ? [...rows, { label: words.sources.routeCounts, value: words.sources.routeCountsNote }] : [];
+  return rows;
 }
 
 // "{documents} documents for {projects} projects", in the singular where a count is one.
@@ -168,6 +169,13 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
             tooltipKind="ratio"
             windowColumn={column}
             extraRows={column === "read_well" ? routeRows(cell, measures) : undefined}
+            // A document collection's Read well counts pages across both routes, so its window says what counts on
+            // each, in its definition rather than a row (ticket 58; the 18 design review, round 3, P1).
+            window={
+              column === "read_well" && cell.routes?.length
+                ? { title: words.sources.columns.read_well.label, definition: words.sources.readWellDocuments }
+                : undefined
+            }
           />
         )}
       </span>
@@ -254,11 +262,12 @@ function scopeText(row: Extract<SourceRow, { type: "measured" | "unmeasured" }>)
             {words.sources.scope.sliceShelf}
           </>
         )}
+        {/* Which documents, on a line of their own under which projects, so "with their" never has two places
+            to belong (ticket 58; the 18 design review, round 3, P2). */}
         {row.covers && (
-          <>
-            {words.sources.scope.join}
-            {row.covers}
-          </>
+          <span data-covers className="block">
+            {row.covers.charAt(0).toUpperCase() + row.covers.slice(1)}
+          </span>
         )}
       </>
     );
@@ -534,10 +543,39 @@ function Fixes({ fixes, measures, shortfalls, shown, zones }: { fixes: Fix[]; me
   );
 }
 
-// The Procurement Plan pages the layout parser could not read (ticket 08 asked to show them), as
-// their own section under Sources, whenever the plans' row is in view. With none, the row says so, with nothing to open.
+// The Procurement Plan pages the layout parser could not read (ticket 08 asked to show them), whenever the plans' row
+// is in view: inside the hardest documents' row, its sentence after that row's and its pages after the table (ticket
+// 58), or a row of their own when the page shows no hardest documents. With none, the sentence says so.
+function failuresInShelf(result: Readiness): { sentence: ReactNode; list: ReactNode } | undefined {
+  if (result.parse_failures === null) return undefined;
+  const failures = result.parse_failures;
+  return {
+    sentence: failures.length === 0 ? words.failures.none : words.failures.summary,
+    list: failures.length > 0 && (
+      <div data-failures className="flex flex-col gap-1">
+        <h3 className="text-h3 text-ink-heading">{words.failures.title}</h3>
+        <FailureList failures={failures} asOf={result.as_of} />
+      </div>
+    ),
+  };
+}
+
+function FailureList({ failures, asOf }: { failures: NonNullable<Readiness["parse_failures"]>; asOf: string }) {
+  return (
+    <ul className="flex flex-col gap-1 pt-2 text-body">
+      {failures.map((failure) => (
+        <li key={`${failure.document_id}-${failure.pdf_page}`}>
+          <span className="font-mono wrap-anywhere">{failure.document_id}</span>
+          {words.sources.scope.join}
+          <Template text={words.failures.page} values={{ page: <Num value={failure.pdf_page} />, date: day(failure.failed_on, asOf, "table") }} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function Failures({ result, zones }: { result: Readiness; zones: Zones }) {
-  if (result.parse_failures === null) return null;
+  if (result.parse_failures === null || result.stress_shelf.length > 0) return null;
   const failures = result.parse_failures;
   return (
     <TaskZone
@@ -548,17 +586,7 @@ function Failures({ result, zones }: { result: Readiness; zones: Zones }) {
       summary={failures.length === 0 ? words.failures.none : words.failures.summary}
       toggle={failures.length === 0 ? undefined : toggleOf(zones, "failures", words.failures.show, words.failures.hide)}
     >
-      {failures.length > 0 && (
-        <ul className="flex flex-col gap-1 pt-2 text-body">
-          {failures.map((failure) => (
-            <li key={`${failure.document_id}-${failure.pdf_page}`}>
-              <span className="font-mono wrap-anywhere">{failure.document_id}</span>
-              {words.sources.scope.join}
-              <Template text={words.failures.page} values={{ page: <Num value={failure.pdf_page} />, date: day(failure.failed_on, result.as_of, "table") }} />
-            </li>
-          ))}
-        </ul>
-      )}
+      {failures.length > 0 && <FailureList failures={failures} asOf={result.as_of} />}
     </TaskZone>
   );
 }
@@ -594,7 +622,7 @@ function Tables({ result, zones }: { result: Readiness; zones: Zones }) {
         source={sourceLine(result)}
         spanName={COLUMNS.map((column) => words.sources.columns[column].label).join(words.sources.scope.join)}
       />
-      <HardestDocuments result={result} open={zones.isOpen("shelf")} onToggle={() => zones.toggle("shelf")} />
+      <HardestDocuments result={result} failures={failuresInShelf(result)} open={zones.isOpen("shelf")} onToggle={() => zones.toggle("shelf")} />
       <Failures result={result} zones={zones} />
       <Fixes fixes={result.fixes} measures={measures} shortfalls={result.gaps.length > 0} shown={result.filter.shown} zones={zones} />
     </div>
@@ -789,11 +817,12 @@ function render(
           {/* The hardest documents, one skeleton row for each entry the slice file names once opened, when no link
               filters the page (a filtered view shows only the entries on its sources). */}
           {!filtered && known.status === "ready" && (
-            <HardestDocumentsLoading rows={known.registry.shelf} open={zones.isOpen("shelf")} onToggle={() => zones.toggle("shelf")} />
+            <HardestDocumentsLoading rows={known.registry.shelf} failures open={zones.isOpen("shelf")} onToggle={() => zones.toggle("shelf")} />
           )}
           {/* Every row is in view when no link filters the page, the plans' row with them. Its sentence waits for the
-              measures, since it says whether any page failed: one line from a 768 px page area, two below. */}
-          {!filtered && (
+              measures, since it says whether any page failed: one line from a 768 px page area, two below. It is part of
+              the hardest documents' row when the slice file names any (ticket 58). */}
+          {!filtered && !(known.status === "ready" && known.registry.shelf > 0) && (
             <TaskZone
               name={words.failures.title}
               headingId="data-failures"

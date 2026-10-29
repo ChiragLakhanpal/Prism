@@ -317,7 +317,7 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
         <MetaLine evidence={evidence} />
         {summary && fields.page && (
           <p className="px-4 pt-3 text-caption text-ink-muted">
-            {copy.evidence.summaryNote(String(fields.page), fields.lastPage && fields.lastPage !== fields.page ? String(fields.lastPage) : null)}
+            {copy.evidence.summaryNote}
           </p>
         )}
         {fromAnswer && ranges.length === 0 && (

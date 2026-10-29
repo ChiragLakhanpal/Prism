@@ -192,6 +192,9 @@ class ReadinessColumn:
     # and the one that counts the slice's projects whose documents were read, out of the slice's projects.
     projects: str | None = None
     slice_read: str | None = None
+    # For a check of what Strata found, in place of lack: what it found none of on a row that falls short, so the gap
+    # says "where I found no paragraph numbers" (ticket 58).
+    not_found: str | None = None
 
 
 @dataclass(frozen=True)
@@ -388,11 +391,12 @@ def load_sources(path: Path = CONFIG_DIR / "sources.toml",
 def _column(path: Path, where: str, table) -> ReadinessColumn:
     entry = _Entry(path, where, table)
     entry.only({"measure", "counts", "noun", "counted_in", "lack", "years", "counts_one", "noun_one", "projects",
-                "slice_read"})
+                "slice_read", "not_found"})
     return ReadinessColumn(entry.text("measure"), entry.text("counts"), entry.text("noun"), entry.text("counted_in"),
                            entry.text("lack", required=False), entry.text("years", required=False),
                            entry.text("counts_one", required=False), entry.text("noun_one", required=False),
-                           entry.text("projects", required=False), entry.text("slice_read", required=False))
+                           entry.text("projects", required=False), entry.text("slice_read", required=False),
+                           entry.text("not_found", required=False))
 
 
 def _route(path: Path, where: str, table) -> ReadinessRoute:

@@ -67,7 +67,10 @@ for (const width of [1440, 1024, 390]) {
     // A region named by its title, between the Sources table and the fixes: a closed row with its one sentence, which
     // opens in place to the rows in the slice file's order (ticket 104).
     await expect(page.getByRole("region", { name: TITLE }).getByRole("heading", { level: 2 })).toHaveText(TITLE);
-    await expect(shelf(page).locator("[data-section-summary]")).toHaveText("I use these documents as a stress test for my reading.");
+    // With the plans' row in view, its sentence also says how the layout parser did with the plans (ticket 58).
+    await expect(shelf(page).locator("[data-section-summary]")).toHaveText(
+      "I use these documents as a stress test for my reading. The layout parser read every Procurement Plan page it tried.",
+    );
     await openShelf(page);
     await expect(shelf(page).locator("[data-table-lines]")).toHaveText(
       "Each row says what makes the document hard, what I recovered, and the page where you can compare the two.",
@@ -219,9 +222,25 @@ test("before the first document run every row says it is not read yet, and the s
   await expect(visible(page, 1440).locator("td[colspan='3']")).toHaveText(Array(5).fill("Not read yet. The next document run reads it."));
   // Before any reading, a rule's row never says I read the document (critique r2).
   await expect(row(page, 1440, "longest_pad").locator("th")).toHaveText("The longest Project Appraisal DocumentI choose it when I read the documents.");
+  // Ticket 58: the hard cell says what makes it hard, not the Document cell's words again.
   await expect(row(page, 1440, "longest_pad").locator("[data-cell='longest_pad:hard']")).toHaveText(
-    "The longest Project Appraisal Document of the pilot projects.",
+    "It has more pages than any other appraisal document of the pilot projects.",
   );
+});
+
+// Ticket 58 (the 18 design review, round 3, P4): a document over the parser's limit, read in three parts, says
+// "three", as the rest of the section writes one to nine. No recording reads one, so the over-limit row takes the
+// longest Project Appraisal Document's reading, in memory only.
+test("a document read in parts writes how many in words", async ({ page }) => {
+  const answer = await json("data-readiness.json");
+  const longest = answer.stress_shelf.find((entry: { key: string }) => entry.key === "longest_pad");
+  const over = answer.stress_shelf.find((entry: { key: string }) => entry.key === "over_parser_limit");
+  Object.assign(over, { ...longest, key: "over_parser_limit", kind: "over_parser_limit", rule: "over_parser_limit", position: 5, parts: 3 });
+  await openData(page, { file: "data-readiness.json", body: JSON.stringify(answer) });
+  await openShelf(page);
+
+  await expect(row(page, 1440, "over_parser_limit")).toContainText("page numbers match the PDF, across three parts");
+  await expect(row(page, 1440, "over_parser_limit")).not.toContainText("across 3 parts");
 });
 
 test("a filtered view shows only the rows on its sources, and leaves the section out when none are", async ({ page }) => {
@@ -261,7 +280,8 @@ test("an outcome's number says what it counts and opens a window with what it ch
     "A risk counts when I read its name and its rating from the risk table. I don't check the description and mitigation text beside them, which the scan sets in two columns. Open the page to compare.",
   );
   await expect(window).not.toContainText("Counted against");
-  await expect(window.locator(".font-mono")).toHaveText(["recorded words (pdftotext -bbox)", "strata.ops.stress_shelf"]);
+  // The offline parser's plain name, not the command that recorded its words (ticket 58).
+  await expect(window.locator(".font-mono")).toHaveText(["recorded words", "strata.ops.stress_shelf"]);
   await page.keyboard.press("Escape");
   await expect(number).toBeFocused();
 
@@ -304,15 +324,29 @@ test("the project reports' row counts the projects its documents belong to, then
   await page.keyboard.press("Escape");
   await cell("coverage").locator("[data-num]").nth(2).click();
   await expect(page.getByRole("dialog", { name: "Pilot projects read" })).toContainText("strata.silver.documents");
+  // Ticket 58: no stranded "of", and nothing the fixture makes false about the daily page limit.
+  await expect(page.getByRole("dialog", { name: "Pilot projects read" })).toContainText(
+    "How many pilot projects have at least one document I read, out of all the pilot projects. The pilot projects are in the sectors and countries the row's caption names, with a Board date in its fiscal years. One whose documents wait for a later run, or that lists none of the types I read, does not count yet.",
+  );
   await page.keyboard.press("Escape");
   await expect(page.locator("[data-readiness-table=sources] [data-row=reports] th")).toContainText(
     "Water and transport projects in Kenya, Bangladesh, Vietnam and Pakistan, fiscal 2012 to 2025, and the projects of the hardest documents below",
   );
+  // Which documents, on a line of their own under which projects, so "with their" has one place to belong (ticket 58).
+  const covers = page.locator("[data-readiness-table=sources] [data-row=reports] th [data-covers]");
+  await expect(covers).toHaveText("Appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports");
+  expect(await covers.evaluate((element) => getComputedStyle(element).display)).toBe("block");
   const [text, parser] = reports.cells.read_well.routes.map((route: { row: number }) => answer.rows[route.row]);
   await cell("read_well").locator("[data-num]").click();
   const window = page.getByRole("dialog", { name: "Read well" });
   await expect(window).toContainText(`Published text${text.count} of ${text.denominator} pages read well`);
   await expect(window).toContainText(`Layout parser${parser.count} of ${parser.denominator} pages read well`);
+  // Ticket 58: its definition says what counts on each route, and no right-aligned paragraph row says it again.
+  await expect(window).toContainText(
+    "How many report pages I read. A page of published text counts once I have placed its text on its PDF page. A page I sent to the layout parser counts when it gave back a table or text. Whether I found a report's paragraph numbers is a separate check, shown under What you can ask.",
+  );
+  await expect(window).not.toContainText("What counts");
+  await expect(window).not.toContainText("without losing their paragraph numbers");
   await page.keyboard.press("Escape");
   await expect(page.locator("[data-readiness-table=sources] [data-table-view=table] [data-cell='notice_text:read_well']")).toHaveText("Published as text");
 });
@@ -423,7 +457,8 @@ const KINDS = [
     id: "strata.gold.passage:18381488/v1/table65",
     file: "evidence-pad-p130164-risk-summary.json",
     heading: "Rajasthan Road Sector Modernization, summary of Annex 4 - Operational Risk Assessment Framework (ORAF)",
-    note: "I wrote this summary of the table on PDF pages 65 to 70. It is not the document's own words, and I never use it to back a number.",
+    // The meta line and the summary's first words give the table's pages, so the note does not (ticket 58).
+    note: "I wrote this summary of the table. It is not the document's own words, and I never use it to back a number.",
     link: /^Open at page 65$/,
   },
   {
@@ -443,6 +478,9 @@ for (const kind of KINDS) {
 
       await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(kind.heading);
       await expect(drawer(page)).toContainText(kind.note);
+      // A notice with no heading names no section, so its meta line never repeats the text's first sentence (ticket 58;
+      // the notice reader names a section only by a heading since 6f5ccf0a).
+      await expect(drawer(page).locator("[data-meta-line]")).not.toContainText("Specifically");
       await expect(drawer(page).getByRole("link", { name: kind.link })).toHaveCount(1);
       expect(await violations(page)).toEqual([]);
     });

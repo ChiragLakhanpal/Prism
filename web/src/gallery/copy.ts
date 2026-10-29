@@ -1388,7 +1388,7 @@ export const galleryCopy = {
         { type: "measured", id: "papers", source_key: "papers", label: "Sample reports", stratum: "Why", scope: { kind: "projects", count: 1 }, covers: null, cells: {
           coverage: { measure: "passages", row: 11, counts: "passages read", noun: "passages", status: null, note: null },
           linked: { measure: null, row: null },
-          read_well: { measure: "read", row: 9, counts: "body pages with their paragraph numbers found", noun: "body pages", status: "partial", note: null },
+          read_well: { measure: "read", row: 9, counts: "pages of the reports' main text with their paragraph numbers found", noun: "pages of the reports' main text", status: "partial", note: null },
           fresh: { measure: "fresh", row: 10, counts: "newest report", noun: "reports", status: null, note: null, schedule: "as published", late_days: null },
         } },
         { type: "unmeasured", id: "scores", source_key: "scores", label: "Sample scores", stratum: "What", scope: { kind: "countries", names: ["Kenya", "Bangladesh"] }, covers: null, cells: {
@@ -1410,7 +1410,7 @@ export const galleryCopy = {
       ],
       fixes: [
         { rank: 1, gap: "sample/linked", projects: 12, row: 2, projects_row: 4, projects_from: "measure", sentence: [{ text: "Find a STEP reference for the " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " sample contracts that lack one." }] },
-        { rank: 2, gap: "papers/read_well", projects: 1, row: 9, projects_row: null, projects_from: "subjects", sentence: [{ text: "Use the layout parser on the " }, { number: 20, row: 9, noun: "body pages", role: "missing" }, { text: " body pages where I found no paragraph numbers." }] },
+        { rank: 2, gap: "papers/read_well", projects: 1, row: 9, projects_row: null, projects_from: "subjects", sentence: [{ text: "Use the layout parser on the " }, { number: 20, row: 9, noun: "pages of the reports' main text", role: "missing" }, { text: " pages of the reports' main text where I found no paragraph numbers." }] },
       ],
     },
   },

@@ -2642,7 +2642,7 @@
         "last_fiscal_year": 2025,
         "shelf": true
       },
-      "covers": "with their appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports",
+      "covers": "appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports",
       "cells": {
         "coverage": {
           "measure": "documents_read",
@@ -2722,7 +2722,7 @@
         "last_fiscal_year": 2025,
         "shelf": true
       },
-      "covers": "with their notices' scope and qualification text",
+      "covers": "scope and qualification text of the notices",
       "cells": {
         "coverage": {
           "measure": "notice_text_passages",
@@ -2806,8 +2806,8 @@
           {
             "number": 264,
             "row": 52,
-            "noun": "body pages",
-            "noun_one": "body page",
+            "noun": "pages of the reports' main text",
+            "noun_one": "page of a report's main text",
             "role": null,
             "lack": null
           },
@@ -2815,24 +2815,25 @@
             "text": " "
           },
           {
-            "text": "body pages"
+            "text": "pages of the reports' main text"
           },
           {
-            "text": ", "
+            "text": ", I found no "
+          },
+          {
+            "text": "paragraph numbers"
+          },
+          {
+            "text": " on "
           },
           {
             "number": 70,
             "row": 52,
-            "noun": "body pages",
-            "noun_one": "body page",
+            "noun": "pages of the reports' main text",
+            "noun_one": "page of a report's main text",
             "role": "missing",
-            "lack": "paragraph numbers I could find"
-          },
-          {
-            "text": " lack "
-          },
-          {
-            "text": "paragraph numbers I could find"
+            "lack": null,
+            "not_found": "paragraph numbers"
           },
           {
             "text": "."
@@ -2854,8 +2855,8 @@
           {
             "number": 264,
             "row": 52,
-            "noun": "body pages",
-            "noun_one": "body page",
+            "noun": "pages of the reports' main text",
+            "noun_one": "page of a report's main text",
             "role": null,
             "lack": null
           },
@@ -2863,24 +2864,25 @@
             "text": " "
           },
           {
-            "text": "body pages"
+            "text": "pages of the reports' main text"
           },
           {
-            "text": ", "
+            "text": ", I found no "
+          },
+          {
+            "text": "paragraph numbers"
+          },
+          {
+            "text": " on "
           },
           {
             "number": 70,
             "row": 52,
-            "noun": "body pages",
-            "noun_one": "body page",
+            "noun": "pages of the reports' main text",
+            "noun_one": "page of a report's main text",
             "role": "missing",
-            "lack": "paragraph numbers I could find"
-          },
-          {
-            "text": " lack "
-          },
-          {
-            "text": "paragraph numbers I could find"
+            "lack": null,
+            "not_found": "paragraph numbers"
           },
           {
             "text": "."
@@ -2982,10 +2984,11 @@
         {
           "number": 70,
           "row": 52,
-          "noun": "body pages",
-          "noun_one": "body page",
+          "noun": "pages of the reports' main text",
+          "noun_one": "page of a report's main text",
           "role": "missing",
-          "lack": "paragraph numbers I could find"
+          "lack": null,
+          "not_found": "paragraph numbers"
         },
         {
           "text": " of "
@@ -2993,8 +2996,8 @@
         {
           "number": 264,
           "row": 52,
-          "noun": "body pages",
-          "noun_one": "body page",
+          "noun": "pages of the reports' main text",
+          "noun_one": "page of a report's main text",
           "role": null,
           "lack": null
         },
@@ -3002,13 +3005,13 @@
           "text": " "
         },
         {
-          "text": "body pages"
+          "text": "pages of the reports' main text"
         },
         {
-          "text": " that lack "
+          "text": " where I found no "
         },
         {
-          "text": "paragraph numbers I could find"
+          "text": "paragraph numbers"
         }
       ]
     },
@@ -3298,13 +3301,14 @@
         {
           "number": 70,
           "row": 52,
-          "noun": "body pages",
-          "noun_one": "body page",
+          "noun": "pages of the reports' main text",
+          "noun_one": "page of a report's main text",
           "role": "missing",
-          "lack": "paragraph numbers I could find"
+          "lack": null,
+          "not_found": "paragraph numbers"
         },
         {
-          "text": " body pages where I found no paragraph numbers, so each passage keeps its number."
+          "text": " pages of the reports' main text where I found no paragraph numbers, so each passage keeps its number."
         }
       ]
     },

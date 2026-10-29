@@ -14,7 +14,7 @@
     ],
     "strata.bronze.layout_pages": [
       124,
-      "6d4a1094ef32f628d450b364c44e8703f6331022901789206186a460d57f7fa5"
+      "b8b746d0f303ed86f2360a522283a4f3d90a8d003ef0b29cc105af49acc4b948"
     ],
     "strata.gold.passage": [
       2198,
@@ -30,11 +30,11 @@
     ],
     "strata.ops.parse_failures": [
       25,
-      "f293682cf20c8118e9ceb344fc0dffabc2b8530f01a51f834325c0a5aad59275"
+      "a3bc8c005368564977639c24a5e4d41791b082b715cebb72beccbe7241397973"
     ],
     "strata.ops.parse_runs": [
       5,
-      "f361ac9efb7c93bd5236ecef4991688dfed2d4df8482c153aa7dba8eda6fce80"
+      "969d05793ab3c16055a41c78a4cd77763b17d94b30fcbf2ab1fe7a5e8538fafe"
     ],
     "strata.ops.passage_language_checks": [
       50,
@@ -42,7 +42,7 @@
     ],
     "strata.ops.stress_shelf": [
       5,
-      "2d5572d20b6bcb4800310b18a298eba1060a9e6e96cab3f864503cbb1d04d247"
+      "1889300f75bdafc36f45a896eee0b59efa66239257924b7a04e9041c4fec969b"
     ],
     "strata.silver.document_page_routes": [
       650,
@@ -84,7 +84,7 @@
     ],
     "strata.bronze.layout_pages": [
       124,
-      "e49db1ff80d09f3cec6198fe7eef890e2b7cc237c9bd38881314cd8b89a391fb"
+      "2289b69c8d0211f4344755aeb166546f4bbed6811b9d8f2b3220801e005ab509"
     ],
     "strata.gold.passage": [
       1400,
@@ -100,11 +100,11 @@
     ],
     "strata.ops.parse_failures": [
       43,
-      "ca8b455dc1038b6aa5589b4de486dc167b6480e869245ce32c06054635f01891"
+      "175a3caf62920d72e835e687e3fe5e5c596b112a110d067520383d83c81ba90a"
     ],
     "strata.ops.parse_runs": [
       10,
-      "b6127954fbd5d204bdb5a8884c7afb0aa79bd9d98f613ad6e77e2901f0c08c25"
+      "9d3bb8d1907f77f5d4aa6ec209f024b22c247f6bf51aa39c3cbded778a72cdc5"
     ],
     "strata.ops.passage_language_checks": [
       100,
@@ -112,7 +112,7 @@
     ],
     "strata.ops.stress_shelf": [
       10,
-      "33b9e2e9606b27cbfb35e5c273bf013b1e6abce50991f475595eb8bd77100cc6"
+      "892d6f3387bfa8fc52767d051fa18972b7e641291b9cac3c941406c9e586bbf6"
     ],
     "strata.silver.document_page_routes": [
       650,

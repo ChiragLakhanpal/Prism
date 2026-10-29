@@ -91,11 +91,24 @@ function said(noun: Noun | null, n: number): string {
 
 export type TooltipKind = "ratio" | "count" | "day" | "missing";
 
-function tooltip(row: MeasureRow, noun: Noun | null, asOf: string, kind: TooltipKind, count?: number, lack?: string | null): string {
+function tooltip(
+  row: MeasureRow,
+  noun: Noun | null,
+  asOf: string,
+  kind: TooltipKind,
+  count?: number,
+  lack?: string | null,
+  notFound?: string | null,
+): string {
   const n = (value: number) => numText({ value, options: { compact: false } });
   // The date stays on one line in the tooltip (ticket 59).
   // A date in a sentence is written in full (DESIGN.md rule 13), as its From line writes it.
   if (kind === "day" && row.as_of) return words.number.day(wholeDate(numText({ date: row.as_of })));
+  // A check of what I found says where I found none: "I found no paragraph numbers on 70 of 264 pages of the reports'
+  // main text." (ticket 58).
+  if (kind === "missing" && notFound && count !== undefined && row.denominator !== null) {
+    return words.number.notFound(n(count), n(row.denominator), said(noun, row.denominator), notFound);
+  }
   // A shortfall names what its records lack: "75 of 603 contracts lack a STEP reference."
   if (kind === "missing" && lack && count !== undefined && row.denominator !== null) {
     const says = count === 1 ? words.number.missingOne : words.number.missing;
@@ -121,6 +134,7 @@ export function MeasureValue({
   tooltipKind = "count",
   role,
   lack,
+  notFound,
   className,
   extraRows,
   window: own,
@@ -134,6 +148,8 @@ export function MeasureValue({
   tooltipKind?: TooltipKind;
   role?: Role | null;
   lack?: string | null;
+  // A check of what I found: what I found none of (ticket 58).
+  notFound?: string | null;
   className?: string;
   // More rows for the window, after the measure's own numbers, such as a share's split by route.
   extraRows?: { label: string; value: ReactNode }[];
@@ -149,7 +165,15 @@ export function MeasureValue({
     <MeasureNum
       value={value}
       className={className}
-      tooltip={tooltip(row, noun, measures.asOf, role === "missing" && (lack || row.kind === "read_well") ? "missing" : tooltipKind, count, lack)}
+      tooltip={tooltip(
+        row,
+        noun,
+        measures.asOf,
+        role === "missing" && (lack || notFound || row.kind === "read_well") ? "missing" : tooltipKind,
+        count,
+        lack,
+        notFound,
+      )}
       from={<FromLine words={measuresFrom(row.measured_on)} />}
       inText={inText}
       measure={measureWindow(row, owner, measures.asOf, role && count !== undefined ? { role, value: count } : null, extraRows, own)}
@@ -210,6 +234,7 @@ export function Sentence({
             noun={segment.noun ? { many: segment.noun, one: segment.noun_one } : null}
             role={segment.role}
             lack={segment.lack}
+            notFound={segment.not_found}
             inText={inText}
           />
         );

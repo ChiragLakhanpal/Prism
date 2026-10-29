@@ -109,7 +109,9 @@ Word = tuple[float, float, float, float, str]  # x0, y0, x1, y1, text, in points
 class RecordedLayout:
     """The layout parser's offline stand-in, which reads each page from its document's recorded words."""
 
-    name = "recorded words (pdftotext -bbox)"
+    # The name every shelf window shows beside the live parser's ai_parse_document: plain words, not the command that
+    # recorded them (pdftotext -bbox), which read as jargon and broke before "-bbox" (ticket 58).
+    name = "recorded words"
 
     def __init__(self, manifest, rejoin_split_words: bool | None = None):
         from strata.config import load_rejoin_split_words

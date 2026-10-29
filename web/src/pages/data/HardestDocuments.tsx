@@ -13,10 +13,12 @@ import { ExternalLink, pdfPageHref } from "../../components/ExternalLink";
 import { ProjectId } from "../../components/ProjectId";
 import { TextLink } from "../../components/TextLink";
 import { sourcePageHref } from "../../lib/documents";
+import { formatCount } from "../../lib/format";
 import { Num } from "../../components/Num";
 import { MeasureNum } from "../../components/MeasureNum";
 import { FromLine, settingsFrom } from "../../components/NumFrom";
 import { ReadinessTable, type ReadinessColumn, type ReadinessRow } from "../../components/ReadinessTable";
+import { Skeleton } from "../../components/Skeleton";
 import { StatusBadge } from "../../components/StatusBadge";
 import { Template } from "../../components/Template";
 import { DefinitionWindow } from "../../components/Term";
@@ -86,7 +88,8 @@ const fill = (text: string, entry: ShelfEntry, parts?: number | null) =>
   text
     .replace("{part}", copy.dataReadiness.server.shelfParts[entry.part ?? ""] ?? "")
     .replace("{languageName}", languageName(entry))
-    .replace("{parts}", String(parts ?? ""));
+    // One to nine in words: "across three parts" (ticket 58; DESIGN.md section 7, rule 12).
+    .replace("{parts}", parts == null ? "" : formatCount(parts));
 
 // "{count} of {total}" in one Num, never a percentage: each row is one document, and its counts are small.
 // The pair never wraps, so a narrow column wraps the words under it and never the number (critique r2).
@@ -344,9 +347,21 @@ function sourceLine(result: Readiness): ReactNode {
 // most readers skip it, and a link to #hardest-documents opens it.
 export type ShelfToggle = { open: boolean; onToggle: () => void };
 
-const closedRow = ({ open, onToggle }: ShelfToggle) => ({ summary: words.summary, toggle: { open, onToggle, show: words.show, hide: words.hide } });
+const closedRow = ({ open, onToggle }: ShelfToggle, more?: ReactNode) => ({
+  summary: more ? (
+    <>
+      {words.summary} {more}
+    </>
+  ) : (
+    words.summary
+  ),
+  toggle: { open, onToggle, show: words.show, hide: words.hide },
+});
 
-export function HardestDocuments({ result, ...toggle }: { result: Readiness } & ShelfToggle) {
+// The hardest documents and the plan pages the layout parser couldn't read are one section (ticket 58; the 16 and 18
+// critiques found two sections about the parser back to back): the row's sentence says how the parser did with the
+// plans, and the pages it couldn't read, when there are any, follow the table.
+export function HardestDocuments({ result, failures, ...toggle }: { result: Readiness; failures?: { sentence: ReactNode; list: ReactNode } } & ShelfToggle) {
   if (result.stress_shelf.length === 0) return null;
   return (
     <ReadinessTable
@@ -360,14 +375,16 @@ export function HardestDocuments({ result, ...toggle }: { result: Readiness } & 
       state={{ status: "ready", rows: shelfRows(result) }}
       source={sourceLine(result)}
       spanName={words.spanName}
-      closed={closedRow(toggle)}
+      closed={closedRow(toggle, failures?.sentence)}
+      after={failures?.list}
     />
   );
 }
 
 // While the measures load: the closed row with its sentence, and once opened the caption and one skeleton row for each
-// entry in the slice file.
-export function HardestDocumentsLoading({ rows, ...toggle }: { rows: number } & ShelfToggle) {
+// entry in the slice file. When the plans' row is in view, the sentence on the plan pages waits for the measures, so a
+// bar about its length holds its place after the row's own sentence (ticket 58).
+export function HardestDocumentsLoading({ rows, failures = false, ...toggle }: { rows: number; failures?: boolean } & ShelfToggle) {
   if (rows === 0) return null;
   return (
     <ReadinessTable
@@ -379,7 +396,7 @@ export function HardestDocumentsLoading({ rows, ...toggle }: { rows: number } & 
       head={SHELF_HEAD}
       columns={SHELF_COLUMNS}
       state={{ status: "loading", rows }}
-      closed={closedRow(toggle)}
+      closed={closedRow(toggle, failures ? <Skeleton className="inline-block h-[1em] w-[55ch] max-w-full align-[-0.125em]" /> : undefined)}
     />
   );
 }

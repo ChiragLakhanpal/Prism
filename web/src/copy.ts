@@ -9,6 +9,9 @@
 // each definition keeps one home.
 
 const plural = (count: number, one: string, many: string) => (count === 1 ? one : many);
+// A sentence's last words with its period, unless they already end with one, as STEP's "Activity Reference No." does
+// (ticket 58): a sentence never ends in two.
+const stop = (text: string) => (text.endsWith(".") ? text : `${text}.`);
 // STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
 const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
@@ -1390,10 +1393,9 @@ export const copy = {
     // The row's cells: its column heads and its values.
     rowField: "Column",
     rowValue: "Value",
-    // The summary itself starts with the table, so who wrote it is said once, here, with the table's pages
-    // (design review r2 P2).
-    summaryNote: (page: string, last: string | null) =>
-      `I wrote this summary of the table on ${last ? `PDF pages ${page} to ${last}` : `PDF page ${page}`}. It is not the document's own words, and I never use it to back a number.`,
+    // The summary itself starts with the table, so who wrote it is said once, here (design review r2 P2). The meta line
+    // above it and the summary's first words both give the table's pages, so this does not (ticket 58).
+    summaryNote: "I wrote this summary of the table. It is not the document's own words, and I never use it to back a number.",
     noticeTitle: "Notice {id}",
     noticeEyebrow: "What · notice",
     noticeWhole: "The whole section, word for word, without contact details.",
@@ -5647,13 +5649,13 @@ export const copy = {
         layout_parser: "Layout parser",
       } as Record<string, string>,
       routeRead: (part: string, whole: string) => `${part} of ${whole} pages read well`,
-      // What a route counts as read well, under the split, since the published text's pages count once
-      // placed on their PDF page, which the paragraph-number check goes beyond (review r2 P2).
-      routeCounts: "What counts",
-      routeCountsNote:
-        "A page of published text counts once I have placed its text on its PDF page. A page I sent to the " +
-        "layout parser counts when it gave back a table or text. Whether I found a report's paragraph numbers " +
-        "is a separate check.",
+      // A document collection's Read well window: what a page counts as read well on each route, since the published
+      // text's pages count once placed on their PDF page, which the paragraph-number check goes beyond (review r2 P2;
+      // ticket 58 moved it from a row into the definition, the 18 design review, round 3, P1).
+      readWellDocuments:
+        "How many report pages I read. A page of published text counts once I have placed its text on its PDF page. " +
+        "A page I sent to the layout parser counts when it gave back a table or text. Whether I found a report's " +
+        "paragraph numbers is a separate check, shown under What you can ask.",
       notMeasured: "Not measured yet",
       // A column the registry gives this row no measure for, so no run will measure it.
       noMeasure: "No measure",
@@ -5720,8 +5722,9 @@ export const copy = {
         over_parser_limit: "More pages than the layout parser takes at once.",
       } as Record<string, string>,
       // A rule's entry before the reading, so the row never says I read what I haven't (critique r2).
+      // It says what makes the document hard, its length, not its name again beside the Document cell (ticket 58).
       hardBefore: {
-        longest_pad: "The longest Project Appraisal Document of the pilot projects.",
+        longest_pad: "It has more pages than any other appraisal document of the pilot projects.",
       } as Record<string, string>,
       // A rule's entry that found no document: what I looked for (design review r2 P5).
       lookedFor: {
@@ -5885,14 +5888,16 @@ export const copy = {
       // The document search's Ready for number: its title repeats the cell's own words (review r7 B1).
       passages_embedded: {
         title: "Passages you can search",
-        definition: "How many of the passages I read you can search. I count them out of every passage I read.",
+        definition:
+          "How many of the passages I read are in the search index. I count them out of every passage I read. A search " +
+          "finds an older version of a report only as of a date before the newer one came out.",
       },
       // The project reports' check (ticket 18): their Read well column counts pages across both routes.
       document_pages_paragraph_numbering_found: {
         title: "Paragraph numbers found",
         definition:
-          "How many body pages of the reports that number their paragraphs show a paragraph number I could find. " +
-          "A passage keeps its paragraph's number, so a citation can name it as the report does.",
+          "How many pages of the reports' main text show a paragraph number I could find, in the reports that number " +
+          "their paragraphs. A passage keeps its paragraph's number, so a citation can name it as the report does.",
       },
       // A document collection's projects, in its Coverage cell (the 18 brief, section 6.1; design review
       // r2 B1): the projects its documents belong to, and the pilot projects I read documents for. The
@@ -5905,15 +5910,9 @@ export const copy = {
       slice_projects_read: {
         title: "Pilot projects read",
         definition:
-          "How many pilot projects I read at least one document of, out of every pilot project. The pilot projects " +
-          "are those of the sectors, countries and fiscal years the row's caption names, by their Board date. I read " +
-          "the documents of each one I can, within my daily page limit, so some wait for a later run.",
-      },
-      slice_projects: {
-        title: "Pilot projects",
-        definition:
-          "The projects of the sectors, countries and fiscal years the row's caption names, by their Board date. I " +
-          "read the documents of each one I can, within my daily page limit.",
+          "How many pilot projects have at least one document I read, out of all the pilot projects. The pilot " +
+          "projects are in the sectors and countries the row's caption names, with a Board date in its fiscal years. " +
+          "One whose documents wait for a later run, or that lists none of the types I read, does not count yet.",
       },
     } as Record<string, { title: string; definition: string }>,
     loading: {
@@ -5952,8 +5951,10 @@ export const copy = {
       count: (count: string, noun: string) => `${count} ${noun}.`,
       day: (day: string) => `The latest data are from ${day}.`,
       // A shortfall: how many of the whole lack what the gap names.
-      missing: (part: string, whole: string, noun: string, lack: string) => `${part} of ${whole} ${noun} lack ${lack}.`,
-      missingOne: (part: string, whole: string, noun: string, lack: string) => `${part} of ${whole} ${noun} lacks ${lack}.`,
+      missing: (part: string, whole: string, noun: string, lack: string) => `${part} of ${whole} ${noun} lack ${stop(lack)}`,
+      missingOne: (part: string, whole: string, noun: string, lack: string) => `${part} of ${whole} ${noun} lacks ${stop(lack)}`,
+      // A check of what I found: where I found none (ticket 58).
+      notFound: (part: string, whole: string, noun: string, found: string) => `I found no ${found} on ${part} of ${whole} ${noun}.`,
       // A Read well shortfall lacks nothing the registry names, so it says what went wrong, as the
       // gap's sentence does: "30 of 175 body pages I couldn't read without errors."
       unread: (part: string, whole: string, noun: string) => `${part} of ${whole} ${noun} I couldn't read without errors.`,
@@ -6038,6 +6039,11 @@ export const copy = {
         checkOne: "the {missing} of {total} {noun} that lacks {lack}",
         checkAll: "the {total} {noun}, none of which has {lack}",
         checkOnly: "the {total} {noun} that lacks {lack}",
+        // A check of what I found (config/sources.toml's not_found, in {lack}): where I found none (ticket 58).
+        checkNotFound: "the {missing} of {total} {noun} where I found no {lack}",
+        checkNotFoundOne: "the {missing} of {total} {noun} where I found no {lack}",
+        checkNotFoundAll: "the {total} {noun}, on none of which I found {lack}",
+        checkNotFoundOnly: "the {total} {noun}, on which I found no {lack}",
         readWell: "the {missing} of {total} {noun} I couldn't read without errors",
         late: "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
         lateOneDay: "the {sourceNoun}, last fetched {date}, one day behind their {schedule} update",
@@ -6055,6 +6061,10 @@ export const copy = {
         checkOne: "Of {total} {noun}, {missing} lacks {lack}.",
         checkAll: "None of the {total} {noun} has {lack}.",
         checkOnly: "The {total} {noun} lacks {lack}.",
+        checkNotFound: "Of {total} {noun}, I found no {lack} on {missing}.",
+        checkNotFoundOne: "Of {total} {noun}, I found no {lack} on {missing}.",
+        checkNotFoundAll: "I found no {lack} on any of the {total} {noun}.",
+        checkNotFoundOnly: "I found no {lack} on the {total} {noun}.",
         readWell: "I couldn't read {missing} of {total} {noun} without errors.",
         late: "I last fetched the {sourceNoun} on {date}, {days} days behind their {schedule} update.",
         lateOneDay: "I last fetched the {sourceNoun} on {date}, one day behind their {schedule} update.",
