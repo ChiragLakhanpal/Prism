@@ -4225,3 +4225,51 @@ It worked if:
 - `<App URL>/packages` shows its table running edge to edge in its panel.
 
 Record the exit code, the App's address and what the two pages showed here under ticket 100. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
+
+## Ticket 62, step 1 of 5: redeploy the App, so the server's cleanups run on the workspace
+
+Parked on October 28, 2026 with ticket 62, which merged into build/strata as fc0532ea (branch `strata/62-server-routes-tools-and-app-code-cleanups` at d24732d9). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this one from a snapshot that includes this merge (fc0532ea, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the deploy. One deploy from a commit at or after fc0532ea also serves ticket 100's step 1, if it has not run yet.
+
+What ticket 62 changes on the App: a later `?asof=` is read as today on every route, the draft writers, the package reader and the lesson rewrite carry the MODEL tag, `/api/packages/NOPE-1/risks` answers 404, the existing-draft lookup finds a draft by any form of the agency's name or id, the supplier review list is read as the viewer, the trail shows a notice's own text, and `POST /api/evidence/opened` records only an id a source has. Step 6 of the deploy now names the lesson and retrieval tables it grants. The bundle needs no deploy for this ticket.
+
+The builder's step, in the builder's words:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- Step 5 prints "The deployment <id>, made at ..., succeeded."
+- Step 6 prints the new line that names lesson_review_acts ... retrieval_queries.
+- The last line is "Strata is running at <url>".
+
+Record the exit code, the App's address and the three lines here under ticket 62. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
+
+## Ticket 62, step 2 of 5: sync the orchestrator agent, since check_plan's reasons changed
+
+Parked on October 28, 2026 with ticket 62 (merge fc0532ea). config/tools.toml now lists `method_unknown` among check_plan's reasons, with a comment on get_disagreements' rejection codes, so the orchestrator agent's tool list changes (it is the only agent in config/agents.toml with tools). Run from the same snapshot as step 1, one at a time:
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked if the first run makes a new version of strata-orchestrator, the second reports no difference, and `--check` exits 0. Record the version number here under ticket 62.
+
+## Ticket 62, step 3 of 5: a warehouse read that gives up cancels its statement (criterion 3, live)
+
+Parked on October 28, 2026 with ticket 62 (merge fc0532ea). The offline proof is `tests/test_freshness.py`: its give-up test expects a POST to `/api/2.0/sql/statements/<id>/cancel`, and a second test proves a failed cancel changes nothing. On the paid workspace, from the snapshot, run a read through `strata.lakehouse.engine.WarehouseEngine` with a wait short enough that it gives up (a `SELECT` over `strata.silver.passages` with a timeout of a few seconds), note the statement id the `EngineError` names, then read the statement with the Databricks CLI, signed in with the environment file's host and token and `DATABRICKS_CONFIG_FILE=/dev/null` as the header says:
+
+    databricks api get /api/2.0/sql/statements/<statement id>
+
+It worked if `status.state` reads `CANCELED`, not `RUNNING` or `SUCCEEDED`. Record the statement id and its state here under ticket 62.
+
+## Ticket 62, step 4 of 5: does the review-notes writer cite the first published planned row? (verify finding F1, Foundry)
+
+Parked on October 28, 2026 with ticket 62 (merge fc0532ea). Ticket 62 makes check_plan's `signed_late_over_estimate` and `completion_passed_no_contract` reasons also cite the plan row that first published the planned date (`strata.silver.plan_rows:<first planned document>/<reference>`). `src/strata/drafts/review_notes.py` `cited_rows()` does not hold those rows yet, so if the live writer cites both ids a reason names, the note check removes a true sentence with `id_not_returned`. After steps 1 and 2, on the App as World Bank staff, draft review notes on `<App URL>/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09`.
+
+It worked (no loss) if the draft's `removed` list holds no `id_not_returned` entry on a `strata.silver.plan_rows:33014836/...` id. If it holds one, record the sentence here under ticket 62; the fix is the follow-up named in ticket 62's done comment (add the rows a reason names to `cited_rows()`).
+
+## Ticket 62, step 5 of 5: the deploy starts a stopped App first (the pm's comment, live)
+
+Parked on October 28, 2026 with ticket 62 (merge fc0532ea). This needs an App whose compute the workspace stopped, so it runs only when the App is found stopped; the strata-75 or strata-58 session folds it into step 1 then. Do not stop the running App to test it without the owner's go-ahead.
+
+It worked if step 1's deploy says it is starting the App, waits, and goes on to "Strata is running at <url>" with exit 0, where before this ticket it exited 2 on the stop message. Record what it printed here under ticket 62.
