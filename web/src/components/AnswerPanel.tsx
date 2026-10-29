@@ -258,9 +258,11 @@ export function sentenceText(
   let at = 0;
   for (const mention of found) {
     if (mention.start < at) continue;
-    // A currency sign right before the number stays on its line ("US$" never ends a line apart from its amount).
+    // A currency sign right before the number stays on its line ("US$" never ends a line apart from its amount), and
+    // so does an opening quote mark or bracket before it (a line never ends 'because "' with "108 of 328" on the next;
+    // ticket 94's review, routed to ticket 105).
     const before = sentence.text.slice(at, mention.start);
-    const sign = /(US\$|\$|€|£)$/.exec(before)?.[0] ?? "";
+    const sign = /[("“‘[]?(?:US\$|\$|€|£)?$/.exec(before)?.[0] ?? "";
     parts.push(...plain(at, mention.start - sign.length));
     const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
     const from = evidenceFrom(evidence[mention.id]);

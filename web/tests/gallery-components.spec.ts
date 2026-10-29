@@ -521,6 +521,13 @@ test("a term, a measure, a checkable number and the data date share one dotted u
     ...(await underlines(page.locator("[data-state-section=terms] [data-term]"), 2)),
     ...(await underlines(page.locator("[data-state-section=checkable] button[data-num]"), 1)),
   ];
+  // A Term's hit area grows 2 px above and below, as a number's does, without making its line taller: its box in the
+  // line is one line high, so a term in "In short" never pushes its lines apart (ticket 59's item, settled by 105).
+  const inLine = await page.locator("[data-state-section=terms] [data-term]").first().evaluate((term) => {
+    const style = getComputedStyle(term);
+    return Math.round(term.getBoundingClientRect().height + parseFloat(style.marginTop) + parseFloat(style.marginBottom) - parseFloat(style.lineHeight));
+  });
+  expect(inLine).toBe(0);
   await page.goto("/gallery/navigation");
   marks.push(...(await underlines(page.locator("[data-stamp] a").first(), 1)));
   expect(marks).toHaveLength(4);

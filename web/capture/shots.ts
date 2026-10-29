@@ -115,6 +115,20 @@ const RISK_SHOTS: Shot[] = [
   riskShot("focus-checkbox", INDIA, { full: false, act: focus("section#risks [data-risk-view]:visible input[type=checkbox]") }),
   riskShot("hover-count", INDIA, { full: false, widths: WIDE, act: hover("section#risks [data-risk-view]:visible [data-count] button") }),
   riskShot("320", INDIA, { widths: [320], act: toRisks }),
+  // Ticket 105: a drawer's list lands on the row you came back to, marked with tint: a risk's reports, after one of
+  // them was opened and "Back to the report" pressed.
+  {
+    ...riskShot("landed-row", INDIA, {
+      full: false,
+      widths: [1440, 390],
+      act: async (page: Page) => {
+        await click("section#risks [data-risk-view]:visible [data-count] button")(page);
+        await click("[data-evidence-drawer] [data-report-entry]")(page);
+        await click("[data-evidence-drawer] >> text=Back to the report")(page);
+      },
+    }),
+    name: "evidence--landed-row",
+  },
 ];
 
 // Ticket 27: section 2 of the package workspace, the planned date for each STEP step. On the fixture every step
@@ -951,6 +965,8 @@ const DRAFT_SHOTS: Shot[] = [
   draftShot("draft--exported-revisit", { recorded: "drafts-review-notes-exported.json" }),
   draftShot("draft--exported-files-missing", { body: filesMissing }),
   draftShot("draft--partial", { recorded: "drafts-review-notes-partial.json" }, {}, "/drafts/draft-0002"),
+  // Ticket 105: How I checked this draft, which opens on the two sentences I removed.
+  draftShot("checks--how-window-draft", { recorded: "drafts-review-notes-partial.json" }, { widths: [1440, 390], act: click("[data-how-checked]") }, "/drafts/draft-0002"),
   draftShot("draft--refused", { recorded: "drafts-review-notes-refused.json" }, {}, "/drafts/draft-0003"),
   draftShot("draft--teammate", { recorded: "drafts-review-notes-teammate.json" }, { api: AS_TEAMMATE }),
   draftShot("draft--discarded", { recorded: "drafts-review-notes-discarded.json" }, {}, "/drafts/draft-0004"),
@@ -1791,6 +1807,8 @@ const TIMELINE_SHOTS: Shot[] = [
 
 const CHECK_SHOTS: Shot[] = [
   answerShot("checks--ticket-form", "ask-ke-nwwda-541055-past-range.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  // Ticket 105: How I checked this answer, opened from "How was that checked?" after the check line.
+  answerShot("checks--how-window", "ask-ke-nwwda-541055-past-range.sse", { widths: [1440, 390], act: then(askInBox(PAST_RANGE), click("[data-how-checked]")) }, "/"),
   answerShot("checks--judged", "ask-ke-nwwda-541055-advice.sse", { act: askInBox(PAST_RANGE) }, "/"),
   answerShot("checks--every-sentence-judged", "ask-p130164-summaries.sse", { act: askInBox(SUMMARIES) }),
   answerShot("checks--six-checks-judged", "ask-ke-nwwda-541055-advice.sse", { act: then(askInBox(PAST_RANGE), click(steps)) }, "/"),

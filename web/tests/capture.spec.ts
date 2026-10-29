@@ -58,6 +58,18 @@ test("the capture list photographs the Drafts list grouped, empty and in error, 
   expect(SHOTS.find((shot) => shot.name === "draft--marked-checked")?.act).toBeDefined();
 });
 
+// Ticket 105: How I checked this answer and this draft, open, and a drawer's list landed on the row you came back to,
+// at 1440 and 390 px.
+test("the capture list photographs the check windows and a drawer's landed row at 1440 and 390 px", () => {
+  for (const name of ["checks--how-window", "checks--how-window-draft", "evidence--landed-row"]) {
+    const shot = SHOTS.find((candidate) => candidate.name === name);
+    expect(shot?.server, name).toBe("app");
+    expect(shot?.widths, name).toEqual([1440, 390]);
+    expect(shot?.act, name).toBeDefined();
+  }
+  expect(SHOTS.find((shot) => shot.name === "checks--how-window-draft")?.api?.["/api/drafts/draft-0002"]?.recorded).toBe("drafts-review-notes-partial.json");
+});
+
 test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {
   expect(SHOTS.filter((shot) => shot.name.includes("--hover-")).length).toBeGreaterThan(5);
   expect(SHOTS.filter((shot) => shot.name.includes("--focus-")).length).toBeGreaterThan(5);

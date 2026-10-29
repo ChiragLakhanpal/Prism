@@ -74,6 +74,10 @@ export type DrawerData =
 // The passages' table, before the colon of a passage's evidence id.
 const PASSAGE_TABLE = "strata.gold.passage:";
 
+// How far under the sticky header the passage block's top stops when the drawer scrolls to a highlight on open: the
+// panel's own scroll padding below its header (8 px), so a tab focused later sits in the same place.
+const PASSAGE_PAD = 8;
+
 // The source an evidence id names: from the stream if it sent it, or else from the server.
 export function useEvidence(id: string, asOf: string | null): DrawerData {
   const all = useStore(known);
@@ -307,7 +311,7 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
             : copy.evidence.whole;
   return (
     <>
-      <div className="rounded-md border border-line">
+      <div data-passage-block className="rounded-md border border-line">
         <MetaLine evidence={evidence} />
         {summary && fields.page && (
           <p className="px-4 pt-3 text-caption text-ink-muted">
@@ -434,7 +438,7 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   }
   if (given(row.process_status)) fields.push({ label: columns.status, value: String(row.process_status), wide: true });
   return (
-    <div className="flex flex-col gap-4 rounded-md border border-line p-4">
+    <div data-passage-block className="flex flex-col gap-4 rounded-md border border-line p-4">
       {/* A lesson has no STEP fields: its statement is the drawer's title, so only its source line shows. */}
       {fields.length > 0 && <dl data-record data-numbers className="grid grid-cols-2 gap-x-4 gap-y-2">
         {fields.map((field, index) =>
@@ -974,8 +978,10 @@ export function EvidenceDrawer({
     if (takeFocusRequest() || (narrow && !from)) heading.current?.focus({ preventScroll: !narrow });
   }, [requests, id]);
 
-  // On open, the drawer scrolls only when the first highlight is out of view, and then puts it in the
-  // middle of the space under the sticky header, so the claim stays beside its source when it can.
+  // On open, the drawer scrolls only when the first highlight is out of view, so the claim stays beside its source
+  // when it can. It then stops with the passage block's top PASSAGE_PAD under the sticky header when the whole
+  // highlight fits below it, so no tab or meta line is left cut under the header, and centers the highlight in the
+  // space under the header only when it does not (ticket 59's item, settled by ticket 105).
   useEffect(() => {
     const container = panel.current;
     const mark = container?.querySelector("mark");
@@ -988,6 +994,14 @@ export function EvidenceDrawer({
     const box = mark.getBoundingClientRect();
     const start = box.top - view.top;
     if (start >= top && box.bottom - view.top <= bottom) return;
+    const block = mark.closest("[data-passage-block]");
+    if (block) {
+      const shift = block.getBoundingClientRect().top - view.top - top - PASSAGE_PAD;
+      if (box.bottom - view.top - shift <= bottom) {
+        container.scrollTop += shift;
+        return;
+      }
+    }
     container.scrollTop += start - top - Math.max(0, (bottom - top - box.height) / 2);
   }, [id, data.status]);
 

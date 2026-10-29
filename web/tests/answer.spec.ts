@@ -703,15 +703,20 @@ for (const [width, height] of [
 }
 
 // The claim beside its source is why the drawer exists, so opening it never slides "From the answer"
-// under the sticky header for a highlight already in view. Only a highlight out of view scrolls, and it
-// then sits in the middle of the space under the header (the 14 critique, round 4). At 1024 by 900 and
-// 390 by 844 the ISR's highlight is in view on open; at 320 by 568 it is below the fold.
+// under the sticky header for a highlight already in view. Only a highlight out of view scrolls (the 14 critique,
+// round 4). It then stops with the passage block's top 8 px under the header when the whole highlight fits below
+// it, so no tab or meta line is cut under the header, and centers the highlight under the header only when it does
+// not (ticket 59's item, settled by ticket 105). At 1024 by 900 and 390 by 844 the ISR's highlight is in view on open;
+// at 320 by 568 and 1024 by 600 it is below the fold and fits under the block's top; at 320 by 480 it does not. (Ticket
+// 59 named 800 by 600 as the centered case; the drawer's head has since lost its eyebrow, and there the highlight fits.)
 for (const [width, height, scrolls] of [
-  [1024, 900, false],
-  [390, 844, false],
-  [320, 568, true],
+  [1024, 900, "no"],
+  [390, 844, "no"],
+  [320, 568, "to the block"],
+  [1024, 600, "to the block"],
+  [320, 480, "to the middle"],
 ] as const) {
-  test(`at ${width} by ${height} px the drawer opens ${scrolls ? "with the highlight in the middle under its header" : "with the claim, its sources and the highlight all in view"}`, async ({ page }) => {
+  test(`at ${width} by ${height} px the drawer opens ${scrolls === "to the middle" ? "with the highlight in the middle under its header" : scrolls === "to the block" ? "with the passage block's top under its header" : "with the claim, its sources and the highlight all in view"}`, async ({ page }) => {
     await open(page, { stream: "ask-p130164-isr-section.sse", width });
     await page.setViewportSize({ width, height });
     await askFromTheBox(page);
@@ -726,9 +731,14 @@ for (const [width, height, scrolls] of [
       const shown = (await mark.boundingBox())!;
       expect(shown.y).toBeGreaterThanOrEqual(under);
       expect(shown.y + shown.height).toBeLessThanOrEqual(height);
-      if (scrolls) {
+      const block = (await drawer(page).locator("[data-passage-block]").boundingBox())!;
+      if (scrolls === "to the middle") {
         const middle = under + (height - under) / 2;
         expect(Math.abs(shown.y + shown.height / 2 - middle)).toBeLessThanOrEqual(2);
+        // Snapping to the block would have left the highlight's end below the window.
+        expect(block.y).toBeLessThan(under + 8);
+      } else if (scrolls === "to the block") {
+        expect(Math.abs(block.y - (under + 8))).toBeLessThanOrEqual(1);
       } else {
         expect((await drawer(page).locator("[data-claim]").boundingBox())!.y).toBeGreaterThanOrEqual(under);
         expect((await drawer(page).getByRole("tab").first().boundingBox())!.y).toBeGreaterThanOrEqual(under);
@@ -903,13 +913,44 @@ test("the check line never uses the success state", async ({ page }) => {
 });
 
 for (const width of [1440, 390]) {
-  test(`axe finds no WCAG 2.2 AA violations in the answer and the open drawer at ${width} px`, async ({ page }) => {
+  test(`axe finds no WCAG 2.2 AA violations in the answer, the check window and the open drawer at ${width} px`, async ({ page }) => {
     await open(page, { width });
     await askFromTheBox(page);
     await landed(page);
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
     let results = await scan(page);
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+
+    // The opening quote mark stays on the line of the number it opens: at 390 px the line once ended 'because "' and
+    // the next started "108 of 328 cases" (ticket 94's review, routed to ticket 105).
+    const [quoteMark, number] = await panel(page).locator("[data-sentence-text='0']").evaluate((sentence) => {
+      const walker = document.createTreeWalker(sentence, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const at = node.textContent!.indexOf('"');
+        if (at < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, at);
+        range.setEnd(node, at + 1);
+        return [range.getBoundingClientRect().bottom, sentence.querySelector("button[data-num]")!.getBoundingClientRect().bottom];
+      }
+      return [0, -100];
+    });
+    expect(Math.abs(quoteMark - number)).toBeLessThanOrEqual(4);
+
+    // How I checked this answer, which opens on the one sentence the verifier removed (ticket 105).
+    await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+    const how = page.getByRole("dialog", { name: "How I checked this answer" });
+    await expect(how.locator("[data-how-scope]")).toHaveText(
+      "These counts include the one sentence I removed. The check line counts only the sentences I kept.",
+    );
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
+    results = await scan(page, "[data-how-window]");
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+    // The window keeps to the screen.
+    const box = (await how.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    await page.keyboard.press("Escape");
 
     await marker(page, 1).click();
     await expect(drawer(page)).toBeVisible();

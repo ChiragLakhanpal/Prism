@@ -156,7 +156,7 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
       key: "stratum",
       header: (
         <span className="flex flex-col">
-          <Term term="Stratum">{words.columns.stratum}</Term>
+          <Term term="Stratum" inText={false}>{words.columns.stratum}</Term>
           <span className="text-caption font-normal text-ink-muted">{words.stratumCaption}</span>
         </span>
       ),
