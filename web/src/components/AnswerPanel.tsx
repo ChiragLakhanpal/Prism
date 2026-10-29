@@ -210,6 +210,26 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
   );
 }
 
+// The STEP references of the records a sentence cites, longest first, so a reference that holds a shorter one is
+// found whole. The sentence sets each one in Roboto Mono, as an ID in a sentence (ticket 58).
+function stepReferences(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>): string[] {
+  const ids = [...sentence.evidence_ids, ...sentence.numbers.map((m) => m.evidence_id), ...sentence.dates.map((m) => m.evidence_id)];
+  const found = new Set<string>();
+  for (const id of ids) {
+    const reference = id ? evidence[id]?.row?.step_reference : undefined;
+    if (evidence[id ?? ""]?.kind === "record" && typeof reference === "string" && reference) found.add(reference);
+  }
+  return [...found].sort((a, b) => b.length - a.length);
+}
+
+// A pattern that finds those references whole in a sentence, with the punctuation right after one, which stays in its
+// last part's box so it never starts a line.
+function referencePattern(references: string[]): RegExp | null {
+  if (references.length === 0) return null;
+  const alternatives = references.map((reference) => reference.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  return new RegExp(`(?<![\\w-])(${alternatives})(?![\\w-])([.,;:)\\]]*)`, "g");
+}
+
 // A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline and a
 // tooltip naming the source and where it came from (DESIGN.md, Number tooltip). In an answer that is all (the
 // Plain variant): the marker beside the sentence opens the source. In a draft's note, open is given and a click
@@ -226,18 +246,38 @@ export function sentenceText(
   const quoteLang = sentence.quote ? (evidence[sentence.quote.evidence_id]?.row?.language as string | undefined) : undefined;
   const quoteStart = sentence.quote && quoteLang && quoteLang !== around ? sentence.text.indexOf(sentence.quote.text) : -1;
   const quoteEnd = quoteStart < 0 ? -1 : quoteStart + sentence.quote!.text.length;
+  // A cited record's STEP reference is a name, not a quote: it is set by MonoWords, so it moves to the next line whole
+  // and never breaks after "KE-" (ticket 58).
+  const references = referencePattern(stepReferences(sentence, evidence));
+  const named = (start: number, end: number): ReactNode[] => {
+    const text = sentence.text.slice(start, end);
+    if (!references) return [text];
+    const pieces: ReactNode[] = [];
+    let at = 0;
+    for (const match of text.matchAll(references)) {
+      pieces.push(text.slice(at, match.index));
+      pieces.push(
+        <span key={`reference-${start + match.index}`} data-step-reference>
+          <MonoWords text={match[1]} after={match[2]} medium />
+        </span>,
+      );
+      at = match.index + match[0].length;
+    }
+    pieces.push(text.slice(at));
+    return pieces.filter((piece) => piece !== "");
+  };
   // Plain text from start to end of the sentence, with the part inside the quote marked as the source's language.
   const plain = (start: number, end: number): ReactNode[] => {
-    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return [sentence.text.slice(start, end)];
+    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return named(start, end);
     const from = Math.max(start, quoteStart);
     const to = Math.min(end, quoteEnd);
     return [
-      sentence.text.slice(start, from),
+      ...named(start, from),
       <Lang key={`quote-${from}`} code={quoteLang}>
         {sentence.text.slice(from, to)}
       </Lang>,
-      sentence.text.slice(to, end),
-    ].filter((piece) => piece !== "");
+      ...named(to, end),
+    ];
   };
   const found: { start: number; end: number; text: string; id: string; date: boolean }[] = [];
   // Numbers and dates each come in the order the sentence writes them, but a date may come before

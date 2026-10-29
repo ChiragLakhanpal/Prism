@@ -386,6 +386,40 @@ test("the evidence drawer enters with opacity and 12 px from the right over 160 
   expect(await moves()).toEqual([]);
 });
 
+// Ticket 58: a STEP reference in an answer's sentence is a name, not a quote. The agent writes it with no quote marks,
+// and the sentence sets the reference of a record it cites in Roboto Mono 500, as an ID in a sentence, in one box that
+// moves to the next line whole and keeps the comma after it, so it never breaks after "KE-" or "571738-". A reference
+// with a space in it, such as a county's, may break only at that space.
+for (const width of [1440, 390]) {
+  test(`at ${width} px a STEP reference in a sentence is set in Roboto Mono with no quote marks and never breaks inside itself`, async ({ page }) => {
+    await open(page, { stream: "ask-ke-nwwda-541055-past-range.sse", width });
+    await askFromTheBox(page);
+    await landed(page);
+
+    const another = panel(page).locator("[data-sentence-text='2']");
+    await expect(another).toContainText("Another, KE-ICTA-571738-CW-RFB, was still open too.");
+    const reference = another.locator("[data-step-reference]");
+    await expect(reference).toHaveText("KE-ICTA-571738-CW-RFB,");
+    const mono = reference.locator(".font-mono");
+    expect(await mono.evaluate((part) => [getComputedStyle(part).fontFamily.split(",")[0], getComputedStyle(part).fontWeight])).toEqual([
+      '"Roboto Mono"',
+      "500",
+    ]);
+    // One box, on one line, with its comma.
+    const boxes = (sentence: typeof another) =>
+      sentence.locator("[data-step-reference] .inline-block").evaluateAll((all) => all.map((box) => [box.textContent, getComputedStyle(box).display, box.getClientRects().length]));
+    expect(await boxes(another)).toEqual([["KE-ICTA-571738-CW-RFB,", "inline-block", 1]]);
+
+    const newest = panel(page).locator("[data-sentence-text='1']");
+    await expect(newest).toContainText("The newest, KE-MIGORI COUNTY-532367-CW-RFB, was still open 13 days after its notice.");
+    expect(await boxes(newest)).toEqual([
+      ["KE-MIGORI", "inline-block", 1],
+      ["COUNTY-532367-CW-RFB,", "inline-block", 1],
+    ]);
+    await expect(panel(page).locator("[data-sentence-text]")).not.toContainText(['"']);
+  });
+}
+
 test("under reduced motion the answer's block, the check line's tick, the check window and the evidence drawer arrive with no transition", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await recordTransitions(page);

@@ -45,10 +45,11 @@ async function axe(page: Page) {
 test("the check line reads the verifier's counts in the ticket's form, in the neutral state", async ({ page }) => {
   await answered(page, "ask-ke-nwwda-541055-past-range.sse");
 
-  // The two sentences that quote only a STEP reference went to the judge (ticket 61); the past range's needed no model.
+  // The answer names its comparables by STEP reference with no quote marks (ticket 58), so it quotes nothing. The
+  // sentence that states no number went to the judge; the past range's and the newest comparable's needed no model.
   const line = panel(page).locator("[data-check-line]");
   await expect(line).toHaveText(
-    "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages. Judged by a model: 2 of 2 sentences follow from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page. Not checked: whether these are the right comparables.",
+    "Checked: 5 of 5 numbers match records. Judged by a model: 1 of 1 sentence follows from its sources. The other two needed no model, because every number, date and quote in them matched a record or a page. Not checked: whether these are the right comparables.",
   );
   await expect(line.locator("[data-check-part=judged]")).toHaveCount(1);
   // The line sits in its surface-2 block, neutral and never green (ticket 105 puts the removed box in the same block).
@@ -80,8 +81,8 @@ test("How was that checked? opens How I checked this answer with the six checks 
   await expect(window.getByRole("list").getByRole("listitem")).toHaveText([
     "5 of 5 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this question.",
-    "2 of 2 quotes were word for word on their pages.",
-    "A model judged two sentences, and 2 of 2 followed from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
+    "None of the sentences quoted a source.",
+    "A model judged one sentence, and 1 of 1 followed from its sources. The other two needed no model, because every number, date and quote in them matched a record or a page.",
     "None of the sentences gave advice.",
     "No sentence rested on a report that another report disagrees with.",
   ]);
@@ -127,7 +128,7 @@ test("a judged sentence adds the model's part, and the steps list all six checks
   await answered(page, "ask-ke-nwwda-541055-advice.sse");
 
   await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 3 of 3 sentences follow from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
+    "Judged by a model: 2 of 2 sentences follow from their sources. The other two needed no model, because every number, date and quote in them matched a record or a page.",
   );
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
@@ -136,8 +137,8 @@ test("a judged sentence adds the model's part, and the steps list all six checks
     // 49, 3.3, 7.9, 4.4, 13 and 1.5; the past range's summary and two comparables' rows.
     "6 of 6 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this question.",
-    "2 of 2 quotes were word for word on their pages.",
-    "A model judged three sentences, and 3 of 3 followed from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
+    "None of the sentences quoted a source.",
+    "A model judged two sentences, and 2 of 2 followed from their sources. The other two needed no model, because every number, date and quote in them matched a record or a page.",
     "1 of 1 sentence that gave advice cited a lesson or a comparable package.",
     "No sentence rested on a report that another report disagrees with.",
   ]);
@@ -195,7 +196,7 @@ test("check 2's step counts the sentences it removed for citing no source", asyn
 });
 
 // A mixed answer, in which some judged sentences cite a source and one does not, keeps today's words (ticket 58). No
-// recording holds one, so the advice answer's counts say one of its three judged sentences cites nothing.
+// recording holds one, so the advice answer's counts say one of its two judged sentences cites nothing.
 test("a mixed answer keeps the usual check line and judged step", async ({ page }) => {
   await answeredWith(page, "ask-ke-nwwda-541055-advice.sse", (event, data) => {
     if (event !== "checks") return;
@@ -204,12 +205,12 @@ test("a mixed answer keeps the usual check line and judged step", async ({ page 
   });
 
   await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 3 of 3 sentences follow from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
+    "Judged by a model: 2 of 2 sentences follow from their sources. The other two needed no model, because every number, date and quote in them matched a record or a page.",
   );
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
   await expect(verifier.locator("[data-step-items] li").nth(3)).toHaveText(
-    "A model judged three sentences, and 3 of 3 followed from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
+    "A model judged two sentences, and 2 of 2 followed from their sources. The other two needed no model, because every number, date and quote in them matched a record or a page.",
   );
 });
 

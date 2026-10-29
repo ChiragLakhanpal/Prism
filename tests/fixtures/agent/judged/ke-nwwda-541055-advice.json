@@ -7,8 +7,7 @@
   "deployment": "gpt-5.4"
  },
  "asked": [
-  "The newest, \"KE-MIGORI COUNTY-532367-CW-RFB\", was still open 13 days after its notice.",
-  "Another, \"KE-ICTA-571738-CW-RFB\", was still open too.",
+  "Another, KE-ICTA-571738-CW-RFB, was still open too.",
   "Plan for longer than the 1.5 months the plan allows."
  ],
  "response": {
@@ -21,7 +20,7 @@
     "finish_reason": "stop",
     "message": {
      "role": "assistant",
-     "content": "{\"judgements\": [{\"index\": 1, \"follows\": true, \"advises\": false, \"reason\": \"The package's row says it was still open, 13 days after its notice.\"}, {\"index\": 2, \"follows\": true, \"advises\": false, \"reason\": \"The package's row says it was still open.\"}, {\"index\": 3, \"follows\": true, \"advises\": true, \"reason\": \"The past range shows the middle half of comparable packages took 3.3 to 7.9 months, and the plan allows 1.5 months.\"}]}"
+     "content": "{\"judgements\": [{\"index\": 2, \"follows\": true, \"advises\": false, \"reason\": \"The package's row says it was still open.\"}, {\"index\": 3, \"follows\": true, \"advises\": true, \"reason\": \"The past range shows the middle half of comparable packages took 3.3 to 7.9 months, and the plan allows 1.5 months.\"}]}"
     }
    }
   ]
