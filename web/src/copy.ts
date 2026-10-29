@@ -253,16 +253,14 @@ export const copy = {
     lessons: {
       title: "Lessons",
       purpose: LESSONS_PURPOSE,
-      // The empty library's card says whose lessons these are, who decides, what happens to the proposed ones and
-      // where the lessons show up anyway (ticket 114). The page's caption above it spells out IEG.
-      emptyTitle: "No lesson has entered the library yet.",
+      // The empty library's row says who decides, what happens to the proposed lessons and where the lessons show up
+      // anyway (ticket 114). The purpose above it says whose lessons they are, and the page's caption spells out IEG.
       emptyBody:
-        "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of " +
-        "them. I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed " +
+        "I propose each lesson, and a lead procurement specialist decides whether it enters the library. Proposed " +
         "lessons wait for that decision, and only lesson reviewers can read them.",
       emptyMore:
-        "You don't need to search here for each package. On a package's page, section 3, Procurement risks and what " +
-        "helped, I show the lessons from the completion reports of projects with comparable packages.",
+        "On a package's page, in section 3, Procurement risks and what helped, I show the lessons from projects with " +
+        "comparable packages.",
       // Where section 3's own empty state links (routes.ts, RISKS_READINESS_HREF).
       link: "See which completion reports I have read",
     },
@@ -275,7 +273,8 @@ export const copy = {
       purpose: LESSONS_PURPOSE,
     },
     lessonReview: {
-      title: "Waiting for review",
+      // The h1 when the item cannot load names one item, since the breadcrumb above it already ends at the queue.
+      title: "A lesson waiting for review",
       documentTitle: "Waiting for review, Lessons",
       purpose: "One lesson waiting for review, with its evidence, its history and your part in deciding it.",
     },
@@ -448,11 +447,11 @@ export const copy = {
       dataSources: "Sources and licenses",
     },
     // A reviewer page's count sits in a small badge after its label, hidden at zero (ticket 102). The badge shows the
-    // number alone, so the link's name says what it counts instead.
+    // number alone, so the link's name says what it counts instead: the label, then the number, then what it counts.
     subCount: {
-      lessonsQueue: (count: string) => `Waiting for review, ${count} waiting`,
-      lessonsReports: (count: string) => `Passage reports, ${count} waiting`,
-      lessonsJudging: (count: string) => `Judging, ${count} left to judge`,
+      lessonsQueue: (count: string) => `Waiting for review, ${count} ${count === "1" ? "lesson" : "lessons"}`,
+      lessonsReports: (count: string) => `Passage reports, ${count} ${count === "1" ? "passage" : "passages"}`,
+      lessonsJudging: (count: string) => `Judging, ${count} ${count === "1" ? "query" : "queries"} left`,
     },
     // One button that turns the sidebar into the rail of icons and back.
     collapse: "Collapse the sidebar",
@@ -6687,6 +6686,11 @@ export const copy = {
     rests: "Rests on {quotes} quotes from {reports} reports.",
     changedTitle: "Changed where you used it",
     changedCaption: "Your drafts still cite the versions you used. Nothing in a draft changes until you choose.",
+    // The same zone on a visit with nothing new, when the digest above says no lesson changed (ticket 102).
+    changedEarlierCaption: (count: number) =>
+      count === 1
+        ? "This change came before your last visit. Your drafts still cite the version you used, and nothing in a draft changes until you choose."
+        : "These changes came before your last visit. Your drafts still cite the versions you used, and nothing in a draft changes until you choose.",
     newTitle: "New",
     newCaption: "Lessons a lead procurement specialist added to the library since your last visit, newest first.",
     reportsTitle: "Your reports",

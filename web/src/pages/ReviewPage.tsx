@@ -43,7 +43,7 @@ import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
 import { itemHref, LESSONS_HREF, lessonHref, QUEUE_HREF, removedOf, type LessonEvidence, type ReviewItem, type Saved } from "../lib/lessons";
-import { refreshLessonsMe } from "./LessonsPages";
+import { refreshLessonsMe } from "../lib/lessonsMe";
 import { DocumentColumn } from "./DraftPage";
 
 const words = copy.lessons;
@@ -522,6 +522,9 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
   return (
     <div data-review-page={item.item_id}>
       <Workspace head={head} side={history}>
+      {/* The work lays out by its own column's width, which the drawer never changes, so opening the drawer moves
+          nothing inside it (DESIGN.md section 4, Workspace: the work keeps its place and width). */}
+      <div className="@container/page" data-review-work>
       <section aria-labelledby={evidenceId}>
         <h2 id={evidenceId} className="text-h2 text-ink-heading">
           {r.evidenceTitle}
@@ -553,6 +556,7 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
         </div>
       )}
       {action && <div className="mt-8 @md/page:mt-12" data-review-action>{action}</div>}
+      </div>
       </Workspace>
     </div>
   );

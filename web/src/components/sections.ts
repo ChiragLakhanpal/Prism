@@ -43,14 +43,17 @@ type LessonsCount = "waiting" | "reports_waiting" | "queries_left";
 // The sub-items each section has, in order (ticket 99 fills Projects', ticket 104 Data's, ticket 102 Lessons'). A page
 // for World Bank staff alone (staff) shows only to them in their own view, as Following does; a page for a Lessons role
 // (role) only to the people who have it, with its count (count); the views' hidden pages (config/roles.toml) are left
-// out by the sidebar. Adding a section's page is one entry here and its word in copy.nav.sub.
-type SubEntry = {
-  pageKey: keyof typeof copy.nav.sub & PageKey;
+// out by the sidebar. Adding a section's page is one entry here and its word in copy.nav.sub; a counted page also needs
+// the words for its count in copy.nav.subCount, which the type below asks for.
+type PlainEntry = { pageKey: keyof typeof copy.nav.sub & PageKey; href: string; staff?: boolean; role?: LessonsRole; count?: undefined };
+type CountedEntry = {
+  pageKey: keyof typeof copy.nav.sub & keyof typeof copy.nav.subCount & PageKey;
   href: string;
   staff?: boolean;
-  role?: LessonsRole;
-  count?: LessonsCount & keyof LessonsMe;
+  role: LessonsRole;
+  count: LessonsCount & keyof LessonsMe;
 };
+type SubEntry = PlainEntry | CountedEntry;
 const SUB_ENTRIES: Partial<Record<Section, SubEntry[]>> = {
   projects: [
     { pageKey: "following", href: FOLLOWING_HREF, staff: true },
@@ -67,8 +70,6 @@ const SUB_ENTRIES: Partial<Record<Section, SubEntry[]>> = {
   ],
 };
 
-const countWords = copy.nav.subCount as Partial<Record<PageKey, (count: string) => string>>;
-
 // The sub-items for a viewer: staff is true for World Bank staff in their own view, never in a preview; lessons is the
 // viewer's Lessons roles and counts (GET /api/lessons/me), or null until it answers, when no reviewer page shows.
 export function subItemsFor(staff: boolean, lessons: LessonsMe | null = null): SubItems {
@@ -76,18 +77,24 @@ export function subItemsFor(staff: boolean, lessons: LessonsMe | null = null): S
   return Object.fromEntries(
     Object.entries(SUB_ENTRIES).map(([section, entries]) => [
       section,
-      entries.filter(shown).map(({ pageKey, href, role, count }): SubItem => {
-        const value = count && lessons ? (lessons[count] ?? 0) : 0;
-        const words = countWords[pageKey];
-        const text = formatNumber(value, { compact: false });
+      entries.filter(shown).map((entry): SubItem => {
+        const { pageKey, href, role } = entry;
         return {
           pageKey,
           href,
           label: copy.nav.sub[pageKey],
-          ...(value > 0 && words ? { count: { text, words: words(text) } } : {}),
+          ...(entry.count ? badge(entry, lessons) : {}),
           ...(role ? { inside: `${href}/` } : {}),
         };
       }),
     ]),
   );
+}
+
+// A counted page's badge and the words that name it, or nothing at zero (or until GET /api/lessons/me answers).
+function badge(entry: CountedEntry, lessons: LessonsMe | null): Pick<SubItem, "count"> {
+  const value = lessons ? (lessons[entry.count] ?? 0) : 0;
+  if (value <= 0) return {};
+  const text = formatNumber(value, { compact: false });
+  return { count: { text, words: copy.nav.subCount[entry.pageKey](text) } };
 }

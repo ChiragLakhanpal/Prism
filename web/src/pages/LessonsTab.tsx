@@ -46,7 +46,8 @@ import { QUEUE_HREF } from "../lib/lessons";
 import { address, navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { RISKS_READINESS_HREF } from "../routes";
-import { LessonsFrame, LibrarySkeleton, refreshLessonsMe, useMe } from "./LessonsPages";
+import { refreshLessonsMe, useLessonsMe } from "../lib/lessonsMe";
+import { LessonsFrame, LibrarySkeleton } from "./LessonsPages";
 
 const w = copy.lessonsPage;
 const server = copy.lessons.server;
@@ -248,7 +249,8 @@ function DigestBlock({ page, isReviewer }: { page: LessonsPageAnswer; isReviewer
         <PageSentence segments={digest.segments} popover={digestPopover(digest, page.visit?.last_visit_on ?? null, isReviewer)} />
       </p>
       {first && <p className="mt-2 max-w-prose text-caption text-ink-muted">{w.firstCaption}</p>}
-      <p className={cx("max-w-prose text-caption text-ink-muted", first ? "mt-1" : "mt-2")}>{copy.lessons.sourcesNote}</p>
+      {/* 24 px after a finding, 4 px between a status sentence's captions (DESIGN.md section 4, space roles). */}
+      <p className={cx("max-w-prose text-caption text-ink-muted", first ? "mt-1" : "mt-6")}>{copy.lessons.sourcesNote}</p>
       {digest.strengthened && <StrengthenedLine strengthened={digest.strengthened} />}
     </div>
   );
@@ -296,7 +298,8 @@ function FilterBar({ library, onChange, busy }: { library: LibraryAnswer; onChan
   return (
     <fieldset className="@container/filters" aria-busy={busy || undefined} data-filter-bar>
       <legend className="clip-visually">{w.filters.legend}</legend>
-      <div className="grid grid-cols-1 gap-3 @min-[30rem]/filters:grid-cols-2 @min-[30rem]/filters:gap-4">
+      {/* One row of selects, each as wide as its words, and a stack below 30rem (ticket 102, critique round 1). */}
+      <div className="flex flex-col gap-3 @min-[30rem]/filters:flex-row @min-[30rem]/filters:flex-wrap @min-[30rem]/filters:gap-4">
         {FILTER_KEYS.map((key) => {
           const options = key === "status"
             ? library.options.status.map((option) => ({ key: option.key, label: w.filters.statuses[option.key] ?? option.key }))
@@ -316,7 +319,7 @@ function FilterBar({ library, onChange, busy }: { library: LibraryAnswer; onChan
                   // No type step of its own, so the base rule draws it at 16 px and a phone never zooms into it
                   // (DESIGN.md section 4, Phone baseline; ticket 102).
                   className={cx(
-                    "h-11 w-full appearance-none rounded-sm border border-line-strong pr-10 pl-3 text-ink hover:bg-tint-hover",
+                    "h-11 w-full appearance-none rounded-sm border border-line-strong pr-10 pl-3 text-ink hover:bg-tint-hover @min-[30rem]/filters:w-auto @min-[30rem]/filters:min-w-48",
                     isSet ? "bg-tint shadow-[inset_0_0_0_2px_var(--color-primary)]" : "bg-surface",
                   )}
                 >
@@ -401,9 +404,9 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
   const open = evidenceIn(here.search);
   if (library.of === 0 && library.status === "current" && !library.narrowed) {
     // The library holds no lesson yet, so its zone is a row (ticket 102) with no title of its own, since the digest
-    // above already says the library is empty. Its sentences say whose lessons these are and where they show up on a
-    // package's page, and it links where section 3's own empty state does (ticket 114); a reviewer with lessons
-    // waiting is led to them instead.
+    // above already says the library is empty. The purpose above says whose lessons these are, so its sentences say
+    // who decides and where the lessons show up on a package's page, and it links where section 3's own empty state
+    // does (ticket 114); a reviewer with lessons waiting is led to them instead.
     const link = isReviewerWaiting ? { href: QUEUE_HREF, text: copy.lessons.library.reviewerLink } : { href: RISKS_READINESS_HREF, text: copy.pages.lessons.link };
     return (
       <TaskZone
@@ -511,7 +514,7 @@ function PageSkeleton() {
         {w.loading}
       </p>
       <SkeletonText className="max-w-[22.5em] text-finding" widths={["w-full", "w-full", "w-[70%]"]} />
-      <p className="mt-2 max-w-prose text-caption text-ink-muted">{copy.lessons.sourcesNote}</p>
+      <p className="mt-6 max-w-prose text-caption text-ink-muted">{copy.lessons.sourcesNote}</p>
       <div className="mt-8 @md/page:mt-12">
         <TaskZone panel name={w.libraryTitle}>
           <ZoneBlock>
@@ -527,9 +530,11 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
   return (
     <div data-lessons-page="ready" className="flex flex-col">
       {page.as_of ? (
-        <Alert state="info">
+        // The alert slot already says the page is as of a date, so this sentence reports the library's state as a
+        // status line, not a second alert (DESIGN.md section 1, principle 6).
+        <p className="max-w-prose text-lead text-pretty text-ink" data-status-lead>
           <Fill template={w.asOfNote} slots={{ date: <Num date={page.as_of} /> }} />
-        </Alert>
+        </p>
       ) : (
         <>
           {page.digest && <DigestBlock page={page} isReviewer={isReviewer} />}
@@ -541,7 +546,10 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
         {page.notices.length > 0 && (
           <TaskZone panel headingId="lessons-changed" name={w.changedTitle} marks={{ "data-changed": "" }}>
             <ZoneBlock>
-              <p className="max-w-prose text-caption text-ink-muted">{w.changedCaption}</p>
+              {/* With nothing new, the digest says no lesson changed, so the zone says its changes came before then. */}
+              <p className="max-w-prose text-caption text-ink-muted" data-zone-caption>
+                {page.digest?.kind === "nothing" ? w.changedEarlierCaption(page.notices.length) : w.changedCaption}
+              </p>
               <ul>
                 {page.notices.map((notice) => (
                   <VersionNotice key={notice.anchor} notice={notice} />
@@ -577,7 +585,7 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
 }
 
 export function LessonsPage({ search }: { search: string }) {
-  const me = useMe();
+  const me = useLessonsMe();
   // The page's own read keeps the address it opened with; a filter or a page change asks for the library alone.
   const [path] = useState(() => `/api/lessons/page${pageQuery(search)}`);
   const [load, retry] = useLoad<LessonsPageAnswer>(path);

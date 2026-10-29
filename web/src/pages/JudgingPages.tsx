@@ -39,7 +39,8 @@ import { JUDGING_HREF, queryHref, type Grade, type JudgingList, type JudgingQuer
 import { setPageTitle } from "../lib/title";
 import { usePageAtLeast } from "../lib/usePageAtLeast";
 import { DocumentColumn } from "./DraftPage";
-import { LessonsFrame, refreshLessonsMe, useMe } from "./LessonsPages";
+import { refreshLessonsMe } from "../lib/lessonsMe";
+import { LessonsFrame } from "./LessonsPages";
 
 const w = copy.judging;
 const KEYS: Record<string, Grade> = { a: "answers", p: "partly", n: "not_relevant" };
@@ -206,7 +207,7 @@ export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList;
       <p className="max-w-prose text-body text-ink-muted">{w.purpose}</p>
       {list.total > 0 && (
         <>
-          <p tabIndex={-1} data-lead className="mt-6 text-lead text-ink-heading outline-none" data-judging-lead>
+          <p tabIndex={-1} data-lead className="mt-6 max-w-prose text-lead text-pretty text-ink-heading outline-none" data-judging-lead>
             {lead}
           </p>
           <p className="mt-2 text-caption text-ink-muted">
@@ -269,7 +270,7 @@ export function JudgingSkeleton() {
         {w.loading}
       </p>
       <p className="max-w-prose text-body text-ink-muted">{w.purpose}</p>
-      <SkeletonLine className="mt-6 text-lead" width="w-[60%]" />
+      <SkeletonLine className="mt-6 max-w-prose text-lead" width="w-[60%]" />
       <SkeletonLine className="mt-2 text-caption" width="w-[40%]" />
       <Skeleton className="mt-4 h-11 w-full @md/page:w-50" radius="rounded-sm" />
       <SkeletonText className="mt-6 text-small @md/page:mt-8" widths={["w-full", "w-1/2"]} />
@@ -330,8 +331,6 @@ export function JudgingView({ load, retry, last = null }: { load: Load<JudgingLi
 }
 
 export function JudgingPage({ search }: { search: string }) {
-  // The sidebar's count under Lessons reads the viewer's roles, so the page asks for them once a page load.
-  useMe();
   const params = new URLSearchParams(search);
   const show = (SHOWS as readonly string[]).includes(params.get("show") ?? "") ? (params.get("show") as Show) : "to_judge";
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);

@@ -2,7 +2,7 @@
 // keyboard-focus shots, so design reviews are repeatable (criterion 10 of ticket 02). The
 // whole command is not a gate step; these tests check its list of shots and run one of them.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -64,6 +64,22 @@ test("the capture list photographs Lessons, a review page, Passage reports and J
     const read = shot.api?.["/api/lessons/page"];
     if (shot.name === "lessons--library-error") expect(read?.status, shot.name).toBe(503);
     else expect(Boolean(read && (read.status ?? 200) === 200 && (read.recorded || read.body)), shot.name).toBe(true);
+  }
+});
+
+// Round 1 of ticket 102: a Lessons shot as of a past date shows the page the server sends for that date, recorded by
+// tests/record_lessons_page_api.py, and never today's page with only its date changed (an answer as of a date never
+// cites a document made public after it).
+test("a Lessons shot as of a past date answers with the server's recording for that date", () => {
+  const dated = SHOTS.filter((shot) => shot.server === "app" && /^\/lessons\?(.*&)?asof=\d{4}-\d{2}-\d{2}/.test(shot.path));
+  expect(dated.map((shot) => shot.name)).toContain("app--asof");
+  for (const shot of dated) {
+    const asof = new URL(shot.path, "http://strata.test").searchParams.get("asof");
+    const read = shot.api?.["/api/lessons/page"];
+    expect(read?.body, shot.name).toBeUndefined();
+    expect(read?.recorded, shot.name).toBeDefined();
+    const page = JSON.parse(readFileSync(new URL(`../../tests/fixtures/api/${read!.recorded}`, import.meta.url), "utf8"));
+    expect(page.as_of, shot.name).toBe(asof);
   }
 });
 

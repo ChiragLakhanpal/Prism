@@ -82,6 +82,9 @@ test("the digest is the page's finding inside the first screen at 390 by 844 and
   await expect(digest).toHaveText(
     "Since your last visit on October 22, 2026, two completion reports and two ICR Reviews came in. Two lessons are new and two changed.",
   );
+  // 24 px after a finding (DESIGN.md section 4, space roles), then its sources note.
+  const after = await digest.evaluate((found) => found.nextElementSibling!.getBoundingClientRect().top - found.getBoundingClientRect().bottom);
+  expect(after).toBeCloseTo(24, 0);
   expect(await zones(page)).toEqual([
     ["Changed where you used it", "panel"],
     ["New", "panel"],
@@ -228,6 +231,15 @@ test("the library's filters change the list at once, keep the address, and the c
   const asked = await openLessons(page, "lessons-page.json", { "/api/lessons/library": await file("lessons-library-method-rfq.json") });
   const library = page.locator("[data-library=ready]");
   await expect(library.locator("[data-lead]")).toHaveText("Showing all two current lessons, newest first.");
+  // The four filters sit in one row at 1440 px, each as wide as its words, and stack on a phone.
+  const boxes = () => library.locator("[data-filter]").evaluateAll((all) => all.map((select) => select.getBoundingClientRect()).map(({ top, width }) => ({ top: Math.round(top), width })));
+  const wide = await boxes();
+  expect(wide).toHaveLength(4);
+  expect(new Set(wide.map((box) => box.top)).size).toBe(1);
+  expect(Math.max(...wide.map((box) => box.width))).toBeLessThan(400);
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(new Set((await boxes()).map((box) => box.top)).size).toBe(4);
+  await page.setViewportSize({ width: 1440, height: 900 });
   await library.getByLabel("Method").selectOption("Request for Quotations");
   await expect(library.locator("[data-lead]")).toHaveText("Showing one of two current lessons, newest first.");
   await expect(page).toHaveURL(/\/lessons\?method=Request\+for\+Quotations$/);
@@ -287,8 +299,12 @@ test("a first visit's status sentence is lead, not the finding, and a visit with
   await openLessons(page, "lessons-page-nothing.json");
   await expect(page.locator("main [data-finding]")).toHaveText("Nothing came in since your last visit on October 30, 2026, and no lesson changed.");
   await expect(page.locator("[data-new], [data-strengthened]")).toHaveCount(0);
-  // The notice stays until the author chooses, whatever happened to the last visit.
+  // The notice stays until the author chooses, whatever happened to the last visit, and its zone says the change came
+  // before that visit, so "no lesson changed" above it still reads true.
   await expect(page.locator("[data-version-notice=narrowed]")).toHaveCount(1);
+  await expect(page.locator("[data-changed] [data-zone-caption]")).toHaveText(
+    "This change came before your last visit. Your drafts still cite the version you used, and nothing in a draft changes until you choose.",
+  );
   expect(await axe(page)).toEqual([]);
 });
 
@@ -331,13 +347,14 @@ test("at 1440 and 390 px the empty library is a row that says whose lessons they
     await expect(card).not.toContainText("no lessons yet");
     await expect(card).not.toContainText("No lesson has entered the library yet.");
     await expect(card.locator("[data-library-empty] p")).toHaveText([
-      "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of them. " +
-        "I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
+      "I propose each lesson, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
         "wait for that decision, and only lesson reviewers can read them.",
-      "You don't need to search here for each package. On a package's page, section 3, Procurement risks and what " +
-        "helped, I show the lessons from the completion reports of projects with comparable packages.",
+      "On a package's page, in section 3, Procurement risks and what helped, I show the lessons from projects with " +
+        "comparable packages.",
       "See which completion reports I have read",
     ]);
+    // The purpose above says whose lessons they are, so the row does not say it again.
+    await expect(page.locator("main [data-page-head]")).toContainText("quoted from completion reports");
     const section3 = JSON.parse(await recorded("risks-ke-nwwda-541055.json"));
     expect(section3.empty_reason).toBe("no_reports");
     const link = card.getByRole("link", { name: "See which completion reports I have read" });
@@ -349,6 +366,19 @@ test("at 1440 and 390 px the empty library is a row that says whose lessons they
     await expect(card).not.toContainText(/approv/i);
     expect((await scan(page, "[data-library=empty]")).violations, `${width} px`).toEqual([]);
   }
+});
+
+// Round 1 of ticket 102: as of a past date the page shows only what was disclosed by then (the server's own answer,
+// tests/record_lessons_page_api.py), and says so once, in the alert slot; the library's own sentence is a status line.
+test("as of a past date the page says so once, and the library holds only what was public then", async ({ page }) => {
+  await openLessons(page, "lessons-page-asof.json", { "/api/me": await file("me-asof.json") }, "/lessons?asof=2016-08-26");
+  await expect(page.locator("[data-alert-slot] [data-alert=info]")).toContainText("August 26, 2016");
+  await expect(page.locator("[data-alert]")).toHaveCount(1);
+  await expect(page.locator("main [data-status-lead]")).toHaveText(
+    "You are seeing the library as of August 26, 2016, with each lesson at the version that was current then.",
+  );
+  expect(await zones(page)).toEqual([["The library", "row"]]);
+  await expect(page.locator("main")).not.toContainText(/2019|2023|2026/);
 });
 
 test("a preview leaves out the reader's drafts, reports and the proposed count", async ({ page }) => {

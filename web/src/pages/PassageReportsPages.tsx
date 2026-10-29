@@ -45,7 +45,8 @@ import {
 import { shortProjectName } from "../lib/sources";
 import { setPageTitle } from "../lib/title";
 import { DocumentColumn } from "./DraftPage";
-import { LessonsFrame, refreshLessonsMe, useMe } from "./LessonsPages";
+import { refreshLessonsMe } from "../lib/lessonsMe";
+import { LessonsFrame } from "./LessonsPages";
 
 const w = copy.passageReports;
 const kindOf = (key: string) => copy.retrieval.queryKinds[key] ?? copy.retrieval.queryKinds.other;
@@ -115,7 +116,7 @@ function Lead({ queue }: { queue: ReportsQueue }) {
   };
   const template = you && others ? w.lead.both : you ? w.lead.youOnly : others ? w.lead.othersOnly : w.lead.none;
   return (
-    <p tabIndex={-1} data-lead className="text-lead text-ink-heading outline-none" data-reports-lead>
+    <p tabIndex={-1} data-lead className="max-w-prose text-lead text-pretty text-ink-heading outline-none" data-reports-lead>
       <Fill template={template} slots={slots} />
       {oldest && (you || others) ? (
         <>
@@ -241,7 +242,7 @@ export function ReportsSkeleton() {
         {w.loading}
       </p>
       <Purpose />
-      <span className="mt-6 flex flex-col text-lead">
+      <span className="mt-6 flex max-w-prose flex-col text-lead">
         <SkeletonLine width="w-[70%]" />
       </span>
       <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
@@ -283,8 +284,6 @@ export function ReportsView({ load, retry }: { load: Load<ReportsQueue>; retry: 
 }
 
 export function PassageReportsPage({ search }: { search: string }) {
-  // The sidebar's count under Lessons reads the viewer's roles, so the page asks for them once a page load.
-  useMe();
   const [load, retry] = useLoad<ReportsQueue>(`/api/passage-reports?page=${pageOf(search)}`);
   const denied = refusedAs(load, "not_a_passage_reviewer");
   useEffect(() => {

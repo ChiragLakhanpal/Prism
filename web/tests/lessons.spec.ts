@@ -108,7 +108,7 @@ test("a lesson reviewer finds Waiting for review under Lessons in the sidebar wi
   // One page for this role, Waiting for review, with the count waiting in the reviewer's region in its badge.
   await expect(queue).toHaveCount(1);
   await expect(queue).toHaveAttribute("href", "/lessons/review");
-  await expect(queue).toHaveAccessibleName("Waiting for review, 3 waiting");
+  await expect(queue).toHaveAccessibleName("Waiting for review, 3 lessons");
   await expect(queue.locator("[data-sub-count]")).toHaveText("3");
   await expect(lessons).toHaveAttribute("aria-current", "page");
   // No sub-tab row on the page.
@@ -123,6 +123,8 @@ test("a lesson reviewer finds Waiting for review under Lessons in the sidebar wi
   await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
   await expect(queue).toHaveAttribute("aria-current", "page");
   await expect(lessons).toHaveAttribute("aria-current", "true");
+  // As the current item, in its heavier weight, the label and its badge still keep to one line, so the sidebar stays put.
+  expect((await queue.boundingBox())!.height).toBeLessThanOrEqual(32);
   await expect(subTabs(page)).toHaveCount(0);
   await expect(page).toHaveTitle("Waiting for review, Lessons | Strata");
 
@@ -257,6 +259,18 @@ test("a review page is a workspace at 1440 and 1280 px, with its history in the 
   const form = page.locator("[data-decision-form]");
   await form.getByRole("button", { name: "Recommend adding it" }).click();
   await expect(form.getByRole("textbox", { name: "Your reason" })).toBeFocused();
+});
+
+// Round 1 of ticket 102: a review page whose one read fails puts its alert in the alert slot, and its h1 names one item
+// under the breadcrumb that ends at the queue, so the page never reads as the queue itself.
+test("when a review page's one read fails, its alert is in the alert slot and its h1 names one lesson, not the queue", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await reviewer(page, { [`/api/lessons/review/${REBIDDING}`]: { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
+  await page.goto(`/lessons/review/${REBIDDING}`);
+  await expect(page.locator("[data-alert-slot] [role=alert]")).toBeVisible();
+  await expect(page.locator("main nav[aria-label] a").last()).toHaveText("Waiting for review");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("A lesson waiting for review");
+  await expect(page).toHaveTitle("Waiting for review, Lessons | Strata");
 });
 
 test("a recommendation needs a reason, sends the stage the reviewer saw, and ends on the outcome panel", async ({ page }) => {
@@ -420,6 +434,16 @@ test("an evidence card's marker opens the drawer at its source, and focus comes 
   await page.keyboard.press("Escape");
   await expect(drawer).toHaveCount(0);
   await expect(marker).toBeFocused();
+
+  // At 1280 px too, where the drawer leaves the page area narrower than the work's own breakpoints: the work lays out by
+  // its own column, so the marker you pressed does not move when the drawer opens.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(() => document.fonts.ready);
+  const before = await marker.boundingBox();
+  await marker.click();
+  await expect(drawer).toBeVisible();
+  await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
+  expect(await marker.boundingBox()).toEqual(before);
 });
 
 test("a likely repeat's citation of a library lesson opens the drawer at the lesson, named by its statement", async ({ page }) => {

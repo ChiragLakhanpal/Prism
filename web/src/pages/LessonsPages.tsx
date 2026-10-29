@@ -29,20 +29,12 @@ import { Table, type Row as TableRow } from "../components/Table";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import { useLoad, type Load } from "../lib/load";
-import { lessonsMe, refreshLessonsMe, useLessonsMe, type MeState } from "../lib/lessonsMe";
+import { useLessonsMe } from "../lib/lessonsMe";
 import { setPageTitle } from "../lib/title";
 import { itemHref, LESSONS_HREF, pageHref, QUEUE_HREF, type Me, type Queue, type QueueRow as Row } from "../lib/lessons";
 import { dataReadinessHref } from "../routes";
 
 const words = copy.lessons;
-
-// ── Who is viewing: loaded once a page load, refreshed after a save (lib/lessonsMe.ts) ─────
-
-export { lessonsMe, refreshLessonsMe, type MeState };
-
-export function useMe(): MeState {
-  return useLessonsMe();
-}
 
 // The pages the frame holds: the library, and the three reviewer pages the sidebar lists under Lessons.
 export type LessonsPageKey = "lessons" | "lessonsQueue" | "lessonsReports" | "lessonsJudging";
@@ -263,7 +255,7 @@ export function QueueBody({ queue }: { queue: Queue }) {
         <EmptyState className="mt-6" title={q.emptyTitle} body={q.emptyBody} link={{ href: LESSONS_HREF, text: q.emptyLink }} />
       ) : (
         // At most 65 characters a line, as the purpose above it wraps (ticket 91's critique; ticket 102).
-        <p tabIndex={-1} className="mt-4 max-w-prose text-lead text-ink-heading outline-none @md/page:mt-6" data-queue-lead>
+        <p tabIndex={-1} className="mt-4 max-w-prose text-lead text-pretty text-ink-heading outline-none @md/page:mt-6" data-queue-lead>
           {queue.lead && <Sentence segments={queue.lead} />}
         </p>
       )}
@@ -297,7 +289,7 @@ export function QueueSkeleton({ me }: { me?: Me | null }) {
         <SkeletonText className="max-w-prose text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
       )}
       {/* Each part in the text style of what it stands for, so each line is as tall as the line it holds. */}
-      <span className="mt-4 flex flex-col text-lead @md/page:mt-6">
+      <span className="mt-4 flex max-w-prose flex-col text-lead @md/page:mt-6">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-3/5" />
         <SkeletonLine width="w-2/5" className={NARROW_ONLY} />
@@ -357,7 +349,8 @@ export function QueueView({ load, retry, me = null }: { load: Load<Queue>; retry
 }
 
 export function QueuePage({ search }: { search: string }) {
-  const me = useMe();
+  // Who is viewing (lib/lessonsMe.ts): loaded once a page load, refreshed after a save.
+  const me = useLessonsMe();
   const [load, retry] = useLoad<Queue>(`/api/lessons/review?page=${pageOf(search)}`);
   // Someone the roles file does not name sees the Lessons h1 and its purpose over the no-access card, and the
   // page's title as the library's, since this page is not theirs to open.

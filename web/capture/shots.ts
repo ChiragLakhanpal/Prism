@@ -2058,11 +2058,12 @@ export const SHOTS: Shot[] = [
   app("app--no-access", "/", { freshness: { status: 403, recorded: "freshness-no-access.json" } }),
   app("app--no-identity", "/", { me: { body: SIGNED_OUT }, freshness: { status: 401, recorded: "freshness-no-identity.json" } }),
   // A preview's and a past date's Lessons page, from the server's answers (ticket 102): the preview leaves out what is
-  // about you, and as of a date the page says it shows the library as it was.
+  // about you, and as of a date the page says it shows the library as it was. The past date's answer is the server's
+  // own for August 26, 2016 (tests/record_lessons_page_api.py), when no lesson, notice or report was public yet.
   app("app--view-piu", "/lessons?view=piu", {}, { api: { ...app("x", "/lessons").api, "/api/me": { recorded: "me-preview-piu.json" }, "/api/lessons/page": { recorded: "lessons-page-preview.json" } } }),
   app("app--view-public", "/lessons?view=public", {}, { api: { ...app("x", "/lessons").api, "/api/me": { recorded: "me-preview-public.json" }, "/api/lessons/page": { recorded: "lessons-page-preview.json" } } }),
   app("app--asof", "/lessons?asof=2016-08-26", {}, {
-    api: { ...app("x", "/lessons").api, "/api/me": { recorded: "me-asof.json" }, "/api/lessons/page": { body: derived("lessons-page.json", (body) => Object.assign(body, { as_of: "2016-08-26" })) } },
+    api: { ...app("x", "/lessons").api, "/api/me": { recorded: "me-asof.json" }, "/api/lessons/page": { recorded: "lessons-page-asof.json" } },
   }),
   app("app--asof-unreadable", "/lessons?asof=last-tuesday"),
   app("app--box-with-text", "/", { }, { act: type("[data-box-slot] input", "P130164"), api: { ...app("x", "/").api, ...BOX_API } }),

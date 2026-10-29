@@ -52,8 +52,11 @@ test("a passage reviewer finds Passage reports under Lessons, and a query judge 
   });
   await page.goto("/lessons/reports");
   await expect(page.locator("[data-reports-lead]")).toContainText("Reports on two passages are waiting for you.");
-  await expect(lessonsItems(page)).toHaveText(["Passage reports2"]);
-  await expect(lessonsItems(page)).toHaveAccessibleName("Passage reports, 2 waiting");
+  // On the wide Lessons pages each sentence keeps to the width of prose (DESIGN.md, Page layouts), so a lead never runs
+  // the page's full width at 1440 px.
+  expect((await page.locator("[data-reports-lead]").boundingBox())!.width).toBeLessThan(700);
+  await expect(lessonsItems(page)).toHaveText(["Passage reports 2"]);
+  await expect(lessonsItems(page)).toHaveAccessibleName("Passage reports, 2 passages");
   await expect(lessonsItems(page)).toHaveAttribute("aria-current", "page");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Passage reports");
   await expect(subTabs(page)).toHaveCount(0);
@@ -65,7 +68,8 @@ test("a passage reviewer finds Passage reports under Lessons, and a query judge 
   });
   await page.goto("/lessons/judging");
   await expect(page.getByRole("radio", { name: "To judge (2)" })).toBeVisible();
-  await expect(lessonsItems(page)).toHaveAccessibleName("Judging, 2 left to judge");
+  expect((await page.locator("[data-judging-lead]").boundingBox())!.width).toBeLessThan(700);
+  await expect(lessonsItems(page)).toHaveAccessibleName("Judging, 2 queries left");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Judging");
   await expect(subTabs(page)).toHaveCount(0);
 
@@ -77,9 +81,23 @@ test("a passage reviewer finds Passage reports under Lessons, and a query judge 
   });
   await page.goto("/lessons");
   await expect(page.locator("[data-lessons-page=ready]")).toBeVisible();
-  await expect(lessonsItems(page)).toHaveText(["Waiting for review3", "Passage reports"]);
+  await expect(lessonsItems(page)).toHaveText(["Waiting for review 3", "Passage reports"]);
   await expect(lessonsItems(page).nth(1)).toHaveAccessibleName("Passage reports");
   await expect(lessonsItems(page).nth(1).locator("[data-sub-count]")).toHaveCount(0);
+
+  // With one passage waiting, its name counts one passage. Each badge's link reads its label, then its number, so its
+  // name holds what it shows (WCAG 2.5.3, Label in Name).
+  await page.unrouteAll();
+  await serve(page, {
+    "/api/lessons/me": await file("retrieval-me-both-waiting.json"),
+    "/api/lessons/page": await file("lessons-page-reviewer.json"),
+  });
+  await page.goto("/lessons");
+  await expect(lessonsItems(page)).toHaveText(["Waiting for review 3", "Passage reports 1"]);
+  await expect(lessonsItems(page).nth(0)).toHaveAccessibleName("Waiting for review, 3 lessons");
+  await expect(lessonsItems(page).nth(1)).toHaveAccessibleName("Passage reports, 1 passage");
+  const sidebarScan = await scan(page, "[data-sub-items=lessons]");
+  expect(sidebarScan.violations.map((violation) => violation.id)).toEqual([]);
 
   // The officer's preview hides the reviewer pages (config/roles.toml), whatever roles the viewer has.
   await page.unrouteAll();
@@ -251,12 +269,14 @@ test("a query's page keeps to the work columns at 1440 and 1280 px and is one co
     else expect(work.width / column.width, `${width} px`).toBeGreaterThan(0.85);
   }
   await page.setViewportSize({ width: 1440, height: 900 });
-  // Outside the panel, on the page's h1, the key types nothing and grades nothing.
+  // Outside the panel, on the page's h1, the key grades nothing; inside it, the same key grades.
+  // One PUT after both presses proves the first sent nothing and the second graded.
   await page.getByRole("heading", { level: 1 }).focus();
   await page.keyboard.press("a");
-  await page.waitForTimeout(350);
   await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 1 of 40");
-  expect(sent.filter((call) => call.method === "PUT")).toEqual([]);
+  await panel.focus();
+  await page.keyboard.press("a");
+  await expect.poll(() => sent.filter((call) => call.method === "PUT").length).toBe(1);
 });
 
 test("grading the last passage moves focus to the panel that says you graded them all", async ({ page }) => {
