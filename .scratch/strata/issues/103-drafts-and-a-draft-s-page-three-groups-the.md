@@ -68,3 +68,4 @@ Read first: the prototype's Drafts and a draft at 1440, 1024 and 390 px, the Dra
   - Unblocks: ticket 105 (the check window and the drawer's motion), whose other blocker, 97, is done. I left its Status at `ready`, since it is not one of this wave's tickets (80, 81, 86, 87, 88); the orchestrator dispatches it.
 
 ---
+- October 28, 2026, orchestrator (01:50 PDT): the App redeploy ran from d4ac8473 (the catch-up block "Tickets 102, 103 and 105, the App redeploy ran"); the page's check by eye is the owner's.

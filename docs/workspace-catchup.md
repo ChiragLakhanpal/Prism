@@ -4308,3 +4308,7 @@ Record the exit code, the App's address and what `/data` showed here under ticke
 ## Tickets 101, the App redeploy ran: the App runs a8c6b8c6
 
 **Ran on October 28, 2026 (orchestrator), from a snapshot of a8c6b8c6.** `ops/app/deploy_app.py --keep-secrets` exited 0 with the running line (05:33 to 05:47 UTC); the watchdog holds a8c6b8c6; the local copy moved to the same commit and answers at http://127.0.0.1:49690 (`.notes/local-run.md`). The App carries 101 (the package workspace as numbered task zones) over everything through 104. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Tickets 102, 103 and 105, the App redeploy ran: the App runs d4ac8473
+
+**Ran on October 28, 2026 (orchestrator), from a snapshot of d4ac8473.** `ops/app/deploy_app.py --keep-secrets` exited 0 with the running line; the watchdog holds d4ac8473; the local copy moved to the same commit and answers at http://127.0.0.1:59828 (`.notes/local-run.md`). The App now carries every redesign page, 95 to 105: 102 (Lessons with the digest leading and the reviewer pages under it), 103 (Drafts and a draft's page in three groups) and 105 (the check window and the drawer's motion) over the rest. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
