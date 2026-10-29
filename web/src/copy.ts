@@ -103,6 +103,8 @@ const PPSD_ROWS = {
       "borrower's Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence " +
       "beside the row.",
     methodLink: "the risks you selected",
+    // The side panel's "Made from" (ticket 103), a link to the package's risks: {title} is the package as its page names it.
+    madeFrom: "The risks you selected for {title}",
     countLine: (count: number, countText: string) => (count === 1 ? "Showing the one row" : `Showing all ${countText} rows`),
     columns: {} as Record<string, string>,
     tableCaption: (form: string, _date: string) =>
@@ -1094,11 +1096,6 @@ export const copy = {
   // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
   // stratum and its document's short name come from the answer stream.
   evidence: {
-    // The space line (ticket 110): what columns 9 to 12 are for while no drawer is open, on the pages that keep them
-    // free for the drawer. The package page holds its side panel there instead (ticket 101).
-    spaceHint: {
-      draft: "Select a numbered source, and its record opens here.",
-    },
     eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
     // The heading names the source, not the claim, so a drawer opened from a link still reads.
     title: "{project}, paragraph {para}",
@@ -2970,6 +2967,8 @@ export const copy = {
           "I wrote each note from {check} and cited the records behind every sentence. Open a source number to see " +
           "its record beside the note.",
         methodLink: "my check of this plan",
+        // The side panel's "Made from" (ticket 103), a link to the plan check: {date} is the plan's date in full.
+        madeFrom: "My check of the {agency} plan of {date}",
         countLine: (count: number, countText: string) =>
           count === 1 ? "Showing the 1 activity with a signal" : `Showing all ${countText} activities with a signal`,
         columns: { activity: "Activity", note: "Review note" },
@@ -3058,6 +3057,8 @@ export const copy = {
           "I wrote each part from public records through {date} and cited the record or paragraph behind every sentence. " +
           "Open a source number to see it beside the brief.",
         methodLink: "public records",
+        // A link to the project's page: {date} is the date the records run through.
+        madeFrom: "The project's public records through {date}",
         countLine: (_count: number, _countText: string) => "",
         columns: {} as Record<string, string>,
         tableCaption: (name: string, _date: string) => `Mission brief for ${name}`,
@@ -3163,6 +3164,8 @@ export const copy = {
           "I started from the dates in your plan and added how far comparable packages ran past their planned dates at " +
           "each step. Open a count of comparable packages to see them.",
         methodLink: "the dates in your plan",
+        // The side panel's "Made from" (ticket 103), plain text: {date} is the day the plan was uploaded.
+        madeFrom: "The dates in your plan uploaded {date}",
         countLine: (count: number, countText: string) => (count === 1 ? "Showing the one activity" : `Showing all ${countText} activities`),
         columns: { activity: "Activity", signed: "Contract signed", dated: "Steps dated" } as Record<string, string>,
         tableCaption: (_form: string, _date: string) => "Your activities, in your file's order",
@@ -3264,6 +3267,8 @@ export const copy = {
           "I wrote every sentence from a tool's counts or a record, and I cited each one. I don't rate the agency's " +
           "procurement risk. That rating is yours.",
         methodLink: "my check of the plan",
+        // The side panel's "Made from" (ticket 103), a link to the plan check.
+        madeFrom: "My check of the {agency} plan of {date}",
         countLine: (_count: number, _countText: string) => "",
         columns: {} as Record<string, string>,
         tableCaption: (agency: string, _date: string) => `Procurement summary for the Project Paper, ${agency}`,
@@ -3350,6 +3355,9 @@ export const copy = {
       doneSuffix: ", done",
       discarded: (date: string) => `Discarded on ${date}`,
     },
+    // The side panel "State of this draft" (ticket 103): after the stepper, what the draft was made from (each kind's
+    // madeFrom), when it was drafted (the kind's metaYou), and once checked, who checked it and when (tab.checkedYou).
+    side: { madeFrom: "Made from", drafted: "Drafted", checked: "Checked" },
     // Under the steps I took, before the draft's ID in Roboto Mono.
     idLabel: "Draft ID",
     // Sources (section 5.4).
@@ -3457,6 +3465,8 @@ export const copy = {
     },
     // The Drafts tab (section 5.8). Its title, purpose and empty card are pages.drafts.
     tab: {
+      // The one panel that holds the three groups (ticket 103), named for screen readers.
+      panelLabel: "Your team's drafts",
       groups: { to_check: "To check", checked: "Checked", exported: "Exported" },
       count: (count: number, countText: string) => (count === 1 ? "One draft." : `${countText} drafts, newest first.`),
       // Line 2's sentences, after the project.

@@ -9,7 +9,7 @@ import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { draftBarSentence } from "./design-md";
 import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
-import { recordTransitions, transitionsOn } from "./reveals";
+import { forgetTransitions, recordTransitions, transitionsOn } from "./reveals";
 import { animationsDone, fontsLoaded } from "./settled";
 import { tabUnderStickyParts } from "./sticky";
 
@@ -255,14 +255,14 @@ test("a draft written in this visit, opened again from Drafts after it was check
   await page.goto(PLAN);
   await page.getByRole("button", { name: "Draft review notes (3 rows)" }).click();
   await bar(page).getByRole("button", { name: "Mark as checked" }).click();
-  await expect(page.locator("[aria-current=step]")).toHaveText("Checked by you");
+  await expect(page.locator("[aria-current=step]:visible")).toHaveText("Checked by you");
   const reads = asked.filter((call) => call === `GET /api${DRAFT}`).length;
 
   draft.body = await recorded("drafts-review-notes-checked.json");
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Drafts" }).click();
   await page.locator(`[data-draft-group=checked] a[href="${DRAFT}"]`).click();
 
-  await expect(page.locator("[aria-current=step]")).toHaveText("Checked by you");
+  await expect(page.locator("[aria-current=step]:visible")).toHaveText("Checked by you");
   await expect(page.locator("[data-page-status]")).toHaveText("");
   expect(asked.filter((call) => call === `GET /api${DRAFT}`).length).toBeGreaterThan(reads);
 });
@@ -348,6 +348,68 @@ test("the draft's notes cite their plan rows, and the bar says what exporting do
   );
   await expect(page.locator("[data-sources-caption]")).toHaveText("You opened 0 of 4. In the Word file, each of the 7 citations becomes a footnote.");
   await expect(page).toHaveTitle("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Strata");
+});
+
+// Ticket 103 (plan 7.8; DESIGN.md section 5, State stepper): a draft's page takes the workspace layout. From a frame of
+// 75rem the side panel "State of this draft" holds the stepper, what the draft was made from and when it was drafted;
+// below it the stepper takes one line in the head, under the subtitle, and the rest of the panel follows the draft.
+test("a draft keeps its stepper, origin and date in the side panel at 1440 and 1280 px, and the stepper on one line in the head at 1024 and 390 px", async ({ page }) => {
+  await openDraft(page, { file: "drafts-review-notes-partial.json", path: "/drafts/draft-0002" });
+  const side = page.getByRole("region", { name: "State of this draft" });
+  const column = page.locator("[data-document-column]");
+  const headStepper = page.locator("[data-draft-header] [data-stepper]");
+  for (const [width, height] of [[1440, 900], [1280, 800]]) {
+    const where = `${width} by ${height}`;
+    await page.setViewportSize({ width, height });
+    await expect(side.locator("[data-stepper]"), where).toBeVisible();
+    await expect(side.locator("[aria-current=step]"), where).toHaveText("Draft");
+    await expect(headStepper, where).toBeHidden();
+    await expect(side.locator("dt"), where).toHaveText(["Made from", "Drafted"]);
+    await expect(side.locator("dd"), where).toHaveText([
+      "My check of the Northern Water Works Development Agency plan of October 9, 2026",
+      "I drafted these notes for you on October 23, 2026.",
+    ]);
+    await expect(side.locator("dd a")).toHaveAttribute("href", PLAN);
+    // Columns 9 to 12, beside the work and level with its top.
+    const [work, panel] = [(await column.boundingBox())!, (await side.boundingBox())!];
+    expect(panel.x, where).toBeGreaterThan(work.x + work.width);
+    expect(Math.abs(panel.y - work.y), where).toBeLessThanOrEqual(32);
+  }
+  for (const [width, height] of [[1024, 768], [390, 844]]) {
+    const where = `${width} by ${height}`;
+    await page.setViewportSize({ width, height });
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await expect(headStepper, where).toBeVisible();
+    await expect(headStepper.locator("[aria-current=step]"), where).toHaveText("Draft");
+    await expect(side.locator("[data-stepper]"), where).toBeHidden();
+    // One line: every step's word on the same line, under the subtitle.
+    const tops = await headStepper.locator("li[data-step-state]").evaluateAll((items) => items.map((item) => Math.round(item.getBoundingClientRect().top)));
+    expect(new Set(tops).size, where).toBe(1);
+    const subtitle = (await page.locator("[data-draft-header] [data-subtitle]").boundingBox())!;
+    expect(tops[0], where).toBeGreaterThanOrEqual(subtitle.y + subtitle.height);
+    // What it was made from and when it was drafted follow the draft.
+    await expect(side.locator("dt"), where).toHaveText(["Made from", "Drafted"]);
+    const [work, panel] = [(await column.boundingBox())!, (await side.boundingBox())!];
+    expect(panel.y, where).toBeGreaterThanOrEqual(work.y + work.height);
+  }
+  // The lede's top is inside the first screen at 390 by 844.
+  expect((await page.locator("[data-lede]").boundingBox())!.y).toBeLessThan(844);
+});
+
+test("a draft that fails to load is the error alert in the alert slot, with Drafts as the h1 and no scope chip", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, { [`GET /api${DRAFT}`]: { status: 503, body: '{"code":"data_service"}' } });
+  await page.goto(DRAFT);
+  const alert = page.getByRole("alert");
+  await expect(alert).toContainText("I couldn't load this draft because the data service didn't answer.");
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  const h1 = page.getByRole("heading", { level: 1 });
+  await expect(h1).toHaveText("Drafts");
+  await expect(h1).toBeVisible();
+  // The alert slot sits above the h1.
+  expect((await alert.boundingBox())!.y).toBeLessThan((await h1.boundingBox())!.y);
+  await expect(page.locator("[data-box-slot] [data-scope-chip]")).toHaveCount(0);
+  await expect(page.locator("[data-draft-bar], [data-side-slot]")).toHaveCount(0);
 });
 
 test("in Draft, Export to Word is held with its reason, Mark as checked is the one solid button, and Discard sits at the far left", async ({ page }) => {
@@ -446,6 +508,35 @@ test("one hook in the frame writes the document's scroll padding, and DraftPage'
   }
   expect(writers).toEqual(["lib/sticky.ts"]);
   expect(files).not.toContain("lib/useScrollPadding.ts");
+});
+
+// Ticket 103: the draft bar sticks to the window's foot held to the work's columns, 1 to 7 of the frame, with the
+// phone's safe area added under its buttons.
+test("the draft bar sticks held to the work's columns, with the safe area's inset in its bottom padding", async ({ page }) => {
+  await openDraft(page, { width: 1440, height: 900 });
+  const [work, edge] = [(await page.locator("[data-document-column]").boundingBox())!, (await bar(page).boundingBox())!];
+  expect([Math.round(edge.x), Math.round(edge.width)]).toEqual([Math.round(work.x), Math.round(work.width)]);
+  expect(await bar(page).evaluate((element) => getComputedStyle(element).position)).toBe("sticky");
+  // The rule that sets the bar's bottom padding adds env(safe-area-inset-bottom), which is 0 on this screen.
+  const padding = await bar(page).evaluate((element) => {
+    const rules: CSSStyleRule[] = [];
+    const walk = (list: CSSRuleList) => {
+      for (const rule of list) {
+        if (rule instanceof CSSStyleRule) rules.push(rule);
+        if ("cssRules" in rule) walk((rule as CSSGroupingRule).cssRules);
+      }
+    };
+    for (const sheet of document.styleSheets) walk(sheet.cssRules);
+    const matches = (rule: CSSStyleRule) => {
+      try {
+        return element.matches(rule.selectorText);
+      } catch {
+        return false;
+      }
+    };
+    return rules.filter(matches).map((rule) => rule.style.paddingBottom).filter(Boolean);
+  });
+  expect(padding.some((value) => value.includes("env(safe-area-inset-bottom"))).toBe(true);
 });
 
 test("tabbing through a draft never leaves the focused element under the bar, the sticky head, the box or the draft bar", async ({ page }) => {
@@ -622,22 +713,51 @@ test("beside the open drawer at 768 and 800 px the column is phone-sized, so the
   }
 });
 
-test("Mark as checked saves, moves the state on and makes Export to Word the solid button, with focus on it", async ({ page }) => {
-  await openDraft(page, { answers: { "POST /api/drafts/draft-0001/check": { body: await recorded("drafts-review-notes-checked.json"), delay: 300 } } });
-  const check = bar(page).getByRole("button", { name: "Mark as checked" });
+// Ticket 103 (plan 9, pattern 9, fairshare's decision bar): after the act the bar says who did it and when, by role,
+// and nothing fades. Checked at the two widths where the stepper sits in different places.
+for (const [width, height] of [[1440, 900], [390, 844]]) {
+  test(`at ${width} px, Mark as checked saves, says who checked the notes and when, and makes Export to Word the solid button, with focus on it`, async ({ page }) => {
+    await recordTransitions(page);
+    const asked = await openDraft(page, {
+      width,
+      height,
+      answers: { "POST /api/drafts/draft-0001/check": { body: await recorded("drafts-review-notes-checked.json"), delay: 300 } },
+    });
+    const check = bar(page).getByRole("button", { name: "Mark as checked" });
+    await expect(bar(page).locator("[data-decided-line]")).toHaveCount(0);
+    await animationsDone(page);
+    await forgetTransitions(page);
 
-  await check.click();
-  await expect(bar(page)).toHaveAttribute("aria-busy", "true");
-  await expect(bar(page).getByRole("button", { name: "Saving" })).toBeVisible();
+    await check.click();
+    await expect(bar(page)).toHaveAttribute("aria-busy", "true");
+    await expect(bar(page).getByRole("button", { name: "Saving" })).toBeVisible();
 
-  const exportButton = bar(page).getByRole("button", { name: "Export to Word" });
-  await expect(exportButton).toBeFocused();
-  await expect(exportButton).toHaveAttribute("data-button", "primary");
-  await expect(exportButton).not.toHaveAttribute("aria-disabled");
-  await expect(page.locator("[aria-current=step]")).toHaveText("Checked by you");
-  await expect(bar(page).locator("[data-hold-line]")).toHaveCount(0);
-  await expect(bar(page).locator("[data-bar-status]")).toHaveText("You marked these notes as checked. You can export them now.");
-});
+    const exportButton = bar(page).getByRole("button", { name: "Export to Word" });
+    await expect(exportButton).toBeFocused();
+    await expect(exportButton).toHaveAttribute("data-button", "primary");
+    await expect(exportButton).not.toHaveAttribute("aria-disabled");
+    // The hold line gives way to the decided line, in small 600 ink-heading.
+    await expect(bar(page).locator("[data-hold-line]")).toHaveCount(0);
+    const decided = bar(page).locator("[data-decided-line]");
+    await expect(decided).toHaveText("Checked by you on October 23, 2026.");
+    expect(await decided.evaluate((line) => getComputedStyle(line).fontWeight)).toBe("600");
+    await expect(page.locator("[aria-current=step]:visible")).toHaveText("Checked by you");
+    // The side panel adds the same line under the date the draft was drafted, where it shows.
+    const side = page.getByRole("region", { name: "State of this draft" });
+    await expect(side.locator("dt")).toHaveText(["Made from", "Drafted", "Checked"]);
+    await expect(side.locator("dd").last()).toHaveText("Checked by you on October 23, 2026.");
+    // A polite status says what changed.
+    const status = bar(page).locator("[data-bar-status]");
+    await expect(status).toHaveAttribute("role", "status");
+    await expect(status).toHaveText("You marked these notes as checked. You can export them now.");
+    // Nothing fades: the text changes at once.
+    await page.waitForTimeout(250);
+    expect((await transitionsOn(page, "decidedLine")).length + (await transitionsOn(page, "stepState")).length).toBe(0);
+    expect(await page.evaluate(() => document.getAnimations().filter((one) => (one as CSSTransition).transitionProperty === "opacity").length)).toBe(0);
+    // Marking as checked sends nothing anywhere: the only act was the check, to Strata's own server.
+    expect(asked.filter((call) => call.startsWith("POST"))).toEqual(["POST /api/drafts/draft-0001/check"]);
+  });
+}
 
 test("Export downloads the Word file, ends on a success that names it and its footnotes, and reaches nothing outside Strata", async ({ page }) => {
   await openDraft(page, {
@@ -661,7 +781,7 @@ test("Export downloads the Word file, ends on a success that names it and its fo
   await expect(page.getByRole("link", { name: `${WORD}, Word file, 7 footnotes` })).toHaveAttribute("download", WORD);
   await expect(page.getByRole("link", { name: /evidence-pack\.pdf, Evidence pack, PDF$/ })).toBeVisible();
   await expect(page.getByRole("link", { name: /evidence-pack\.csv, Evidence pack, CSV$/ })).toBeVisible();
-  await expect(page.locator("[aria-current=step]")).toHaveText("Exported");
+  await expect(page.locator("[aria-current=step]:visible")).toHaveText("Exported");
   await expect(bar(page)).toHaveCount(0);
   // No mail, share or send control anywhere on the page.
   await expect(page.getByRole("button", { name: /email|share|send/i })).toHaveCount(0);
@@ -695,7 +815,7 @@ test("Discard is undone by Restore the draft, which puts the bar back in the sta
   const sentence = page.locator("[data-discarded-sentence]");
   await expect(sentence).toHaveText("You discarded these review notes, so your team no longer sees them in Drafts.");
   await expect(sentence).toBeFocused();
-  await expect(page.getByText("Discarded on October 23, 2026")).toBeVisible();
+  await expect(page.getByText("Discarded on October 23, 2026").filter({ visible: true })).toBeVisible();
   // Stuck to the window's bottom edge, the notice ends the scrolling notes as the bar did: a 1px rule above
   // it, with 12 px of the page's background on each side of the alert.
   const frame = await page.locator("[data-discarded-notice]").evaluate((element) => {
@@ -817,7 +937,7 @@ test("a refused act shows its failure in the bar and keeps the state; a change m
 
   // The draft reloads in its state now, says so beside the buttons and above the page, and focus goes to
   // that state's next step.
-  await expect(page.locator("[aria-current=step]")).toHaveText("Checked by you");
+  await expect(page.locator("[aria-current=step]:visible")).toHaveText("Checked by you");
   await expect(bar(page).locator("[data-bar-notice]")).toHaveText("This draft changed in another tab or window, so I reloaded it.");
   await expect(page.locator("main [role=status]").filter({ hasText: "This draft changed" }).first()).toBeVisible();
   await expect(bar(page).getByRole("button", { name: "Export to Word" })).toBeFocused();
@@ -863,17 +983,24 @@ test("a draft another team made, a failed read and the previews each say so in t
   await expect(page.getByRole("heading", { name: "The public view has no drafts." })).toBeVisible();
 });
 
-test("the header and the bar stick in a window at least 768 px wide and 640 px tall, and a focused marker stays clear of the bar", async ({ page }) => {
+test("the header sticks in a window at least 50rem tall, the bar in one at least 768 px wide and 640 px tall, and a focused marker stays clear of the bar", async ({ page }) => {
   await openDraft(page, { width: 1440, height: 900 });
   const header = page.locator("[data-draft-header]");
   // At the top of the page the bar already sits on the bottom edge of the window, over the notes.
   await page.evaluate(() => window.scrollTo(0, 0));
   expect(await bar(page).evaluate((element) => Math.round(element.getBoundingClientRect().bottom))).toBe(900);
-  // Scrolled, the header stays at the top of the window, under the navy bar that sticks from 1024 px (ticket 93), with
-  // the stepper in it.
+  // Scrolled, the header stays at the top of the window, under the navy bar that sticks from 1024 px (ticket 93), and
+  // the side panel, with the stepper, stays in view beside the notes (ticket 103).
   await page.evaluate(() => window.scrollTo(0, 900));
   expect(await header.evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBe(56);
-  await expect(header.locator("[aria-current=step]")).toBeInViewport();
+  await expect(page.getByRole("region", { name: "State of this draft" }).locator("[aria-current=step]")).toBeInViewport();
+  // Ticket 93's review, routed to ticket 103: at 1440 by 640 the bar, the header and the draft bar would leave the notes
+  // 286 px, so the header does not stick there (the head-sticks variant in app.css).
+  await page.setViewportSize({ width: 1440, height: 640 });
+  expect(await header.evaluate((element) => getComputedStyle(element).position)).toBe("static");
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.evaluate(() => window.scrollTo(0, 900));
+  expect(await header.evaluate((element) => getComputedStyle(element).position)).toBe("sticky");
   // Focus the last note's marker from the top of the page: scroll padding keeps it above the bar (WCAG 2.4.11).
   await page.evaluate(() => window.scrollTo(0, 0));
   const last = notes(page).locator("[data-citation='3']").last();
@@ -1013,40 +1140,72 @@ test("the draft pages have no WCAG 2.2 AA violations at 1440, 1024 and 390 px", 
 
 // ── The Drafts tab ───────────────────────────────────────────────────────
 
-test("the Drafts tab lists the team's drafts under To check, Checked and Exported, with the author's opened count", async ({ page }) => {
+// Ticket 103 (DESIGN.md section 5, Drafts list): one panel holding three groups, each an h2 with its count line after
+// it and its rows: the title as a link, then the project and the drafted, checked or exported line in small, then the
+// notes and opened count in caption. Discarded drafts fold under the groups, inside the panel.
+test("the Drafts list is one panel with To check, Checked and Exported, each with its count line, and the discarded drafts folded under them", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, { "/api/drafts": { body: await recorded("drafts-list.json") } });
   await page.goto("/drafts");
 
-  const groups = page.locator("[data-draft-group]");
+  const panel = page.getByRole("region", { name: "Your team's drafts" });
+  await expect(panel).toHaveAttribute("data-drafts-panel", "");
+  const groups = panel.locator("[data-draft-group]");
   await expect(groups.getByRole("heading", { level: 2 })).toHaveText(["To check", "Checked", "Exported"]);
-  const toCheck = page.locator("[data-draft-group=to_check]");
-  await expect(toCheck).toContainText("One draft.");
-  await expect(toCheck.getByRole("link", { name: /^Review notes/ })).toHaveText("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026");
+  // Each group's count line follows its name on the same line.
+  await expect(groups.locator("[data-group-count]")).toHaveText(["One draft.", "One draft.", "One draft."]);
+  const [name, count] = [await groups.first().getByRole("heading").boundingBox(), await groups.first().locator("[data-group-count]").boundingBox()];
+  expect(count!.x).toBeGreaterThan(name!.x + name!.width);
+  expect(Math.abs(count!.y + count!.height - (name!.y + name!.height))).toBeLessThanOrEqual(6);
+
+  const toCheck = panel.locator("[data-draft-group=to_check]");
+  const row = toCheck.locator("[data-draft-row]");
+  await expect(row.getByRole("link", { name: /^Review notes/ })).toHaveText("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026");
   // The project ID is a link to its project page (ticket 21's ProjectId rule).
-  await expect(toCheck.getByRole("link", { name: "P156634" })).toHaveAttribute("href", "/projects/P156634");
-  await expect(toCheck).toContainText("Water and Sanitation Development Project (P156634). Two notes. Drafted by you on October 23, 2026.");
-  await expect(toCheck).toContainText("You opened 0 of 2 sources.");
-  await expect(page.locator("[data-draft-group=exported]")).toContainText("Three notes. Exported by you on October 23, 2026.");
-  // Only the author's own discarded drafts, folded.
-  const fold = page.locator("[data-discarded-fold]");
+  await expect(row.getByRole("link", { name: "P156634" })).toHaveAttribute("href", "/projects/P156634");
+  await expect(row.locator("[data-row-line]")).toHaveText("Water and Sanitation Development Project (P156634). Drafted by you on October 23, 2026.");
+  await expect(row.locator("[data-row-line]")).toHaveClass(/text-small/);
+  await expect(row.locator("[data-numbers]")).toHaveText("Two notes. You opened 0 of 2 sources.");
+  await expect(row.locator("[data-numbers]")).toHaveClass(/text-caption/);
+  await expect(panel.locator("[data-draft-group=checked] [data-row-line]")).toHaveText("Water and Sanitation Development Project (P156634). Checked by you on October 23, 2026.");
+  await expect(panel.locator("[data-draft-group=exported] [data-numbers]")).toHaveText("Three notes.");
+  // Only the author's own discarded drafts, folded under the groups, inside the panel.
+  const fold = panel.locator("[data-discarded-fold]");
   await expect(fold).toContainText("You discarded one draft.");
   await fold.getByRole("button", { name: "Show it" }).click();
   await expect(fold.getByRole("link", { name: /^Review notes/ })).toHaveAttribute("href", "/drafts/draft-0004");
   expect(await axe(page)).toEqual([]);
 });
 
-test("a teammate's Drafts tab names the author and has no opened count or discarded fold; an empty one shows its card", async ({ page }) => {
+test("a teammate's Drafts list names the author and has no opened count or discarded fold", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const list = { body: await recorded("drafts-list-teammate.json") };
-  await serve(page, { "/api/drafts": list });
+  await serve(page, { "/api/drafts": { body: await recorded("drafts-list-teammate.json") } });
   await page.goto("/drafts");
   await expect(page.locator("[data-draft-group=checked]")).toContainText("Checked by Ana Example on October 23, 2026.");
   await expect(page.getByText(/You opened/)).toHaveCount(0);
   await expect(page.locator("[data-discarded-fold]")).toHaveCount(0);
   expect(await axe(page)).toEqual([]);
+});
 
-  list.body = await recorded("drafts-list-empty.json");
+// With no drafts, a Task zone row in the panel's place; a failed load, the error alert in the panel's place, under the
+// page's own h1 and purpose.
+test("with no drafts the Drafts list is one row with its sentence and Go to Packages, and a failed load is the error alert in the panel's place", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const list: Answer = { body: await recorded("drafts-list-empty.json") };
+  await serve(page, { "/api/drafts": list });
+  await page.goto("/drafts");
+  const row = page.locator("main [data-zone]");
+  await expect(row).toHaveAttribute("data-zone", "row");
+  await expect(row.getByRole("heading", { level: 2 })).toHaveText("You have no drafts to check.");
+  await expect(row).toContainText("When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you to check.");
+  await expect(row.getByRole("link")).toHaveText(["Go to Packages"]);
+  await expect(row.getByRole("link")).toHaveAttribute("href", "/packages");
+  await expect(page.locator("[data-drafts-panel]")).toHaveCount(0);
+
+  Object.assign(list, { status: 503, body: '{"code":"data_service"}' });
   await page.reload();
-  await expect(page.getByRole("heading", { name: "You have no drafts to check." })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Drafts");
+  await expect(page.getByRole("alert")).toContainText("I couldn't load your team's drafts because the data service didn't answer.");
+  await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(page.locator("[data-drafts-panel], main [data-zone]")).toHaveCount(0);
 });

@@ -725,6 +725,7 @@ export const galleryCopy = {
     stepExported: "Exported is the current state",
     stepTeammate: "As a teammate sees it",
     stepDiscarded: "Discarded: a caption in its place",
+    stepColumn: "In the side panel, one step to a line, after Checked by you",
     table: "As a table, from a 560 px column",
     cards: "As cards, below a 560 px column",
     sourceStates: "One source opened, two not yet",

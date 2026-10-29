@@ -19,6 +19,7 @@ export function SidePanel({
   sentence,
   loading = false,
   headingId: namedId,
+  before,
   children,
 }: {
   title: ReactNode;
@@ -30,6 +31,8 @@ export function SidePanel({
   loading?: boolean;
   // The h2's id when a part inside the panel is named by it too, such as a review page's history list (ticket 102).
   headingId?: string;
+  // What the panel holds before its facts, such as a draft's state stepper (ticket 103).
+  before?: ReactNode;
   // What the panel holds when it is not a list of facts, such as Waiting for you's drafts (ticket 98).
   children?: ReactNode;
 }) {
@@ -55,6 +58,7 @@ export function SidePanel({
       <h2 id={headingId} className="text-h2 text-ink-heading">
         {title}
       </h2>
+      {before}
       {facts && (
         <dl className="mt-4 grid grid-cols-1 gap-4 @facts/side:grid-cols-2">
           {facts.map((fact, index) => (

@@ -936,6 +936,16 @@ const DRAFT_SHOTS: Shot[] = [
   draftShot("draft--scrolled", { recorded: DRAFT_FILE }, { full: false, act: (page) => page.evaluate(() => window.scrollTo(0, 700)) }),
   draftShot("draft--saving", { recorded: DRAFT_FILE }, { pending: ["/api/drafts/draft-0001/check"], full: true, act: click("[data-draft-bar] [data-button=primary]") }),
   draftShot("draft--checked", { recorded: "drafts-review-notes-checked.json" }),
+  // Ticket 103: just after Mark as checked, the bar's decided line, Export to Word solid with focus, and the side panel's
+  // Checked line (or, at 390 px, the stepper in the head).
+  draftShot("draft--marked-checked", { recorded: DRAFT_FILE }, {
+    widths: [1440, 1024, 390],
+    api: { "/api/drafts/draft-0001/check": { recorded: "drafts-review-notes-checked.json" } },
+    act: async (page) => {
+      await page.locator("[data-draft-bar] [data-button=primary]").first().click();
+      await page.locator("[data-decided-line]").waitFor();
+    },
+  }),
   draftShot("draft--exporting", { recorded: "drafts-review-notes-checked.json" }, { pending: ["/api/drafts/draft-0001/export"], full: true, act: click("[data-draft-bar] [data-button=primary]") }),
   draftShot("draft--exported", { recorded: "drafts-review-notes-checked.json" }, {
     full: true,
