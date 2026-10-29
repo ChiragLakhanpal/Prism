@@ -976,6 +976,29 @@ test("section 1's finding opens with Strata's byline, its abstention with Strata
   await expect(bylines).toHaveText(["Strata held back"]);
 });
 
+// Ticket 59, item 59, as the design review of round 1 settled it: on the 0 to 12 axis under 400 px wide, where the label
+// "9" would come within 8 px of "12 months", every second tick from 0 is labeled instead (0, 6, 12 months), and every
+// tick and gridline stays, so no gridline is left with a lone missing label. At 390 px all five labels fit today.
+for (const [width, labels] of [
+  [390, ["0", "3", "6", "9", "12 months"]],
+  [320, ["0", "6", "12 months"]],
+] as const) {
+  test(`at ${width} px the 0 to 12 axis labels ${labels.length === 5 ? "every tick" : "every second tick from 0"} and keeps every tick`, async ({ page }) => {
+    await openPackage(page, {
+      width,
+      comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
+      estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
+    });
+    await ready(page);
+    const chart = page.locator("[data-chart-drawing]");
+    const shown = await chart.locator("[data-tick-label]").evaluateAll((elements) =>
+      elements.filter((el) => el.getAttribute("opacity") !== "0").map((el) => el.textContent),
+    );
+    expect(shown).toEqual(labels);
+    await expect(chart.locator("[data-tick-label]")).toHaveCount(5);
+  });
+}
+
 test("below 20 comparables there is no range and no share: the copy file's sentence, every package, and the table open", async ({ page }) => {
   await openPackage(page, {
     comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },

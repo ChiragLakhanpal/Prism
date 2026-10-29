@@ -994,10 +994,14 @@ export function RangeChart({
   const rowE2 = rowE1 + rowCStep * (middle2Break ? 2 : 1);
 
   // The axis: the label before the last one is dropped when it comes within 8 px of the last, whose
-  // tick and gridline stay.
+  // tick and gridline stay. Under 400 px wide, where that would leave one tick unlabeled among labeled ones, every
+  // second tick from 0 is labeled instead, as on the 0 to 12 axis: 0, 6, 12 months (ticket 59, item 59, as the design
+  // review of round 1 settled it). Every tick and gridline stays.
   const lastTick = ticks[ticks.length - 1];
   const prevTick = ticks.length > 2 ? ticks[ticks.length - 2] : null;
   const dropPrev = prevTick !== null && x(prevTick) + (widths.tickPrev ?? 0) / 2 > x(lastTick) - (widths.tickLast ?? 0) - 8;
+  const everySecond = dropPrev && width < 400 && (ticks.length - 1) % 2 === 0;
+  const tickShown = (index: number) => (everySecond ? index % 2 === 0 : !(ticks[index] === prevTick && dropPrev));
 
   // The tooltip covers no dot, so the pointer can move onto it and keep it (WCAG 1.4.13) and can still
   // reach every other dot: it sits above every dot in the lane when that fits inside the card, and below
@@ -1232,7 +1236,7 @@ export function RangeChart({
               y={axisY + 6 + type.s}
               textAnchor={index === 0 ? "start" : index === ticks.length - 1 ? "end" : "middle"}
               fontSize={type.s}
-              opacity={tick === prevTick && dropPrev ? 0 : 1}
+              opacity={tickShown(index) ? 1 : 0}
               data-tick-label
               className="fill-chart-text-subtle tabular-nums"
             >

@@ -53,6 +53,43 @@ test("above 60 packages the cost lane draws one dot per quantile with its key li
   await expect(sample.locator("[data-cost-table] [data-count-row] p").first()).toHaveText(`Showing all ${mock.counts.m} packages`);
 });
 
+// The critique of round 1: at 390 px the 20 quantile dots sat on one line with their rings touching, so a reader could
+// not count them. They are r 4 below 400 px, and move off the centre line far enough that each dot's 2 px surface ring
+// keeps 1 px clear of the next (centres at least 2r + 3 apart).
+test("the cost lane's quantile dots never touch, at 390 and 320 px as at 1440", async ({ page }) => {
+  await page.goto("/gallery/check-criteria");
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const circles = page.locator("[data-cost-sample=quantile] [data-cost-drawing] circle");
+    await expect(circles).toHaveCount(20);
+    await expect
+      .poll(
+        () =>
+          circles.evaluateAll((dots) => {
+            const at = dots.map((dot) => ({ x: Number(dot.getAttribute("cx")), y: Number(dot.getAttribute("cy")), r: Number(dot.getAttribute("r")) }));
+            const touching: string[] = [];
+            at.forEach((a, i) => at.slice(i + 1).forEach((b, j) => Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r + 3 - 0.01 && touching.push(`${i + 1} and ${i + j + 2}`)));
+            return touching;
+          }),
+        `${width} px`,
+      )
+      .toEqual([]);
+  }
+});
+
+// The design review of round 1, follow-up 9: the gallery draws "Advertised again" as the page does, its foot strip run
+// out to the panel's edges, not inset inside a padded card.
+test("the gallery's Advertised again samples run the foot strip to the panel's edges, as the page does", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/rebidding");
+  const sample = page.locator("[data-state-section=fixture]");
+  const panel = (await sample.locator("[data-zone=panel]").boundingBox())!;
+  const strip = (await sample.locator("[data-foot-strip]").boundingBox())!;
+  expect(Math.abs(strip.x - (panel.x + 1)), "the strip's left edge on the panel's inside").toBeLessThanOrEqual(1);
+  expect(Math.abs(strip.x + strip.width - (panel.x + panel.width - 1)), "the strip's right edge on the panel's inside").toBeLessThanOrEqual(1);
+  expect(Math.abs(strip.y + strip.height - (panel.y + panel.height - 1)), "the strip ends the panel").toBeLessThanOrEqual(1);
+});
+
 test("an empty state's title keeps a STEP reference on one line whenever it fits", async ({ page }) => {
   await page.goto("/gallery/pages");
   for (const width of [390, 768, 1024, 1279]) {

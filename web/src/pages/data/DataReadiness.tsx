@@ -55,14 +55,22 @@ const ROWS_BEFORE_REGISTRY = 3;
 const FINDING = "max-w-[22.5em] text-finding text-balance text-ink-heading";
 // The headline's skeleton: as many lines as the real headline runs in the finding style, measured on the fixture's page
 // at 320 to 1440 px (ticket 59): six from a 34rem page area, where its 22.5em holds it, seven below it, nine below 26rem
-// and eleven below 22.5rem, so nothing moves when it arrives. Each line is its width and the classes that show it.
+// and eleven below 22.5rem, so nothing moves when it arrives. Each line is its width and the classes that show it. At
+// each page area the short line is the last one shown, so the bars read as one paragraph (the critique of round 1).
 const HEADLINE_LINES: [string, string?][] = [
   ...Array.from({ length: 5 }, (): [string] => ["w-full"]),
-  ["w-3/5"],
+  // Six lines from 34rem: the sixth is the short one.
+  ["w-3/5", "hidden @[34rem]/page:flex"],
   ["w-full", "@[34rem]/page:hidden"],
+  // Seven from 26rem to 34rem.
+  ["w-3/5", "hidden @[26rem]/page:flex @[34rem]/page:hidden"],
   ["w-full", "@[26rem]/page:hidden"],
   ["w-full", "@[26rem]/page:hidden"],
+  // Nine from 22.5rem to 26rem.
+  ["w-3/5", "hidden @[22.5rem]/page:flex @[26rem]/page:hidden"],
   ["w-full", "@[22.5rem]/page:hidden"],
+  ["w-full", "@[22.5rem]/page:hidden"],
+  // Eleven below 22.5rem.
   ["w-2/5", "@[22.5rem]/page:hidden"],
 ];
 

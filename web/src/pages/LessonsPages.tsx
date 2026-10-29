@@ -316,11 +316,13 @@ export function QueueSkeleton({ me }: { me?: Me | null }) {
           {[0, 1, 2].map((index) => (
             <div key={index} className="flex flex-col gap-1 border-t-2 border-line py-4" data-skeleton-row>
               <SkeletonLine className="text-small" width="w-2/5" />
-              <span className="flex flex-col text-h2">
+              {/* The statement's and the source's bars keep to the prose width, as the lead's do, since a row's
+                  lines end there on a wide page (the critique of round 1). */}
+              <span className="flex max-w-prose flex-col text-h2">
                 <SkeletonLine width="w-[90%]" />
                 <SkeletonLine width="w-1/2" className="@[37.5rem]/page:hidden" />
               </span>
-              <span className="flex flex-col text-caption">
+              <span className="flex max-w-prose flex-col text-caption">
                 <SkeletonLine width="w-full" />
                 <SkeletonLine width="w-3/5" className="@[43rem]/page:hidden" />
                 <SkeletonLine width="w-2/5" className="@[22.5rem]/page:hidden" />

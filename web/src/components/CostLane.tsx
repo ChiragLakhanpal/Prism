@@ -123,13 +123,16 @@ function Lane({ cost, onOpen, onTable, title, width }: {
   const openMark = (mark: Mark, element: HTMLElement) => (mark.row ? onOpen(mark.row, element) : onTable());
   const type = chartType(width || 600);
   const narrow = width > 0 && width < 400;
-  // Quantile dots are drawn larger, as on the past range (DESIGN.md section 6).
-  const r = quantile ? (narrow ? 5 : 6) : narrow ? 4 : 4.5;
+  // Quantile dots are drawn larger, as on the past range (DESIGN.md section 6), and r 4 below 400 px, where 20 of them
+  // share a short lane. They are spaced so each dot's surface ring keeps 1 px clear of the next, so every one of them
+  // can be counted (ticket 59; the critique of round 1).
+  const r = quantile ? (narrow ? 4 : 6) : narrow ? 4 : 4.5;
+  const spacing = quantile ? r + 1.5 : r;
   const lane = 96;
   const ranged = Boolean(cost.quartiles);
   const axis = percentAxis(rows.map((row) => row.diff_pct));
   const x = (value: number) => EDGE + ((value - axis.min) / (axis.max - axis.min)) * Math.max(0, width - 2 * EDGE);
-  const offsets = swarm(marks.map((mark) => x(mark.diff)), r, lane) ?? marks.map(() => 0);
+  const offsets = swarm(marks.map((mark) => x(mark.diff)), spacing, lane) ?? marks.map(() => 0);
   const zero = x(0);
   const textWidth = (text: string) => text.length * type.s * 0.56;
   const ticks: number[] = [];
@@ -154,10 +157,11 @@ function Lane({ cost, onOpen, onTable, title, width }: {
   const height = rowB + lane + (ranged ? ROW_C : 0) + AXIS;
   const laneTop = rowB;
   const centre = laneTop + lane / 2;
-  // Stacked, the two counts are two rows from one left edge, the block centred under the line's label as far as the
-  // plot allows, so they never step down and across each other (ticket 59; the 31 critique, round 3, follow-up 5).
-  const stackWidth = Math.max(below > 0 ? textWidth(belowText) : 0, above > 0 ? textWidth(aboveText) : 0);
-  const stackX = Math.min(Math.max(zero - stackWidth / 2, PAD), Math.max(PAD, width - PAD - stackWidth));
+  // Stacked, the line's label and the two counts are three rows from one left edge, the label's own, kept inside the
+  // plot, so the counts never step down and across each other (ticket 59; the 31 critique, round 3, follow-up 5; the
+  // design review of round 1, follow-up 5).
+  const stackWidth = Math.max(textWidth(words.line), below > 0 ? textWidth(belowText) : 0, above > 0 ? textWidth(aboveText) : 0);
+  const stackX = Math.min(Math.max(zero - textWidth(words.line) / 2, PAD), Math.max(PAD, width - PAD - stackWidth));
   const tip = shown !== null && !hidden ? marks[shown] : null;
   const middleLabel = cost.quartiles
     ? words.middleLabel
@@ -231,7 +235,8 @@ function Lane({ cost, onOpen, onTable, title, width }: {
           <line x1={zero} x2={zero} y1={stacked ? rowB : 14} y2={ranged ? laneTop + lane : height - AXIS} strokeWidth={2}
             className="stroke-chart-grey500" data-zero-line />
           {/* Row B: the line's label, then the counts on each side; a side with no package is left out. */}
-          <text x={clampText(zero, words.line, type.s)} y={11} textAnchor="middle" fontSize={type.s} fontWeight={600} className="fill-chart-text" style={HALO}>
+          <text x={stacked ? stackX : clampText(zero, words.line, type.s)} y={11} textAnchor={stacked ? "start" : "middle"} fontSize={type.s} fontWeight={600}
+            className="fill-chart-text" style={HALO} data-line-label>
             {words.line}
           </text>
           {!stacked && below > 0 && (

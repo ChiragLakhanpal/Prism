@@ -653,6 +653,37 @@ function bringIntoView(target: HTMLElement) {
   window.scrollTo({ top: Math.max(0, top) });
 }
 
+// A landing aims once, and a later change of layout, such as the fonts arriving on a slow connection or the floating ask
+// bar taking its height, can move the row after it and leave it cut under the parts that stick. So for a second after a
+// landing, the row is aimed again once the fonts have loaded and whenever it moves on the page. The reader's own scroll,
+// key or touch ends this at once, so it never fights them (ticket 59; the design review of round 1, follow-up 2).
+const SETTLE_MS = 1000;
+function landAndHold(target: HTMLElement): () => void {
+  const at = () => Math.round(target.getBoundingClientRect().top + window.scrollY);
+  bringIntoView(target);
+  let last = at();
+  let done = false;
+  const again = () => {
+    if (done || !target.isConnected) return;
+    const now = at();
+    if (now === last) return;
+    last = now;
+    bringIntoView(target);
+  };
+  const watch = new ResizeObserver(again);
+  watch.observe(document.documentElement);
+  void document.fonts?.ready.then(again);
+  const stop = () => {
+    done = true;
+    watch.disconnect();
+    clearTimeout(timer);
+    for (const kind of ["wheel", "touchstart", "keydown", "pointerdown"]) window.removeEventListener(kind, stop, true);
+  };
+  const timer = setTimeout(stop, SETTLE_MS);
+  for (const kind of ["wheel", "touchstart", "keydown", "pointerdown"]) window.addEventListener(kind, stop, { capture: true, passive: true });
+  return stop;
+}
+
 export function PlanCheckHeader({ agency, plan, pill, action, feedforward, level = 1, sticky = false, rule = true }: {
   agency: ReactNode;
   // "Procurement Plan of October 9, 2026", when the plan is known.
@@ -779,6 +810,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   // A link whose hash names an activity: open the fold if the activity is in it, then bring the
   // activity into view and focus it.
   useEffect(() => {
+    let stop = () => {};
     const follow = () => {
       const ref = hashReference();
       if (!ref || !result.rows.some((row) => rowKey(row) === ref)) return;
@@ -787,13 +819,17 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
       requestAnimationFrame(() => {
         const target = visibleActivity(ref);
         if (!target) return;
-        bringIntoView(target);
+        stop();
+        stop = landAndHold(target);
         target.focus({ preventScroll: true });
       });
     };
     follow();
     window.addEventListener("hashchange", follow);
-    return () => window.removeEventListener("hashchange", follow);
+    return () => {
+      stop();
+      window.removeEventListener("hashchange", follow);
+    };
     // The rows are fixed for a result, so following once per result is enough.
   }, [result]);
 

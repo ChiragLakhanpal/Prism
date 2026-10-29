@@ -30,7 +30,7 @@ import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { ListedRefs } from "../components/MonoWords";
 import { Num, type NumCheck } from "../components/Num";
-import { checkFrom, FromLine } from "../components/NumFrom";
+import { checkFrom, FromLine, wholeDate } from "../components/NumFrom";
 import { PaperSheet } from "../components/PaperSheet";
 import { PpsdRows } from "../components/PpsdRows";
 import { PpsdSources } from "../components/PpsdSources";
@@ -64,7 +64,8 @@ type KindWords = (typeof copy.draft.kinds)[keyof typeof copy.draft.kinds];
 // Before a draft loads, its kind is not known yet: the skeleton draws the one kind there is today.
 const SKELETON_KIND: KindWords = copy.draft.kinds.review_notes;
 const whole = (value: number) => formatNumber(value, { compact: false });
-const day = (iso: string) => formatDate(iso.slice(0, 10));
+// A date on a draft never breaks inside itself (ticket 59; the design review of round 1, follow-up 1).
+const day = (iso: string) => wholeDate(formatDate(iso.slice(0, 10)));
 const short = (iso: string) => formatDate(iso.slice(0, 10), { style: "table" });
 
 type Loaded =

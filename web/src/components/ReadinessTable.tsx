@@ -211,12 +211,13 @@ export function ReadinessTable({
         </thead>
         <tbody>
           {placeholders.map((index) => (
-            <tr key={index} aria-hidden="true" className={cx("border-t border-line", ROW_HEIGHT[skeletonRows])}>
-              <td className="px-4">
+            // Each bar sits on its cell's first line, where the drawn row's text starts (the critique of round 1).
+            <tr key={index} aria-hidden="true" className={cx("border-t border-line align-top", ROW_HEIGHT[skeletonRows])}>
+              <td className="px-4 py-3">
                 <SkeletonLine width="w-4/5" className="text-small" />
               </td>
               {columns.map((column) => (
-                <td key={column.key} className={cx("px-4", column.className)}>
+                <td key={column.key} className={cx("px-4 py-3", column.className)}>
                   <SkeletonLine width={column.numeric ? "ml-auto w-1/2" : "w-4/5"} className="text-small" />
                 </td>
               ))}

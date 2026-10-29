@@ -94,6 +94,25 @@ test("the box list keeps a plan's date whole on a STEP reference's option", asyn
   });
 });
 
+// The design review of round 1, follow-up 1: a draft's Drafted field read "I drafted these notes for you on October 23,"
+// over "2026." at 390 px. Every date on a draft page stays whole.
+test("a draft page keeps each date whole", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    "/api/drafts/existing": { body: '{"draft":null}' },
+    "/api/drafts/draft-0001": { body: await recorded("drafts-review-notes-draft.json") },
+  });
+  await page.goto("/drafts/draft-0001");
+  await expect(page.locator("[data-draft-notes]")).toBeVisible();
+  await atEachWidth(page, async (width) => {
+    const { found, broken } = await brokenInside(page, "main", WHOLE.date);
+    expect(found, `${width} px: the draft's dates`).toBeGreaterThan(1);
+    expect(broken, `${width} px`).toEqual([]);
+  });
+});
+
 test("the Summary's source cells keep each date whole, in the fact tables and in the loan history's cards", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 900 });
   await mockApi(page, {

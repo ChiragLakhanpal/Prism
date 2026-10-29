@@ -329,13 +329,21 @@ test("in the work column at 1440 px the cost table's packages are cards, so no S
   for (const [head, box] of Object.entries(fields)) if (head !== "Country") expect(box.top, head).toBeGreaterThanOrEqual(fields.Country.bottom);
   // Ticket 59 (the 31 critique, round 3, follow-up 5): where a count has no room beside the zero line, the two counts
   // stack as two rows from one left edge under the line's label, never as a stair-step across it.
+  // The design review of round 1, follow-up 5: the line's label shares that edge, so the three lines read as one block.
+  // The lane lays out again from its width after a resize, so each width is read until the drawing has settled there.
   for (const width of [390, 320]) {
     await page.setViewportSize({ width, height: 900 });
-    const counts = await part.locator("[data-cost-drawing] [data-row-b]").evaluateAll((texts) =>
-      texts.map((text) => ({ x: Math.round(text.getBoundingClientRect().left), y: Math.round(text.getBoundingClientRect().top) })),
-    );
-    expect(counts.length, `${width} px`).toBe(2);
-    if (counts[0].y !== counts[1].y) expect(counts[0].x, `${width} px: one left edge`).toBe(counts[1].x);
+    const edges = () =>
+      part.locator("[data-cost-drawing]").evaluate((drawing) => {
+        const left = (selector: string) => [...drawing.querySelectorAll(selector)].map((text) => text.getBoundingClientRect());
+        const [label] = left("[data-line-label]");
+        const counts = left("[data-row-b]");
+        if (counts.length !== 2) return "not two counts";
+        // Side by side the counts sit beside the line, and the rule is about stacking only.
+        if (Math.round(counts[0].top) === Math.round(counts[1].top)) return "one left edge";
+        return new Set([label, ...counts].map((box) => Math.round(box.left))).size === 1 ? "one left edge" : "two left edges";
+      });
+    await expect.poll(edges, `${width} px`).toBe("one left edge");
   }
 });
 

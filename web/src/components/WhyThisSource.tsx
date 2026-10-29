@@ -19,11 +19,17 @@ import { joinWords, topicWords, type Why } from "../lib/trail";
 import { matchRoute } from "../routes";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
+import { MonoWords } from "./MonoWords";
+import { wholeDate } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
 import { TextLink } from "./TextLink";
 
 const words = copy.why;
 const mono = (text: string) => <span className="font-mono">{text}</span>;
+// A STEP reference in the sentence takes the scope chip's rule, so it moves to the next line whole rather than break
+// after a hyphen, and its dates never break inside themselves (ticket 59; the critique of round 1, follow-up 1).
+const reference = (text: string) => <MonoWords text={text} />;
+const day = (iso: string) => wholeDate(formatDate(iso));
 
 // The route's activity, when the page is an activity page: the contract "Why this source" names.
 export function routeStepRef(pathname: string): string | null {
@@ -40,7 +46,7 @@ export function useWhy(evidence: EvidenceEvent): Why | null {
 function timeSentence(why: Why) {
   const time = why.components.find((part) => part.part === "time");
   if (!time || Number(time.points) <= 0 || why.months === null || !why.document.date) return null;
-  const slots = { doc: why.document.short_name ?? why.document.type, doc_date: formatDate(why.document.date), months: String(why.months) };
+  const slots = { doc: why.document.short_name ?? why.document.type, doc_date: day(why.document.date), months: String(why.months) };
   if (why.direction === "same" || why.months === 0) return <Fill template={words.timeSame} slots={slots} />;
   if (why.months === 1) return <Fill template={why.direction === "before" ? words.timeBeforeOne : words.timeAfterOne} slots={slots} />;
   return <Fill template={why.direction === "before" ? words.timeBefore : words.timeAfter} slots={slots} />;
@@ -82,7 +88,7 @@ export function WhyThisSource({ why }: { why: Why }) {
       <p data-why-sentence className="max-w-prose text-small text-ink">
         <Fill
           template={words.link}
-          slots={{ record_noun: words.recordNoun[why.record_noun] ?? why.record_noun, ref: mono(ref), signed_date: why.signed_on ? formatDate(why.signed_on) : "" }}
+          slots={{ record_noun: words.recordNoun[why.record_noun] ?? why.record_noun, ref: reference(ref), signed_date: why.signed_on ? day(why.signed_on) : "" }}
         />{" "}
         {topics.length ? (
           <Fill template={words.topics} slots={{ topics: joinWords(topics, words.topicJoin), project_state: state }} />
