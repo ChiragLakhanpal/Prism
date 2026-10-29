@@ -1,4 +1,4 @@
-"""The batch model the lesson extractor sends documents to (docs/PLAN.md section 2: gpt-5.4-nano on Global
+"""The batch model the lesson extractor sends documents to (docs/PLAN.md section 2: the batch role's deployment on Global
 Batch for bulk extraction; config/models.toml's batch role names the deployment).
 
 A batch takes requests in the Batch API's line shape ({custom_id, method, url, body}) and answers each,

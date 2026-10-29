@@ -5,7 +5,7 @@
 import { BookOpen, Database, FilePenLine, FolderOpen, House, Package, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { FOLLOWING_HREF } from "../lib/following";
-import type { PageKey } from "../routes";
+import { DATA_HREF, type PageKey } from "../routes";
 
 export type Section = keyof typeof copy.nav.tabs;
 
@@ -31,14 +31,18 @@ export const HOME_ITEM = { href: "/", icon: House };
 export type SubItem = { pageKey: PageKey; label: string; href: string };
 export type SubItems = Partial<Record<Section, SubItem[]>>;
 
-// The sub-items each section has, in order (ticket 99 fills Projects'). A page for World Bank staff alone (staff) shows
-// only to them in their own view, as Following does; the views' hidden pages (config/roles.toml) are left out by the
-// sidebar. Adding a section's page is one entry here and its word in copy.nav.sub.
+// The sub-items each section has, in order (ticket 99 fills Projects', ticket 104 Data's). A page for World Bank staff
+// alone (staff) shows only to them in their own view, as Following does; the views' hidden pages (config/roles.toml)
+// are left out by the sidebar. Adding a section's page is one entry here and its word in copy.nav.sub.
 type SubEntry = { pageKey: keyof typeof copy.nav.sub & PageKey; href: string; staff?: boolean };
 const SUB_ENTRIES: Partial<Record<Section, SubEntry[]>> = {
   projects: [
     { pageKey: "following", href: FOLLOWING_HREF, staff: true },
     { pageKey: "projects", href: "/projects" },
+  ],
+  data: [
+    { pageKey: "data", href: DATA_HREF.data },
+    { pageKey: "dataSources", href: DATA_HREF.dataSources },
   ],
 };
 

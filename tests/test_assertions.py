@@ -16,6 +16,7 @@ import pytest
 
 from strata.knowledge import assertions, batch
 from strata.lakehouse.engine import DuckDBEngine
+from strata.config import load_models
 
 ROOT = Path(__file__).resolve().parents[1]
 TRUTH = {entry["id"]: entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
@@ -82,7 +83,7 @@ def test_the_icrs_account_of_the_mid_term_review_is_an_assertion_about_that_mome
     assert paragraph["evidence_id"] == "strata.gold.passage:31525018/v1/78"
     assert paragraph["pdf_page"] == TRUTH["icr-para-78"]["pdf_page"]
     assert paragraph["quote"] == value("icr-para-78")
-    assert paragraph["read_by"].startswith("gpt-5.4-nano")
+    assert paragraph["read_by"].startswith(load_models()["batch"].deployment)  # the batch role's deployment, one line of config/models.toml
 
 
 def test_the_pads_overall_risk_is_an_assertion_about_the_appraisal_in_the_pad_tier(engine):

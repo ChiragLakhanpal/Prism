@@ -1,6 +1,6 @@
 """The batch model: bulk extraction on Azure OpenAI's Global Batch (docs/PLAN.md section 2).
 
-config/models.toml's batch role names the deployment (gpt-5.4-nano). A batch is a list of requests, each
+config/models.toml's batch role names the deployment, a Global Batch one (the nano model has no batch lane in Azure, found October 28, 2026). A batch is a list of requests, each
 a chat completion with the rules in its instructions and the data in its message (so Prompt Shields does
 not read the rules as an attack; spec, "Security and privacy"), asked for one JSON object, and keyed by
 a custom_id. Assertions (strata.knowledge.assertions) use it now; proposed lessons (ticket 29) reuse it.

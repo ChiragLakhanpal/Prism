@@ -11,7 +11,7 @@ ICR Reviews and PPARs into strata.silver.passages:
     uv run --script ops/lessons/run_live.py --env-file .env
 
 It runs the same task as the gate (strata.knowledge.lessons.propose) with the live adapters: Azure OpenAI's
-Global Batch on the batch role's deployment (config/models.toml, gpt-5.4-nano), from AZURE_OPENAI_ENDPOINT and
+Global Batch on the batch role's deployment (config/models.toml's batch role), from AZURE_OPENAI_ENDPOINT and
 AZURE_OPENAI_API_KEY, and the quote check, the review queue and the lessons verified measure on the warehouse.
 A batch takes up to a day, so the first run sends the documents and a later run collects the answers; run it
 again until it reports no batch still running. Once proposals are queued, it runs the review-proposed-lessons

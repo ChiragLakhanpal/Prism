@@ -1,7 +1,7 @@
 """Proposed lessons at seam 1, the lakehouse run over the fixture (ticket 29).
 
 The nightly job's propose_lessons task sends each current ICR, ICR Review and PPAR of the slice to the
-batch model (gpt-5.4-nano on Global Batch; offline, its recorded answers in
+batch model (the batch role's deployment on Global Batch; offline, its recorded answers in
 tests/fixtures/azure/lesson_batch.json), reads back the lessons it proposes, and keeps a proposal only
 when its quote is word for word on the page it cites. The check rejects and never repairs. An ICR
 Review's restatement of an ICR's lesson attaches as a second piece of evidence, and each passing

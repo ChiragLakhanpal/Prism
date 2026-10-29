@@ -50,12 +50,12 @@ appinsights_daily_cap_gb = 0.15
 [caps.deployments.agent]
 deployment_type = "Global Standard"
 sku = "GlobalStandard"
-tokens_per_minute = 100000
+tokens_per_minute = 150000  # raised by the owner on October 28, 2026; the agent role's deployment also serves the judge
 
 [caps.deployments.draft]
 deployment_type = "Global Standard"
 sku = "GlobalStandard"
-tokens_per_minute = 30000
+tokens_per_minute = 150000  # the draft role shares the agent role's deployment since October 27, 2026
 
 [caps.deployments.batch]
 deployment_type = "Global Batch"

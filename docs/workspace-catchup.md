@@ -4273,3 +4273,26 @@ It worked (no loss) if the draft's `removed` list holds no `id_not_returned` ent
 Parked on October 28, 2026 with ticket 62 (merge fc0532ea). This needs an App whose compute the workspace stopped, so it runs only when the App is found stopped; the strata-75 or strata-58 session folds it into step 1 then. Do not stop the running App to test it without the owner's go-ahead.
 
 It worked if step 1's deploy says it is starting the App, waits, and goes on to "Strata is running at <url>" with exit 0, where before this ticket it exited 2 on the stop message. Record what it printed here under ticket 62.
+
+## Ticket 104, step 1 of 1: redeploy the App, so Data's pages are sidebar items and Data readiness opens on its finding
+
+Parked on October 28, 2026 with ticket 104, which merged into build/strata as 3f818d42 (branch `strata/104-data-readiness-by-the-page-area-with-its-pages` at 494104e4). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs this one from a snapshot that includes this merge (3f818d42, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run `npm ci --prefix web` in the snapshot, or link the main checkout's `web/node_modules` into it, before the deploy. One deploy from a commit at or after 3f818d42 also serves ticket 100's step 1 and ticket 62's step 1, if they have not run yet.
+
+What ticket 104 changes on the App: Data readiness and Sources and licenses are the sidebar's items under Data, and Data's sub-tab row is gone. The Data pages lay out by the page area, so beside the drawer at 1024 px their tables are cards. Data readiness opens on its headline in the large light finding type, "What you can ask" and "Sources" are white panels, and the last three sections are closed rows that open in place. Only the web app changed, so the bundle needs no deploy.
+
+The builder's step, in the builder's words:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if:
+
+- It exits 0 with the running line, "Strata is running at https://...".
+- The App's `/data` shows "Data readiness" and "Sources and licenses" under Data in the open sidebar.
+- The headline is in the large light finding type, and "What you can ask" and "Sources" are white panels.
+- The three closed rows show: "Show the documents", the parser row's sentence, and "Show the fixes".
+
+Record the exit code, the App's address and what `/data` showed here under ticket 104. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
+
+## Ticket 49, step 1 of 3 ran in full again, and ticket 118's three passes in a row: the App's secret renewed
+
+**Ran on October 28, 2026 (orchestrator), 23:24 to 23:28 UTC, from a snapshot of 7f42374f (the App's commit).** The Home step's failure of 20:30 to 20:37 UTC was the App service principal's OAuth secret: the principal (app-1vvvna strata, id 145252624286955) had one active secret, made at 17:06 UTC that day, and the environment file still held an older one, so the token request answered 401 invalid_client. The owner generated a new secret in the workspace's Identity and access page and put it in the environment file; a client-credentials token request then answered 200 (checked with a probe that prints only the status). The demo-ready command then exited 0: the App (health in 1 second), Genie (16 seconds once warm), the smoke question (six checks, citing strata.gold.passage:31525018/v1/54), the P156634 recheck, Home (the examples seeded, the window checked) and the workspace listing all passed: "Strata is ready for the demo." With the passes of 20:33 and 20:35 UTC (the block "Ticket 118, step 1 of 1 ran"), the smoke question has passed three runs in a row, so ticket 118's criterion 4 holds.

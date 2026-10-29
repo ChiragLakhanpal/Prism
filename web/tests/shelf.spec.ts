@@ -48,6 +48,11 @@ async function openData(page: Page, readiness: Answer, { path = "/data", width =
 
 const json = async (name: string) => JSON.parse(await recorded(name));
 const shelf = (page: Page) => page.locator("[data-readiness-table=shelf]");
+// The section starts as a closed row (ticket 104); its Show button opens it in place.
+async function openShelf(page: Page) {
+  await shelf(page).getByRole("button", { name: "Show the documents" }).click();
+  await expect(shelf(page)).toHaveAttribute("data-zone", "panel");
+}
 const visible = (page: Page, width: number) => shelf(page).locator(`[data-table-view=${width < 768 ? "cards" : "table"}]`);
 const row = (page: Page, width: number, key: string) => visible(page, width).locator(width < 768 ? `[data-card="${key}"]` : `[data-row="${key}"]`);
 const TITLE = "The hardest documents I read";
@@ -59,10 +64,13 @@ for (const width of [1440, 1024, 390]) {
     await openData(page, { file: "data-readiness.json" }, { width });
     await expect(shelf(page)).toBeVisible();
 
-    // A region named by its title, in the slice file's order, between the Sources table and the fixes.
+    // A region named by its title, between the Sources table and the fixes: a closed row with its one sentence, which
+    // opens in place to the rows in the slice file's order (ticket 104).
     await expect(page.getByRole("region", { name: TITLE }).getByRole("heading", { level: 2 })).toHaveText(TITLE);
-    await expect(shelf(page).locator("h2 + p")).toHaveText(
-      "I use these documents as a stress test for my reading. Each row says what makes the document hard, what I recovered, and the page where you can compare the two.",
+    await expect(shelf(page).locator("[data-section-summary]")).toHaveText("I use these documents as a stress test for my reading.");
+    await openShelf(page);
+    await expect(shelf(page).locator("[data-table-lines]")).toHaveText(
+      "Each row says what makes the document hard, what I recovered, and the page where you can compare the two.",
     );
     const top = async (selector: string) => (await page.locator(selector).boundingBox())!.y;
     expect(await top("[data-readiness-table=sources]")).toBeLessThan(await top("[data-readiness-table=shelf]"));
@@ -134,10 +142,6 @@ test("a Gap is the one row that stands out, and What holds it back links down to
   await openData(page, { file: "data-readiness-shelf-gap.json" });
   await expect(shelf(page)).toBeVisible();
 
-  await expect(row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome']")).toContainText("0 of 8rated risks recoveredGap");
-  await expect(row(page, 1440, "longest_pad").locator("[data-cell='longest_pad:outcome']")).toContainText("Partial");
-  await expect(visible(page, 1440).getByText(/^(Partial|Gap)$/)).toHaveCount(2);
-
   // The document search reads the PAD's source, so its cell gains one sentence after its top gap.
   const holds = page.locator("[data-readiness-table=kinds] [data-table-view=table] [data-cell='document_search:holds'] p");
   await expect(holds.last()).toHaveText(
@@ -147,10 +151,24 @@ test("a Gap is the one row that stands out, and What holds it back links down to
   await expect(page.locator("[data-cell='plan_check:holds']").first()).not.toContainText("hardest documents");
   await expect(page.locator("[data-headline]")).not.toContainText("hardest documents");
 
+  // The link opens the closed row in place and moves focus to its heading (DESIGN.md section 5, Task zone: a link to a
+  // zone's id opens it; ticket 104).
+  await expect(shelf(page)).toHaveAttribute("data-zone", "row");
   await holds.last().getByRole("link", { name: "the hardest documents I read" }).click();
   await expect(page.getByRole("heading", { level: 2, name: TITLE })).toBeFocused();
   await expect(page).toHaveURL(/\/data#hardest-documents$/);
+  await expect(shelf(page)).toHaveAttribute("data-zone", "panel");
+  await expect(shelf(page).getByRole("button", { name: "Hide the documents" })).toHaveAttribute("aria-expanded", "true");
+
+  await expect(row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome']")).toContainText("0 of 8rated risks recoveredGap");
+  await expect(row(page, 1440, "longest_pad").locator("[data-cell='longest_pad:outcome']")).toContainText("Partial");
+  await expect(visible(page, 1440).getByText(/^(Partial|Gap)$/)).toHaveCount(2);
   expect(await violations(page)).toEqual([]);
+
+  // An address that names the section opens it on arrival, with focus on its heading once the measures show it.
+  await page.reload();
+  await expect(shelf(page)).toHaveAttribute("data-zone", "panel");
+  await expect(page.getByRole("heading", { level: 2, name: TITLE })).toBeFocused();
 });
 
 test("with two hard documents unread, the sentence counts them and names one", async ({ page }) => {
@@ -164,6 +182,7 @@ test("with two hard documents unread, the sentence counts them and names one", a
 test("a row with nothing to show spans one note across its last three cells, with no badge and no link", async ({ page }) => {
   await openData(page, { file: "data-readiness-shelf-abstentions.json" });
   await expect(shelf(page)).toBeVisible();
+  await openShelf(page);
   const span = (key: string) => visible(page, 1440).locator(`[data-cell='${key}:span']`);
 
   // No hand count: the number alone, and what it lacks.
@@ -194,6 +213,7 @@ test("a row with nothing to show spans one note across its last three cells, wit
 
 test("before the first document run every row says it is not read yet, and the section keeps its shape", async ({ page }) => {
   await openData(page, { file: "data-readiness-shelf-empty.json" });
+  await openShelf(page);
 
   await expect(visible(page, 1440).locator("[data-row]")).toHaveCount(5);
   await expect(visible(page, 1440).locator("td[colspan='3']")).toHaveText(Array(5).fill("Not read yet. The next document run reads it."));
@@ -211,20 +231,24 @@ test("a filtered view shows only the rows on its sources, and leaves the section
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await openData(page, { file: "data-readiness-plan-check.json" }, { path: "/data?sources=documents,projects&from=check_plan" });
+  await openShelf(page);
   await expect(visible(page, 1440).locator("[data-row]")).toHaveCount(1);
   await expect(row(page, 1440, "long_plan").locator("th")).toContainText("Procurement Plan");
 });
 
-test("while the measures load, the section shows its title and one skeleton row for each document the slice file names", async ({ page }) => {
+test("while the measures load, the section shows its title and sentence, and opened, one skeleton row for each document the slice file names", async ({ page }) => {
   await openData(page, { pending: true });
 
   await expect(page.getByRole("heading", { level: 2, name: TITLE })).toBeVisible();
+  await expect(shelf(page).locator("[data-section-summary]")).toHaveText("I use these documents as a stress test for my reading.");
+  await openShelf(page);
   await expect(shelf(page).locator("[data-table-view=table] tbody tr[aria-hidden=true]")).toHaveCount(5);
   await expect(page.locator("[data-readiness=loading]")).toHaveAttribute("aria-busy", "true");
 });
 
 test("an outcome's number says what it counts and opens a window with what it checks, the parser and the table", async ({ page }) => {
   await openData(page, { file: "data-readiness.json" });
+  await openShelf(page);
   const number = row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome'] [data-num]");
 
   await number.focus();
@@ -250,6 +274,7 @@ test("an outcome's number says what it counts and opens a window with what it ch
 
 test("with a hand count, the outcome's window says what it was counted against", async ({ page }) => {
   await openData(page, { file: "data-readiness-shelf-gap.json" });
+  await openShelf(page);
   await row(page, 1440, "p130164_pad").locator("[data-cell='p130164_pad:outcome'] [data-num]").click();
 
   await expect(page.getByRole("dialog", { name: "Outcome" })).toContainText(
@@ -298,6 +323,7 @@ test("the project reports' row counts the projects its documents belong to, then
 for (const width of [768, 1024]) {
   test(`at ${width} px the number columns' heads and numbers line up on the right, and no pair breaks`, async ({ page }) => {
     await openData(page, { file: "data-readiness-shelf-gap.json" }, { width });
+    await openShelf(page);
     const table = visible(page, width);
     await expect(table).toBeVisible();
     const columns = ["parser", "outcome"];
@@ -337,6 +363,7 @@ test("every number on the shelf opens its own window, counted in the shelf's tab
     await page.unrouteAll({ behavior: "ignoreErrors" });
     await openData(page, { file });
     await expect(shelf(page)).toBeVisible();
+    await openShelf(page);
     for (const entry of answer.stress_shelf) {
       for (const [field, title] of Object.entries(titles)) {
         const index = entry[field];
@@ -356,6 +383,7 @@ test("every number on the shelf opens its own window, counted in the shelf's tab
 
 test("in a card, the Page field's label is for screen readers, so the link stands on its own line", async ({ page }) => {
   await openData(page, { file: "data-readiness.json" }, { width: 390 });
+  await openShelf(page);
   const card = row(page, 390, "p130164_pad");
 
   await expect(card.locator("dt.clip-visually")).toHaveText("Page where the hard part starts");
@@ -364,6 +392,7 @@ test("in a card, the Page field's label is for screen readers, so the link stand
 
 test("at 320 px the hardest documents reflow as cards with no sideways scroll", async ({ page }) => {
   await openData(page, { file: "data-readiness-shelf-gap.json" }, { width: 320 });
+  await openShelf(page);
   await expect(shelf(page).locator("[data-table-view=cards] [data-card]")).toHaveCount(5);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await expect(row(page, 320, "p130164_pad").getByRole("heading", { level: 3 })).toHaveText("Project Appraisal Document");

@@ -17,8 +17,8 @@ deployment = "gpt-5.4"
 purpose = "Drafting, hard questions and the judge that checks each sentence follows from its passages."
 
 [roles.batch]
-deployment = "gpt-5.4-nano"
-purpose = "Bulk extraction on Global Batch, such as proposing lessons."
+deployment = "gpt-5.4-mini-batch"
+purpose = "Bulk extraction on Global Batch, such as proposing lessons. A Global Batch deployment of gpt-5.4-mini since October 28, 2026: gpt-5.4-nano has no batch lane in Azure, so the Batch API refused the nightly's lesson and disagreement passes."
 
 # The embedding role also names the vector size it asks for. load_models() refuses the file without it.
 [roles.embed]

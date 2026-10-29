@@ -1,7 +1,7 @@
 {
  "about": "Two lines of the output file of Azure OpenAI's Batch API for the lesson extractor (src/strata/knowledge/lessons/propose.py), one for P130164's ICR of October 10, 2019 and one for its ICR Review of May 4, 2023, each a chat completion from the batch role's deployment. They are written by hand in the shape the Batch API documents, because the gate's machine has no key, and their token counts are zero because no model ran. The ICR's answer proposes three lessons: paragraph 54's and paragraph 55's, whose quotes are on PDF page 23, and one from paragraph 78 that cites page 23 though its words are on page 27, so the quote check rejects it. The ICR Review's answer proposes IEG's lesson in section 12 and restates ICR paragraph 54 in section 10.b. Every other document the run sends gets no recorded answer and fails with not_recorded. Replace it with a recorded answer when the live run first runs (docs/workspace-catchup.md).",
  "recorded": false,
- "model": "gpt-5.4-nano",
+ "model": "gpt-5.4-mini-batch",
  "outputs": [
   {
    "id": "batch_req_not-a-real-id-1",
@@ -13,7 +13,7 @@
      "id": "chatcmpl-not-a-real-id-1",
      "object": "chat.completion",
      "created": 1792750000,
-     "model": "gpt-5.4-nano",
+     "model": "gpt-5.4-mini-batch",
      "choices": [
       {
        "index": 0,
@@ -43,7 +43,7 @@
      "id": "chatcmpl-not-a-real-id-2",
      "object": "chat.completion",
      "created": 1792750000,
-     "model": "gpt-5.4-nano",
+     "model": "gpt-5.4-mini-batch",
      "choices": [
       {
        "index": 0,
