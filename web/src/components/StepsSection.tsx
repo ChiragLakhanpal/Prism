@@ -41,8 +41,8 @@ import {
   type StepsResult,
 } from "../lib/steps";
 import { useStore } from "../lib/store";
-import { dataReadinessHref } from "../routes";
-import { familyStep, stepFamily, type StepEntry, type StepFamily } from "../steps";
+import { dataReadinessHref, fill } from "../routes";
+import { familyStep, stepFamilies, stepFamily, type StepEntry, type StepFamily } from "../steps";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CollapsedSection } from "./CollapsedSection";
@@ -54,6 +54,7 @@ import { Source } from "./Source";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 import { FootStrip } from "./FootStrip";
+import { SkeletonWords } from "./Skeleton";
 
 const words = copy.stepDates;
 const SLOW_MS = 400;
@@ -103,6 +104,22 @@ function dayCaption(point: StepPoint, previous: StepEntry | null): ReactNode {
 }
 
 // ── The summary line ─────────────────────────────────────────────────────
+
+// While the steps load, the summary holds the lines of its most common answer, the demo package's: goods, works and
+// non-consulting services' six steps, none dated for too few comparable packages. The words are the copy file's, held
+// as skeleton words, unseen and unheard, so at 390 and 320 px the summary keeps the four lines it will take and the
+// sections under it stay put (ticket 59; the design review of round 3, follow-up 1). A package whose summary is longer
+// or shorter moves the sections under it when the steps arrive.
+function SummaryHeld() {
+  const steps = stepFamilies.goods.steps;
+  const slots = { first: steps[0].phrase, last: steps[steps.length - 1].phrase };
+  return (
+    <span aria-hidden="true" data-steps-summary-held>
+      <SkeletonWords text={fill(words.summarySteps(formatCount(steps.length, { capital: true })), slots)} />{" "}
+      <SkeletonWords text={words.summaryPartialAll(formatCount(steps.length))} />
+    </span>
+  );
+}
 
 function Summary({ dates, packageKey, onOpen, from }: { dates: StepDates; packageKey: string; onOpen: Opener; from: ReactNode }) {
   const family = stepFamily(dates.family);
@@ -995,6 +1012,7 @@ export function StepsView({
       headingRef={headingRef}
       sectionKey="steps"
       foot={foot}
+      loading={<SummaryHeld />}
       live={
         <p className="sr-only" role="status" aria-live="polite">
           {announce}

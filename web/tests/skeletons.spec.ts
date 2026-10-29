@@ -131,6 +131,25 @@ test("the steps tracker's skeleton holds the tracker's place, its foot strip too
   expect(jumps(shifts)).toEqual([]);
 });
 
+// The design review of round 3, follow-up 1, and the critique's follow-up 2: section 2's summary was two bars while the
+// steps loaded, but four lines once drawn at 390 and 320 px, so sections 3 to 5 dropped 48 to 68 px. It now holds the
+// demo package's summary as skeleton words, so its end stays within 24 px at every width.
+test("while the steps load, section 2's summary holds the demo package's lines", async ({ page }) => {
+  await mockApi(page, await packageAnswers());
+  const summary = "[data-section=steps] [data-section-summary]";
+  const shifts = await skeletonShift(page, {
+    path: "/packages/KE-NWWDA-541055-CW-RFB",
+    hold: `**${PACKAGE}/steps`,
+    answer: { body: await recorded("steps-ke-nwwda-541055.json") },
+    skeleton: summary,
+    drawn: summary,
+    loaded: "[data-section=steps][data-collapsed-section=collapsed]",
+    prepare: (page) => expect(page.locator(`${summary} [data-steps-summary-held]`)).toBeVisible(),
+    widths: [320, 390, 768, 1024, 1440],
+  });
+  expect(jumps(shifts, { top: 24, end: 24 })).toEqual([]);
+});
+
 test("Advertised again's skeleton holds the block's place under section 1", async ({ page }) => {
   await mockApi(page, await packageAnswers());
   const shifts = await skeletonShift(page, {
