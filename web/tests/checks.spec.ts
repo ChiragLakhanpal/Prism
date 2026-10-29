@@ -164,23 +164,29 @@ test("an answer whose kept sentence cites nothing says there was nothing to matc
     "None of the sentences stated a number or a date.",
     "None of the sentences cited a source.",
     "None of the sentences quoted a source.",
-    "A model judged one sentence against what a tool told me it could not answer, and 1 of 1 said no more than that.",
+    // The check line's own words, in one clause (the 58 design review, follow-up 14).
+    "A model judged one sentence, and 1 of 1 said no more than my tools reported.",
     "None of the sentences gave advice.",
     "No sentence rested on a report that another report disagrees with.",
   ]);
   expect(await axe(page)).toEqual([]);
+  // No sentence stated a number, so the window says nothing about how a number passes (the 58 critique, follow-up 8).
+  await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+  const window = page.getByRole("dialog", { name: "How I checked this answer" });
+  await expect(window.locator("[data-how-done]")).toBeVisible();
+  await expect(window.locator("[data-how-rounding]")).toHaveCount(0);
 });
 
 test("a sentence that cites nothing and says more than a tool reported is removed with its own reason", async ({ page }) => {
   await answered(page, "ask-p156634-uncited-blame.sse");
 
   await expect(panel(page).locator("[data-removed-box]")).toHaveText(
-    "I removed one sentence. It said the agency was late in publishing its plan, and it cited no source and said more than my tools reported.",
+    "I removed one sentence. It said the agency was late in publishing its plan, and it went beyond what my tools reported without citing a source.",
   );
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
   await expect(verifier.locator("[data-step-items] li").nth(3)).toHaveText(
-    "A model judged two sentences against what a tool told me it could not answer, and 1 of 2 said no more than that.",
+    "A model judged two sentences, and 1 of 2 said no more than my tools reported.",
   );
 });
 
@@ -193,6 +199,18 @@ test("check 2's step counts the sentences it removed for citing no source", asyn
   await expect(verifier.locator("[data-step-items] li").nth(1)).toHaveText(
     "2 of 2 sources I cited came back for this question. One sentence cited no source.",
   );
+});
+
+// The 58 review, P9: when no sentence cited a source and check 2 removed some for citing none, the step says it once.
+// No recording holds this, so the uncited summary's counts say no kept sentence cited anything.
+test("check 2's step says once that the sentences cited no source when none cited any", async ({ page }) => {
+  await answeredWith(page, "ask-p130164-uncited-summary.sse", (event, data) => {
+    if (event === "checks") data.sources = { total: 0, returned: 0, uncited: 2 };
+  });
+
+  await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
+  const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
+  await expect(verifier.locator("[data-step-items] li").nth(1)).toHaveText("Two sentences cited no source.");
 });
 
 // A mixed answer, in which some judged sentences cite a source and one does not, keeps today's words (ticket 58). No

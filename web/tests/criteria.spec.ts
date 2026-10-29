@@ -143,7 +143,10 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
   // Ticket 58: with a comparison some numbers match your own words, and the lesson cards below leave their gap too
   // (the 31 review, round 3, F3; the 31 design review, round 3, P1).
   await expect(line.locator("[data-check-part=checked]")).toContainText("numbers match records or your words");
-  if (result.lessons?.groups?.length) await expect(line.locator("[data-check-part=not-checked]")).toContainText("whether these lessons apply here");
+  // The lessons come from the package run the page opened with, not from the comparison (the 58 review, B1).
+  const run = events(await recorded("criteria-run-ke-cwsb-224323.sse")).find((event) => event.type === "package_run")!.data;
+  expect(run.lessons.groups.length).toBeGreaterThan(0);
+  await expect(line.locator("[data-check-part=not-checked]")).toContainText("whether these lessons apply here");
   // The part's h3 is its only heading: the table's title sentence under it is body text, not a second title.
   const part = section(page).locator("[data-criteria-part=items]");
   const sizes = await part.evaluate((element) => {
@@ -426,6 +429,9 @@ test.describe("on a touch screen", () => {
       await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
       const drawer = page.getByRole("dialog");
       await expect(drawer.getByRole("heading", { level: 2 })).toContainText(reference!);
+      // The plan row is an Activity, as every drawer names it (the 58 design review, follow-up 11).
+      await expect(drawer.locator("#cost-plan-row")).toContainText(/^Activity /);
+      await expect(drawer.locator("#cost-plan-row")).toContainText(reference!);
       await page.keyboard.press("Escape");
       await expect(drawer).toHaveCount(0);
     }

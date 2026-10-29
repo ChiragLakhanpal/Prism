@@ -959,7 +959,9 @@ test("the drawer's head shows no eyebrow or middle dot on any of its views on th
   const captions = await page.locator("[data-drawer-header] [data-drawer-caption]").allTextContents();
   expect(captions.length).toBeGreaterThan(5);
   expect(captions.filter((caption) => caption.includes("·"))).toEqual([]);
-  expect(captions).toContain("An evaluation that explains why things went as they did");
+  // A report is named by its type, so an appraisal document is never called an evaluation (the 58 design review, B2).
+  expect(captions).toContain("The completion report, written after the project closed");
+  expect(captions.filter((caption) => caption.includes("evaluation that explains"))).toEqual([]);
 });
 
 // Ticket 14's evidence drawer, on the gallery's Evidence page. The record is KE-NWWDA-229129-CW-RFB
@@ -1016,7 +1018,8 @@ test("a record's evidence card ends with its drawer's source line, and an ISR se
   );
   await expect(page.locator("[data-card-sample=section] mark")).toHaveText("Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.");
   const section = page.locator("[data-state-section=section] [role=dialog]");
-  await expect(section.getByRole("heading", { level: 2 })).toHaveText("ISR, Rajasthan Road Sector Modernization, section Project Development Objective Indicators");
+  // A section with a name is named alone, with no "section" before it (the 58 design review, follow-up 7).
+  await expect(section.getByRole("heading", { level: 2 })).toHaveText("ISR, Rajasthan Road Sector Modernization, Project Development Objective Indicators");
   await expect(section).toContainText("The whole section, word for word.");
   await expect(section.locator("[data-meta-line]")).not.toContainText("¶");
   // The switcher's tabs name two sections, and a long tab wraps inside its pill.

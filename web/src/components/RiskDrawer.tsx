@@ -143,7 +143,12 @@ export function RiskReportsView({ evidence, focusEntry = null, onOpen }: { evide
         <p className="mt-1 border-l-2 border-line-strong pl-3 text-small font-semibold text-ink-heading">{row.risk_label}</p>
       </div>
       <p className="text-small text-ink">
-        <Fill template={words.reportsFinding} slots={{ k: <Num value={row.k} options={{ compact: false }} />, m: <Num value={row.m} options={{ compact: false }} />, risk: row.risk_label }} />
+        {row.m === 1 ? (
+          // One report read: no "1 of 1 completion reports" (the 58 design review, follow-up 5).
+          <Fill template={words.reportsFindingOne} slots={{ risk: row.risk_label }} />
+        ) : (
+          <Fill template={words.reportsFinding} slots={{ k: <Num value={row.k} options={{ compact: false }} />, m: <Num value={row.m} options={{ compact: false }} />, risk: row.risk_label }} />
+        )}
       </p>
       <p className="text-caption text-ink-muted">{words.reportsNote}</p>
       <ul className="flex flex-col divide-y divide-line border-y border-line">

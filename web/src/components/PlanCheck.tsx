@@ -707,7 +707,7 @@ export function checkPill(result: CheckedPlan): ReactNode {
   const { activities, checked } = result.counts;
   return (
     <CheckPill>
-      {checked === activities ? words.pill(activities, whole(activities)) : words.pillPartial(whole(checked), whole(activities))}
+      {checked === activities ? words.pill(activities, formatCount(activities, { capital: true })) : words.pillPartial(whole(checked), whole(activities))}
     </CheckPill>
   );
 }
@@ -826,8 +826,8 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   const rowProps = (row: Activity) => ({ row, result, mark: markOf(row), change: changed[row.activity_reference_no], onOpen: openRecords });
 
   // One to nine in words, "both" for two and a full stop, as every count line (ticket 58).
-  const countLine =
-    open || unmarked === 0 ? copy.table.showingAll(activities, formatCount(activities), words.noun) : words.countLine(whole(marked), whole(activities));
+  const shownRows = open || unmarked === 0 ? activities : marked;
+  const countLine = copy.table.showingOf(shownRows, activities, whole(shownRows), whole(activities), formatCount(activities), words.countNoun);
 
   return (
     <section aria-labelledby={findingId} data-plan-check>

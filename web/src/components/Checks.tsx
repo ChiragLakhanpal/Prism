@@ -201,8 +201,9 @@ export function sixChecks(checks: ChecksEvent, { draft = false }: { draft?: bool
         : [six.notJudged(judge.proven, formatCount(judge.proven))];
   // Step 2's sentence, then the sentences it removed for citing nothing, when it removed any (ticket 58).
   const uncited = checks.sources.uncited ?? 0;
+  // When no sentence cited a source and some cited none, the count of those says it alone (the 58 review, P9).
   const second = [
-    (draft ? six.sourcesDraft : six.sources)(checks.sources.returned, checks.sources.total),
+    ...(checks.sources.total === 0 && uncited > 0 ? [] : [(draft ? six.sourcesDraft : six.sources)(checks.sources.returned, checks.sources.total)]),
     ...(uncited > 0 ? [six.uncited(uncited, formatCount(uncited, { capital: true }))] : []),
   ];
   const disputed = checks.disagreements?.disputed ?? 0;
@@ -288,7 +289,8 @@ export function HowChecked({ checks, id }: { checks: ChecksEvent; id: CheckedId 
                   <li key={index}>{item}</li>
                 ))}
               </ol>
-              <p data-how-rounding>{words.rounding}</p>
+              {/* Only when check 1 counted a number, so an answer that stated none is not told how a number passes. */}
+              {checks.numbers.total > 0 && <p data-how-rounding>{words.rounding}</p>}
               <p data-how-id className="text-caption text-ink-muted">
                 {"draft" in id ? (
                   id.run ? (

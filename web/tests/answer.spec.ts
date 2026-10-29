@@ -176,8 +176,9 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
   await marker(page, 1).click();
 
   await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
-  // One caption under the title says what kind of source it is, and a hairline closes the head at rest (ticket 58).
-  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("An evaluation that explains why things went as they did");
+  // One caption under the title says what kind of source it is, by the report's type, and a hairline closes the head
+  // at rest (ticket 58; the 58 design review, B2).
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
   expect(await drawer(page).locator("[data-drawer-header]").evaluate((head) => getComputedStyle(head).borderBottomColor)).not.toBe("rgba(0, 0, 0, 0)");
   await expect(drawer(page)).toHaveAttribute("aria-modal", "false");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
@@ -257,8 +258,9 @@ test("reloading with the evidence parameter reopens the drawer at that source, w
   await open(page, { path: `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}` });
 
   await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
-  // One caption under the title says what kind of source it is, and a hairline closes the head at rest (ticket 58).
-  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("An evaluation that explains why things went as they did");
+  // One caption under the title says what kind of source it is, by the report's type, and a hairline closes the head
+  // at rest (ticket 58; the 58 design review, B2).
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
   expect(await drawer(page).locator("[data-drawer-header]").evaluate((head) => getComputedStyle(head).borderBottomColor)).not.toBe("rgba(0, 0, 0, 0)");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
   await expect(drawer(page).locator("[data-claim]")).toHaveCount(0);

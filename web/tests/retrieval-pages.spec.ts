@@ -127,7 +127,7 @@ test("Passage reports lists the groups waiting, oldest first, and the decisions 
   await expect(row.getByRole("heading", { level: 3 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 55");
   await expect(page.getByRole("heading", { name: "Decided in the last 90 days" })).toBeVisible();
   await expect(page.locator("[data-reports-decided]")).toContainText("Ranked lower");
-  await expect(page.locator("[data-reports-decided]")).toContainText("Showing one decision, newest first.");
+  await expect(page.locator("[data-reports-decided]")).toContainText("Showing the one decision, newest first.");
   expect(await axe(page)).toEqual([]);
 });
 

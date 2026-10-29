@@ -330,12 +330,14 @@ test("the project reports' row counts the projects its documents belong to, then
   );
   await page.keyboard.press("Escape");
   await expect(page.locator("[data-readiness-table=sources] [data-row=reports] th")).toContainText(
-    "Water and transport projects in Kenya, Bangladesh, Vietnam and Pakistan, fiscal 2012 to 2025, and the projects of the hardest documents below",
+    "Water and transport projects in Kenya, Bangladesh, Vietnam and Pakistan, fiscal 2012 to 2025, and the projects of the hardest documents below.",
   );
   // Which documents, on a line of their own under which projects, so "with their" has one place to belong (ticket 58).
   const covers = page.locator("[data-readiness-table=sources] [data-row=reports] th [data-covers]");
-  await expect(covers).toHaveText("Appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports");
-  expect(await covers.evaluate((element) => getComputedStyle(element).display)).toBe("block");
+  // Each line ends with a full stop and the second sits 4 px under the first, so the two never read as one phrase (the
+  // 58 critique, Data readiness).
+  await expect(covers).toHaveText("Appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports.");
+  expect(await covers.evaluate((element) => [getComputedStyle(element).display, getComputedStyle(element).marginTop])).toEqual(["block", "4px"]);
   const [text, parser] = reports.cells.read_well.routes.map((route: { row: number }) => answer.rows[route.row]);
   await cell("read_well").locator("[data-num]").click();
   const window = page.getByRole("dialog", { name: "Read well" });
@@ -343,7 +345,7 @@ test("the project reports' row counts the projects its documents belong to, then
   await expect(window).toContainText(`Layout parser${parser.count} of ${parser.denominator} pages read well`);
   // Ticket 58: its definition says what counts on each route, and no right-aligned paragraph row says it again.
   await expect(window).toContainText(
-    "How many report pages I read. A page of published text counts once I have placed its text on its PDF page. A page I sent to the layout parser counts when it gave back a table or text. Whether I found a report's paragraph numbers is a separate check, shown under What you can ask.",
+    "How many report pages I read well, out of all I tried. A page of published text counts once I have placed its text on its PDF page. A page I sent to the layout parser counts when it gave back a table or text. Whether I found a report's paragraph numbers is a separate check, shown under What you can ask.",
   );
   await expect(window).not.toContainText("What counts");
   await expect(window).not.toContainText("without losing their paragraph numbers");
@@ -441,6 +443,8 @@ const KINDS = [
     id: "strata.gold.passage:18381488/v1/23",
     file: "evidence-pad-p130164-scanned.json",
     heading: "PAD, Rajasthan Road Sector Modernization, paragraph 23",
+    // By the report's type, so an appraisal is never called an evaluation (the 58 design review, B2).
+    caption: "The appraisal document, written before the project began",
     note: "The whole paragraph, as the layout parser read it from a scanned page. The PDF page has the exact words.",
     link: /^Open at page 20$/,
   },
@@ -448,7 +452,9 @@ const KINDS = [
     name: "a row of a table",
     id: "strata.gold.passage:18381488/v1/table65.2",
     file: "evidence-pad-p130164-risk-row.json",
-    heading: "Rajasthan Road Sector Modernization, Annex 4 - Operational Risk Assessment Framework (ORAF)",
+    // The report's short name first, as a paragraph's title has it (the 58 critique, follow-up 16).
+    heading: "PAD, Rajasthan Road Sector Modernization, Annex 4 - Operational Risk Assessment Framework (ORAF)",
+    caption: "The appraisal document, written before the project began",
     note: "This row as the layout parser read it from the table. The PDF page has the original.",
     link: /^Open at page 65$/,
   },
@@ -456,7 +462,8 @@ const KINDS = [
     name: "a table's summary",
     id: "strata.gold.passage:18381488/v1/table65",
     file: "evidence-pad-p130164-risk-summary.json",
-    heading: "Rajasthan Road Sector Modernization, summary of Annex 4 - Operational Risk Assessment Framework (ORAF)",
+    heading: "PAD, Rajasthan Road Sector Modernization, summary of Annex 4 - Operational Risk Assessment Framework (ORAF)",
+    caption: "The appraisal document, written before the project began",
     // The meta line and the summary's first words give the table's pages, so the note does not (ticket 58).
     note: "I wrote this summary of the table. It is not the document's own words, and I never use it to back a number.",
     link: /^Open at page 65$/,
@@ -466,6 +473,8 @@ const KINDS = [
     id: "strata.gold.passage:OP00118817/v1/s5",
     file: "evidence-notice-op00118817-qualifications.json",
     heading: "Notice OP00118817",
+    // The drawer shows the notice without its contacts, so the caption claims no more (the 58 review, P3).
+    caption: "A procurement notice the World Bank published",
     note: "The whole section, word for word, without contact details.",
     link: /^Open this notice on the World Bank's site/,
   },
@@ -477,6 +486,7 @@ for (const kind of KINDS) {
       await openAnswerPage(page, { path: `/projects/P130164?evidence=${encodeURIComponent(kind.id)}`, evidence: kind.file, width });
 
       await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(kind.heading);
+      await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText(kind.caption);
       await expect(drawer(page)).toContainText(kind.note);
       // A notice with no heading names no section, so its meta line never repeats the text's first sentence (ticket 58;
       // the notice reader names a section only by a heading since 6f5ccf0a).
@@ -530,7 +540,7 @@ test("a notice's text shows where contact details were removed and never the raw
   // The drawer's head is the notice's title, with no eyebrow above it (ticket 94), and one caption under it that says
   // what kind of source it is, with no middle dot (ticket 58).
   await expect(drawer(page).locator("[data-drawer-header] p:not([data-drawer-caption])")).toHaveCount(0);
-  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("A procurement notice, as the World Bank published it");
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("A procurement notice the World Bank published");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
     /^Request for Expression of Interest\s·\sWater and Sanitation Development\s\(P156634\)\s·\sFebruary 26, 2021\s·\sAddress referred above$/,
   );

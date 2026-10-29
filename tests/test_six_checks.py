@@ -139,7 +139,7 @@ def test_a_summary_that_cites_nothing_and_says_more_than_the_abstention_is_remov
     assert "says nothing about the agency being late" in removed["reasons"][0]["text"]
     assert copy_reason("beyond_abstention") == {
         "item": "It cited no source, and it said more than my tools reported.",
-        "joined": "it cited no source and said more than my tools reported"}
+        "joined": "it went beyond what my tools reported without citing a source"}
     assert [item["text"] for item in asked.of("sentence")] == [NOT_PUBLIC]
     checks = asked.of("checks")[0]
     assert checks["judge"]["on_abstention"] == 2 and checks["shown"]["sources"] == {"total": 0, "uncited": 1}

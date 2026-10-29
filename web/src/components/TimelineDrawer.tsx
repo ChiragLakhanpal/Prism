@@ -19,7 +19,7 @@ import { formatCount, formatDate } from "../lib/format";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { asOfOf, withMode } from "../lib/view";
-import { sideContext, sideInSentence, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
+import { placeWordOf, sideContext, sideInSentence, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
@@ -312,13 +312,15 @@ function DisagreementView({ evidence, renderSide }: { evidence: EvidenceEvent; r
   const panelId = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const sides = (row.sides ?? []) as SideData[];
-  // A side's tab reads "ICR ¶78", and a screen reader hears "ICR paragraph 78", as the source switcher does.
+  // A side's tab reads "ICR ¶78", and a screen reader hears "ICR paragraph 78", as the source switcher does. An ICR
+  // Review's place is a section, which has no mark: "ICR Review section 5" (the 58 critique, follow-up 2).
   const tabs: ReactNode[] = [
     words.disagreement.both,
     ...sides.map((side) => {
       const short = sideShort({ ...side, paragraph_numbered: false });
       const paragraph = side.paragraph_numbered ? side.paragraph : null;
       if (!paragraph) return short;
+      if (placeWordOf(side) !== copy.disagreement.placeWordOther) return sideShort(side);
       return (
         <span>
           {short}{" "}

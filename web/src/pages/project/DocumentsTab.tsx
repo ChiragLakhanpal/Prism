@@ -358,7 +358,7 @@ export function DocumentsList({ data, pid }: { data: DocumentList; pid: string }
   return (
     <>
       <p className="text-caption text-ink-muted tabular-nums" data-documents-count>
-        {shownRows === data.total ? copy.table.showingAll(data.total, formatCount(data.total), words.noun) : words.showing(whole(shownRows), whole(data.total))}
+        {copy.table.showingOf(shownRows, data.total, whole(shownRows), whole(data.total), formatCount(data.total), words.countNoun)}
       </p>
       <div className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @md/page:block" data-view="table">
         <table className="w-full table-fixed border-collapse text-small">

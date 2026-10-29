@@ -818,9 +818,11 @@ export const copy = {
       },
       // Check 4 (ticket 58): a sentence that cites nothing, judged against what a tool could not answer, said more
       // than that. Check 2's no_source above stays for a sentence that cites nothing when no tool held back.
+      // The joined form is one clause after the box's "and", so the sentence has no second "and" (the 58 design review,
+      // follow-up 15).
       beyond_abstention: {
         item: "It cited no source, and it said more than my tools reported.",
-        joined: "it cited no source and said more than my tools reported",
+        joined: "it went beyond what my tools reported without citing a source",
       },
       quote_not_on_page: {
         item: "The quote is not on the page it cites.",
@@ -983,8 +985,8 @@ export const copy = {
         // Ticket 58: when every judged sentence cites nothing, a model judged it against what a tool could not answer.
         judgedOnAbstention: (judged: number, judgedText: string, followed: number) =>
           judged === 1
-            ? `A model judged one sentence against what a tool told me it could not answer, and ${followed} of 1 said no more than that.`
-            : `A model judged ${judgedText} sentences against what a tool told me it could not answer, and ${followed} of ${judged} said no more than that.`,
+            ? `A model judged one sentence, and ${followed} of 1 said no more than my tools reported.`
+            : `A model judged ${judgedText} sentences, and ${followed} of ${judged} said no more than my tools reported.`,
         proven: (count: number, countText: string) =>
           count === 1
             ? "The other one needed no model, because every number, date and quote in it matched a record or a page."
@@ -1185,6 +1187,10 @@ export const copy = {
     titleSection: "{doc}, {project}, section {section}",
     titleNoDoc: "{project}, paragraph {para}",
     titleSectionNoDoc: "{project}, section {section}",
+    // A section with a name, not a number, is named alone: "ISR, Rajasthan Road Sector Modernization, Project
+    // Development Objective Indicators" (the 58 design review, follow-up 7).
+    titleNamedSection: "{doc}, {project}, {section}",
+    titleNamedSectionNoDoc: "{project}, {section}",
     recordTitle: "{kind} {reference}",
     // A mission brief's records (ticket 37), named for what they are: the totals record by its project, an agency's
     // latest plan by the agency, and an ISR's rating by the ISR and the rating.
@@ -1217,12 +1223,24 @@ export const copy = {
     // (ticket 58; DESIGN.md section 5, Evidence drawer). A passage or a record by its stratum (GLOSSARY.md), a
     // notice's text, and the views a timeline mark or section 5 opens. The plan row's and the package's are above.
     captions: {
+      // By the report's type, as the documents API names it (its docty; config/project_page.toml): what the report
+      // is and when it was written, so an appraisal is never called an evaluation (the 58 design review, B2).
+      documentType: {
+        "Project Appraisal Document": "The appraisal document, written before the project began",
+        "Project Paper": "A paper on a change to the project",
+        "Implementation Status and Results Report": "A status report, written during the project",
+        "Implementation Completion and Results Report": "The completion report, written after the project closed",
+        "Implementation Completion Report Review": "The Independent Evaluation Group's (IEG's) review of the completion report",
+        "Project Performance Assessment Report": "The Independent Evaluation Group's (IEG's) later assessment of the project",
+      } as Record<string, string>,
+      // For a source with no report type of its own, by its stratum, in GLOSSARY.md's words.
       stratum: {
         What: "A record of what happened",
         How: "An operations document on how procurement was carried out",
-        Why: "An evaluation that explains why things went as they did",
+        Why: "A report that explains design choices and outcomes",
       } as Record<string, string>,
-      notice: "A procurement notice, as the World Bank published it",
+      // The drawer shows a notice without its contact details, so the caption claims no more than it shows.
+      notice: "A procurement notice the World Bank published",
       document: "A report on this project's timeline",
       ratings: "Ratings from the project's status reports",
       contracts: "Contract records from the World Bank's contract awards data",
@@ -1420,6 +1438,11 @@ export const copy = {
     tableTitle: "{project}, {table}",
     tableTitleUntitled: "{project}, table on page {page}",
     summaryTitle: "{project}, summary of {table}",
+    // With the report's short name first, as a paragraph's title has it, so a table's heading also says which report
+    // is open: "PAD, Rajasthan Road Sector Modernization, summary of Annex 4" (the 58 critique, follow-up 16).
+    tableTitleDoc: "{doc}, {project}, {table}",
+    tableTitleUntitledDoc: "{doc}, {project}, table on page {page}",
+    summaryTitleDoc: "{doc}, {project}, summary of {table}",
     rowOf: (row: string) => `Row ${row}`,
     rowNote: "This row as the layout parser read it from the table. The PDF page has the original.",
     // The row's cells: its column heads and its values.
@@ -1519,8 +1542,10 @@ export const copy = {
     // A number in a sentence says which source the verifier matched it to.
     // Templates for Fill, so the project ID or the reference is set in Roboto Mono.
     numTooltip: "Matches paragraph {para} of the {kind} for {pid}.",
-    // The section's name as a phrase, "the ... section" (ticket 58; the 14 critique, round 5).
+    // A section's name as a phrase, "the ... section" (ticket 58; the 14 critique, round 5), and a section's number
+    // after the word, "section 10.b" (the 58 design review, follow-up 7).
     numTooltipSection: "Matches the {section} section of the {kind} for {pid}.",
+    numTooltipSectionNumbered: "Matches section {section} of the {kind} for {pid}.",
     // The reference ends the sentence, so its full stop stays in the reference's last box (MonoWords).
     numTooltipRecord: "Matches the {kind} record {reference}",
     numTooltipRecordEnd: ".",
@@ -1568,10 +1593,17 @@ export const copy = {
     meta: "{source}, {date}. {written}.",
     // The source in full: "Implementation Status and Results Report (ISR) 7", "Implementation Completion
     // and Results Report (ICR), paragraph 78". The short names fill {lean} and {other} in the rule.
-    sourceFull: (documentType: string, short: string | null, sequence: number | null, paragraph: string | null) =>
-      `${documentType}${short ? ` (${short})` : ""}${sequence ? ` ${sequence}` : ""}${paragraph ? `, paragraph ${paragraph}` : ""}`,
-    sourceShort: (short: string, sequence: number | null, paragraph: string | null) =>
-      `${short}${sequence ? ` ${sequence}` : ""}${paragraph ? ` paragraph ${paragraph}` : ""}`,
+    // {place} is the word the report uses for its numbered places (placeWord below): "ICR paragraph 78", "ICR Review
+    // section 5".
+    sourceFull: (documentType: string, short: string | null, sequence: number | null, paragraph: string | null, place = "paragraph") =>
+      `${documentType}${short ? ` (${short})` : ""}${sequence ? ` ${sequence}` : ""}${paragraph ? `, ${place} ${paragraph}` : ""}`,
+    sourceShort: (short: string, sequence: number | null, paragraph: string | null, place = "paragraph") =>
+      `${short}${sequence ? ` ${sequence}` : ""}${paragraph ? ` ${place} ${paragraph}` : ""}`,
+    // An ICR Review numbers its sections (5 is Efficiency), so its place is a section, as the drawer, the risk pill and
+    // the queue name it; every other report numbers paragraphs (the 58 critique, follow-up 2). Keyed by the report's
+    // kind (config/project_page.toml's document groups).
+    placeWord: { icr_review: "section" } as Record<string, string>,
+    placeWordOther: "paragraph",
     lean: "Strata leans on this",
     // A report's abbreviation by its kind (config/project_page.toml's document groups), for its short name.
     shortType: {
@@ -1621,10 +1653,10 @@ export const copy = {
       meta: "{date}. {written}.",
       // A side's title on the timeline and in the drawer: "ISR 7", "ICR, paragraph 78".
       title: "{short}",
-      titlePara: "{short}, paragraph {para}",
+      titlePara: "{short}, {place} {para}",
       // "Open ISR 7", "Open paragraph 78".
       open: "Open {side}",
-      openPara: "paragraph {para}",
+      openPara: "{place} {para}",
       rated: (months: number) =>
         months === 1 ? "Rated {months} month after the mid-term review of {date}." : "Rated {months} months after the mid-term review of {date}.",
       written: (months: number) =>
@@ -1693,11 +1725,22 @@ export const copy = {
     // "Commitment (US$, millions)".
     stackedUnit: " ({unit})",
     // Every count line (ticket 58; DESIGN.md section 5, Tables): one to nine in words, a full stop, "both" for two,
-    // and the table's order, when the noun names one, for a single row too. A range keeps its numerals.
-    showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}.`,
+    // "the one" for one, and the table's order, when the noun names one, for a single row too. A range or a part of
+    // the whole keeps its numerals, and a range is written with "to", never a dash.
+    showing: (from: string, to: string, total: string, noun: string) => `Showing ${from} to ${to} of ${total} ${noun}.`,
     showingAll: (total: number, totalText: string, noun: string) =>
       total === 2 ? `Showing both ${noun}.` : `Showing all ${totalText} ${noun}.`,
-    showingOne: (noun: string) => `Showing one ${noun}.`,
+    showingOne: (noun: string) => `Showing the one ${noun}.`,
+    // A table that shows all its rows, with its noun for one row and for more: "Showing the one source.",
+    // "Showing both sources.", "Showing all 14 sources." A part of the whole is "Showing 2 of 14 sources.".
+    showingOf: (shown: number, total: number, shownText: string, totalText: string, totalWords: string, noun: { one: string; many: string }) =>
+      shown < total
+        ? `Showing ${shownText} of ${totalText} ${noun.many}.`
+        : total === 1
+          ? `Showing the one ${noun.one}.`
+          : total === 2
+            ? `Showing both ${noun.many}.`
+            : `Showing all ${totalWords} ${noun.many}.`,
   },
 
   // A clock time, "9:14 a.m.", in the reader's own time zone (ticket 58). The period's dots are the Associated Press's.
@@ -1817,7 +1860,8 @@ export const copy = {
     // When no project I checked had every check run.
     coverageNone: "I couldn't run every check on any project I checked. Each row says which records I lacked.",
     coverageLink: "See which records I hold",
-    countLine: (shown: number, total: number) => `Showing ${shown} of ${total} projects you follow.`,
+    // The count line's noun (copy.table.showingOf): "Showing 1 of 2 projects you follow.", "Showing both projects you follow.".
+    countNoun: { one: "project you follow", many: "projects you follow" },
     tableCaption: "Projects you follow, with their status, signals and next step",
     cols: {
       status: { label: "Status", def: (word: string) => `needs a look means ${word} signals or one strong one; a signal is a reason to look, not a finding` },
@@ -2439,7 +2483,8 @@ export const copy = {
       "page, with its paragraphs numbered as the document numbers them.",
     noun: "documents",
     // The count line: the rows the list shows, of every document listed. Both counts are the route's.
-    showing: (shown: string, total: string) => `Showing ${shown} of ${total} documents.`,
+    // The count line's noun (copy.table.showingOf): "Showing 12 of 39 documents.", "Showing the one document.".
+    countNoun: { one: "document", many: "documents" },
     caption: (name: string) => `Documents for ${name}, by type`,
     col: { document: "Document", dated: "Dated", disclosed: "Disclosed", pages: "Pages read", pdf: "PDF" },
     def: {
@@ -2564,6 +2609,9 @@ export const copy = {
     // A blank Process status on the plan's own page, where "Not in the plan" would read as if the activity were missing
     // (ticket 58; the 21 critique, round 4).
     noStatus: "No status in the plan",
+    // A blank Review Type on the plan's own page, which "Not in the plan" would read as a missing activity (the 58
+    // review, P7).
+    noReview: "No review type in the plan",
     rowField: "Column",
     rowValue: "Value",
     reissueCurrent: "This is the re-issue of {reissue_date}. It replaces the version of {original_date}.",
@@ -2648,14 +2696,17 @@ export const copy = {
     subtitle: "Procurement Plan of {date}",
     // The h1 when the agency's name is not known.
     agencyUnknown: "Procurement Plan",
-    pill: (total: number, totalText: string) => (total === 1 ? "1 activity checked" : `${totalText} activities checked`),
+    // {totalText} is a capitalized word from one to nine, as the Packages tab's "Nine activities checked." (the 58 design
+    // review, follow-up 2).
+    pill: (total: number, totalText: string) => (total === 1 ? "One activity checked" : `${totalText} activities checked`),
     pillPartial: (checked: string, total: string) => `${checked} of ${total} activities fully checked`,
     // The finding: the first part, then the notes part, then the full stop. {look}, {watch} and
     // {notes} are the tool's counts, in words.
     finding: {
+      // The first count keeps its noun, "One activity needs a look" (the 58 design review, follow-up 1).
       lookAndWatch: (look: number, watch: number) =>
-        `{look} ${look === 1 ? "needs" : "need"} a look and {watch} ${watch === 1 ? "is" : "are"} worth watching`,
-      lookOnly: (look: number) => `{look} ${look === 1 ? "needs" : "need"} a look`,
+        `{look} ${look === 1 ? "activity needs" : "activities need"} a look and {watch} ${watch === 1 ? "is" : "are"} worth watching`,
+      lookOnly: (look: number) => `{look} ${look === 1 ? "activity needs" : "activities need"} a look`,
       watchOnly: (watch: number) => `No activity needs a look, but {watch} ${watch === 1 ? "is" : "are"} worth watching`,
       none: "No activity needs a look or is worth watching",
       notes: (notes: number) => (notes === 1 ? "; {notes} has a data note" : "; {notes} have data notes"),
@@ -2696,7 +2747,8 @@ export const copy = {
     },
     // The panel that holds the activities' table (ticket 100; DESIGN.md section 5, Plan check table).
     activitiesTitle: "Activities in this plan",
-    countLine: (shown: string, total: string) => `Showing ${shown} of ${total} activities.`,
+    // The count line's noun (copy.table.showingOf): "Showing 6 of 9 activities.", "Showing all nine activities.".
+    countNoun: { one: "activity", many: "activities" },
     noun: "activities",
     caption: (agency: string, date: string) => `Activities in the ${agency} plan of ${date}, marked activities first`,
     // A row's reference opens the row's records in the evidence drawer (ticket 100). The button's name is the reference
@@ -3806,7 +3858,9 @@ export const copy = {
     markerName: (n: number, sources: string, opened: boolean) => `Source ${n}: ${sources}${opened ? ", opened" : ""}`,
     markerJoin: ", and ",
     markerParagraph: "{doc} {pcode} paragraph {para}, page {page}",
-    markerSection: "{doc} paragraph {section}",
+    // An ICR Review numbers its sections, so its locator is a section, as its source line says (the 58 design review,
+    // follow-up 6).
+    markerSection: "{doc} section {section}",
     markerCount: "count of comparable completion reports",
     markerLesson: "the lesson it rests on",
     // Announced in the page's one polite region (section 5.4).
@@ -3907,7 +3961,8 @@ export const copy = {
     factsAmount: (amount: string) => `US$${amount}`,
     // The side panel's source line, and its marker's name, which opens the plan row in the evidence drawer.
     factsSource: "Procurement Plan, {agency}, {pid}, version of {date}, page {page}.",
-    factsMarker: (ref: string) => `Procurement Plan row ${ref}`,
+    // A plan row is named "Activity", as the drawer and the rebidding markers name it (the 58 design review, F11).
+    factsMarker: (ref: string) => `Activity ${ref}`,
     // The stage labels before the zones (DESIGN.md section 5, Stage label): "Planning" before zone 1, "Tender design"
     // before zone 5. They replace the sections' eyebrows.
     stages: { planning: "Planning", tender: "Tender design" },
@@ -4254,7 +4309,7 @@ export const copy = {
       nounOne: "test year",
       count: (count: string, first: string, last: string) => `Showing ${count} test years, ${first} to ${last}.`,
       countBoth: (first: string, last: string) => `Showing both test years, ${first} and ${last}.`,
-      countOne: (year: string) => `Showing one test year, ${year}.`,
+      countOne: (year: string) => `Showing the one test year, ${year}.`,
       columns: {
         year: "Test year",
         n: "Packages I had not seen",
@@ -4290,24 +4345,24 @@ export const copy = {
     },
     // Lane 2's messages, which are HTML over the lane, so they wrap.
     abstain: {
-      few: "I'm not giving a time estimate: only {n} comparable packages.",
-      fewOne: "I'm not giving a time estimate: only one comparable package.",
+      few: "I'm not giving a time estimate from only {n} comparable packages.",
+      fewOne: "I'm not giving a time estimate from only one comparable package.",
       fewSummary: "I give a time estimate only from {min} or more comparable packages, the same rule as the past range.",
       // outside_training, by the feature and its side of what the model learned from.
       outside: {
         estimated_amount_usd: {
-          high: "I'm not giving a time estimate: this package is larger than any package my model learned from.",
-          low: "I'm not giving a time estimate: this package is smaller than any package my model learned from.",
+          high: "I'm not giving a time estimate, because this package is larger than any package my model learned from.",
+          low: "I'm not giving a time estimate, because this package is smaller than any package my model learned from.",
         },
         planned_days: {
-          high: "I'm not giving a time estimate: this package's plan allows longer than any plan my model learned from.",
-          low: "I'm not giving a time estimate: this package's plan allows less time than any plan my model learned from.",
+          high: "I'm not giving a time estimate, because this package's plan allows longer than any plan my model learned from.",
+          low: "I'm not giving a time estimate, because this package's plan allows less time than any plan my model learned from.",
         },
       },
-      outsideOther: "I'm not giving a time estimate: this package is outside what my model learned from.",
+      outsideOther: "I'm not giving a time estimate, because this package is outside what my model learned from.",
       outsideSummary: "The past range above still shows every comparable package.",
       beforeTraining: "I'm not giving a time estimate as of {date}, because my model learned from packages signed after that date.",
-      noModel: "I'm not giving a time estimate yet: no model has been scored.",
+      noModel: "I'm not giving a time estimate yet, because no model has been scored.",
       error: "I couldn't load my time estimate.",
       tryAgain: "Try again",
       code: "If it fails again, quote this code: {code}.",
@@ -4359,6 +4414,8 @@ export const copy = {
       "Limited - International": "limited international",
     } as Record<string, string>,
     lots: (count: number) => (count === 1 ? "1 lot" : `${count} lots`),
+    // Inside a sentence, one to nine in words, "one lot" (DESIGN.md section 7, rule 12; the 58 critique, follow-up 6).
+    lotsInSentence: (count: number, countText: string) => (count === 1 ? "one lot" : `${countText} lots`),
     label_prequalification: { Y: "Prequalification", N: "Post-qualification" } as Record<string, string>,
     inSentence_prequalification: { Y: "prequalification", N: "post-qualification" } as Record<string, string>,
     lever: { market_approach: "market approach", lots: "lots", prequalification: "qualification" },
@@ -4736,7 +4793,12 @@ export const copy = {
     },
     findingTwo: '"{a}" and "{b}" came up most often, each in {k} of {m} completion reports for projects with comparable packages.',
     findingMany: "{tied} of these risks came up most often, each in {k} of {m} completion reports for projects with comparable packages.",
-    countOne: "Showing one risk.",
+    // When I read one completion report, so no "1 of 1 completion reports" (the 58 design review, follow-up 5). {m} is
+    // the count "one", and it opens the report.
+    findingOneReport: '"{risk}" came up in the {m} completion report I read for projects with comparable packages.',
+    findingTwoOneReport: '"{a}" and "{b}" both came up in the {m} completion report I read for projects with comparable packages.',
+    findingManyOneReport: "{tied} of these risks came up in the {m} completion report I read for projects with comparable packages.",
+    countOne: "Showing the one risk I ranked.",
     countBoth: "Showing both risks, in the order I ranked them.",
     count: (shown: string) => `Showing ${shown} risks, in the order I ranked them.`,
     // The person's own count, so plain text, not a finding.
@@ -4837,7 +4899,8 @@ export const copy = {
       noComparables: "I found no comparable packages, so I have no completion reports to look in.",
       noComparablesPlanned: "Change a criterion above to compare with more packages.",
       noComparablesStep: "Data readiness shows which records I hold for this region and period.",
-      noComparablesLink: "Open Data readiness",
+      // The coverage lines' words, so the package page names Data readiness one way (the 58 design review, F10).
+      noComparablesLink: "See Data readiness for these sources",
       noReports: "None of the {p} projects with comparable packages has a completion report I could read.",
       noReportsOne: "The one project with comparable packages has no completion report I could read.",
       noReportsBody: "A project gets a completion report only after it closes.",
@@ -4871,6 +4934,7 @@ export const copy = {
       reportsEyebrow: "Why · evaluation",
       reportsTitle: "Completion reports that raised this risk",
       reportsFinding: '{k} of {m} completion reports for projects with comparable packages raised "{risk}".',
+      reportsFindingOne: 'The one completion report I read for projects with comparable packages raised "{risk}".',
       reportsNote: "Newest first.",
       reportEntry: "{doc}, {date}, paragraph {para}",
       allTitle: "Completion reports I counted",
@@ -4952,7 +5016,8 @@ export const copy = {
     // A package from a sentence whose only date is the one you gave its first step.
     captionNoneAfter: (phrase: string) => `I couldn't date any step after ${phrase}.`,
     captionUndated: "How many days each step took in comparable packages.",
-    captionAbstain: (family: string) => `The steps STEP uses for ${family}.`,
+    // What the table holds, since the intro above already names the steps (the 58 critique, follow-up 7).
+    captionAbstain: (_family: string) => "Each step, and how many comparable packages recorded it.",
     // In the Tables form, as every count line (ticket 58; DESIGN.md section 5, Tables).
     count: (countWords: string) => `Showing all ${countWords} steps.`,
     columns: {
@@ -4967,7 +5032,8 @@ export const copy = {
       middleNote: "My suggestion. Half of comparable packages ran later.",
       // When no step can be dated, the column says what dating takes, not how often packages ran later (ticket 58).
       planned: "Planned date",
-      noneNote: "I date a step from {min} comparable packages.",
+      // A minimum, not a method, in a column note's short form (the 58 review, P5).
+      noneNote: "Dated only when {min} or more comparable packages recorded the step.",
       comparables: "Comparable packages",
       comparablesNote: "That recorded this step",
     },
@@ -5018,7 +5084,7 @@ export const copy = {
     coverageOtherFamily: "Based on {used} of {total} comparable packages; {other} were planned in another STEP table, whose steps differ.",
     coverageOtherFamilyAndMissing:
       "Based on {used} of {total} comparable packages; {other} were planned in another STEP table, whose steps differ, and {missing} had no dates for these steps in their published plans.",
-    coverageLink: "Data readiness for these sources",
+    coverageLink: "See Data readiness for these sources",
     sourceLine: "{names}. Records run through {date}.",
     sourceLineAsOf: "{names}. Records as of {date}.",
     // The section's live region (the 27 brief, section 8.5).
@@ -5066,16 +5132,18 @@ export const copy = {
       fullName: (name: string) => `In STEP: ${name}.`,
       // {about_c} and {about_m} are aboutIn10 or aboutHalf.
       findingDelay:
-        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after the date first planned for it. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
+        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after the date first planned for it. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after that date.",
       findingDuration:
-        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after {previous}. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
+        "For {longer_c} of {n} packages, {about_c}, {step} came more than {days_c} days after {previous}. For {longer_m} of {n}, {about_m}, it came more than {days_m} days after {previous}.",
       findingAbstain: "Only {n} comparable packages recorded {step}, too few for me to date it. Here are all {n}.",
       findingAbstainOne: "Only one comparable package recorded {step}, too few for me to date it. Here it is.",
       findingCounts: "{n} comparable packages recorded {step}. Here are all {n}.",
       // When no comparable package ran later than the shown days (ticket 58): no "0 of 25, about 0 in 10".
       findingNoneLater: "In all {n} packages, {step} came no more than {days_c} days after {previous}.",
       findingNoneLaterDelay: "In all {n} packages, {step} came no more than {days_c} days after the date first planned for it.",
-      findingMiddle: "For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
+      // Each says what the step came after, so no sentence ends on "after." (the 58 review, P4).
+      findingMiddle: "For {longer_m} of {n}, {about_m}, it came more than {days_m} days after {previous}.",
+      findingMiddleDelay: "For {longer_m} of {n}, {about_m}, it came more than {days_m} days after the date first planned for it.",
       // A step most comparable packages had not reached by the records' date (ticket 58): never "recorded" it.
       findingNotReached: "{reached} of {n} comparable packages had reached {step} by {date}. Here are all {n}.",
       findingNotReachedNone: "None of the {n} comparable packages had reached {step} by {date}. Here are all {n}.",
@@ -5394,7 +5462,7 @@ export const copy = {
       coverageMissing: "{missing} of them published no qualification criteria.",
       coverageOpen: "I left out {open} that were still open, because I don't compare a tender that is still open.",
       coverageAll: "Based on all {total} comparable packages.",
-      coverageLink: "Data readiness for these sources",
+      coverageLink: "See Data readiness for these sources",
       // {sources} is each source's dataset name from the tool, joined as a list; {through} is the day the
       // records run through, the same in every part, and {asOf} the page's as-of date (the 31 brief, 6.5).
       source: "{sources}. Records run through {through}. Compared on {compared}.",
@@ -5516,7 +5584,7 @@ export const copy = {
     coverageAnd: ", and ",
     coverageComma: ", ",
     coverageAll: "Based on all {total} comparable packages.",
-    coverageLink: "Data readiness for these sources",
+    coverageLink: "See Data readiness for these sources",
     source: "{sources}. Records run through {through}.",
     sourceAsOf: "{sources}. Records as of {asOf}.",
     showTable: "Show the table",
@@ -5551,7 +5619,7 @@ export const copy = {
       eyebrow: "How · operations",
       title: "Cost records of {ref}",
       finding: "Its contracts were signed for {signed}, {diff} its cost estimate of {estimate}.",
-      planRow: "Procurement Plan row {ref}",
+      planRow: "Activity {ref}",
       planFrom: "Procurement Plan of {date}, PDF page {page}.",
       estimated: "Estimated Amount (US$)",
       contract: "Contract {id}",
@@ -5708,7 +5776,8 @@ export const copy = {
     },
     sources: {
       title: "Sources",
-      showing: "Showing {shown} of {total} sources.",
+      // The count line's noun (copy.table.showingOf): "Showing 2 of 14 sources.", "Showing all 14 sources.".
+      noun: { one: "source", many: "sources" },
       source: "Source",
       columns: {
         coverage: { label: "Coverage", about: "rows and fiscal years" },
@@ -5738,6 +5807,9 @@ export const copy = {
         slice: (sectors: string, countries: string, from: string, to: string) => `${sectors} projects in ${countries}, fiscal ${from} to ${to}`,
         // When "The hardest documents I read" shows below: their projects are read too (design review r2 B1).
         sliceShelf: "and the projects of the hardest documents below",
+        // A slice's projects and, on their own line, which documents it covers end each with a full stop, so the
+        // two never read as one phrase (ticket 58; the 58 critique, Data readiness).
+        end: ".",
         join: ", ",
         lastJoin: " and ",
       },
@@ -5774,7 +5846,7 @@ export const copy = {
       // text's pages count once placed on their PDF page, which the paragraph-number check goes beyond (review r2 P2;
       // ticket 58 moved it from a row into the definition, the 18 design review, round 3, P1).
       readWellDocuments:
-        "How many report pages I read. A page of published text counts once I have placed its text on its PDF page. " +
+        "How many report pages I read well, out of all I tried. A page of published text counts once I have placed its text on its PDF page. " +
         "A page I sent to the layout parser counts when it gave back a table or text. Whether I found a report's " +
         "paragraph numbers is a separate check, shown under What you can ask.",
       notMeasured: "Not measured yet",
@@ -6046,11 +6118,11 @@ export const copy = {
       link: "See the datasets I'm set up to read",
     },
     abstain: {
-      unmeasured: "I'm not giving a headline: {count} of the {total} sources below have no measures yet. Their rows say so.",
-      unmeasuredOne: "I'm not giving a headline: {count} of the {total} sources below has no measures yet. Its row says so.",
+      unmeasured: "I'm not giving a headline. {count} of the {total} sources below have no measures yet. Their rows say so.",
+      unmeasuredOne: "I'm not giving a headline. {count} of the {total} sources below has no measures yet. Its row says so.",
       // When no source in view has measures: the second when the view holds one source.
-      unmeasuredAll: "I'm not giving a headline: none of the sources below has measures yet. Their rows say so.",
-      unmeasuredAllOne: "I'm not giving a headline: the source below has no measures yet. Its row says so.",
+      unmeasuredAll: "I'm not giving a headline, because none of the sources below has measures yet. Their rows say so.",
+      unmeasuredAllOne: "I'm not giving a headline, because the source below has no measures yet. Its row says so.",
       beforeFirst: "I have no measures taken on or before {asked}. I took my first measures on {first}.",
       showToday: "Show today's measures",
     },
@@ -6395,8 +6467,8 @@ export const copy = {
       // The count line in a table's form (copy.table): one to nine in words, a full stop, and its order for one too.
       countAll: "Showing all {total} lessons in the library, newest first.",
       countBoth: "Showing both lessons in the library, newest first.",
-      countOne: "Showing one lesson in the library, newest first.",
-      countRange: "Showing {from}–{to} of {total} lessons in the library, newest first.",
+      countOne: "Showing the one lesson in the library, newest first.",
+      countRange: "Showing {from} to {to} of {total} lessons in the library, newest first.",
       reviewerLink: "Go to Waiting for review",
       outOfRangeTitle: "There is no page {page} in the library.",
       outOfRangeBody: "The library has {pages} pages.",
@@ -6477,7 +6549,7 @@ export const copy = {
       noAccessLink: "Go to Lessons",
       decidedTitle: "Decided in the last {days} days",
       decidedNone: "No lesson was decided in the last {days} days.",
-      // The count line's noun: "Showing 1–20 of 34 decisions, newest first" (copy.table).
+      // The count line's noun: "Showing 1 to 20 of 34 decisions, newest first." (copy.table).
       decidedNoun: "decisions, newest first",
       decidedNounOne: "decision, newest first",
       decidedCaption: "Lessons decided in the last {days} days",
@@ -6840,9 +6912,9 @@ export const copy = {
         // Two and one (ticket 58): "both", and the one row with its order, as every count line.
         both: "Showing both {noun}, newest first.",
         one: "Showing the one {noun}, newest first.",
-        range: "Showing {from}–{to} of {m} {noun}, newest first.",
+        range: "Showing {from} to {to} of {m} {noun}, newest first.",
         narrowed: "Showing {n} of {m} {noun}, newest first.",
-        narrowedRange: "{n} of {m} {noun} match. Showing {from}–{to}, newest first.",
+        narrowedRange: "{n} of {m} {noun} match. Showing {from} to {to}, newest first.",
         nouns: {
           current: { one: "current lesson", many: "current lessons" },
           rechecking: { one: "lesson being re-checked", many: "lessons being re-checked" },
@@ -7235,7 +7307,7 @@ export const copy = {
     blank: "Not in the record",
     pill: (n: number, kind: string, reference: string, date: string, opened: boolean) =>
       `Source ${n}: ${kind} ${reference}, ${date}${opened ? ", opened" : ""}`,
-    pillKind: { plan: "Procurement Plan row", notice: "notice", award_notice: "award notice", contract: "contract" } as Record<string, string>,
+    pillKind: { plan: "activity", notice: "notice", award_notice: "award notice", contract: "contract" } as Record<string, string>,
     // What a pill's name says after "Source {n}:": "award notice OP00164589, Feb 2, 2022".
     pillSource: (kind: string, reference: string, date: string) => `${kind} ${reference}, ${date}`,
     paraShort: (para: string) => `¶${para}`,
@@ -8744,7 +8816,7 @@ export const copy = {
         },
         retrieval: {
           evaluated: "On the held-out set, in the evaluation of {day}, precision at 10 was {p} and recall at 20 was {r}.",
-          fewQueries: "I'm not giving precision or recall for the held-out set: it has only {queries} queries.",
+          fewQueries: "I'm not giving precision or recall for the held-out set, because it has only {queries} queries.",
           none: "No retrieval evaluation has run yet.",
           feedback: {
             one:
@@ -8770,7 +8842,7 @@ export const copy = {
             "Of the {finished} packages that finished in the 12 months to {month}, {inside} finished inside my " +
             "8-in-10 range, about {in10} in 10.",
           few:
-            "I'm not giving coverage: only {finished} packages finished in the 12 months to {month}, and {inside} of " +
+            "I'm not giving coverage, because only {finished} packages finished in the 12 months to {month}, and {inside} of " +
             "them finished inside my 8-in-10 range.",
           inside: "That is inside the {low} to {high} percent target.",
           outside: {

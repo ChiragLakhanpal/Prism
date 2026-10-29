@@ -40,8 +40,8 @@ const whole = (value: number) => formatNumber(value, { compact: false });
 // sentence ("open national", "3 lots", "prequalification").
 export function optionWords(lever: string, value: string | number): { label: string; inSentence: string } {
   if (lever === "lots") {
-    const text = what.lots(Number(value));
-    return { label: text, inSentence: text };
+    const count = Number(value);
+    return { label: what.lots(count), inSentence: what.lotsInSentence(count, formatCount(count)) };
   }
   const labels = lever === "market_approach" ? what.label_market_approach : what.label_prequalification;
   const inSentence = lever === "market_approach" ? what.inSentence_market_approach : what.inSentence_prequalification;

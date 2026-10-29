@@ -113,6 +113,15 @@ export function isToday(iso: string, now: Date = new Date()): boolean {
   return new Date(iso).toDateString() === now.toDateString();
 }
 
+// A moment's day in the reader's own time zone, as YYYY-MM-DD, so a row from yesterday evening never shows today's UTC
+// date (the 58 design review, follow-up 19). A plain date is its own day.
+export function localDay(iso: string): string {
+  if (iso.length <= 10) return iso;
+  const day = new Date(iso);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+}
+
 // Section 7, rule 12: one to nine in words, numerals from 10. A word that starts a sentence takes
 // a capital ("One needs a look").
 export function formatCount(count: number, options: { capital?: boolean } = {}): string {

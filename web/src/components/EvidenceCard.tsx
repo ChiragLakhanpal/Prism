@@ -7,7 +7,7 @@
 import type { ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
-import { excerpt, highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference, recordSource, summarySourceKey } from "../lib/sources";
+import { excerpt, highlightsFor, lessonOf, namedSection, passageFields, placeOf, recordKind, recordReference, recordSource, summarySourceKey } from "../lib/sources";
 import { dotTitle } from "./ComparableRecords";
 import { highlighted, withoutMarkers } from "./Document";
 import { Fill } from "./Fill";
@@ -74,24 +74,21 @@ export function sourceTitle(evidence: EvidenceEvent) {
   if (fields.kind === "notice_text" && fields.noticeId) {
     return <Fill template={copy.evidence.noticeTitle} slots={{ id: <span className="font-mono">{fields.noticeId}</span> }} />;
   }
-  if (fields.kind === "table_row" || fields.kind === "table_summary") {
-    const project = <span lang={fields.lang ?? undefined}>{fields.project}</span>;
-    if (!fields.tableTitle) return <Fill template={copy.evidence.tableTitleUntitled} slots={{ project, page: String(fields.page ?? "") }} />;
-    return (
-      <Fill
-        template={fields.kind === "table_summary" ? copy.evidence.summaryTitle : copy.evidence.tableTitle}
-        slots={{ project, table: fields.tableTitle }}
-      />
-    );
-  }
   // The document's short name first, so the heading says which report is open (ticket 58).
   const doc = evidence.short_name;
   const words = copy.evidence;
-  return place.kind === "paragraph" ? (
-    <Fill template={doc ? words.title : words.titleNoDoc} slots={{ doc: doc ?? "", project: fields.project, para: place.text }} />
-  ) : (
-    <Fill template={doc ? words.titleSection : words.titleSectionNoDoc} slots={{ doc: doc ?? "", project: fields.project, section: place.text }} />
-  );
+  if (fields.kind === "table_row" || fields.kind === "table_summary") {
+    const project = <span lang={fields.lang ?? undefined}>{fields.project}</span>;
+    if (!fields.tableTitle) {
+      return <Fill template={doc ? words.tableTitleUntitledDoc : words.tableTitleUntitled} slots={{ doc: doc ?? "", project, page: String(fields.page ?? "") }} />;
+    }
+    const template = fields.kind === "table_summary" ? (doc ? words.summaryTitleDoc : words.summaryTitle) : doc ? words.tableTitleDoc : words.tableTitle;
+    return <Fill template={template} slots={{ doc: doc ?? "", project, table: fields.tableTitle }} />;
+  }
+  if (place.kind === "paragraph") return <Fill template={doc ? words.title : words.titleNoDoc} slots={{ doc: doc ?? "", project: fields.project, para: place.text }} />;
+  const named = namedSection(place);
+  const template = named ? (doc ? words.titleNamedSection : words.titleNamedSectionNoDoc) : doc ? words.titleSection : words.titleSectionNoDoc;
+  return <Fill template={template} slots={{ doc: doc ?? "", project: fields.project, section: place.text }} />;
 }
 
 // A mission brief's records that a kind and a key would name badly (ticket 37): the totals record ("Record

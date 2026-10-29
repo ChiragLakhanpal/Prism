@@ -248,7 +248,8 @@ test("the library's filters change the list at once, keep the address, and the c
   expect(new Set((await boxes()).map((box) => box.top)).size).toBe(4);
   await page.setViewportSize({ width: 1440, height: 900 });
   await library.getByLabel("Method").selectOption("Request for Quotations");
-  await expect(library.locator("[data-lead]")).toHaveText("Showing one of two current lessons, newest first.");
+  // A part of the whole keeps its numerals (DESIGN.md section 7, rule 42; the 58 critique, follow-up 13).
+  await expect(library.locator("[data-lead]")).toHaveText("Showing 1 of 2 current lessons, newest first.");
   await expect(page).toHaveURL(/\/lessons\?method=Request\+for\+Quotations$/);
   await expect(library.locator("#method-caption")).toHaveText("Lessons that name no method are included, because they apply to every method.");
   await expect(library.locator("[data-lesson-card]")).toHaveCount(1);

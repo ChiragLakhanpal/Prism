@@ -1136,8 +1136,8 @@ export function StepsSection({
 
   // Hold each step's list for the drawer while the section shows it.
   useEffect(() => {
-    if (state.status === "ready") rememberStepLists(packageKey, state.result);
-  }, [state, packageKey]);
+    if (state.status === "ready") rememberStepLists(packageKey, state.result, asOf);
+  }, [state, packageKey, asOf]);
 
   useEffect(() => {
     onState?.(state);

@@ -615,7 +615,7 @@
         },
         "retrieval": {
           "evaluated": "On the held-out set, in the evaluation of {day}, precision at 10 was {p} and recall at 20 was {r}.",
-          "fewQueries": "I'm not giving precision or recall for the held-out set: it has only {queries} queries.",
+          "fewQueries": "I'm not giving precision or recall for the held-out set, because it has only {queries} queries.",
           "none": "No retrieval evaluation has run yet.",
           "feedback": {
             "one": "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passage as wrong, or {rate} for every 100 sources opened. They marked {notUseful} as not useful.",
@@ -630,7 +630,7 @@
         "estimates": {
           "percent": "Of the {finished} packages that finished in the 12 months to {month}, {inside} finished inside my 8-in-10 range, or {pct} percent.",
           "inTen": "Of the {finished} packages that finished in the 12 months to {month}, {inside} finished inside my 8-in-10 range, about {in10} in 10.",
-          "few": "I'm not giving coverage: only {finished} packages finished in the 12 months to {month}, and {inside} of them finished inside my 8-in-10 range.",
+          "few": "I'm not giving coverage, because only {finished} packages finished in the 12 months to {month}, and {inside} of them finished inside my 8-in-10 range.",
           "inside": "That is inside the {low} to {high} percent target.",
           "outside": {
             "one": "That is outside the {low} to {high} percent target, as it has been for {months} month.",

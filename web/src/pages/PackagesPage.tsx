@@ -17,7 +17,7 @@ import { TaskZone } from "../components/TaskZone";
 import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
-import { formatCount, formatDate, formatTime, isToday } from "../lib/format";
+import { formatCount, formatDate, formatTime, isToday, localDay } from "../lib/format";
 import { useLoad, type Load } from "../lib/load";
 import { enterBoxMode, type PlannedList, type PlannedRow } from "../lib/packages";
 import { PublicView } from "./PlannedPackagePage";
@@ -110,7 +110,7 @@ function rowOf(row: PlannedRow): Row {
 function LastDate({ on }: { on: string }) {
   return (
     <span className="whitespace-nowrap" data-last-worked>
-      {on.length > 10 && isToday(on) ? words.lastToday(formatTime(on)) : <Num date={on.slice(0, 10)} style="table" />}
+      {on.length > 10 && isToday(on) ? words.lastToday(formatTime(on)) : <Num date={localDay(on)} style="table" />}
     </span>
   );
 }

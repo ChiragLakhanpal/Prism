@@ -1498,7 +1498,7 @@ export const galleryCopy = {
     },
     activities: {
       name: "Activities in this plan",
-      tag: "Showing 6 of 9 activities",
+      tag: "Showing 6 of 9 activities.",
       body: "Each activity with a signal is a row of the table here, with what I found.",
       source: "Procurement Plan of October 9, 2026, from the World Bank documents API.",
     },

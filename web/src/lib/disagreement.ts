@@ -33,17 +33,19 @@ const card = words.card;
 
 const paragraphOf = (side: SideData) => (side.paragraph_numbered ? side.paragraph : null);
 const typeOf = (side: SideData) => side.type ?? (side.document_type ? "other" : "record");
+// The word the side's report uses for a numbered place: "section" for an ICR Review, "paragraph" for the others.
+export const placeWordOf = (side: SideData) => words.placeWord[typeOf(side)] ?? words.placeWordOther;
 
 // "ISR 7", "ICR paragraph 78": a side's name in the card's group name, the drawer's heading and its tabs.
 export function sideShort(side: SideData): string {
   const short = words.shortType[typeOf(side)] ?? words.shortType.other;
-  return words.sourceShort(short, side.sequence, paragraphOf(side));
+  return words.sourceShort(short, side.sequence, paragraphOf(side), placeWordOf(side));
 }
 
 // "Implementation Status and Results Report (ISR) 7": the first name on a screen that spells the abbreviation out.
 export function sideFull(side: SideData): string {
   const short = words.shortType[typeOf(side)] ?? null;
-  return words.sourceFull(side.document_type ?? short ?? "", short, side.sequence, paragraphOf(side));
+  return words.sourceFull(side.document_type ?? short ?? "", short, side.sequence, paragraphOf(side), placeWordOf(side));
 }
 
 // "ISR 7", "ICR, paragraph 78": a side's title on the timeline and in the drawer.
@@ -51,7 +53,9 @@ export function sideTitle(side: SideData): string {
   const short = words.shortType[typeOf(side)] ?? words.shortType.other;
   const named = words.sourceShort(short, side.sequence, null);
   const paragraph = paragraphOf(side);
-  return paragraph ? card.titlePara.replace("{short}", named).replace("{para}", paragraph) : card.title.replace("{short}", named);
+  return paragraph
+    ? card.titlePara.replace("{short}", named).replace("{place}", placeWordOf(side)).replace("{para}", paragraph)
+    : card.title.replace("{short}", named);
 }
 
 // "August 26, 2016. Written during the project."
@@ -63,7 +67,7 @@ export function sideMeta(side: SideData): string {
 // "Open ISR 7", "Open paragraph 78".
 export function sideOpen(side: SideData): string {
   const paragraph = paragraphOf(side);
-  const named = paragraph ? card.openPara.replace("{para}", paragraph) : sideShort(side);
+  const named = paragraph ? card.openPara.replace("{place}", placeWordOf(side)).replace("{para}", paragraph) : sideShort(side);
   return card.open.replace("{side}", named);
 }
 

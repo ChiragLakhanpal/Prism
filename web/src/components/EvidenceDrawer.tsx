@@ -44,6 +44,7 @@ import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { linkProjectIds, ProjectId } from "./ProjectId";
 import { TextLink } from "./TextLink";
 import { RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
+import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { planRowCaption, PlanRowRecords, planRowTitle } from "./PlanRowRecords";
@@ -74,20 +75,31 @@ export type DrawerData =
 // The passages' table, before the colon of a passage's evidence id.
 const PASSAGE_TABLE = "strata.gold.passage:";
 
+// The plans' rows' table, before the colon of a plan row's evidence id.
+const PLAN_ROWS_TABLE = "strata.silver.plan_rows";
+
 // The drawer head's caption for a passage, a record, a timeline view or a section 5 view (ticket 58): what kind of source
-// is open. A plan row and a comparable package have their own, above; a list of packages, a dot or a lesson has none.
-function kindCaption(evidence: EvidenceEvent): string | null {
+// is open. A report is named by its type, and only a source with no type falls back to its stratum (the 58 design
+// review, B2). A plan row and a comparable package have their own, above; a list of packages, a dot or a lesson has none.
+function kindCaption(evidence: EvidenceEvent): ReactNode {
   const captions = copy.evidence.captions;
+  const byType = (type: unknown) => (typeof type === "string" ? captions.documentType[type] : undefined);
   if (evidence.kind === "passage") {
     if (evidence.row?.kind === "notice_text") return captions.notice;
-    return evidence.stratum ? (captions.stratum[evidence.stratum] ?? null) : null;
+    return byType(passageFields(evidence).docType) ?? (evidence.stratum ? (captions.stratum[evidence.stratum] ?? null) : null);
   }
   if (evidence.kind === "record") {
     if (lessonOf(evidence)) return null;
+    // A plan row records a plan, not what happened: "Activity in the {agency} plan of {date}", as the plan check's
+    // drawer says (the 58 design review, follow-up 12).
+    const source = (evidence.row?.source ?? {}) as Record<string, unknown>;
+    if (evidence.id.split(":")[0] === PLAN_ROWS_TABLE && typeof source.implementing_agency === "string" && typeof source.document_date === "string") {
+      return <Fill template={copy.evidence.planRowCaption} slots={{ agency: source.implementing_agency, date: <Num date={source.document_date} /> }} />;
+    }
     return captions.stratum[evidence.stratum ?? "What"] ?? null;
   }
+  if (evidence.kind === "document") return byType(evidence.row?.document_type) ?? captions.document;
   const byKind: Record<string, string> = {
-    document: captions.document,
     ratings: captions.ratings,
     contracts: captions.contracts,
     disagreement: captions.disagreement,
@@ -805,7 +817,7 @@ export function EvidenceDrawerView({
                 {copy.evidence.package.caption}
               </p>
             )}
-            {evidence && kindCaption(evidence) && (
+            {evidence && kindCaption(evidence) !== null && (
               <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
                 {kindCaption(evidence)}
               </p>

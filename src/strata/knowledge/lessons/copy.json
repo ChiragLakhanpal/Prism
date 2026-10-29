@@ -92,9 +92,9 @@
     "all": "Showing all {m} {noun}, newest first.",
     "both": "Showing both {noun}, newest first.",
     "one": "Showing the one {noun}, newest first.",
-    "range": "Showing {from}–{to} of {m} {noun}, newest first.",
+    "range": "Showing {from} to {to} of {m} {noun}, newest first.",
     "narrowed": "Showing {n} of {m} {noun}, newest first.",
-    "narrowedRange": "{n} of {m} {noun} match. Showing {from}–{to}, newest first.",
+    "narrowedRange": "{n} of {m} {noun} match. Showing {from} to {to}, newest first.",
     "nouns": {
       "current": {
         "one": "current lesson",

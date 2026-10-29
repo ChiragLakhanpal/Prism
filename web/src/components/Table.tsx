@@ -1,5 +1,5 @@
 // Table (DESIGN.md section 5): a title sentence that states the finding, a count line
-// ("Showing 1–20 of 99 sources"), a surface-2 header with units in the column heads, numbers
+// ("Showing 1 to 20 of 99 sources."), a surface-2 header with units in the column heads, numbers
 // right-aligned in tabular numerals, and a source line below. Below 768 px each row becomes a
 // card, so nothing scrolls sideways. A table whose columns need more than the 672 px a 768 px
 // screen leaves, such as ticket 10's plan check, sets cardsBelow="lg" and becomes cards below
@@ -59,7 +59,7 @@ export type TableState =
   | { status: "empty"; title: ReactNode; body: ReactNode; link?: { href: string; text: ReactNode } }
   | { status: "error"; message: ReactNode; onRetry?: () => void };
 
-// What the count line counts: "Showing all 4 activities", or "Showing 1–20 of 99 sources"
+// What the count line counts: "Showing all four activities.", or "Showing 1 to 20 of 99 sources."
 // when the rows are one page of more.
 // one is the noun for a single row ("version"), so one row reads "Showing 1 version".
 // text: the count line in words of the screen's own, such as "Showing 6 of 61 versions" for rows that are

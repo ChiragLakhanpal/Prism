@@ -61,7 +61,7 @@ function approachName(approach: Approach, inSentence = false): string {
   const market = inSentence ? what.inSentence_market_approach : what.label_market_approach;
   return words.approach(
     market[approach.market_approach] ?? approach.market_approach,
-    what.lots(approach.lots),
+    inSentence ? what.lotsInSentence(approach.lots, formatCount(approach.lots)) : what.lots(approach.lots),
     what.inSentence_prequalification[approach.prequalification] ?? approach.prequalification,
   );
 }

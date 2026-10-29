@@ -29,7 +29,7 @@ import { ENGLISH, langOf, languageName, workingLanguage } from "../lib/lang";
 import { useRevealAfterWait } from "../lib/reveal";
 import { useStore } from "../lib/store";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
-import { highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
+import { highlightsFor, lessonOf, namedSection, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -206,7 +206,7 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
   return place.kind === "paragraph" ? (
     <Fill template={words.numTooltip} slots={{ para: place.text, kind, pid }} />
   ) : (
-    <Fill template={words.numTooltipSection} slots={{ section: place.text, kind, pid }} />
+    <Fill template={namedSection(place) ? words.numTooltipSection : words.numTooltipSectionNumbered} slots={{ section: place.text, kind, pid }} />
   );
 }
 

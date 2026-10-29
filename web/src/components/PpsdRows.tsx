@@ -60,7 +60,7 @@ function dollars(amount: string | null): string {
 }
 
 // The marker's name lists every source it carries (the 36 brief, 4.6): "Source 2: ICR P130164 paragraph 54, page
-// 23, and ICR Review paragraph 10.b".
+// 23, and ICR Review section 10.b".
 export function footnoteSources(footnote: Footnote, row: PpsdRow): string {
   const named = footnote.evidence_ids.map((id) => {
     if (id === row.counts_evidence_id) return words.markerCount;

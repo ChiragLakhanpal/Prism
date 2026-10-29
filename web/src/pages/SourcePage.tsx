@@ -378,7 +378,7 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
                   {row.description && <span className="mt-1 block text-ink">{drawable(row.description)}</span>}
                 </th>
                 <td className="px-3 py-2">{method(row)}</td>
-                <td className="px-3 py-2">{row.review_type ?? copy.notInPlan}</td>
+                <td className="px-3 py-2">{row.review_type ?? words.noReview}</td>
                 <td className="px-3 py-2 text-right tabular-nums">{amount(row.estimated_amount_usd)}</td>
                 <td className="px-3 py-2">{row.process_status ?? words.noStatus}</td>
               </tr>
@@ -397,7 +397,7 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
             </div>
             <div>
               <dt className="text-caption text-ink-muted">{columns.review}</dt>
-              <dd className="text-small text-ink">{row.review_type ?? copy.notInPlan}</dd>
+              <dd className="text-small text-ink">{row.review_type ?? words.noReview}</dd>
             </div>
             <div>
               <dt className="text-caption text-ink-muted">{columns.estimated}</dt>

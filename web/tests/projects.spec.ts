@@ -139,7 +139,7 @@ test("the list search filters on the server as you type, by name, project ID or 
 
   await field.pressSequentially("india");
 
-  await expect(main.locator("[data-page-lead]")).toHaveText("Showing one project.");
+  await expect(main.locator("[data-page-lead]")).toHaveText("Showing the one project.");
   await expect(main.locator("[data-table-view=table] tbody tr")).toHaveCount(1);
   await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P130164" })).toBeVisible();
   // One request for the word, sent once typing stopped, and the address keeps the search in place.
@@ -302,7 +302,7 @@ test("a project's Procurement tab shows each agency's plan versions newest first
     "Plan of Dec 7, 2020",
   ]);
   await expect(nwwda.locator("[data-table-view=table] tbody tr").first().locator("td")).toHaveText(["Oct 9, 2026", "9"]);
-  await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText("Showing one version.")).toBeVisible();
+  await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText("Showing the one version.")).toBeVisible();
   // One source line, under the last agency's table, not the same line under each (ticket 58).
   const sources = main.locator("[data-agency] [data-source]");
   await expect(sources).toHaveCount(1);

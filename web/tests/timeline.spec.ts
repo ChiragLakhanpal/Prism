@@ -277,6 +277,13 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await expect(second).toContainText('If you keep the ICR instead, I treat "efficiency rating" as');
   await expect(second).toContainText("You can keep the ICR instead from an answer or draft that rests on these two reports.");
   await expect(second).not.toContainText("keep ICR paragraph");
+  // An ICR Review numbers its sections, so its side is "section 5" in the heading, the tab and the open link, as the
+  // drawer it opens names it, never "paragraph 5" or "¶5" (the 58 critique, follow-up 2).
+  await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ICR paragraph 44 and ICR Review section 5");
+  await expect(dialog.getByRole("tab", { name: "ICR Review section 5" })).toBeVisible();
+  await expect(second).toContainText("Open section 5");
+  await expect(dialog).not.toContainText("ICR Review paragraph");
+  await expect(dialog).not.toContainText("Review ¶");
 });
 
 test("in a 1100 px page area the chart redraws beside the drawer at 536 px and keeps every label; a band and a report open their views", async ({ page }) => {
@@ -303,9 +310,12 @@ test("in a 1100 px page area the chart redraws beside the drawer at 536 px and k
 
   await item(page, "doc:26733307").click();
   await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ISR 7, August 26, 2016");
+  // The caption names the kind of report and when it was written (the 58 design review, follow-up 13).
+  await expect(dialog.locator("[data-drawer-caption]")).toHaveText("A status report, written during the project");
   await expect(dialog.locator("[data-document-fields]")).toContainText("Disclosed");
   await expect(dialog.locator("[data-claim-line]")).toContainText("ISR 7 and the ICR disagree about progress towards the project development objective (PDO) at the mid-term review.");
   await item(page, "doc:31525018").click();
+  await expect(dialog.locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
   // A sentence that starts with a report's short name starts with a capital.
   await expect(dialog.locator("[data-claim-line]").first()).toContainText("The ICR and ISR 7 disagree about");
   await item(page, "doc:26733307").click();

@@ -102,7 +102,10 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
         {(middle.longer ?? 0) > 0 && (
           <>
             {" "}
-            <Fill template={words.findingMiddle} slots={{ longer_m: number(middle.longer ?? 0), about_m: about(middle.in10), days_m: number(middle.days), n: number(n) }} />
+            <Fill
+              template={row.basis === "delay" ? words.findingMiddleDelay : words.findingMiddle}
+              slots={{ longer_m: number(middle.longer ?? 0), about_m: about(middle.in10), days_m: number(middle.days), n: number(n), previous: previous?.phrase ?? "" }}
+            />
           </>
         )}
       </>

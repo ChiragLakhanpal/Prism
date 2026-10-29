@@ -838,7 +838,8 @@ test("a source with no measures leaves the headline out, and its row says it is 
   expect(total).toBeGreaterThanOrEqual(14);
   await expect(page.locator("[data-headline]")).toHaveText(
     // One to nine in words, as in any sentence (DESIGN.md section 7, rule 12; design r5 P4).
-    `I'm not giving a headline: one of the ${total} sources below has no measures yet. Its row says so.`,
+    // No colon joins the two sentences (ticket 58; DESIGN.md section 7, rule 16).
+    `I'm not giving a headline. One of the ${total} sources below has no measures yet. Its row says so.`,
   );
   // With no headline, the caption says when the measures were taken, with no "this" to point at nothing.
   await expect(page.locator("[data-lead] [data-headline] + p")).toHaveText("I took the measures below on October 23, 2026.");
@@ -856,14 +857,14 @@ test("a source with no measures leaves the headline out, and its row says it is 
   await page.route("**/api/data/readiness*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(body) }));
   await page.reload();
   await expect(page.locator("[data-headline]")).toHaveText(
-    "I'm not giving a headline: one of the two sources below has no measures yet. Its row says so.",
+    "I'm not giving a headline. One of the two sources below has no measures yet. Its row says so.",
   );
   body = abstaining(2, 2);
   await page.reload();
-  await expect(page.locator("[data-headline]")).toHaveText("I'm not giving a headline: none of the sources below has measures yet. Their rows say so.");
+  await expect(page.locator("[data-headline]")).toHaveText("I'm not giving a headline, because none of the sources below has measures yet. Their rows say so.");
   body = abstaining(1, 1);
   await page.reload();
-  await expect(page.locator("[data-headline]")).toHaveText("I'm not giving a headline: the source below has no measures yet. Its row says so.");
+  await expect(page.locator("[data-headline]")).toHaveText("I'm not giving a headline, because the source below has no measures yet. Its row says so.");
 });
 
 test("a date before the first measure says when the measures start and links to today's", async ({ page }) => {

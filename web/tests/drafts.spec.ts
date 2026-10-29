@@ -117,7 +117,7 @@ test("with no activity marked, a preview or an as-of date, Check a plan offers n
   // Ticket 100: with no signal to draft from, the finding says so, the head holds the check pill and no action, and it
   // does not stick; only the data-note rows are marked.
   await expect(page.locator("[data-finding]")).toHaveText("No activity needs a look or is worth watching; three have data notes.");
-  await expect(page.locator("[data-plan-header] [data-check-pill]")).toHaveText("9 activities checked");
+  await expect(page.locator("[data-plan-header] [data-check-pill]")).toHaveText("Nine activities checked");
   await expect(page.locator("[data-draft-slot], [data-draft-action]")).toHaveCount(0);
   expect(await page.locator("[data-plan-header]").evaluate((head) => getComputedStyle(head).position)).toBe("static");
   await expect(page.locator("[data-view=table] tbody tr[id]:visible")).toHaveCount(3);

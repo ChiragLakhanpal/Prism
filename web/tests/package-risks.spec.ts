@@ -94,6 +94,10 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   // The count names its reference class in its cell and its column head, as a count of the one denominator.
   expect(await text(cost.locator("[data-count]"))).toBe("1 of 1 completion reports");
   await expect(view(page).locator("thead")).toContainText("In completion reports for projects with comparable packages");
+  // The finding reads the one report as one, with no "1 of 1" (the 58 design review, follow-up 5).
+  await expect(section(page).locator("[data-finding]")).toHaveText(
+    `"${RISK}" and "Land, forest and other permits not in place before award" both came up in the one completion report I read for projects with comparable packages.`,
+  );
   const pills = cost.getByRole("list", { name: "Sources" }).getByRole("link");
   expect(await shown(pills)).toEqual(["ICR P130164 ¶54", "ICR Review 10.b"]);
   await expect(pills.first()).toHaveAccessibleName(/^ICR P130164 paragraph 54 ?, Implementation Completion and Results Report, October 10, 2019$/);
@@ -171,8 +175,8 @@ test("a row's count opens the completion reports that raised its risk, and each 
   await row(page, "cost_estimates").locator("[data-count] button").click();
 
   await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("Completion reports that raised this risk");
-  // No "the" before the one report's count (ticket 58).
-  await expect(drawer(page)).toContainText(`1 of 1 completion reports for projects with comparable packages raised "${RISK}".`);
+  // One report read, so no "1 of 1 completion reports" (the 58 design review, follow-up 5).
+  await expect(drawer(page)).toContainText(`The one completion report I read for projects with comparable packages raised "${RISK}".`);
   await drawer(page).locator(`[data-report-entry='${ICR_54}']`).click();
   await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph 54$/);
   await drawer(page).getByRole("button", { name: "Back to the report" }).click();

@@ -1,7 +1,22 @@
 // The number rules Num enforces (DESIGN.md sections 6 and 7), checked against literal
 // strings. Num renders exactly what these functions return.
 import { expect, test } from "@playwright/test";
-import { formatAmountText, formatCount, formatDate, formatNumber, formatRatio, formatYear } from "../src/lib/format";
+import { formatAmountText, formatCount, formatDate, formatNumber, formatRatio, formatYear, localDay } from "../src/lib/format";
+
+// The 58 design review, follow-up 19: a row worked on at 11:30 p.m. in California on October 28 is from October 28 there,
+// though it is already October 29 in UTC. A plain date stays as it is.
+test("a moment's day is the reader's own day, not the UTC day", () => {
+  const was = process.env.TZ;
+  process.env.TZ = "America/Los_Angeles";
+  try {
+    expect(localDay("2026-10-29T06:30:00Z")).toBe("2026-10-28");
+    expect(localDay("2026-10-29T08:30:00Z")).toBe("2026-10-29");
+    expect(localDay("2026-10-29")).toBe("2026-10-29");
+  } finally {
+    if (was === undefined) delete process.env.TZ;
+    else process.env.TZ = was;
+  }
+});
 
 test("a ratio under 20 cases is a count and never a percentage", () => {
   expect(formatRatio(6, 12)).toEqual({ text: "6 of 12", count: "6 of 12", frequency: null });

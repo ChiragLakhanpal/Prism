@@ -45,6 +45,13 @@ export type Place = { kind: "paragraph" | "section"; text: string };
 
 export const ICR_REVIEW = "Implementation Completion Report Review";
 
+// A section the report names in words, such as an ISR's "Project Development Objective Indicators", rather than by a
+// number or an ID, such as "10.b", "III.B" or "Annex 8". A heading or a tooltip names the first alone ("the ... section")
+// and the second after the word "section" (the 58 design review, follow-up 7).
+export function namedSection(place: Place): boolean {
+  return place.kind === "section" && !/\d/.test(place.text) && /[a-z]{2}/.test(place.text);
+}
+
 export function placeOf(fields: PassageFields): Place {
   if (fields.numbered && fields.docType === ICR_REVIEW) return { kind: "section", text: fields.para };
   return fields.numbered ? { kind: "paragraph", text: fields.para } : { kind: "section", text: keepClosingId(fields.section ?? fields.para) };

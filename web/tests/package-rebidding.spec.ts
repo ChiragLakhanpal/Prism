@@ -165,6 +165,9 @@ test("a canceled plan row opens with its Process Status highlighted, and a STEP 
   await block(page).locator(`[data-citation-id='${PLAN_ROW}']`).click();
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Activity KE-KIMAWASCO-157517-CW-RFB");
+  // A plan row records a plan, so its caption names the plan, as the plan check's drawer does (the 58 design review,
+  // follow-up 12).
+  await expect(drawer.locator("[data-drawer-caption]")).toHaveText("Activity in the Kilifi - Mariakani Water and Sewerage Company Ltd plan of March 19, 2025");
   await expect(drawer.locator("mark")).toContainText("Canceled");
   // Its place in Check a plan, on the plan version that canceled it (ticket 28's design review, F1).
   await expect(drawer.getByRole("link", { name: copy.trail.plan.showInPlan })).toHaveAttribute(

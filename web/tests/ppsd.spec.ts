@@ -319,6 +319,9 @@ test("the Project Paper summary for P156634 is a sheet in three parts, cites its
   await expect(page.locator("[data-sources]")).toContainText(
     "Source: Implementation Completion and Results Report, P130164, October 10, 2019, paragraph 54, page 23.",
   );
+  // The ICR Review's locator is a section, in the name and in its source line alike (the 58 design review, follow-up 6).
+  await expect(page.locator("[data-sources]")).toContainText("ICR Review section 10.b");
+  await expect(page.locator("[data-sources]")).not.toContainText("ICR Review paragraph");
   expect(await axe(page)).toEqual([]);
 });
 

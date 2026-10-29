@@ -206,12 +206,12 @@ test("Compare with is one tab stop the arrow keys move through without pressing,
   await expect(second).toHaveAttribute("aria-pressed", "true");
   await expect(first).toHaveAttribute("aria-pressed", "false");
 
-  // Too few went with 1 lot: lane 1 lights its dots, lane 2 keeps only the ghost and says why.
+  // Too few went with one lot (in words inside a sentence; the 58 critique, follow-up 6): lane 1 lights its dots, lane 2 keeps only the ghost and says why.
   await expect(page.locator("[data-chart-drawing] [data-went-with=yes]")).toHaveCount(lots.k);
   await expect(page.locator("[data-lane2-bar]")).toHaveCount(0);
   await expect(page.locator("[data-lane2-ghost]")).toHaveCount(1);
-  await expect(section(page).locator("[data-lane2-note]")).toHaveText(`Only ${lots.k} went with 1 lot, too few for a time estimate.`);
-  await expect(summary(page)).toContainText(`Only ${lots.k} of the ${lots.n} comparable packages went with 1 lot, so I'm not giving a time estimate for it.`);
+  await expect(section(page).locator("[data-lane2-note]")).toHaveText(`Only ${lots.k} went with one lot, too few for a time estimate.`);
+  await expect(summary(page)).toContainText(`Only ${lots.k} of the ${lots.n} comparable packages went with one lot, so I'm not giving a time estimate for it.`);
 
   // Enter moves the one comparison to the other segment.
   await page.keyboard.press("Home");
@@ -271,7 +271,7 @@ test("zone 4 is a panel of at most three approaches, each counted out of the sam
   const options = page.locator("[data-approach-options]");
   const n = body.comparables.n;
   await expect(options).toContainText("Procurement approach options");
-  await expect(options).toContainText(`Comparable packages went with three approaches. The most common was open national, 1 lot, post-qualification, with 25 of ${n}.`);
+  await expect(options).toContainText(`Comparable packages went with three approaches. The most common was open national, one lot, post-qualification, with 25 of ${n}.`);
   // Ticket 101: with options to compare, zone 4 is a panel that shows them, tagged with its PPSD section, and has no
   // Show or Hide button; its notes and source end it in its foot strip.
   await expect(options).toHaveAttribute("data-zone", "panel");
@@ -286,7 +286,7 @@ test("zone 4 is a panel of at most three approaches, each counted out of the sam
   await expect(rows.nth(1)).toContainText("No time estimate: only 12 went with it");
   // With no approach ruled out, the table's caption may call the first approach the most common of all.
   await expect(options.locator("[data-approach-table] caption")).toContainText(
-    `25 of the ${n} comparable packages went with open national, 1 lot, post-qualification, the most common approach.`,
+    `25 of the ${n} comparable packages went with open national, one lot, post-qualification, the most common approach.`,
   );
   // n is lane 1's total: the same comparable packages find_comparables returned.
   const lane1 = (await json("comparables-ke-nwwda-229129.json")).counts.comparables;
@@ -330,7 +330,7 @@ test("with one approach left, section 4 counts the comparable packages whose app
   await openWorkspace(page, { estimate: answer });
   const options = page.locator("[data-approach-options]");
   await expect(options).toContainText(
-    `Two of the ${body.comparables.n} comparable packages went with open national, 1 lot, post-qualification. One went with an approach the thresholds rule out for this package, so I have no other approach to compare.`,
+    `Two of the ${body.comparables.n} comparable packages went with open national, one lot, post-qualification. One went with an approach the thresholds rule out for this package, so I have no other approach to compare.`,
   );
   await expect(options).not.toContainText("The rest don't record");
 });
@@ -344,12 +344,12 @@ test("with approaches to list, section 4 names those the thresholds allow and co
   const options = page.locator("[data-approach-options]");
   const n = body.comparables.n;
   await expect(options).toContainText(
-    `Comparable packages went with three approaches the thresholds allow for this package. The most common was open national, 1 lot, post-qualification, with 25 of ${n}.`,
+    `Comparable packages went with three approaches the thresholds allow for this package. The most common was open national, one lot, post-qualification, with 25 of ${n}.`,
   );
   // The tool doesn't count each ruled-out approach, so the caption claims only the most common one the thresholds allow.
   const caption = options.locator("[data-approach-table] caption");
   await expect(caption).toContainText(
-    `25 of the ${n} comparable packages went with open national, 1 lot, post-qualification, the most common approach the thresholds allow for this package.`,
+    `25 of the ${n} comparable packages went with open national, one lot, post-qualification, the most common approach the thresholds allow for this package.`,
   );
   await expect(caption).not.toContainText("the most common approach.");
   await expect(options).toContainText(`Two of the ${n} comparable packages went with approaches the thresholds rule out for this package, so I left those approaches out.`);
@@ -364,7 +364,7 @@ test("with fewer than 20 comparable packages lane 2 says so in the first person,
   });
   const count = (await json("estimate-ke-nwwda-541055-prior.json")).abstention.count;
   expect(count).toBeLessThan(20);
-  await expect(section(page).locator("[data-lane2-message=abstain]")).toHaveText(`I'm not giving a time estimate: only ${count === 7 ? "seven" : count} comparable packages.`);
+  await expect(section(page).locator("[data-lane2-message=abstain]")).toHaveText(`I'm not giving a time estimate from only ${count === 7 ? "seven" : count} comparable packages.`);
   await expect(page.locator("[data-lane2-bar]")).toHaveCount(0);
   await expect(compare(page)).toHaveCount(0);
   await expect(page.locator("[data-track-record]")).toHaveCount(0);
@@ -404,7 +404,7 @@ test("with the time estimate's table above it, a pressed number's count line rep
   await expect(count).toBeFocused();
   await expect(page.locator("[data-time-estimate-table]")).toBeVisible();
   await section(page).getByRole("button", { name: `Show all ${total}` }).click();
-  await expect(count).toHaveText(new RegExp(`^Showing 1\u201320 of ${total} packages\\.$`));
+  await expect(count).toHaveText(new RegExp(`^Showing 1 to 20 of ${total} packages\\.$`));
 });
 
 test("at 1440 px axe finds no WCAG 2.2 AA violations while comparing, with section 4 and the table twin open", async ({ page }) => {

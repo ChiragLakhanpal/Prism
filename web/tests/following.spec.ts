@@ -85,9 +85,11 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   // The closed project folds away with a count, and opens in place.
   await expect(table.getByText("One project has closed.")).toBeVisible();
   await expect(table.locator("[data-project-row=P130164]")).toBeHidden();
+  // A part of the whole keeps its numerals; the whole says "both" (ticket 58; the 58 design review, B1).
+  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing 1 of 2 projects you follow.");
   await table.getByRole("button", { name: "Show it" }).click();
   await expect(table.locator("[data-project-row=P130164]")).toContainText("Closed");
-  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing 2 of 2 projects you follow.");
+  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing both projects you follow.");
   // Never replayed yet on the fixture: the track record says so, and types no number.
   await expect(page.locator("[data-track-record=none]")).toContainText("I haven't replayed these checks on past dates yet");
 });
@@ -389,6 +391,17 @@ test("when every project you follow is quiet, the finding counts them in words",
   await openFollowing(page, { file: "following-made-up-all-quiet.json" });
 
   await expect(page.getByRole("heading", { level: 2, name: "You follow three projects, and none has a signal." })).toBeVisible();
+  // No row shows until the fold opens, so no count line shows either (DESIGN.md section 5, Tables; the 58 design
+  // review, B1). Opened, it shows every project, in words.
+  await expect(page.locator("[data-count-line]")).toHaveCount(0);
+  await page.locator("[data-following-view]:visible [data-fold]").first().click();
+  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing all three projects you follow.");
+});
+
+test("one project you follow is counted as the one, never as 1 of 1", async ({ page }) => {
+  await openFollowing(page, { file: "following-made-up-one.json" });
+
+  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing the one project you follow.");
 });
 
 test("a part the writer refused says so, and never says I removed sentences", async ({ page }) => {

@@ -226,9 +226,13 @@ export function FollowingBody({ data }: { data: Following }) {
             {words.defEnd}
           </p>
         </div>
-        <p className="mt-4 text-caption text-ink-muted @xl/page:mt-6" data-count-line>
-          {words.countLine(shownCount, counts.total)}
-        </p>
+        {/* The count line shows only with the rows, so a list whose every project is folded has none (DESIGN.md
+            section 5, Tables; the 58 design review, B1). */}
+        {shownCount > 0 && (
+          <p className="mt-4 text-caption text-ink-muted @xl/page:mt-6" data-count-line>
+            {copy.table.showingOf(shownCount, counts.total, formatNumber(shownCount, { compact: false }), formatNumber(counts.total, { compact: false }), formatCount(counts.total), words.countNoun)}
+          </p>
+        )}
 
         {/* The table, from a page area of 1,200 px. */}
         <div data-following-view="table" className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @xl/page:block">

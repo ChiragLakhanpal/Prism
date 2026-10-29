@@ -315,6 +315,13 @@ function Finding({
   );
   const mText = formatNumber(m, { compact: false });
   const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m, from, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
+  if (m === 1) {
+    // One report: "the one completion report I read", never "1 of 1 completion reports" (the 58 design review, F5).
+    const report = <Num count={m} check={{ tooltip: tips.m, from, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
+    if (one) return <Fill template={words.findingOneReport} slots={{ risk: one.risk_label, m: report }} />;
+    if (tied.length === 2) return <Fill template={words.findingTwoOneReport} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, m: report }} />;
+    return <Fill template={words.findingManyOneReport} slots={{ tied: formatCount(tied.length, { capital: true }), m: report }} />;
+  }
   if (one) return <Fill template={words.finding} slots={{ risk: one.risk_label, k, m: all }} />;
   if (tied.length === 2) return <Fill template={words.findingTwo} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, k, m: all }} />;
   return <Fill template={words.findingMany} slots={{ tied: formatCount(tied.length, { capital: true }), k, m: all }} />;

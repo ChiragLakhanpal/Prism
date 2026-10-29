@@ -41,6 +41,7 @@ import {
   type ReadinessState,
   type SourceRow,
 } from "../../lib/dataPages";
+import { formatCount, formatNumber } from "../../lib/format";
 import { useStore } from "../../lib/store";
 import { DATA_HREF } from "../../routes";
 import { HardestDocuments, HardestDocumentsLoading, SHELF_ID } from "./HardestDocuments";
@@ -48,6 +49,7 @@ import { MeasureValue, OpenSection, Sentence, type Measures, type Noun } from ".
 
 const words = copy.dataReadiness;
 const SLOW_MS = 3000;
+const whole = (value: number) => formatNumber(value, { compact: false });
 // Until the registry answers, the skeleton holds this many rows in each table and fixes in the card.
 const ROWS_BEFORE_REGISTRY = 3;
 // The headline is the page's finding (ticket 104): 28 / 36 light, 24 / 32 below a 48rem window, at most 22.5em wide,
@@ -265,9 +267,13 @@ function scopeText(row: Extract<SourceRow, { type: "measured" | "unmeasured" }>)
         {/* Which documents, on a line of their own under which projects, so "with their" never has two places
             to belong (ticket 58; the 18 design review, round 3, P2). */}
         {row.covers && (
-          <span data-covers className="block">
-            {row.covers.charAt(0).toUpperCase() + row.covers.slice(1)}
-          </span>
+          <>
+            {words.sources.scope.end}
+            <span data-covers className="mt-1 block">
+              {row.covers.charAt(0).toUpperCase() + row.covers.slice(1)}
+              {words.sources.scope.end}
+            </span>
+          </>
         )}
       </>
     );
@@ -420,7 +426,8 @@ function Abstention({ unmeasured, sources }: { unmeasured: number; sources: numb
   return (
     <Template
       text={unmeasured === 1 ? words.abstain.unmeasuredOne : words.abstain.unmeasured}
-      values={{ count: <Num count={unmeasured} />, total: <Num count={sources} /> }}
+      // The count starts the second sentence, so its word takes a capital (no colon joins the two; DESIGN.md rule 16).
+      values={{ count: <Num count={unmeasured} capital />, total: <Num count={sources} /> }}
     />
   );
 }
@@ -615,7 +622,7 @@ function Tables({ result, zones }: { result: Readiness; zones: Zones }) {
         id="sources"
         skeletonRows="sources"
         title={words.sources.title}
-        lines={<Template text={words.sources.showing} values={{ shown: <Num value={result.filter.shown} />, total: <Num value={result.filter.total} /> }} />}
+        lines={copy.table.showingOf(result.filter.shown, result.filter.total, whole(result.filter.shown), whole(result.filter.total), formatCount(result.filter.total), words.sources.noun)}
         head={{ label: words.sources.source, width: "w-[28%]" }}
         columns={COLUMNS.map(columnHead)}
         state={{ status: "ready", rows: sourceRows(result, measures) }}

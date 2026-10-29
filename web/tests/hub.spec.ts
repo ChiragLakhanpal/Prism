@@ -876,7 +876,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   const unrecorded = await open(page, "/projects/P156634/procurement", 1440, await p156634());
   const packages = page.locator("[data-packages=ready]");
   await expect(packages.getByRole("heading", { level: 2, name: "Packages" })).toBeVisible();
-  await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 46 packages.");
+  await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1 to 20 of 46 packages.");
   const first = packages.locator("[data-table-view=table] tbody tr").first();
   await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB");
   await expect(first.locator("td")).toHaveText(["Northern Water Works Development Agency", "Request for Bids · Open - National", "300,000.00", "Signed"]);
@@ -884,7 +884,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
 
   await packages.getByRole("link", { name: "Next page" }).click();
   await expect(page).toHaveURL(/packages_page=2$/);
-  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21–40 of 46 packages.");
+  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21 to 40 of 46 packages.");
 
   // The description reads "Exploratory Bo reholes" in the PDF, and the search still finds "boreholes".
   const field = page.getByRole("searchbox", { name: "Search packages" });
