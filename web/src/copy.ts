@@ -5322,9 +5322,9 @@ export const copy = {
       "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
     // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), so the intro says so.
     introQuantile:
-      "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. Its place shows how far above or below its own cost estimate the middle package of its group was signed.",
+      "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows how far the middle package of its group was signed above or below that package's own cost estimate.",
     introNoEstimateQuantile:
-      "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. Its place shows how far above or below its own cost estimate the middle package of its group was signed.",
+      "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows how far the middle package of its group was signed above or below that package's own cost estimate.",
     amount: (amount: string) => `US$${amount}`,
     title: "{above} of {m} comparable packages were signed above their cost estimates.",
     titleOne: "One of the {m} comparable packages was signed above its cost estimate.",
@@ -5385,7 +5385,7 @@ export const copy = {
     tooltipOpenDots: "Press Enter or click to see every package in the table.",
     alt: "One dot for each of {m} comparable packages, placed by how far its signed amount was from its own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altQuantile:
-      "{dots} dots, each standing for 1 in {dots} of the {m} comparable packages, placed by how far above or below its own cost estimate the middle package of each group was signed. {below} were signed below, {at} at, and {above} above their cost estimates.",
+      "{dots} dots, each standing for 1 in {dots} of the {m} comparable packages. Each dot shows how far the middle package of its group was signed above or below that package's own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altMiddle: "The middle half ran from {q25} to {q75}, and the middle package was {q50}.",
     countTooltip: "Comparable packages with both a cost estimate and a signed contract.",
     countAct: "Select to see the table.",
@@ -7143,7 +7143,10 @@ export const copy = {
   },
   why: {
     title: "Why this source",
-    link: "This paragraph appeared together with {record_noun} {ref}, signed {signed_date}.",
+    // The record's noun and its reference move to a new line together, so "notice" never ends a line alone (ticket 59).
+    link: "This paragraph appeared together with {record}, signed {signed_date}.",
+    // The record's noun before its reference, joined by a no-break space.
+    recordLabel: (noun: string) => `${noun}\u00a0`,
     recordNoun: { "award notice": "award notice", contract: "contract" } as Record<string, string>,
     topics: "Both concern {topics}, in a project that {project_state}.",
     sameProject: "Both come from {pid}, a project that {project_state}.",

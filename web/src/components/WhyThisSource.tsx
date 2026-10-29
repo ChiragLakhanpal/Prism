@@ -27,8 +27,8 @@ import { TextLink } from "./TextLink";
 const words = copy.why;
 const mono = (text: string) => <span className="font-mono">{text}</span>;
 // A STEP reference in the sentence takes the scope chip's rule, so it moves to the next line whole rather than break
-// after a hyphen, and its dates never break inside themselves (ticket 59; the critique of round 1, follow-up 1).
-const reference = (text: string) => <MonoWords text={text} />;
+// after a hyphen, with its record's noun in its first box, so "award notice" never ends a line alone; and its dates
+// never break inside themselves (ticket 59; the critique of round 1, follow-up 1, and of round 2, follow-up 7).
 const day = (iso: string) => wholeDate(formatDate(iso));
 
 // The route's activity, when the page is an activity page: the contract "Why this source" names.
@@ -88,7 +88,10 @@ export function WhyThisSource({ why }: { why: Why }) {
       <p data-why-sentence className="max-w-prose text-small text-ink">
         <Fill
           template={words.link}
-          slots={{ record_noun: words.recordNoun[why.record_noun] ?? why.record_noun, ref: reference(ref), signed_date: why.signed_on ? day(why.signed_on) : "" }}
+          slots={{
+            record: <MonoWords text={ref} before={words.recordLabel(words.recordNoun[why.record_noun] ?? why.record_noun)} />,
+            signed_date: why.signed_on ? day(why.signed_on) : "",
+          }}
         />{" "}
         {topics.length ? (
           <Fill template={words.topics} slots={{ topics: joinWords(topics, words.topicJoin), project_state: state }} />

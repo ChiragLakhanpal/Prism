@@ -21,8 +21,9 @@ export function MonoWords({
   className,
 }: {
   text: string;
-  // An opening quote mark or bracket, kept in the first part's box so it never ends a line.
-  before?: string;
+  // An opening quote mark or bracket, or a label such as "award notice" with a no-break space after it, kept in the first
+  // part's box so it never ends a line apart from the reference.
+  before?: ReactNode;
   after?: string;
   // Roboto Mono 500, as an ID in a sentence; 400 otherwise.
   medium?: boolean;

@@ -7,6 +7,7 @@ import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, test, windowBeside } from "./mocked";
 import { fontsLoaded } from "./settled";
+import { formatSignedPercent } from "../src/lib/format";
 
 async function axe(page: Page) {
   await page.waitForFunction(() =>
@@ -34,10 +35,14 @@ test("above 60 packages the cost lane draws one dot per quantile with its key li
   // package (ticket 59's round 1 reviews: the review's B1, the design review's B2).
   const intro = sample.locator("[data-cost-intro]");
   await expect(intro).toContainText(`Each dot below stands for 1 in ${share} of them.`);
+  // The design review of round 2, follow-up 3: the sentence names the package before its own cost estimate.
+  await expect(intro).toContainText("It shows how far the middle package of its group was signed above or below that package's own cost estimate.");
   await expect(intro).not.toContainText("one of them");
   const drawing = sample.locator("[data-cost-drawing]");
   await expect(drawing).toHaveAccessibleName(
-    new RegExp(`^${share} dots, each standing for 1 in ${share} of the ${mock.counts.m} comparable packages, placed by how far above or below`),
+    new RegExp(
+      `^${share} dots, each standing for 1 in ${share} of the ${mock.counts.m} comparable packages\\. Each dot shows how far the middle package of its group was signed above or below that package's own cost estimate\\.`,
+    ),
   );
   await expect(drawing).toHaveAccessibleName(
     new RegExp(`${mock.counts.below} were signed below, ${mock.counts.at} at, and ${mock.counts.above} above their cost estimates\\.`),
@@ -79,6 +84,26 @@ test("the cost lane's quantile dots never touch, at 390 and 320 px as at 1440", 
       )
       .toEqual([]);
   }
+});
+
+// The design review of round 2, follow-up 2: at 320 px each dot's 24 px target covers the next dot's centre, so a hover
+// on dot 10 showed dot 11's value. The tooltip now names the dot nearest the pointer.
+test("at 320 px a hover on a quantile dot shows that dot's own tooltip, not the next one's", async ({ page }) => {
+  const mock = JSON.parse(await readFile(QUANTILE_MOCK, "utf8"));
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/gallery/check-criteria");
+  const sample = page.locator("[data-cost-sample=quantile]");
+  const dots = sample.locator("[data-cost-dot]");
+  await expect(dots).toHaveCount(mock.quantile_dots.length);
+  await dots.first().scrollIntoViewIfNeeded();
+  const wrong: string[] = [];
+  for (const [index, dot] of (mock.quantile_dots as { diff_pct: number }[]).entries()) {
+    const box = (await dots.nth(index).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    const shown = (await sample.locator("[data-cost-tooltip] p").nth(1).textContent()) ?? "";
+    if (shown !== formatSignedPercent(dot.diff_pct)) wrong.push(`dot ${index + 1}: ${shown}`);
+  }
+  expect(wrong).toEqual([]);
 });
 
 // The design review of round 1, follow-up 9: the gallery draws "Advertised again" as the page does, its foot strip run

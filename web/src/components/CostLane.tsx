@@ -110,7 +110,8 @@ function Lane({ cost, onOpen, onTable, title, width }: {
   const [hidden, setHidden] = useState(false);
   const altId = useId();
   const dots = useRef<(HTMLSpanElement | null)[]>([]);
-  const pointer = useRef("mouse");
+  // The dot the pointer last showed the tooltip of.
+  const hovered = useRef<number | null>(null);
   const open = useOpenId();
   const rows = cost.rows;
   // Above past_range.quantile_dots_above comparable packages the tool returns quantile dots, each standing for an equal
@@ -163,6 +164,13 @@ function Lane({ cost, onOpen, onTable, title, width }: {
   const stackWidth = Math.max(textWidth(words.line), below > 0 ? textWidth(belowText) : 0, above > 0 ? textWidth(aboveText) : 0);
   const stackX = Math.min(Math.max(zero - textWidth(words.line) / 2, PAD), Math.max(PAD, width - PAD - stackWidth));
   const tip = shown !== null && !hidden ? marks[shown] : null;
+  // The dot whose centre is nearest the pointer, among all of them, measured in the lane's own box.
+  const nearestTo = (event: { clientX: number; clientY: number; currentTarget: HTMLElement }, from: number) => {
+    const box = (event.currentTarget.parentElement ?? event.currentTarget).getBoundingClientRect();
+    const at = { x: event.clientX - box.left, y: event.clientY - box.top };
+    const distance = (index: number) => (x(marks[index].diff) - at.x) ** 2 + (centre + offsets[index] - at.y) ** 2;
+    return marks.reduce((best, _, index) => (distance(index) < distance(best) ? index : best), from);
+  };
   const middleLabel = cost.quartiles
     ? words.middleLabel
         .replace("{q25}", formatSignedPercent(cost.quartiles.q25))
@@ -295,22 +303,25 @@ function Lane({ cost, onOpen, onTable, title, width }: {
                 setHidden(false);
               }}
               onBlur={() => setShown(null)}
-              onPointerEnter={() => {
-                setShown(index);
+              // Each dot's target is 8 px wider than the dot, so in a cluster the pointer is over whichever is on top: the
+              // dot nearest the pointer shows its tooltip, and a press opens it (the 31 design review, F6; ticket 59, the
+              // design review of round 2, follow-up 2, where at 320 px a hover on dot 10 showed dot 11's value).
+              onPointerEnter={(event) => {
+                hovered.current = nearestTo(event, index);
+                setShown(hovered.current);
                 setHidden(false);
               }}
-              onPointerLeave={() => setShown((current) => (current === index ? null : current))}
-              onPointerDown={(event) => {
-                pointer.current = event.pointerType;
+              onPointerMove={(event) => {
+                const near = nearestTo(event, index);
+                if (near === hovered.current) return;
+                hovered.current = near;
+                setShown(near);
               }}
+              onPointerLeave={() => setShown((current) => (current === hovered.current ? null : current))}
               onClick={(event) => {
-                // Each dot's target is 8 px wider than the dot, so in a cluster a tap lands on whichever is on top:
-                // on a touch screen, the dot nearest the tap opens (the 31 design review, F6).
-                if (pointer.current !== "touch") return openMark(mark, event.currentTarget);
-                const box = (event.currentTarget.parentElement ?? event.currentTarget).getBoundingClientRect();
-                const at = { x: event.clientX - box.left, y: event.clientY - box.top };
-                const distance = (index: number) => (x(marks[index].diff) - at.x) ** 2 + (centre + offsets[index] - at.y) ** 2;
-                const nearest = marks.reduce((best, _, index) => (distance(index) < distance(best) ? index : best), index);
+                // A click from the keyboard has no place on the screen, so it opens the dot that has focus.
+                if (event.detail === 0) return openMark(mark, event.currentTarget);
+                const nearest = nearestTo(event, index);
                 openMark(marks[nearest], dots.current[nearest] ?? event.currentTarget);
               }}
               className="pointer-events-auto absolute cursor-pointer rounded-full after:absolute after:-inset-2 after:content-['']"
