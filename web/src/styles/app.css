@@ -677,7 +677,7 @@
 
 /* Where the draft bar sticks (the 35 brief, section 4.3; DESIGN.md section 5, Draft bar): in a window at
    least 48rem wide and 40rem tall, and only while the document column it sits in is at least 30rem wide.
-   Beside the open drawer below about 960 px the column is phone-sized, so the bar sits at the end of the
+   Beside the open drawer below 936 px the column is phone-sized, so the bar sits at the end of the
    column with its buttons stacked, as on a phone. The bar, the discarded notice and the draft page's
    skeleton write bar-sticks: for every class that differs, so a change to where it sticks lands here. */
 @custom-variant bar-sticks {

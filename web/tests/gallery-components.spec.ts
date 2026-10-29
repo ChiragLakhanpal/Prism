@@ -955,6 +955,11 @@ test("the drawer's head shows no eyebrow or middle dot on any of its views on th
   );
   expect(found.length).toBeGreaterThan(5);
   expect(found.filter((head) => head.text.includes("·") || head.eyebrows > 0)).toEqual([]);
+  // Ticket 58: a passage's or a record's head carries one caption that says what kind of source it is.
+  const captions = await page.locator("[data-drawer-header] [data-drawer-caption]").allTextContents();
+  expect(captions.length).toBeGreaterThan(5);
+  expect(captions.filter((caption) => caption.includes("·"))).toEqual([]);
+  expect(captions).toContain("An evaluation that explains why things went as they did");
 });
 
 // Ticket 14's evidence drawer, on the gallery's Evidence page. The record is KE-NWWDA-229129-CW-RFB

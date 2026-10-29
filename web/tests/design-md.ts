@@ -36,7 +36,7 @@ export function normalize(value: string): string {
   return value.trim().replace(/\s+/g, " ").replace(/\s*,\s*/g, ", ");
 }
 
-// below: the size and line height a step takes below a page area of 48rem, such as the finding's 24 / 32.
+// below: the size and line height a step takes below 48rem of window width, such as the finding's 24 / 32.
 export type TypeStep = {
   token: string;
   size: number;
@@ -47,7 +47,7 @@ export type TypeStep = {
 };
 
 // Section 3's type scale: one row per token, with the size in px and the line height as written. A step
-// that steps down on a phone, such as "28 / 36; 24 / 32 below a page area of 48rem", gives its first pair
+// that steps down on a phone, such as "28 / 36; 24 / 32 below 48rem of window width", gives its first pair
 // as its size and line height and the second as below.
 export async function typeScale(): Promise<TypeStep[]> {
   const text = await section(3);

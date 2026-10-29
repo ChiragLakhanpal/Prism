@@ -196,7 +196,7 @@ export const copy = {
   // Every route's title, its purpose of one or two short sentences, and its empty state (the 06 design brief, with
   // design-lead's round 1 wording for the empty states). Until a route's own ticket fills it, a
   // page reads nothing, so its empty state says what the page can't show yet and never claims
-  // what the data hold: the stamp in the band may already show a date. {pid}, {stepRef} and {id}
+  // what the data hold: the stamp at the sidebar's foot may already show a date. {pid}, {stepRef} and {id}
   // come from the address and show in Roboto Mono. Each page's link goes where web/src/routes.ts
   // says; data has none, and the not-found pages have no card.
   pages: {
@@ -1213,6 +1213,24 @@ export const copy = {
     // (ticket 100; DESIGN.md section 5, Evidence drawer: placement, head and motion).
     // The date keeps to one line (ticket 100's design review, item 6).
     planRowCaption: "Activity in the {agency} plan of {date}",
+    // The drawer head's one caption, which says what kind of source is open, under its title, with no middle dot
+    // (ticket 58; DESIGN.md section 5, Evidence drawer). A passage or a record by its stratum (GLOSSARY.md), a
+    // notice's text, and the views a timeline mark or section 5 opens. The plan row's and the package's are above.
+    captions: {
+      stratum: {
+        What: "A record of what happened",
+        How: "An operations document on how procurement was carried out",
+        Why: "An evaluation that explains why things went as they did",
+      } as Record<string, string>,
+      notice: "A procurement notice, as the World Bank published it",
+      document: "A report on this project's timeline",
+      ratings: "Ratings from the project's status reports",
+      contracts: "Contract records from the World Bank's awards data",
+      disagreement: "Two reports that say different things",
+      criteriaPublic: "From the comparable packages' procurement notices",
+      criteriaItem: "From the comparable packages' procurement notices",
+      packageCost: "From the package's plan row and its contract records",
+    },
     // The records a project's Summary cites (ticket 21), by the table their evidence id names. The
     // project ID or loan number follows in Roboto Mono.
     summaryRecordKinds: {
@@ -5436,7 +5454,6 @@ export const copy = {
     },
     // The drawer's views of section 5's lists (the 31 brief, section 6.11 A and B).
     drawer: {
-      eyebrow: "What · notice",
       publicTitle: "{n} packages whose criteria are public",
       publicTitleOne: "One package whose criteria are public",
       publicSentence: "These comparable packages published their qualification criteria in their notices.",
@@ -6060,7 +6077,7 @@ export const copy = {
       // A check of what I found: where I found none (ticket 58).
       notFound: (part: string, whole: string, noun: string, found: string) => `I found no ${found} on ${part} of ${whole} ${noun}.`,
       // A Read well shortfall lacks nothing the registry names, so it says what went wrong, as the
-      // gap's sentence does: "30 of 175 body pages I couldn't read without errors."
+      // gap's sentence does: "30 of 175 report pages I couldn't read without errors."
       unread: (part: string, whole: string, noun: string) => `${part} of ${whole} ${noun} I couldn't read without errors.`,
       // What a count in a sentence counts, when the page's own tables list it (ticket 96).
       kinds: "The kinds of question in the table below.",
@@ -6468,7 +6485,7 @@ export const copy = {
       columns: { lesson: "Lesson", outcome: "Outcome", decided: "Decided", days: "Days from publication" },
       daysDefinition: "report public to decision",
       // Cards have no column heads, so the days' definition ends the count line's row once.
-      daysCards: "Days from publication run from the day the report became public to the decision.",
+      daysCards: "Days from publication count from the day the report became public to the day of the decision.",
       recheckDays: "Re-check",
       project: "{name} ({pid})",
       outcomes: {
@@ -6570,6 +6587,9 @@ export const copy = {
       },
       summaryTitle: "My summary of the evidence",
       summaryWriting: "I'm still writing my summary. The quotes above are complete, so you can decide without it.",
+      // A decided record whose summary was never written: it says so, and asks for nothing (ticket 58; the 29 critique,
+      // round 3, follow-up 2).
+      summaryNoneOnRecord: "I didn't write a summary of this evidence before the decision.",
       summaryReady: "My summary is ready.",
       summaryShow: "Show my summary",
       summaryNothing: "I have nothing to add to the quotes above.",
@@ -7612,7 +7632,9 @@ export const copy = {
     agreeWithheld: "I'll give your agreement once you have both graded {min} passages on the same queries. So far you have {pairs}.",
     kappaName: "Cohen's kappa",
     tooltipDone: "Queries where you graded every passage.",
+    // {done} is a word from one to nine (ticket 58).
     tooltipPairs: "Passages you both graded, across {done} queries you both finished.",
+    tooltipPairsOne: "Passages you both graded, on the one query you both finished.",
     tooltipKappa: "From {pairs} passages you both graded. I recompute it each time a query is finished by both of you.",
     show: "Show",
     filters: {
@@ -7672,6 +7694,8 @@ export const copy = {
     barLabel: "Your grade for passage {i}",
     barNote: "Saves and opens the next passage.",
     barNoteNarrow: "Choosing a grade saves it and opens the next passage.",
+    // Once every passage is graded, a grade only changes yours (ticket 58; the 32 design review, round 3, F2).
+    barNoteChange: "Choosing a grade saves the change.",
     keysNote: "While you are in this panel, the keys A, P and N choose a grade.",
     previous: "Previous passage",
     nextPassage: "Next passage",
@@ -7893,7 +7917,6 @@ export const copy = {
       fromTimelineItem: "{label}, {date}.",
       close: "Close the source",
       disagreement: {
-        eyebrow: "{strata} · disagreement",
         heading: "{side1} and {side2}",
         switcher: "Reports in this disagreement",
         both: "Both reports",
@@ -7901,12 +7924,9 @@ export const copy = {
         notAsOf: "These two reports were not both public on {date}, so they did not disagree then.",
         close: "Close the reports",
       },
-      // The strata of the two sides, joined: "How and Why".
-      strataJoin: "{first} and {second}",
       claimLine: "{side1} and {side2} disagree about this.",
       showBoth: "Show both reports",
       ratings: {
-        eyebrow: "How · operations",
         heading: "ISRs {first}–{last}, rated {rating}",
         headingOne: "ISR {first}, rated {rating}",
         trajectory:
@@ -7919,7 +7939,6 @@ export const copy = {
         close: "Close the ratings",
       },
       contracts: {
-        eyebrow: "What · record",
         heading: "Contracts signed in {year}",
         // The table under the heading, which says what each row is rather than repeating the heading.
         tableTitle: "Each contract signed in {year}, in date order.",

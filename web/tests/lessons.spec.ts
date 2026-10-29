@@ -374,6 +374,29 @@ test("a decided record shows the outcome where the form was, with days from publ
   await expect(page.locator("[data-history]")).toContainText("Now: Rests on two quotes from two reports.");
 });
 
+// Ticket 58 (the 29 critique, round 3, follow-up 2): a decided record whose summary was never written says so, and
+// never that I'm still writing it so you can decide.
+test("a decided record whose summary was never written says I didn't write one before the decision", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const item = JSON.parse((await file("lessons-item-decided-merged.json")).body);
+  item.summary = { ...item.summary, status: "writing", sentences: [], evidence: {}, removed: [] };
+  await reviewer(page, { [`/api/lessons/review/${PERMITS}`]: { body: JSON.stringify(item) } });
+  await page.goto(`/lessons/review/${PERMITS}`);
+
+  await expect(page.locator("main")).toContainText("I didn't write a summary of this evidence before the decision.");
+  await expect(page.locator("main")).not.toContainText("I'm still writing my summary");
+});
+
+// Ticket 58 (the 29 design review, round 3, F5): the decided table's cards say what days from publication count.
+test("below 768 px the decided table's note says what days from publication count", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await reviewer(page, { "/api/lessons/review": await file("lessons-queue-decided.json") });
+  await page.goto("/lessons/review");
+  await expect(page.locator("main")).toContainText(
+    "Days from publication count from the day the report became public to the day of the decision.",
+  );
+});
+
 // ── The library ──────────────────────────────────────────────────────────
 
 test("the library lists lesson cards newest first, naming roles and never people, with each lesson's edition", async ({ page }) => {

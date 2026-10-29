@@ -74,6 +74,30 @@ export type DrawerData =
 // The passages' table, before the colon of a passage's evidence id.
 const PASSAGE_TABLE = "strata.gold.passage:";
 
+// The drawer head's caption for a passage, a record, a timeline view or a section 5 view (ticket 58): what kind of source
+// is open. A plan row and a comparable package have their own, above; a list of packages, a dot or a lesson has none.
+function kindCaption(evidence: EvidenceEvent): string | null {
+  const captions = copy.evidence.captions;
+  if (evidence.kind === "passage") {
+    if (evidence.row?.kind === "notice_text") return captions.notice;
+    return evidence.stratum ? (captions.stratum[evidence.stratum] ?? null) : null;
+  }
+  if (evidence.kind === "record") {
+    if (lessonOf(evidence)) return null;
+    return captions.stratum[evidence.stratum ?? "What"] ?? null;
+  }
+  const byKind: Record<string, string> = {
+    document: captions.document,
+    ratings: captions.ratings,
+    contracts: captions.contracts,
+    disagreement: captions.disagreement,
+    criteria_public: captions.criteriaPublic,
+    criteria_item: captions.criteriaItem,
+    package_cost: captions.packageCost,
+  };
+  return byKind[evidence.kind] ?? null;
+}
+
 // How far under the sticky header the passage block's top stops when the drawer scrolls to a highlight on open: the
 // panel's own scroll padding below its header (8 px), so a tab focused later sits in the same place.
 const PASSAGE_PAD = 8;
@@ -625,7 +649,6 @@ export function EvidenceDrawerView({
 }) {
   const headingId = useId();
   const passageId = useId();
-  const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 
   // The browser keeps a focused element below the sticky header (WCAG 2.2 SC 2.4.11, technique C43):
@@ -729,7 +752,6 @@ export function EvidenceDrawerView({
       <div
         ref={panelRef}
         data-drawer-panel
-        onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
         className={cx(
           !sample && "overflow-y-auto",
           !sample && (narrow ? "h-dvh" : "sticky top-(--frame-top) max-h-[calc(100dvh-var(--frame-top))] animate-drawer-slide"),
@@ -739,7 +761,8 @@ export function EvidenceDrawerView({
         <div
           ref={headerRef}
           data-drawer-header
-          className={cx("sticky top-0 z-10 flex items-start gap-4 border-b bg-surface px-6 pt-6 pb-4", scrolled ? "border-line" : "border-transparent")}
+          // A hairline under the head at rest too, as the prototype draws it (ticket 58).
+          className="sticky top-0 z-10 flex items-start gap-4 border-b border-line bg-surface px-6 pt-6 pb-4"
         >
           <div className="min-w-0 flex-1">
             {backTo && onBack && (
@@ -753,8 +776,8 @@ export function EvidenceDrawerView({
                       : copy.evidence.package.dot.back(formatCount(backTo.count))}
               </Button>
             )}
-            {/* The head is the title, with no eyebrow above it and no middle dots (ticket 94). The one caption sentence
-                under it, which says what the source is, takes the words ticket 58 writes. */}
+            {/* The head is the title, with no eyebrow above it and no middle dots (ticket 94), then one caption that says
+                what kind of source is open (ticket 58). */}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? (
                 criteriaView ? criteriaTitle(evidence) : timelineView ? timelineTitle(evidence) : evidence.kind === "plan-row-check" ? planRowTitle(evidence) : sourceTitle(evidence)
@@ -780,6 +803,11 @@ export function EvidenceDrawerView({
             {evidence?.kind === "package" && inRange && (
               <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
                 {copy.evidence.package.caption}
+              </p>
+            )}
+            {evidence && kindCaption(evidence) && (
+              <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
+                {kindCaption(evidence)}
               </p>
             )}
           </div>

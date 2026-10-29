@@ -292,6 +292,22 @@ test("grading the last passage moves focus to the panel that says you graded the
   const finished = page.locator("[data-judging-finished=mine] [data-outcome-panel]");
   await expect(finished).toBeFocused();
   await expect(finished).toContainText("You graded all 40 passages for this query.");
+  // Every passage is graded, so the bar no longer promises to open the next one (ticket 58; the 32 design review, F2).
+  await expect(page.locator("[data-grade-bar]")).toContainText("Choosing a grade saves the change.");
+  await expect(page.locator("[data-grade-bar]")).not.toContainText("opens the next passage");
+});
+
+// Ticket 58 (the 32 design review, round 3, F4): one finished query is "the one query", never "1 queries".
+test("the agreement's tooltip says the one query you both finished", async ({ page }) => {
+  await serve(page, {
+    "/api/lessons/me": await file("retrieval-me-judge-after.json"),
+    "/api/judging/queries": await file("judging-queries.json"),
+  });
+  await page.goto("/lessons/judging");
+  const agree = page.locator("[data-agreement=shown] [data-num]").first();
+  await agree.focus();
+  await expect(page.getByRole("tooltip")).toContainText("Passages you both graded, on the one query you both finished.");
+  await expect(page.getByRole("tooltip")).not.toContainText("1 queries");
 });
 
 test("when the other judge finishes while the query is open, the refused grade says the grades are locked, with no retry", async ({ page }) => {

@@ -527,8 +527,10 @@ test("a notice's text shows where contact details were removed and never the raw
 
   await expect(drawer(page).locator("[data-passage]")).toContainText("Telephone: (contact details removed), Email address: (contact details removed)");
   await expect(drawer(page)).not.toContainText("[contact removed]");
-  // The drawer's head is the notice's title, with no eyebrow above it (ticket 94).
-  await expect(drawer(page).locator("[data-drawer-header] p")).toHaveCount(0);
+  // The drawer's head is the notice's title, with no eyebrow above it (ticket 94), and one caption under it that says
+  // what kind of source it is, with no middle dot (ticket 58).
+  await expect(drawer(page).locator("[data-drawer-header] p:not([data-drawer-caption])")).toHaveCount(0);
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("A procurement notice, as the World Bank published it");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
     /^Request for Expression of Interest\s·\sWater and Sanitation Development\s\(P156634\)\s·\sFebruary 26, 2021\s·\sAddress referred above$/,
   );
