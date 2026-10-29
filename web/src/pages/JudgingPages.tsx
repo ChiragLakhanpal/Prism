@@ -641,7 +641,9 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         theirs={passage.other_grade}
         onGrade={grade}
         notice={(wide && failedAlert) || undefined}
-        done={done === pool}
+        // Every passage graded, the same test that keeps the finished panel in place (ticket 60): the bar's note then
+        // says a grade's change saves, with no move (ticket 58).
+        done={allGraded}
       />
     );
     main = (

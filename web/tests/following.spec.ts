@@ -5,6 +5,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, recorded, test, viewAnswers, windowBeside } from "./mocked";
+import { fontsLoaded } from "./settled";
 
 const FOLLOWING = "/projects/following";
 // The current mark's fill (DESIGN.md section 2).
@@ -404,6 +405,9 @@ test("when every project is quiet, the fold button stays where it was as the fol
   for (const width of [1440, 390]) {
     await openFollowing(page, { file: "following-made-up-all-quiet.json", width });
     const fold = page.locator("[data-following-view]:visible [data-fold]").first();
+    // The web font has drawn before the first measure, so a line the fallback face broke elsewhere moves nothing between
+    // the two (ticket 60: under the gate's load the font arrived between them, 20 px at 390 px).
+    await fontsLoaded(page);
     const before = (await fold.boundingBox())!.y;
     await fold.click();
     await expect(page.locator("[data-count-line]:visible")).toBeVisible();
