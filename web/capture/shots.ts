@@ -1202,7 +1202,7 @@ const noPlanDates = derived(COMPARABLES, (body) => {
 });
 function packageShot(name: string, answer: Answer | null, rest: Partial<Shot> = {}, pkg: Answer | null = { recorded: "package-ke-nwwda-541055.json" }, path = PACKAGE): Shot {
   const api = `/api${path}`;
-  const answers: Record<string, Answer> = { ...app(name, path).api };
+  const answers: Record<string, Answer> = { ...app(name, path).api, ...(rest.api ?? {}) };
   if (pkg) answers[api] = pkg;
   if (answer) answers[`${api}/comparables`] = answer;
   // Section 3 (ticket 30): the fixture's Kenya comparables reach no completion report.
@@ -1444,6 +1444,22 @@ const PACKAGE_SHOTS: Shot[] = [
     "/packages/KE-NWWDA-541062-CW-RFQ",
   ),
   packageShot("package--section-error", { status: 503, body: SERVICE_DOWN }),
+  // Ticket 101: the past range failed while "Advertised again" answered, which stays under the error; the plan row's
+  // record in the drawer, from the side panel's marker, in the side panel's place; and "2" pressed, with the table
+  // filtered to the two packages it counts.
+  packageShot("package--section-error-again", { status: 503, body: SERVICE_DOWN }, {
+    api: { "/api/packages/KE-NWWDA-541055-CW-RFB/rebidding": { recorded: "rebidding-ke-nwwda-541055.json" } },
+  }),
+  packageShot("package--drawer-plan-row", comparables(COMPARABLES), {
+    widths: [1440, 1280, 1024],
+    // The side panel's marker from a frame of 75rem, the facts line's "Show the plan row" below it.
+    act: async (page: Page) => {
+      await page.locator("[data-side-panel] [data-citation], [data-facts-line] button").filter({ visible: true }).first().click();
+      await page.waitForTimeout(250);
+    },
+    api: { "/api/evidence": { recorded: "evidence-plan-row-ke-nwwda-541055.json" }, "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' } },
+  }),
+  packageShot("package--pressed-within", comparables(COMPARABLES), { widths: [1440, 390], act: click("[data-finding] button[data-num]") }),
   packageShot("package--error", null, {}, { status: 503, body: SERVICE_DOWN }),
   packageShot("package--not-found", null, {}, { status: 404, body: '{"code":"unknown_package"}' }, "/packages/KE-NWWDA-000000-CW-RFB"),
   packageShot("package--moved", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "6") }),

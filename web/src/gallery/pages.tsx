@@ -77,7 +77,8 @@ import { Tabs } from "../components/Tabs";
 import { DefinitionWindow, Term } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import type { Section } from "../components/sections";
-import { FactsSkeleton, PackageFactsList, PackageHeader } from "../components/PackageFacts";
+import { FactsPanel, factsLine } from "../components/PackageFacts";
+import { PageHead } from "../components/PageHead";
 import { PastRange } from "../components/PastRange";
 import { copy } from "../copy";
 import type { Readiness, ReadinessState, RegistryState, Segment, ShelfEntry } from "../lib/dataPages";
@@ -1419,17 +1420,31 @@ export const PAGES: GalleryPage[] = [
       {
         id: "header",
         title: t.packageHeader,
+        // Ticket 101: the package's page head, with its facts line, and its facts as the side panel "From the plan row".
         body: (
-          <>
-            <PackageHeader level={2} sticky={false} title={pr.description} reference={<span className="font-mono font-medium">{pr.reference}</span>} />
-            <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>
-            <div className="mt-4">
-              <PackageFactsList pkg={samplePackage} />
+          <div className="flex flex-col gap-8">
+            <PageHead
+              level={2}
+              title={pr.description}
+              id={pr.reference}
+              purpose={copy.pages.package.purpose}
+              facts={{ line: factsLine(samplePackage), show: copy.packagePage.factsShow, onShow: () => {} }}
+            />
+            <div className="max-w-[22.5rem]">
+              <FactsPanel pkg={samplePackage} />
             </div>
-          </>
+          </div>
         ),
       },
-      { id: "header-loading", title: s.loading, body: <FactsSkeleton /> },
+      {
+        id: "header-loading",
+        title: s.loading,
+        body: (
+          <div className="max-w-[22.5rem]">
+            <FactsPanel pkg={null} />
+          </div>
+        ),
+      },
       { id: "range", title: t.rangeReady, body: <PastRange state={{ status: "ready", result: rangeReady }} /> },
       { id: "no-plan", title: t.rangeNoPlan, body: <PastRange state={{ status: "ready", result: rangeNoPlan }} /> },
       { id: "dots", title: t.rangeDots, body: <PastRange state={{ status: "ready", result: rangeWide }} /> },

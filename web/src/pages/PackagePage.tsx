@@ -1,39 +1,43 @@
 // The package workspace (the 12 brief), at /packages/:id, where :id is the package's STEP reference.
 // It reads two things as the viewer, side by side: the package as its newest public plan row states
-// it (GET /api/packages/:id), for the header and the facts, and find_comparables (GET
-// /api/packages/:id/comparables) for section 1, "How long it took". Each has its own loading and
-// error state, so a section that fails leaves the header and the facts usable.
+// it (GET /api/packages/:id), for the page head and the facts, and find_comparables (GET
+// /api/packages/:id/comparables) for zone 1, "How long it took". Each has its own loading and
+// error state, so a zone that fails leaves the head and the facts usable.
 //
-// One narrative column: columns 1 to 8 of the grid from 1200 px, leaving the right side for the
-// evidence drawer that ticket 15 opens, and all 12 below that. While no drawer is open, the space line in columns 9 to
-// 12 says what that side is for (ticket 110). The header (the package's
-// Description as the h1 and its STEP reference) sticks from 768 px, and the page keeps scroll
-// padding at its height plus 16 px, so a focused dot or link is never hidden under it. Every width
-// on this page is the page area's, not the window's, since the evidence drawer narrows it (DESIGN.md
-// section 4): its breakpoints are container queries on the page column (@md/page:). Later tickets
-// add sections below section 1 in the PPSD's order; ticket 31 adds section 5, "Check your criteria".
+// Since ticket 101 it is a workspace page (DESIGN.md section 4, Page layouts, Workspace; Workspace.tsx): the page head
+// and five numbered Task zones in columns 1 to 7, with "Planning" before zone 1 and "Tender design" before zone 5, and
+// the plan row's facts as the side panel "From the plan row" in columns 9 to 12 from a frame of 75rem. The evidence
+// drawer opens in the side panel's place, and the zones keep their place and width. Below that frame the facts are one
+// line in the head, with "Show the plan row", which opens the same record. The head does not stick, and its h1, the
+// package's Description, wraps in full however long. Zone 1 is a panel that opens on its finding; zones 2 and 5 are
+// closed rows; zones 3 and 4 are rows while they hold only their sentence, panels when they have risks or options, and
+// zone 3 then holds "Suggest {n} PPSD risk rows", the page's one primary action for staff. The step tracker (ticket
+// 115) follows zone 1, so the finding leads inside the first screen at 390 by 844 and 1024 by 768.
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Breadcrumb, type Crumb } from "../components/Breadcrumb";
+import { type Crumb } from "../components/Breadcrumb";
+import { CopyKey } from "../components/CopyKey";
 import { ExistingPpsdNotice } from "../components/ExistingDraftNotice";
 import { PpsdAction, type RiskSelection } from "../components/PpsdAction";
-import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { MonoWords } from "../components/MonoWords";
-import { FactsSkeleton, mono, PackageFactsList, PackageHeader } from "../components/PackageFacts";
+import { FactsPanel, factsLine, mono } from "../components/PackageFacts";
 import { ApproachOptions, approachState } from "../components/ApproachOptions";
+import { PageHead } from "../components/PageHead";
 import { PastRange, type PastRangeState } from "../components/PastRange";
 import { Rebidding } from "../components/RebiddingBlock";
 import type { EstimateState } from "../components/TimeEstimate";
 import { RisksSection } from "../components/RisksSection";
 import { CheckCriteria } from "../components/CheckCriteria";
-import { SkeletonLine, SkeletonText } from "../components/Skeleton";
-import { SpaceLine } from "../components/SpaceLine";
+import { StageLabel } from "../components/StageLabel";
 import { StepTracker, TrackerSkeleton } from "../components/StepTracker";
 import { StepsSection, type StepsState } from "../components/StepsSection";
 import { TextLink } from "../components/TextLink";
+import { Workspace } from "../components/Workspace";
+import { useAnswerInPage } from "../components/AnswerSlot";
 import { copy } from "../copy";
-import type { ComparablesResult, EstimateResult, PackageResult } from "../lib/api";
+import type { ComparablesResult, EstimateResult, PackageFacts, PackageResult } from "../lib/api";
+import { evidenceIn, openEvidence } from "../lib/evidence";
 import { usePlanDateChoice } from "../lib/estimates";
 import { useLoad } from "../lib/load";
 import { useOpenComparable } from "../lib/packages";
@@ -49,6 +53,11 @@ const words = copy.packagePage;
 // package's own from its plan row. Section 2 sends the same query, so the two count the same comparables (ticket 27's
 // review round 2, follow-up 5).
 const SECTION_1_CRITERIA = new URLSearchParams();
+
+// The plan row's record in the evidence drawer, opened from the side panel's marker, the facts line's button or the
+// finding's plan months; the opener gets focus back when it closes.
+const openPlanRow = (pkg: PackageFacts) => (element: HTMLElement) =>
+  openEvidence(pkg.evidence_id, { serial: null, sentence: null, marker: element, runId: null });
 
 export function PackagePage({ stepRef }: { stepRef: string }) {
   const base = `/api/packages/${encodeURIComponent(stepRef)}`;
@@ -70,69 +79,60 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
     viewOf(here.search) !== "staff",
   );
   const sectionHeading = useRef<HTMLHeadingElement>(null);
-  const pkg = load.status === "ready" ? load.data.package : null;
+  // An answer asked from the box: in the work's columns above the page head (ticket 98's answer slot).
+  const asked = useAnswerInPage();
   // A dot or a row of section 1 opens its comparable package in the evidence drawer (ticket 15).
   const opening = useOpenComparable();
   // Section 3's selection, for "Suggest {n} PPSD risk rows" (ticket 36).
   const [selection, setSelection] = useState<RiskSelection | null>(null);
-  // Section 2's answer, which the tracker at the top of the page draws from (ticket 115).
+  // Section 2's answer, which the step tracker draws from (ticket 115).
   const [steps, setSteps] = useState<StepsState>({ status: "loading" });
   const preview = viewOf(here.search) !== "staff";
   // Suggested PPSD rows are a World Bank staff draft (config/drafts.toml, staff_only): a viewer without the role gets
   // no action, and ticket 38's agency variant gives the implementing agency its own.
   const staff = useStore(staffRole) !== false;
   const asOf = new URLSearchParams(here.search).has("asof");
+  const openId = evidenceIn(here.search);
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {
     if (section.status === "ready" && section.afterRetry) sectionHeading.current?.focus();
   }, [section]);
 
-  const projectCrumb = (name: ReactNode, pid: string): Crumb => ({ text: name, href: `/projects/${pid}` });
-  const trail = (project: Crumb | null): Crumb[] => [
-    { text: words.breadcrumbPackages, href: "/packages" },
-    ...(project ? [project] : []),
-    { text: mono(stepRef) },
-  ];
-
+  const packagesCrumb: Crumb = { text: words.breadcrumbPackages, href: "/packages" };
   const notFound = load.status === "error" && load.error?.status === 404;
-  let body: ReactNode;
-  let crumbs: Crumb[];
+
+  let head: ReactNode;
+  let side: ReactNode = undefined;
+  let zones: ReactNode = null;
   if (load.status === "loading") {
-    crumbs = trail(null);
-    body = (
+    // The head holds the places of its ID line and its facts line, so nothing under it moves when the package arrives.
+    head = (
+      <PageHead
+        trail={[packagesCrumb]}
+        held
+        title={stepRef}
+        id={stepRef}
+        loading
+        purpose={copy.pages.package.purpose}
+        facts={{ line: null, show: words.factsShow, onShow: () => undefined }}
+      />
+    );
+    side = <FactsPanel pkg={null} />;
+    zones = (
       <>
-        <PackageHeader
-          title={
-            <>
-              <span className="sr-only">{stepRef}</span>
-              {/* A Description takes four lines or so below 768 px, and two above, since most STEP
-                  descriptions are longer than one line of the h1. */}
-              <SkeletonText className="@md/page:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
-              <SkeletonText className="hidden @md/page:flex" widths={["w-full", "w-2/5"]} />
-            </>
-          }
-          reference={<SkeletonLine width="w-48" />}
-          sticky={false}
-        />
-        <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>
-        <div className="mt-4">
-          <FactsSkeleton />
-        </div>
-        <div className="mt-6">
+        <StageLabel>{words.stages.planning}</StageLabel>
+        <PastRange state={{ status: "loading" }} estimate={{ status: "loading" }} />
+        <div className="my-4">
           <TrackerSkeleton />
-        </div>
-        <div className="mt-8">
-          <PastRange state={{ status: "loading" }} estimate={{ status: "loading" }} />
         </div>
       </>
     );
   } else if (notFound) {
-    crumbs = trail(null);
-    body = (
+    head = <PageHead trail={[packagesCrumb]} held title={words.notFoundTitle} id={stepRef} />;
+    zones = (
       <>
-        <PackageHeader title={words.notFoundTitle} reference={mono(stepRef)} sticky={false} />
-        <p className="mt-4 max-w-prose text-body text-ink">
+        <p className="max-w-prose text-body text-ink">
           <Fill template={words.notFoundBody} slots={{ ref: <MonoWords text={stepRef} after="." medium /> }} />
         </p>
         <p className="mt-4">
@@ -141,21 +141,16 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
       </>
     );
   } else if (load.status === "error") {
-    crumbs = trail(null);
-    body = (
-      <>
-        <PackageHeader title={mono(stepRef)} reference={null} sticky={false} />
-        <div className="mt-6">
-          <LoadError
-            error={load.error}
-            message={words.error}
-            permission={words.permission}
-            onRetry={retry}
-            retrying={load.retrying}
-            attempt={load.attempt}
-          />
-        </div>
-      </>
+    // The page's one request failed: its error alert sits in the head's alert slot, and the reference is the h1.
+    head = (
+      <PageHead
+        trail={[packagesCrumb]}
+        held
+        title={mono(stepRef)}
+        alert={
+          <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+        }
+      />
     );
   } else {
     const facts = load.data.package;
@@ -165,92 +160,88 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
     ) : (
       <Fill template={copy.breadcrumb.projectId} slots={{ pid: mono(facts.project_id) }} />
     );
-    crumbs = trail(projectCrumb(name, facts.project_id));
+    const planRowOpen = openId === facts.evidence_id;
+    head = (
+      <PageHead
+        // Ticket 36's notices about suggested PPSD rows sit in the head's alert slot, above the breadcrumb.
+        alert={<ExistingPpsdNotice packageKey={facts.step_reference} />}
+        trail={[packagesCrumb, { text: name, href: `/projects/${facts.project_id}` }]}
+        held
+        title={facts.description ?? mono(facts.step_reference)}
+        id={facts.step_reference}
+        // Ticket 112: the copy key copies the STEP reference. The 24 px key keeps the 20 px line's height.
+        idAction={<CopyKey text={facts.step_reference} what={copy.copyKey.reference} className="-my-0.5 align-top" />}
+        purpose={copy.pages.package.purpose}
+        facts={{ line: factsLine(facts), show: words.factsShow, onShow: openPlanRow(facts), expanded: planRowOpen }}
+      />
+    );
+    side = <FactsPanel pkg={facts} opened={planRowOpen} onOpen={openPlanRow(facts)} />;
     const sectionState: PastRangeState =
       section.status === "loading"
         ? { status: "loading" }
         : section.status === "error"
           ? { status: "error", error: section.error, retrying: section.retrying, attempt: section.attempt, onRetry: retrySection }
           : { status: "ready", result: section.data };
-    body = (
+    zones = (
       <>
-        <PackageHeader
-          title={facts.description ?? mono(facts.step_reference)}
-          reference={mono(facts.step_reference)}
-          copyReference={facts.step_reference}
-          action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} /> : undefined}
+        <StageLabel>{words.stages.planning}</StageLabel>
+        {/* Zone 1, "How long it took", with "Advertised again" (ticket 28) as its second block. */}
+        <PastRange
+          state={sectionState}
+          headingRef={sectionHeading}
+          open={opening}
+          estimate={estimate}
+          planDate={planDate}
+          after={(comparing) => (
+            <Rebidding
+              path={rebiddingPath(base)}
+              section={section.status === "ready" ? section.data : null}
+              sectionFailed={section.status === "error"}
+              comparing={comparing}
+            />
+          )}
         />
-        <p className="mt-4 max-w-prose text-body text-ink-muted">{copy.pages.package.purpose}</p>
-        <div className="mt-4">
-          <PackageFactsList pkg={facts} />
-        </div>
-        {/* Where each step stands in the plan (ticket 115), from section 2's answer. */}
-        <div className="mt-6">
+        {/* Where each step stands in the plan (ticket 115), from zone 2's answer. */}
+        <div className="my-4">
           <StepTracker state={steps} />
         </div>
-        <div className="mt-8">
-          <PastRange
-            state={sectionState}
-            headingRef={sectionHeading}
-            open={opening}
-            estimate={estimate}
-            planDate={planDate}
-            after={(comparing) => (
-              <Rebidding path={rebiddingPath(base)} section={section.status === "ready" ? section.data : null} comparing={comparing} />
-            )}
-          />
-        </div>
-        {/* Section 2, the planned date for each STEP step (ticket 27), collapsed until opened. */}
-        <div className="mt-6 @lg/page:mt-8">
-          <StepsSection packageKey={facts.step_reference} kind="step" criteria={criteria} onState={setSteps} />
-        </div>
-        {/* Section 3, procurement risks and what helped (ticket 30), with section 1's default criteria; it tells the
-            page what is selected, for "Suggest {n} PPSD risk rows" (ticket 36). */}
-        <div className="mt-6 @lg/page:mt-8">
-          <RisksSection
-            apiHref={base}
-            packageKey={facts.step_reference}
-            kind="step"
-            onSelection={setSelection}
-            action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} inline /> : undefined}
-          />
-        </div>
-        {/* Section 4, procurement approach options (ticket 26), from the same time estimate. */}
-        <div className="mt-6 @lg/page:mt-8">
-          <ApproachOptions
-            state={approachState(
-              section.status === "ready" ? { status: "ready", result: section.data } : { status: section.status },
-              estimate,
-              false,
-              retrySection,
-            )}
-          />
-        </div>
-        {/* Section 5, "Check your criteria" (ticket 31). */}
-        <div className="mt-6 @lg/page:mt-8">
-          <CheckCriteria base={base} preview={viewOf(here.search) !== "staff"} />
-        </div>
+        {/* Zone 2, the planned date for each STEP step (ticket 27), closed until opened. */}
+        <StepsSection packageKey={facts.step_reference} kind="step" criteria={criteria} onState={setSteps} />
+        {/* Zone 3, procurement risks and what helped (ticket 30), with zone 1's default criteria; it tells the page
+            what is selected, for "Suggest {n} PPSD risk rows" (ticket 36), which it holds. */}
+        <RisksSection
+          apiHref={base}
+          packageKey={facts.step_reference}
+          kind="step"
+          onSelection={setSelection}
+          action={staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} /> : undefined}
+        />
+        {/* Zone 4, procurement approach options (ticket 26), from the same time estimate. */}
+        <ApproachOptions
+          state={approachState(
+            section.status === "ready" ? { status: "ready", result: section.data } : { status: section.status },
+            estimate,
+            false,
+            retrySection,
+          )}
+        />
+        <StageLabel>{words.stages.tender}</StageLabel>
+        {/* Zone 5, "Check your criteria" (ticket 31). */}
+        <CheckCriteria base={base} preview={viewOf(here.search) !== "staff"} />
       </>
     );
   }
 
   return (
-    <EightColumns breakpoint="xl" beside={<SpaceLine>{copy.evidence.spaceHint.package}</SpaceLine>}>
-      <div data-package-page={load.status}>
-        {/* Below 768 px the trail shows its parent, the project, whose name takes two lines; it holds them while loading. */}
-        <div className={load.status === "loading" ? "min-h-[2lh] text-caption @md/page:min-h-0" : undefined}>
-          <Breadcrumb trail={crumbs} />
-        </div>
-        {/* Ticket 36's notices about suggested PPSD rows sit above the h1, outside the body, so the body's children
-            keep their places when the package arrives and the page does not shift. */}
-        {load.status === "ready" && <ExistingPpsdNotice packageKey={load.data.package.step_reference} />}
-        <div className="mt-4">{body}</div>
-        {load.status === "loading" && (
-          <p role="status" className="sr-only">
-            {words.loading}
-          </p>
-        )}
-      </div>
-    </EightColumns>
+    <div data-package-page={load.status}>
+      <Workspace answer={asked} head={head} side={side} fold="head">
+        {zones}
+      </Workspace>
+      {load.status === "loading" && (
+        <p role="status" className="sr-only">
+          {words.loading}
+        </p>
+      )}
+    </div>
   );
 }

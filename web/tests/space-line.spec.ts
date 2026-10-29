@@ -1,8 +1,8 @@
 // The space line (ticket 110; DESIGN.md section 5, Space line), at seam 4: where a reading page keeps columns 9 to 12
-// free for the evidence drawer (the package page from a page area of 75rem, a draft's page from a frame of 75rem), one
-// caption line in those columns says what the space is for while no drawer is open. It hides when the drawer opens and
-// moves nothing else. The words are the ticket's, copied here so the test checks the copy file against an independent
-// source.
+// free for the evidence drawer (a draft's page from a frame of 75rem), one caption line in those columns says what the
+// space is for while no drawer is open. It hides when the drawer opens and moves nothing else. The words are the
+// ticket's, copied here so the test checks the copy file against an independent source. Since ticket 101 the package
+// page holds its side panel, "From the plan row", in those columns instead, and has no space line.
 import type { Page } from "@playwright/test";
 import { scan } from "./axe";
 import { expect, mockApi, recorded, test } from "./mocked";
@@ -10,7 +10,6 @@ import { expect, mockApi, recorded, test } from "./mocked";
 const PACKAGE = "KE-NWWDA-541055-CW-RFB";
 const MOWI = "KE-MOWI-47509-CW-RFB";
 const DRAFT = "/drafts/draft-0001";
-const PACKAGE_LINE = "Select a dot on the chart or a numbered source, and its records open here.";
 const DRAFT_LINE = "Select a numbered source, and its record opens here.";
 
 // At 1440 px beside the 64 px rail the frame is 1376 px: 40 px margins leave 1296 px, whose 12 columns of 78.67 px and
@@ -58,17 +57,24 @@ async function violations(page: Page) {
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
+test("at 1440 px the package page holds its side panel in columns 9 to 12 level with the page head, and no space line", async ({ page }) => {
+  await openPackage(page, 1440);
+  await expect(page.locator("[data-space-line]")).toHaveCount(0);
+  const side = page.getByRole("region", { name: "From the plan row" });
+  const box = (await side.boundingBox())!;
+  expect([Math.round(box.x), Math.round(box.x + box.width)]).toEqual([COLUMN_9, COLUMN_12_END]);
+  expect(Math.round(box.y)).toBe(Math.round((await page.locator("[data-breadcrumb]").first().boundingBox())!.y));
+  // A dot on the chart opens its package's records in the panel's place.
+  const target = page.locator(`[data-dot-target][aria-label^="${MOWI},"]`);
+  await target.scrollIntoViewIfNeeded();
+  const spot = (await target.boundingBox())!;
+  await page.mouse.click(spot.x + spot.width / 2, spot.y + spot.height / 2);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect(side).toBeHidden();
+  expect(await page.locator("[data-space-line]").count()).toBe(0);
+});
+
 const PAGES = [
-  {
-    name: "the package page",
-    line: PACKAGE_LINE,
-    open: openPackage,
-    // The work: the column the page's head and sections sit in.
-    work: "[data-package-page]",
-    head: "[data-breadcrumb]",
-    // A dot on the chart opens its package's records.
-    opener: (page: Page) => page.locator(`[data-dot-target][aria-label^="${MOWI},"]`),
-  },
   {
     name: "a draft",
     line: DRAFT_LINE,

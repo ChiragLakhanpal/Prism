@@ -81,12 +81,15 @@ async function openSection(page: Page) {
   await expect(section(page).getByRole("button", { name: copy.criteria.hide })).toBeFocused();
 }
 
-test("collapsed, the section reads the ticket's words with N from the tool, under the eyebrow Tender design", async ({ page }) => {
+test("collapsed, zone 5 reads the ticket's words with N from the tool, after the stage label Tender design", async ({ page }) => {
   const summary = JSON.parse(await recorded("criteria-summary-ke-cwsb-224323.json"));
   await open(page, CONSULTANT);
 
-  await expect(section(page).getByText(copy.criteria.eyebrow, { exact: true })).toBeVisible();
-  await expect(section(page).getByRole("heading", { level: 2 })).toHaveText(`${copy.criteria.number} ${copy.criteria.heading}`);
+  // Ticket 101: the stage label stands once before zone 5, in place of the zone's eyebrow, and the zone is a row.
+  await expect(page.locator("[data-stage-label]").last()).toHaveText("Tender design");
+  await expect(section(page)).toHaveAttribute("data-zone", "row");
+  await expect(section(page).getByRole("heading", { level: 2 })).toHaveText("5 Check your criteria");
+  await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("Check your criteria");
   await expect(section(page).locator("[data-summary-text]")).toContainText(
     `optional. Paste your qualification criteria to compare them with ${summary.public_criteria_count} packages whose criteria are public.`,
   );

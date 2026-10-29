@@ -265,19 +265,19 @@ test("for a viewer who can't read the backtest results, the track record says so
   await expect(track).not.toContainText("no backtest results yet");
 });
 
-test("section 4 opens on demand to at most three approaches, each counted out of the same comparable packages as lane 1", async ({ page }) => {
+test("zone 4 is a panel of at most three approaches, each counted out of the same comparable packages as lane 1", async ({ page }) => {
   const { answer, body } = await derivedEstimate(addOptions);
   await openWorkspace(page, { estimate: answer });
   const options = page.locator("[data-approach-options]");
   const n = body.comparables.n;
   await expect(options).toContainText("Procurement approach options");
   await expect(options).toContainText(`Comparable packages went with three approaches. The most common was open national, 1 lot, post-qualification, with 25 of ${n}.`);
-  const button = options.getByRole("button", { name: "Show the options" });
-  await expect(button).toHaveAttribute("aria-expanded", "false");
-  await expect(options.locator("[data-approach-table]")).toHaveCount(0);
-
-  await button.click();
-  await expect(options.getByRole("button", { name: "Hide the options" })).toHaveAttribute("aria-expanded", "true");
+  // Ticket 101: with options to compare, zone 4 is a panel that shows them, tagged with its PPSD section, and has no
+  // Show or Hide button; its notes and source end it in its foot strip.
+  await expect(options).toHaveAttribute("data-zone", "panel");
+  await expect(options.locator("[data-zone-tag]")).toHaveText("PPSD section 6");
+  await expect(options.getByRole("button", { name: /^(Show|Hide) the options$/ })).toHaveCount(0);
+  await expect(options.locator("[data-foot-strip]")).toContainText("Records run through");
   const rows = options.locator("[data-approach-table] table tbody tr");
   await expect(rows).toHaveCount(3);
   await expect(rows.nth(0)).toContainText(`25 of ${n}`);
@@ -346,7 +346,6 @@ test("with approaches to list, section 4 names those the thresholds allow and co
   await expect(options).toContainText(
     `Comparable packages went with three approaches the thresholds allow for this package. The most common was open national, 1 lot, post-qualification, with 25 of ${n}.`,
   );
-  await options.getByRole("button", { name: "Show the options" }).click();
   // The tool doesn't count each ruled-out approach, so the caption claims only the most common one the thresholds allow.
   const caption = options.locator("[data-approach-table] caption");
   await expect(caption).toContainText(
@@ -393,6 +392,21 @@ for (const [when, abstention] of [
   });
 }
 
+test("with the time estimate's table above it, a pressed number's count line repeats only that number, which the tool returned", async ({ page }) => {
+  const { answer } = await derivedEstimate(addOptions);
+  await openWorkspace(page, { estimate: answer });
+  const tool = await json("comparables-ke-nwwda-229129.json");
+  const total = String(tool.counts.comparables);
+  const q80 = tool.past_range.q80.toFixed(1);
+  await section(page).locator("[data-summary]").getByRole("button", { name: q80, exact: true }).first().click();
+  const count = section(page).locator("[data-comparables-table] [data-count-row] p").first();
+  await expect(count).toHaveText(`Showing the packages signed within ${q80}\u00a0months.`);
+  await expect(count).toBeFocused();
+  await expect(page.locator("[data-time-estimate-table]")).toBeVisible();
+  await section(page).getByRole("button", { name: `Show all ${total}` }).click();
+  await expect(count).toHaveText(new RegExp(`^Showing 1\u201320 of ${total} packages$`));
+});
+
 test("at 1440 px axe finds no WCAG 2.2 AA violations while comparing, with section 4 and the table twin open", async ({ page }) => {
   const { answer } = await derivedEstimate((body, rows) => {
     addComparisons(body, rows);
@@ -401,7 +415,7 @@ test("at 1440 px axe finds no WCAG 2.2 AA violations while comparing, with secti
   });
   await openWorkspace(page, { estimate: answer });
   await compare(page).getByRole("button", { name: "Prequalification" }).click();
-  await page.locator("[data-approach-options]").getByRole("button", { name: "Show the options" }).click();
+  await expect(page.locator("[data-approach-table]")).toBeVisible();
   await section(page).getByRole("button", { name: "Show the table" }).click();
   await expect(page.locator("[data-time-estimate-table]")).toBeVisible();
   const results = await scan(page);

@@ -290,13 +290,28 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
 
 // The card's top: its heading, the sentence the person wrote, and the instruction with the guess count. In a
 // preview nothing can be changed, so the instruction says so instead.
-export function CardTop({ sentence, guesses, headingId, preview = false }: { sentence: string; guesses: number | null; headingId?: string; preview?: boolean }) {
+// named: the card draws its own h2; in a Task zone (ticket 101) the zone's name is the heading, so it draws none.
+export function CardTop({
+  sentence,
+  guesses,
+  headingId,
+  preview = false,
+  named = true,
+}: {
+  sentence: string;
+  guesses: number | null;
+  headingId?: string;
+  preview?: boolean;
+  named?: boolean;
+}) {
   return (
     <>
-      <h2 id={headingId} className="text-h2 text-ink-heading">
-        {words.card.heading}
-      </h2>
-      <p className="mt-2 text-small text-ink" data-you-wrote>
+      {named && (
+        <h2 id={headingId} className="text-h2 text-ink-heading">
+          {words.card.heading}
+        </h2>
+      )}
+      <p className={named ? "mt-2 text-small text-ink" : "text-small text-ink"} data-you-wrote>
         <span className="text-ink-muted">{words.card.youWrote}</span> {words.card.quoted(sentence)}
       </p>
       {guesses !== null && (

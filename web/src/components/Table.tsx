@@ -21,7 +21,7 @@
 // - Empty: only an empty-state card that says, in the first person, what will appear.
 // - Error: only an error alert, with "Try again" when the caller can ask again.
 // A finding, a count or a source line never sits over rows that are not there.
-import { createElement, useId, type ReactNode } from "react";
+import { createElement, useId, type ReactNode, type Ref } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
@@ -125,6 +125,8 @@ export function Table({
   countLead = false,
   selected,
   inPanel = false,
+  countRef,
+  countAction,
 }: {
   // The finding the rows show, as a sentence.
   title: ReactNode;
@@ -159,6 +161,11 @@ export function Table({
   // those edges, and its cards are rows divided by a line (app.css, "A table in a panel"). The zone names it
   // (labelledBy), and the panel's foot strip holds its source.
   inPanel?: boolean;
+  // The count line, which a caller moves focus to, as the past range does when a pressed number lands on the rows it
+  // counts (ticket 101): the line then takes focus without a tab stop.
+  countRef?: Ref<HTMLParagraphElement>;
+  // One flush button right after the count, such as the past range's "Show all 49" (ticket 101).
+  countAction?: ReactNode;
 }) {
   const ownTitleId = useId();
   const titleId = labelledBy ?? ownTitleId;
@@ -240,9 +247,19 @@ export function Table({
             // The count, and the cards' note as its own element at the row's end, which wraps to a line
             // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).
             <div data-count-row className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
-              <p id={countId} data-numbers data-page-lead={countLead || undefined} tabIndex={countLead ? -1 : undefined} className="focus:outline-none">
-                {busy ?? countText(count)}
-              </p>
+              <div className="flex flex-wrap items-baseline gap-x-3">
+                <p
+                  ref={countRef}
+                  id={countId}
+                  data-numbers
+                  data-page-lead={countLead || undefined}
+                  tabIndex={countLead || countRef ? -1 : undefined}
+                  className="focus:outline-none"
+                >
+                  {busy ?? countText(count)}
+                </p>
+                {countAction}
+              </div>
               {cardsNote && (
                 <p className={SHOW[cardsBelow].cards} data-cards-note>
                   {cardsNote}

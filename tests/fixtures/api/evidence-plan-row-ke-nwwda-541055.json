@@ -1,0 +1,59 @@
+{
+  "id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "reference": "KE-NWWDA-541055-CW-RFB",
+    "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
+    "fields": [
+      {
+        "key": "description",
+        "value": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+        "kind": "text"
+      },
+      {
+        "key": "method",
+        "value": "Request for Bids",
+        "kind": "text"
+      },
+      {
+        "key": "market_approach",
+        "value": "Open - National",
+        "kind": "text"
+      },
+      {
+        "key": "review_type",
+        "value": "Post",
+        "kind": "text"
+      },
+      {
+        "key": "estimated_amount_usd",
+        "value": "1230000.00",
+        "kind": "usd"
+      },
+      {
+        "key": "process_status",
+        "value": "Pending Implementation",
+        "kind": "text",
+        "highlight": true
+      }
+    ],
+    "public_from": "2026-10-09",
+    "plan_href": "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09#KE-NWWDA-541055-CW-RFB",
+    "source": {
+      "document_type": "Procurement Plan",
+      "implementing_agency": "Northern Water Works Development Agency",
+      "project_id": "P156634",
+      "document_id": "40132287",
+      "document_date": "2026-10-09",
+      "pdf_page": 3
+    },
+    "record_kind": "activity",
+    "step_reference": "KE-NWWDA-541055-CW-RFB",
+    "project_id": "P156634",
+    "activity_href": "/projects/P156634/packages/KE-NWWDA-541055-CW-RFB"
+  },
+  "highlights": []
+}

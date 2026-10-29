@@ -1081,9 +1081,8 @@ export const copy = {
   // stratum and its document's short name come from the answer stream.
   evidence: {
     // The space line (ticket 110): what columns 9 to 12 are for while no drawer is open, on the pages that keep them
-    // free for the drawer.
+    // free for the drawer. The package page holds its side panel there instead (ticket 101).
     spaceHint: {
-      package: "Select a dot on the chart or a numbered source, and its records open here.",
       draft: "Select a numbered source, and its record opens here.",
     },
     eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
@@ -1328,7 +1327,8 @@ export const copy = {
     // stratum's, as for any record.
     package: {
       region: (ref: string) => `Records for comparable package ${ref}`,
-      eyebrow: "What · record",
+      // The one caption sentence under the drawer's title, which says what the records are (ticket 101).
+      caption: "Comparable package in the past range",
       meta: "{project} ({pcode})",
       findingSigned: "This package took {months} months from its notice on {notice} to its signed contract on {signed}.",
       // A still-open package's months run to the page's as-of date ({counted}), which can be later than the
@@ -3742,15 +3742,29 @@ export const copy = {
     // {ref} carries its own full stop, so the two move to a new line together.
     notFoundBody: "No package in Strata has the reference {ref} Check the reference in STEP, or find its project in All projects.",
     notFoundLink: "All projects",
+    // The package's facts beside its zones, from a frame of 75rem (DESIGN.md section 5, Side panel; ticket 101).
+    factsTitle: "From the plan row",
+    // Below that frame the facts fold into one line in the page head, with this button, which opens the plan row in
+    // the evidence drawer (the plan's section 7.6).
+    factsShow: "Show the plan row",
+    // The facts line: the plan row's Method, Market Approach, Estimated Amount (US$) without its cents and Process
+    // Status, each it has, in that order, a comma between them.
+    factsLine: (parts: string[]) => parts.join(", "),
+    factsAmount: (amount: string) => `US$${amount}`,
+    // The side panel's source line, and its marker's name, which opens the plan row in the evidence drawer.
+    factsSource: "Procurement Plan, {agency}, {pid}, version of {date}, page {page}.",
+    factsMarker: (ref: string) => `Procurement Plan row ${ref}`,
+    // The stage labels before the zones (DESIGN.md section 5, Stage label): "Planning" before zone 1, "Tender design"
+    // before zone 5. They replace the sections' eyebrows.
+    stages: { planning: "Planning", tender: "Tender design" },
   },
 
   // Section 1 of the package workspace, "How long it took": the past range of comparable packages
   // (the 12 brief). Every number is find_comparables', written by web/src/lib/format.ts; the screen
   // only counts rows for the plan line's readout. Strings with {slots} are filled with Num elements.
   pastRange: {
-    eyebrow: "Planning",
-    // Hidden from screen readers, so the heading reads "How long it took".
-    number: "1 ·",
+    // The zone's number, hidden from screen readers, so the heading reads "How long it took".
+    number: "1",
     heading: "How long it took",
     loading: "Loading the comparable packages.",
     error: "I couldn't load the comparable packages for this section.",
@@ -3766,6 +3780,23 @@ export const copy = {
       noPlanNoRange: "I found {total} comparable packages, but so many are still open that I can't place their middle half.",
       abstain: "I'm not giving a range: only {n} comparable packages. Here are all {n}.",
       abstainOne: "I'm not giving a range: only one comparable package. Here it is.",
+    },
+    // Below 20 comparable packages the sentence that holds back is the finding, and the count follows it in body, with
+    // no share of 10 (DESIGN.md section 7, rule 15). {total} is in words up to nine.
+    fewCount: {
+      none: "None of the {total} comparable packages were signed within the plan's {plan} months.",
+      some: "{within} of the {total} comparable packages were signed within the plan's {plan} months.",
+      all: "All {total} comparable packages were signed within the plan's {plan} months.",
+      noneOne: "The one comparable package was not signed within the plan's {plan} months.",
+      allOne: "The one comparable package was signed within the plan's {plan} months.",
+    },
+    // What a click on each number in the finding and the summary does: it opens the table filtered to the rows the
+    // number counts (ticket 101), as its tooltip's action line says.
+    act: {
+      within: (count: number, words: string) => (count === 1 ? "Select to see the package." : `Select to see the ${words} packages.`),
+      middle: "Select to see the packages in the middle half.",
+      median: "Select to see the middle package.",
+      in10: "Select to see the packages signed within it.",
     },
     subtitle: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
     subtitleDots:
@@ -3930,6 +3961,15 @@ export const copy = {
     table: {
       show: "Show the table",
       hide: "Hide the table",
+      // The count line once a number was pressed: it repeats the pressed number and no other (ticket 101).
+      shown: {
+        within: (within: string, total: string, months: string) => `Showing the ${within} of ${total} packages signed within ${months}\u00a0months.`,
+        middle: (q25: string, q75: string) => `Showing the packages in the middle half, from ${q25} to ${q75}\u00a0months.`,
+        median: (q50: string) => `Showing the middle package, at ${q50}\u00a0months.`,
+        in10: (q80: string) => `Showing the packages signed within ${q80}\u00a0months.`,
+      },
+      // The flush button after a pressed number's count line, which shows every row again.
+      showAll: (total: string) => `Show all ${total}`,
       caption: (total: string) => `All ${total} comparable packages, shortest first.`,
       captionOne: "The one comparable package.",
       noun: "packages",
@@ -4217,8 +4257,9 @@ export const copy = {
   // Section 4 of the package workspace, "Procurement approach options" (ticket 26; the 26 brief, section 7.7). PPSD
   // is spelled out in section 3's instruction sentence, which comes first on the page.
   approachOptions: {
-    eyebrow: "Planning, PPSD section 6",
-    number: "4 ·",
+    // The zone's tag, at its header's right (DESIGN.md section 5, Task zone), written as section 3's is.
+    ppsdTag: "PPSD section 6",
+    number: "4",
     heading: "Procurement approach options",
     summary: "Comparable packages went with {count} approaches. The most common was {option1}, with {k1} of {n}.",
     summaryAllowed:
@@ -4235,8 +4276,6 @@ export const copy = {
       ruled === 1
         ? "The one comparable package that records its market approach, lots and qualification went with an approach the thresholds rule out for this package, so I can't list approach options."
         : "The {ruled} comparable packages that record their market approach, lots and qualification went with approaches the thresholds rule out for this package, so I can't list approach options.",
-    show: "Show the options",
-    hide: "Hide the options",
     title: "{k1} of the {n} comparable packages went with {option1}, the most common approach.",
     // When the thresholds rule out approaches some comparable packages went with, the tool doesn't count each of
     // those, so the caption claims only the most common approach of those the thresholds allow.
@@ -4305,9 +4344,6 @@ export const copy = {
       agencyDescription:
         "I write a Risk Description and a Description of mitigation for each risk you selected, for your Project " +
         "Procurement Strategy for Development (PPSD).",
-      // "section 3" links to the risks section.
-      heldNone: "Select the risks you want in {section} first.",
-      heldNoneLink: "section 3",
       heldNoneInline: "Select at least one risk above first.",
       heldSaveFailed: "I couldn't save your selection, so I can't draft from it yet. Try again in section 3.",
       heldPreview: "This is a preview, so you can't start a draft.",
@@ -4502,10 +4538,10 @@ export const copy = {
   // never counts, ranks or picks the most common risk. Risk names are the closed list's labels
   // (config/lessons.toml), in straight double quotes inside a sentence.
   packageRisks: {
-    // The ticket's exact words, shown as written: capitals appear only in a chart's labels (DESIGN.md section 3).
-    eyebrow: "Planning · PPSD section 3",
+    // The zone's tag, at its header's right (DESIGN.md section 5, Task zone), written as section 4's is.
+    ppsdTag: "PPSD section 3",
     // Hidden from screen readers, so the heading reads "Procurement risks and what helped".
-    number: "3 ·",
+    number: "3",
     heading: "Procurement risks and what helped",
     intro:
       "These risks came up again and again in the completion reports of projects with comparable packages. Each one has a lesson on what helped and the reports that say so.",
@@ -4666,9 +4702,8 @@ export const copy = {
   // steps' labels, STEP's full names, their phrases and stages are in the step-label registry, web/src/steps.ts.
   // Templates in braces are Fill templates whose numbers and dates are Num values from the tool.
   stepDates: {
-    eyebrow: "Planning",
     // Hidden from screen readers, so the heading reads "Planned date for each step".
-    number: "2 ·",
+    number: "2",
     heading: "Planned date for each step",
     // {first} and {last} are the family's first and last steps' phrases; the count is the registry's, in words.
     summarySteps: (countWords: string) => `${countWords} steps, from {first} to {last}.`,
@@ -5002,8 +5037,7 @@ export const copy = {
   // "qualification criteria" for the bidding document's requirements, so it is never read as the criteria that
   // chose the comparable packages, and "cost estimate" in full.
   criteria: {
-    eyebrow: "Tender design",
-    number: "5 ·",
+    number: "5",
     heading: "Check your criteria",
     // The collapsed summary's first sentence holds the ticket's words: "optional. Paste your qualification
     // criteria to compare them with N packages whose criteria are public."

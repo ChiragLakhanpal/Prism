@@ -49,8 +49,9 @@ export function litSection(match: Match, sections: readonly string[] | null): Se
 // The pages on the workspace layout that draw an answer asked on them in their own work columns, above their head and
 // beside their side panel (DESIGN.md section 4, Page layouts, Workspace; Workspace.tsx's answer slot, read through
 // AnswerSlot.tsx). Every other page shows the answer at the top of the page column. Home is the first (ticket 98);
-// each ticket that moves a page onto the workspace adds its key here.
-export const ANSWER_IN_PAGE: ReadonlySet<PageKey> = new Set<PageKey>(["home"]);
+// each ticket that moves a page onto the workspace adds its key here; ticket 101 adds the package workspace and a
+// planned package.
+export const ANSWER_IN_PAGE: ReadonlySet<PageKey> = new Set<PageKey>(["home", "package", "plannedPackage", "packageNew"]);
 
 // A project page's tabs. Their order lives in one place, the copy file (copy.projectPage.tab), which the tab row reads
 // (ticket 99); here each tab has its address. Ticket 23 added "timeline" and ticket 22 "connections".

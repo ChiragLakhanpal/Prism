@@ -766,6 +766,12 @@ export function EvidenceDrawerView({
                 {planRowCaption(evidence)}
               </p>
             )}
+            {/* A comparable package opened from the range chart or its table (ticket 101). */}
+            {evidence?.kind === "package" && (
+              <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
+                {copy.evidence.package.caption}
+              </p>
+            )}
           </div>
           {/* Ticket 112: a source's copy key, before the close, on the heading's 24 px line. */}
           {(evidence?.kind === "passage" || evidence?.kind === "record") && !criteriaView && !timelineView && (

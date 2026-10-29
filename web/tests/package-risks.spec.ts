@@ -77,10 +77,12 @@ const shown = (locator: Locator) =>
     }),
   );
 
-test("the section carries its eyebrow and lists the cost estimates risk, what helped, its count and its sources", async ({ page }) => {
+test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped, its count and its sources", async ({ page }) => {
   await openPackage(page);
 
-  await expect(section(page).locator("p").first()).toHaveText("Planning · PPSD section 3");
+  await expect(section(page).locator("[data-zone-tag]")).toHaveText("PPSD section 3");
+  // Ticket 101: with risks to select, zone 3 is a panel.
+  await expect(section(page)).toHaveAttribute("data-zone", "panel");
   await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("Procurement risks and what helped");
   const cost = row(page, "cost_estimates");
   await expect(cost.getByRole("rowheader")).toHaveText(RISK);
@@ -177,7 +179,9 @@ test("a failed save keeps the selection on the page and offers Try again", async
 test("on the fixture's Kenya comparables the section says no completion report could be read", async ({ page }) => {
   await openPackage(page, { risks: "risks-ke-nwwda-541055.json" });
 
-  await expect(section(page).locator("[data-no-risks] h3")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
+  // Ticket 101: holding only its sentence and one link, zone 3 is a row.
+  await expect(section(page)).toHaveAttribute("data-zone", "row");
+  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
   await expect(section(page).getByRole("link", { name: "See which completion reports I have read" })).toHaveAttribute(
     "href",
     "/data?sources=notices,awards,documents,projects&from=package_risks",
@@ -211,8 +215,8 @@ async function openPlanned(page: Page, risks: Answer, save: Answer = { body: '{"
 test("the rural roads package from a sentence reaches no completion report on the fixture, and says so", async ({ page }) => {
   await openPlanned(page, { body: await recorded("risks-planned-rural-roads.json") });
 
-  await expect(section(page).locator("p").first()).toHaveText("Planning · PPSD section 3");
-  await expect(section(page).locator("[data-no-risks] h3")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
+  await expect(section(page).locator("[data-zone-tag]")).toHaveText("PPSD section 3");
+  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
 });
 
 test("on a package from a sentence, a selection saves with the package under the saved stamp", async ({ page }) => {

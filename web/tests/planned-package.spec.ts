@@ -701,6 +701,9 @@ test("when a rerun has redrawn the dot that opened the records away, closing the
 test("a row of the table twin opens the same records, and the row stays marked while they show", async ({ page }) => {
   await openChart(page);
   await page.getByRole("button", { name: "Show the table" }).click();
+  // Twenty rows a page (ticket 101): the longest package is on the last of the three.
+  await page.getByRole("button", { name: "Next 20" }).click();
+  await page.getByRole("button", { name: "Next 20" }).click();
   const row = page.locator(`[data-open-row="${MOWI}"]:visible`);
   await expect(row).toHaveAccessibleName(`Open the records for ${MOWI}`);
 
@@ -997,6 +1000,8 @@ for (const width of [1440, 1024, 390]) {
     await expect(chip(page, "method")).toBeFocused();
 
     await page.getByRole("button", { name: "Show the table" }).click();
+    await page.getByRole("button", { name: "Next 20" }).click();
+    await page.getByRole("button", { name: "Next 20" }).click();
     await page.locator(`[data-open-row="${MOWI}"]:visible`).click();
     await expect(drawer(page)).toBeVisible();
     await expect(drawer(page)).toHaveAttribute("data-evidence-drawer", width < 768 ? "sheet" : "drawer");
@@ -1066,4 +1071,38 @@ test("in a list of choices the arrow keys move between options without choosing,
   await expect(editor).toHaveCount(0);
   await expect.poll(() => sent).toEqual([{ field: "method", action: "set", value: "Request for Quotations" }]);
   await expect(chip(page, "method")).toBeFocused();
+});
+
+// ── Ticket 101: the planned package on the workspace layout ──────────────
+
+test("a planned package puts What I understood in an unnumbered panel before the stage label and the numbered zones, under a head that holds no action", async ({ page }) => {
+  await openPackage(page);
+  const understood = card(page);
+  await expect(understood).toHaveAttribute("data-zone", "panel");
+  await expect(understood).not.toHaveAttribute("data-numbered", "");
+  await expect(understood).toHaveAccessibleName("What I understood");
+  await expect(understood.locator("[data-zone-number]")).toHaveCount(0);
+  // The page's order: What I understood, the stage label "Planning", zones 1 to 4, "Tender design" and zone 5.
+  const order = await page.locator("[data-zones] > [data-zone], [data-zones] > [data-stage-label]").evaluateAll((all) =>
+    all.map((el) =>
+      el.hasAttribute("data-stage-label")
+        ? el.textContent
+        : `${el.querySelector("[data-zone-number]")?.textContent?.trim() ?? "-"} ${el.querySelector("[data-zone-name]")?.lastChild?.textContent}`,
+    ),
+  );
+  expect(order).toEqual([
+    "- What I understood",
+    "Planning",
+    "1 How long it took",
+    "2 Planned date for each step",
+    "3 Procurement risks and what helped",
+    "4 Procurement approach options",
+    "Tender design",
+    "5 Check your criteria",
+  ]);
+  // The head does not stick and holds no action; "No STEP reference yet" stands in the ID line's place.
+  const head = page.locator("[data-page-head]");
+  await expect(head.locator("[data-id-line]")).toContainText("No STEP reference yet");
+  await expect(head.locator("button[data-button=primary]")).toHaveCount(0);
+  expect(await page.locator("[data-package-header]").evaluate((element) => getComputedStyle(element).position)).toBe("static");
 });

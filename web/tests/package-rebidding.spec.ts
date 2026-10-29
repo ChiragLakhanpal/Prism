@@ -69,8 +69,17 @@ test("the block ends section 1's card after a divider, labeled experimental with
   await openPackage(page);
   await ready(page);
 
-  // Inside section 1's card, after everything else in it, with a 1px line above it.
-  expect(await block(page).evaluate((element) => element.closest("[data-past-range]") !== null && element.nextElementSibling === null)).toBe(true);
+  // Zone 1's second block, after everything else in it but its own foot strip, which holds its source (ticket 101), with
+  // a 1px line above it.
+  expect(
+    await block(page).evaluate(
+      (element) =>
+        element.closest("[data-past-range]") !== null &&
+        element.nextElementSibling?.hasAttribute("data-foot-strip") === true &&
+        element.nextElementSibling.nextElementSibling === null,
+    ),
+  ).toBe(true);
+  await expect(page.locator("[data-past-range] > [data-foot-strip]").last()).toContainText("Records run through");
   expect(await block(page).evaluate((element) => getComputedStyle(element).borderTopWidth)).toBe("1px");
   await expect(block(page).getByRole("heading", { level: 3 })).toHaveText("Advertised again");
   await expect(block(page).locator("[data-badge=experimental]")).toHaveText("Experimental");

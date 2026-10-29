@@ -36,6 +36,11 @@ import { ExistingPpsdNotice } from "../components/ExistingDraftNotice";
 import { PpsdAction, type RiskSelection } from "../components/PpsdAction";
 import { StepTracker } from "../components/StepTracker";
 import { StepsSection, type StepsState } from "../components/StepsSection";
+import { PageHead } from "../components/PageHead";
+import { StageLabel } from "../components/StageLabel";
+import { TaskZone, ZoneBlock } from "../components/TaskZone";
+import { Workspace as WorkspaceLayout } from "../components/Workspace";
+import { useAnswerInPage } from "../components/AnswerSlot";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
@@ -179,35 +184,34 @@ export function SavedStamp({ saving, preview, onRetry }: { saving: Saving; previ
   );
 }
 
-// The header: the title as the h1, then the reference line, which carries the saved stamp after the reference
-// (brief 36 moved the stamp there from the header's right, where "Suggest {n} PPSD risk rows" now sits from a page
-// area of 768 px). It sticks from a page area of 768 px; below that it scrolls with the page and the stamp takes a
-// line of its own.
+// The page head (ticket 101; DESIGN.md section 5, Page head): the breadcrumb, parents only, the title as the h1, then
+// the reference line in the ID line's place, which carries the saved stamp after "No STEP reference yet", and the
+// purpose. It does not stick, and holds no action: "Suggest {n} PPSD risk rows" sits in zone 3. Below 768 px the stamp
+// takes a line of its own.
 function Header({
   title,
   stamp,
   headingRef,
   loading = false,
-  action,
 }: {
   title: ReactNode;
   stamp: ReactNode;
   headingRef?: RefObject<HTMLHeadingElement | null>;
   loading?: boolean;
-  // Ticket 36: "Suggest {n} PPSD risk rows" and its caption, at the header's right from 768 px.
-  action?: ReactNode;
 }) {
   return (
-    <div data-package-header data-sticky="top" className="border-b border-line bg-page py-4 @md/page:sticky @md/page:top-(--frame-top) @md/page:z-10">
-      <div className="flex items-start justify-between gap-x-6">
-        <div className="min-w-0 flex-1">
-          <h1 ref={headingRef} tabIndex={-1} className="text-h2 text-pretty wrap-anywhere text-ink-heading focus:outline-none @md/page:text-h1">
-            {title}
-          </h1>
-          {loading ? (
-            <SkeletonLine className="mt-1 text-small" width="w-40" />
+    <div data-package-header>
+      <PageHead
+        trail={packagesOnly}
+        held
+        title={title}
+        titleRef={headingRef}
+        loading={loading}
+        meta={
+          loading ? (
+            <SkeletonLine className="text-small" width="w-40" />
           ) : (
-            <div className="mt-1 flex flex-col gap-x-2 @md/page:flex-row @md/page:flex-wrap @md/page:items-baseline" data-reference-line>
+            <div className="flex flex-col gap-x-2 @md/page:flex-row @md/page:flex-wrap @md/page:items-baseline" data-reference-line>
               <p className="text-small text-ink-muted">{words.referenceNone}</p>
               {stamp && (
                 <>
@@ -218,17 +222,28 @@ function Header({
                 </>
               )}
             </div>
-          )}
-        </div>
-        {action}
-      </div>
+          )
+        }
+        purpose={words.purpose}
+      />
     </div>
   );
 }
 
-const crumbs = (title: ReactNode) => [{ text: words.breadcrumbPackages, href: "/packages" }, { text: title }];
-// A package not read yet, or not found: the trail ends at "Packages", since there is no title to name.
+// The breadcrumb names the page's parents only (DESIGN.md section 5, Page head), so a package's title shows once.
 const packagesOnly = [{ text: words.breadcrumbPackages, href: "/packages" }];
+
+// "What I understood" (the 15 brief): the sentence, the chips and the computed note, in an unnumbered Task zone panel
+// before zone 1 (ticket 101), named by the zone's h2, whose id the editor and links name.
+function UnderstoodZone({ children }: { children: ReactNode }) {
+  return (
+    <TaskZone name={words.card.heading} headingId="what-i-understood" panel sectionKey="understood" marks={{ "data-criteria-card": "" }}>
+      <ZoneBlock data-block="understood">
+        <div>{children}</div>
+      </ZoneBlock>
+    </TaskZone>
+  );
+}
 
 // ── Reading the sentence ─────────────────────────────────────────────────
 
@@ -278,15 +293,12 @@ function ReadingPage() {
   const message = current.phase === "dropped" ? words.readErrors.dropped : (words.readErrors[current.error ?? "internal"] ?? words.readErrors.internal);
   const retry = current.error !== "no_reader";
   return (
-    <DocumentColumn>
-      <div data-planned-package={current.phase === "no_package" ? "no-package" : failed ? "failed" : "reading"} aria-busy={!failed && current.phase === "reading"}>
-        <Breadcrumb trail={crumbs(words.titleNew)} held />
-        <div className="mt-4">
-          <Header title={words.titleNew} headingRef={heading} stamp={<SavedStamp saving={{ status: "unsaved" }} preview={false} />} />
-        </div>
-        <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
-        <section aria-labelledby="what-i-understood" className="mt-6 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-criteria-card>
-          <CardTop sentence={current.sentence} guesses={null} headingId="what-i-understood" />
+    <div data-planned-package={current.phase === "no_package" ? "no-package" : failed ? "failed" : "reading"} aria-busy={!failed && current.phase === "reading"}>
+      <WorkspaceLayout
+        head={<Header title={words.titleNew} headingRef={heading} stamp={<SavedStamp saving={{ status: "unsaved" }} preview={false} />} />}
+      >
+        <UnderstoodZone>
+          <CardTop sentence={current.sentence} guesses={null} named={false} />
           {current.phase === "no_package" ? (
             <div className="mt-4" data-no-package>
               <h3 tabIndex={-1} className="text-h2 text-ink-heading">
@@ -333,14 +345,15 @@ function ReadingPage() {
               </div>
             </>
           )}
-        </section>
+        </UnderstoodZone>
         {!failed && current.phase !== "no_package" && (
-          <div className="mt-6 @lg/page:mt-8">
+          <>
+            <StageLabel>{copy.packagePage.stages.planning}</StageLabel>
             <PastRange state={{ status: "loading" }} quiet />
-          </div>
+          </>
         )}
-      </div>
-    </DocumentColumn>
+      </WorkspaceLayout>
+    </div>
   );
 }
 
@@ -448,24 +461,15 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
 
 function LoadingPackage() {
   return (
-    <DocumentColumn>
-      <div data-planned-package="loading" aria-busy="true" className="min-h-svh">
-        <Breadcrumb trail={crumbs(<SkeletonLine width="w-32" />)} held />
-        <div className="mt-4">
-          <Header title={<><span className="sr-only">{words.loading}</span><SkeletonLine className="text-h1" width="w-2/5" /></>} stamp={null} loading />
-        </div>
-        <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
-        <section className="mt-6 rounded-md border border-line bg-surface p-4 @md/page:p-6">
-          <h2 className="text-h2 text-ink-heading">{words.card.heading}</h2>
-          <div className="mt-4">
-            <ChipSkeletons form={null} />
-          </div>
-        </section>
-        <div className="mt-6 @lg/page:mt-8">
-          <PastRange state={{ status: "loading" }} />
-        </div>
-      </div>
-    </DocumentColumn>
+    <div data-planned-package="loading" aria-busy="true" className="min-h-svh">
+      <WorkspaceLayout head={<Header title={words.loading} stamp={null} loading />}>
+        <UnderstoodZone>
+          <ChipSkeletons form={null} />
+        </UnderstoodZone>
+        <StageLabel>{copy.packagePage.stages.planning}</StageLabel>
+        <PastRange state={{ status: "loading" }} />
+      </WorkspaceLayout>
+    </div>
   );
 }
 
@@ -484,7 +488,6 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   const [showWithout, setShowWithout] = useState(false);
   // How many reruns have answered, so the live region can say the section's new title once each.
   const [sayUpdated, setSayUpdated] = useState(0);
-  const sectionRoot = useRef<HTMLDivElement>(null);
   const narrow = useNarrowWindow();
   const opening = useOpenComparable();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -519,8 +522,9 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   const staff = useStore(staffRole) !== false;
   const asOf = new URLSearchParams(useStore(address).search).has("asof");
   const ppsdPackage = { id: pkg.package_id, title: String(valueOf(pkg, "description") ?? title), step_reference: null };
-  const ppsdAction = (inline: boolean) =>
-    staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} inline={inline} /> : undefined;
+  const ppsdAction = staff ? <PpsdAction pkg={ppsdPackage} selection={selection} preview={preview} asOf={asOf} /> : undefined;
+  // An answer asked from the box: in the work's columns above the page head (ticket 98's answer slot; ticket 101).
+  const asked = useAnswerInPage();
   // While the action is live it is the screen's one solid button, so section 1's "Show the past range" turns secondary.
   const ppsdLive = staff && !preview && !asOf && selection !== null && selection.chosen > 0 && !selection.saveFailed;
 
@@ -605,7 +609,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   useEffect(() => {
     if (sayUpdated === 0) return;
     const frame = requestAnimationFrame(() => {
-      const shown = sectionRoot.current?.querySelector("[data-finding], [data-no-chart] h3, [data-plan-prompt] [data-found]");
+      const shown = sectionHeading.current?.closest("section")?.querySelector("[data-finding], [data-no-chart] h3, [data-plan-prompt] [data-found]");
       const title = shown?.textContent?.replace(/\s+/g, " ").trim();
       if (title) setAnnounce(words.announce.updated(title));
     });
@@ -826,111 +830,107 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
   ) : undefined;
 
   return (
-    <DocumentColumn>
-      <div data-planned-package="ready">
-        <Breadcrumb trail={crumbs(title)} held />
-        {/* Ticket 36's notices about suggested PPSD rows on this package sit above the h1, as on a STEP row's page. */}
-        <ExistingPpsdNotice packageKey={pkg.package_id} />
-        <div className="mt-4">
-          <Header
-            headingRef={heading}
-            title={title}
-            action={ppsdAction(false)}
-            stamp={
-              <SavedStamp
-                saving={saving}
-                preview={preview}
-                onRetry={failedChange ? () => send(failedChange) : retryRisks.current ? () => retryRisks.current?.() : undefined}
-              />
-            }
-          />
-        </div>
-        {initial.example && <ExampleNote className="mt-4">{copy.home.exampleNotes.package(formatDate(pkg.created_at))}</ExampleNote>}
-        <p className="mt-4 max-w-prose text-body text-ink-muted">{words.purpose}</p>
-        <section aria-labelledby="what-i-understood" className="mt-6 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-criteria-card>
-          <CardTop sentence={pkg.sentence} guesses={pkg.guesses} headingId="what-i-understood" preview={preview} />
+    <div data-planned-package="ready">
+      <WorkspaceLayout
+        answer={asked}
+        head={
+          <>
+            {/* Ticket 36's notices about suggested PPSD rows on this package sit above the head, as on a STEP row's page. */}
+            <ExistingPpsdNotice packageKey={pkg.package_id} />
+            <Header
+              headingRef={heading}
+              title={title}
+              stamp={
+                <SavedStamp
+                  saving={saving}
+                  preview={preview}
+                  onRetry={failedChange ? () => send(failedChange) : retryRisks.current ? () => retryRisks.current?.() : undefined}
+                />
+              }
+            />
+            {initial.example && <ExampleNote className="mt-4">{copy.home.exampleNotes.package(formatDate(pkg.created_at))}</ExampleNote>}
+          </>
+        }
+      >
+        <UnderstoodZone>
+          <CardTop sentence={pkg.sentence} guesses={pkg.guesses} preview={preview} named={false} />
           {pkg.refusal === "dividing" && <RefusalAlert />}
           <div className="mt-4">
             <ChipGroups form={form} chip={chip} />
           </div>
           <ComputedNote pkg={pkg} form={form} />
-        </section>
-        {/* Where each step stands (ticket 115), from section 2's answer: a package from a sentence has no plan yet. */}
-        <div className="mt-6">
+        </UnderstoodZone>
+        <StageLabel>{copy.packagePage.stages.planning}</StageLabel>
+        {/* Zone 1, the past range, read from the criteria that pick comparables. */}
+        <PastRange
+          state={state}
+          headingRef={sectionHeading}
+          open={opening}
+          planned={{ months: plan, onChange: onPlanMoved }}
+          body={body}
+          status={updating ? words.section.updating : undefined}
+          busy={updating}
+          lead={lead}
+          more={more}
+          quiet
+          after={(comparing) => (
+            <Rebidding
+              path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
+              section={section.status === "ready" && !skeleton ? section.result : null}
+              sectionFailed={section.status === "error" && !skeleton}
+              comparing={comparing}
+            />
+          )}
+          estimate={pkg.comparables_query ? estimate : undefined}
+          planDate={planDate}
+        />
+        {/* Where each step stands (ticket 115), from zone 2's answer: a package from a sentence has no plan yet. It
+            follows zone 1, so the finding leads (ticket 101). */}
+        <div className="my-4">
           <StepTracker state={steps} />
         </div>
-        <div ref={sectionRoot} className="mt-6 @lg/page:mt-8">
-          <PastRange
-            state={state}
-            headingRef={sectionHeading}
-            open={opening}
-            planned={{ months: plan, onChange: onPlanMoved }}
-            body={body}
-            status={updating ? words.section.updating : undefined}
-            busy={updating}
-            lead={lead}
-            more={more}
-            quiet
-            after={(comparing) => (
-              <Rebidding
-                path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
-                section={section.status === "ready" && !skeleton ? section.result : null}
-                comparing={comparing}
-              />
-            )}
-            estimate={pkg.comparables_query ? estimate : undefined}
-            planDate={planDate}
-          />
-        </div>
-        {/* Section 2, the planned date for each STEP step (ticket 27): it reruns when a criterion changes, since the
+        {/* Zone 2, the planned date for each STEP step (ticket 27): it reruns when a criterion changes, since the
             method family and the comparables follow the criteria. */}
-        <div className="mt-6 @lg/page:mt-8">
-          <StepsSection packageKey={pkg.package_id} kind="planned" rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`} onState={setSteps} />
-        </div>
-        {/* Section 3, procurement risks and what helped (ticket 30): it reruns with section 1's criteria, and its
-            selection saves with the package under the saved stamp and tells the page what is selected, for "Suggest
-            {n} PPSD risk rows" (ticket 36), which it draws under its last risk below 768 px. */}
-        <div className="mt-6 @lg/page:mt-8">
-          <RisksSection
-            apiHref={`/api/planned-packages/${pkg.package_id}`}
-            packageKey={pkg.package_id}
-            kind="planned"
-            rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`}
-            preview={preview}
-            missingList={missingList}
-            onSaveState={(state, retry) => {
-              retryRisks.current = state === "failed" ? retry : null;
-              setSaving(state === "saved" ? { status: "saved", at: new Date().toISOString() } : { status: state });
-            }}
-            onSelection={setSelection}
-            action={ppsdAction(true)}
-          />
-        </div>
-        {/* Section 4, procurement approach options (ticket 26), from section 1's time estimate. */}
-        <div className="mt-6 @lg/page:mt-8">
-          <ApproachOptions
-            state={
-              section.status === "none" || missing.length > 0
-                ? { kind: "empty" }
-                : approachState(
-                    section.status === "ready" ? { status: "ready", result: section.result } : section.status === "error" ? { status: "error" } : { status: "loading" },
-                    estimate,
-                    prompting,
-                    () => fetchComparables(pkg),
-                  )
-            }
-          />
-        </div>
-        {/* Section 5, "Check your criteria" (ticket 31), on this package's comparables: a change of criteria
-            reads its summary again. */}
-        <div className="mt-6 @lg/page:mt-8">
-          <CheckCriteria base={`/api/planned-packages/${encodeURIComponent(pkg.package_id)}`} version={queryKey(pkg)} preview={preview} />
-        </div>
-        <p role="status" className="sr-only" data-workspace-live>
-          {announce}
-        </p>
-      </div>
-    </DocumentColumn>
+        <StepsSection packageKey={pkg.package_id} kind="planned" rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`} onState={setSteps} />
+        {/* Zone 3, procurement risks and what helped (ticket 30): it reruns with zone 1's criteria, and its selection
+            saves with the package under the saved stamp and tells the page what is selected, for "Suggest {n} PPSD
+            risk rows" (ticket 36), which it holds. */}
+        <RisksSection
+          apiHref={`/api/planned-packages/${pkg.package_id}`}
+          packageKey={pkg.package_id}
+          kind="planned"
+          rerunKey={`${queryKey(pkg)}|${pkg.missing.join(",")}`}
+          preview={preview}
+          missingList={missingList}
+          onSaveState={(state, retry) => {
+            retryRisks.current = state === "failed" ? retry : null;
+            setSaving(state === "saved" ? { status: "saved", at: new Date().toISOString() } : { status: state });
+          }}
+          onSelection={setSelection}
+          action={ppsdAction}
+        />
+        {/* Zone 4, procurement approach options (ticket 26), from zone 1's time estimate. */}
+        <ApproachOptions
+          state={
+            section.status === "none" || missing.length > 0
+              ? { kind: "empty" }
+              : approachState(
+                  section.status === "ready" ? { status: "ready", result: section.result } : section.status === "error" ? { status: "error" } : { status: "loading" },
+                  estimate,
+                  prompting,
+                  () => fetchComparables(pkg),
+                )
+          }
+        />
+        <StageLabel>{copy.packagePage.stages.tender}</StageLabel>
+        {/* Zone 5, "Check your criteria" (ticket 31), on this package's comparables: a change of criteria reads its
+            summary again. */}
+        <CheckCriteria base={`/api/planned-packages/${encodeURIComponent(pkg.package_id)}`} version={queryKey(pkg)} preview={preview} />
+      </WorkspaceLayout>
+      <p role="status" className="sr-only" data-workspace-live>
+        {announce}
+      </p>
+    </div>
   );
 }
 

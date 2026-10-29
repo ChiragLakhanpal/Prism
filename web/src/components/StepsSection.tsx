@@ -969,7 +969,6 @@ export function StepsView({
   return (
     <CollapsedSection
       id="planned-dates"
-      eyebrow={words.eyebrow}
       number={words.number}
       heading={words.heading}
       summary={summary}

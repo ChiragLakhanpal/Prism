@@ -16,7 +16,7 @@ import { cx } from "../lib/cx";
 import { Breadcrumb, type Crumb } from "./Breadcrumb";
 import { Button } from "./Button";
 import { MonoWords } from "./MonoWords";
-import { LoadingLabel, SkeletonText } from "./Skeleton";
+import { LoadingLabel, SkeletonLine, SkeletonText } from "./Skeleton";
 
 export type FactsLine = {
   // The object's facts in one line, such as its method, market approach, amount and status.
@@ -38,6 +38,8 @@ export function PageHead({
   titleRef,
   loading = false,
   id,
+  idAction,
+  meta,
   purpose,
   facts,
   action,
@@ -58,6 +60,11 @@ export function PageHead({
   loading?: boolean;
   // An object's ID, such as its STEP reference.
   id?: string;
+  // What follows the ID on its line, such as the copy key that copies it (ticket 112; the package page, ticket 101).
+  idAction?: ReactNode;
+  // An object with no ID yet: the line that stands in the ID line's place, such as a planned package's "No STEP
+  // reference yet" and its saved stamp (ticket 101).
+  meta?: ReactNode;
   purpose?: ReactNode;
   facts?: FactsLine;
   action?: ReactNode;
@@ -65,7 +72,8 @@ export function PageHead({
   return (
     <div data-page-head>
       {alert && (
-        <div data-head-alert className="mb-6 flex flex-col gap-2">
+        // A notice that draws nothing, such as the package page's notice of suggested PPSD rows with none, leaves no gap.
+        <div data-head-alert className="mb-6 flex flex-col gap-2 empty:hidden">
           {alert}
         </div>
       )}
@@ -89,12 +97,25 @@ export function PageHead({
               title
             ),
           )}
+          {/* While the object loads, its ID line and its facts line keep their places (ticket 101). */}
+          {id && loading && <SkeletonLine className="mt-1 text-small" width="w-48" />}
           {id && !loading && (
             <p data-id-line className="mt-1 text-small text-ink-muted">
               <MonoWords text={id} />
+              {idAction}
             </p>
           )}
+          {!id && meta != null && (
+            <div data-id-line className="mt-1">
+              {meta}
+            </div>
+          )}
           {purpose != null && <p className="mt-3 max-w-prose text-body text-pretty text-ink-muted">{purpose}</p>}
+          {facts && loading && (
+            <div data-facts-line aria-hidden="true" className="mt-3 flex min-h-11 items-center">
+              <SkeletonLine className="text-small" width="w-4/5" />
+            </div>
+          )}
           {facts && !loading && (
             <div data-facts-line className="mt-3 flex flex-wrap items-center gap-x-3">
               <p className="text-small text-ink">{facts.line}</p>
