@@ -79,7 +79,7 @@ def months_between(start: dt.date, end: dt.date) -> int:
 
 
 def _boolean(value) -> bool | None:
-    """A boolean from DuckDB or from the warehouse's text."""
+    """A boolean, or a boolean written as text."""
     return None if value is None else value if isinstance(value, bool) else str(value).lower() == "true"
 
 
@@ -231,7 +231,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
     passages = {row["assertion_id"]: _passage(row) for row in held}
     current = [assertion for assertion in assertions if _current(assertion, call.as_of)
                and (attribute is None or assertion.attribute == attribute)]
-    reasons = [{"reason": row["reason"], "count": int(row["rejected"])}
+    reasons = [{"reason": row["reason"], "count": row["rejected"]}
                for row in _rows(call, "rejections.sql", project_id=project_id, as_of=call.as_of)]
     rejected = {"count": sum(reason["count"] for reason in reasons), "reasons": reasons}
 

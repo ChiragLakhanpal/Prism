@@ -137,7 +137,7 @@ class Desk:
     def __init__(self, engine: Engine):
         self.queries: dict[str, Query] = {}
         for row in rows(engine, "queries"):
-            self.queries[row["query_id"]] = Query(row["query_id"], int(row["n"]), row["query_text"], row["notice_id"],
+            self.queries[row["query_id"]] = Query(row["query_id"], row["n"], row["query_text"], row["notice_id"],
                                                   row["notice_ref"], as_date(row["notice_date"]), row["project_id"],
                                                   json.loads(row["judges"]))
         for row in rows(engine, "pool"):

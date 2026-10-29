@@ -445,7 +445,7 @@ def decide(engine: Engine, run_id: str, tracker, thresholds: Thresholds | None =
 
 
 def _moment(value) -> dt.datetime:
-    """A stored ran_at as a time in UTC: DuckDB gives it without a zone, the SQL warehouse as text."""
+    """A stored ran_at as a time in UTC: from a datetime with or without a zone, or from text."""
     if not isinstance(value, dt.datetime):
         value = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     return value if value.tzinfo else value.replace(tzinfo=dt.UTC)

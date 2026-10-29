@@ -52,7 +52,7 @@ LEFT_OUT = (ATTACK_FOUND, NOT_SCREENED)  # in the order a coverage line lists th
 
 def held_back(attack_detected) -> str | None:
     """Why a passage's words are kept from the agent, as a coverage line's reason code, or None when Prompt Shields
-    screened it and found no attack. The stored result arrives typed from DuckDB and as text from the SQL warehouse."""
+    screened it and found no attack. The stored result arrives typed, or as text."""
     if attack_detected is None or attack_detected == "":
         return NOT_SCREENED
     found = attack_detected if isinstance(attack_detected, bool) else str(attack_detected).lower() == "true"

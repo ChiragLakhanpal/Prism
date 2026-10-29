@@ -8,8 +8,8 @@ removes an upload: removing one is a retention policy the owner has not set.
 
 The store holds no access rule. The upload routes (src/strata/server/uploads.py) ask the one access rule
 (src/strata/server/access.py) before they show anything, and so do the tools that read an upload, through the
-reader the routes give them. Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read
-once here.
+reader the routes give them. Every engine gives typed values (ticket 128), and each is
+read once here.
 """
 
 from __future__ import annotations
@@ -133,7 +133,7 @@ class UploadStore:
             found = self._rows(engine, "upload", upload_id=upload_id)
             if not found:
                 return None
-            rows = [{"position": int(row["position"]), "reference": row["activity_reference_no"],
+            rows = [{"position": row["position"], "reference": row["activity_reference_no"],
                      "description": row["description"], **json.loads(row["content"])}
                     for row in self._rows(engine, "rows", upload_id=upload_id)]
         return self._saved(found[0], rows)

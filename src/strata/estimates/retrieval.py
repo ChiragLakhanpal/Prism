@@ -165,7 +165,7 @@ class RetrievalEvaluation:
 def read_labels(engine: Engine, as_of: dt.date, thresholds: Thresholds) -> list[Label]:
     """The labeled set's latest build, as the harness may read it on a date."""
     return [Label(row["query_set"], row["query_id"], row["query_text"], label_set.as_date(row["query_date"]),
-                  row["project_id"], row["passage_id"], int(row["grade"]), row["origin"], float(row["weight"]))
+                  row["project_id"], row["passage_id"], row["grade"], row["origin"], row["weight"])
             for row in Reader(engine, as_of, thresholds).rows(_sql("labels_as_of"))]
 
 

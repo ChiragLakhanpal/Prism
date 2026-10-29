@@ -73,7 +73,7 @@ def _rows(call: Call, name: str, **params) -> list[dict]:
     return [dict(zip(result.columns, row)) for row in result.rows]
 
 
-# Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read once here.
+# Every engine gives typed values (ticket 128); each is read once here, and a value written as text reads the same.
 
 def _date(value) -> dt.date | None:
     if value is None or value == "":
@@ -830,7 +830,7 @@ def data_readiness_for(call: Call, sources: str | None = None, from_tool: str | 
 
     # The plan pages the layout parser could not read belong with the plans' row: none to list
     # (None) when that row is out of view.
-    failures = [{"project_id": row["project_id"], "document_id": row["document_id"], "pdf_page": int(row["pdf_page"]),
+    failures = [{"project_id": row["project_id"], "document_id": row["document_id"], "pdf_page": row["pdf_page"],
                  "failed_on": _iso(_date(row["failed_on"]))}
                 for row in _rows(call, "parse_failures.sql", as_of=call.as_of)] if PLANS in in_view else None
     days = [_date(row["measured_on"]) for row in page.measures.rows if row["source_key"] in keys]

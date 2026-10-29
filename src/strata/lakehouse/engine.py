@@ -66,7 +66,8 @@ class Result:
         """Each value as the warehouse writes it: dates as 2016-05-16, timestamps in UTC as
         2026-10-23T23:30:00.000Z, true and false, and '' for null.
 
-        Rows from WarehouseEngine are text already, so rows from two engines can be compared.
+        Every engine's rows hold typed values (WarehouseEngine reads the warehouse's text by the manifest's types),
+        and this writes them back the way the warehouse does, so rows from two engines can be compared.
         `ops/bundle/check.py same-rows` compares them on the workspace.
         """
         return [tuple(_text(value) for value in row) for row in self.rows]
@@ -367,8 +368,45 @@ def _parts(rows: list[tuple], chunk: int, chunk_characters: int):
     if part:
         yield part
 
+# The Statement Execution API names a column's type in type_name (LONG, SHORT, BYTE) and in type_text (BIGINT,
+# SMALLINT, TINYINT); these are both spellings.
+WHOLE = ("BYTE", "SHORT", "INT", "INTEGER", "LONG", "BIGINT", "TINYINT", "SMALLINT")
+FRACTION = ("FLOAT", "DOUBLE", "REAL")
+
+
+def typed(value: str | None, type_name: str | None) -> Any:
+    """One value the warehouse wrote as text, read as its column's type, so it reaches the caller as DuckDB gives
+    the same column (ticket 128): BIGINT, INT, SMALLINT and TINYINT as int; DECIMAL as Decimal; DOUBLE and FLOAT as
+    float; BOOLEAN as bool; DATE as date; TIMESTAMP as a datetime in UTC and TIMESTAMP_NTZ as one with no zone.
+    STRING and every other type stay as written, null stays None, and text that does not read as its type stays as
+    written. This is the one place Strata reads the warehouse's text; Genie's results come through it too."""
+    if value is None:
+        return None
+    kind = (type_name or "STRING").upper().split("(")[0].strip()
+    try:
+        if kind in WHOLE:
+            return int(value)
+        if kind in FRACTION:
+            return float(value)
+        if kind == "DECIMAL":
+            return decimal.Decimal(value)
+        if kind == "BOOLEAN":
+            return value.lower() == "true"
+        if kind == "DATE":
+            return dt.date.fromisoformat(value[:10])
+        if kind == "TIMESTAMP":
+            moment = dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
+            return moment.replace(tzinfo=dt.UTC) if moment.tzinfo is None else moment.astimezone(dt.UTC)
+        if kind == "TIMESTAMP_NTZ":
+            return dt.datetime.fromisoformat(value)
+    except (ValueError, decimal.InvalidOperation):
+        return value
+    return value
+
+
 class WarehouseEngine:
-    """The workspace's SQL warehouse, run as whoever owns the token."""
+    """The workspace's SQL warehouse, run as whoever owns the token. Its rows hold Python values typed from the
+    statement's manifest, as DuckDBEngine's and SparkEngine's do (typed())."""
 
     name = "databricks"
 
@@ -463,4 +501,8 @@ class WarehouseEngine:
             chunk = self.transport("GET", link, None)
             rows += chunk.get("data_array") or []
             link = chunk.get("next_chunk_internal_link")
-        return Result(tuple(column["name"] for column in columns), tuple(tuple(row) for row in rows))
+        # format JSON_ARRAY writes every value as text, so each is read by its column's type (ticket 128).
+        kinds = [column.get("type_name") or column.get("type_text") for column in columns]
+        return Result(tuple(column["name"] for column in columns),
+                      tuple(tuple(typed(value, kinds[at]) if at < len(kinds) else value for at, value in enumerate(row))
+                            for row in rows))

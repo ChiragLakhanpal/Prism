@@ -78,7 +78,7 @@ def _rows(engine: Engine, name: str, **params) -> list[dict]:
     return [dict(zip(result.columns, row, strict=True)) for row in result.rows]
 
 
-# Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read once here.
+# Every engine gives typed values (ticket 128); each is read once here, and a value written as text reads the same.
 
 def _int(value) -> int | None:
     return None if value is None or value == "" else int(value)
@@ -98,7 +98,7 @@ def _iso(value) -> str | None:
 
 
 def _moment(value) -> dt.datetime | None:
-    """A timestamp in UTC: DuckDB gives a datetime, the warehouse text such as 2026-10-27T14:00:00.000Z."""
+    """A timestamp in UTC, from a datetime or from text such as 2026-10-27T14:00:00.000Z."""
     if value is None or value == "":
         return None
     found = value if isinstance(value, dt.datetime) else dt.datetime.fromisoformat(str(value))

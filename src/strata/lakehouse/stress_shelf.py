@@ -143,11 +143,11 @@ class Document:
 def documents(engine: Engine) -> dict[str, Document]:
     """Every document the run read: the passage reader's, then the plan reader's versions."""
     found = {str(row["document_id"]): Document(str(row["document_id"]), row["project_id"], row["document_type"],
-                                               _date(row["document_date"]), int(row["pdf_pages"]), row["pdf_url"],
+                                               _date(row["document_date"]), row["pdf_pages"], row["pdf_url"],
                                                row["language"]) for row in _rows(engine, REPORTS)}
     for row in _rows(engine, PLANS):
         found.setdefault(str(row["document_id"]), Document(
-            str(row["document_id"]), row["project_id"], plans.PLAN, _date(row["plan_date"]), int(row["pdf_pages"]),
+            str(row["document_id"]), row["project_id"], plans.PLAN, _date(row["plan_date"]), row["pdf_pages"],
             row["pdf_url"], "en", plan=True))
     return found
 
@@ -179,15 +179,15 @@ class Reader:
         self.routes = _rows(engine, ROUTES, document_id=document.document_id)
         self.pages = route_b.page_texts(engine, document.document_id)
         hashes = {number: digest for number, digest, _ in self.pages}
-        self.layouts = {int(row["pdf_page"]): row for row in _rows(engine, LAYOUT_PAGES, document_id=document.document_id)
-                        if hashes.get(int(row["pdf_page"])) == str(row["page_hash"])}
-        self.failed = {int(row[0]) for row in engine.run(FAILED, {"document_id": document.document_id}).rows}
+        self.layouts = {row["pdf_page"]: row for row in _rows(engine, LAYOUT_PAGES, document_id=document.document_id)
+                        if hashes.get(row["pdf_page"]) == str(row["page_hash"])}
+        self.failed = {row[0] for row in engine.run(FAILED, {"document_id": document.document_id}).rows}
 
     @property
     def parser_pages(self) -> list[int]:
         if self.document.plan:
             return [number for number, _, text in self.pages if plans.holds_table(text)]
-        return [int(row["pdf_page"]) for row in self.routes if row["route"] == route_a.ROUTE_B]
+        return [row["pdf_page"] for row in self.routes if row["route"] == route_a.ROUTE_B]
 
     def read_well(self, number: int) -> bool:
         row = self.layouts.get(number)
