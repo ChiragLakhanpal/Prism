@@ -46,3 +46,4 @@ Read first: docs/PLAN.md sections 13 (P4) and 15; the blueprint's "A specialist'
 - October 27, 2026, orchestrator (23:09 PDT): step 1 passed in full three times in the night (the catch-up block "Ticket 49, step 1 of 3 ran again"); the demo is postponed, so the command stays the check before it.
 - October 28, 2026, orchestrator (04:12 PDT): step 1 ran again from 4484310a at 10:58 UTC on October 28: five of six steps passed and the smoke question lost two sentences to the judge's rate limit (ticket 118); the command stays the check before the demo.
 - October 28, 2026, orchestrator (19:16 PDT): step 1 passed in full at 23:24 UTC on October 28 from 7f42374f after the App's secret was renewed (the catch-up block "Ticket 49, step 1 of 3 ran in full again").
+- October 29, 2026, orchestrator (06:14 PDT): step 1 passed in full at 13:08 UTC on October 29 from d4ac8473 (the catch-up block "The morning check of October 29"); the smoke question has passed four runs in a row.
