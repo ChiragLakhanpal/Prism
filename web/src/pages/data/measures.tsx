@@ -6,7 +6,7 @@
 // October 23, 2026.") and, for a number with a window, what a click opens (DESIGN.md section 5, Number tooltip; ticket
 // 96). Every window shows the number that opened it: a number that is neither the measure's count nor its
 // denominator, such as a shortfall, gets its own first row.
-import { Fragment, type MouseEvent, type ReactNode } from "react";
+import { createContext, Fragment, useContext, type MouseEvent, type ReactNode } from "react";
 import { MeasureNum, type Measure } from "../../components/MeasureNum";
 import { Num, numText, type NumValue } from "../../components/Num";
 import { FromLine, measuresFrom, wholeDate } from "../../components/NumFrom";
@@ -218,14 +218,21 @@ export function Sentence({
   );
 }
 
+// Opens the page's closed row whose heading has this id, such as the hardest documents' (ticket 104): the page provides
+// it, and a link to a zone's id opens the zone (DESIGN.md section 5, Task zone).
+export const OpenSection = createContext<((id: string) => void) | null>(null);
+
 // A link to a section of this page, such as "the hardest documents I read" (the 18 brief, section 6.2):
-// it moves focus to the section's heading, which takes tabindex -1, and the address gains the
-// section's id, so Back returns to the link.
+// it opens the section if it is a closed row, moves focus to the section's heading, which takes tabindex -1, and the
+// address gains the section's id, so Back returns to the link.
 export function InPageLink({ href, text }: { href: string; text: string }) {
+  const openSection = useContext(OpenSection);
   const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
-    const target = document.getElementById(href.slice(1));
+    const id = href.slice(1);
+    const target = document.getElementById(id);
     if (!target) return;
     event.preventDefault();
+    openSection?.(id);
     window.history.pushState(window.history.state, "", href);
     target.focus();
     target.scrollIntoView({ block: "start" });

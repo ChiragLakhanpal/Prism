@@ -1573,6 +1573,12 @@ function sixChecksSections(): GalleryPage["sections"] {
   ];
 }
 
+// The hardest documents alone, opened, as a person sees them after "Show the documents" (a closed row since ticket 104).
+function OpenShelf({ result }: { result: Readiness }) {
+  const [open, setOpen] = useState(true);
+  return <HardestDocuments result={result} open={open} onToggle={() => setOpen((was) => !was)} />;
+}
+
 // The Data readiness page in each state, from the gallery's made-up sample.
 function readinessSections(): GalleryPage["sections"] {
   const words = galleryCopy.readiness;
@@ -1660,7 +1666,7 @@ function readinessSections(): GalleryPage["sections"] {
       title,
       body: <ReadinessView state={state} known={known} slow={slow} />,
     })),
-    ...shelfOnly.map(([id, title, stress_shelf]) => ({ id, title, body: <HardestDocuments result={{ ...result, stress_shelf }} /> })),
+    ...shelfOnly.map(([id, title, stress_shelf]) => ({ id, title, body: <OpenShelf result={{ ...result, stress_shelf }} /> })),
     { id: "shelf-two-gaps", title: shelf.sections.twoGaps, body: <ReadinessView state={twoGaps} known={known} /> },
     { id: "shelf-filtered", title: shelf.sections.filtered, body: <ReadinessView state={filtered} known={known} /> },
   ];

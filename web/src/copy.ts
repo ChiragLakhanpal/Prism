@@ -433,11 +433,13 @@ export const copy = {
       data: "Data",
     },
     // A section's own pages, under its item while it is current (DESIGN.md section 5, Sidebar), by page key: Following
-    // and All projects under Projects for World Bank staff (ticket 99). The labels carry no count, so they never grow
-    // while a list loads.
+    // and All projects under Projects for World Bank staff (ticket 99), and Data readiness and Sources and licenses
+    // under Data (ticket 104). The labels carry no count, so they never grow while a list loads.
     sub: {
       following: "Following",
       projects: "All projects",
+      data: "Data readiness",
+      dataSources: "Sources and licenses",
     },
     // One button that turns the sidebar into the rail of icons and back.
     collapse: "Collapse the sidebar",
@@ -5380,11 +5382,6 @@ export const copy = {
   // The Data readiness page (the 16 design brief). Every number on it comes from the
   // data_readiness_for tool, and the page computes none.
   dataReadiness: {
-    tabs: {
-      label: "Data pages",
-      readiness: "Data readiness",
-      sources: "Sources and licenses",
-    },
     // The info alert above the headline when a coverage line opened the page. The noun comes from
     // server.fromNouns, by the tool the link names, never from the link's own words.
     // Templates whose {slots} the page fills with Num, so each number keeps its form and its check.
@@ -5535,9 +5532,11 @@ export const copy = {
     // never says "stress shelf", our own name for it; the code and the slice file keep it.
     shelf: {
       title: "The hardest documents I read",
-      caption:
-        "I use these documents as a stress test for my reading. Each row says what makes the document hard, what I " +
-        "recovered, and the page where you can compare the two.",
+      // A closed row (ticket 104): its one sentence, the Show and Hide button, and the line over the table once open.
+      summary: "I use these documents as a stress test for my reading.",
+      show: "Show the documents",
+      hide: "Hide the documents",
+      caption: "Each row says what makes the document hard, what I recovered, and the page where you can compare the two.",
       sourceLine: "Strata's reading records, taken {date}. Documents from the World Bank's Documents and Reports.",
       columns: {
         document: { label: "Document" },
@@ -5672,14 +5671,25 @@ export const copy = {
       // A spanning note's place in a card, for a screen reader.
       spanName: "Layout parser, outcome and page",
     },
+    // A closed row (ticket 104): its one sentence and the Show and Hide button when there are pages to list, and the
+    // none sentence alone, with nothing to open, when there are none.
     failures: {
       title: "Plan pages the layout parser couldn't read",
+      summary: "These are the Procurement Plan pages the layout parser couldn't read, with the day it last tried each one.",
+      show: "Show the pages",
+      hide: "Hide the pages",
       none: "The layout parser read every Procurement Plan page it tried.",
       page: "page {page}, last tried {date}",
       document: "Document",
     },
     fixes: {
       title: "Fixes that would unlock the most",
+      // A closed row (ticket 104): its one sentence and the Show and Hide button. With no fix to rank, the row holds
+      // the none sentence below alone, with nothing to open.
+      summary: "I rank each fix by how many projects it would add evidence to.",
+      show: "Show the fixes",
+      hide: "Hide the fixes",
+      // The definition in a fix measure's window when the copy file gives that measure no words of its own.
       caption: "Ranked by how many projects each fix would add evidence to.",
       projects: "Would add evidence to {count} projects.",
       oneProject: "Would add evidence to {count} project.",

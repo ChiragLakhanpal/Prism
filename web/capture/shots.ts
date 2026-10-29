@@ -312,6 +312,13 @@ function data(name: string, path: string, readiness: Answer = { recorded: "data-
 }
 
 const FILTERED = "/data?sources=awards,notices&from=find_comparables";
+// Ticket 104: the hardest documents, the plan pages the parser couldn't read and the fixes are closed rows; a shot of
+// what one holds presses its Show button first, as a reader does.
+const openDataRow = (section: "shelf" | "failures" | "fixes") => async (page: Page) => {
+  await page.locator(`[data-readiness] [data-section=${section}] [data-section-toggle][aria-expanded=false]`).click();
+  await page.waitForTimeout(250);
+};
+const openDataRows = inOrder(openDataRow("shelf"), openDataRow("fixes"));
 
 // Ticket 10's screens. A state the fixture cannot reach, such as a partial check, is the recorded
 // plan check with one value changed, so it still shows real rows.
@@ -2047,8 +2054,21 @@ export const SHOTS: Shot[] = [
 
   // The Data tab (ticket 16): every state of Data readiness and Sources and licenses, and its focus
   // and hover states. The loading states are the gallery's readiness page. How Strata works left the
-  // tab in ticket 97.
+  // tab in ticket 97, and its two pages became the sidebar's items under Data in ticket 104.
   data("readiness", "/data"),
+  // Ticket 104: the finding, the two panels and the three closed rows, then the rows opened in place, and the page
+  // beside the evidence drawer at 1024 px, where its tables read a 550 px page area and turn to cards.
+  data("rows-open", "/data", undefined, { act: openDataRows, full: true }),
+  data("beside-drawer", `/data?evidence=${encodeURIComponent("strata.gold.passage:31525018/v1/54")}`, undefined, {
+    widths: [1024],
+    full: true,
+    api: {
+      "/api/me": { recorded: "me.json" },
+      "/api/freshness": { recorded: "freshness.json" },
+      "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
+      "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
+    },
+  }),
   data("filtered", FILTERED, { recorded: "data-readiness-filtered.json" }),
   data("filtered-plan-check", "/data?sources=documents,projects&from=check_plan", { recorded: "data-readiness-plan-check.json" }),
   data("filtered-unknown-key", "/data?sources=awards,not-a-source&from=find_comparables", { recorded: "data-readiness-unknown-key.json" }),
@@ -2061,31 +2081,29 @@ export const SHOTS: Shot[] = [
   data("error", "/data", { status: 502, recorded: "data-readiness-error.json" }),
   data("sources", "/data/sources"),
   data("sources-empty", "/data/sources", undefined, {}, { body: '{"datasets":[],"collections":[],"readiness_rows":0,"known_gaps":0,"kinds":0,"fixes":0}' }),
-  data("focus-subtab", "/data", undefined, { act: focus("[aria-label='Data pages'] a[href='/data/sources']") }),
-  data("hover-subtab", "/data", undefined, { widths: WIDE, act: hover("[aria-label='Data pages'] a[href='/data/sources']") }),
   data("focus-show-all", FILTERED, { recorded: "data-readiness-filtered.json" }, { act: focus("main [data-alert=info] a") }),
   data("term-open", "/data", undefined, { widths: WIDE, act: click("[data-readiness-table=sources] thead [data-term] >> nth=1") }),
   data("focus-num", "/data", undefined, { act: focus("[data-headline] [data-num] >> nth=2") }),
   data("num-window", "/data", undefined, { act: click("[data-headline] [data-num] >> nth=2") }),
   data("hover-num", "/data", undefined, { widths: WIDE, act: hover("[data-cell='awards:linked'] [data-num]") }),
-  data("fix-projects-window", "/data", undefined, { widths: WIDE, act: click("[data-fixes] li >> nth=0 >> p.text-small [data-num]") }),
+  data("fix-projects-window", "/data", undefined, { widths: WIDE, act: inOrder(openDataRow("fixes"), click("[data-fixes] li >> nth=0 >> p.text-small [data-num]")) }),
   data("hover-link", "/data", { recorded: "data-readiness-empty.json" }, { act: hover("[data-readiness=empty] a") }),
   data("cards-320", "/data", undefined, { widths: [320] }),
   // Ticket 18: the hardest documents I read, after Sources. The states the fixture does not reach are
   // the server's answers on the fixture with its shelf outcomes changed (tests/record_api.py).
-  data("shelf-gap", "/data", { recorded: "data-readiness-shelf-gap.json" }),
-  data("shelf-two-gaps", "/data", { recorded: "data-readiness-shelf-two-gaps.json" }),
-  data("shelf-abstentions", "/data", { recorded: "data-readiness-shelf-abstentions.json" }),
-  data("shelf-empty", "/data", { recorded: "data-readiness-shelf-empty.json" }),
-  data("shelf-loading", "/data", undefined, { pending: ["/api/data/readiness"] }),
-  data("shelf-focus-link", "/data", undefined, { act: focus("[data-readiness-table=shelf] a:visible") }),
-  data("shelf-hover-link", "/data", undefined, { widths: WIDE, act: hover("[data-readiness-table=shelf] [data-table-view=table] a") }),
-  data("shelf-term-open", "/data", undefined, { widths: WIDE, act: click("[data-readiness-table=shelf] thead [data-term] >> nth=0") }),
-  data("shelf-focus-num", "/data", undefined, { act: focus("[data-readiness-table=shelf] [data-num]:visible") }),
-  data("shelf-num-window", "/data", undefined, { act: click(":is([data-cell='p130164_pad:outcome'], [data-card='p130164_pad']) [data-num]:visible >> nth=-1") }),
+  data("shelf-gap", "/data", { recorded: "data-readiness-shelf-gap.json" }, { act: openDataRow("shelf"), full: true }),
+  data("shelf-two-gaps", "/data", { recorded: "data-readiness-shelf-two-gaps.json" }, { act: openDataRow("shelf"), full: true }),
+  data("shelf-abstentions", "/data", { recorded: "data-readiness-shelf-abstentions.json" }, { act: openDataRow("shelf"), full: true }),
+  data("shelf-empty", "/data", { recorded: "data-readiness-shelf-empty.json" }, { act: openDataRow("shelf"), full: true }),
+  data("shelf-loading", "/data", undefined, { pending: ["/api/data/readiness"], act: openDataRow("shelf"), full: true }),
+  data("shelf-focus-link", "/data", undefined, { act: inOrder(openDataRow("shelf"), focus("[data-readiness-table=shelf] a:visible")) }),
+  data("shelf-hover-link", "/data", undefined, { widths: WIDE, act: inOrder(openDataRow("shelf"), hover("[data-readiness-table=shelf] [data-table-view=table] a")) }),
+  data("shelf-term-open", "/data", undefined, { widths: WIDE, act: inOrder(openDataRow("shelf"), click("[data-readiness-table=shelf] thead [data-term] >> nth=0")) }),
+  data("shelf-focus-num", "/data", undefined, { act: inOrder(openDataRow("shelf"), focus("[data-readiness-table=shelf] [data-num]:visible")) }),
+  data("shelf-num-window", "/data", undefined, { act: inOrder(openDataRow("shelf"), click(":is([data-cell='p130164_pad:outcome'], [data-card='p130164_pad']) [data-num]:visible >> nth=-1")) }),
   data("shelf-holds-link", "/data", { recorded: "data-readiness-shelf-gap.json" }, { act: click("[data-readiness-table=kinds] a[href='#hardest-documents']:visible") }),
   data("read-well-window", "/data", undefined, { widths: WIDE, act: click("[data-cell='reports:read_well'] [data-num]") }),
-  data("shelf-cards-320", "/data", { recorded: "data-readiness-shelf-gap.json" }, { widths: [320] }),
+  data("shelf-cards-320", "/data", { recorded: "data-readiness-shelf-gap.json" }, { widths: [320], act: openDataRow("shelf"), full: true }),
 
   // Ticket 10: Check a plan, a project's page and All projects, in every state the 10 brief
   // lists (section 10), with /api answered from the recordings.
