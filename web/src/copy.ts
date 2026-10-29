@@ -1083,9 +1083,9 @@ export const copy = {
     highlightEnds: "Highlight ends.",
     // What a PDF's private-use character, such as a Wingdings bullet, shows as: one character for one.
     privateGlyph: "\u2022",
-    openAtPage: (page: string) => `Open at page ${page} in the World Bank's PDF`,
+    openAtPage: (page: string) => `Open at page\u00a0${page} in the World Bank's PDF`,
     // Ticket 21: the drawer's link opens the in-app source view at the page, in the same tab.
-    openAtPageHere: (page: string) => `Open at page ${page}`,
+    openAtPageHere: (page: string) => `Open at page\u00a0${page}`,
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
     missing: "I have no source with this ID. The link may be incomplete.",
@@ -5740,7 +5740,7 @@ export const copy = {
       stoppedNote: "I stopped at today's limit of {cap} pages, which covers every document in the run. The next run reads the rest.",
       notRead: "Not read yet. The next document run reads it.",
       // The Page cell: the link, then where it lands.
-      pageLink: "Open at page {page}",
+      pageLink: "Open at page\u00a0{page}",
       // The link's whole name, starting with its words on screen, so five "Open at page" links are told
       // apart: "Open at page 65 of the Project Appraisal Document for P130164". Ticket 21 points it at the
       // in-app source view, in the same tab, where the World Bank's PDF is linked at the same page.
@@ -5748,7 +5748,7 @@ export const copy = {
       // Under it, the World Bank's PDF at the same page, since the source view shows the page's passages and
       // tables but not its picture (the 21 design review, round 2, F16). The name goes on with
       // pdfLinkName, then ", opens in a new tab".
-      pdfLink: "Open page {page} in the World Bank's PDF",
+      pdfLink: "Open page\u00a0{page} in the World Bank's PDF",
       pdfLinkName: (docType: string, pid: string) => ` of the ${docType} for ${pid}`,
       pageLines: {
         scan_annex: "where the {part} starts",

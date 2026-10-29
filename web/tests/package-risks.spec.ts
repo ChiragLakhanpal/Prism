@@ -232,6 +232,46 @@ test("on a package from a sentence, a selection saves with the package under the
   expect(puts.map((request) => request.postDataJSON())).toEqual([{ changes: { cost_estimates: true } }]);
 });
 
+// Ticket 59 (the 30 design review, F2 to F4 and F13; the 30 critique, follow-ups 2, 3, 9 and 10). At 1024 px the
+// table's pills keep to one line and How often's head no longer breaks a word or two a line, so the head is shorter;
+// at 390 px a one-line risk name sits 4 px over its count and a two-line name keeps small's 20 px leading; a failed
+// save keeps its icon on the sentence's first line; and the foot strip's lines keep to 65 characters.
+test("the table's pills keep one line, a risk's name sits on its count, a failed save keeps its icon with its words, and the notes keep to the prose width", async ({ page }) => {
+  await openPackage(page, { width: 1024, save: { status: 503, body: '{"code":"not_saved","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
+  await expect(view(page)).toHaveAttribute("data-risk-view", "table");
+  const table = view(page);
+  const pills = await table.locator("[data-source-pill]").evaluateAll((all) => all.map((pill) => Math.round(pill.getBoundingClientRect().height)));
+  expect(pills.length).toBeGreaterThan(2);
+  for (const height of pills) expect(height, "one line").toBeLessThanOrEqual(24);
+  const often = await table.locator("thead th").nth(2).evaluate((cell) => Math.round(cell.getBoundingClientRect().width));
+  expect(often, "How often's column").toBeGreaterThanOrEqual(140);
+  // The notes, the coverage line and the source line, each at most 65 characters a line.
+  const widths = await section(page).locator("[data-risk-notes] > *").evaluateAll((lines) => lines.map((line) => Math.round(line.getBoundingClientRect().width)));
+  const prose = await section(page).locator("[data-risk-notes] > p").first().evaluate((line) => parseFloat(getComputedStyle(line).maxWidth));
+  for (const width of widths) expect(width, "a foot strip line").toBeLessThanOrEqual(Math.ceil(prose));
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(view(page)).toHaveAttribute("data-risk-view", "list");
+  const items = await view(page).locator("li[data-risk-row]").evaluateAll((all) =>
+    all.map((item) => {
+      const name = item.querySelector("label span.block")!;
+      const label = item.querySelector("label")!.getBoundingClientRect();
+      const count = item.querySelector("[data-count]")!.getBoundingClientRect();
+      const lines = Math.round(name.getBoundingClientRect().height / parseFloat(getComputedStyle(name).lineHeight));
+      return { lines, leading: getComputedStyle(name).lineHeight, gap: Math.round(count.top - label.bottom) };
+    }),
+  );
+  expect(items.some((item) => item.lines === 1)).toBe(true);
+  for (const item of items) expect(item, "the name over its count").toMatchObject({ leading: "20px", gap: 4 });
+
+  await view(page).getByRole("checkbox", { name: `Select ${RISK} for the PPSD` }).check();
+  const failed = section(page).locator("[data-save-failed]");
+  await expect(failed).toContainText("I couldn't save your selection.");
+  // Both boxes in one read, so a scroll between two reads cannot move one against the other.
+  const [icon, words] = await failed.evaluate((line) => [line.querySelector("svg")!, line.querySelector("span > span")!].map((part) => part.getBoundingClientRect().toJSON()));
+  expect(Math.abs(icon.y + icon.height / 2 - (words.y + 10)), "the icon on the sentence's first line").toBeLessThanOrEqual(2);
+});
+
 // The table shows where the zone gives it 49rem, as the past range's does (DESIGN.md section 5, Tables): at 1024 px. At
 // 1440 px the zones keep to the work's seven columns beside the side panel, so the risks are a list there, as at 390
 // px, and no column head runs to six lines (ticket 101's design review and critique).

@@ -533,7 +533,8 @@ function ActivityCard({ row, result, fresh, mark, change, onOpen }: RowProps) {
             <Reference row={row} open={mark === "open"} onOpen={onOpen} />
           </span>
         </h3>
-        {row.description && <p className="mt-1 text-small text-ink">{row.description}</p>}
+        {/* The Description in ink-muted and the reasons in ink, so the reason under it reads as the finding (ticket 59). */}
+        {row.description && <p className="mt-1 text-small text-ink-muted">{row.description}</p>}
         <UploadLines row={row} />
         <ChangedLine change={change} />
         <div className="mt-2 flex flex-col gap-2">

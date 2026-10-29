@@ -107,6 +107,21 @@ export function RebiddingView({
   const headingId = useId();
   const result = state.status === "ready" ? state.result : null;
   const loading = state.status === "loading";
+  // The list's open state lives here, above the ready block, so a rerun that shows the skeleton for a while keeps it
+  // (ticket 59; the 28 review, follow-up 1).
+  const [open, setOpen] = useState(initiallyOpen);
+  // The ready block's last height: a rerun's skeleton holds it, so the sections under the block stay put (ticket 59).
+  const readyBlock = useRef<HTMLDivElement>(null);
+  const [lastHeight, setLastHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    if (!readyBlock.current) return;
+    const element = readyBlock.current;
+    const keep = () => setLastHeight(element.getBoundingClientRect().height);
+    keep();
+    const watch = new ResizeObserver(keep);
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, [result, updating]);
   // Zone 1's second block (ticket 101): its body, then its source line in its own foot strip.
   return (
     <>
@@ -129,29 +144,40 @@ export function RebiddingView({
           {words.why}
         </p>
       )}
-      {(loading || updating) && <RebidSkeleton />}
+      {loading && <RebidSkeleton />}
+      {updating && (
+        <div className={cx(lastHeight !== null && "overflow-hidden")} style={{ height: lastHeight ?? undefined }} data-rebid-updating>
+          <RebidSkeleton />
+        </div>
+      )}
       {state.status === "error" && <RebidError state={state} />}
       {/* A failed load is said once, politely; the Alert itself is no alert, so it is not heard twice. */}
       <p role="status" className="sr-only">
         {state.status === "error" ? words.error : ""}
       </p>
       {result && !updating && (
-        <Ready
-          result={result}
-          numbers={numbers}
-          asOf={asOf}
-          comparing={comparing}
-          openId={openId}
-          visited={visited}
-          handlers={handlers}
-          initiallyOpen={initiallyOpen}
-        />
+        <div ref={readyBlock} className="flow-root">
+          <Ready
+            result={result}
+            numbers={numbers}
+            asOf={asOf}
+            comparing={comparing}
+            openId={openId}
+            visited={visited}
+            handlers={handlers}
+            open={open}
+            setOpen={setOpen}
+          />
+        </div>
       )}
       </div>
     </div>
-    {result && !updating && (
+    {/* While a rerun shows the skeleton, the foot strip keeps its place with the last source line unseen. */}
+    {result && (
       <FootStrip>
-        <RebidSource result={result} asOf={asOf} />
+        <div className={cx(updating && "invisible")} aria-hidden={updating || undefined}>
+          <RebidSource result={result} asOf={asOf} />
+        </div>
       </FootStrip>
     )}
     </>
@@ -173,12 +199,11 @@ function RebidSource({ result, asOf }: { result: RebiddingResult; asOf: string |
   );
 }
 
-function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, initiallyOpen }: {
+function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, open, setOpen }: {
   result: RebiddingResult; numbers: Map<string, number>; asOf: string | null; comparing: boolean; openId: string | null;
-  visited: ReadonlySet<string>; handlers: RebidHandlers; initiallyOpen: boolean;
+  visited: ReadonlySet<string>; handlers: RebidHandlers; open: boolean; setOpen: (open: boolean | ((now: boolean) => boolean)) => void;
 }) {
   const listId = useId();
-  const [open, setOpen] = useState(initiallyOpen);
   const [focusFirst, setFocusFirst] = useState(false);
   const { n, m } = result;
   // Selecting {n} or {m} opens the list and moves focus to its first group's heading, where the count can be
@@ -218,7 +243,7 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
   const byRef = new Map(result.rows.map((row) => [row.step_reference, row]));
   return (
     <>
-      <p className="mt-3 max-w-prose text-body text-ink" data-rebid-count>
+      <p className="mt-3 max-w-prose text-body text-pretty text-ink" data-rebid-count>
         {sentence}
       </p>
       {different && (
@@ -259,7 +284,7 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
           </p>
         </div>
       )}
-      <div id={listId} hidden={!open} className="mt-4 flex animate-open-in flex-col gap-6" data-rebid-list>
+      <div id={listId} hidden={!open} className="mt-4 flex max-w-prose animate-open-in flex-col gap-6" data-rebid-list>
         {result.groups.map((group, index) => (
           <div key={group.reason_code} className="@container/reasons" data-rebid-group={group.reason_code}>
             <ReasonGroup
@@ -292,7 +317,7 @@ function ModelLines({ model }: { model: RebidModel }) {
     const tip = { tooltip: words.tips.track, from: <FromLine words={testsFrom(track.run_date)} /> };
     return (
       <>
-        <p className="mt-2 max-w-prose text-body text-ink" data-rebid-model>
+        <p className="mt-2 max-w-prose text-body text-pretty text-ink" data-rebid-model>
           {model.band === "below_1" ? words.modelBelow1 : model.band === "above_9" ? words.modelAbove9 : <Fill template={words.model} slots={{ k }} />}
         </p>
         <p className="mt-2 max-w-prose text-caption text-ink-muted" data-rebid-track>
@@ -313,7 +338,7 @@ function ModelLines({ model }: { model: RebidModel }) {
   // The smallest count the model gives an estimate from is one of my settings, as the scored run used it.
   const setting = model.score_date ? <FromLine words={settingsFrom(model.score_date)} /> : undefined;
   return (
-    <p className="mt-2 max-w-prose text-body text-ink" data-rebid-model-off={reason}>
+    <p className="mt-2 max-w-prose text-body text-pretty text-ink" data-rebid-model-off={reason}>
       <Fill
         template={words.off[reason] ?? words.off.no_results}
         slots={{
@@ -436,7 +461,7 @@ function RebidError({ state }: { state: Extract<RebidState, { status: "error" }>
       </div>
       {state.requestId && (
         <p className="text-caption text-ink-muted">
-          <Fill template={words.errorCode} slots={{ code: <span className="font-mono">{state.requestId}</span> }} />
+          <Fill template={words.errorCode} slots={{ code: <Mono text={state.requestId} /> }} />
         </p>
       )}
     </div>

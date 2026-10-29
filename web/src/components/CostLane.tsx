@@ -330,7 +330,8 @@ function CostTable({ cost, open: openId, onOpen, titleId }: {
   // A STEP reference such as KE-KIMAWASCO-141042-CW-RFB stays on one line at 1440 px (the 31 design review, F13).
   const columns = [
     { key: "package", header: words.columns.package, width: "w-[36%]" },
-    { key: "country", header: words.columns.country, short: true, width: "w-[10%]" },
+    // Country takes a card's full row, so it never starts a line below a two-line head beside it (ticket 59).
+    { key: "country", header: words.columns.country, width: "w-[10%]" },
     {
       key: "estimated",
       header: (

@@ -314,6 +314,19 @@ test("in the work column at 1440 px the cost table's packages are cards, so no S
   });
   expect(Object.keys(lines).length).toBeGreaterThan(0);
   expect(Object.entries(lines).filter(([, count]) => count > 1)).toEqual([]);
+  // Ticket 59 (the 31 critique, round 3, follow-up 6): in a 390 px card Country takes a row of its own, so its head
+  // never starts a line below the two-line head of the amount beside it.
+  await page.setViewportSize({ width: 390, height: 900 });
+  const fields = await part.locator("[data-cost-table] [data-table-view=cards] li").first().evaluate((card) =>
+    Object.fromEntries(
+      [...card.querySelectorAll("dl > div")].map((field) => {
+        const box = field.getBoundingClientRect();
+        return [field.querySelector("dt")!.textContent, { top: Math.round(box.top), bottom: Math.round(box.bottom) }];
+      }),
+    ),
+  );
+  expect(fields.Country, "Country's own row, above the amounts").toBeDefined();
+  for (const [head, box] of Object.entries(fields)) if (head !== "Country") expect(box.top, head).toBeGreaterThanOrEqual(fields.Country.bottom);
 });
 
 test("rejected bids and the cost estimate each end in a foot strip across the panel, holding the coverage and source lines", async ({ page }) => {

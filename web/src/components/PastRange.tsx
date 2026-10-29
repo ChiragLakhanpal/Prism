@@ -180,6 +180,10 @@ export function PastRange({
 }) {
   const loading = state.status === "loading";
   const result = state.status === "ready" ? state.result : null;
+  // Once the section has drawn a result, a rerun's skeleton keeps the block after it, which shows its own skeleton,
+  // so the page under it does not jump (ticket 59; the 28 review, follow-up 2).
+  const drawnBefore = useRef(false);
+  if (!loading) drawnBefore.current = true;
   // Where a dot opens the drawer, each quantile dot's list is held for it (ticket 15). A link to a dot's list
   // that these comparables have no dots for closes the drawer, rather than leave it waiting.
   const canOpen = Boolean(open);
@@ -330,7 +334,7 @@ export function PastRange({
           pressedNumber={pressedNumber}
         />
       )}
-      {!body && state.status !== "loading" && (typeof after === "function" ? after(comparison !== null) : after)}
+      {!body && (!loading || drawnBefore.current) && (typeof after === "function" ? after(comparison !== null) : after)}
     </TaskZone>
   );
 }

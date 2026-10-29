@@ -433,6 +433,62 @@ test("changing a chip that picks the comparables reruns find_comparables and red
   await expect(live(page)).toHaveText("Updated. 27 past packages matched this one, but I can't measure how long any of them took.");
 });
 
+// Ticket 59 (the 28 review, follow-ups 1 and 2; the 28 design review, F3): when a chip reruns section 1 and the
+// answers take over 400 ms, "Advertised again" stays in the card with its own skeleton, as tall as its ready part was,
+// and its reasons list is still open when its answer comes. The rerun's comparables are the Request for Bids ones again,
+// so the block has packages to count: the layout is under test here, not the facts.
+test("a slow rerun keeps Advertised again in the card with its own skeleton at its height, and its list stays open", async ({ page }) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await openPackage(page, {
+    answers: {
+      "/api/comparables?category=Works&country=KE&method=Request+for+Quotations": { body: await recorded("comparables-planned-works-rfb-ke.json"), delay: 1500 },
+    },
+  });
+  // Each block's second read waits until the test releases it. Zone 3 lists the India comparables' two risks, so it has
+  // a ready part to hold.
+  const holdSecond = async (glob: string, file: string) => {
+    let reads = 0;
+    await page.route(glob, async (route) => {
+      reads += 1;
+      if (reads > 1) await held;
+      await route.fulfill({ contentType: "application/json", body: await recorded(file) });
+    });
+  };
+  await holdSecond("**/api/rebidding?*", "rebidding-planned-works-rfb-ke.json");
+  await holdSecond("**/api/planned-packages/pkg-000000000001/risks*", "risks-ke-nwwda-541055-india.json");
+  // The first read, now that the route answers it, by a reload of the saved package; the range shows without a plan.
+  await page.reload();
+  await page.getByRole("button", { name: "Show it without a plan" }).click();
+  const block = page.locator("[data-rebidding]");
+  await expect(block).toHaveAttribute("data-rebidding", "found");
+  await block.locator("[data-rebid-disclosure]").click();
+  await expect(block.locator("[data-rebid-list]")).toBeVisible();
+  const height = () =>
+    block.evaluate((element) => Math.round(element.nextElementSibling!.getBoundingClientRect().bottom - element.getBoundingClientRect().top));
+  const risks = page.locator("section#risks");
+  await expect(risks.locator("[data-finding]")).toBeVisible();
+  const risksHeight = () => risks.evaluate((element) => Math.round(element.getBoundingClientRect().height));
+  const before = { block: await height(), risks: await risksHeight() };
+
+  await changes(page);
+  await chip(page, "method").click();
+  await page.getByRole("dialog", { name: "Method" }).locator("label", { hasText: "Request for Quotations (RFQ)" }).click();
+
+  await expect(page.locator("[data-past-range-skeleton]")).toBeVisible();
+  await expect(block.locator("[data-rebid-updating]")).toBeVisible();
+  expect(Math.abs((await height()) - before.block), "the block holds its height").toBeLessThanOrEqual(1);
+  // Zone 3 keeps its instruction and its foot strip's place, and its skeleton holds the ready part's height.
+  await expect(risks.locator("[data-risks-updating]")).toBeVisible();
+  await expect(risks).toContainText("Select the risks that belong in section 3 of the borrower's Project Procurement Strategy for Development (PPSD).");
+  expect(Math.abs((await risksHeight()) - before.risks), "zone 3 holds its height").toBeLessThanOrEqual(1);
+  release();
+  await expect(block.locator("[data-rebid-updating]")).toHaveCount(0);
+  await expect(block.locator("[data-rebid-disclosure]")).toHaveAttribute("aria-expanded", "true");
+  await expect(block.locator("[data-rebid-list]")).toBeVisible();
+  await expect(risks.locator("[data-risks-updating]")).toHaveCount(0);
+});
+
 test("a change made while the last one is still saving waits for it, so the server changes the latest save", async ({ page }) => {
   await openPackage(page);
   const sent = await changes(page, 600);

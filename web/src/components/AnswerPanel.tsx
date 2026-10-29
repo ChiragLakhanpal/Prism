@@ -53,7 +53,9 @@ const STILL_WORKING_MS = 30_000;
 export const DRAWER_ID = "evidence-drawer";
 
 // An ID in a line Strata writes: a P-code links to its project page (ticket 21), anything else is in mono.
-const mono = (text: string) => <IdText id={text} />;
+// A P-code as the page header sets it; a STEP reference as the box sets it, by MonoWords, so "Asked within
+// KE-NWWDA-541055-CW-RFB." never breaks inside the reference while it fits a line (ticket 59).
+const mono = (text: string) => (/^P\d{6}$/.test(text) ? <IdText id={text} /> : <MonoWords text={text} />);
 
 // ── Steps ──────────────────────────────────────────────────────────────
 

@@ -125,6 +125,7 @@ export function RisksView({
 }: RisksViewProps) {
   const result = state.status === "ready" ? state.result : null;
   const populated = Boolean(result && result.rows.length > 0 && !result.empty_reason);
+  const [readyPart, lastHeight] = useLastHeight(Boolean(result) && !updating, result);
   // Zone 3 (ticket 101): a row while it holds only its sentence (no completion report, no lesson, no comparable
   // package, or a criterion still missing), and a panel when it has risks, or a removed box when every row was
   // removed, since a zone that holds a removed sentence is never closed.
@@ -149,14 +150,32 @@ export function RisksView({
   if (state.status === "loading" && !updating) return <TaskZone {...zone} state="loading" />;
   if (state.status === "error") return <TaskZone {...zone} state="error" error={<RisksError state={state} />} />;
   if (sentence) return <TaskZone {...zone} state="empty" summary={<Empty result={sentence} kind={kind} missingList={missingList} />} />;
+  // A rerun over 400 ms keeps the instruction, holds the ready part's last height with the skeleton, and keeps the foot
+  // strip's place with its last lines unseen, so nothing under the zone moves (ticket 59; the 30 design review, F6).
   return (
     <TaskZone {...zone} panel>
-      <ZoneBlock data-block="risks" foot={populated && result && !updating ? <FootStrip><Notes result={result} /></FootStrip> : undefined}>
+      <ZoneBlock
+        data-block="risks"
+        foot={
+          populated && result ? (
+            <FootStrip>
+              <div className={cx(updating && "invisible")} aria-hidden={updating || undefined}>
+                <Notes result={result} />
+              </div>
+            </FootStrip>
+          ) : undefined
+        }
+      >
         <div className="@container/risks">
           <p className="max-w-prose text-body text-ink">{words.intro}</p>
-          {populated && !updating && <p className="mt-2 max-w-prose text-body text-ink">{words.instruction}</p>}
-          {updating && <RisksSkeleton />}
+          {populated && <p className="mt-2 max-w-prose text-body text-ink">{words.instruction}</p>}
+          {updating && (
+            <div className={cx(lastHeight !== null && "overflow-hidden")} style={{ height: lastHeight ?? undefined }} data-risks-updating>
+              <RisksSkeleton />
+            </div>
+          )}
           {result && !updating && (
+            <div ref={readyPart} className="flow-root">
             <Ready
               result={result}
               packageKey={packageKey}
@@ -171,11 +190,28 @@ export function RisksView({
               handlers={handlers}
               action={action}
             />
+            </div>
           )}
         </div>
       </ZoneBlock>
     </TaskZone>
   );
+}
+
+// The ready part's height, kept while it shows, so a rerun's skeleton can hold it (ticket 59).
+function useLastHeight(shown: boolean, key: unknown) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | null>(null);
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!shown || !element) return;
+    const keep = () => setHeight(element.getBoundingClientRect().height);
+    keep();
+    const watch = new ResizeObserver(keep);
+    watch.observe(element);
+    return () => watch.disconnect();
+  }, [shown, key]);
+  return [ref, height] as const;
 }
 
 // The empty states that are one sentence and at most one link, so the zone is a row.
@@ -235,12 +271,16 @@ function Ready({
         </p>
       </div>
       {saveFailed && (
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-small text-error" data-save-failed>
-          <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
-          {words.saveFailed}
-          <Button variant="ghost" flush onClick={onRetrySave}>
-            {words.tryAgain}
-          </Button>
+        // The icon keeps to the first line, and the sentence and "Try again" wrap beside it as one block, so the icon is
+        // never left alone on a line (ticket 59). The button keeps its 44 px target over the 20 px line.
+        <p className="mt-2 flex items-start gap-2 text-small text-error" data-save-failed>
+          <CircleX aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-error-icon" />
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2">
+            <span>{words.saveFailed}</span>
+            <Button variant="ghost" flush onClick={onRetrySave} className="-my-3">
+              {words.tryAgain}
+            </Button>
+          </span>
         </p>
       )}
       {dropped.length > 0 && (
@@ -348,9 +388,9 @@ function RiskColumns() {
     <>
       <colgroup>
         <col className="w-12" />
-        <col className="w-[23%]" />
-        <col className="w-[15%]" />
-        <col className="w-[34%]" />
+        <col className="w-[21%]" />
+        <col className="w-[18%]" />
+        <col className="w-[28%]" />
         <col />
       </colgroup>
       <thead className="bg-surface-2 text-left align-bottom">
@@ -460,7 +500,8 @@ function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, han
       {rows.map((row) => (
         <li key={row.risk_key} data-risk-row={row.risk_key} data-open={rowIsOpen(row, opened) || undefined} className={cx("border-b border-line py-4", rowIsOpen(row, opened) && "-mx-2 rounded-md bg-tint px-2")}>
           <Checkbox checked={selected.includes(row.risk_key)} onChange={(checked) => onToggle(row.risk_key, checked)} name={words.checkbox(row.risk_label)} readOnly={preview}>
-            <span className="text-small font-semibold text-ink-heading">{row.risk_label}</span>
+            {/* A block, so a two-line name is set at small's own leading (ticket 59). */}
+            <span className="block text-small font-semibold text-ink-heading">{row.risk_label}</span>
           </Checkbox>
           <div className="mt-1 flex flex-col gap-2 pl-8">
             <p className="text-small">
@@ -677,7 +718,7 @@ export function RisksSkeleton() {
       </div>
       <ol className="mt-3 border-t border-line @min-[49rem]/risks:hidden">
         {[0, 1, 2].map((n) => (
-          <li key={n} className="flex h-42 gap-4 border-b border-line py-4">
+          <li key={n} className="flex h-42 gap-3 border-b border-line py-4">
             <Skeleton className="size-5 shrink-0" />
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <SkeletonLine width="w-3/5" />
@@ -707,7 +748,8 @@ function RisksError({ state }: { state: Extract<RisksState, { status: "error" }>
       </div>
       {code && (
         <p className="text-caption text-ink-muted">
-          <Fill template={words.errorCode} slots={{ code: <span className="font-mono">{code}</span> }} />
+          {/* The code breaks anywhere, so at 320 px it never crosses the card's edge (ticket 59). */}
+          <Fill template={words.errorCode} slots={{ code: <span className="font-mono wrap-anywhere">{code}</span> }} />
         </p>
       )}
     </div>

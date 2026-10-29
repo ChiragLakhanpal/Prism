@@ -537,6 +537,7 @@ export const galleryCopy = {
     noLessons: "No lesson fits",
     asOf: "As of a date",
     loading: "Loading",
+    updating: "Updating, over 400 ms: the skeleton holds the risks' last height",
     error: "Error",
     claim: "The drawer's claim, when IEG's review restates the lesson",
     awaiting: "The IEG line, when IEG has not reviewed the project yet",

@@ -420,6 +420,14 @@ test("a card's Process status takes its full width, as Method does, so STEP's Pe
     await expect(status).toHaveText("Pending Implementation");
     expect(await status.evaluate(textLines), `${width} px`).toBe(1);
   }
+  // Ticket 59: the card's Description is in ink-muted and its reason in ink, so the reason reads as the finding.
+  await page.setViewportSize({ width: 390, height: 900 });
+  const color = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => getComputedStyle(element).color);
+  const description = card.locator("article > p").filter({ hasText: "Equipping of Exploratory" });
+  await expect(description).toBeVisible();
+  // ink-muted, #4b5e71, and ink, #181f25 (app.css).
+  expect(await color(description)).toBe("rgb(75, 94, 113)");
+  expect(await color(card.locator("article > div > p").first())).toBe("rgb(24, 31, 37)");
 });
 
 test("from 1024 px the header sticks and focused rows stay 8 px clear of it; below 1024 px it scrolls away", async ({ page }) => {

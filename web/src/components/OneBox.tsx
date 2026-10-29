@@ -188,8 +188,10 @@ export function OneBox({
         <span className="block wrap-anywhere">{option.label}</span>
         {option.line && <span className="block text-caption wrap-anywhere text-ink-muted">{option.line}</span>}
       </span>
+      {/* Below 360 px the Enter hint hides, as the box's search icon does, so a STEP reference under the option's name
+          keeps to one line (ticket 59; DESIGN.md section 4, Breakpoints). */}
       {selected && !option.disabled && (
-        <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted">
+        <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted max-xs:hidden">
           {copy.box.enter}
         </kbd>
       )}

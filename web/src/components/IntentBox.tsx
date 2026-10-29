@@ -14,7 +14,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { FolderOpen, MessageSquareText, PackagePlus, Table2 } from "lucide-react";
 import { copy } from "../copy";
-import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { removedScopes, removeScope } from "../lib/answer";
 import {
@@ -37,14 +36,16 @@ import { useStore } from "../lib/store";
 import { currentLanguage, ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { OneBox, type BoxOption } from "./OneBox";
 import { Fill } from "./Fill";
+import { MonoWords } from "./MonoWords";
 import { RETURNING } from "./Popover";
 
 const LOOKUP_DELAY_MS = 150;
 const ICONS = { project: FolderOpen, loan: FolderOpen, activity: Table2 };
 
-// An ID in mono. A P-code or a loan number (12 characters or fewer) moves to the next line whole; a
-// STEP reference may still break after its hyphens (DESIGN.md section 5, Page header).
-const mono = (text: string) => <span className={cx("font-mono", text.length <= 12 && "whitespace-nowrap")}>{text}</span>;
+// An ID in mono. A P-code or a loan number (12 characters or fewer) moves to the next line whole; a STEP reference
+// takes the scope chip's rule, MonoWords: each part between spaces moves to the next line whole, and breaks after a
+// hyphen only when it is wider than the line (DESIGN.md section 5, Reference words; ticket 59).
+const mono = (text: string) => (text.length <= 12 ? <span className="font-mono whitespace-nowrap">{text}</span> : <MonoWords text={text} />);
 
 function idLabel(intent: Intent): ReactNode {
   const words = copy.box.option;

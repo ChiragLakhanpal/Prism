@@ -740,19 +740,51 @@ test("a source page's table, or a plan's STEP rows, is a table in a frame a keyb
     const frame = main(page).getByRole("region", { name: caption });
     await expect(frame).toHaveAttribute("tabindex", "0");
     expect(await axe(page), `${path} at 1440 px`).toEqual([]);
+    // Ticket 59: the table spans the page bars' width, while the page's words keep to 72 characters a line.
+    const right = (box: { x: number; width: number } | null) => Math.round(box!.x + box!.width);
+    expect(right(await frame.boundingBox()), `${path}: the table ends where the page bar does`).toBe(right(await page.locator("[data-page-bar]").first().boundingBox()));
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 900 });
       await expect(frame).toBeHidden();
       const cards = main(page).getByRole("list", { name: caption }).getByRole("listitem");
       await expect(cards).toHaveCount(rows);
-      // Each column's head sits above its value, every value from the card's one left edge.
-      const lefts = await cards.first().evaluate((card) =>
-        [...card.querySelectorAll("dt, dd")].map((field) => Math.round(field.getBoundingClientRect().left - card.getBoundingClientRect().left)),
-      );
-      expect(new Set(lefts).size, `${path} at ${width} px`).toBe(1);
+      // Ticket 59, as Table's cards are: each card is headed by its row's name, and each column's head sits above its
+      // value. The PAD's table lists its other columns from the card's one left edge; a plan row's Method takes the
+      // card's full width, and its estimate and Process status share the 120 px grid, side by side from 390 px.
+      const card = await cards.first().evaluate((element) => {
+        const left = (field: Element) => Math.round(field.getBoundingClientRect().left - element.getBoundingClientRect().left);
+        const fields = [...element.querySelectorAll("dl > div")].map((field) => ({
+          head: field.querySelector("dt")!.textContent,
+          left: left(field),
+          top: Math.round(field.getBoundingClientRect().top),
+        }));
+        return { heading: element.querySelector("h2")?.textContent ?? null, fields };
+      });
+      expect(card.heading, `${path} at ${width} px: the card's heading`).not.toBeNull();
+      if (rows === 2) {
+        expect(card.heading).toBe("Stakeholder Risk");
+        expect(new Set(card.fields.map((field) => field.left)).size, `${path} at ${width} px`).toBe(1);
+      } else {
+        expect(card.heading).toBe("KE-KENHA-124342-CW-RFB");
+        expect(card.fields.map((field) => field.head)).toEqual(["Method and market approach", "Estimated (US$)", "Process status"]);
+        const [method, estimate, status] = card.fields;
+        expect(estimate.top, `${width} px: Method above the rest`).toBeGreaterThan(method.top);
+        if (width === 390) expect([status.top, status.left > estimate.left], "the estimate and Process status side by side").toEqual([estimate.top, true]);
+      }
       expect(await axe(page), `${path} at ${width} px`).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth), `${path} at ${width} px`).toBeLessThanOrEqual(width);
     }
+    // Ticket 59: below 480 px the page bar says Previous and Next, so the page's place keeps one row between them.
+    await page.setViewportSize({ width: 390, height: 900 });
+    const bar = page.locator("[data-page-bar]").first();
+    const middles = await bar.evaluate((nav) =>
+      [...nav.children].slice(0, 2).concat(nav.lastElementChild!).map((part) => {
+        const box = part.getBoundingClientRect();
+        return Math.round(box.top + box.height / 2);
+      }),
+    );
+    expect(new Set(middles).size, `${path}: Previous, the page's place and Next on one row`).toBe(1);
+    expect((await bar.getByRole("link", { name: "Next page" }).innerText()).trim()).toBe("Next");
   }
 });
 
