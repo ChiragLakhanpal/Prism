@@ -682,6 +682,23 @@ test("the gallery shows the plan check's held change line and section 1's skelet
   expect(asked).toEqual([]);
 });
 
+// The review of round 3, B2: the gallery shows round 3's held state too. While the time estimate loads, section 1 holds
+// no Compare with row, and a held-back estimate's sentences are held as skeleton words under the chart and in the
+// summary, unseen and unheard.
+test("the gallery shows section 1 while the time estimate loads, with a held-back estimate's sentences held", async ({ page }) => {
+  await page.goto("/gallery/past-range");
+  const range = page.locator("[data-state-section=loading-estimate]");
+  await expect(
+    range.getByRole("heading", { name: "Loading the time estimate, with a held-back estimate's sentences held under the chart and in the summary" }),
+  ).toBeVisible();
+  await expect(range.locator("[data-chart-figure]")).toBeVisible();
+  const held = range.locator("[data-lane2-message=loading] [data-skeleton-words]");
+  await expect(held).toBeVisible();
+  await expect(held).toHaveAttribute("aria-hidden", "true");
+  await expect(range.locator("[data-skeleton-words]")).toHaveCount(2);
+  await expect(range.getByText("Compare with")).toHaveCount(0);
+});
+
 // The review of round 3, B1: held skeleton words are a typical answer's words, not this page's answer, so they stay
 // unseen in a Windows contrast theme too. There the browser would otherwise paint them in the system text colour and
 // drop their bar, and a reader would see a count or a claim no tool returned while the page loads.
@@ -690,6 +707,7 @@ test("held skeleton words stay unseen, with their bar, when the reader's system 
   for (const [slug, section] of [
     ["skeleton", "words"],
     ["plan-check", "loading-change-line"],
+    ["past-range", "loading-estimate"],
   ]) {
     await page.goto(`/gallery/${slug}`);
     const held = page.locator(`[data-state-section=${section}] [data-skeleton-words]`);

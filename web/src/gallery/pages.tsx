@@ -1515,6 +1515,13 @@ export const PAGES: GalleryPage[] = [
           />
         ),
       },
+      // Ticket 59, round 3: while the time estimate loads, section 1 holds no Compare with row, and a held-back
+      // estimate's two sentences are held as skeleton words, under the chart and at the end of the summary.
+      {
+        id: "loading-estimate",
+        title: s.loadingEstimate,
+        body: <PastRange state={{ status: "ready", result: rangeReady }} estimate={{ status: "loading" }} />,
+      },
       {
         id: "error",
         title: s.error,

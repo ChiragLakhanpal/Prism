@@ -1475,6 +1475,9 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package", comparables(COMPARABLES)),
   packageShot("package--loading", null, {}, null),
   packageShot("package--section-loading", null),
+  // Ticket 59, round 3: the time estimate held alone. Section 1 draws no Compare with row, and the held-back estimate's
+  // sentences keep their places, unseen, under the chart and at the end of the summary.
+  packageShot("package--estimate-loading", comparables(COMPARABLES), { pending: [`/api${PACKAGE}/estimate`] }),
   packageShot("package--no-plan-dates", { body: noPlanDates }),
   packageShot("package--quantile-dots", comparables("comparables-ke-nwwda-541055-any-category.json")),
   packageShot("package--abstention", comparables("comparables-ke-nwwda-541055-prior.json")),

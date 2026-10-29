@@ -339,6 +339,7 @@ export const galleryCopy = {
     // Ticket 59, round 2: the held states the page draws while its answers load.
     loadingChangeLine: "Loading, with the change line's place held under the narration",
     loadingWithAgain: "Loading, with Advertised again's skeleton under the past range's",
+    loadingEstimate: "Loading the time estimate, with a held-back estimate's sentences held under the chart and in the summary",
     withText: "With text",
     opened: "Opened before",
     active: "Open in the drawer",
