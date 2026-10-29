@@ -785,7 +785,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         ) : (
           <>
             <p className="mt-6 text-caption text-ink-muted" data-count-line data-numbers>
-              {kind.countLine(signal, whole(signal))}
+              {kind.countLine(signal, formatCount(signal))}
             </p>
             <div className="mt-2">
               <DraftNotes

@@ -230,7 +230,7 @@ test("a table shows its title, count and source lines only with its rows", async
   await page.goto("/gallery/table");
   const ready = page.locator("[data-state-section=ready] [data-table]");
   await expect(ready.getByRole("heading")).toHaveText("Three of the four sample activities were signed after their planned date.");
-  await expect(ready).toContainText("Showing all 4 activities");
+  await expect(ready).toContainText("Showing all four activities.");
   await expect(ready).toContainText("Source: Sample rows made for the gallery, in STEP's columns.");
 
   for (const state of ["loading", "empty", "error"]) {

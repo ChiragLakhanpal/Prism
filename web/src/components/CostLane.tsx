@@ -393,7 +393,12 @@ function CostTable({ cost, open: openId, onOpen, titleId }: {
       title={<CostTitle cost={cost} />}
       labelledBy={titleId}
       countLead
-      count={{ noun: "", total: cost.counts.m, text: cost.counts.m === 1 ? words.tableCountOne : words.tableCount.replace("{m}", formatCount(cost.counts.m)) }}
+      count={{
+        noun: "",
+        total: cost.counts.m,
+        text:
+          cost.counts.m === 1 ? words.tableCountOne : cost.counts.m === 2 ? words.tableCountBoth : words.tableCount.replace("{m}", formatCount(cost.counts.m)),
+      }}
       columns={columns}
       state={{ status: "ready", rows }}
       rowHeader="package"

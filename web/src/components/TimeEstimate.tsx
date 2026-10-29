@@ -507,7 +507,12 @@ function TestYearTable({ result, captionRef }: { result: EstimateResult; caption
         noun: y.noun,
         one: y.nounOne,
         total: years.length,
-        text: years.length === 1 ? y.countOne(String(first)) : y.count(formatCount(years.length), String(first), String(last)),
+        text:
+          years.length === 1
+            ? y.countOne(String(first))
+            : years.length === 2
+              ? y.countBoth(String(first), String(last))
+              : y.count(formatCount(years.length), String(first), String(last)),
       }}
       columns={columns}
       rowHeader="year"

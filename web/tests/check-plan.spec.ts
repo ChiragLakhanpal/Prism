@@ -87,7 +87,7 @@ test("the plan check finds every activity, states the finding, and folds the act
   await expect(main.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
   await expect(main.locator("[data-check-pill]")).toHaveText("9 activities checked");
   await expect(main.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
-  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities");
+  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities.");
   await expect(view(page, "table")).toBeVisible();
   expect(await refsIn(page, "table")).toEqual(MARKED);
   const fold = view(page, "table").locator("[data-fold]:visible");
@@ -187,7 +187,7 @@ test("Show them opens the folded activities by mouse, and Hide them folds them a
   await expect(hide).toHaveAttribute("aria-expanded", "true");
   await expect(hide).toBeFocused();
   expect(await refsIn(page, "table")).toEqual([...MARKED, ...FOLDED]);
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing all 9 activities");
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing all nine activities.");
   for (const ref of FOLDED) {
     await expect(view(page, "table").locator(`tr[id="${ref}"]`)).toContainText("No signals.");
   }

@@ -121,7 +121,9 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
       <table className="w-full border-collapse text-small @max-[30rem]/options:hidden">
         <caption className="pb-2 text-left text-h2 text-ink-heading">
           <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
-          <span className="mt-1 block text-caption font-normal text-ink-muted">{words.count(formatCount(options.approaches.length))}</span>
+          <span className="mt-1 block text-caption font-normal text-ink-muted">
+            {options.approaches.length === 2 ? words.countBoth : words.count(formatCount(options.approaches.length))}
+          </span>
         </caption>
         <thead className="bg-surface-2 text-left text-caption text-ink-muted">
           <tr>
@@ -169,7 +171,9 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
         <p className="text-h2 text-ink-heading">
           <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
         </p>
-        <p className="text-caption text-ink-muted">{words.count(formatCount(options.approaches.length))}</p>
+        <p className="text-caption text-ink-muted">
+          {options.approaches.length === 2 ? words.countBoth : words.count(formatCount(options.approaches.length))}
+        </p>
         <ul className="flex flex-col gap-3">
           {options.approaches.map((approach, index) => (
             <li key={index} className="rounded-md border border-line p-4" data-approach-card={index}>

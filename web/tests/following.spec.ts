@@ -87,7 +87,7 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   await expect(table.locator("[data-project-row=P130164]")).toBeHidden();
   await table.getByRole("button", { name: "Show it" }).click();
   await expect(table.locator("[data-project-row=P130164]")).toContainText("Closed");
-  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing 2 of 2 projects you follow");
+  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing 2 of 2 projects you follow.");
   // Never replayed yet on the fixture: the track record says so, and types no number.
   await expect(page.locator("[data-track-record=none]")).toContainText("I haven't replayed these checks on past dates yet");
 });

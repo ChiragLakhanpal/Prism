@@ -383,7 +383,7 @@ test("the library lists lesson cards newest first, naming roles and never people
   await page.goto("/lessons");
   const cards = page.locator("[data-library] [data-lesson-card=full]");
   await expect(cards).toHaveCount(2);
-  await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing all two current lessons, newest first.");
+  await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing both current lessons, newest first.");
   const first = cards.first();
   await expect(first).toContainText("A lead procurement specialist decided version 2 on October 29, 2026, after an accredited procurement specialist recommended it.");
   await expect(first).toContainText("Its projects followed the World Bank's Procurement Guidelines of January 2011.");

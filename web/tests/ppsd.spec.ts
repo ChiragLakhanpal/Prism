@@ -195,7 +195,7 @@ test("with a row left out because both its cells failed, the lede and the count 
   // tests/test_ppsd_rows.py's ppsd-rows-a-row-removed: two risks selected, two rows written, one left out.
   await openDraft(page, "drafts-ppsd-row-removed.json");
   await expect(page.locator("[data-lede]")).toHaveText("I drafted rows for one of the two risks you selected.");
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing the one row");
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing the one row.");
   await expect(page.locator("[data-step=done]")).toContainText(["I wrote two rows."]);
 });
 

@@ -15,7 +15,7 @@ import { sourcePageHref } from "../lib/documents";
 import { evidenceHref, openEvidence } from "../lib/evidence";
 import { cx } from "../lib/cx";
 import { capitalize, shortName } from "../lib/timeline";
-import { formatDate } from "../lib/format";
+import { formatCount, formatDate } from "../lib/format";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { asOfOf, withMode } from "../lib/view";
@@ -212,7 +212,7 @@ function RatingsView({ evidence }: { evidence: EvidenceEvent }) {
         title={words.ratings.caption}
         level={3}
         cardsBelow="narrow"
-        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.ratings.count(String(row.count)) }}
+        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.ratings.count(row.count, formatCount(row.count)) }}
         columns={columns}
         rowHeader="isr"
         state={{
@@ -249,7 +249,7 @@ function ContractsView({ evidence }: { evidence: EvidenceEvent }) {
         title={words.contracts.tableTitle.replace("{year}", String(row.year))}
         level={3}
         cardsBelow="fit"
-        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.contracts.count(String(row.count)) }}
+        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.contracts.count(row.count, formatCount(row.count)) }}
         columns={columns}
         rowHeader="contract"
         state={{

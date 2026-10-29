@@ -227,7 +227,7 @@ function Ready({
       </h3>
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small">
         <p id={countId} className="text-ink-muted" data-count-line>
-          {rows.length === 1 ? words.countOne : words.count(formatCount(rows.length))}
+          {rows.length === 1 ? words.countOne : rows.length === 2 ? words.countBoth : words.count(formatCount(rows.length))}
         </p>
         <p className="text-ink" data-selection-status>
           {chosen === 0 ? words.selectedNone : words.selected(formatNumber(chosen, { compact: false }), formatNumber(rows.length, { compact: false }))}

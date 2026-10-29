@@ -323,7 +323,7 @@ test("when no step can be dated, as on the fixture's demo package, the section o
   await expect(section(page).locator("[data-step-caption]:visible")).toHaveText("I couldn't date any of these steps.");
   // The count line in the Tables form: one to nine in words and no full stop, as zone 1's (ticket 101's design review,
   // round 2, item 8).
-  await expect(section(page).locator("[data-step-count]:visible")).toHaveText("Showing all six steps");
+  await expect(section(page).locator("[data-step-count]:visible")).toHaveText("Showing all six steps.");
   await expect(section(page).locator("[data-section-summary]")).toContainText("I have too few comparable packages to date any of the six.");
 });
 

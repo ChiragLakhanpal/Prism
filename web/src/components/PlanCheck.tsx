@@ -825,7 +825,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           : undefined;
   const rowProps = (row: Activity) => ({ row, result, mark: markOf(row), change: changed[row.activity_reference_no], onOpen: openRecords });
 
-  const countLine = open || unmarked === 0 ? copy.table.showingAll(whole(activities), words.noun) : words.countLine(whole(marked), whole(activities));
+  // One to nine in words, "both" for two and a full stop, as every count line (ticket 58).
+  const countLine =
+    open || unmarked === 0 ? copy.table.showingAll(activities, formatCount(activities), words.noun) : words.countLine(whole(marked), whole(activities));
 
   return (
     <section aria-labelledby={findingId} data-plan-check>

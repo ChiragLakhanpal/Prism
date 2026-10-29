@@ -887,7 +887,7 @@ test("the Packages head holds its two buttons at its right or under the purpose,
     await expect(list.getByRole("heading", { level: 2 })).toHaveText("You have three packages in progress and one checked plan.");
     await expect(list).toHaveAttribute("data-zone", "panel");
     await expect(list.getByRole("heading", { level: 2 })).toHaveCSS("font-size", "18px");
-    await expect(list.locator("[data-count-line]")).toHaveText("Showing all 4 packages and plans");
+    await expect(list.locator("[data-count-line]")).toHaveText("Showing all four packages and plans.");
     await expect(list.locator("[data-foot-strip] [data-source]")).toHaveText("Source: your packages and plan checks, saved in Strata.");
     // The panel is the table's frame, as All projects' is: no box inside it, and its rows start on the name's text
     // edge, 16 px under the name and its count line (the critique of ticket 100, round 1).

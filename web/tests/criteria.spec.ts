@@ -281,7 +281,7 @@ test("below 20 comparables the cost estimate abstains in the first person and li
   );
   // The table twin is open by default with every package, and no range or middle half is drawn. Its count line is in
   // the Tables form, one to nine in words and no full stop (ticket 101's design review, round 2, item 8).
-  await expect(part.locator("[data-cost-table] [data-count-row] p").first()).toHaveText(`Showing all ${alone(run.cost.counts.m)} packages`);
+  await expect(part.locator("[data-cost-table] [data-count-row] p").first()).toHaveText(`Showing all ${alone(run.cost.counts.m)} packages.`);
   await expect(part.locator("[data-cost-table] tbody tr")).toHaveCount(run.cost.rows.length);
   await expect(part.locator("[data-cost-middle]")).toHaveCount(0);
   await expect(part.locator("[data-cost-dot]")).toHaveCount(run.cost.rows.length);

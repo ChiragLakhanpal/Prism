@@ -404,7 +404,7 @@ test("with the time estimate's table above it, a pressed number's count line rep
   await expect(count).toBeFocused();
   await expect(page.locator("[data-time-estimate-table]")).toBeVisible();
   await section(page).getByRole("button", { name: `Show all ${total}` }).click();
-  await expect(count).toHaveText(new RegExp(`^Showing 1\u201320 of ${total} packages$`));
+  await expect(count).toHaveText(new RegExp(`^Showing 1\u201320 of ${total} packages\\.$`));
 });
 
 test("at 1440 px axe finds no WCAG 2.2 AA violations while comparing, with section 4 and the table twin open", async ({ page }) => {

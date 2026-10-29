@@ -897,7 +897,9 @@ class LessonReview:
         if narrowed:
             template = found["narrowedRange"] if pages > 1 else found["narrowed"]
             return fill(template, {"n": {"number": n, "capital": pages > 1}, "m": {"number": m}, "noun": noun, **numeral})
-        return fill(found["range"] if pages > 1 else found["all"], {"m": {"number": m}, "noun": noun, **numeral})
+        # "both" for two and "the one" for one, as every count line (ticket 58; DESIGN.md section 5, Tables).
+        whole = found["range"] if pages > 1 else found["one"] if m == 1 else found["both"] if m == 2 else found["all"]
+        return fill(whole, {"m": {"number": m}, "noun": noun, **numeral})
 
     # ── Writes ───────────────────────────────────────────────────────────
     #

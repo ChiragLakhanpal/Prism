@@ -29,7 +29,7 @@ import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
 import type { DocumentList, ListedDocument } from "../../lib/api";
 import { cx } from "../../lib/cx";
-import { formatDate, formatNumber } from "../../lib/format";
+import { formatCount, formatDate, formatNumber } from "../../lib/format";
 import { useLoad } from "../../lib/load";
 import { address } from "../../lib/router";
 import { useStore } from "../../lib/store";
@@ -358,7 +358,7 @@ export function DocumentsList({ data, pid }: { data: DocumentList; pid: string }
   return (
     <>
       <p className="text-caption text-ink-muted tabular-nums" data-documents-count>
-        {shownRows === data.total ? copy.table.showingAll(whole(data.total), words.noun) : words.showing(whole(shownRows), whole(data.total))}
+        {shownRows === data.total ? copy.table.showingAll(data.total, formatCount(data.total), words.noun) : words.showing(whole(shownRows), whole(data.total))}
       </p>
       <div className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @md/page:block" data-view="table">
         <table className="w-full table-fixed border-collapse text-small">

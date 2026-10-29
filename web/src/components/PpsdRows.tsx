@@ -20,7 +20,7 @@ import { cx } from "../lib/cx";
 import type { Draft, DraftNote, Footnote, PpsdColumn, PpsdRow } from "../lib/drafts";
 import { valueOf } from "../lib/drafts";
 import { evidenceHref, openEvidence } from "../lib/evidence";
-import { formatAmountText, formatNumber } from "../lib/format";
+import { formatAmountText, formatCount, formatNumber } from "../lib/format";
 import { DRAWER_ID, sentenceText } from "./AnswerPanel";
 import { CitationMarker } from "./CitationMarker";
 import { FillChip } from "./FillChip";
@@ -245,7 +245,7 @@ export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm
         {long ? words.progressLong : words.progressShort}
       </p>
       <p className="mt-2 text-caption text-ink-muted" data-count-line data-numbers>
-        {kind.countLine(counts.total, whole(counts.total))}
+        {kind.countLine(counts.total, formatCount(counts.total))}
       </p>
       <div className="mt-2">
         {table ? (

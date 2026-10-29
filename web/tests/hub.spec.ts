@@ -506,14 +506,14 @@ test("P130164's Documents list the PAD, the ISRs, the ICR and the ICR Review re-
   await expect(plan.getByRole("link", { name: /^Procurement Plan of Jun 20, 2018$/ })).toHaveCount(0);
   await expect(plan.locator("td").nth(2)).toHaveText("Not read");
   await expect(icr.getByRole("link", { name: "Open the PDF of Implementation Completion and Results Report, October 10, 2019, on the World Bank's site (opens in a new tab)" })).toHaveAttribute("target", "_blank");
-  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 18 of 61 documents");
+  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 18 of 61 documents.");
 
   // A group's fold opens in place and keeps focus on its button.
   const more = list.getByRole("button", { name: "Show all 13" });
   await more.click();
   await expect(list.locator("[data-group=isr] tr[data-document]")).toHaveCount(13);
   await expect(list.getByRole("button", { name: "Show fewer" })).toBeFocused();
-  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents");
+  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents.");
 });
 
 test("Documents keeps each date and count on one line, starts Pages read at a card's left edge, and names a document with no type", async ({ page }) => {
@@ -858,7 +858,7 @@ test("an agency's version list shows the five newest and the baseline, and folds
   nwwda.shown_count = 5;
   await open(page, "/projects/P156634/procurement", 1440, { ...(await p156634()), "/api/projects/P156634": { body: JSON.stringify(body) } });
   const block = page.locator("[data-agency=northern-water-works-development-agency]");
-  await expect(block.getByText("Showing 5 of 7 versions")).toBeVisible();
+  await expect(block.getByText("Showing 5 of 7 versions.")).toBeVisible();
   await expect(block.locator("[data-table-view=table] tbody th").nth(2)).toHaveText("Plan of Jul 21, 2025 Baseline");
   const more = block.getByRole("button", { name: "Show all 7 versions" });
   await expect(more).toHaveAttribute("aria-expanded", "false");
@@ -866,7 +866,7 @@ test("an agency's version list shows the five newest and the baseline, and folds
   await more.click();
 
   await expect(block.locator("[data-table-view=table] tbody tr")).toHaveCount(7);
-  await expect(block.getByText("Showing all 7 versions")).toBeVisible();
+  await expect(block.getByText("Showing all seven versions.")).toBeVisible();
   const fewer = block.getByRole("button", { name: "Show fewer versions" });
   await expect(fewer).toBeFocused();
   await expect(fewer).toHaveAttribute("aria-expanded", "true");
@@ -876,7 +876,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   const unrecorded = await open(page, "/projects/P156634/procurement", 1440, await p156634());
   const packages = page.locator("[data-packages=ready]");
   await expect(packages.getByRole("heading", { level: 2, name: "Packages" })).toBeVisible();
-  await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 46 packages");
+  await expect(packages.locator("[data-page-lead]")).toHaveText("Showing 1–20 of 46 packages.");
   const first = packages.locator("[data-table-view=table] tbody tr").first();
   await expect(first.getByRole("link", { name: "KE-NWWDA-229129-CW-RFB" })).toHaveAttribute("href", "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB");
   await expect(first.locator("td")).toHaveText(["Northern Water Works Development Agency", "Request for Bids · Open - National", "300,000.00", "Signed"]);
@@ -884,7 +884,7 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
 
   await packages.getByRole("link", { name: "Next page" }).click();
   await expect(page).toHaveURL(/packages_page=2$/);
-  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21–40 of 46 packages");
+  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21–40 of 46 packages.");
 
   // The description reads "Exploratory Bo reholes" in the PDF, and the search still finds "boreholes".
   const field = page.getByRole("searchbox", { name: "Search packages" });

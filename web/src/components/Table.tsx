@@ -24,7 +24,7 @@
 import { createElement, useId, type ReactNode, type Ref } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
-import { formatNumber } from "../lib/format";
+import { formatCount, formatNumber } from "../lib/format";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { EmptyState } from "./Card";
@@ -112,7 +112,7 @@ export function countText({ noun, one, total, from, to, text }: Count): string {
   if (total === 1 && one) return copy.table.showingOne(one);
   return from !== undefined && to !== undefined && (from > 1 || to < total)
     ? copy.table.showing(n(from), n(to), n(total), noun)
-    : copy.table.showingAll(n(total), noun);
+    : copy.table.showingAll(total, formatCount(total), noun);
 }
 
 export function Table({

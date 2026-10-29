@@ -1465,8 +1465,8 @@ function ComparablesTable({
           total,
           from: from + 1,
           to: from + shown.length,
-          // Every row of a few, one to nine in words, as the finding counts them (DESIGN.md section 7, rule 12).
-          text: filter?.line ?? (!paged && total > 1 && total < 10 ? copy.table.showingAll(spelled(total), t.noun) : undefined),
+          // Every row of a few is in words, as every count line writes one to nine (Table's countText; ticket 58).
+          text: filter?.line,
         }}
         countRef={countRef}
         countAction={

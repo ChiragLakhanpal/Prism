@@ -108,7 +108,8 @@ const PPSD_ROWS = {
     methodLink: "the risks you selected",
     // The side panel's "Made from" (ticket 103), a link to the package's risks: {title} is the package as its page names it.
     madeFrom: "The risks you selected for {title}",
-    countLine: (count: number, countText: string) => (count === 1 ? "Showing the one row" : `Showing all ${countText} rows`),
+    countLine: (count: number, countText: string) =>
+      count === 1 ? "Showing the one row." : count === 2 ? "Showing both rows." : `Showing all ${countText} rows.`,
     columns: {} as Record<string, string>,
     tableCaption: (form: string, _date: string) =>
       `Suggested risk rows for the borrower's PPSD, ${form}, one row per risk you selected`,
@@ -1659,9 +1660,12 @@ export const copy = {
     // A fact table's units after a stacked row's label below 768 px, where the column heads are hidden:
     // "Commitment (US$, millions)".
     stackedUnit: " ({unit})",
-    showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}`,
-    showingAll: (total: string, noun: string) => `Showing all ${total} ${noun}`,
-    showingOne: (noun: string) => `Showing 1 ${noun}`,
+    // Every count line (ticket 58; DESIGN.md section 5, Tables): one to nine in words, a full stop, "both" for two,
+    // and the table's order, when the noun names one, for a single row too. A range keeps its numerals.
+    showing: (from: string, to: string, total: string, noun: string) => `Showing ${from}–${to} of ${total} ${noun}.`,
+    showingAll: (total: number, totalText: string, noun: string) =>
+      total === 2 ? `Showing both ${noun}.` : `Showing all ${totalText} ${noun}.`,
+    showingOne: (noun: string) => `Showing one ${noun}.`,
   },
 
   // A list in a sentence: "A", "A and B", or "A, B and C", with no serial comma.
@@ -1702,7 +1706,7 @@ export const copy = {
     noun: "projects",
     nounOne: "project",
     // The count line of one page of more (the redesign plan, 8.6), with the range in words rather than a dash.
-    countRange: (from: string, to: string, total: string) => `Showing ${from} to ${to} of ${total} projects`,
+    countRange: (from: string, to: string, total: string) => `Showing ${from} to ${to} of ${total} projects.`,
     loading: "Loading projects.",
     // While a search waits more than 400 ms for its answer, in the count line's place.
     searching: "Searching projects.",
@@ -1774,7 +1778,7 @@ export const copy = {
     // When no project I checked had every check run.
     coverageNone: "I couldn't run every check on any project I checked. Each row says which records I lacked.",
     coverageLink: "See which records I hold",
-    countLine: (shown: number, total: number) => `Showing ${shown} of ${total} projects you follow`,
+    countLine: (shown: number, total: number) => `Showing ${shown} of ${total} projects you follow.`,
     tableCaption: "Projects you follow, with their status, signals and next step",
     cols: {
       status: { label: "Status", def: (word: string) => `needs a look means ${word} signals or one strong one; a signal is a reason to look, not a finding` },
@@ -2167,7 +2171,7 @@ export const copy = {
     baselineMark: "Baseline",
     versionsMore: (count: string) => `Show all ${count} versions`,
     versionsLess: "Show fewer versions",
-    versionsShowing: (shown: string, total: string) => `Showing ${shown} of ${total} versions`,
+    versionsShowing: (shown: string, total: string) => `Showing ${shown} of ${total} versions.`,
     changesLoading: "Loading this project's Procurement Plans.",
   },
 
@@ -2396,7 +2400,7 @@ export const copy = {
       "page, with its paragraphs numbered as the document numbers them.",
     noun: "documents",
     // The count line: the rows the list shows, of every document listed. Both counts are the route's.
-    showing: (shown: string, total: string) => `Showing ${shown} of ${total} documents`,
+    showing: (shown: string, total: string) => `Showing ${shown} of ${total} documents.`,
     caption: (name: string) => `Documents for ${name}, by type`,
     col: { document: "Document", dated: "Dated", disclosed: "Disclosed", pages: "Pages read", pdf: "PDF" },
     def: {
@@ -2653,7 +2657,7 @@ export const copy = {
     },
     // The panel that holds the activities' table (ticket 100; DESIGN.md section 5, Plan check table).
     activitiesTitle: "Activities in this plan",
-    countLine: (shown: string, total: string) => `Showing ${shown} of ${total} activities`,
+    countLine: (shown: string, total: string) => `Showing ${shown} of ${total} activities.`,
     noun: "activities",
     caption: (agency: string, date: string) => `Activities in the ${agency} plan of ${date}, marked activities first`,
     // A row's reference opens the row's records in the evidence drawer (ticket 100). The button's name is the reference
@@ -3049,7 +3053,11 @@ export const copy = {
         // The side panel's "Made from" (ticket 103), a link to the plan check: {date} is the plan's date in full.
         madeFrom: "My check of the {agency} plan of {date}",
         countLine: (count: number, countText: string) =>
-          count === 1 ? "Showing the 1 activity with a signal" : `Showing all ${countText} activities with a signal`,
+          count === 1
+            ? "Showing the one activity with a signal."
+            : count === 2
+              ? "Showing both activities with a signal."
+              : `Showing all ${countText} activities with a signal.`,
         columns: { activity: "Activity", note: "Review note" },
         tableCaption: (agency: string, date: string) =>
           `Review notes on the ${agency} plan of ${date}, one row per activity with a signal`,
@@ -3245,7 +3253,8 @@ export const copy = {
         methodLink: "the dates in your plan",
         // The side panel's "Made from" (ticket 103), plain text: {date} is the day the plan was uploaded.
         madeFrom: "The dates in your plan uploaded {date}",
-        countLine: (count: number, countText: string) => (count === 1 ? "Showing the one activity" : `Showing all ${countText} activities`),
+        countLine: (count: number, countText: string) =>
+          count === 1 ? "Showing the one activity." : count === 2 ? "Showing both activities." : `Showing all ${countText} activities.`,
         columns: { activity: "Activity", signed: "Contract signed", dated: "Steps dated" } as Record<string, string>,
         tableCaption: (_form: string, _date: string) => "Your activities, in your file's order",
         abstain: "I removed this date, because it didn't match my delay model's results.",
@@ -4201,7 +4210,8 @@ export const copy = {
       noun: "test years",
       nounOne: "test year",
       count: (count: string, first: string, last: string) => `Showing ${count} test years, ${first} to ${last}.`,
-      countOne: (year: string) => `Showing 1 test year, ${year}.`,
+      countBoth: (first: string, last: string) => `Showing both test years, ${first} and ${last}.`,
+      countOne: (year: string) => `Showing one test year, ${year}.`,
       columns: {
         year: "Test year",
         n: "Packages I had not seen",
@@ -4391,6 +4401,7 @@ export const copy = {
     // those, so the caption claims only the most common approach of those the thresholds allow.
     titleAllowed: "{k1} of the {n} comparable packages went with {option1}, the most common approach the thresholds allow for this package.",
     count: (count: string) => `Showing ${count} approaches, the most common first.`,
+    countBoth: "Showing both approaches, the most common first.",
     unrecorded: (rest: number) =>
       rest === 1
         ? "{rest} of the {n} comparable packages doesn't record its market approach, lots and qualification, so I can't say which approach it went with."
@@ -4674,6 +4685,7 @@ export const copy = {
     findingTwo: '"{a}" and "{b}" came up most often, each in {k} of the {m} completion reports for projects with comparable packages.',
     findingMany: "{tied} of these risks came up most often, each in {k} of the {m} completion reports for projects with comparable packages.",
     countOne: "Showing one risk.",
+    countBoth: "Showing both risks, in the order I ranked them.",
     count: (shown: string) => `Showing ${shown} risks, in the order I ranked them.`,
     // The person's own count, so plain text, not a finding.
     selected: (selected: string, shown: string) => `You selected ${selected} of the ${shown} risks for the PPSD.`,
@@ -4879,8 +4891,8 @@ export const copy = {
     captionNoneAfter: (phrase: string) => `I couldn't date any step after ${phrase}.`,
     captionUndated: "How many days each step took in comparable packages.",
     captionAbstain: (family: string) => `The steps STEP uses for ${family}.`,
-    // In the Tables form, as zone 1's count line: no full stop (ticket 101's design review, round 2).
-    count: (countWords: string) => `Showing all ${countWords} steps`,
+    // In the Tables form, as every count line (ticket 58; DESIGN.md section 5, Tables).
+    count: (countWords: string) => `Showing all ${countWords} steps.`,
     columns: {
       step: "Step",
       stepNote: "Short names. Choose one to see STEP's full name.",
@@ -5412,8 +5424,9 @@ export const copy = {
     sourceAsOf: "{sources}. Records as of {asOf}.",
     showTable: "Show the table",
     hideTable: "Hide the table",
-    tableCount: "Showing all {m} packages",
-    tableCountOne: "Showing the one package",
+    tableCount: "Showing all {m} packages.",
+    tableCountBoth: "Showing both packages.",
+    tableCountOne: "Showing the one package.",
     columns: {
       package: "Package",
       country: "Country",
@@ -6279,11 +6292,11 @@ export const copy = {
     // The library (section 5.2).
     library: {
       loading: "Loading the library.",
-      // The count line in a table's form (copy.table): numerals and no closing period.
-      countAll: "Showing all {total} lessons in the library, newest first",
-      countBoth: "Showing both lessons in the library, newest first",
-      countOne: "Showing 1 lesson in the library",
-      countRange: "Showing {from}–{to} of {total} lessons in the library, newest first",
+      // The count line in a table's form (copy.table): one to nine in words, a full stop, and its order for one too.
+      countAll: "Showing all {total} lessons in the library, newest first.",
+      countBoth: "Showing both lessons in the library, newest first.",
+      countOne: "Showing one lesson in the library, newest first.",
+      countRange: "Showing {from}–{to} of {total} lessons in the library, newest first.",
       reviewerLink: "Go to Waiting for review",
       outOfRangeTitle: "There is no page {page} in the library.",
       outOfRangeBody: "The library has {pages} pages.",
@@ -6721,6 +6734,9 @@ export const copy = {
       // that status with no other filter; stage, method and sector narrow {n}.
       count: {
         all: "Showing all {m} {noun}, newest first.",
+        // Two and one (ticket 58): "both", and the one row with its order, as every count line.
+        both: "Showing both {noun}, newest first.",
+        one: "Showing the one {noun}, newest first.",
         range: "Showing {from}–{to} of {m} {noun}, newest first.",
         narrowed: "Showing {n} of {m} {noun}, newest first.",
         narrowedRange: "{n} of {m} {noun} match. Showing {from}–{to}, newest first.",
@@ -7038,7 +7054,11 @@ export const copy = {
       colCurrency: (label: string, currency: string) => `${label} (${currency})`,
       // Counts under ten in words (DESIGN.md section 7, rule 12): "Showing all three bids", "Showing the one bid".
       count: (n: number, count: string, proposals: boolean) =>
-        n === 1 ? `Showing the one ${proposals ? "proposal" : "bid"}` : `Showing all ${count} ${proposals ? "proposals" : "bids"}`,
+        n === 1
+          ? `Showing the one ${proposals ? "proposal" : "bid"}.`
+          : n === 2
+            ? `Showing both ${proposals ? "proposals" : "bids"}.`
+            : `Showing all ${count} ${proposals ? "proposals" : "bids"}.`,
       awarded: "Awarded",
       notAwarded: "Not awarded",
       rejected: "Rejected. The award notice gives the reason \"{reason}\".",
@@ -7141,7 +7161,7 @@ export const copy = {
     linesHint: "Hover over or focus a package to see its links.",
     noPackages: "I haven't read a Procurement Plan for {pid} yet.",
     noPackagesLink: "Procurement Plans for {pid}",
-    count: "Showing {shown} of {total} packages and documents",
+    count: "Showing {shown} of {total} packages and documents.",
     toList: "Show as a list",
     toDiagram: "Show as a diagram",
     showingList: "Showing the list.",
@@ -7655,7 +7675,7 @@ export const copy = {
     show: "Show the table",
     hide: "Hide the table",
     caption: (name: string) => `Everything on the timeline of ${name}, in date order.`,
-    count: (n: string) => `Showing all ${n} items.`,
+    count: (n: number, text: string) => (n === 1 ? "Showing the one item." : n === 2 ? "Showing both items." : `Showing all ${text} items.`),
     itemsNoun: "items",
     columns: { date: "Date", stratum: "Stratum", item: "Item", rating: "Rating", note: "Note" },
     stratumCaption: "What: records. How: operations. Why: evaluations.",
@@ -7809,7 +7829,7 @@ export const copy = {
         trajectory:
           "Ratings that change from one ISR to the next describe different periods. I show them as a trajectory, not a disagreement.",
         caption: "ISR ratings of progress towards achievement of PDO",
-        count: (n: string) => `Showing all ${n} ISRs.`,
+        count: (n: number, text: string) => (n === 1 ? "Showing the one ISR." : n === 2 ? "Showing both ISRs." : `Showing all ${text} ISRs.`),
         columns: { isr: "ISR", date: "Date", rating: "Progress towards achievement of PDO" },
         isr: "ISR {sequence}",
         source: "World Bank documents and reports API, the ISRs of {pid}.",
@@ -7820,7 +7840,8 @@ export const copy = {
         heading: "Contracts signed in {year}",
         // The table under the heading, which says what each row is rather than repeating the heading.
         tableTitle: "Each contract signed in {year}, in date order.",
-        count: (n: string) => `Showing all ${n} contracts.`,
+        count: (n: number, text: string) =>
+          n === 1 ? "Showing the one contract." : n === 2 ? "Showing both contracts." : `Showing all ${text} contracts.`,
         columns: { contract: "Contract (STEP reference)", signed: "Signed", amount: "Signed amount (US$)" },
         notInRecord: "Not in the record",
         source: "World Bank contract awards and procurement notices, {pid}.",
