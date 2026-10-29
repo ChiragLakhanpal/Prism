@@ -856,6 +856,18 @@ li[data-row-mark="open"] {
   .on-navy:focus-visible {
     outline-color: var(--color-focus-on-dark);
   }
+  /* A text link that wraps would draw one outline around both of its lines, through the line between them. So its ring
+     is a 2 px focus shadow drawn around each line on its own; the outline stays, transparent, for forced-colors mode,
+     which drops shadows and draws the outline in its own color (DESIGN.md section 10; ticket 60). */
+  [data-text-link]:focus-visible {
+    outline-color: transparent;
+    box-shadow: 0 0 0 2px var(--color-focus);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+  }
+  .on-navy [data-text-link]:focus-visible {
+    box-shadow: 0 0 0 2px var(--color-focus-on-dark);
+  }
 
   table,
   [data-numbers] {

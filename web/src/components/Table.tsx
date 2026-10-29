@@ -21,7 +21,7 @@
 // - Empty: only an empty-state card that says, in the first person, what will appear.
 // - Error: only an error alert, with "Try again" when the caller can ask again.
 // A finding, a count or a source line never sits over rows that are not there.
-import { createElement, useId, type ReactNode, type Ref } from "react";
+import { createElement, useId, type ReactNode, type Ref, useLayoutEffect, useRef, useState } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatNumber } from "../lib/format";
@@ -179,6 +179,21 @@ export function Table({
   const ownTitleId = useId();
   const titleId = labelledBy ?? ownTitleId;
   const countId = useId();
+  // The frame is a tab stop only while its table is wider than it, so a keyboard can scroll it; a frame that scrolls
+  // nothing never takes the first Tab and scrolls the page for nothing (ticket 60).
+  const frame = useRef<HTMLDivElement>(null);
+  const [overflows, setOverflows] = useState(false);
+  useLayoutEffect(() => {
+    const element = frame.current;
+    if (!element) return;
+    const measure = () => setOverflows(element.scrollWidth > element.clientWidth + 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(element);
+    const table = element.firstElementChild;
+    if (table) observer.observe(table);
+    return () => observer.disconnect();
+  });
 
   if (state.status === "empty") {
     return (
@@ -282,9 +297,10 @@ export function Table({
 
       {/* From a page area of 768 px (or 1024 px with cardsBelow="lg", or a frame of 49rem with "fit"),
           a table. In a narrow column it scrolls inside its frame, which then takes focus so a keyboard
-          can scroll it too. */}
+          can scroll it too, and only then (ticket 60). */}
       <div
-        tabIndex={loading ? undefined : 0}
+        ref={frame}
+        tabIndex={loading ? undefined : overflows ? 0 : -1}
         role={loading ? undefined : "region"}
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}

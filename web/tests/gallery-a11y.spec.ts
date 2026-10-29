@@ -41,6 +41,12 @@ async function tabStops(page: Page) {
       const ring = (el.closest("[data-focus-ring]") as HTMLElement | null) ?? el;
       const style = getComputedStyle(ring);
       const path = `${el.tagName.toLowerCase()}:${el.textContent?.trim().slice(0, 30) ?? ""}:${Math.round(el.getBoundingClientRect().y + scrollY)}`;
+      // A text link draws its ring as a 2 px focus shadow around each of its lines, over a transparent outline that
+      // forced-colors mode draws (app.css; ticket 60).
+      const shadow = /^(rgb\([^)]*\)) 0px 0px 0px 2px$/.exec(style.boxShadow);
+      if (el.hasAttribute("data-text-link") && shadow && style.outlineColor === "rgba(0, 0, 0, 0)") {
+        return { path, width: style.outlineWidth, offset: style.outlineOffset, style: style.outlineStyle, color: shadow[1] };
+      }
       return { path, width: style.outlineWidth, offset: style.outlineOffset, style: style.outlineStyle, color: style.outlineColor };
     });
     if (!focus || seen.has(focus.path)) break;
@@ -66,11 +72,13 @@ function smallTargets(page: Page) {
       const width = rect.width + pad(after.left) + pad(after.right);
       const height = rect.height + pad(after.top) + pad(after.bottom);
       const isButton = el.hasAttribute("data-button");
+      // A compact flush button in a line of text is 24 px tall, WCAG 2.5.8's minimum (DESIGN.md section 5; ticket 60).
+      const buttonHeight = el.hasAttribute("data-compact") ? 24 : 44;
       // A number you can check sits inside a sentence, such as "186 days", so it is an inline
       // target, which WCAG 2.5.8 exempts from the width; it still keeps a line 24 px tall (the
       // 10 brief, section 5).
       const inSentence = el.hasAttribute("data-num");
-      const ok = (inSentence || width >= 24) && height >= 24 && (!isButton || Math.round(rect.height) === 44);
+      const ok = (inSentence || width >= 24) && height >= 24 && (!isButton || Math.round(rect.height) === buttonHeight);
       const label = `${el.tagName.toLowerCase()} "${el.textContent?.trim().slice(0, 30)}"`;
       return ok ? [] : [`${label} ${Math.round(width)}x${Math.round(height)}`];
     });

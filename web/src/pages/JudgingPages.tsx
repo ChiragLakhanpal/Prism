@@ -179,7 +179,9 @@ const COLUMNS = [
 
 // busy: another filter's or page's queries are on their way, so this list stays on screen, marked busy, and the
 // filter keeps focus (selection follows focus, briefs 26 and 27).
-export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList; onShow?: (show: Show) => void; busy?: boolean }) {
+// show: the filter the address names, which keeps the check mark on the segment you chose while its queries load,
+// where focus is (ticket 60).
+export function JudgingBody({ list, onShow, busy = false, show: chosen }: { list: JudgingList; onShow?: (show: Show) => void; busy?: boolean; show?: Show }) {
   const total = <Num value={list.total} options={{ compact: false }} />;
   const lead =
     list.mine_done === 0 ? (
@@ -226,7 +228,7 @@ export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList;
           <div className="mt-6 @md/page:mt-8">
             <SegmentedControl<Show>
               legend={w.show}
-              value={list.show}
+              value={chosen ?? list.show}
               onChange={(key) => (onShow ? onShow(key) : navigate(listHref(key), { quiet: true }))}
               options={SHOWS.map((key) => ({ value: key, label: fillText(w.filters[key], { count: list.counts[key] }) }))}
             />
@@ -310,8 +312,8 @@ function NoAccess() {
   return <EmptyState title={w.noAccessTitle} body={w.noAccessBody} link={{ href: LESSONS_HREF, text: w.noAccessLink }} />;
 }
 
-export function JudgingView({ load, retry, last = null }: { load: Load<JudgingList>; retry: () => void; last?: JudgingList | null }) {
-  if (load.status === "loading") return last ? <JudgingBody list={last} busy /> : <JudgingSkeleton />;
+export function JudgingView({ load, retry, last = null, show }: { load: Load<JudgingList>; retry: () => void; last?: JudgingList | null; show?: Show }) {
+  if (load.status === "loading") return last ? <JudgingBody list={last} busy show={show} /> : <JudgingSkeleton />;
   // A short answer, such as an error, holds a screen's height as the skeleton did, so the footer stays below the fold.
   // A failed read's alert goes to the page's alert slot (PageAlert.tsx; ticket 102).
   if (load.status === "error") {
@@ -327,7 +329,7 @@ export function JudgingView({ load, retry, last = null }: { load: Load<JudgingLi
       </div>
     );
   }
-  return <JudgingBody list={load.data} />;
+  return <JudgingBody list={load.data} show={show} />;
 }
 
 export function JudgingPage({ search }: { search: string }) {
@@ -344,7 +346,7 @@ export function JudgingPage({ search }: { search: string }) {
   }, [denied]);
   return (
     <LessonsFrame pageKey={denied ? "lessons" : "lessonsJudging"} failed={load.status === "error" && !denied}>
-      <JudgingView load={load} retry={retry} last={last.current} />
+      <JudgingView load={load} retry={retry} last={last.current} show={show} />
     </LessonsFrame>
   );
 }
@@ -443,8 +445,13 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   const passage = query.passages[at - 1];
   const graded = query.passages.map((p) => Boolean(grades[p.passage_id]));
   const done = graded.filter(Boolean).length;
-  const finished = pool > 0 && done === pool && unsaved.length === 0 && failed === null;
-  const wasFinished = useRef(finished);
+  // Every passage has your grade: the finished panel shows, and stays while a changed grade saves, so it never blinks
+  // (WCAG 3.2.2; ticket 60).
+  const allGraded = pool > 0 && done === pool;
+  const finished = allGraded && unsaved.length === 0 && failed === null;
+  // The grade that graded the last ungraded passage: only its save moves focus to the finished panel. A grade changed
+  // after you finish leaves focus on the grade (ticket 60).
+  const completing = useRef(false);
 
   useEffect(() => setQuery(loaded), [loaded]);
   useEffect(() => {
@@ -455,8 +462,9 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   }, []);
   // The last grade saved: the panel that says so takes focus, so it is heard (the 32 brief, section 6.2).
   useEffect(() => {
-    if (finished && !wasFinished.current && !sample) outcome.current?.focus();
-    wasFinished.current = finished;
+    if (!finished || !completing.current) return;
+    completing.current = false;
+    if (!sample) outcome.current?.focus();
   }, [finished]);
   useEffect(() => {
     if (lockedWhileOpen && !sample) lockedAlert.current?.focus();
@@ -527,6 +535,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   function grade(choice: Grade) {
     if (!passage || query.locked) return;
     const entry = { passage: passage.passage_id, grade: choice };
+    if (!grades[passage.passage_id] && done + 1 === pool) completing.current = true;
     const next = { ...grades, [passage.passage_id]: choice };
     setGrades(next);
     setUnsaved((all) => [...all, entry]);
@@ -633,7 +642,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
           <Fill template={w.poolNote} slots={{ date: <Num date={query.query_date} /> }} />
         </p>
         <PassageMap open={mapOpen} onToggle={() => setMapOpen(!mapOpen)} count={pool} current={at} graded={graded} href={(n) => queryHref(query.query_id, n)} onChoose={(n) => show(n)} />
-        {finished && !query.locked ? (
+        {allGraded && !query.locked ? (
           <div className="flex flex-col gap-4" data-judging-finished="mine">
             <OutcomePanel ref={outcome} state="info" lead={fillText(w.finishedLead, { pool })} body={w.finishedBody} />
             <Next query={query} />

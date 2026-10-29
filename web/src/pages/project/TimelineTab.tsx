@@ -386,7 +386,7 @@ export function TimelineCard({
   // The title's count (the 23 brief, section 7.2) opens the table and moves focus to it, named by its caption.
   const openTable = () => {
     setTable(true);
-    requestAnimationFrame(() => document.getElementById(tableId)?.querySelector<HTMLElement>("[tabindex='0']")?.focus());
+    requestAnimationFrame(() => document.getElementById(tableId)?.querySelector<HTMLElement>("[data-table-view=table]")?.focus());
   };
   const empty = (lane: Lane) => !data.items.some((item) => item.lane === lane);
   const lanesEmpty = Object.fromEntries(LANES.map((lane) => [lane, empty(lane)])) as Record<Lane, boolean>;

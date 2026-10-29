@@ -232,6 +232,8 @@ test("a table shows its title, count and source lines only with its rows", async
   await expect(ready.getByRole("heading")).toHaveText("Three of the four sample activities were signed after their planned date.");
   await expect(ready).toContainText("Showing all 4 activities");
   await expect(ready).toContainText("Source: Sample rows made for the gallery, in STEP's columns.");
+  // A STEP amount keeps STEP's form with its cents (DESIGN.md section 6; ticket 60).
+  await expect(ready.locator("tbody tr").first()).toContainText("1,230,000.00");
 
   for (const state of ["loading", "empty", "error"]) {
     const section = page.locator(`[data-state-section=${state}]`);
@@ -382,6 +384,18 @@ test("the steps toggle lines up with the answer's text, and its fill and focus r
   }
 });
 
+// Ticket 60 (ticket 02's review, round 12, P1): in forced-colors mode the browser draws every border, so a flush button's
+// side borders come back and it keeps its outline as every other ghost button does; outside it they stay at 0.
+test("in forced-colors mode the flush steps toggle keeps its side borders, and outside it has none", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/answer");
+  const toggle = page.locator("[data-answer=ready]").getByRole("button", { name: /\bsteps?\b/ });
+  const sides = () => toggle.evaluate((element) => [getComputedStyle(element).borderLeftWidth, getComputedStyle(element).borderRightWidth]);
+  expect(await sides()).toEqual(["0px", "0px"]);
+  await page.emulateMedia({ forcedColors: "active" });
+  expect(await sides()).toEqual(["2px", "2px"]);
+});
+
 // Ticket 115: the server's answer for KE-KURA-219079-CS-INDV on the fixture (tests/record_steps_api.py), whose plan
 // of September 24, 2026 gave its Process Status as Canceled (tests/ground_truth/values.toml, [step_tracker]).
 test("the step tracker marks no step of a canceled activity late and says why in one sentence, and keeps its card when the steps fail", async ({ page }) => {
@@ -451,8 +465,8 @@ test("the steps list starts its text under the toggle's text, on one inner edge"
     await page.goto("/gallery/answer");
     for (const state of ["ready", "abstained"]) {
       const answer = page.locator(`[data-answer=${state}]`);
-      // Found by place, not by name: its name changes to "Hide the steps" once it opens.
-      const toggle = answer.locator(":scope > div > button[aria-expanded]");
+      // Found by its name, which says steps whether it shows or hides them (ticket 60).
+      const toggle = answer.getByRole("button", { name: /\bsteps?\b/ });
       await toggle.click();
       await expect(toggle).toHaveAttribute("aria-expanded", "true");
       const label = (await toggle.locator("span").boundingBox())!;
@@ -1094,6 +1108,32 @@ test("buttons have 4 px corners, badges and citation markers keep the pill, and 
       await page.mouse.up();
     }
   }
+});
+
+// Ticket 60 (ticket 12's design review, round 3): a text link that wraps draws its focus ring around each of its lines,
+// as a 2 px focus shadow cloned onto each line, so the ring never runs through the line above it; a transparent 2 px
+// outline stays for forced-colors mode, which drops shadows and draws the outline.
+test("a text link that wraps draws its focus ring around each line, never through the line above", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/links");
+  const link = page.locator("[data-state-section=text-link] a").first();
+  // Narrow the link's paragraph so the link wraps onto a second line.
+  await link.evaluate((element) => {
+    const block = element.parentElement as HTMLElement;
+    block.style.width = `${Math.ceil(element.getBoundingClientRect().width / 2) + 20}px`;
+  });
+  expect(await link.evaluate((element) => element.getClientRects().length)).toBeGreaterThan(1);
+  await link.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(link).toBeFocused();
+  const ring = await link.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { clone: style.boxDecorationBreak || style.getPropertyValue("-webkit-box-decoration-break"), shadow: style.boxShadow, outline: [style.outlineStyle, style.outlineWidth, style.outlineColor] };
+  });
+  expect(ring.clone).toBe("clone");
+  expect(ring.shadow).toBe("rgb(182, 73, 12) 0px 0px 0px 2px");
+  expect(ring.outline).toEqual(["solid", "2px", "rgba(0, 0, 0, 0)"]);
 });
 
 test("a list search, a key hint and a toggle button have a control's 4 px corners", async ({ page }) => {

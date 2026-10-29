@@ -74,8 +74,14 @@ export type ButtonProps = Omit<ComponentProps<"button">, "disabled"> & {
   // changes nothing you see. Its hover fill then reaches 8 px past the text and its focus ring
   // 12 px, inside the 16 px padding of the smallest card. A flush button carries an icon, so
   // its spinner takes the icon's place and loading does not change its width. A label that wraps,
-  // as at 320 px, keeps its lines on the text's edge too, never centred.
+  // as at 320 px, keeps its lines on the text's edge too, never centred. Outside forced-colors mode a
+  // ghost's border is clear, so dropping its sides changes nothing you see there. In forced-colors mode
+  // the browser draws every border, so the sides come back and the button keeps its outline (ticket 60).
   flush?: boolean;
+  // A flush text button that sits in a line of text, such as "Show all agencies" after the project's agency
+  // line: 24 px tall, WCAG 2.5.8's minimum target, so its hover fill and focus ring keep to its own line and
+  // never cross the line above or below it (DESIGN.md section 5, Buttons; ticket 60).
+  compact?: boolean;
   // A ghost button on the page background, such as "Show them" in the plan check's fold row:
   // tint-hover barely shows on page, so it hovers to tint.
   onPage?: boolean;
@@ -90,6 +96,7 @@ export function Button({
   busyLabel,
   iconOnly = false,
   flush = false,
+  compact = false,
   onPage = false,
   className,
   children,
@@ -108,11 +115,13 @@ export function Button({
       aria-busy={loading || undefined}
       data-disabled={disabled || undefined}
       data-held={held || undefined}
+      data-compact={compact || undefined}
       onClick={inactive ? (event) => event.preventDefault() : onClick}
       className={cx(
-        "relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-sm border text-button",
+        "relative inline-flex shrink-0 items-center justify-center gap-2 rounded-sm border text-button",
+        compact ? "h-6" : "h-11",
         "transition-paint select-none",
-        iconOnly ? "w-11" : flush ? "-ml-2 border-x-0 px-2 text-left" : loading && !Icon ? "px-3" : "px-6",
+        iconOnly ? "w-11" : flush ? "-ml-2 border-x-0 px-2 text-left forced-colors:border-x-2" : loading && !Icon ? "px-3" : "px-6",
         held ? (variant === "ghost" ? HELD_GHOST : HELD) : VARIANTS[variant],
         !held && variant === "ghost" && (onPage ? "hover:bg-tint" : "hover:bg-tint-hover"),
         DISABLED[variant],

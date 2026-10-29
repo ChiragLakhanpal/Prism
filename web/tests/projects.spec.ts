@@ -39,6 +39,24 @@ const p156634 = async () => ({
   "/api/projects/P156634/packages": { body: await recorded("packages-p156634.json") },
 });
 
+// Ticket 60 (ticket 10's design review, round 2, P14): a table's frame is a tab stop only while it scrolls sideways, so
+// the first Tab into All projects goes to the first project, never to a frame that scrolls nothing.
+test("All projects' table frame is a tab stop only while its table is wider than the frame", async ({ page }) => {
+  await open(page, "/projects", await projects());
+  const frame = listZone(page).locator("[data-table-view=table]");
+  await expect(frame).toBeVisible();
+  // It can still take focus from a link that lands on the table, but it is no tab stop.
+  await expect(frame).toHaveAttribute("tabindex", "-1");
+  await listZone(page).locator("[data-list-search] input").focus();
+  const before = await page.evaluate(() => window.scrollY);
+  await page.keyboard.press("Tab");
+  await expect(frame.locator("tbody a").first()).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(before + 400);
+  // Narrowed so the table scrolls inside it, the frame becomes a tab stop, so a keyboard can scroll it.
+  await frame.evaluate((element) => ((element as HTMLElement).style.width = "300px"));
+  await expect(frame).toHaveAttribute("tabindex", "0");
+});
+
 test("All projects shows 20 projects a page with the range it shows, sets project IDs in Roboto Mono as links, and pages by address", async ({ page }) => {
   const unrecorded = await open(page, "/projects", {
     ...(await projects()),
@@ -397,6 +415,25 @@ test("a long list of implementing agencies keeps to one line until you show them
   expect(await agencies.evaluate((element) => element.clientHeight)).toBeGreaterThan(2 * lineHeight + 1);
   expect(await agencies.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   expect((await fewer.boundingBox())!.y).toBeGreaterThanOrEqual((await agencies.boundingBox())!.y + (await agencies.boundingBox())!.height - 1);
+
+  // Ticket 60 (ticket 21's design review, round 4, F1): the button is a compact flush one, 24 px tall, so its focus ring
+  // (2 px out past a 2 px offset) keeps clear of the agencies' last line above it and of the h1 and the tabs.
+  const ring = async (locator: import("@playwright/test").Locator) => {
+    const box = (await locator.boundingBox())!;
+    return { top: box.y - 4, bottom: box.y + box.height + 4, height: box.height };
+  };
+  await expect(fewer).toBeFocused();
+  const opened = await ring(fewer);
+  expect(opened.height).toBe(24);
+  const list = (await agencies.boundingBox())!;
+  expect(opened.top).toBeGreaterThanOrEqual(list.y + list.height - 0.5);
+  await fewer.click();
+  await expect(show).toBeFocused();
+  const closed = await ring(show);
+  const h1 = (await page.locator("main h1").boundingBox())!;
+  const tabs = (await page.getByRole("navigation", { name: "Project sections" }).boundingBox())!;
+  expect(closed.top).toBeGreaterThanOrEqual(h1.y + h1.height - 0.5);
+  expect(closed.bottom).toBeLessThanOrEqual(tabs.y + 0.5);
 
   // One agency fits on a line, so there is nothing to show.
   await open(page, "/projects/P130164", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });

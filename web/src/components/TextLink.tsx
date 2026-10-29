@@ -8,6 +8,8 @@ export function TextLink({ className, ...rest }: ComponentProps<"a">) {
   return (
     <a
       {...rest}
+      // Its focus ring is drawn around each of its lines (app.css; ticket 60).
+      data-text-link=""
       className={cx(
         "py-1 text-primary underline decoration-1 underline-offset-3 transition-paint duration-150",
         "hover:text-link-hover active:text-primary-pressed",

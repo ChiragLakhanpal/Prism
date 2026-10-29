@@ -65,6 +65,8 @@ export type Lane2 =
 // One part of a key: a glyph drawn as the mark it stands for, then its words.
 type KeyGlyph = "filled" | "hollow" | "grey" | "bar" | "ghost" | "none";
 type KeyPart = { glyph: KeyGlyph; text: string };
+// A pointer slower than this, in px per ms, is resting: Floating UI's safePolygon uses the same speed (ticket 60).
+const RESTING_SPEED = 0.1;
 const KEY_A = ["keyA0", "keyA1", "keyA2"];
 const KEY_D = ["keyD0", "keyD1"];
 
@@ -680,6 +682,8 @@ export function RangeChart({
   const restTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   // The pointer's last point on the hovered dot, where the band toward its tooltip starts.
   const apex = useRef<{ x: number; y: number } | null>(null);
+  // The pointer's last move, for its speed: a pointer slower than RESTING_SPEED is resting (ticket 60).
+  const lastMove = useRef<{ x: number; y: number; at: number } | null>(null);
   const dotRefs = useRef<(HTMLSpanElement | null)[]>([]);
   const tipRef = useRef<HTMLDivElement>(null);
   // Whichever came last leads: the pointer moving onto a dot other than the focused one shows that dot, and focus moving
@@ -1026,7 +1030,13 @@ export function RangeChart({
     const found = nearest(px, py);
     clearTimeout(restTimer.current);
     if (found !== null && found === hover) apex.current = { x: px, y: py };
-    if (inBand(px, py)) {
+    // A pointer that crawls, slower than 0.1 px per ms, is resting, as Floating UI's safePolygon has it: the band no
+    // longer holds the last dot, so the dot under it takes the tooltip as it arrives (ticket 60).
+    const now = performance.now();
+    const last = lastMove.current;
+    const speed = last && now > last.at ? Math.hypot(px - last.x, py - last.y) / (now - last.at) : Infinity;
+    lastMove.current = { x: px, y: py, at: now };
+    if (speed >= RESTING_SPEED && inBand(px, py)) {
       clearTimeout(hideTimer.current);
       if (found !== null && found !== hover) {
         restTimer.current = setTimeout(() => {

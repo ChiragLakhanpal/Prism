@@ -745,6 +745,33 @@ test("the pointer can cross the dots above a dot to reach its tooltip, and a dot
   }
 });
 
+// Ticket 60 (ticket 12's critique, rounds 5 and 6): a pointer that crawls, slower than 0.1 px per ms, is resting, as
+// Floating UI's safePolygon has it, so the band toward the tooltip no longer holds the last dot and the dot under the
+// pointer takes the tooltip as the pointer reaches it, with no 100 ms wait.
+test("a pointer crawling up from a dot onto the dot above shows the dot above as it arrives", async ({ page }) => {
+  await page.clock.install();
+  await openPackage(page, { width: 1440 });
+  await ready(page);
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  await stopTheClock(page);
+  const column = await tallestColumn(page);
+  const [bottom, upper] = [column[column.length - 1], column[column.length - 2]];
+  const name = async (index: number) => (await page.locator(`[data-dot-target='${index}']`).getAttribute("aria-label"))!.split(",")[0];
+  const tip = page.locator("[data-dot-tooltip]");
+  const from = await centre(page, `[data-dot-target='${bottom}']`);
+  const to = await centre(page, `[data-dot-target='${upper}']`);
+  await page.mouse.move(from.x, from.y);
+  await expect(tip).toContainText(await name(bottom));
+
+  // 1 px every 16 ms, about 0.06 px per ms.
+  const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y));
+  for (let step = 1; step <= steps; step++) {
+    await page.clock.runFor(16);
+    await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
+  }
+  await expect(tip).toContainText(await name(upper));
+});
+
 // Every dot's centre and reference in the viewport, and the lane's centre line, which the middle
 // half's band is centred on.
 async function swarmGeometry(page: Page) {

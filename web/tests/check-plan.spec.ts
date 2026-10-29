@@ -560,6 +560,24 @@ test("the table draws six columns at 1280 and 1440 px and three at 1024 px with 
   }
 });
 
+// Ticket 60 (ticket 10's design review, round 5): with WCAG 1.4.12's text spacing, no cell's text runs past its cell,
+// "1,230,000.00" and "Pending Implementation" included, and the page never scrolls sideways.
+test("with WCAG 1.4.12's text spacing at 1024 and 1440 px, every cell's text stays inside its cell", async ({ page }) => {
+  await openPlan(page, 1440);
+  await view(page, "table").getByRole("button", { name: "Show them" }).click();
+  await page.addStyleTag({
+    content: "* { letter-spacing: 0.12em !important; word-spacing: 0.16em !important; line-height: 1.5 !important; } p { margin-bottom: 2em !important; }",
+  });
+  await page.evaluate(() => document.fonts.ready);
+  for (const width of [1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(view(page, "table").locator("thead th:visible").first()).toBeVisible();
+    const { overflow } = await page.evaluate(measureTable);
+    expect(overflow, `${width} px`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${width} px`).toBe(true);
+  }
+});
+
 // Ticket 100: a row's reference opens the row's records in the evidence drawer, beside the page. The values are the
 // recorded check's for KE-NWWDA-229129-CW-RFB, which tests/ground_truth/values.toml quotes from the plan's page 3.
 test("a row's reference opens its records in the drawer, the row keeps the current mark, Escape returns focus, and a count word marks the rows it counts", async ({ page }) => {

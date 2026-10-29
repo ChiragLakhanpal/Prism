@@ -937,7 +937,16 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
                 <SavedStamp
                   saving={saving}
                   preview={preview}
-                  onRetry={failedChange ? () => send(failedChange) : retryRisks.current ? () => retryRisks.current?.() : undefined}
+                  // One Try again sends again every save that failed: the package's change and the risks' selection (ticket 60).
+                  onRetry={
+                    failedChange || retryRisks.current
+                      ? () => {
+                          const risks = retryRisks.current;
+                          if (failedChange) send(failedChange);
+                          risks?.();
+                        }
+                      : undefined
+                  }
                 />
               }
             />

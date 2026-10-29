@@ -419,6 +419,28 @@ test.describe("on a touch screen", () => {
       await expect(drawer).toHaveCount(0);
     }
   });
+
+  // Ticket 60 (ticket 31's design review, round 3, P5): at 320 px a tap shows no neighbour's tooltip, which used to sit
+  // over the tap and open nothing; each dot tapped opens its own records.
+  test("at 320 px a tap on each cost dot opens that dot's package and shows no other dot's tooltip", async ({ page }) => {
+    await open(page, WORKS, { width: 320 });
+    await openSection(page);
+    const dots = section(page).locator("[data-cost-dot]");
+    await expect(dots.first()).toBeAttached();
+    const count = await dots.count();
+    for (let index = 0; index < count; index++) {
+      const dot = dots.nth(index);
+      const reference = (await dot.getAttribute("data-cost-dot"))!;
+      await dot.scrollIntoViewIfNeeded();
+      const box = (await dot.boundingBox())!;
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      const drawer = page.getByRole("dialog");
+      await expect(drawer.getByRole("heading", { level: 2 }), `dot ${index + 1} of ${count}`).toContainText(reference);
+      for (const shown of await section(page).locator("[data-cost-tooltip]").allTextContents()) expect(shown).toContain(reference);
+      await page.keyboard.press("Escape");
+      await expect(drawer).toHaveCount(0);
+    }
+  });
 });
 
 test("a failed save is said once, under the field, and any other failure offers Try again", async ({ page }) => {

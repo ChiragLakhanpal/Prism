@@ -166,7 +166,7 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
             ) : (
               // The agency line and the place of "Show all agencies" beside it, as a project with many agencies has
               // them, so the tabs below never move down when the project arrives; with one agency they move up.
-              <div aria-hidden="true" className="mt-2 flex h-11 items-center">
+              <div aria-hidden="true" className="mt-2 flex h-6 items-center">
                 <Skeleton className="h-[1em] w-3/5 max-w-[480px]" />
               </div>
             )}
