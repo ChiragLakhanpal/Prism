@@ -519,7 +519,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         return JSONResponse(answer(value), headers={"Cache-Control": "no-store"})
 
     def day_left(key: PageKey) -> float | None:
-        """For a page read as of today, the seconds until the day ends, after which the browser must ask again."""
+        """For a page read as of today, the seconds until the day ends, after which the browser must ask again. A
+        project's header is never kept by the browser, since saving or removing a baseline changes it and the page
+        reads it again at once; the App lets its own copy go then."""
+        if key.page == "project":
+            return 0
         if key.as_of < today():
             return None
         moment = now()

@@ -141,8 +141,11 @@ def test_a_page_read_again_within_the_window_reads_nothing_and_the_browser_keeps
     assert first.status_code == again.status_code == 200
     assert read > 0 and len(trips) == read  # the second view issued no warehouse call
     assert again.json() == first.json()
-    assert first.headers["cache-control"] == "private, max-age=600"
-    assert again.headers["cache-control"] == "private, max-age=1"
+    if "/summary" in path or "/timeline" in path or "/packages" in path:
+        assert first.headers["cache-control"] == "private, max-age=600"
+        assert again.headers["cache-control"] == "private, max-age=1"
+    else:  # the browser asks again for a project's header, which a saved baseline changes
+        assert first.headers["cache-control"] == again.headers["cache-control"] == "private, max-age=0"
 
 
 def test_a_page_kept_answers_as_the_page_did_before_it_was_kept(counted_reads, kept_app):
