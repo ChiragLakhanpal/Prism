@@ -802,6 +802,7 @@ export const galleryCopy = {
     rejectedLanguage: "A reason in French, with its language named",
     removedRow: "A reason the verifier removed, with the removed box",
     costNoEstimate: "The plan row gives no cost estimate for this package",
+    costQuantile: "Above 60 packages: 20 quantile dots, each 1 in 20 of the packages (mock, made up)",
     sampleNoun: "sample",
   },
 

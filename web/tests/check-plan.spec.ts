@@ -683,13 +683,14 @@ function landing(ref: string) {
   };
 }
 
-test("a link that lands on any row leaves no row cut under the bar and the head at 1440 by 900, 1440 by 700, 1024 by 768 and 320 by 568", async ({ page }) => {
+test("a link that lands on any row leaves no row cut under the bar and the head at 1440 by 900, 1440 by 700, 1024 by 768, 1024 by 600 and 320 by 568", async ({ page }) => {
   const sizes: [number, number, number][] = [
     // Width, height, and how many parts stick: the bar and the head, the bar alone in a window under 50rem tall,
-    // and nothing below 1024 px.
+    // and nothing below 1024 px. Ticket 59's criterion 2 adds 1024 by 600.
     [1440, 900, 2],
     [1440, 700, 1],
     [1024, 768, 1],
+    [1024, 600, 1],
     [320, 568, 0],
   ];
   for (const [width, height, sticking] of sizes) {

@@ -18,6 +18,26 @@ async function axe(page: Page) {
 
 // Moved from web/tests/routes.spec.ts when the package workspace replaced the last placeholder page
 // whose empty state named a STEP reference; the gallery's page header sample keeps that empty state.
+// Ticket 59 (the 31 review, round 3, F5): above 60 comparable packages the cost lane draws the tool's 20 quantile dots,
+// each at its share's middle difference, under brief 12's key line, and a dot's press opens the table twin, which keeps
+// every package. The sample is a mock the fixture cannot hold, and says so.
+test("above 60 packages the cost lane draws one dot per quantile with its key line, and a dot opens every package in the table", async ({ page }) => {
+  const mock = JSON.parse(await readFile(new URL("../../tests/fixtures/api/criteria-cost-mock-quantile-dots.json", import.meta.url), "utf8"));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/check-criteria");
+  const sample = page.locator("[data-cost-sample=quantile]");
+  await expect(sample.locator("[data-cost-key]")).toHaveText(`Each dot is 1 in 20 of the ${mock.counts.m} packages.`);
+  const dots = sample.locator("[data-cost-dot]");
+  await expect(dots).toHaveCount(mock.quantile_dots.length);
+  await expect(sample.locator("[data-cost-drawing] circle")).toHaveCount(mock.quantile_dots.length);
+  const first = mock.quantile_dots[0];
+  await expect(dots.first()).toHaveAccessibleName(new RegExp(`^Dot 1 of 20: ${first.count} of the ${mock.counts.m} packages, their middle one signed `));
+  await dots.first().focus();
+  await expect(sample.locator("[data-cost-tooltip]")).toContainText(`${first.count} packages`);
+  await page.keyboard.press("Enter");
+  await expect(sample.locator("[data-cost-table] [data-count-row] p").first()).toHaveText(`Showing all ${mock.counts.m} packages`);
+});
+
 test("an empty state's title keeps a STEP reference on one line whenever it fits", async ({ page }) => {
   await page.goto("/gallery/pages");
   for (const width of [390, 768, 1024, 1279]) {

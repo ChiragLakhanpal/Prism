@@ -5371,6 +5371,13 @@ export const copy = {
     tooltipOpen: "Press Enter or click to open its records.",
     tooltipOpenTouch: "Open its records",
     dotName: (ref: string, diff: string) => `${ref}, signed ${diff} its cost estimate`,
+    // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), as on the past range.
+    keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages.`,
+    dotQuantile: (k: string, dots: string, count: string, total: string, diff: string) =>
+      `Dot ${k} of ${dots}: ${count} of the ${total} packages, their middle one signed ${diff} its cost estimate`,
+    tipQuantile: (count: string) => `${count} packages`,
+    tipQuantileLine: "The middle one's signed amount against its cost estimate.",
+    tooltipOpenDots: "Press Enter or click to see every package in the table.",
     alt: "One dot for each of {m} comparable packages, placed by how far its signed amount was from its own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altMiddle: "The middle half ran from {q25} to {q75}, and the middle package was {q50}.",
     countTooltip: "Comparable packages with both a cost estimate and a signed contract.",

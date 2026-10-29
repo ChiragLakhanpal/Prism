@@ -748,6 +748,76 @@ for (const [width, height, scrolls] of [
   });
 }
 
+// Ticket 59, criterion 2: a drawer opened on any recorded passage, by its address, scrolls to its passage and leaves no
+// tab, meta line or table row cut under its sticky header, at each window size the criterion names. One page load at each
+// size; each passage opens from the address in place and closes before the next.
+const PASSAGES = [
+  "evidence-icr-p127203-fr.json",
+  "evidence-icr-p130164-11.json",
+  "evidence-icr-p130164-44.json",
+  "evidence-icr-p130164-54.json",
+  "evidence-icr-p130164-78.json",
+  "evidence-icr-review-p130164-10b.json",
+  "evidence-icr-review-p130164-2023-5.json",
+  "evidence-isr-p130164-7-key-dates.json",
+  "evidence-isr-p130164-7-s4.json",
+  "evidence-isr-p130164-s4.json",
+  "evidence-isr-p156634-s4-why.json",
+  "evidence-notice-op00118817-qualifications.json",
+  "evidence-notice-op00118817.json",
+  "evidence-pad-p130164-risk-row.json",
+  "evidence-pad-p130164-risk-summary.json",
+  "evidence-pad-p130164-scanned.json",
+  "evidence-passage-op00077276-s3.json",
+];
+// The parts of the open drawer that a sticky header can cut: each one that both starts above the header's foot and ends
+// below it.
+function cutUnderTheHeader() {
+  const open = document.querySelector("[role=dialog]:has([data-drawer-header])")!;
+  const foot = open.querySelector("[data-drawer-header]")!.getBoundingClientRect().bottom;
+  return [...open.querySelectorAll("[role=tab], [data-meta-line], tr")]
+    .filter((part) => !part.closest("[data-drawer-header]"))
+    .map((part) => ({ part, box: part.getBoundingClientRect() }))
+    .filter(({ box }) => box.height > 0 && box.top < foot - 0.5 && box.bottom > foot + 0.5)
+    .map(({ part }) => `${part.tagName.toLowerCase()} ${(part.textContent ?? "").trim().slice(0, 40)}`);
+}
+for (const [width, height] of [
+  [1440, 900],
+  [1440, 700],
+  [1024, 768],
+  [1024, 600],
+  [320, 568],
+] as const) {
+  test(`at ${width} by ${height} px a drawer opened on any recorded passage leaves no tab, meta line or row cut under its header`, async ({ page }) => {
+    await open(page, { width });
+    await page.setViewportSize({ width, height });
+    const byId = new Map<string, string>();
+    for (const name of PASSAGES) {
+      const body = await recorded(name);
+      byId.set(JSON.parse(body).id, body);
+    }
+    await page.route("**/api/evidence?*", (route) => {
+      const body = byId.get(new URL(route.request().url()).searchParams.get("id") ?? "");
+      return body ? route.fulfill({ contentType: "application/json", body }) : route.fallback();
+    });
+    const go = (search: string) =>
+      page.evaluate((to) => {
+        window.history.pushState({ key: to }, "", to);
+        window.dispatchEvent(new PopStateEvent("popstate"));
+      }, `/projects/P130164${search}`);
+    for (const id of byId.keys()) {
+      await go(`?evidence=${encodeURIComponent(id)}`);
+      await expect(drawer(page).locator("[data-drawer-header]")).toBeVisible();
+      await expect(drawer(page).locator("[data-passage-block], [data-record]").first()).toBeVisible();
+      await animationsDone(page);
+      await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+      expect(await page.evaluate(cutUnderTheHeader), `${id} at ${width} by ${height}`).toEqual([]);
+      await go("");
+      await expect(drawer(page)).toHaveCount(0);
+    }
+  });
+}
+
 // A whole sentence a reader quotes is often longer than the third of the card's room that goes before
 // the match, so the cut must never fall inside the matched words.
 test("a long quote stays whole and highlighted in the evidence card, which still keeps to about 280 characters", async ({ page }) => {

@@ -16,6 +16,8 @@ import liveTender from "../../../tests/fixtures/api/criteria-compare-live-tender
 import partial from "../../../tests/fixtures/api/criteria-compare-partial-refusal.sse?raw";
 import noneFound from "../../../tests/fixtures/api/criteria-compare-none-found.sse?raw";
 import swapped from "../../../tests/fixtures/api/criteria-compare-swapped-reading.sse?raw";
+// A mock above 60 packages, whose lane draws quantile dots (ticket 59): made up, as the file says.
+import quantileCost from "../../../tests/fixtures/api/criteria-cost-mock-quantile-dots.json";
 import { useId, type ReactNode } from "react";
 import { CheckCriteriaView, type CompareState, type RunState, type SummaryState, type ViewProps } from "../components/CheckCriteria";
 import { CostEstimate } from "../components/CostLane";
@@ -312,6 +314,13 @@ export function criteriaPage(): GalleryPage {
             <Labeled label={cs.costNoEstimate}>
               <Column>
                 <CostEstimate cost={NO_ESTIMATE} readinessHref={dataReadinessHref([], "compare_cost_estimates")} />
+              </Column>
+            </Labeled>
+            <Labeled label={cs.costQuantile}>
+              <Column>
+                <div data-cost-sample="quantile">
+                  <CostEstimate cost={quantileCost as unknown as Cost} readinessHref={dataReadinessHref([], "compare_cost_estimates")} />
+                </div>
               </Column>
             </Labeled>
           </div>

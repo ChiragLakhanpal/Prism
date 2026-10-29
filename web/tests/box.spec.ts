@@ -486,6 +486,24 @@ for (const width of [390, 320]) {
   });
 }
 
+// Ticket 59 (the 93 design review, follow-up 1): from 1024 px a reference that holds a space drops "Within", so the
+// package's placeholder beside its chip is never cut; a reference with no space keeps it.
+test("from 1024 px a chip whose reference holds a space drops Within, so the placeholder stays whole", async ({ page }) => {
+  for (const [ref, within] of [["KE-UASIN GISHU COUNTY-571338-CW-RFB", false], ["KE-NWWDA-541055-CW-RFB", true]] as const) {
+    for (const width of [1440, 1280, 1024]) {
+      await openPackage(page, ref, width);
+      const chip = page.locator("[data-box-slot] [data-scope-chip]");
+      await expect(chip).toContainText(ref);
+      await expect(chip.getByText("Within", { exact: true }), `${ref} at ${width} px`).toBeVisible({ visible: within });
+      const cut = await page.evaluate(() => {
+        const shown = [...document.querySelectorAll<HTMLElement>("[data-box-slot] [data-placeholder]")].find((el) => el.getClientRects().length > 0)!;
+        return shown.scrollWidth > shown.clientWidth;
+      });
+      expect(cut, `${ref} at ${width} px: the placeholder is cut`).toBe(false);
+    }
+  }
+});
+
 // The fixture's longest reference, with spaces, one of the package's 49 comparables (the plan's section 7.10).
 test("at 390 px a chip with the fixture's longest reference takes its own row, with the text under it", async ({ page }) => {
   const ref = "KE-UASIN GISHU COUNTY-571338-CW-RFB";

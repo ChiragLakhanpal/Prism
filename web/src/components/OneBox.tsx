@@ -56,7 +56,9 @@ function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void })
       className="flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
     >
       <span className="min-w-0 py-1 text-small">
-        <span className="mr-2 hidden text-ink-muted md:@min-[35rem]/box:inline">{copy.box.chipWithin}</span>
+        {/* A reference that holds a space, such as KE-UASIN GISHU COUNTY-571338-CW-RFB, is long enough without "Within",
+            which would cut the placeholder beside it (ticket 59; DESIGN.md section 5, Scope chip). */}
+        <span className={cx("mr-2 hidden text-ink-muted", !scope.includes(" ") && "md:@min-[35rem]/box:inline")}>{copy.box.chipWithin}</span>
         <MonoWords text={scope} className="align-top text-ink" />
       </span>
       {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}

@@ -90,9 +90,18 @@ function altText(cost: Cost): string {
   return `${base} ${words.altMiddle.replace("{q25}", say(cost.quartiles.q25)).replace("{q75}", say(cost.quartiles.q75)).replace("{q50}", say(cost.quartiles.q50))}`;
 }
 
+type QuantileDot = NonNullable<Cost["quantile_dots"]>[number];
+// A dot on the lane: one comparable package, or a quantile dot that stands for an equal share of them.
+type Mark = { key: string; diff: number; row: CostRow | null; dot: QuantileDot | null };
+
+function quantileName(dot: QuantileDot, dots: number, total: number): string {
+  const n = (value: number) => formatNumber(value, { compact: false });
+  return words.dotQuantile(n(dot.k), n(dots), n(dot.count), n(total), formatSignedPercent(dot.diff_pct, { style: "words" }));
+}
+
 // The lane itself: an svg drawing named by the alt text, and over it one group of dots with one tab stop.
-function Lane({ cost, onOpen, title, width }: {
-  cost: Cost; onOpen: (row: CostRow, element: HTMLElement) => void; title: string; width: number;
+function Lane({ cost, onOpen, onTable, title, width }: {
+  cost: Cost; onOpen: (row: CostRow, element: HTMLElement) => void; onTable: () => void; title: string; width: number;
 }) {
   const [active, setActive] = useState(0);
   const [shown, setShown] = useState<number | null>(null);
@@ -102,14 +111,23 @@ function Lane({ cost, onOpen, title, width }: {
   const pointer = useRef("mouse");
   const open = useOpenId();
   const rows = cost.rows;
+  // Above past_range.quantile_dots_above comparable packages the tool returns quantile dots, each standing for an equal
+  // share of the packages at its share's middle difference, as the past range draws them (brief 12): the lane draws
+  // those, and a dot's press opens the table twin, which keeps every package (ticket 59; the 31 review, round 3, F5).
+  const quantile = cost.quantile_dots;
+  const marks: Mark[] = quantile
+    ? quantile.map((dot) => ({ key: `dot-${dot.k}`, diff: dot.diff_pct, row: null, dot }))
+    : rows.map((row) => ({ key: row.step_reference, diff: row.diff_pct, row, dot: null }));
+  const openMark = (mark: Mark, element: HTMLElement) => (mark.row ? onOpen(mark.row, element) : onTable());
   const type = chartType(width || 600);
   const narrow = width > 0 && width < 400;
-  const r = narrow ? 4 : 4.5;
+  // Quantile dots are drawn larger, as on the past range (DESIGN.md section 6).
+  const r = quantile ? (narrow ? 5 : 6) : narrow ? 4 : 4.5;
   const lane = 96;
   const ranged = Boolean(cost.quartiles);
   const axis = percentAxis(rows.map((row) => row.diff_pct));
   const x = (value: number) => EDGE + ((value - axis.min) / (axis.max - axis.min)) * Math.max(0, width - 2 * EDGE);
-  const offsets = swarm(rows.map((row) => x(row.diff_pct)), r, lane) ?? rows.map(() => 0);
+  const offsets = swarm(marks.map((mark) => x(mark.diff)), r, lane) ?? marks.map(() => 0);
   const zero = x(0);
   const textWidth = (text: string) => text.length * type.s * 0.56;
   const ticks: number[] = [];
@@ -138,7 +156,7 @@ function Lane({ cost, onOpen, title, width }: {
   // plot allows, so they never step down and across each other (ticket 59; the 31 critique, round 3, follow-up 5).
   const stackWidth = Math.max(below > 0 ? textWidth(belowText) : 0, above > 0 ? textWidth(aboveText) : 0);
   const stackX = Math.min(Math.max(zero - stackWidth / 2, PAD), Math.max(PAD, width - PAD - stackWidth));
-  const tip = shown !== null && !hidden ? rows[shown] : null;
+  const tip = shown !== null && !hidden ? marks[shown] : null;
   const middleLabel = cost.quartiles
     ? words.middleLabel
         .replace("{q25}", formatSignedPercent(cost.quartiles.q25))
@@ -146,7 +164,7 @@ function Lane({ cost, onOpen, title, width }: {
         .replace("{q50}", formatSignedPercent(cost.quartiles.q50))
     : "";
   const keys = (event: KeyboardEvent) => {
-    const last = rows.length - 1;
+    const last = marks.length - 1;
     const next =
       event.key === "ArrowRight" || event.key === "ArrowDown" ? Math.min(last, active + 1)
         : event.key === "ArrowLeft" || event.key === "ArrowUp" ? Math.max(0, active - 1)
@@ -161,7 +179,7 @@ function Lane({ cost, onOpen, title, width }: {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       const element = dots.current[active];
-      if (element) onOpen(rows[active], element);
+      if (element) openMark(marks[active], element);
       return;
     }
     if (event.key === "Escape" && shown !== null && !hidden) {
@@ -172,8 +190,8 @@ function Lane({ cost, onOpen, title, width }: {
     }
   };
   useEffect(() => {
-    if (active > rows.length - 1) setActive(0);
-  }, [rows.length, active]);
+    if (active > marks.length - 1) setActive(0);
+  }, [marks.length, active]);
   return (
     <div className="relative mt-2" onKeyDown={keys} data-cost-lane>
       <p id={altId} className="sr-only">{altText(cost)}</p>
@@ -234,15 +252,15 @@ function Lane({ cost, onOpen, title, width }: {
               {aboveText}
             </text>
           )}
-          {/* One dot per comparable package with both amounts. */}
-          {rows.map((row, index) => {
-            const opened = open === costRecordId(row.step_reference);
+          {/* One dot per comparable package with both amounts, or one per quantile above the threshold. */}
+          {marks.map((mark, index) => {
+            const opened = mark.row !== null && open === costRecordId(mark.row.step_reference);
             return (
-              <g key={row.step_reference}>
-                <circle cx={x(row.diff_pct)} cy={centre + offsets[index]} r={r} strokeWidth={2}
+              <g key={mark.key}>
+                <circle cx={x(mark.diff)} cy={centre + offsets[index]} r={r} strokeWidth={2}
                   className="fill-chart-cat1-text stroke-surface" />
                 {(opened || (shown === index && !hidden)) && (
-                  <circle cx={x(row.diff_pct)} cy={centre + offsets[index]} r={r + 2} strokeWidth={2}
+                  <circle cx={x(mark.diff)} cy={centre + offsets[index]} r={r + 2} strokeWidth={2}
                     className={opened ? "fill-none stroke-info-icon" : "fill-none stroke-chart-grey500"} />
                 )}
               </g>
@@ -254,16 +272,16 @@ function Lane({ cost, onOpen, title, width }: {
           its tooltip shows. Enter opens its cost records. */}
       <div role="group" aria-label={title} className="pointer-events-none absolute inset-0">
         {width > 0 &&
-          rows.map((row, index) => (
+          marks.map((mark, index) => (
             <span
-              key={row.step_reference}
+              key={mark.key}
               ref={(element) => {
                 dots.current[index] = element;
               }}
               role="img"
-              aria-label={dotName(row)}
+              aria-label={mark.row ? dotName(mark.row) : quantileName(mark.dot!, marks.length, cost.counts.m)}
               tabIndex={index === active ? 0 : -1}
-              data-cost-dot={row.step_reference}
+              data-cost-dot={mark.key}
               onFocus={() => {
                 setActive(index);
                 setShown(index);
@@ -281,15 +299,15 @@ function Lane({ cost, onOpen, title, width }: {
               onClick={(event) => {
                 // Each dot's target is 8 px wider than the dot, so in a cluster a tap lands on whichever is on top:
                 // on a touch screen, the dot nearest the tap opens (the 31 design review, F6).
-                if (pointer.current !== "touch") return onOpen(row, event.currentTarget);
+                if (pointer.current !== "touch") return openMark(mark, event.currentTarget);
                 const box = (event.currentTarget.parentElement ?? event.currentTarget).getBoundingClientRect();
                 const at = { x: event.clientX - box.left, y: event.clientY - box.top };
-                const distance = (index: number) => (x(rows[index].diff_pct) - at.x) ** 2 + (centre + offsets[index] - at.y) ** 2;
-                const nearest = rows.reduce((best, _, index) => (distance(index) < distance(best) ? index : best), index);
-                onOpen(rows[nearest], dots.current[nearest] ?? event.currentTarget);
+                const distance = (index: number) => (x(marks[index].diff) - at.x) ** 2 + (centre + offsets[index] - at.y) ** 2;
+                const nearest = marks.reduce((best, _, index) => (distance(index) < distance(best) ? index : best), index);
+                openMark(marks[nearest], dots.current[nearest] ?? event.currentTarget);
               }}
               className="pointer-events-auto absolute cursor-pointer rounded-full after:absolute after:-inset-2 after:content-['']"
-              style={{ left: x(row.diff_pct) - r, top: centre + offsets[index] - r, width: 2 * r, height: 2 * r }}
+              style={{ left: x(mark.diff) - r, top: centre + offsets[index] - r, width: 2 * r, height: 2 * r }}
             />
           ))}
       </div>
@@ -299,7 +317,7 @@ function Lane({ cost, onOpen, title, width }: {
           data-cost-tooltip
           className="absolute z-10 w-max max-w-[240px] rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
           style={{
-            left: Math.min(Math.max(0, x(tip.diff_pct) - 120), Math.max(0, width - 240)),
+            left: Math.min(Math.max(0, x(tip.diff) - 120), Math.max(0, width - 240)),
             // Below 400 px of chart width it opens under the dot, so it never covers the subtitle or the line's
             // label above the lane.
             ...(narrow
@@ -308,19 +326,32 @@ function Lane({ cost, onOpen, title, width }: {
             fontSize: type.s,
           }}
         >
-          <p className="font-semibold text-chart-text">
-            <MonoWords text={tip.step_reference} />
-          </p>
-          <p className="font-bold text-chart-text tabular-nums" style={{ fontSize: type.m }}>
-            {formatSignedPercent(tip.diff_pct)}
-          </p>
-          <p className="text-chart-text-subtle">
-            {(tip.country_name ? words.tooltipLine : words.tooltipLineNoCountry)
-              .replace("{signed}", usd(tip.signed_amount_usd))
-              .replace("{estimate}", usd(tip.estimated_amount_usd))
-              .replace("{country}", tip.country_name ?? "")}
-          </p>
-          <p className="mt-1 text-chart-text-subtle">{words.tooltipOpen}</p>
+          {tip.row ? (
+            <>
+              <p className="font-semibold text-chart-text">
+                <MonoWords text={tip.row.step_reference} />
+              </p>
+              <p className="font-bold text-chart-text tabular-nums" style={{ fontSize: type.m }}>
+                {formatSignedPercent(tip.row.diff_pct)}
+              </p>
+              <p className="text-chart-text-subtle">
+                {(tip.row.country_name ? words.tooltipLine : words.tooltipLineNoCountry)
+                  .replace("{signed}", usd(tip.row.signed_amount_usd))
+                  .replace("{estimate}", usd(tip.row.estimated_amount_usd))
+                  .replace("{country}", tip.row.country_name ?? "")}
+              </p>
+              <p className="mt-1 text-chart-text-subtle">{words.tooltipOpen}</p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold text-chart-text">{words.tipQuantile(formatNumber(tip.dot!.count, { compact: false }))}</p>
+              <p className="font-bold text-chart-text tabular-nums" style={{ fontSize: type.m }}>
+                {formatSignedPercent(tip.dot!.diff_pct)}
+              </p>
+              <p className="text-chart-text-subtle">{words.tipQuantileLine}</p>
+              <p className="mt-1 text-chart-text-subtle">{words.tooltipOpenDots}</p>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -510,7 +541,13 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
         </p>
       )}
       <p className="text-chart-text-subtle" style={{ fontSize: type.m }}>{words.subtitle}</p>
-      <Lane cost={cost} onOpen={onOpen} title={titleText(cost)} width={width} />
+      {/* With quantile dots, brief 12's key line says what a dot stands for. */}
+      {cost.quantile_dots && (
+        <p className="text-chart-text-subtle" style={{ fontSize: type.s }} data-cost-key>
+          {words.keyDots(formatNumber(cost.counts.m, { compact: false }))}
+        </p>
+      )}
+      <Lane cost={cost} onOpen={onOpen} onTable={showTable} title={titleText(cost)} width={width} />
       {cost.quartiles && (
         <p className="max-w-prose text-body text-ink" data-cost-middle>
           <Fill

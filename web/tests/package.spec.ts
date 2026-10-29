@@ -351,10 +351,18 @@ test("the plan line never runs through a statistic's label: the label moves off 
   for (const width of [1440, 390]) {
     await openPackage(page, { width });
     await ready(page);
-    // 10 months sits just past the 8-in-10 point, where a reader drags the line to ask whether 10 would be enough.
-    for (const months of ["10", "6", "3.5"]) {
+    // 10 months sits just past the 8-in-10 point, where a reader drags the line to ask whether 10 would be enough; 4.4
+    // and 5 sit on and just past the middle, where ticket 59 re-checked that the middle's label, moved off the line,
+    // never stacks over the 8-in-10 label.
+    for (const months of ["10", "6", "3.5", "4.4", "5"]) {
       await page.getByRole("textbox", { name: "Planned months" }).fill(months);
       await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", String(Number(months)));
+      const stacked = await page.evaluate(() => {
+        const boxes = [...document.querySelectorAll("[data-chart-drawing] [data-row-c]")].map((label) => label.getBoundingClientRect());
+        // Two rows of row C sit 16 px apart, so their letters' boxes may touch by a few pixels; over each other is more.
+        return boxes.some((a, i) => boxes.some((b, j) => i < j && a.left < b.right && b.left < a.right && a.top < b.bottom - 6 && b.top < a.bottom - 6));
+      });
+      expect(stacked, `${width} px, ${months} months: two statistics' labels over each other`).toBe(false);
       // A label the line's x falls inside must sit on its knockout, drawn over the line and wider than the label.
       const through = await page.evaluate(() => {
         const svg = document.querySelector("[data-chart-drawing]")!;
