@@ -293,11 +293,17 @@ test("a failed load says so with Try again and the code, and a route the server 
   await expect(zone.getByRole("status")).toHaveText("I couldn't load the count of packages advertised again.");
   await expect(block(page).getByRole("status")).toHaveCount(0);
 
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
   await page.route(`**${API}/rebidding`, async (route) => {
     calls += 1;
+    await held;
     await route.fulfill({ contentType: "application/json", body: await recorded("rebidding-ke-nwwda-541055.json") });
   });
   await block(page).getByRole("button", { name: "Try again" }).click();
+  // The region empties while the retry runs, so a second failure would be heard again (ticket 60's review, item 5).
+  await expect(zone.getByRole("status")).toHaveText("");
+  release();
   await expect(block(page)).toHaveAttribute("data-rebidding", "found");
   await expect(block(page).getByRole("heading", { level: 3 })).toBeFocused();
   expect(calls).toBe(1);

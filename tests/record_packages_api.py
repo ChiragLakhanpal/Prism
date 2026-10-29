@@ -142,9 +142,15 @@ def answers(folder: Path) -> dict[str, str]:
             later(10)
             found["package-plan-yourself.sse"] = await plan("package-rural-roads-kenya", SENTENCE, read=False)
             found["planned-package-yourself.json"] = await get("/api/planned-packages/pkg-000000000002")
+            # Sections 2 and 5 of the package set up yourself, which lacks the criteria that pick comparables (ticket
+            # 60's design review, F6), so the capture's planned--missing shows each section as the app reads it.
+            found["steps-planned-yourself.json"] = await get("/api/planned-packages/pkg-000000000002/steps")
+            found["criteria-summary-planned-yourself.json"] = await get("/api/planned-packages/pkg-000000000002/criteria")
             later(10)
             found["package-plan-dividing.sse"] = await plan("package-dividing", DIVIDING)
             found["planned-package-dividing.json"] = await get("/api/planned-packages/pkg-000000000003")
+            found["steps-planned-dividing.json"] = await get("/api/planned-packages/pkg-000000000003/steps")
+            found["criteria-summary-planned-dividing.json"] = await get("/api/planned-packages/pkg-000000000003/criteria")
             found["package-plan-no-package.sse"] = await plan("package-no-package", NO_PACKAGE)
             found["package-plan-reader-unavailable.sse"] = await plan("unavailable", SENTENCE)
             found["planned-packages-list.json"] = await get("/api/planned-packages")

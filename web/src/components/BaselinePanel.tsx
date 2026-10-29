@@ -44,6 +44,7 @@ type Mode =
   | { kind: "busy"; action: Action }
   | { kind: "done"; message: ReactNode; undo: () => Promise<void> }
   | { kind: "undone"; message: ReactNode }
+  | { kind: "beaten"; winner: Baseline }
   | { kind: "failed"; again: () => void }
   | { kind: "permission" };
 
@@ -115,10 +116,11 @@ export function BaselinePanel({
   });
   const undoTo = (to: string | null) => async () =>
     run("undo", () => (to ? save(to) : remove()), () => undone(to));
-  // A save that another save beat answers with the plan that won as the baseline: the panel then says what the
-  // baseline is, naming that plan, and never that it saved yours (ticket 60).
+  // A save that another save beat answers with the plan that won as the baseline: the panel then says your save did not
+  // take and who saved which plan first, never that it saved yours, and the baseline as it stands follows (ticket 60 and
+  // its design review, F2).
   const unlessBeaten = (made: () => Mode) => (result: { baseline: Baseline | null }): Mode =>
-    result.baseline && result.baseline.plan_date !== planDate ? { kind: "idle" } : made();
+    result.baseline && result.baseline.plan_date !== planDate ? { kind: "beaten", winner: result.baseline } : made();
 
   const isThis = baseline?.plan_date === planDate;
   const savedOn = baseline ? date(baseline.saved_on) : null;
@@ -150,8 +152,13 @@ export function BaselinePanel({
     message = text;
   } else if (mode.kind === "undone") {
     message = mode.message;
+  } else if (mode.kind === "beaten") {
+    message = (
+      <Fill template={words.beaten} slots={{ saved_by: mode.winner.saved_by ?? "", baseline_date: date(mode.winner.plan_date) }} />
+    );
   }
-  if (staff && (mode.kind === "idle" || mode.kind === "undone" || mode.kind === "busy" || mode.kind === "failed")) {
+  const idle = mode.kind === "idle" || mode.kind === "undone" || mode.kind === "busy" || mode.kind === "failed" || mode.kind === "beaten";
+  if (staff && idle) {
     if (!baseline) {
       controls = (
         <Button
@@ -208,6 +215,7 @@ export function BaselinePanel({
       <p ref={status} role="status" tabIndex={-1} className="max-w-prose text-body text-ink focus:outline-none">
         {message}
       </p>
+      {mode.kind === "beaten" && <p className="mt-2 max-w-prose text-body text-ink">{text}</p>}
       {mode.kind === "failed" && (
         <div className="mt-3">
           <Alert

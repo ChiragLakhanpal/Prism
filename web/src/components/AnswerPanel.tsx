@@ -565,11 +565,13 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     };
   }
   const outage = outages(run);
+  // A partial refusal says the rest was answered only when some of the rest is on screen (ticket 60's design review,
+  // F1); with every other sentence removed, it says the rest was written but none of it shows.
   const partial =
     refusal && run.refusal?.partial ? (
       <>
         <p>
-          {refusal.lead} {refusal.why} {copy.answer.refusalPartial}
+          {refusal.lead} {refusal.why} {checks.sentences.kept === 0 ? copy.answer.refusalPartialNone : copy.answer.refusalPartial}
         </p>
         <div className="mt-2">
           <RefusalWindow />

@@ -451,6 +451,9 @@ test("a partial refusal whose other sentences could not be checked keeps its ref
   await expect(panel(page).getByRole("alert")).toContainText(
     "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources.",
   );
+  // Its design review, F1, and the critique: with nothing of the rest on screen, the paragraph never says I answered it.
+  await expect(refusal).not.toContainText("I answered the rest of your question.");
+  await expect(refusal).toContainText("I wrote an answer to the rest of your question, but I couldn't show any of it.");
   // The refusal comes before the alert, in the order of the page.
   const alert = panel(page).getByRole("alert");
   expect((await refusal.boundingBox())!.y).toBeLessThan((await alert.boundingBox())!.y);

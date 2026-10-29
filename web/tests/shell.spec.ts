@@ -248,8 +248,6 @@ test("Expand the sidebar opens the rail to 224 px at once, Collapse the sidebar 
   expect((await column.boundingBox())!.width).toBe(64);
 });
 
-// A rail item's label shows in a tooltip on hover and on keyboard focus; the name stays in the link, so the tooltip
-// is hidden from screen readers. The open sidebar shows its labels and no tooltip.
 // Ticket 60 (ticket 93's review, F1): on a preview link with /api/me failing, the sidebar keeps its loading bars, and
 // shows the data stamp all the same, open at 1440 px and in the Menu sheet.
 test("on a preview link with who is viewing unread, the sidebar and the Menu sheet still show the data stamp", async ({ page }) => {
@@ -333,6 +331,8 @@ test("narrowing across 1024 px with the Menu sheet closed hides the sidebar at o
   await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
 });
 
+// A rail item's label shows in a tooltip on hover and on keyboard focus; the name stays in the link, so the tooltip
+// is hidden from screen readers. The open sidebar shows its labels and no tooltip.
 test("each rail item's tooltip shows its label on hover and on keyboard focus", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1280, height: 900 });

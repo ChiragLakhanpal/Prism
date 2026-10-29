@@ -286,14 +286,16 @@ export function EditorBody({
           )}
           <p className="text-caption text-ink-muted">{field.picks ? words.picks : words.doesNotPick}</p>
           <div className="flex flex-wrap gap-2">
-            {!choosing && (!guessed || edited) && (
-              <Button variant="secondary" onClick={commitText}>
-                {words.use}
-              </Button>
-            )}
+            {/* On a guess, "Keep" comes first, so "Use this" joins after the buttons already shown when you edit the
+                value, and nothing moves under the pointer (ticket 60's design review, F7). */}
             {guessed && (
               <Button variant="secondary" onClick={() => onCommit({ field: field.key, action: "keep" })}>
                 {words.keep(valueText(field, value.value, form, approximate))}
+              </Button>
+            )}
+            {!choosing && (!guessed || edited) && (
+              <Button variant="secondary" onClick={commitText}>
+                {words.use}
               </Button>
             )}
             {computedHidden && (

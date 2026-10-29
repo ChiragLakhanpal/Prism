@@ -991,6 +991,14 @@ test("after a change made elsewhere exported the draft, focus goes to the export
   // Ticket 60 (ticket 35's design review, round 4, P3): the panel says the export came from elsewhere, at its top, so
   // "Exported on ..." never reads as the result of your own press.
   await expect(page.locator("[data-export-success] [data-export-notice]")).toHaveText("This draft changed in another tab or window, so I reloaded it.");
+  // Its design review, F3: the notice is a line of its own above the success row, so the check marks the heading.
+  // Both are measured at once, since the page may still be scrolling to the panel.
+  const offset = await page.locator("[data-export-success]").evaluate((panel) => {
+    const top = (selector: string) => panel.querySelector(selector)!.getBoundingClientRect().top;
+    return top(":scope > div > svg") - top("h2");
+  });
+  expect(offset).toBeGreaterThanOrEqual(-1);
+  expect(offset).toBeLessThan(16);
 });
 
 test("a refused act shows its failure in the bar and keeps the state; a change made elsewhere reloads the draft", async ({ page }) => {

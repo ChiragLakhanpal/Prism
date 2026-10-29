@@ -1,0 +1,23 @@
+{
+  "state": "no_comparables",
+  "comparables_total": 0,
+  "public_criteria_count": 0,
+  "public": [],
+  "signature": "cbe5cfdf7c2118a9",
+  "records_through": null,
+  "limits": {
+    "max_chars": 20000,
+    "counter_left": 2000,
+    "rows_per_group": 5,
+    "lessons_per_group": 3,
+    "lesson_factors": [
+      "cost_estimates",
+      "designs_and_specifications"
+    ],
+    "min_comparables": 20
+  },
+  "comparison": null,
+  "package_run": null,
+  "section_checks": null,
+  "public_sources": []
+}

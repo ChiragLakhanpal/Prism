@@ -746,8 +746,12 @@ test("on a guess, Use this shows only after you edit the value", async ({ page }
   const editor = page.getByRole("dialog", { name: "Number of lots" });
   await expect(editor.getByRole("button", { name: "Keep 2 lots" })).toBeVisible();
   await expect(editor.getByRole("button", { name: "Use this" })).toHaveCount(0);
+  const before = (await editor.getByRole("button", { name: "Keep 2 lots" }).boundingBox())!;
   await editor.getByRole("textbox").fill("3");
   await expect(editor.getByRole("button", { name: "Use this" })).toBeVisible();
+  // Its design review, F7: "Use this" joins after the buttons you have seen, so "Keep 2 lots" stays where it was.
+  const after = (await editor.getByRole("button", { name: "Keep 2 lots" }).boundingBox())!;
+  expect([after.x, after.y]).toEqual([before.x, before.y]);
 });
 
 test("a computed chip you set yourself turns typed, the note shows both values, and Use the computed value goes back", async ({ page }) => {

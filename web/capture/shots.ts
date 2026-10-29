@@ -84,13 +84,19 @@ const ROUTES: [string, string][] = [
 const RISKS_PATH = "/packages/KE-NWWDA-541055-CW-RFB";
 const RISKS_API = "/api/packages/KE-NWWDA-541055-CW-RFB";
 function riskShot(name: string, risks: Answer | null, rest: Partial<Shot> = {}): Shot {
-  // Section 1 answers with the same criteria section 3 was read with, so the page pairs India's comparables with
-  // India's risks, as the app does, and Kenya's with Kenya's (ticket 60).
+  // Section 1 answers with the same criteria section 3 was read with (India from 2013, as tests/record_risks_api.py
+  // reads India's risks), so the page pairs India's comparables with India's risks, as the app does, and Kenya's with
+  // Kenya's. Sections 2 and 5 and lane 2 answer as they do on the package shots, so no section shows a load error
+  // the app does not (ticket 60 and its design review, B1).
   const india = Boolean(risks?.recorded?.includes("-india"));
   const answers: Record<string, Answer> = {
     ...app(name, RISKS_PATH).api,
     [RISKS_API]: { recorded: "package-ke-nwwda-541055.json" },
-    [`${RISKS_API}/comparables`]: { recorded: india ? "comparables-ke-nwwda-541055-india.json" : "comparables-ke-nwwda-541055.json" },
+    [`${RISKS_API}/comparables`]: { recorded: india ? "comparables-ke-nwwda-541055-india-2013.json" : "comparables-ke-nwwda-541055.json" },
+    [`${RISKS_API}/steps`]: { recorded: "steps-ke-nwwda-541055.json" },
+    [`${RISKS_API}/estimate`]: { recorded: "estimate-ke-nwwda-541055.json" },
+    [`${RISKS_API}/criteria`]: { recorded: "criteria-summary-ke-nwwda-541055.json" },
+    [`${RISKS_API}/criteria/run`]: { recorded: "criteria-run-ke-nwwda-541055.sse" },
     [`${RISKS_API}/risk-selection`]: { recorded: "risks-selection-saved.json" },
     "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
@@ -100,9 +106,12 @@ function riskShot(name: string, risks: Answer | null, rest: Partial<Shot> = {}):
   return app(`risks--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending: risks ? rest.pending : [`${RISKS_API}/risks`] });
 }
 const INDIA: Answer = { recorded: "risks-ke-nwwda-541055-india.json" };
+// Each shot that scrolls to section 3 is a whole-page shot, so it scrolls back to the top once the section has drawn,
+// and the sticky bar sits over the page's start, not over its middle (ticket 60's design review, F4).
 const toRisks = async (page: Page) => {
   await page.locator("section#risks").scrollIntoViewIfNeeded();
   await page.waitForTimeout(250);
+  await page.evaluate(() => window.scrollTo(0, 0));
 };
 const openPill = click("section#risks [data-risk-view]:visible [data-source-pill]");
 const RISK_SHOTS: Shot[] = [
@@ -240,15 +249,25 @@ type Answer = { recorded?: string; body?: string; status?: number };
 // An app shot: the page, with /api/me and /api/freshness answered from the recordings unless
 // the shot says otherwise. A page under /lessons also gets who is viewing it and the Lessons page's one read, so the
 // shell's shots there show the page and never a load error (ticket 102; ticket 60's routed note).
+// Home's own read answers every shot at "/" the same way, so a shot of the shell or an answer there never shows Home's
+// load error behind it (ticket 60's design review, F5).
 function app(name: string, path: string, answers: { me?: Answer; freshness?: Answer } = {}, rest: Partial<Shot> = {}): Shot {
   const lessons: Shot["api"] = path.startsWith("/lessons")
     ? { "/api/lessons/me": { recorded: "lessons-me-viewer.json" }, "/api/lessons/page": { recorded: "lessons-page.json" } }
     : {};
+  const home: Shot["api"] =
+    path === "/" || path.startsWith("/?")
+      ? {
+          "/api/home": { recorded: "home.json" },
+          "/api/home?view=piu": { recorded: "home-preview-piu.json" },
+          "/api/home?view=public": { recorded: "home-preview-public.json" },
+        }
+      : {};
   return {
     name,
     path,
     server: "app",
-    api: { "/api/me": answers.me ?? { recorded: "me.json" }, "/api/freshness": answers.freshness ?? { recorded: "freshness.json" }, ...lessons },
+    api: { "/api/me": answers.me ?? { recorded: "me.json" }, "/api/freshness": answers.freshness ?? { recorded: "freshness.json" }, ...lessons, ...home },
     ...rest,
   };
 }
@@ -1000,6 +1019,9 @@ const DRAFT_SHOTS: Shot[] = [
       await page.reload();
       await page.locator("[data-draft-bar] [data-button=primary]").first().click();
       await page.waitForTimeout(400);
+      // The success heading took focus and scrolled; a whole-page shot starts at the top, so the sticky bar sits
+      // over the page's start, not over its middle (ticket 60's design review, F4).
+      await page.evaluate(() => window.scrollTo(0, 0));
     },
   }),
   draftShot("draft--not-found", { status: 404, body: '{"code":"unknown_draft"}' }, {}, "/drafts/draft-9999"),
@@ -1609,6 +1631,12 @@ const PLANNED_ANSWERS: Shot["api"] = {
   "/api/planned-packages/pkg-000000000003/risks": { recorded: "risks-planned-rural-roads.json" },
   // Section 2 (ticket 27): the rural roads package asks for its first step's date.
   "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-rural-roads.json" },
+  // Sections 2 and 5 of the package set up yourself and of the dividing one, as the server answered them (ticket 60's
+  // design review, F6), so planned--missing and planned--dividing show no load error the app does not show.
+  "/api/planned-packages/pkg-000000000002/steps": { recorded: "steps-planned-yourself.json" },
+  "/api/planned-packages/pkg-000000000002/criteria": { recorded: "criteria-summary-planned-yourself.json" },
+  "/api/planned-packages/pkg-000000000003/steps": { recorded: "steps-planned-dividing.json" },
+  "/api/planned-packages/pkg-000000000003/criteria": { recorded: "criteria-summary-planned-dividing.json" },
 };
 const plannedShot = (name: string, pkg: Answer = { recorded: PLANNED_FILE }, rest: Partial<Shot> = {}, path = PLANNED, read = PLANNED_API): Shot =>
   app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...PLANNED_ANSWERS, [read]: pkg, ...rest.api } });
@@ -2157,8 +2185,10 @@ export const SHOTS: Shot[] = [
   app("app--320", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB", {}, { widths: [320] }),
   app("app--hover-current-item", "/lessons", {}, { widths: WIDE, act: hover("[data-sidebar] [aria-current=page]") }),
   app("app--focus-wordmark", "/", {}, { act: focus("[data-nav-bar] a[href='/']") }),
-  app("app--focus-empty-link", "/", {}, { act: focus("[data-empty-state] a") }),
-  app("app--hover-empty-link", "/", {}, { act: hover("[data-empty-state] a") }),
+  // Home draws no empty state, so the empty card's link is shot on the Drafts list with no drafts (ticket 60's design
+  // review, F5).
+  app("app--focus-empty-link", "/drafts", {}, { api: { ...app("x", "/drafts").api, "/api/drafts": { recorded: "drafts-list-empty.json" } }, act: focus("[data-empty-state] a") }),
+  app("app--hover-empty-link", "/drafts", {}, { api: { ...app("x", "/drafts").api, "/api/drafts": { recorded: "drafts-list-empty.json" } }, act: hover("[data-empty-state] a") }),
   app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
 
   // The Data tab (ticket 16): every state of Data readiness and Sources and licenses, and its focus

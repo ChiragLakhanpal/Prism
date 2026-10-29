@@ -42,11 +42,6 @@ def _rows(engine: Engine, name: str, **params) -> list[dict]:
     return [dict(zip(result.columns, row)) for row in result.rows]
 
 
-def _utc(moment: dt.datetime) -> dt.datetime:
-    """A moment in UTC: the tables keep saved_at in UTC, and an engine may give it back without its zone."""
-    return moment.replace(tzinfo=dt.UTC) if moment.tzinfo is None else moment.astimezone(dt.UTC)
-
-
 def _remove(engine: Engine, project_id: str, agency: str) -> None:
     # The row first, so a failure before the steps leave shows no baseline rather than one with no dates.
     for name in ("remove", "remove_steps"):
@@ -68,12 +63,10 @@ def save(engine: Engine, project_id: str, agency: str, plan_date: dt.date, viewe
     engine.run(_query("save_steps"), values)
     engine.run(_query("save"), {**values, "implementing_agency": version["implementing_agency"],
                                 "plan_date": plan_date, "saved_by": viewer.user_id, "saved_by_name": viewer.name})
-    engine.run(_query("remove_older_steps"), {"project_id": project_id, "agency_id": agency, "saved_at": now})
     # A later save that landed first keeps the row (save.sql), so this save's steps would wait for the next save to
-    # leave: they leave now (ticket 60).
-    named = _rows(engine, "saved_at", project_id=project_id, agency_id=agency)
-    if named and _utc(named[0]["saved_at"]) != _utc(now):
-        engine.run(_query("remove_lost_steps"), {"project_id": project_id, "agency_id": agency, "saved_at": now})
+    # leave: they leave now, and the statement itself checks the row (ticket 60).
+    for name in ("remove_older_steps", "remove_lost_steps"):
+        engine.run(_query(name), {"project_id": project_id, "agency_id": agency, "saved_at": now})
     saved = read_baseline(engine, project_id, agency, today, "staff")
     return saved.record if saved else None
 

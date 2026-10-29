@@ -557,6 +557,8 @@ export function Rebidding({ path, section, sectionFailed = false, sectionLoading
             requestId: error instanceof ApiError ? (error.body.trace_id ?? null) : null,
             onRetry: () => {
               retried.current = true;
+              // The zone's live region empties first, so a second failure is heard again (ticket 60's review, item 5).
+              onStatus?.("");
               setAttempt((count) => count + 1);
             },
           });

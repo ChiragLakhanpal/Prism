@@ -1,0 +1,591 @@
+{
+  "tool": "estimate_time",
+  "as_of": "2026-10-23",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.tools.estimate_time:described/-/-@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": true,
+      "market_approach": null,
+      "prequalification": null,
+      "review_type": null,
+      "q25": 10.1,
+      "q50": 13.3,
+      "q75": 22.8,
+      "q80": 25.2,
+      "days": {
+        "q25": 308,
+        "q50": 406,
+        "q75": 693,
+        "q80": 766
+      },
+      "abstention": null
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/-/N@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": null,
+      "prequalification": "N",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/-/Y@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": null,
+      "prequalification": "Y",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - National/-@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - National",
+      "prequalification": null,
+      "review_type": null,
+      "q25": 10.1,
+      "q50": 13.3,
+      "q75": 22.8,
+      "q80": 25.2,
+      "days": {
+        "q25": 308,
+        "q50": 406,
+        "q75": 693,
+        "q80": 766
+      },
+      "abstention": null
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - National/N@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - National",
+      "prequalification": "N",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - National/Y@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - National",
+      "prequalification": "Y",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - International/-@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - International",
+      "prequalification": null,
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - International/N@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - International",
+      "prequalification": "N",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    },
+    {
+      "evidence_id": "strata.tools.estimate_time:described/Open - International/Y@2026-10-23",
+      "public_from": "2026-10-23",
+      "source": {
+        "model": "strata.gold.time_estimate",
+        "model_version": 1,
+        "run_id": null,
+        "scored": "request"
+      },
+      "as_described": false,
+      "market_approach": "Open - International",
+      "prequalification": "Y",
+      "review_type": null,
+      "q25": null,
+      "q50": null,
+      "q75": null,
+      "q80": null,
+      "days": null,
+      "abstention": "value_not_learned"
+    }
+  ],
+  "coverage": {
+    "matched": 9,
+    "used": 2,
+    "not_used": [
+      {
+        "reason": "value_not_learned",
+        "count": 7,
+        "evidence_ids": [
+          "strata.tools.estimate_time:described/-/N@2026-10-23",
+          "strata.tools.estimate_time:described/-/Y@2026-10-23",
+          "strata.tools.estimate_time:described/Open - National/N@2026-10-23",
+          "strata.tools.estimate_time:described/Open - National/Y@2026-10-23",
+          "strata.tools.estimate_time:described/Open - International/-@2026-10-23",
+          "strata.tools.estimate_time:described/Open - International/N@2026-10-23",
+          "strata.tools.estimate_time:described/Open - International/Y@2026-10-23"
+        ]
+      }
+    ]
+  },
+  "package": {
+    "step_reference": null,
+    "described": {
+      "market_approach": null,
+      "prequalification": null,
+      "lots": null,
+      "review_type": null,
+      "estimated_amount_usd": null,
+      "category": null,
+      "method": null,
+      "country_code": null
+    }
+  },
+  "comparables": {
+    "n": 135,
+    "signed": 122,
+    "still_open": 13
+  },
+  "estimate": {
+    "q25": 10.1,
+    "q50": 13.3,
+    "q75": 22.8,
+    "q80": 25.2,
+    "days": {
+      "q25": 308,
+      "q50": 406,
+      "q75": 693,
+      "q80": 766
+    },
+    "model": "strata.gold.time_estimate",
+    "model_version": 1,
+    "model_alias": "champion",
+    "training_through": "2026-10-23",
+    "scored_on": "2026-10-23",
+    "scored": "request"
+  },
+  "difference": {
+    "middle_diff_months": 8.7,
+    "direction": "later",
+    "reasons": []
+  },
+  "track_record": {
+    "year": 2025,
+    "abstention": {
+      "reason": "too_few_unseen_packages",
+      "n": 0,
+      "min_unseen_packages": 20
+    }
+  },
+  "test_years": [
+    {
+      "year": 2021,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0001",
+      "abstention": null
+    },
+    {
+      "year": 2022,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0002",
+      "abstention": null
+    },
+    {
+      "year": 2023,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0003",
+      "abstention": null
+    },
+    {
+      "year": 2024,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0004",
+      "abstention": null
+    },
+    {
+      "year": 2025,
+      "n": 0,
+      "m": 0,
+      "expected": 0,
+      "error_estimate_months": null,
+      "error_past_range_months": null,
+      "error_plan_months": null,
+      "mlflow_run_id": "offline-run-0005",
+      "abstention": null
+    }
+  ],
+  "plan_dates": {
+    "middle": {
+      "months": 13.3,
+      "ran_longer": 0,
+      "total": 0,
+      "in10": null
+    },
+    "eight_in_ten": {
+      "months": 25.2,
+      "ran_longer": 0,
+      "total": 0,
+      "in10": null
+    },
+    "default": "eight_in_ten"
+  },
+  "comparisons": [],
+  "options": {
+    "approaches": [
+      {
+        "market_approach": "Open - National",
+        "lots": 1,
+        "prequalification": "N",
+        "k": 3,
+        "matching_ids": [
+          "KE-CWSB-232660-CW-RFB",
+          "KE-CWSB-233052-CW-RFB",
+          "KE-NWWDA-229129-CW-RFB"
+        ],
+        "is_as_described": false,
+        "estimate": null,
+        "abstention": {
+          "reason": "too_few_in_subgroup",
+          "k": 3,
+          "n": 135,
+          "min_subgroup": 20
+        }
+      }
+    ],
+    "count": 1,
+    "recorded": 3,
+    "ruled_out": 0,
+    "unrecorded": 132,
+    "n": 135,
+    "review_type": null
+  },
+  "axis_max_months": 25.2,
+  "thresholds": {
+    "min_comparables": 20,
+    "min_subgroup": 20,
+    "min_unseen_packages": 20
+  },
+  "step_dates": {
+    "min_comparables": 20,
+    "middle_in10": 5,
+    "cautious_in10": 2,
+    "start_range": {
+      "from": "2025-10-23",
+      "to": "2031-10-23"
+    },
+    "method": null,
+    "dateable_n": 0,
+    "dated_n": {
+      "middle": 0,
+      "cautious": 0
+    },
+    "undated_n": 0,
+    "few_n": 0,
+    "none_dated": true,
+    "family": null,
+    "family_reason": "no_family",
+    "basis": null,
+    "needs_start_date": false,
+    "start_date": null,
+    "steps": [],
+    "longest": null,
+    "abstain_all": null,
+    "actual_steps_count": null,
+    "track_record": null,
+    "coverage": {
+      "total": 135,
+      "used": 135,
+      "missing": 0,
+      "other_family": 0,
+      "unconfirmed": 0,
+      "reason": "no_plan_dates",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    }
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": null,
+  "summary": {
+    "evidence_id": "strata.tools.estimate_time:@2026-10-23",
+    "public_from": "2026-10-23",
+    "source": {
+      "tool": "estimate_time",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "estimate": {
+      "q25": 10.1,
+      "q50": 13.3,
+      "q75": 22.8,
+      "q80": 25.2,
+      "days": {
+        "q25": 308,
+        "q50": 406,
+        "q75": 693,
+        "q80": 766
+      },
+      "model": "strata.gold.time_estimate",
+      "model_version": 1,
+      "model_alias": "champion",
+      "training_through": "2026-10-23",
+      "scored_on": "2026-10-23",
+      "scored": "request"
+    },
+    "difference": {
+      "middle_diff_months": 8.7,
+      "direction": "later",
+      "reasons": []
+    },
+    "track_record": {
+      "year": 2025,
+      "abstention": {
+        "reason": "too_few_unseen_packages",
+        "n": 0,
+        "min_unseen_packages": 20
+      }
+    },
+    "plan_dates": {
+      "middle": {
+        "months": 13.3,
+        "ran_longer": 0,
+        "total": 0,
+        "in10": null
+      },
+      "eight_in_ten": {
+        "months": 25.2,
+        "ran_longer": 0,
+        "total": 0,
+        "in10": null
+      },
+      "default": "eight_in_ten"
+    },
+    "comparisons": [],
+    "options": {
+      "approaches": [
+        {
+          "market_approach": "Open - National",
+          "lots": 1,
+          "prequalification": "N",
+          "k": 3,
+          "matching_ids": [
+            "KE-CWSB-232660-CW-RFB",
+            "KE-CWSB-233052-CW-RFB",
+            "KE-NWWDA-229129-CW-RFB"
+          ],
+          "is_as_described": false,
+          "estimate": null,
+          "abstention": {
+            "reason": "too_few_in_subgroup",
+            "k": 3,
+            "n": 135,
+            "min_subgroup": 20
+          }
+        }
+      ],
+      "count": 1,
+      "recorded": 3,
+      "ruled_out": 0,
+      "unrecorded": 132,
+      "n": 135,
+      "review_type": null
+    },
+    "comparables": {
+      "n": 135,
+      "signed": 122,
+      "still_open": 13
+    },
+    "coverage": {
+      "matched": 9,
+      "used": 2,
+      "not_used": [
+        {
+          "reason": "value_not_learned",
+          "count": 7,
+          "evidence_ids": [
+            "strata.tools.estimate_time:described/-/N@2026-10-23",
+            "strata.tools.estimate_time:described/-/Y@2026-10-23",
+            "strata.tools.estimate_time:described/Open - National/N@2026-10-23",
+            "strata.tools.estimate_time:described/Open - National/Y@2026-10-23",
+            "strata.tools.estimate_time:described/Open - International/-@2026-10-23",
+            "strata.tools.estimate_time:described/Open - International/N@2026-10-23",
+            "strata.tools.estimate_time:described/Open - International/Y@2026-10-23"
+          ]
+        }
+      ]
+    },
+    "step_dates": {
+      "min_comparables": 20,
+      "middle_in10": 5,
+      "cautious_in10": 2,
+      "start_range": {
+        "from": "2025-10-23",
+        "to": "2031-10-23"
+      },
+      "method": null,
+      "dateable_n": 0,
+      "dated_n": {
+        "middle": 0,
+        "cautious": 0
+      },
+      "undated_n": 0,
+      "few_n": 0,
+      "none_dated": true,
+      "family": null,
+      "family_reason": "no_family",
+      "basis": null,
+      "needs_start_date": false,
+      "start_date": null,
+      "steps": [],
+      "longest": null,
+      "abstain_all": null,
+      "actual_steps_count": null,
+      "track_record": null,
+      "coverage": {
+        "total": 135,
+        "used": 135,
+        "missing": 0,
+        "other_family": 0,
+        "unconfirmed": 0,
+        "reason": "no_plan_dates",
+        "sources": [
+          "notices",
+          "awards",
+          "documents",
+          "projects"
+        ]
+      }
+    }
+  },
+  "plan_date_choice": null
+}

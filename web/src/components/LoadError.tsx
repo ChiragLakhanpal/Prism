@@ -40,7 +40,6 @@ export function LoadError({
   return (
     <div data-load-error="service">
       <Alert
-        key={attempt}
         state="error"
         live="alert"
         action={
@@ -56,7 +55,9 @@ export function LoadError({
           </>
         }
       >
-        {message}
+        {/* Only the sentence is keyed by the try, so each failure is announced again while the button stays
+            mounted and keeps focus (ticket 60's review, B1). */}
+        <span key={attempt}>{message}</span>
       </Alert>
     </div>
   );

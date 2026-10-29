@@ -454,6 +454,12 @@ test("a project's page says when the data service didn't answer, and when your a
   // window less the rail, ticket 92) with the 1164 px window's 32 px margins (ticket 94), 8 columns of 57 px and 7
   // gutters of 32 px.
   expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(680);
+  // Ticket 60's review, B1: a retry that fails again keeps focus on "Try again", never on the page's body.
+  const retry = page.getByRole("button", { name: "Try again" });
+  await retry.focus();
+  await Promise.all([page.waitForResponse("**/api/projects/P156634"), page.keyboard.press("Enter")]);
+  await expect(retry).not.toHaveAttribute("aria-busy");
+  await expect(retry).toBeFocused();
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "error at 390 px").toEqual([]);
 

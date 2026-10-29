@@ -201,7 +201,9 @@ export function Table({
     const table = element.firstElementChild;
     if (table) observer.observe(table);
     return () => observer.disconnect();
-  });
+    // The observer reconnects only when the frame can appear or go, which the state's status decides (loading or
+    // ready draw it), not on every render (ticket 60's review, item 3).
+  }, [state.status]);
 
   if (state.status === "empty") {
     return (

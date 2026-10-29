@@ -527,6 +527,11 @@ test("on a query both judges finished, the two grades sit in the page, not in a 
   // "Judge the next query" is never under a stuck bar.
   await page.locator("[data-judging-finished=both]").getByRole("button", { name: /Show where you differed/ }).click();
   const next = page.locator("[data-judging-finished=both]").getByRole("link", { name: "Judge the next query" });
+  // In a 700 px window the link starts below the window, so focusing it scrolls it in, and the gap below proves the
+  // scroll padding (ticket 60's review, item 4).
+  await page.setViewportSize({ width: page.viewportSize()!.width, height: 700 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  expect(await next.evaluate((link) => link.getBoundingClientRect().top > window.innerHeight)).toBe(true);
   await next.focus();
   const box = (await next.boundingBox())!;
   const bar = (await page.locator("[data-grade-bar=locked]").boundingBox())!;

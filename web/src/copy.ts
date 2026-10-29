@@ -1112,6 +1112,9 @@ export const copy = {
       "I turn these requests down every time, and I say what I can do instead. Each one is also a question in my test set that I must turn down.",
     // A partial refusal: after the refusal's lead, before the rest of the answer (the 24 brief, section 4.6).
     refusalPartial: "I answered the rest of your question.",
+    // The same, when none of the rest is on screen, because every sentence of it was removed (ticket 60's design
+    // review, F1): the paragraph says only what the page shows.
+    refusalPartialNone: "I wrote an answer to the rest of your question, but I couldn't show any of it.",
     // The stream ended before its done event (section 5.9).
     dropped: "The connection dropped before the answer was ready.",
     stillInBox: "Your question is still in the box.",
@@ -2693,6 +2696,10 @@ export const copy = {
     replacing: "Replacing the baseline",
     keep: "Keep the plan of {date}",
     justReplaced: "I made the plan of {plan_date} the baseline in place of the plan of {old_date}.",
+    // A save that another save beat (ticket 60's design review, F2): the sentence for the baseline as it stands follows.
+    beaten:
+      "{saved_by} saved the plan of {baseline_date} as the baseline first, so I didn't save this plan. You can still make " +
+      "this plan the baseline.",
     // Undo saves that plan again, so the saver is now the person who pressed Undo (the 21 review, round 2).
     undone: "I undid that change. The baseline is the plan of {date}, now saved by you.",
     undoneNone: "I undid that change. No plan from this agency is saved as the baseline.",

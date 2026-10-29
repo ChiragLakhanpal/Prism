@@ -1155,12 +1155,18 @@ test("a save that another save beat names the plan that won, and never says it s
   const panel = page.getByRole("region", { name: "Baseline for delay" });
   await panel.getByRole("button", { name: "Save as the baseline" }).click();
 
+  // Its design review, F2: the panel says the save you pressed did not take, then the baseline as it stands, and you can
+  // still make this plan the baseline.
   await expect(panel.getByRole("status")).toHaveText(
-    "The baseline is the plan of July 21, 2025, saved by Ana Example on October 23, 2026. I measure delay from its dates as well as from the first published planned dates.",
+    "Ana Example saved the plan of July 21, 2025 as the baseline first, so I didn't save this plan. You can still make this plan the baseline.",
   );
   await expect(panel.getByRole("status")).toBeFocused();
+  await expect(panel).toContainText(
+    "The baseline is the plan of July 21, 2025, saved by Ana Example on October 23, 2026. I measure delay from its dates as well as from the first published planned dates.",
+  );
   await expect(panel).not.toContainText("I saved the plan of October 9, 2026");
   await expect(panel.getByRole("button", { name: "Undo" })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "Make this plan the baseline" })).toBeVisible();
 });
 
 test("a later plan's check names the saved baseline and who saved it, gives both delays, and asks in place before replacing it", async ({ page }) => {

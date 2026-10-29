@@ -131,18 +131,38 @@ test("the source page's table and plan rows are captured at 1440, 1024, 390 and 
   }
 });
 
-// Ticket 60 (ticket 30's review, F12): the risks shots pair section 1 and section 3 as the app does, India's with
-// India's, and the planned shots whose packages lack criteria or divide a package answer section 3 too.
-test("the risks shots pair India's comparables with India's risks, and every planned shot answers section 3", () => {
-  for (const shot of SHOTS.filter((candidate) => candidate.name.startsWith("risks--"))) {
-    const risks = shot.api?.["/api/packages/KE-NWWDA-541055-CW-RFB/risks"]?.recorded ?? "";
-    const comparables = shot.api?.["/api/packages/KE-NWWDA-541055-CW-RFB/comparables"]?.recorded ?? "";
-    expect(comparables.includes("-india"), `${shot.name}: ${risks} with ${comparables}`).toBe(risks.includes("-india"));
+// Ticket 60 (ticket 30's review, F12; its design review, B1): the risks shots pair section 1 and section 3 as the app
+// does. Section 1's answer was read with the criteria section 3 was read with, so every comparable package section 3
+// counted is one section 1 matched; the shots answer every route the package page reads; and the planned shots whose
+// packages lack criteria or divide a package answer section 3 too.
+const recording = (name: string) => JSON.parse(readFileSync(new URL(`../../tests/fixtures/api/${name}`, import.meta.url), "utf8"));
+test("the risks shots pair section 1 and section 3 read with the same criteria, and every planned shot answers sections 2, 3 and 5", () => {
+  const api = "/api/packages/KE-NWWDA-541055-CW-RFB";
+  const shots = SHOTS.filter((candidate) => candidate.name.startsWith("risks--") && candidate.api?.[`${api}/risks`]?.recorded);
+  expect(shots.map((shot) => shot.name)).toContain("risks--table");
+  for (const shot of shots) {
+    const risks = recording(shot.api![`${api}/risks`].recorded!);
+    const comparables = recording(shot.api![`${api}/comparables`].recorded!);
+    if (shot.api![`${api}/risks`].recorded!.includes("-india")) {
+      // tests/record_risks_api.py reads India's risks with these criteria.
+      expect([comparables.criteria.country, comparables.criteria.notice_from], shot.name).toEqual(["IN", "2013-01-01"]);
+    }
+    const matched = new Set<string>([
+      ...comparables.rows.map((row: { step_reference: string }) => row.step_reference),
+      ...comparables.coverage.not_used.flatMap((group: { step_references: string[] }) => group.step_references),
+    ]);
+    const counted = new URL(risks.counts_evidence_id.replace(/^[^?]*/, "http://strata.test/")).searchParams.get("packages")!.split(",");
+    expect(counted.filter((reference) => !matched.has(reference)), shot.name).toEqual([]);
+    for (const route of ["steps", "estimate", "criteria", "criteria/run"]) expect(shot.api![`${api}/${route}`], `${shot.name}: ${route}`).toBeDefined();
   }
   expect(SHOTS.find((shot) => shot.name === "planned--missing")?.api?.["/api/planned-packages/pkg-000000000002/risks"]?.recorded).toBe("risks-planned-yourself.json");
   expect(SHOTS.find((shot) => shot.name === "planned--dividing")?.api?.["/api/planned-packages/pkg-000000000003/risks"]).toBeDefined();
-  const missing = JSON.parse(readFileSync(new URL("../../tests/fixtures/api/risks-planned-yourself.json", import.meta.url), "utf8"));
-  expect(missing.empty_reason).toBe("missing_criteria");
+  expect(recording("risks-planned-yourself.json").empty_reason).toBe("missing_criteria");
+  // Sections 2 and 5 answer for those packages too (its design review, F6).
+  for (const [name, id] of [["planned--missing", "pkg-000000000002"], ["planned--dividing", "pkg-000000000003"]]) {
+    const api = SHOTS.find((shot) => shot.name === name)?.api ?? {};
+    for (const route of ["steps", "criteria"]) expect(api[`/api/planned-packages/${id}/${route}`]?.recorded, `${name}: ${route}`).toBeDefined();
+  }
 });
 
 // Ticket 60 (ticket 29's design review, round 3, F8): a change or a retirement is decided on a lesson that already has a

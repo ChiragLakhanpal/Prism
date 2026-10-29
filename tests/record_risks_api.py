@@ -7,7 +7,7 @@ the fixture database first, then run:
     uv run --frozen python tests/record_risks_api.py
 
 One story makes them all, on a copy of the fixture database as of October 28, 2026, after two reviewers from
-tests/fixtures/roles.toml added the fixture's three proposed lessons to the library on October 27
+tests/fixtures/roles.toml added the fixture's three proposed lessons to the library on October 23
 (tests/lesson_scenario.py). The fixture's only completion reports are P130164's, and Kenya's comparable works
 packages belong to projects still active, so:
 
@@ -49,7 +49,7 @@ from strata.server.app import create_app  # noqa: E402
 
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 OUT = ROOT / "tests" / "fixtures" / "api"
-DECIDED, TODAY = dt.date(2026, 10, 27), dt.date(2026, 10, 28)
+DECIDED, TODAY = dt.date(2026, 10, 23), dt.date(2026, 10, 28)
 ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-Preferred-Username": "Ana Example",
        "X-Forwarded-User": "4021@1984", "X-Forwarded-Access-Token": "token-for-ana-only"}
 DEMO = "/api/packages/KE-NWWDA-541055-CW-RFB"
