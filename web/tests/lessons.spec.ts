@@ -153,6 +153,15 @@ test("a lesson reviewer finds Waiting for review under Lessons in the sidebar wi
   await expect(row).toContainText("From the ICR for Rajasthan Road Sector Modernization Project (P130164), paragraph 54, page 23. South Asia.");
   await expect(row.locator("[data-badge=restated]")).toHaveText("Restated by IEG");
   await expect(row).toContainText("Day 3 of 10 business days, due November 5, 2026.");
+
+  // Three digits keep the current item on one line too (design round 2, item A), so Drafts below it stays put.
+  const me = JSON.parse(await recorded("lessons-me-reviewer.json"));
+  await page.route("**/api/lessons/me", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ...me, waiting: 100 }) }));
+  await page.reload();
+  await expect(queue.locator("[data-sub-count]")).toHaveText("100");
+  await expect(queue).toHaveAccessibleName("Waiting for review, 100 lessons");
+  await expect(queue).toHaveAttribute("aria-current", "page");
+  expect((await queue.boundingBox())!.height).toBeLessThanOrEqual(32);
 });
 
 test("while the queue loads, its purpose is already in place and names every one of the reviewer's regions", async ({ page }) => {

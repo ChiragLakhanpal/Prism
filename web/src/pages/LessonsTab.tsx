@@ -298,8 +298,10 @@ function FilterBar({ library, onChange, busy }: { library: LibraryAnswer; onChan
   return (
     <fieldset className="@container/filters" aria-busy={busy || undefined} data-filter-bar>
       <legend className="clip-visually">{w.filters.legend}</legend>
-      {/* One row of selects, each as wide as its words, and a stack below 30rem (ticket 102, critique round 1). */}
-      <div className="flex flex-col gap-3 @min-[30rem]/filters:flex-row @min-[30rem]/filters:flex-wrap @min-[30rem]/filters:gap-4">
+      {/* One row of selects, each as wide as its words, from a 62rem bar, where all four fit (ticket 102, critique round
+          1); two rows of two equal columns from 36rem, so no select sits alone on a row and none is too narrow for its
+          longest option (design round 2, item B); a stack below that. */}
+      <div className="flex flex-col gap-3 @min-[36rem]/filters:grid @min-[36rem]/filters:grid-cols-[repeat(2,minmax(0,20rem))] @min-[36rem]/filters:gap-4 @min-[62rem]/filters:flex @min-[62rem]/filters:flex-row @min-[62rem]/filters:flex-wrap">
         {FILTER_KEYS.map((key) => {
           const options = key === "status"
             ? library.options.status.map((option) => ({ key: option.key, label: w.filters.statuses[option.key] ?? option.key }))
@@ -319,7 +321,7 @@ function FilterBar({ library, onChange, busy }: { library: LibraryAnswer; onChan
                   // No type step of its own, so the base rule draws it at 16 px and a phone never zooms into it
                   // (DESIGN.md section 4, Phone baseline; ticket 102).
                   className={cx(
-                    "h-11 w-full appearance-none rounded-sm border border-line-strong pr-10 pl-3 text-ink hover:bg-tint-hover @min-[30rem]/filters:w-auto @min-[30rem]/filters:min-w-48",
+                    "h-11 w-full appearance-none rounded-sm border border-line-strong pr-10 pl-3 text-ink hover:bg-tint-hover @min-[62rem]/filters:w-auto @min-[62rem]/filters:min-w-48",
                     isSet ? "bg-tint shadow-[inset_0_0_0_2px_var(--color-primary)]" : "bg-surface",
                   )}
                 >

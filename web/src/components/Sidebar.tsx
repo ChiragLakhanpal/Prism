@@ -226,18 +226,19 @@ export function Sidebar({
                     aria-current={here}
                     // The count in a small badge, hidden at zero (ticket 102): the number alone on sight, and the link's
                     // name says what it counts, such as "Waiting for review, 3 lessons". The space between the label and
-                    // the badge keeps the visible words inside that name (WCAG 2.5.3, Label in Name). The right padding
-                    // and the badge's own are tight, so the current item's heavier label keeps to one line.
+                    // the badge keeps the visible words inside that name (WCAG 2.5.3, Label in Name). The right padding,
+                    // the 4 px gap and the badge's 2 px are tight, so the current item's heavier label keeps to one line
+                    // up to a count of 999 (design round 2, item A).
                     aria-label={sub.count?.words}
                     data-sub-item={sub.pageKey}
-                    className={cx("relative flex min-h-8 items-center gap-2 rounded-sm py-1 pr-2 pl-10 text-small transition-paint", here ? CURRENT : "text-ink hover:bg-surface-2")}
+                    className={cx("relative flex min-h-8 items-center gap-1 rounded-sm py-1 pr-2 pl-10 text-small transition-paint", here ? CURRENT : "text-ink hover:bg-surface-2")}
                   >
                     <span className="min-w-0 flex-1">{sub.label}</span>{" "}
                     {sub.count && (
                       <span
                         aria-hidden="true"
                         data-sub-count
-                        className="min-w-6 shrink-0 rounded-pill border border-line bg-surface px-1 text-center text-caption font-semibold text-ink tabular-nums"
+                        className="min-w-6 shrink-0 rounded-pill border border-line bg-surface px-0.5 text-center text-caption font-semibold text-ink tabular-nums"
                       >
                         {sub.count.text}
                       </span>

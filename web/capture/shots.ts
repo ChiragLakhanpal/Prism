@@ -1040,6 +1040,8 @@ const manySources = (library: Record<string, any>) => {
   const card = library.lessons[0];
   const more = Array.from({ length: 6 }, (_, n) => ({ ...card.evidence[0], evidence_id: `${card.evidence[0].evidence_id}-${n}`, locator: { kind: "paragraph", text: String(60 + n) } }));
   card.evidence = [...card.evidence, ...more];
+  // The server folds the sources past chips_max behind "Show {n} more sources", so the shot's card does too.
+  card.folded = Math.max(0, card.evidence.length - card.chips_max);
 };
 const pageTwo = (body: Record<string, any>) => Object.assign(body, { page: 2, pages: 3, total: 18, from: 9, to: 10 });
 const decidedAs = (outcome: string, version: number | null) => (body: Record<string, any>) => {

@@ -237,6 +237,13 @@ test("the library's filters change the list at once, keep the address, and the c
   expect(wide).toHaveLength(4);
   expect(new Set(wide.map((box) => box.top)).size).toBe(1);
   expect(Math.max(...wide.map((box) => box.width))).toBeLessThan(400);
+  // Where the four don't fit in one row, as at 1024 px beside the rail, no select sits alone (design round 2, item B):
+  // two rows of two, all one width, none narrower than the widest select is at 1440, so no chosen option is cut.
+  await page.setViewportSize({ width: 1024, height: 768 });
+  const mid = await boxes();
+  expect([mid[0].top === mid[1].top, mid[2].top === mid[3].top, mid[1].top < mid[2].top]).toEqual([true, true, true]);
+  expect(new Set(mid.map((box) => Math.round(box.width))).size).toBe(1);
+  expect(mid[0].width).toBeGreaterThanOrEqual(Math.max(...wide.map((box) => box.width)));
   await page.setViewportSize({ width: 390, height: 844 });
   expect(new Set((await boxes()).map((box) => box.top)).size).toBe(4);
   await page.setViewportSize({ width: 1440, height: 900 });
