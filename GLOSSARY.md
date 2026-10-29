@@ -74,6 +74,9 @@ _Avoid_: Failed (for a throttled pull)
 The language a person asks Strata to write answers and drafts in: English, French, Spanish or Portuguese. The screens stay in English, and sources keep their own language, word for word.
 _Avoid_: Locale, interface language
 
+**Mid-term review (MTR)**:
+The review the World Bank and the borrower hold about halfway through a project, to check its progress and decide whether to change its design or its targets. A report that writes "MTR" means this review.
+
 ### Procurement
 
 **Package**:

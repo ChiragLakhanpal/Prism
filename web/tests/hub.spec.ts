@@ -639,7 +639,7 @@ test("the drawer's Open at page 23 lands on the source view with paragraph 54 hi
   await expect(block).toBeFocused();
 
   await page.goBack();
-  await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toHaveText("ICR, Rajasthan Road Sector Modernization, paragraph 54");
 });
 
 test("Back from the source view restores the page with its answer and the drawer, with focus on the drawer's heading", async ({ page }) => {

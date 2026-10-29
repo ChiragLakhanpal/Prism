@@ -406,7 +406,7 @@ const KINDS = [
     name: "a paragraph the layout parser read from a scanned page",
     id: "strata.gold.passage:18381488/v1/23",
     file: "evidence-pad-p130164-scanned.json",
-    heading: "Rajasthan Road Sector Modernization, paragraph 23",
+    heading: "PAD, Rajasthan Road Sector Modernization, paragraph 23",
     note: "The whole paragraph, as the layout parser read it from a scanned page. The PDF page has the exact words.",
     link: /^Open at page 20$/,
   },

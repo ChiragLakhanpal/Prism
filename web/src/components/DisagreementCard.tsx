@@ -23,6 +23,7 @@ import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { address } from "../lib/router";
 import { previewReason, viewOf } from "../lib/view";
+import { withAbbreviations } from "./Abbreviations";
 import { Button } from "./Button";
 import { ReasonField } from "./DecisionForm";
 import { Source } from "./Source";
@@ -172,7 +173,8 @@ export function SideSaid({ side }: { side: SideData }) {
   if (side.quote) {
     return (
       <p lang="en" className="text-small text-ink">
-        {copy.removed.quoted(side.sentence ?? side.quote)}
+        {/* A GLOSSARY.md abbreviation in the report's words opens its Term, so "MTR" is spelled out (ticket 58). */}
+        {withAbbreviations(copy.removed.quoted(side.sentence ?? side.quote))}
       </p>
     );
   }

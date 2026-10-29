@@ -125,6 +125,11 @@ test("a source click opens the drawer at its paragraph with the row's claim, the
   await tabs.nth(1).click();
   await expect(page).toHaveURL(/evidence=strata\.gold\.passage%3A34056616/);
   await expect(drawer(page).locator("[data-ieg-line='restated']")).toBeVisible();
+  // Ticket 58: the heading names the report that is open, and an ICR Review's place has one name everywhere: the
+  // pill's "10.b", the heading's and the meta line's "section 10.b", never "paragraph 10.b" or "¶10.b".
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("ICR Review, Rajasthan Road Sector Modernization, section 10.b");
+  await expect(drawer(page).locator("[data-meta-line]")).toContainText("Section 10.b");
+  await expect(drawer(page).locator("[data-meta-line]")).not.toContainText("¶10.b");
 
   await page.keyboard.press("Escape");
   await expect(drawer(page)).toHaveCount(0);

@@ -154,6 +154,7 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   const table = fields.kind === "table_row" || fields.kind === "table_summary";
   const notice = fields.kind === "notice_text";
   const language = fields.lang && fields.lang !== "en" ? copy.language.name[fields.lang] : null;
+  const sectionText = place.kind === "section" && fields.numbered ? place.text : fields.section;
   const parts: { text: ReactNode; whole: boolean }[] = [
     { text: fields.docType, whole: false },
     {
@@ -177,7 +178,8 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
           ? [{ text: fields.section, whole: false }]
           : []
         : [
-            ...(fields.section ? [{ text: words.section(fields.section), whole: fields.section.length <= SHORT_SECTION }] : []),
+            // A numbered section, such as an ICR Review's 10.b, is named by its own number (ticket 58).
+            ...(sectionText ? [{ text: words.section(sectionText), whole: sectionText.length <= SHORT_SECTION }] : []),
             ...(place.kind === "paragraph" ? [{ text: words.para(place.text), whole: true }] : []),
           ]),
     ...(fields.page

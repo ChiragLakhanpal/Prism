@@ -158,7 +158,7 @@ test("the evidence drawer's copy key, before its close, copies the source as one
   await copiesThreeWays(
     page,
     key,
-    "Rajasthan Road Sector Modernization, paragraph 54, Implementation Completion and Results Report, Rajasthan Road Sector Modernization (P130164), October 10, 2019, Section III.B, ¶54, PDF page 23 of 66",
+    "ICR, Rajasthan Road Sector Modernization, paragraph 54, Implementation Completion and Results Report, Rajasthan Road Sector Modernization (P130164), October 10, 2019, Section III.B, ¶54, PDF page 23 of 66",
     "the source",
     [drawer.getByRole("heading", { level: 2 }), key, close],
   );

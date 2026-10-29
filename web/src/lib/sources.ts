@@ -36,12 +36,17 @@ export type PassageFields = {
   passageId: string | null;
 };
 
-// Where in its document a passage sits: a numbered paragraph ("54", or an item such as 10.b), or else
-// its section. An ISR numbers no paragraphs, so ticket 11 keys each section ("s4") and marks the
-// passage unnumbered; that key is never shown, since no reader could find "paragraph s4" in the PDF.
+// Where in its document a passage sits: a numbered paragraph ("54"), or else its section. An ISR numbers no
+// paragraphs, so ticket 11 keys each section ("s4") and marks the passage unnumbered; that key is never shown, since
+// no reader could find "paragraph s4" in the PDF. An ICR Review numbers its sections and their items ("10.b"), so its
+// place is always a section, as the risks section, the lesson review and get_lessons name it (ticket 58: one name for
+// the card, the drawer's meta line, its switcher and its heading).
 export type Place = { kind: "paragraph" | "section"; text: string };
 
+export const ICR_REVIEW = "Implementation Completion Report Review";
+
 export function placeOf(fields: PassageFields): Place {
+  if (fields.numbered && fields.docType === ICR_REVIEW) return { kind: "section", text: fields.para };
   return fields.numbered ? { kind: "paragraph", text: fields.para } : { kind: "section", text: keepClosingId(fields.section ?? fields.para) };
 }
 

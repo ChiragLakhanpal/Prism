@@ -84,10 +84,13 @@ export function sourceTitle(evidence: EvidenceEvent) {
       />
     );
   }
+  // The document's short name first, so the heading says which report is open (ticket 58).
+  const doc = evidence.short_name;
+  const words = copy.evidence;
   return place.kind === "paragraph" ? (
-    <Fill template={copy.evidence.title} slots={{ project: fields.project, para: place.text }} />
+    <Fill template={doc ? words.title : words.titleNoDoc} slots={{ doc: doc ?? "", project: fields.project, para: place.text }} />
   ) : (
-    <Fill template={copy.evidence.titleSection} slots={{ project: fields.project, section: place.text }} />
+    <Fill template={doc ? words.titleSection : words.titleSectionNoDoc} slots={{ doc: doc ?? "", project: fields.project, section: place.text }} />
   );
 }
 

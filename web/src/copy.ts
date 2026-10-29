@@ -1161,9 +1161,13 @@ export const copy = {
   // stratum and its document's short name come from the answer stream.
   evidence: {
     eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
-    // The heading names the source, not the claim, so a drawer opened from a link still reads.
-    title: "{project}, paragraph {para}",
-    titleSection: "{project}, section {section}",
+    // The heading names the source, not the claim, so a drawer opened from a link still reads. It starts with the
+    // document's short name, so it says which report is open (ticket 58); the forms without one are for a document
+    // whose type has no short name.
+    title: "{doc}, {project}, paragraph {para}",
+    titleSection: "{doc}, {project}, section {section}",
+    titleNoDoc: "{project}, paragraph {para}",
+    titleSectionNoDoc: "{project}, section {section}",
     recordTitle: "{kind} {reference}",
     // A mission brief's records (ticket 37), named for what they are: the totals record by its project, an agency's
     // latest plan by the agency, and an ISR's rating by the ISR and the rating.
@@ -1479,7 +1483,8 @@ export const copy = {
     // A number in a sentence says which source the verifier matched it to.
     // Templates for Fill, so the project ID or the reference is set in Roboto Mono.
     numTooltip: "Matches paragraph {para} of the {kind} for {pid}.",
-    numTooltipSection: "Matches the section {section} of the {kind} for {pid}.",
+    // The section's name as a phrase, "the ... section" (ticket 58; the 14 critique, round 5).
+    numTooltipSection: "Matches the {section} section of the {kind} for {pid}.",
     // The reference ends the sentence, so its full stop stays in the reference's last box (MonoWords).
     numTooltipRecord: "Matches the {kind} record {reference}",
     numTooltipRecordEnd: ".",

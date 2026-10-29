@@ -156,7 +156,7 @@ test("hovering or focusing a marker shows the evidence card: stratum, title, hig
   const card = page.locator("[data-evidence-card]");
   await expect(card).toBeVisible();
   await expect(card).toContainText("Why · evaluation");
-  await expect(card).toContainText("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(card).toContainText("ICR, Rajasthan Road Sector Modernization, paragraph 54");
   await expect(card.locator("mark")).toHaveText("Highlight starts. 108 of 328 cases had to go through rebidding Highlight ends.");
   await expect(card.locator("[data-source]")).toHaveText(
     "Source: Implementation Completion and Results Report, P130164, October 10, 2019, paragraph 54, page 23.",
@@ -175,7 +175,7 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
 
   await marker(page, 1).click();
 
-  await expect(drawer(page)).toHaveAccessibleName("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
   await expect(drawer(page)).toHaveAttribute("aria-modal", "false");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
   await expect(drawer(page).getByRole("heading", { level: 2 })).toBeFocused();
@@ -253,7 +253,7 @@ test("at 1024 px the drawer takes 40 percent of the window, 410 px, and the page
 test("reloading with the evidence parameter reopens the drawer at that source, with no claim and no switcher", async ({ page }) => {
   await open(page, { path: `/projects/P130164?evidence=${encodeURIComponent(ICR_54)}` });
 
-  await expect(drawer(page)).toHaveAccessibleName("Rajasthan Road Sector Modernization, paragraph 54");
+  await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
   await expect(drawer(page).locator("[data-claim]")).toHaveCount(0);
   await expect(drawer(page).getByRole("tablist")).toHaveCount(0);
@@ -570,7 +570,7 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   // An answer's number is the Number tooltip's Plain variant (ticket 96): what it matched and where that came from, and
   // no action line, because the marker beside the sentence opens the source.
   await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
-    "Matches the section Project Development Objective Indicators of the status report for P130164.",
+    "Matches the Project Development Objective Indicators section of the status report for P130164.",
   );
   await expect(page.getByRole("tooltip").locator("[data-num-from]")).toHaveText(
     "From the Implementation Status and Results Report for P130164 of February 22, 2014.",

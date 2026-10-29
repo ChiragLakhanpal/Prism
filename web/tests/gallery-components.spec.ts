@@ -977,7 +977,7 @@ test("a record's evidence card ends with its drawer's source line, and an ISR se
   );
   await expect(page.locator("[data-card-sample=section] mark")).toHaveText("Highlight starts. Percentage Value 67.00 67.00 80.00 Highlight ends.");
   const section = page.locator("[data-state-section=section] [role=dialog]");
-  await expect(section.getByRole("heading", { level: 2 })).toHaveText("Rajasthan Road Sector Modernization, section Project Development Objective Indicators");
+  await expect(section.getByRole("heading", { level: 2 })).toHaveText("ISR, Rajasthan Road Sector Modernization, section Project Development Objective Indicators");
   await expect(section).toContainText("The whole section, word for word.");
   await expect(section.locator("[data-meta-line]")).not.toContainText("¶");
   // The switcher's tabs name two sections, and a long tab wraps inside its pill.

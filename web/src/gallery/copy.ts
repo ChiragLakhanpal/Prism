@@ -387,7 +387,7 @@ export const galleryCopy = {
     // Ticket 100: what a plan check row's reference opens in the drawer.
     planRowCheck: "A plan check row's records: the reason, what I checked, the plan row, its source and its links",
     unknown: "An ID no source has",
-    unknownAsOf: "An ID no source has as of the address's date",
+    unknownAsOf: "An ID with no source by the address's date",
     drawerPreview: "In a preview",
     // Ticket 18's kinds of passage (design review r2 P9).
     scanned: "A paragraph the layout parser read from a scanned page",

@@ -378,6 +378,12 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   await expect(sides.nth(1)).toContainText(
     '"Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders."',
   );
+  // Ticket 58: "MTR" in the report's words opens its GLOSSARY.md Term, which spells it out, and the words stay as written.
+  const mtr = sides.nth(1).getByRole("button", { name: "MTR" });
+  await mtr.click();
+  await expect(page.getByRole("dialog", { name: "Mid-term review (MTR)" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(mtr).toBeFocused();
   await expect(sides.nth(0)).toHaveAttribute("data-side", "other");
   // Equal weight: the same border and fill on both sides.
   const looks = await sides.evaluateAll((all) => all.map((side) => [getComputedStyle(side).borderColor, getComputedStyle(side).backgroundColor]));
@@ -404,6 +410,8 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   await expect(page.getByRole("dialog").locator("[data-passage] mark")).toContainText(
     "it was clearly identified at the MTR that the achievement of part of the PDO was compromised",
   );
+  // The drawer's passage spells "MTR" out through its Term too, both times paragraph 78 writes it (ticket 58).
+  await expect(page.getByRole("dialog").locator("[data-passage]").getByRole("button", { name: "MTR" })).toHaveCount(2);
   await expect(page.getByRole("dialog").locator("[data-claim]")).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(second).toBeFocused();
