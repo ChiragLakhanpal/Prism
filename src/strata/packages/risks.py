@@ -53,7 +53,7 @@ from strata.lakehouse.engine import Engine
 from strata.tools import registry
 from strata.tools.get_lessons import ieg_quote
 
-TOOLS =("find_comparables", "get_lessons")
+TOOLS = ("find_comparables", "get_lessons")
 # Why the section has no rows, as the page's empty states say it (web/src/copy.ts packageRisks.empty).
 EMPTY_REASONS = ("missing_criteria", "no_comparables", "no_reports", "no_lessons", "all_removed")
 

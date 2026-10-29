@@ -18,11 +18,11 @@ The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAU
   because that reason gives the closing date and the days left.
 - Watch: a signed amount at least actual_to_estimate_ratio times its estimate. The reason also
   gives how many days after its first published planned date the contract was signed.
+- Data note: each note the plan reader wrote, and a check the tool could not run because the plan
+  gives no planned completion date or no estimate (the activity then counts as not fully checked).
 
 A reason that measures from a first published planned date cites the plan row that gave it, beside
 the row checked, so a later plan that moves the date never leaves the delay without its source.
-- Data note: each note the plan reader wrote, and a check the tool could not run because the plan
-  gives no planned completion date or no estimate (the activity then counts as not fully checked).
 
 The counts give every number the Check a plan screen states about the whole plan: the activities,
 how many were checked fully and how many not, how many carry each mark, how many carry a signal

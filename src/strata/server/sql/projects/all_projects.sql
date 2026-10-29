@@ -25,7 +25,6 @@ listed AS (
 )
 SELECT
   p.project_id,
-  lower(p.project_name),
   p.project_name,
   c.country_name AS country,
   CASE WHEN p.record_current THEN p.status END AS status

@@ -403,6 +403,49 @@ def test_when_two_reviewers_ask_for_a_re_check_in_the_same_moment_only_the_first
     assert opened == [{"item_id": "recheck-rival"}]
 
 
+def test_when_two_re_checks_both_land_the_later_request_takes_its_own_back(database):
+    """Ticket 62's review round 1, follow-up 1: a warehouse runs insert_recheck.sql without a transaction, so two
+    requests can both find no open re-check and both write one. The later one answers 409 recheck_open and takes its
+    own row back, so the lesson holds one open re-check."""
+    class BothLand:
+        """The app's own engine while another reviewer's re-check, asked an instant earlier, lands just after this one."""
+
+        def __init__(self, engine):
+            self.engine, self.rival = engine, True
+
+        def __getattr__(self, name):
+            return getattr(self.engine, name)
+
+        def run(self, sql, params=None):
+            result = self.engine.run(sql, params)
+            if self.rival and "INSERT INTO strata.ops.lesson_review_items" in sql:
+                self.rival = False
+                self.engine.run("INSERT INTO strata.ops.lesson_review_items SELECT * REPLACE ('recheck-rival' AS item_id, "
+                                "created_at - INTERVAL 1 SECOND AS created_at) "
+                                "FROM strata.ops.lesson_review_items WHERE item_id = :item_id",
+                                {"item_id": params["item_id"]})
+            return result
+
+        def close(self):
+            pass
+
+    connection = scenario.OneConnection(database)
+    rival = {"on": False}
+    app = create_app(engine_for=connection.engine_for, lessons=review_today(),
+                     lesson_record=lambda: BothLand(connection.open) if rival["on"] else connection.the_app())
+    item = item_for(app, ASHA, REBIDDING)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    act(app, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Yes.")
+    [lesson] = call(app, "GET", "/api/lessons", ASHA).json()["lessons"]
+
+    rival["on"] = True
+    late = call(app, "POST", f"/api/lessons/{lesson['lesson_id']}/recheck", WANJIRU, json={"reason": "Check it."})
+
+    assert (late.status_code, late.json()["code"]) == (409, "recheck_open")
+    opened = query(database, "SELECT item_id FROM strata.ops.lesson_review_items WHERE kind = 'recheck'")
+    assert opened == [{"item_id": "recheck-rival"}]
+
+
 def test_the_server_names_the_version_a_decision_will_write_and_the_one_a_change_leaves_on_record(app):
     _, recheck = recheck_of_rebidding(app)
     page = call(app, "GET", f"/api/lessons/review/{recheck}", OMAR).json()

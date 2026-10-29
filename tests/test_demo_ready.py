@@ -48,7 +48,7 @@ from workspace_fakes import (  # noqa: E402  (the workspace's state, shared with
     WorkspaceStateFake,
 )
 
-TRUTH ={entry["id"]: entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
+TRUTH = {entry["id"]: entry for entry in tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())["value"]}
 DEMO = load_slice().demo_plan
 QUESTIONS = {question["id"]: question for question in benchmark.load()}
 ANA = Viewer(email="ana.example@worldbank.org", name="Ana Example", user_id="ana", token="token-for-ana-only")

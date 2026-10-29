@@ -625,7 +625,7 @@ class LessonReview:
             subject = self.subject(store, item)
             lesson_id = store.lesson_of(item) or decision["repeat_of"]
             version = store.written_by(lesson_id, item["item_id"])
-            published =_date((store.proposals.get(item["proposal_id"]) or {}).get("report_public_on"))
+            published = _date((store.proposals.get(item["proposal_id"]) or {}).get("report_public_on"))
             found.append({
                 "item_id": item["item_id"], "kind": item["kind"], "statement": subject["statement"],
                 "pid": subject["project_id"], "project_name": (store.projects.get(subject["project_id"]) or {}).get(
@@ -1117,10 +1117,12 @@ class LessonReview:
                "region": region, "origin_by": person.email, "origin_by_name": person.name, "origin_reason": reason,
                "entered_on": now.date(), "created_at": now, "public_from": now.date()}
         # Checked and written in one statement, then read back: a request that lost a race to another reviewer's finds
-        # theirs open (ticket 29's review round 3, P3).
+        # theirs open (ticket 29's review round 3, P3). Without a transaction both can land, so the later one takes
+        # its own row back before it answers (ticket 62's review round 1, follow-up 1).
         writer.run(_sql("insert_recheck"), row)
         opened = _rows(writer, "open_recheck", lesson_id=lesson_id)
         if opened[:1] and opened[0]["item_id"] != row["item_id"]:
+            writer.run(_sql("withdraw_recheck"), {"item_id": row["item_id"]})
             raise Refused(409, "recheck_open", {"on": _iso(opened[0]["entered_on"])})
         return {"item_id": row["item_id"], "region": region, "on": now.date().isoformat()}
 

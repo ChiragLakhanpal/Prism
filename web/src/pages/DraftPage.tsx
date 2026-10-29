@@ -43,7 +43,7 @@ import { ApiError, getJson } from "../lib/api";
 import type { RemovedEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
 import { act, draftScope, fileHref, isPpsdKind, preloaded, refusalOf, setField, setForm, storeFailed, type Action, type Draft } from "../lib/drafts";
-import { evidenceIn, openEvidence, openedAt, origin, recordOpened, remember } from "../lib/evidence";
+import { evidenceIn, openEvidence, openedAt, origin, remember } from "../lib/evidence";
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { address } from "../lib/router";
@@ -659,10 +659,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
               view={dates}
               lists={d.evidence}
               onOpen={(listId, element) => {
-                // The drawer records no step's list it opens elsewhere (section 2 holds those), so the draft records
-                // its own: the bar's count of lists opened moves at once, and the evidence pack says it was opened.
+                // The drawer records each step's list it opens (its steps: ids), so the bar's count of lists opened
+                // moves at once and the evidence pack says it was opened.
                 openEvidence(listId, { serial: null, sentence: null, marker: element, runId: null });
-                recordOpened(listId, null);
               }}
               editable={d.author.you && d.state === "draft" && view !== "piu" && view !== "public"}
               onChoice={async (choice) => {
