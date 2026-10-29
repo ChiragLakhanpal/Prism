@@ -45,3 +45,4 @@ Read first: the design lead's brief for this ticket; the plan's section 8.4 (Dat
   - Unblocks: no ticket lists 104 as a blocker.
 
 ---
+- October 28, 2026, orchestrator (20:38 PDT): the App redeploy ran from 2c901133 (the catch-up block "Tickets 100, 62 and 104, the App redeploy ran"); the page's check by eye is the owner's.
