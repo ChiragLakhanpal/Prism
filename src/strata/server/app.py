@@ -536,22 +536,26 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
         A page in PAGES is kept for its as-of day and the viewer's role (ticket 125): a viewer with a forwarded token
         gets it from the App's memory while its window lasts, and the browser keeps it as long. refresh reads it again
-        and keeps the new answer, as the warm does."""
+        and keeps the new answer, as the warm does. A page reads through one batch (read_together), and a page read
+        past a failed read, such as the Timeline with its disagreements failed, is sent but not kept."""
         if engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
         kept_here = page is not None and page_cache is not None and bool(viewer.token)
         if kept_here and not refresh and (kept := page_cache.get(page)) is not None:
             return page_cache.response(kept, day_left(page))
+        batch, generation = None, page_cache.generation if kept_here else None
         try:
             with engine_for(viewer) as engine:
-                found = read(engine)
+                batch = read_together(engine, ()) if page is not None else None
+                found = read(engine if batch is None else batch)
         except PermissionDenied as error:
             log.warning("The warehouse refused %s on %s: %s", viewer.email or viewer.user_id, what, error)
             return JSONResponse({"code": "permission"}, status_code=403)
         except EngineError:
             return with_reference(503, "data_service", "The data service failed on %s, reference %s.", what)
-        if kept_here and not isinstance(found, Response):
-            return page_cache.response(page_cache.keep(page, found), day_left(page))
+        if kept_here and not isinstance(found, Response) and not batch.errors and (
+                kept := page_cache.keep(page, found, generation)) is not None:
+            return page_cache.response(kept, day_left(page))
         return found
 
     def run_tool(name: str, arguments: dict, viewer: Viewer, view: str, as_of: dt.date | None):
@@ -640,7 +644,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     # ── The pages the App keeps (ticket 125) ───────────────────────────────
     # Each page in PAGES reads its answer from its key alone (src/strata/server/page_cache.py): its name, the viewer's
     # role (the view the request is bound to), its as-of day and its own arguments. A route asks page_for for it, and so
-    # does the warm, as the App itself, for the demo's cases (src/strata/server/warm.py).
+    # does the warm, as the App itself, for the demo's cases (src/strata/server/warm.py). So a page in PAGES reads no
+    # table with a row filter or a masked column (src/strata/lakehouse/masks.py): the App reads past both, and a kept
+    # page goes to everyone in the role (tests/test_page_speed.py checks the statements each page sends).
 
     def unknown(found, code: str):
         return found if found is not None else JSONResponse({"code": code}, status_code=404)
@@ -718,7 +724,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/projects/{project_id}/packages")
     def project_packages(project_id: str, asof: dt.date | None = None, q: str = Query("", max_length=200),
                          page: int = Query(1, ge=1), view: str = "staff", viewer: Viewer = Depends(current_viewer)):
-        return page_for(PageKey("packages", view, as_of_for(asof), (project_id, q.strip(), page)), viewer)
+        key = PageKey("packages", view, as_of_for(asof), (project_id, q.strip(), page))
+        if key.args[1]:  # a search is read but not kept, so searches cannot push the demo's pages out of the App's memory
+            what, read = PAGES["packages"](key, viewer)
+            return read_for(what, viewer, read)
+        return page_for(key, viewer)
 
     @app.get("/api/projects/{project_id}/packages/{step_reference}")
     def activity(project_id: str, step_reference: str, asof: dt.date | None = None,
@@ -805,9 +815,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return refused(401, "no_identity")
         try:
             return read_for(what, viewer, write)
-        finally:  # the project page shows the baseline, so no page kept before the write may answer after it
+        finally:  # a project's header shows the baseline, so no header kept before the write may answer after it
             if page_cache is not None:
-                page_cache.clear()
+                page_cache.drop(lambda key: key.page == "project")
 
     @app.put("/api/projects/{project_id}/procurement/{agency_id}/baseline")
     def save_baseline(project_id: str, agency_id: str, body: BaselineRequest, viewer: Viewer = Depends(current_viewer)):

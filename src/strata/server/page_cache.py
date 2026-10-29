@@ -13,7 +13,10 @@ the App never answers for someone the warehouse would refuse; a kept page is sti
 own grants the warehouse would refuse, a decision parked for the owner. Only a page's answer is kept, never an error.
 
 The kept pages are cleared when the nightly job finishes (the warm in src/strata/server/warm.py sees its new end
-time), when their window passes, and when a baseline is saved or removed (the project page shows it).
+time) and when their window passes, and a project's header goes when a baseline is saved or removed (it shows the
+baseline). A page read while pages were let go may hold what changed, so it is sent but not kept (generation). A page
+read past a failed read, such as the Timeline with its disagreements failed, is not kept either (src/strata/server/
+app.py, read_for).
 
 Nothing about a viewer is kept: the key holds the role, never the person (CLAUDE.md rule 7).
 """
@@ -57,6 +60,7 @@ class PageCache:
         self.seconds, self.entries, self.clock = seconds, entries, clock
         self.kept: OrderedDict[PageKey, Kept] = OrderedDict()
         self.lock = threading.Lock()
+        self.generation = 0  # one more each time pages are let go; a read that began before then is not kept
 
     @classmethod
     def from_thresholds(cls, thresholds: Thresholds, clock: Callable[[], float] = time.monotonic) -> PageCache:
@@ -74,19 +78,28 @@ class PageCache:
             self.kept.move_to_end(key)
             return found
 
-    def keep(self, key: PageKey, answer) -> Kept:
-        """Keep a page's answer as the App sends it, letting the oldest read go when there are too many."""
+    def keep(self, key: PageKey, answer, generation: int | None = None) -> Kept | None:
+        """Keep a page's answer as the App sends it, letting the oldest read go when there are too many. A read that
+        began at an earlier generation than now (pages were let go while it ran) is not kept, and gives None."""
         body = JSONResponse(jsonable_encoder(answer)).body
         with self.lock:
+            if generation is not None and generation != self.generation:
+                return None
             kept = self.kept[key] = Kept(body, self.clock() + self.seconds)
             self.kept.move_to_end(key)
             while len(self.kept) > self.entries:
                 self.kept.popitem(last=False)
         return kept
 
-    def clear(self) -> None:
+    def drop(self, where: Callable[[PageKey], bool]) -> None:
+        """Let go of each kept page whose key `where` picks, and of every read still running."""
         with self.lock:
-            self.kept.clear()
+            self.generation += 1
+            for key in [key for key in self.kept if where(key)]:
+                del self.kept[key]
+
+    def clear(self) -> None:
+        self.drop(lambda key: True)
 
     def __len__(self) -> int:
         return len(self.kept)

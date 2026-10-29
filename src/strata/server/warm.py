@@ -109,7 +109,12 @@ class Warm:
         status = getattr(answer, "status_code", 200)
         if status != 200:
             log.warning("I could not read the demo's page %s ahead: it answered %s.", key, status)
-        return status == 200
+            return False
+        if self._cache.get(key) is None:  # read past a failed read, or while pages were let go: sent, not kept
+            log.warning("I read the demo's page %s ahead but did not keep it: one of its reads failed, or pages were "
+                        "let go while it was read.", key)
+            return False
+        return True
 
     def start(self) -> None:
         self._stop.clear()

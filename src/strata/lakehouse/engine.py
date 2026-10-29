@@ -22,6 +22,7 @@ How the warehouse engine waits is config/thresholds.toml's [warehouse].
 
 from __future__ import annotations
 
+import contextvars
 import datetime as dt
 import decimal
 import functools
@@ -34,7 +35,7 @@ import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable, Mapping, Sequence
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -110,12 +111,29 @@ class Engine(Protocol):
 Statement = tuple[str, Params]  # one statement's SQL and its named parameters
 
 
-def run_many(engine, statements: Sequence[Statement]) -> list[Result]:
+def run_many(engine, statements: Sequence[Statement], return_exceptions: bool = False) -> list[Result | Exception]:
     """The statements' results in order: in one batch on an engine that sends a batch at once (the SQL warehouse's
-    WarehouseEngine.run_many), and one after another on any other."""
+    WarehouseEngine.run_many), and one after another on any other. The first statement that failed raises its error,
+    or, with return_exceptions, each failed statement's error stands in its place, as asyncio.gather gives them."""
     statements = list(statements)
     many = getattr(engine, "run_many", None)
-    return many(statements) if callable(many) else [engine.run(sql, params) for sql, params in statements]
+    if callable(many):
+        return many(statements, return_exceptions=return_exceptions)
+    return _each(engine.run, statements, return_exceptions)
+
+
+def _each(run: Callable[[str, Params], Result], statements: Sequence[Statement],
+          return_exceptions: bool) -> list[Result | Exception]:
+    """Each statement run in turn, with each error in its place when return_exceptions holds them."""
+    out: list[Result | Exception] = []
+    for sql, params in statements:
+        try:
+            out.append(run(sql, params))
+        except Exception as error:
+            if not return_exceptions:
+                raise
+            out.append(error)
+    return out
 
 
 def _key(sql: str, params: Params) -> tuple:
@@ -133,12 +151,18 @@ class ReadTogether:
     """An engine that answers a page's reads from one batch it sent first (ticket 125). A page names every statement
     it will run, read_together sends them at once, and the page's own code then runs each as before and gets its
     result from the batch. A statement the batch does not hold runs alone, as it did before, and is listed in missed,
-    so a test can show that a page needs one round trip."""
+    so a test can show that a page needs one round trip.
+
+    A statement that failed in the batch keeps its error, and the page meets that error only when it runs that
+    statement, as it did when each statement ran alone: so a page that reads on past a failed read (the Timeline draws
+    its marks when get_disagreements fails) still does. errors lists each error the page met, so the App does not keep
+    a page read past one (src/strata/server/page_cache.py)."""
 
     def __init__(self, engine, statements: Sequence[Statement]):
         self.engine = engine
-        self.held: dict[tuple, Result] = {}
+        self.held: dict[tuple, Result | Exception] = {}
         self.missed: list[str] = []
+        self.errors: list[Exception] = []
         self.add(statements)
 
     def add(self, statements: Sequence[Statement]) -> None:
@@ -147,22 +171,42 @@ class ReadTogether:
         unique = list({key: (sql, params) for sql, params in statements
                        if (key := _key(sql, params)) not in self.held}.items())
         if unique:
-            results = run_many(self.engine, [statement for _, statement in unique])
+            results = run_many(self.engine, [statement for _, statement in unique], return_exceptions=True)
             self.held.update({key: result for (key, _), result in zip(unique, results, strict=True)})
 
     def run(self, sql: str, params: Params = None) -> Result:
         found = self.held.get(_key(sql, params))
+        if isinstance(found, Exception):
+            self.errors.append(found)
+            raise found
         if found is not None:
             return found
         self.missed.append(sql)
-        return self.engine.run(sql, params)
+        log.warning("A page ran a statement its batch did not hold, so it took one more round trip: %s",
+                    sql.strip().splitlines()[0] if sql.strip() else sql)
+        try:
+            return self.engine.run(sql, params)
+        except Exception as error:
+            self.errors.append(error)
+            raise
+
+    def run_many(self, statements: Sequence[Statement], return_exceptions: bool = False) -> list[Result | Exception]:
+        """These statements' results from this batch, after one more batch of those it does not hold yet, so a page
+        that runs a batch of its own keeps to one round trip for it."""
+        statements = list(statements)
+        self.add(statements)
+        return _each(self.run, statements, return_exceptions)
 
     def __getattr__(self, name: str):
         return getattr(self.engine, name)
 
 
 def read_together(engine, statements: Sequence[Statement]) -> ReadTogether:
-    """An engine whose answers to these statements come from one batch, sent now."""
+    """An engine whose answers to these statements come from one batch, sent now: on an engine that already reads a
+    page's statements together (the one the App reads each page through), one more of its batches."""
+    if isinstance(engine, ReadTogether):
+        engine.add(statements)
+        return engine
     return ReadTogether(engine, statements)
 
 
@@ -286,9 +330,9 @@ class DuckDBEngine:
             return Result((), ())
         return Result(tuple(column[0] for column in cursor.description), tuple(cursor.fetchall()))
 
-    def run_many(self, statements: Sequence[Statement]) -> list[Result]:
+    def run_many(self, statements: Sequence[Statement], return_exceptions: bool = False) -> list[Result | Exception]:
         """One batch, as the warehouse takes it, run here one statement after another on the one connection."""
-        return [self.run(sql, params) for sql, params in statements]
+        return _each(self.run, statements, return_exceptions)
 
     def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 500) -> int:
         check_names(table, columns)
@@ -422,6 +466,16 @@ def http_transport(host: str, token: str, timeout: int = 120) -> Transport:
 
 
 
+def _outcome(future: Future, return_exceptions: bool) -> Result | Exception:
+    """A statement's result, or its error in its place when return_exceptions holds them."""
+    error = future.exception()
+    if error is None:
+        return future.result()
+    if return_exceptions and isinstance(error, Exception):
+        return error
+    raise error
+
+
 # The Statement Execution API's limit on the combined size of a statement's parameters, with room
 # for the parameter names and the API's own encoding.
 PARAMETER_CHARACTERS = 900_000
@@ -482,17 +536,21 @@ class WarehouseEngine:
     def connect(cls, host: str, token: str, warehouse_id: str) -> WarehouseEngine:
         return cls(warehouse_id, http_transport(host, token))
 
-    def run_many(self, statements: Sequence[tuple[str, Params]]) -> list[Result]:
+    def run_many(self, statements: Sequence[tuple[str, Params]],
+                 return_exceptions: bool = False) -> list[Result | Exception]:
         """A page's statements posted at once, each on its own thread, with one wait for them all (ticket 125): on the
         workspace a statement costs the statements API about two seconds, so six run one after another took twelve.
-        The results come back in the statements' order; the first statement that failed raises its error."""
+        The results come back in the statements' order; the first statement that failed raises its error, or, with
+        return_exceptions, each failed statement's error stands in its place."""
         statements = list(statements)
         if len(statements) < 2:
-            return [self.run(sql, params) for sql, params in statements]
+            return _each(self.run, statements, return_exceptions)
         at_once = max(1, min(len(statements), self.waits.statements_at_once))
         with ThreadPoolExecutor(max_workers=at_once, thread_name_prefix="strata-statement") as pool:
-            running = [pool.submit(self.run, sql, params) for sql, params in statements]
-            return [future.result() for future in running]
+            # Each statement runs in its own copy of the caller's context (one context cannot be entered by two
+            # threads at once), so the request's trace span is its parent in Application Insights.
+            running = [pool.submit(contextvars.copy_context().run, self.run, sql, params) for sql, params in statements]
+            return [_outcome(future, return_exceptions) for future in running]
 
     def run(self, sql: str, params: Params = None) -> Result:
         # The warehouse holds the first answer at most this long: the thresholds' wait, within the API's 5 to 50

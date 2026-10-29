@@ -17,14 +17,17 @@ The live timings are the orchestrator's workspace step (the ticket's report).
 
 import asyncio
 import datetime as dt
+import json
+import logging
 from contextlib import contextmanager
+from pathlib import Path
 
 import httpx
 import pytest
 
 from strata.config import Demo, load_demo, load_slice, load_thresholds
 from strata.dbx import Viewer
-from strata.lakehouse.engine import DuckDBEngine
+from strata.lakehouse.engine import DuckDBEngine, EngineError, PermissionDenied, run_many
 from strata.server.app import create_app
 from strata.server.page_cache import PageCache
 from strata.server.settings import app_from_env
@@ -45,21 +48,35 @@ def get(app, path, headers=ANA):
 
 
 class Counted:
-    """The fixture's engine, counting each round trip a request makes: each batch, and each statement run alone."""
+    """The fixture's engine, counting each round trip a request makes: each batch, with its statements, and each
+    statement run alone."""
 
     def __init__(self, engine, trips: list):
         self.engine, self.trips = engine, trips
 
     def run(self, sql, params=None):
-        self.trips.append(("alone", sql.strip().splitlines()[0]))
+        self.trips.append(("alone", sql))
         return self.engine.run(sql, params)
 
-    def run_many(self, statements):
-        self.trips.append(("batch", len(statements)))
-        return self.engine.run_many(statements)
+    def run_many(self, statements, return_exceptions=False):
+        self.trips.append(("batch", tuple(sql for sql, _ in statements)))
+        return run_many(self.engine, statements, return_exceptions=return_exceptions)
 
     def __getattr__(self, name):
         return getattr(self.engine, name)
+
+
+class FailsOn:
+    """The fixture's engine, except that a statement naming `table` fails as the warehouse fails it: EngineError, or
+    PermissionDenied when a grant is missing."""
+
+    def __init__(self, engine, table: str, error: type[EngineError]):
+        self.engine, self.table, self.error = engine, table, error
+
+    def run(self, sql, params=None):
+        if self.table in sql:
+            raise self.error(f"The warehouse did not run the statement. Its state was FAILED: {self.table}")
+        return self.engine.run(sql, params)
 
 
 @pytest.fixture
@@ -91,6 +108,16 @@ def test_a_page_s_warehouse_reads_go_as_one_batch(counted_reads, trips, path):
 
     assert response.status_code == 200
     assert [kind for kind, _ in trips] == ["batch"], trips
+    assert_reads_no_masked_or_filtered_table(trips)
+
+
+def assert_reads_no_masked_or_filtered_table(trips):
+    """A kept page is served to everyone in the viewer's role, and the warm reads it as the App, which no mask or row
+    filter limits (src/strata/lakehouse/masks.py), so a page in PAGES reads none of those tables."""
+    from strata.lakehouse.masks import FILTERED, MASKED
+
+    read = "\n".join(sql for _, sent in trips for sql in ((sent,) if isinstance(sent, str) else sent))
+    assert read and not [table for table in {*FILTERED, *MASKED} if table in read]
 
 
 @pytest.mark.parametrize("path, batches", [
@@ -103,6 +130,38 @@ def test_a_project_s_header_reads_in_two_batches_since_the_second_needs_the_agen
 
     assert response.status_code == 200
     assert [kind for kind, _ in trips] == ["batch"] * batches, trips
+    assert_reads_no_masked_or_filtered_table(trips)
+
+
+@pytest.fixture
+def failing_reads(fixture_db, trips):
+    def on(table: str, error: type[EngineError]):
+        @contextmanager
+        def engine_for(_viewer):
+            with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+                yield Counted(FailsOn(engine, table, error), trips)
+        return engine_for
+    return on
+
+
+# What build/strata's Timeline answered for the showcase when get_disagreements did not: the marks, with no bands and
+# no dashed lines (tests/record_timeline_api.py, FAILED).
+FAILED_TIMELINE = Path(__file__).parent / "fixtures" / "api" / "timeline-p130164-failed.json"
+
+
+@pytest.mark.parametrize("table, error", [("strata.gold.disagreement", EngineError),
+                                          ("strata.ops.assertion_rejections", PermissionDenied)],
+                         ids=["engine-error", "permission"])
+def test_a_failed_disagreement_read_in_the_batch_still_draws_the_timeline_as_it_did_before_the_batch(
+        failing_reads, trips, table, error):
+    app = create_app(engine_for=failing_reads(table, error), today=lambda: TODAY)
+
+    response = get(app, "/api/projects/P130164/timeline")
+
+    assert response.status_code == 200, response.text
+    assert response.json()["disagreements"]["status"] == "failed"
+    assert response.json() == json.loads(FAILED_TIMELINE.read_text())
+    assert [kind for kind, _ in trips] == ["batch"], trips
 
 
 class Clock:
@@ -155,6 +214,19 @@ def test_a_page_kept_answers_as_the_page_did_before_it_was_kept(counted_reads, k
         assert get(kept_app, path).json() == get(plain, path).json() == get(kept_app, path).json(), path
 
 
+def test_a_page_read_past_a_failed_read_is_not_kept_so_the_next_view_reads_it_again(failing_reads, trips, clock):
+    # The Timeline with its disagreements failed says it could not read them "just now", so the App does not keep it
+    # for its window, and the browser is not told to keep it either.
+    app = create_app(engine_for=failing_reads("strata.gold.disagreement", EngineError),
+                     page_cache=PageCache(seconds=600, entries=50, clock=clock), today=lambda: TODAY)
+
+    for _ in range(2):
+        response = get(app, "/api/projects/P130164/timeline")
+        assert response.json()["disagreements"]["status"] == "failed"
+        assert "cache-control" not in response.headers
+    assert [kind for kind, _ in trips] == ["batch", "batch"], trips
+
+
 def test_another_as_of_date_another_role_or_a_page_past_its_window_is_read_again(kept_app, trips, clock):
     path = "/api/projects/P156634/summary"
     get(kept_app, f"{path}?{DAY}")
@@ -186,6 +258,19 @@ def test_the_app_keeps_at_most_its_number_of_pages_and_lets_the_oldest_go_first(
     assert trips != []
 
 
+def test_a_search_of_a_project_s_packages_is_read_but_not_kept_so_searches_push_no_page_out(counted_reads, trips,
+                                                                                           clock):
+    app = create_app(engine_for=counted_reads, page_cache=PageCache(seconds=600, entries=1, clock=clock))
+    packages = f"/api/projects/P156634/packages?{DAY}"
+    get(app, packages)
+
+    search = get(app, f"{packages}&q=water")
+    assert search.status_code == 200 and "cache-control" not in search.headers
+    trips.clear()
+    get(app, packages)
+    assert trips == []  # the one page the App keeps is still the plain Packages
+
+
 def test_a_viewer_with_no_token_and_an_answer_that_is_no_page_are_never_kept(kept_app, trips):
     path = f"/api/projects/P156634/summary?{DAY}"
     get(kept_app, path)
@@ -200,9 +285,10 @@ def test_a_viewer_with_no_token_and_an_answer_that_is_no_page_are_never_kept(kep
     assert len(trips) == 2
 
 
-def test_saving_or_removing_a_baseline_lets_every_kept_page_go_since_the_project_page_shows_it(kept_app, trips):
-    path = f"/api/projects/P156634?{DAY}"
+def test_saving_or_removing_a_baseline_lets_the_project_s_header_go_since_it_shows_the_baseline(kept_app, trips):
+    path, summary = f"/api/projects/P156634?{DAY}", f"/api/projects/P156634/summary?{DAY}"
     get(kept_app, path)
+    get(kept_app, summary)
 
     async def change(method):
         transport = httpx.ASGITransport(app=kept_app)
@@ -211,10 +297,32 @@ def test_saving_or_removing_a_baseline_lets_every_kept_page_go_since_the_project
                                         "agency/baseline", headers=ANA, json={"plan_date": "2026-10-09"})
 
     for method in ("PUT", "DELETE"):
-        asyncio.run(change(method))  # the fixture is read-only, so the write fails; the kept pages go all the same
+        asyncio.run(change(method))  # the fixture is read-only, so the write fails; the kept header goes all the same
         trips.clear()
+        get(kept_app, summary)
+        assert trips == [], method  # the Summary shows no baseline, so it stays kept
         get(kept_app, path)
         assert trips != [], method
+
+
+def test_a_header_read_while_a_baseline_was_saved_is_sent_but_not_kept(counted_reads, trips, clock):
+    # The read began before the save and may hold the old baseline, so the next view reads the header again.
+    cache = PageCache(seconds=600, entries=50, clock=clock)
+
+    @contextmanager
+    def engine_for(viewer):
+        with counted_reads(viewer) as engine:
+            if not trips:  # the first read: a baseline is saved while it runs
+                cache.drop(lambda key: key.page == "project")
+            yield engine
+
+    app = create_app(engine_for=engine_for, page_cache=cache)
+    path = f"/api/projects/P156634?{DAY}"
+    assert get(app, path).status_code == 200
+    read = len(trips)
+
+    assert get(app, path).status_code == 200
+    assert len(trips) > read
 
 
 TODAY = dt.date(2026, 10, 23)
@@ -296,6 +404,40 @@ def test_every_kept_page_goes_once_the_nightly_job_has_finished_again(warmed, tr
     trips.clear()
     get(app, elsewhere)
     assert trips != []
+
+
+def test_the_warm_reads_when_the_nightly_job_last_finished_from_its_run_log(fixture_db):
+    # The warm's own SQL, run on an engine, not a stand-in: a wrong name would show only on the workspace.
+    from strata.lakehouse import catalog
+    from strata.server.viewer_sql import nightly_finished
+
+    with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        finished = nightly_finished(engine)
+    assert finished and dt.datetime.fromisoformat(finished).tzinfo is not None
+    with DuckDBEngine.open() as empty:  # before any run, an empty strata.ops.pipeline_runs
+        empty.run("CREATE SCHEMA IF NOT EXISTS strata.ops")
+        (runs,) = [table for table in catalog.table_definitions() if table.full_name == "strata.ops.pipeline_runs"]
+        empty.run(runs.sql)
+        assert nightly_finished(empty) is None
+
+
+def test_the_warm_counts_only_the_pages_it_kept(clock, caplog):
+    # A Timeline read past a failed read answers 200 but is not kept, so the log the live record reads does not count
+    # it as read ahead.
+    cache = PageCache(seconds=7200, entries=50, clock=clock)
+
+    def read_page(key, viewer):
+        if key.page != "timeline":
+            cache.keep(key, {"page": key.page})
+        return {"page": key.page}
+
+    warm = Warm(Demo(("P130164",), ()), the_app_itself, every_seconds=3600, clock=clock, finished=lambda engine: None)
+    warm.bind(read_page, lambda viewer, read: None, cache, lambda: TODAY)
+    with caplog.at_level(logging.INFO, logger="strata.server.warm"):
+        assert warm.tick()
+
+    assert "I read 3 of the demo's 4 pages ahead" in caplog.text
+    assert "did not keep it" in caplog.text
 
 
 def test_a_warm_every_zero_seconds_reads_nothing_ahead(counted_reads, trips, clock):
