@@ -4,11 +4,17 @@
 // tool returned it. Opened from a coverage line (?sources=&from=), it shows only the sources behind
 // that answer, with "Show all sources".
 //
+// Ticket 104 (plan 8.4, Data): the page lays out by the page area, never the window, so beside the evidence drawer it
+// reads the page it has. The headline is the page's finding; "What you can ask" and "Sources" are panels; the hardest
+// documents, the plan pages the layout parser couldn't read and the fixes are closed rows with their one sentence,
+// which open in place with focus kept on their button.
+//
 // States: loading (static skeletons at once, and after three seconds one polite line), ready,
 // filtered, empty (no measures yet), abstention (a source with no measures, or a date before the
 // first measure) and error (a timeout, no access, or anything else). In an error the tables are
 // hidden, so old numbers never pass for current ones.
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
+import { TaskZone } from "../../components/TaskZone";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";
@@ -37,18 +43,21 @@ import {
 } from "../../lib/dataPages";
 import { useStore } from "../../lib/store";
 import { DATA_HREF } from "../../routes";
-import { HardestDocuments, HardestDocumentsLoading } from "./HardestDocuments";
-import { MeasureValue, Sentence, type Measures, type Noun } from "./measures";
+import { HardestDocuments, HardestDocumentsLoading, SHELF_ID } from "./HardestDocuments";
+import { MeasureValue, OpenSection, Sentence, type Measures, type Noun } from "./measures";
 
 const words = copy.dataReadiness;
 const SLOW_MS = 3000;
 // Until the registry answers, the skeleton holds this many rows in each table and fixes in the card.
 const ROWS_BEFORE_REGISTRY = 3;
-// The headline's skeleton: as many lines as the real headline runs in the lead size, measured on the
-// fixture's page at 1440, 1024 and 390 px (three from 1200 px, five from 768 px, and seven below), so
-// nothing moves when it arrives.
+// The headline is the page's finding (ticket 104): 28 / 36 light, 24 / 32 below a 48rem window, at most 22.5em wide,
+// about 45 characters a line, in balanced lines.
+const FINDING = "max-w-[22.5em] text-finding text-balance text-ink-heading";
+// The headline's skeleton: as many lines as the real headline runs in the finding style, measured on the fixture's page
+// at 1440, 1024 and 390 px (six from a 768 px page area, where its 22.5em holds it at 1440 and 1024 alike, and nine
+// below), so nothing moves when it arrives.
 const lines = (count: number) => [...Array.from({ length: count - 1 }, () => "w-full"), "w-3/5"];
-const HEADLINE_LINES = { widest: lines(3), wide: lines(4), narrow: lines(7) };
+const HEADLINE_LINES = { wide: lines(6), narrow: lines(9) };
 
 const plain = (count: number) => <Num count={count} />;
 const day = (iso: string, today: string, style: "sentence" | "table" = "sentence") => <Num date={iso} style={style} today={today} />;
@@ -480,55 +489,68 @@ function projectCount(fix: Fix, measures: Measures): ReactNode {
   );
 }
 
-function Fixes({ fixes, measures, shortfalls, shown }: { fixes: Fix[]; measures: Measures; shortfalls: boolean; shown: number }) {
+// The three sections most readers skip (plan 8.4, Data; ticket 104): each is a closed row with its one sentence, and its
+// Show button opens it in place, with focus kept on the button.
+export type ClosedZone = "shelf" | "failures" | "fixes";
+type Zones = { isOpen: (zone: ClosedZone) => boolean; toggle: (zone: ClosedZone) => void };
+const toggleOf = (zones: Zones, zone: ClosedZone, show: string, hide: string) => ({ open: zones.isOpen(zone), onToggle: () => zones.toggle(zone), show, hide });
+
+function FixList({ fixes, measures }: { fixes: Fix[]; measures: Measures }) {
   return (
-    <section aria-labelledby="data-fixes" data-fixes className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
-      <h2 id="data-fixes" className="text-h2 text-ink-heading">
-        {words.fixes.title}
-      </h2>
-      <p className="mt-1 text-caption text-ink-muted">{words.fixes.caption}</p>
-      {fixes.length === 0 ? (
-        <p className="mt-3 text-body">{shortfalls ? (shown === 1 ? words.fixes.noneKnownOne : words.fixes.noneKnown) : words.fixes.none}</p>
-      ) : (
-        <ol className="mt-3 flex flex-col gap-3">
-          {fixes.map((fix) => (
-            <li key={fix.gap} className="grid grid-cols-[1.5rem_1fr] gap-x-2">
-              <span aria-hidden="true" className="text-body font-semibold tabular-nums text-ink-heading">
-                {fix.rank}
-              </span>
-              <div>
-                <p className="text-body">
-                  <Sentence segments={fix.sentence} measures={measures} inText />
-                </p>
-                <p className="text-small" data-numbers>
-                  <Template
-                    text={fix.projects === 1 ? words.fixes.oneProject : words.fixes.projects}
-                    values={{ count: projectCount(fix, measures) }}
-                  />
-                </p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
+    <ol className="flex flex-col gap-3 pt-2">
+      {fixes.map((fix) => (
+        <li key={fix.gap} className="grid grid-cols-[1.5rem_1fr] gap-x-2">
+          <span aria-hidden="true" className="text-body font-semibold tabular-nums text-ink-heading">
+            {fix.rank}
+          </span>
+          <div>
+            <p className="text-body">
+              <Sentence segments={fix.sentence} measures={measures} inText />
+            </p>
+            <p className="text-small" data-numbers>
+              <Template text={fix.projects === 1 ? words.fixes.oneProject : words.fixes.projects} values={{ count: projectCount(fix, measures) }} />
+            </p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+// The fixes, ranked by the projects each would add evidence to. With none to rank, the row says why, with nothing to open.
+function Fixes({ fixes, measures, shortfalls, shown, zones }: { fixes: Fix[]; measures: Measures; shortfalls: boolean; shown: number; zones: Zones }) {
+  const none = shortfalls ? (shown === 1 ? words.fixes.noneKnownOne : words.fixes.noneKnown) : words.fixes.none;
+  return (
+    <TaskZone
+      name={words.fixes.title}
+      headingId="data-fixes"
+      sectionKey="fixes"
+      marks={{ "data-fixes": "" }}
+      summary={fixes.length === 0 ? none : words.fixes.summary}
+      toggle={fixes.length === 0 ? undefined : toggleOf(zones, "fixes", words.fixes.show, words.fixes.hide)}
+    >
+      {fixes.length > 0 && <FixList fixes={fixes} measures={measures} />}
+    </TaskZone>
   );
 }
 
 // The Procurement Plan pages the layout parser could not read (ticket 08 asked to show them), as
-// their own section under Sources, whenever the plans' row is in view.
-function Failures({ result }: { result: Readiness }) {
+// their own section under Sources, whenever the plans' row is in view. With none, the row says so, with nothing to open.
+function Failures({ result, zones }: { result: Readiness; zones: Zones }) {
   if (result.parse_failures === null) return null;
+  const failures = result.parse_failures;
   return (
-    <section aria-labelledby="data-failures" data-failures className="mt-12">
-      <h2 id="data-failures" className="text-h2 text-ink-heading">
-        {words.failures.title}
-      </h2>
-      {result.parse_failures.length === 0 ? (
-        <p className="mt-3 text-body">{words.failures.none}</p>
-      ) : (
-        <ul className="mt-3 flex flex-col gap-1 text-body">
-          {result.parse_failures.map((failure) => (
+    <TaskZone
+      name={words.failures.title}
+      headingId="data-failures"
+      sectionKey="failures"
+      marks={{ "data-failures": "" }}
+      summary={failures.length === 0 ? words.failures.none : words.failures.summary}
+      toggle={failures.length === 0 ? undefined : toggleOf(zones, "failures", words.failures.show, words.failures.hide)}
+    >
+      {failures.length > 0 && (
+        <ul className="flex flex-col gap-1 pt-2 text-body">
+          {failures.map((failure) => (
             <li key={`${failure.document_id}-${failure.pdf_page}`}>
               <span className="font-mono wrap-anywhere">{failure.document_id}</span>
               {words.sources.scope.join}
@@ -537,53 +559,51 @@ function Failures({ result }: { result: Readiness }) {
           ))}
         </ul>
       )}
-    </section>
+    </TaskZone>
   );
 }
 
-function Tables({ result }: { result: Readiness }) {
+// The zones under the finding, as siblings, so a panel keeps 16 px from the next zone and the closed rows touch
+// (DESIGN.md section 5, Task zone).
+const ZONES = "mt-8";
+
+function Tables({ result, zones }: { result: Readiness; zones: Zones }) {
   const measures: Measures = { rows: result.rows, asOf: result.as_of };
   return (
-    <>
+    <div className={ZONES}>
       {result.kinds.length > 0 && (
-        <div className="mt-12">
-          <ReadinessTable
-            id="kinds"
-            skeletonRows="kinds"
-            title={words.kinds.title}
-            lines={words.kinds.caption}
-            head={{ label: words.kinds.kind, width: "w-[28%]" }}
-            columns={KIND_COLUMNS}
-            state={{ status: "ready", rows: kindRows(result.kinds, measures) }}
-            source={sourceLine(result)}
-          />
-        </div>
-      )}
-      <div className="mt-12">
         <ReadinessTable
-          id="sources"
-          skeletonRows="sources"
-          title={words.sources.title}
-          lines={<Template text={words.sources.showing} values={{ shown: <Num value={result.filter.shown} />, total: <Num value={result.filter.total} /> }} />}
-          head={{ label: words.sources.source, width: "w-[28%]" }}
-          columns={COLUMNS.map(columnHead)}
-          state={{ status: "ready", rows: sourceRows(result, measures) }}
+          id="kinds"
+          skeletonRows="kinds"
+          title={words.kinds.title}
+          lines={words.kinds.caption}
+          head={{ label: words.kinds.kind, width: "w-[28%]" }}
+          columns={KIND_COLUMNS}
+          state={{ status: "ready", rows: kindRows(result.kinds, measures) }}
           source={sourceLine(result)}
-          spanName={COLUMNS.map((column) => words.sources.columns[column].label).join(words.sources.scope.join)}
         />
-      </div>
-      <HardestDocuments result={result} />
-      <Failures result={result} />
-      <div className="mt-12">
-        <Fixes fixes={result.fixes} measures={measures} shortfalls={result.gaps.length > 0} shown={result.filter.shown} />
-      </div>
-    </>
+      )}
+      <ReadinessTable
+        id="sources"
+        skeletonRows="sources"
+        title={words.sources.title}
+        lines={<Template text={words.sources.showing} values={{ shown: <Num value={result.filter.shown} />, total: <Num value={result.filter.total} /> }} />}
+        head={{ label: words.sources.source, width: "w-[28%]" }}
+        columns={COLUMNS.map(columnHead)}
+        state={{ status: "ready", rows: sourceRows(result, measures) }}
+        source={sourceLine(result)}
+        spanName={COLUMNS.map((column) => words.sources.columns[column].label).join(words.sources.scope.join)}
+      />
+      <HardestDocuments result={result} open={zones.isOpen("shelf")} onToggle={() => zones.toggle("shelf")} />
+      <Failures result={result} zones={zones} />
+      <Fixes fixes={result.fixes} measures={measures} shortfalls={result.gaps.length > 0} shown={result.filter.shown} zones={zones} />
+    </div>
   );
 }
 
 function Lead({ children, lead, busy }: { children: ReactNode; lead?: RefObject<HTMLDivElement | null>; busy?: boolean }) {
   return (
-    <div ref={lead} tabIndex={-1} data-lead aria-busy={busy || undefined} className="outline-none @md/page:max-w-[66%]">
+    <div ref={lead} tabIndex={-1} data-lead aria-busy={busy || undefined} className="outline-none">
       {children}
     </div>
   );
@@ -662,20 +682,56 @@ export function ReadinessView({
   alert?: RefObject<HTMLDivElement | null>;
   onRetry?: () => void;
 }) {
-  const view = render(state, search, known, slow, onRetry);
+  // The closed rows a person opened. They stay open while the measures load again, and a link to the hardest documents
+  // (#hardest-documents) opens theirs (DESIGN.md section 5, Task zone: a link to a zone's id opens it).
+  const [opened, setOpened] = useState<ReadonlySet<ClosedZone>>(() => new Set(namedZone() ? [namedZone()!] : []));
+  const zones: Zones = {
+    isOpen: (zone) => opened.has(zone),
+    toggle: (zone) =>
+      setOpened((now) => {
+        const next = new Set(now);
+        if (!next.delete(zone)) next.add(zone);
+        return next;
+      }),
+  };
+  const openSection = (id: string) => {
+    const zone = ZONE_OF_ID[id];
+    if (zone) setOpened((now) => new Set(now).add(zone));
+  };
+  const view = render(state, search, known, slow, onRetry, zones);
+  // Arriving with the address naming the hardest documents, their heading takes focus once the measures show it.
+  const followed = useRef(false);
+  const shown = view.name === "ready" || view.name === "filtered";
+  useEffect(() => {
+    if (!shown || followed.current) return;
+    followed.current = true;
+    const id = window.location.hash.slice(1);
+    if (!namedZone()) return;
+    const heading = document.getElementById(id);
+    heading?.scrollIntoView({ block: "start" });
+    heading?.focus({ preventScroll: true });
+  }, [shown]);
   return (
-    <div data-readiness={view.name} aria-busy={view.name === "loading" || undefined}>
-      {view.notice && (
-        <div ref={alert} tabIndex={-1} className="mb-6 outline-none @md/page:max-w-[66%]">
-          {view.notice}
-        </div>
-      )}
-      <Lead lead={lead} busy={view.name === "loading"}>
-        {view.lead}
-      </Lead>
-      {view.body}
-    </div>
+    <OpenSection.Provider value={openSection}>
+      <div data-readiness={view.name} aria-busy={view.name === "loading" || undefined}>
+        {view.notice && (
+          <div ref={alert} tabIndex={-1} className="mb-6 outline-none @md/page:max-w-[66%]">
+            {view.notice}
+          </div>
+        )}
+        <Lead lead={lead} busy={view.name === "loading"}>
+          {view.lead}
+        </Lead>
+        {view.body}
+      </div>
+    </OpenSection.Provider>
   );
+}
+
+// The closed rows an in-page link can name by their heading's id.
+const ZONE_OF_ID: Readonly<Record<string, ClosedZone>> = { [SHELF_ID]: "shelf" };
+function namedZone(): ClosedZone | null {
+  return ZONE_OF_ID[decodeURIComponent(window.location.hash.slice(1))] ?? null;
 }
 
 type View = { name: string; notice?: ReactNode; lead: ReactNode; body?: ReactNode };
@@ -686,20 +742,23 @@ function render(
   known: ReturnType<typeof registry.get>,
   slow: boolean,
   retry: () => void,
+  zones: Zones,
 ): View {
   if (state.status === "loading") {
     const kinds = known.status === "ready" ? known.registry.kinds : ROWS_BEFORE_REGISTRY;
     // The Sources table holds a row for each readiness row and each known gap.
     const rows = known.status === "ready" ? known.registry.readiness_rows + known.registry.known_gaps : ROWS_BEFORE_REGISTRY;
     const fixes = known.status === "ready" ? known.registry.fixes : ROWS_BEFORE_REGISTRY;
+    const filtered = new URLSearchParams(search).has("sources");
     return {
       name: "loading",
       lead: (
         <>
           <span className="clip-visually">{copy.loading}</span>
-          <SkeletonText className="hidden text-lead @xl/page:flex" widths={HEADLINE_LINES.widest} />
-          <SkeletonText className="hidden text-lead @md/page:flex @xl/page:hidden" widths={HEADLINE_LINES.wide} />
-          <SkeletonText className="text-lead @md/page:hidden" widths={HEADLINE_LINES.narrow} />
+          <div className={FINDING} aria-hidden="true">
+            <SkeletonText className="hidden text-finding @md/page:flex" widths={HEADLINE_LINES.wide} />
+            <SkeletonText className="text-finding @md/page:hidden" widths={HEADLINE_LINES.narrow} />
+          </div>
           {/* As tall as the caption it stands for: two lines below 768 px, one above. */}
           <div role="status" className="mt-2 min-h-[2lh] text-caption text-ink-muted @md/page:min-h-lh">
             {slow ? words.loading.slow : null}
@@ -707,58 +766,70 @@ function render(
         </>
       ),
       body: (
-        <>
+        <div className={ZONES}>
           {kinds > 0 && (
-            <div className="mt-12">
-              <ReadinessTable
-                id="kinds"
-                skeletonRows="kinds"
-                title={words.kinds.title}
-                lines={words.kinds.caption}
-                head={{ label: words.kinds.kind, width: "w-[28%]" }}
-                columns={KIND_COLUMNS}
-                state={{ status: "loading", rows: kinds }}
-              />
-            </div>
-          )}
-          <div className="mt-12">
             <ReadinessTable
-              id="sources"
-              skeletonRows="sources"
-              title={words.sources.title}
-              head={{ label: words.sources.source, width: "w-[28%]" }}
-              columns={COLUMNS.map(columnHead)}
-              state={{ status: "loading", rows }}
+              id="kinds"
+              skeletonRows="kinds"
+              title={words.kinds.title}
+              lines={words.kinds.caption}
+              head={{ label: words.kinds.kind, width: "w-[28%]" }}
+              columns={KIND_COLUMNS}
+              state={{ status: "loading", rows: kinds }}
             />
-          </div>
-          {/* The hardest documents, one skeleton row for each entry the slice file names, when no link
-              filters the page (a filtered view shows only the entries on its sources). */}
-          {!new URLSearchParams(search).has("sources") && known.status === "ready" && <HardestDocumentsLoading rows={known.registry.shelf} />}
-          {/* Every row is in view when no link filters the page, the plans' row with them. */}
-          {!new URLSearchParams(search).has("sources") && (
-            <section aria-labelledby="data-failures-loading" className="mt-12">
-              <h2 id="data-failures-loading" className="text-h2 text-ink-heading">
-                {words.failures.title}
-              </h2>
-              <SkeletonLine className="mt-3 hidden text-body @md/page:flex" width="w-2/3" />
-              <SkeletonText className="mt-3 text-body @md/page:hidden" widths={["w-full", "w-1/2"]} />
-            </section>
           )}
-          <div className="mt-12 rounded-md border border-line bg-surface p-4 @md/page:p-6" aria-hidden="true">
-            <h2 className="text-h2 text-ink-heading">{words.fixes.title}</h2>
-            <SkeletonLine className="mt-1 text-caption" width="w-2/5" />
-            <ol className="mt-3 flex flex-col gap-3">
+          <ReadinessTable
+            id="sources"
+            skeletonRows="sources"
+            title={words.sources.title}
+            head={{ label: words.sources.source, width: "w-[28%]" }}
+            columns={COLUMNS.map(columnHead)}
+            state={{ status: "loading", rows }}
+          />
+          {/* The hardest documents, one skeleton row for each entry the slice file names once opened, when no link
+              filters the page (a filtered view shows only the entries on its sources). */}
+          {!filtered && known.status === "ready" && (
+            <HardestDocumentsLoading rows={known.registry.shelf} open={zones.isOpen("shelf")} onToggle={() => zones.toggle("shelf")} />
+          )}
+          {/* Every row is in view when no link filters the page, the plans' row with them. Its sentence waits for the
+              measures, since it says whether any page failed: one line from a 768 px page area, two below. */}
+          {!filtered && (
+            <TaskZone
+              name={words.failures.title}
+              headingId="data-failures"
+              sectionKey="failures"
+              busy
+              summary={
+                <>
+                  <SkeletonLine className="hidden text-body @md/page:flex" width="w-2/3" />
+                  <SkeletonText className="text-body @md/page:hidden" widths={["w-full", "w-1/2"]} />
+                </>
+              }
+            />
+          )}
+          {/* The fixes keep their sentence and their button while the measures load; opened, a skeleton line for each
+              fix the registry holds. */}
+          <TaskZone
+            name={words.fixes.title}
+            headingId="data-fixes"
+            sectionKey="fixes"
+            busy
+            summary={words.fixes.summary}
+            toggle={fixes > 0 ? toggleOf(zones, "fixes", words.fixes.show, words.fixes.hide) : undefined}
+          >
+            <ol aria-hidden="true" className="flex flex-col gap-3 pt-2">
               {Array.from({ length: fixes }, (_, index) => (
                 <li key={index}>
                   {/* A fix runs one line from 768 px and about four below, as on the fixture's page. */}
                   <SkeletonLine className="hidden text-body @md/page:flex" width="w-4/5" />
                   <SkeletonText className="text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
-                  <SkeletonLine className="text-small" width="w-1/3" />
+                  {/* Its project count is a number you can open, whose 2 px padding makes the line 24 px tall. */}
+                  <SkeletonLine className="my-0.5 text-small" width="w-1/3" />
                 </li>
               ))}
             </ol>
-          </div>
-        </>
+          </TaskZone>
+        </div>
       ),
     };
   }
@@ -841,19 +912,21 @@ function render(
     lead: (
       <>
         {result.headline ? (
-          // The headline is the page's finding, so a number's tooltip opens under the whole of it (DESIGN.md, Number
-          // tooltip; ticket 96).
-          <p className="text-lead text-pretty text-ink-heading" data-headline data-finding>
+          // The headline is the page's finding (DESIGN.md section 1, principle 7; ticket 104), in the finding style, so a
+          // number's tooltip opens under the whole of it (DESIGN.md, Number tooltip; ticket 96).
+          <p className={FINDING} data-headline data-finding>
             <Sentence segments={result.headline.segments} measures={measures} about={result.filter.sources ? words.number.sources : undefined} inText />
           </p>
         ) : result.headline_abstention ? (
-          <p className="text-lead text-pretty text-ink-heading" data-headline>
+          // When I hold the headline back, the sentence that says so is the page's answer, so it takes the finding style
+          // too (plan 8.5, Few).
+          <p className={FINDING} data-headline data-finding>
             <Abstention unmeasured={result.headline_abstention.unmeasured} sources={result.headline_abstention.sources} />
           </p>
         ) : null}
         <Provenance result={result} />
       </>
     ),
-    body: <Tables result={result} />,
+    body: <Tables result={result} zones={zones} />,
   };
 }

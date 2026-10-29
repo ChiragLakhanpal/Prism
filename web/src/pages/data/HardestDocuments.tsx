@@ -2,7 +2,8 @@
 // Sources table and before the fixes. Five rows in the slice file's order, each a claim and its proof:
 // the document, what makes it hard, how many of its pages went to the layout parser, what I recovered
 // against what the document holds, and the page where you can compare the two. A badge shows only for
-// Partial or Gap, which the server set. Below 768 px of page area each row is a card.
+// Partial or Gap, which the server set. Below 768 px of page area each row is a card. Since ticket 104 the section is a
+// closed row with its one sentence, which opens in place.
 //
 // Every number comes from data_readiness_for's rows and opens its window, which says what it was counted
 // against, the parser that read it and the table it counted. The page computes nothing (CLAUDE.md rule 1).
@@ -341,41 +342,46 @@ function sourceLine(result: Readiness): ReactNode {
   return <Template text={words.sourceLine} values={{ date: <Num date={measured} style="table" today={result.as_of} className="whitespace-nowrap" /> }} />;
 }
 
-export function HardestDocuments({ result }: { result: Readiness }) {
+// Whether the section is open, and the press that opens or closes it: it starts as a closed row (ticket 104), since
+// most readers skip it, and a link to #hardest-documents opens it.
+export type ShelfToggle = { open: boolean; onToggle: () => void };
+
+const closedRow = ({ open, onToggle }: ShelfToggle) => ({ summary: words.summary, toggle: { open, onToggle, show: words.show, hide: words.hide } });
+
+export function HardestDocuments({ result, ...toggle }: { result: Readiness } & ShelfToggle) {
   if (result.stress_shelf.length === 0) return null;
   return (
-    <div className="mt-12">
-      <ReadinessTable
-        id="shelf"
-        headingId={SHELF_ID}
-        skeletonRows="shelf"
-        title={words.title}
-        lines={words.caption}
-        head={SHELF_HEAD}
-        columns={SHELF_COLUMNS}
-        state={{ status: "ready", rows: shelfRows(result) }}
-        source={sourceLine(result)}
-        spanName={words.spanName}
-      />
-    </div>
+    <ReadinessTable
+      id="shelf"
+      headingId={SHELF_ID}
+      skeletonRows="shelf"
+      title={words.title}
+      lines={words.caption}
+      head={SHELF_HEAD}
+      columns={SHELF_COLUMNS}
+      state={{ status: "ready", rows: shelfRows(result) }}
+      source={sourceLine(result)}
+      spanName={words.spanName}
+      closed={closedRow(toggle)}
+    />
   );
 }
 
-// While the measures load: the title, the caption and one skeleton row for each entry in the slice file.
-export function HardestDocumentsLoading({ rows }: { rows: number }) {
+// While the measures load: the closed row with its sentence, and once opened the caption and one skeleton row for each
+// entry in the slice file.
+export function HardestDocumentsLoading({ rows, ...toggle }: { rows: number } & ShelfToggle) {
   if (rows === 0) return null;
   return (
-    <div className="mt-12">
-      <ReadinessTable
-        id="shelf"
-        headingId={SHELF_ID}
-        skeletonRows="shelf"
-        title={words.title}
-        lines={words.caption}
-        head={SHELF_HEAD}
-        columns={SHELF_COLUMNS}
-        state={{ status: "loading", rows }}
-      />
-    </div>
+    <ReadinessTable
+      id="shelf"
+      headingId={SHELF_ID}
+      skeletonRows="shelf"
+      title={words.title}
+      lines={words.caption}
+      head={SHELF_HEAD}
+      columns={SHELF_COLUMNS}
+      state={{ status: "loading", rows }}
+      closed={closedRow(toggle)}
+    />
   );
 }

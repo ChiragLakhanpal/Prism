@@ -39,6 +39,15 @@ test("the capture list photographs Home answered, the officer's Home and the pub
   expect(SHOTS.find((shot) => shot.name === "home--answered")?.api?.["/api/ask"]?.recorded).toBe("ask-p130164-rebidding.sse");
 });
 
+// Ticket 104: Data readiness at three widths, its closed rows opened, and beside the evidence drawer at 1024 px.
+test("the capture list photographs Data readiness at 1440, 1024 and 390 px, with its rows open, and beside the drawer at 1024 px", () => {
+  const shot = (name: string) => SHOTS.find((candidate) => candidate.name === `data--${name}`);
+  expect(shot("readiness")?.widths ?? WIDTHS).toEqual([1440, 1024, 390]);
+  expect(shot("rows-open")?.full).toBe(true);
+  expect(shot("beside-drawer")?.widths).toEqual([1024]);
+  expect(shot("beside-drawer")?.path).toContain("?evidence=");
+});
+
 test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {
   expect(SHOTS.filter((shot) => shot.name.includes("--hover-")).length).toBeGreaterThan(5);
   expect(SHOTS.filter((shot) => shot.name.includes("--focus-")).length).toBeGreaterThan(5);

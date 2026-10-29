@@ -51,6 +51,16 @@ async function open(page: Page, path = "/data", width = 1440) {
 const json = async (name: string) => JSON.parse(await recorded(name));
 const table = (page: Page, id: string) => page.locator(`[data-readiness-table=${id}] [data-table-view=table]`);
 const cell = (page: Page, key: string) => table(page, "sources").locator(`[data-cell="${key}"]`);
+// The count line under a table's title, such as "Showing 2 of 14 sources."
+const countLine = (page: Page, id: string) => page.locator(`[data-readiness-table=${id}] [data-table-lines]`);
+
+// The hardest documents, the plan pages the parser couldn't read and the fixes start as closed rows (ticket 104): a
+// test of what they hold opens each one first, with its Show button.
+async function openRows(page: Page) {
+  const closed = page.locator("[data-readiness] [data-section-toggle][aria-expanded=false]");
+  await expect(page.locator("[data-readiness=ready], [data-readiness=filtered]")).toBeVisible();
+  for (let left = await closed.count(); left > 0; left -= 1) await closed.first().click();
+}
 
 async function violations(page: Page) {
   const results = await scan(page);
@@ -160,18 +170,79 @@ test("the headline is the server's sentence, and its caption says the measures' 
   );
 });
 
-test("a line of the headline that holds a number keeps the lead's 28 px pitch", async ({ page }) => {
-  // Ticket 91's review, routed to ticket 96: a number's button padding grew each line that held one to 30 or 32 px.
+// Ticket 104: the headline is the page's one finding (DESIGN.md section 1, principle 7), in the finding style: 28 / 36
+// light, 24 / 32 below a 48rem window, at most 22.5em wide. A line that holds a number keeps the finding's pitch (ticket
+// 91's review, routed to ticket 96: a number's button padding grew each line that held one).
+for (const [width, size, pitch] of [[1440, 28, 36], [390, 24, 32]] as const) {
+  test(`at ${width} px the headline is the page's one finding, ${size} px light, and a line that holds a number keeps its ${pitch} px pitch`, async ({ page }) => {
+    await mockData(page, FULL);
+    await page.setViewportSize({ width: windowBeside(width), height: 900 });
+    await page.goto("/data");
+    await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+    await fontsLoaded(page);
+    await expect(page.locator("main [data-finding]")).toHaveCount(1);
+    const headline = page.locator("[data-headline]");
+    await expect(headline).toHaveAttribute("data-finding");
+    await expect(headline.locator("button[data-num]").first()).toBeVisible();
+    const look = await headline.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { size: style.fontSize, weight: style.fontWeight, height: element.getBoundingClientRect().height };
+    });
+    expect([look.size, look.weight]).toEqual([`${size}px`, "300"]);
+    expect(look.height).toBeGreaterThan(pitch);
+    expect(look.height % pitch, `${look.height} px is a whole number of ${pitch} px lines`).toBe(0);
+  });
+}
+
+// Ticket 104 (plan 8.4, Data): What you can ask and Sources hold open work, so each is a panel; the hardest documents,
+// the plan pages the parser couldn't read and the fixes are read by few, so each is a closed row with its one sentence,
+// which opens in place with focus kept on its button. At 390 px the page is at least 30 percent shorter than the
+// 11,205 px of the study's capture (current/data-390.png).
+test("What you can ask and Sources are panels, and the last three sections are closed rows that open in place", async ({ page }) => {
   await mockData(page, FULL);
-  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
-  await page.goto("/data");
+  await open(page, "/data", 390);
   await expect(page.locator("[data-readiness=ready]")).toBeVisible();
   await fontsLoaded(page);
-  const headline = page.locator("[data-headline]");
-  await expect(headline.locator("button[data-num]").first()).toBeVisible();
-  const height = await headline.evaluate((element) => element.getBoundingClientRect().height);
-  expect(height).toBeGreaterThan(28);
-  expect(height % 28, `${height} px is a whole number of 28 px lines`).toBe(0);
+  expect(await page.evaluate(() => document.documentElement.scrollHeight)).toBeLessThanOrEqual(Math.floor(11_205 * 0.7));
+  await page.setViewportSize({ width: windowBeside(1440), height: 900 });
+
+  const zone = (key: string) => page.locator(`[data-readiness] [data-section=${key}]`);
+  for (const [key, name] of [["kinds", "What you can ask"], ["sources", "Sources"]]) {
+    await expect(zone(key)).toHaveAttribute("data-zone", "panel");
+    await expect(zone(key).getByRole("heading", { level: 2 })).toHaveText(name);
+  }
+  const rows = page.locator("[data-readiness] [data-zone=row]");
+  await expect(rows.getByRole("heading", { level: 2 })).toHaveText([
+    "The hardest documents I read",
+    "Plan pages the layout parser couldn't read",
+    "Fixes that would unlock the most",
+  ]);
+  await expect(rows.locator("[data-section-summary]")).toHaveText([
+    "I use these documents as a stress test for my reading.",
+    // The fixture's run read every plan page, so the row says so and has nothing to open.
+    "The layout parser read every Procurement Plan page it tried.",
+    "I rank each fix by how many projects it would add evidence to.",
+  ]);
+  await expect(zone("failures").getByRole("button")).toHaveCount(0);
+  await expect(page.locator("[data-readiness-table=shelf] [data-table-view], [data-fixes] li")).toHaveCount(0);
+
+  for (const [key, show, hide, inside] of [
+    ["shelf", "Show the documents", "Hide the documents", "[data-readiness-table=shelf] [data-table-view=table]"],
+    ["fixes", "Show the fixes", "Hide the fixes", "[data-fixes] li"],
+  ]) {
+    const button = zone(key).getByRole("button", { name: show });
+    await expect(button).toHaveAttribute("aria-expanded", "false");
+    await button.press("Enter");
+    await expect(zone(key)).toHaveAttribute("data-zone", "panel");
+    await expect(page.locator(inside).first()).toBeVisible();
+    const pressed = zone(key).getByRole("button", { name: hide });
+    await expect(pressed).toBeFocused();
+    await expect(pressed).toHaveAttribute("aria-expanded", "true");
+    await pressed.press("Enter");
+    await expect(zone(key)).toHaveAttribute("data-zone", "row");
+    await expect(page.locator(inside)).toHaveCount(0);
+    await expect(button).toBeFocused();
+  }
 });
 
 test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 · daily, and nothing scores a source", async ({ page }) => {
@@ -277,9 +348,10 @@ test("from 768 px no cell's text in the Sources table runs into the next cell's"
 test("at 390 px each table's source line keeps its date on one line", async ({ page }) => {
   await mockData(page, FULL);
   await open(page, "/data", 390);
+  await openRows(page);
 
   const dates = page.locator("[data-readiness-table] [data-source] [data-num]");
-  // Three tables: What you can ask, Sources, and the hardest documents (ticket 18).
+  // Three tables: What you can ask, Sources, and the hardest documents (ticket 18), once opened.
   await expect(dates).toHaveCount(3);
   await expect(dates.first()).toHaveText("Oct 23, 2026");
   expect(await dates.evaluateAll((all) => all.map((date) => date.getClientRects().length))).toEqual([1, 1, 1]);
@@ -353,6 +425,7 @@ test("every number's tooltip names what it counts, and its window shows the numb
   // Design review B1: no tooltip reads "2 . Measured". Focus opens each one; the open tooltip is the
   // one the number names as its description.
   await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  await openRows(page);
   // The cards below 768 px repeat the table's numbers and are hidden at this width.
   const numbers = page.locator("main button[data-num]").filter({ visible: true });
   const count = await numbers.count();
@@ -440,7 +513,7 @@ test("opened from the plan check, it shows only the rows the plan check reads, a
   await expect(table(page, "sources").locator("tbody tr")).toHaveCount(2);
   const total = await sourceRows("data-readiness-plan-check.json");
   expect(total).toBeGreaterThanOrEqual(14);
-  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText(`Showing 2 of ${total} sources.`);
+  await expect(countLine(page, "sources")).toHaveText(`Showing 2 of ${total} sources.`);
   // The headline names no STEP gap here, so the first STEP, in What you can ask, is spelled out.
   await expect(table(page, "kinds").locator("[data-cell='plan_check:readyFor']")).toContainText(
     "rows in the format of Systematic Tracking of Exchanges in Procurement (STEP)",
@@ -492,7 +565,7 @@ for (const [name, path, answer] of SWEPT) {
     const { placed } = placements();
     await mockData(page, answer);
     await open(page, path);
-    await expect(page.locator("[data-readiness=ready], [data-readiness=filtered]")).toBeVisible();
+    await openRows(page);
 
     // The cards below 768 px repeat the table's numbers and are hidden at this width.
     const numbers = page.locator("main button[data-num][aria-haspopup=dialog]").filter({ visible: true });
@@ -577,9 +650,12 @@ test("the fixes end the page, ranked by the projects each would add evidence to"
   await mockData(page, FULL);
   await open(page);
 
+  const zones = page.locator("[data-readiness] [data-zone]");
+  await expect(zones.last()).toHaveAttribute("data-fixes", "");
+  await expect(page.locator("[data-fixes] [data-section-summary]")).toHaveText("I rank each fix by how many projects it would add evidence to.");
+  await openRows(page);
   const fixes = page.locator("[data-fixes] li");
   await expect(fixes).toHaveCount(answer.fixes.length);
-  await expect(page.locator("[data-fixes] > p").first()).toHaveText("Ranked by how many projects each fix would add evidence to.");
   await expect(fixes.first()).toContainText("Would add evidence to three projects.");
 });
 
@@ -592,16 +668,16 @@ test("with no fix to rank, the fixes card says nothing falls short only when not
   await page.route("**/api/data/readiness*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(body) }));
   await open(page, "/data?sources=awards,notices&from=find_comparables");
   expect(answer.gaps.length).toBeGreaterThan(0);
-  await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("I don't have a fix to suggest for these sources.");
+  await expect(page.locator("[data-fixes] [data-section-summary]")).toHaveText("I don't have a fix to suggest for these sources.");
 
   // Design r5 P3: with one source in view, as the alert and the headline say, the card says "this source".
   body = { ...answer, fixes: [], filter: { ...answer.filter, shown: 1 } };
   await page.reload();
-  await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("I don't have a fix to suggest for this source.");
+  await expect(page.locator("[data-fixes] [data-section-summary]")).toHaveText("I don't have a fix to suggest for this source.");
 
   body = { ...answer, fixes: [], gaps: [] };
   await page.reload();
-  await expect(page.locator("[data-fixes] > p").nth(1)).toHaveText("Nothing I measured falls short, so there are no fixes to rank.");
+  await expect(page.locator("[data-fixes] [data-section-summary]")).toHaveText("Nothing I measured falls short, so there are no fixes to rank.");
 });
 
 test("opened from a coverage line, it shows only the sources behind it; Show all sources restores the table and Back returns", async ({ page }) => {
@@ -617,7 +693,7 @@ test("opened from a coverage line, it shows only the sources behind it; Show all
   await expect(rows).toHaveCount(2);
   const total = await sourceRows("data-readiness-filtered.json");
   expect(total).toBeGreaterThanOrEqual(14);
-  await expect(page.locator("[data-readiness-table=sources] > p").first()).toHaveText(`Showing 2 of ${total} sources.`);
+  await expect(countLine(page, "sources")).toHaveText(`Showing 2 of ${total} sources.`);
 
   await page.getByRole("link", { name: "Show all sources" }).click();
   await expect(page).toHaveURL(/\/data$/);
@@ -817,6 +893,15 @@ test("below 768 px each table becomes cards, each with the source's name as a he
   await expect(cards.first().getByRole("heading", { level: 3 })).toHaveText("Contract awards");
   await expect(cards.first().locator("dt").first()).toHaveText("Coveragerows and fiscal years");
   await expect(cards.first().locator("dd").nth(1)).toContainText("528 of 603, 88%");
+  // Each column's short definition shows once over the cards, not in every card (DESIGN.md section 5, Tables; ticket
+  // 104); a screen reader still hears it with each label.
+  const note = page.locator("[data-readiness-table=sources] [data-cards-note]");
+  await expect(note.locator("dt")).toHaveText(["Coverage", "Linked", "Read well", "Fresh"]);
+  await expect(note.locator("dd").first()).toHaveText("rows and fiscal years");
+  expect(await cards.first().getByText("rows and fiscal years").evaluate((about) => about.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(note).toBeHidden();
+  await page.setViewportSize({ width: 390, height: 900 });
   // Each label opens its full definition on a phone too.
   await cards.first().locator("dt").nth(1).getByRole("button", { name: "Linked" }).click();
   await expect(page.getByRole("dialog", { name: "Linked" })).toContainText("a sector or a borrower country");
@@ -867,12 +952,13 @@ test("beside the evidence drawer at 1024 px, the tables are laid out as in a 550
   );
   await page.route("**/api/evidence/opened*", (route) => route.fulfill({ contentType: "application/json", body: '{"opened":[],"recorded":true}' }));
   await open(page, "/data", 550);
-  await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  await openRows(page);
   const narrow = await tableLayout(page);
+  expect(narrow.map((table) => table.id)).toEqual(["kinds", "sources", "shelf"]);
   expect(narrow.map((table) => table.views)).toEqual(narrow.map(() => ["cards"]));
 
   await open(page, `/data?evidence=${encodeURIComponent(ICR_54)}`, 1024);
-  await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  await openRows(page);
   await expect(page.locator("[data-evidence-drawer]")).toBeVisible();
   expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(550);
   expect(await tableLayout(page)).toEqual(narrow);
