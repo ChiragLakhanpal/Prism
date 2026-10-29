@@ -603,6 +603,11 @@ test("Down then Enter asks the first package suggestion within the package, a cl
   await expect(answer).toContainText("The middle half of the 49 comparable packages took 3.3 to 7.9 months");
   await expect(answer).toContainText(`Asked within ${PACKAGE}`);
   expect(asked.map((request) => [request.postDataJSON().question, request.postDataJSON().scope])).toEqual([[SUGGESTED.package[0], PACKAGE]]);
+  // Ticket 101: the package page is a workspace page, so the answer takes the work's columns above the page head,
+  // beside the side panel.
+  await expect(page.locator("[data-workspace] [data-workspace-work]").filter({ has: answer })).toHaveCount(1);
+  expect((await answer.boundingBox())!.y).toBeLessThan((await page.locator("[data-page-head]").boundingBox())!.y);
+  await expect(page.getByRole("region", { name: "From the plan row" })).toBeVisible();
 
   // Empty the box, and a click in it brings the suggestions back; a click on one asks it the same way.
   await page.keyboard.press("Escape");

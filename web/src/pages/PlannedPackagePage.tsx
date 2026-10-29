@@ -118,10 +118,18 @@ export function PlannedPackagePage({ packageId, search }: { packageId: string | 
   return <SavedPackage packageId={packageId} preview={preview === "piu"} />;
 }
 
+// An answer asked from the box on this page (routes.ts, ANSWER_IN_PAGE; ticket 101): the states with no workspace draw
+// it at the top of their column, so it is never lost.
+function InPageAnswer() {
+  const asked = useAnswerInPage();
+  return asked ? <div className="mb-6">{asked}</div> : null;
+}
+
 // The public view holds no packages: the workspace and the Packages tab both show this (brief 7.5 and 7.9).
 export function PublicView() {
   return (
     <DocumentColumn>
+      <InPageAnswer />
       <div data-planned-package="public">
         <h1 tabIndex={-1} className="sr-only">
           {copy.pages.plannedPackage.title}
@@ -287,6 +295,7 @@ function ReadingPage() {
   }, [current?.packageId, current?.form]);
 
   useEffect(() => setPageTitle(words.documentTitle(words.titleNew)), []);
+  const asked = useAnswerInPage();
 
   if (!current) return null;
   const failed = current.phase === "failed" || current.phase === "dropped";
@@ -295,6 +304,7 @@ function ReadingPage() {
   return (
     <div data-planned-package={current.phase === "no_package" ? "no-package" : failed ? "failed" : "reading"} aria-busy={!failed && current.phase === "reading"}>
       <WorkspaceLayout
+        answer={asked}
         head={<Header title={words.titleNew} headingRef={heading} stamp={<SavedStamp saving={{ status: "unsaved" }} preview={false} />} />}
       >
         <UnderstoodZone>
@@ -425,6 +435,7 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
     if (page.error?.status === 404) {
       return (
         <DocumentColumn>
+          <InPageAnswer />
           <div data-planned-package="not-found" className="min-h-svh">
             <Breadcrumb trail={packagesOnly} held />
             <h1 tabIndex={-1} className="sr-only">
@@ -437,6 +448,7 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
     }
     return (
       <DocumentColumn>
+        <InPageAnswer />
         <div data-planned-package="error" className="min-h-svh">
           <h1 tabIndex={-1} className="sr-only">
             {copy.pages.plannedPackage.title}
@@ -460,9 +472,10 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
 }
 
 function LoadingPackage() {
+  const asked = useAnswerInPage();
   return (
     <div data-planned-package="loading" aria-busy="true" className="min-h-svh">
-      <WorkspaceLayout head={<Header title={words.loading} stamp={null} loading />}>
+      <WorkspaceLayout answer={asked} head={<Header title={words.loading} stamp={null} loading />}>
         <UnderstoodZone>
           <ChipSkeletons form={null} />
         </UnderstoodZone>
