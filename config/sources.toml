@@ -195,7 +195,7 @@ name_checked = 2026-10-23
 id = "awards_fy2001_2016"
 label = "Contract awards"
 noun = "contract awards for fiscal 2001 to 2016"
-covers = "fiscal 2001–16"
+covers = "fiscal 2001 to 2016"
 coverage = { measure = "coverage_rows", counts = "award rows held", counts_one = "award row held", noun = "award rows", noun_one = "award row", counted_in = "strata.silver.awards_fy2001_2016", years = "coverage_years" }
 linked = { measure = "linked_project", counts = "contracts have their project record", counts_one = "contract has its project record", noun = "contracts", noun_one = "contract", lack = "a project record I hold", counted_in = "strata.gold.contract" }
 fresh = { measure = "fresh_newest_record", counts = "newest signing date", noun = "contracts", counted_in = "strata.bronze.api_pages" }

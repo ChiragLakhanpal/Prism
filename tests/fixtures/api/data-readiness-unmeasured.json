@@ -2072,7 +2072,7 @@
       "scope": {
         "kind": "every_country"
       },
-      "covers": "fiscal 2001–16",
+      "covers": "fiscal 2001 to 2016",
       "cells": {
         "coverage": {
           "measure": "coverage_rows",

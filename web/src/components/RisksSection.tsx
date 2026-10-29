@@ -317,7 +317,7 @@ function Finding({
   const all = <Num value={m} options={{ compact: false }} check={{ tooltip: tips.m, from, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
   if (m === 1) {
     // One report: "the one completion report I read", never "1 of 1 completion reports" (the 58 design review, F5).
-    const report = <Num count={m} check={{ tooltip: tips.m, from, act: tips.mAct(mText), opens: "record", onOpen: onAll }} />;
+    const report = <Num count={m} check={{ tooltip: tips.m, from, act: tips.mActOne, opens: "record", onOpen: onAll }} />;
     if (one) return <Fill template={words.findingOneReport} slots={{ risk: one.risk_label, m: report }} />;
     if (tied.length === 2) return <Fill template={words.findingTwoOneReport} slots={{ a: tied[0].risk_label, b: tied[1].risk_label, m: report }} />;
     return <Fill template={words.findingManyOneReport} slots={{ tied: formatCount(tied.length, { capital: true }), m: report }} />;
@@ -343,13 +343,13 @@ function RiskCount({ row, m, onCount, from, stacked }: { row: RiskRow; m: number
             from,
             act: row.k === 1 ? words.numTips.kActOne : words.numTips.kAct(k),
             opens: "record",
-            name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label),
+            name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label, m === 1),
             onOpen: (element) => onCount(row, element),
           }}
         />
       </span>
       {!stacked && " "}
-      <span className="text-caption text-ink-muted">{words.reports}</span>
+      <span className="text-caption text-ink-muted">{m === 1 ? words.reportsOne : words.reports}</span>
     </span>
   );
 }
@@ -501,7 +501,7 @@ function removedOf(rows: RemovedRow[], m: number): Removed[] {
     const reason = words.removed.reasons[row.reason_code] ?? copy.removed.reasons[row.reason_code as keyof typeof copy.removed.reasons] ?? copy.removed.unknownReason;
     const said =
       row.claim_kind === "count"
-        ? words.removed.saidCount(row.risk_label, formatNumber(row.k, { compact: false }), formatNumber(m, { compact: false }))
+        ? words.removed.saidCount(row.risk_label, formatNumber(row.k, { compact: false }), formatNumber(m, { compact: false }), m === 1)
         : words.removed.saidHelped(row.risk_label, row.lesson_text.replace(/[.\s]+$/, ""));
     return { sentence: said, reason: reason.item, reasonJoined: reason.joined };
   });

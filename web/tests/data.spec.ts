@@ -126,6 +126,9 @@ test("every number in the Sources table is the measure the server returned for i
   // counts from the recorded award files: 632 rows; 528 of 603 contracts.
   await expect(cell(page, "awards:coverage").locator("[data-num]").first()).toHaveText("632");
   await expect(cell(page, "awards:linked").locator("[data-num]").first()).toHaveText("528 of 603, 88%");
+  // With no filter the table shows every source and says "all" (the 58 review and design review, round 2).
+  const total = await sourceRows("data-readiness.json");
+  await expect(countLine(page, "sources")).toHaveText(`Showing all ${total} sources.`);
 
   for (const row of answer.sources.filter((entry: { type: string }) => entry.type === "measured")) {
     for (const column of ["coverage", "linked", "read_well"]) {
@@ -340,6 +343,20 @@ test("from 768 px no cell's text in the Sources table runs into the next cell's"
   expect(look).toEqual({ muted: true, weight: "400" });
 });
 
+// The 58 critique, round 2: the headline is the page's finding, so a part of a whole in it, "70 of 264", never ends a
+// line on "of". Each part and its whole sit on one line at 390 and 1440 px.
+test("the headline keeps each part of a whole on one line", async ({ page }) => {
+  await mockData(page, FULL);
+  for (const width of [390, 1440]) {
+    await open(page, "/data", width);
+    const kept = page.locator("[data-headline] [data-part-whole]");
+    await expect(kept).toHaveCount(2);
+    await expect(kept.first()).toHaveText("70 of 264");
+    const lines = await kept.evaluateAll((all) => all.map((one) => new Set([...one.getClientRects()].map((box) => Math.round(box.top))).size));
+    expect(lines, `at ${width} px`).toEqual([1, 1]);
+  }
+});
+
 // Critique r6: at 390 px the tables' source line broke its date ("taken Oct" then "23, 2026.").
 test("at 390 px each table's source line keeps its date on one line", async ({ page }) => {
   await mockData(page, FULL);
@@ -379,7 +396,10 @@ test("the fiscal 2017 to 2019 awards show as a Gap row with none published and t
   await open(page);
 
   const row = table(page, "sources").locator("[data-row=fy2017_2019]");
-  await expect(row.locator("th")).toHaveText("Contract awardsfiscal 2017–19");
+  // A range is written with "to", never a dash (DESIGN.md section 5, Tables; the 58 review, round 2, follow-up 2).
+  await expect(row.locator("th")).toHaveText("Contract awardsfiscal 2017 to 2019");
+  await expect(table(page, "sources").locator("[data-row=awards_fy2001_2016]")).toContainText("fiscal 2001 to 2016");
+  await expect(table(page, "sources")).not.toContainText("–");
   await expect(cell(page, "fy2017_2019:span")).toContainText("None published");
   await expect(cell(page, "fy2017_2019:span").locator("[data-badge=gap]")).toHaveText("Gap");
   await expect(cell(page, "fy2017_2019:span")).toContainText(

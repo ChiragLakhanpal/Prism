@@ -201,9 +201,8 @@ export function Sentence({
   // A headline in lead type, whose lines keep their 28 px pitch with a number in them (MeasureNum's inText).
   inText?: boolean;
 }) {
-  return (
-    <>
-      {segments.map((segment, index): ReactNode => {
+  const isNumber = (segment: Segment | undefined) => segment !== undefined && "number" in segment;
+  const one = (segment: Segment, index: number): ReactNode => {
         if ("text" in segment) return <Fragment key={index}>{segment.text}</Fragment>;
         if ("mono" in segment) {
           return (
@@ -238,9 +237,27 @@ export function Sentence({
             inText={inText}
           />
         );
-      })}
-    </>
-  );
+  };
+  // A part of a whole, such as "70 of 264", sits on one line, so a line never ends on "of" with no whole (the 58
+  // critique, round 2). The words between the two numbers are the tool's own, with their spaces made no-break: a
+  // number you can press is a button, and a browser breaks before a button even inside a span that does not wrap.
+  const out: ReactNode[] = [];
+  for (let index = 0; index < segments.length; index++) {
+    const between = segments[index + 1];
+    if (isNumber(segments[index]) && between && "text" in between && between.text === words.partOfWhole && isNumber(segments[index + 2])) {
+      out.push(
+        <span key={index} data-part-whole className="whitespace-nowrap">
+          {one(segments[index], index)}
+          {between.text.replace(/ /g, "\u00a0")}
+          {one(segments[index + 2], index + 2)}
+        </span>,
+      );
+      index += 2;
+    } else {
+      out.push(one(segments[index], index));
+    }
+  }
+  return <>{out}</>;
 }
 
 // Opens the page's closed row whose heading has this id, such as the hardest documents' (ticket 104): the page provides

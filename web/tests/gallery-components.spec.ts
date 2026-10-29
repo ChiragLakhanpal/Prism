@@ -68,6 +68,16 @@ test("the cost intro keeps each amount on one line", async ({ page }) => {
   }
 });
 
+// The 58 design review, round 2, follow-ups 2 and 3: a table that shows all its rows says "all", and a removed count
+// from the one report read keeps "1 of 1" with the noun in the singular.
+test("the risks table says all three, and a removed count from one report reads 1 of 1 completion report", async ({ page }) => {
+  await page.goto("/gallery/risks");
+  await expect(page.locator("[data-state-section=many-tied]")).toContainText("Showing all three risks, in the order I ranked them.");
+  const removed = page.locator("[data-state-section=removed] [data-removed-box]");
+  await expect(removed).toContainText("came up in 1 of 1 completion report");
+  await expect(removed).not.toContainText("completion reports");
+});
+
 // Ticket 58 (the 30 design review, F11): a lesson IEG wrote itself says so in the risk drawer, rather than no line.
 test("the risk drawer's IEG line says when IEG wrote the lesson itself", async ({ page }) => {
   await page.goto("/gallery/risks");
@@ -810,7 +820,8 @@ async function answerSample(page: Page, section: string) {
 
 test("each answer sample's sentences, table, check line and steps count the same things", async ({ page }) => {
   await page.goto("/gallery/answer");
-  const checked = (line: string) => Number(line.match(/Checked: (\d+) of (\d+) numbers?/)![2]);
+  // A part and its whole are joined by no-break spaces, so the line never breaks between them (the 58 critique, round 2).
+  const checked = (line: string) => Number(line.match(/Checked: (\d+)\sof\s(\d+) numbers?/)![2]);
 
   // Ready: the check line counts the numbers in the sentences that were kept, and the step that
   // wrote them counts the kept sentences and the removed one.

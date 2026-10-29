@@ -514,6 +514,10 @@ test("P130164's Documents list the PAD, the ISRs, the ICR and the ICR Review re-
   await expect(list.locator("[data-group=isr] tr[data-document]")).toHaveCount(13);
   await expect(list.getByRole("button", { name: "Show fewer" })).toBeFocused();
   await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents.");
+  // Every group open, the list shows every document and says "all" (the 58 review, round 2, follow-up 1).
+  await list.getByRole("button", { name: "Show all 15" }).click();
+  await list.getByRole("button", { name: "Show all 30" }).click();
+  await expect(page.locator("[data-documents-count]")).toHaveText("Showing all 61 documents.");
 });
 
 test("Documents keeps each date and count on one line, starts Pages read at a card's left edge, and names a document with no type", async ({ page }) => {

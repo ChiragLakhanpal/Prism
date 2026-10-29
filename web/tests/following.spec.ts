@@ -398,6 +398,19 @@ test("when every project you follow is quiet, the finding counts them in words",
   await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing all three projects you follow.");
 });
 
+// The count line's place is held while every row is folded, so "Show them" stays under the pointer when the count
+// line appears, and a second press lands on it (the 58 design review, round 2, follow-up 1).
+test("when every project is quiet, the fold button stays where it was as the fold opens", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openFollowing(page, { file: "following-made-up-all-quiet.json", width });
+    const fold = page.locator("[data-following-view]:visible [data-fold]").first();
+    const before = (await fold.boundingBox())!.y;
+    await fold.click();
+    await expect(page.locator("[data-count-line]:visible")).toBeVisible();
+    expect(Math.round((await fold.boundingBox())!.y), `at ${width} px`).toBe(Math.round(before));
+  }
+});
+
 test("one project you follow is counted as the one, never as 1 of 1", async ({ page }) => {
   await openFollowing(page, { file: "following-made-up-one.json" });
 

@@ -295,6 +295,16 @@ test("Connections caps a large project at 20 nodes and counts its packages, and 
   expect(await axe(page)).toEqual([]);
 });
 
+// The count line follows DESIGN.md's one rule: a project whose every package and document shows says "all" (the 58
+// design review, round 2, follow-up 6). No recording shows every item, so the count is set in memory.
+test("Connections says all when it shows every package and document", async ({ page }) => {
+  const every = JSON.parse(await recorded("connections-p130164.json"));
+  Object.assign(every, { shown: every.total });
+  await mockApi(page, { ...(await trailApi()), "/api/projects/P130164/connections": { body: JSON.stringify(every) } });
+  await page.goto("/projects/P130164/connections");
+  await expect(page.locator("[data-connections]")).toContainText(`Showing all ${every.total} packages and documents.`);
+});
+
 // ── Round 2 ──────────────────────────────────────────────────────────────
 
 test("the showcase's paragraphs are grouped by report, so the ICR's group shows, and Show all opens the rest", async ({ page }) => {

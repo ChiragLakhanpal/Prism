@@ -31,7 +31,7 @@ import {
   type Origin,
 } from "../lib/evidence";
 import { address } from "../lib/router";
-import { highlightsFor, lessonOf, passageFields, placeOf, recordReference } from "../lib/sources";
+import { highlightsFor, lessonOf, namedSection, passageFields, placeOf, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
 import { viewOf } from "../lib/view";
 import { Alert } from "./Alert";
@@ -214,8 +214,12 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
           ? [{ text: fields.section, whole: false }]
           : []
         : [
-            // A numbered section, such as an ICR Review's 10.b, is named by its own number (ticket 58).
-            ...(sectionText ? [{ text: words.section(sectionText), whole: sectionText.length <= SHORT_SECTION }] : []),
+            // A numbered section, such as an ICR Review's 10.b, is named by its own number (ticket 58). A section named
+            // in words, such as an ISR's "Project Development Objective Indicators", stands alone, as the title names it
+            // (the 58 critique, round 2, follow-up 10).
+            ...(sectionText
+              ? [{ text: namedSection({ kind: "section", text: sectionText }) ? sectionText : words.section(sectionText), whole: sectionText.length <= SHORT_SECTION }]
+              : []),
             ...(place.kind === "paragraph" ? [{ text: words.para(place.text), whole: true }] : []),
           ]),
     ...(fields.page

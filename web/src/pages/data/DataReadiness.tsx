@@ -307,7 +307,7 @@ function sourceRows(result: Readiness, measures: Measures): ReadinessRow[] {
       return {
         id: row.id,
         header: row.label,
-        caption: words.sources.gapYears(String(row.first_fiscal_year), String(row.last_fiscal_year).slice(2)),
+        caption: words.sources.gapYears(String(row.first_fiscal_year), String(row.last_fiscal_year)),
         span: (
           <div className="flex flex-col items-start gap-1">
             <span className="flex flex-wrap items-center gap-2">

@@ -280,8 +280,10 @@ test("an outcome's number says what it counts and opens a window with what it ch
     "A risk counts when I read its name and its rating from the risk table. I don't check the description and mitigation text beside them, which the scan sets in two columns. Open the page to compare.",
   );
   await expect(window).not.toContainText("Counted against");
-  // The offline parser's plain name, not the command that recorded its words (ticket 58).
-  await expect(window.locator(".font-mono")).toHaveText(["recorded words", "strata.ops.stress_shelf"]);
+  // The offline parser's plain name, not the command that recorded its words (ticket 58), and not its registry name
+  // either (the 58 critique, round 2, follow-up 8).
+  await expect(window).toContainText("Layout parserAn offline copy of the parser's results");
+  await expect(window.locator(".font-mono")).toHaveText(["strata.ops.stress_shelf"]);
   await page.keyboard.press("Escape");
   await expect(number).toBeFocused();
 

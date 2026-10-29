@@ -52,6 +52,10 @@ test("the check line reads the verifier's counts in the ticket's form, in the ne
     "Checked: 5 of 5 numbers match records. Judged by a model: 1 of 1 sentence follows from its sources. The other two needed no model, because every number, date and quote in them matched a record or a page. Not checked: whether these are the right comparables.",
   );
   await expect(line.locator("[data-check-part=judged]")).toHaveCount(1);
+  // A part of a whole never breaks across a line: "5 of 5" and "1 of 1" are joined by no-break spaces (the 58
+  // critique, round 2, "The one change").
+  expect(await line.locator("[data-check-part=checked]").textContent()).toContain("5\u00a0of\u00a05 numbers");
+  expect(await line.locator("[data-check-part=judged]").textContent()).toContain("1\u00a0of\u00a01 sentence");
   // The line sits in its surface-2 block, neutral and never green (ticket 105 puts the removed box in the same block).
   expect(await line.evaluate((el) => [getComputedStyle(el.closest("[data-check-block]")!).backgroundColor, getComputedStyle(el).color])).toEqual([
     "rgb(231, 237, 243)",

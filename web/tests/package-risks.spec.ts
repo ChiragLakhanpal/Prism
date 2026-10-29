@@ -92,7 +92,8 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   await expect(cost.getByRole("rowheader")).toHaveText(RISK);
   await expect(cost.locator("[data-helped]")).toHaveText(LESSON);
   // The count names its reference class in its cell and its column head, as a count of the one denominator.
-  expect(await text(cost.locator("[data-count]"))).toBe("1 of 1 completion reports");
+  // One report read keeps its numerals beside "of", with the noun in the singular (the 58 design review, round 2, 3).
+  expect(await text(cost.locator("[data-count]"))).toBe("1 of 1 completion report");
   await expect(view(page).locator("thead")).toContainText("In completion reports for projects with comparable packages");
   // The finding reads the one report as one, with no "1 of 1" (the 58 design review, follow-up 5).
   await expect(section(page).locator("[data-finding]")).toHaveText(
@@ -113,6 +114,14 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   // The count opens one report, so its tooltip says "the report", never "the 1".
   await cost.locator("[data-count] button").focus();
   await expect(page.getByRole("tooltip")).toContainText("Select to see the report.");
+  // The finding's "one" opens the one report, so its tooltip never says "all 1" (the 58 design review, round 2, 3).
+  await section(page).locator("[data-finding] button").first().focus();
+  await expect(page.getByRole("tooltip")).toContainText("Select to see it.");
+  await expect(page.getByRole("tooltip")).not.toContainText("all 1");
+  await expect(section(page)).toContainText("An ICR Review is a review of it by the Independent Evaluation Group (IEG).");
+  await expect(section(page)).not.toContainText("(IEG's)");
+  // The package page names Data readiness one way (the 58 critique, round 2, follow-up 4).
+  await expect(section(page).locator("[data-coverage-line]")).toContainText("See Data readiness for these sources");
   // The rows restate their records' names and lessons, which are not quotes from a page (ticket 30's review F3).
   await expect(section(page).locator("[data-check-line] [data-check-part=checked]")).toHaveText(
     "Checked: 4 of 4 numbers match records; 4 of 4 names and lessons match their records.",
@@ -156,6 +165,8 @@ test("a source click opens the drawer at its paragraph with the row's claim, the
   await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("ICR Review, Rajasthan Road Sector Modernization, section 10.b");
   await expect(drawer(page).locator("[data-meta-line]")).toContainText("Section 10.b");
   await expect(drawer(page).locator("[data-meta-line]")).not.toContainText("¶10.b");
+  // IEG is spelled out with its short form after it, never a possessive in brackets (the 58 design review, round 2, 4).
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("A review of the completion report by the Independent Evaluation Group (IEG)");
 
   await page.keyboard.press("Escape");
   await expect(drawer(page)).toHaveCount(0);

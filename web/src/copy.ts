@@ -1232,8 +1232,9 @@ export const copy = {
         "Project Paper": "A paper on a change to the project",
         "Implementation Status and Results Report": "A status report, written during the project",
         "Implementation Completion and Results Report": "The completion report, written after the project closed",
-        "Implementation Completion Report Review": "The Independent Evaluation Group's (IEG's) review of the completion report",
-        "Project Performance Assessment Report": "The Independent Evaluation Group's (IEG's) later assessment of the project",
+        // IEG spelled out, then its short form, with no possessive in brackets (the 58 design review, round 2, 4).
+        "Implementation Completion Report Review": "A review of the completion report by the Independent Evaluation Group (IEG)",
+        "Project Performance Assessment Report": "An assessment of the project by the Independent Evaluation Group (IEG), written after it closed",
       } as Record<string, string>,
       // For a source with no report type of its own, by its stratum, in GLOSSARY.md's words.
       stratum: {
@@ -4802,7 +4803,8 @@ export const copy = {
     findingManyOneReport: "{tied} of these risks came up in the {m} completion report I read for projects with comparable packages.",
     countOne: "Showing the one risk I ranked.",
     countBoth: "Showing both risks, in the order I ranked them.",
-    count: (shown: string) => `Showing ${shown} risks, in the order I ranked them.`,
+    // The table shows every risk it ranked, so it says "all" (DESIGN.md section 5, Tables; the 58 design review, round 2).
+    count: (shown: string) => `Showing all ${shown} risks, in the order I ranked them.`,
     // The person's own count, so plain text, not a finding.
     selected: (selected: string, shown: string) => `You selected ${selected} of the ${shown} risks for the PPSD.`,
     selectedNone: "You haven't selected a risk for the PPSD yet.",
@@ -4827,10 +4829,13 @@ export const copy = {
     },
     // The How often cell: "{k} of {m}" in Num, then this on the next line.
     reports: "completion reports",
+    // One report read: "1 of 1 completion report", numerals beside "of" with the noun in the singular (the 58 design
+    // review, round 2, follow-up 3).
+    reportsOne: "completion report",
     helpedLabel: "What helped",
     sourcesLabel: "Sources",
     checkbox: (risk: string) => `Select ${risk} for the PPSD`,
-    countName: (k: string, m: string, risk: string) => `${k} of ${m} completion reports, for ${risk}`,
+    countName: (k: string, m: string, risk: string, one = false) => `${k} of ${m} completion ${one ? "report" : "reports"}, for ${risk}`,
     // A source pill's visible name: one formatter for every pill (web/src/lib/risks.ts, pillText), which the
     // PPSD draft's footnotes reuse (the 36 brief). A later pill from the same project drops the P-code.
     pill: "{doc} {pcode} {locator}",
@@ -4848,6 +4853,8 @@ export const copy = {
       tie: (k: string) => `Each of these risks came up in ${k} completion reports.`,
       m: "Completion reports of projects with comparable packages that I read.",
       mAct: (m: string) => `Select to see all ${m}.`,
+      // One report read, never "Select to see all 1." (the 58 design review, round 2, follow-up 3).
+      mActOne: "Select to see it.",
       // The coverage line's two counts, each its own sentence (ticket 96). The counts of projects left out are plain.
       coverageM: "Projects with comparable packages whose completion reports I read.",
       coverageP: "All projects with comparable packages, whether or not I could read a completion report for them.",
@@ -4860,7 +4867,7 @@ export const copy = {
       all: (count: number, countText: string) => (count === 2 ? "I removed both risks." : `I removed all ${countText} risks.`),
       allOne: "I removed the one risk I found.",
       // What a removed row said, as the removed box reports it.
-      saidCount: (risk: string, k: string, m: string) => `"${risk}" came up in ${k} of ${m} completion reports`,
+      saidCount: (risk: string, k: string, m: string, one = false) => `"${risk}" came up in ${k} of ${m} completion ${one ? "report" : "reports"}`,
       saidHelped: (risk: string, lesson: string) => `what helped with "${risk}" was "${lesson}"`,
       // Each removed row after the first, under "The others:".
       item: (said: string, reason: string) => `It said ${said}. ${reason}`,
@@ -4877,7 +4884,7 @@ export const copy = {
     // change together (CLAUDE.md rule 4).
     note: (most: string) =>
       `I counted the completion reports of projects that had comparable packages, found with the criteria in section 1. I ranked the risks by how closely their lessons match this package and how strong their evidence is, never by how often people used a lesson. I show at most ${most}.`,
-    abbr: "ICR is the Implementation Completion and Results Report. An ICR Review is the Independent Evaluation Group's (IEG's) review of it.",
+    abbr: "ICR is the Implementation Completion and Results Report. An ICR Review is a review of it by the Independent Evaluation Group (IEG).",
     abbrPpar: "PPAR is IEG's Project Performance Assessment Report.",
     // The coverage line: Fill templates whose numbers are Num values. A reason follows "; " and the first
     // sentence, and a second reason follows ", and ".
@@ -4892,7 +4899,8 @@ export const copy = {
         no_report: { one: "{n} has no completion report yet", many: "{n} have no completion report yet" },
         not_read: { one: "{n} had a completion report I couldn't read", many: "{n} had a completion report I couldn't read" },
       } as Record<string, { one: string; many: string }>,
-      link: "Data readiness for these sources",
+      // The package page names Data readiness one way (the 58 critique, round 2, follow-up 4).
+      link: "See Data readiness for these sources",
     },
     sourceLine: "{names} and Strata's lesson library. Records run through {date}.",
     sourceLineAsOf: "{names} and Strata's lesson library. Records as of {date}.",
@@ -5714,6 +5722,9 @@ export const copy = {
   // The Data readiness page (the 16 design brief). Every number on it comes from the
   // data_readiness_for tool, and the page computes none.
   dataReadiness: {
+    // The words between a part and its whole in the tool's gap phrases ("the {missing} of {total} ..."), which the
+    // headline keeps on one line with both numbers (the 58 critique, round 2).
+    partOfWhole: " of ",
     // The info alert above the headline when a coverage line opened the page. The noun comes from
     // server.fromNouns, by the tool the link names, never from the link's own words.
     // Templates whose {slots} the page fills with Num, so each number keeps its form and its check.
@@ -5821,7 +5832,8 @@ export const copy = {
       // What a fiscal-years count counts, in its tooltip.
       yearsNoun: "fiscal years",
       yearsNounOne: "fiscal year",
-      gapYears: (from: string, to: string) => `fiscal ${from}–${to}`,
+      // A range is written with "to", never a dash (DESIGN.md section 5, Tables; the 58 review, round 2).
+      gapYears: (from: string, to: string) => `fiscal ${from} to ${to}`,
       publishedAsTable: "Published as a table",
       // A row whose records arrive as text, such as notices' text, with nothing to read well.
       publishedAsText: "Published as text",
@@ -5972,6 +5984,9 @@ export const copy = {
         cap: "The most pages I send the layout parser in one day. It is my own setting, not a measure.",
       },
       windowRows: { from: "Counted against", parser: "Layout parser" },
+      // A parser's name a reader can follow, by its registry name (src/strata/reader/layout.py, PARSERS). A parser not
+      // named here shows its registry name in mono, as the live ai_parse_document does (the 58 critique, round 2, 8).
+      parserNames: { "recorded words": "An offline copy of the parser's results" } as Record<string, string>,
       noHandCount: "I have no count of the annex's risks to check this against.",
       noDocumentOver: "No document I read has more than {limit} pages, so none needed dividing. The longest has {maxPages} pages.",
       noDocument: "I found no {description} among the documents I read.",
@@ -7338,7 +7353,8 @@ export const copy = {
     linesHint: "Hover over or focus a package to see its links.",
     noPackages: "I haven't read a Procurement Plan for {pid} yet.",
     noPackagesLink: "Procurement Plans for {pid}",
-    count: "Showing {shown} of {total} packages and documents.",
+    // The count line's noun (copy.table.showingOf): "Showing 19 of 64 packages and documents.".
+    countNoun: { one: "package or document", many: "packages and documents" },
     toList: "Show as a list",
     toDiagram: "Show as a diagram",
     showingList: "Showing the list.",

@@ -633,8 +633,11 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   await expect(tabs.first()).toHaveAccessibleName("ISR, Project Development Objective Indicators");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
     "Implementation Status and Results Report · Rajasthan Road Sector Modernization (P130164) · February 22, 2014 · " +
-      "Section Project Development Objective Indicators · PDF page 2 of 4",
+      "Project Development Objective Indicators · PDF page 2 of 4",
   );
+  // A section named in words stands alone, as the title names it; only a numbered one takes "Section" (the 58
+  // critique, round 2, follow-up 10).
+  await expect(drawer(page).locator("[data-meta-line]")).not.toContainText("Section Project");
   // The project's name keeps its ID beside it: the line never breaks between "Modernization" and "(P130164)".
   // The ID is a link to its project page (ticket 21), padded above and below for its hit area, so the two
   // are compared by the middles of their boxes.
@@ -1045,7 +1048,7 @@ test("the answer reflows at 320 px with nothing scrolling sideways", async ({ pa
 
 test("at 320 px a long section name wraps in the sheet's meta line, and the page part keeps to one line", async ({ page }) => {
   await open(page, { width: 320, path: `/projects/P130164?evidence=${encodeURIComponent(ISR_S4)}`, evidence: "evidence-isr-p130164-s4.json" });
-  await expect(drawer(page).locator("[data-meta-line]")).toContainText("Section Project Development Objective Indicators");
+  await expect(drawer(page).locator("[data-meta-line]")).toContainText("Project Development Objective Indicators");
 
   expect(await sheetScrollsSideways(page)).toBe(false);
   const pagePart = drawer(page).locator("[data-meta-part]").filter({ hasText: "PDF page 2 of 4" });

@@ -37,9 +37,12 @@ const n = (value: number) => formatNumber(value, { compact: false });
 
 export type NotChecked = keyof typeof copy.checkLine.notCheckedClauses;
 
-// "{part} of {whole} numbers match records", in the form for its whole.
+// "{part} of {whole} numbers match records", in the form for its whole. The part and its whole never break across a
+// line: the spaces between them become no-break spaces, so "1 of 1 date" never ends a line on "1" (the 58 critique,
+// round 2). The copy keeps plain spaces, since a draft's files and the server's check line use the same words.
 function ratio(forms: { one: string; many: string }, part: number, whole: number): string {
-  return (whole === 1 ? forms.one : forms.many).replace("{part}", n(part)).replace("{whole}", n(whole));
+  const form = (whole === 1 ? forms.one : forms.many).replace(/\{part\}([^{]*)\{whole\}/, (_, between: string) => `{part}${between.replace(/ /g, "\u00a0")}{whole}`);
+  return form.replace("{part}", n(part)).replace("{whole}", n(whole));
 }
 
 // What the line says was not checked, from the verifier's checks event: whether each sentence follows

@@ -138,13 +138,17 @@ function documentCell(entry: ShelfEntry, asOf: string): { header: ReactNode; cap
   };
 }
 
+// The parser's plain name when the copy file has one, else its registry name in mono.
+const parserName = (parser: string): ReactNode =>
+  words.parserNames[parser] ?? <span className="font-mono wrap-anywhere">{parser}</span>;
+
 function windowWords(title: string, definition: string, entry: ShelfEntry, from?: ReactNode) {
   return {
     title,
     definition,
     rows: [
       ...(from ? [{ label: words.windowRows.from, value: from }] : []),
-      ...(entry.parser ? [{ label: words.windowRows.parser, value: <span className="font-mono wrap-anywhere">{entry.parser}</span> }] : []),
+      ...(entry.parser ? [{ label: words.windowRows.parser, value: parserName(entry.parser) }] : []),
     ],
   };
 }

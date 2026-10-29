@@ -1487,7 +1487,7 @@ export const galleryCopy = {
     approach: {
       name: "Procurement approach options",
       tag: "PPSD section 6",
-      sentence: "Three of the 49 comparable packages went with open national, 1 lot, post-qualification. The rest don't record their whole approach, so I have no other approach to compare.",
+      sentence: "Three of the 49 comparable packages went with open national, one lot, post-qualification. The rest don't record their whole approach, so I have no other approach to compare.",
     },
     criteria: {
       name: "Check your criteria",

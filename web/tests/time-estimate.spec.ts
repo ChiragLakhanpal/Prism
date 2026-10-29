@@ -272,6 +272,11 @@ test("zone 4 is a panel of at most three approaches, each counted out of the sam
   const n = body.comparables.n;
   await expect(options).toContainText("Procurement approach options");
   await expect(options).toContainText(`Comparable packages went with three approaches. The most common was open national, one lot, post-qualification, with 25 of ${n}.`);
+  // A hyphenated word in an approach's name never breaks at its hyphen, as "post-" / "qualification" (the 58 critique,
+  // round 2, follow-up 5): each sits whole on one line.
+  const whole = options.getByText("post-qualification", { exact: true }).filter({ visible: true });
+  expect(await whole.count()).toBeGreaterThan(0);
+  expect(await whole.evaluateAll((all) => all.map((one) => one.getClientRects().length))).toEqual(Array(await whole.count()).fill(1));
   // Ticket 101: with options to compare, zone 4 is a panel that shows them, tagged with its PPSD section, and has no
   // Show or Hide button; its notes and source end it in its foot strip.
   await expect(options).toHaveAttribute("data-zone", "panel");
