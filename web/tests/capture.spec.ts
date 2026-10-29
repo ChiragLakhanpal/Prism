@@ -48,6 +48,16 @@ test("the capture list photographs Data readiness at 1440, 1024 and 390 px, with
   expect(shot("beside-drawer")?.path).toContain("?evidence=");
 });
 
+// Ticket 103: the Drafts list grouped, empty and in error, and a draft just marked as checked, at three widths.
+test("the capture list photographs the Drafts list grouped, empty and in error, and a draft just marked as checked, at 1440, 1024 and 390 px", () => {
+  for (const name of ["drafts-tab", "drafts-tab--empty", "drafts-tab--error", "draft", "draft--checked", "draft--marked-checked", "draft--error"]) {
+    const shot = SHOTS.find((candidate) => candidate.name === name);
+    expect(shot?.server, name).toBe("app");
+    expect(shot?.widths ?? WIDTHS, name).toEqual([1440, 1024, 390]);
+  }
+  expect(SHOTS.find((shot) => shot.name === "draft--marked-checked")?.act).toBeDefined();
+});
+
 test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {
   expect(SHOTS.filter((shot) => shot.name.includes("--hover-")).length).toBeGreaterThan(5);
   expect(SHOTS.filter((shot) => shot.name.includes("--focus-")).length).toBeGreaterThan(5);
