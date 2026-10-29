@@ -21,6 +21,7 @@ import { fillText } from "../components/LessonParts";
 import { OutcomePanel } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
+import { PageAlert } from "../components/PageAlert";
 import { Pagination } from "../components/Pagination";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
@@ -311,13 +312,16 @@ function NoAccess() {
 export function JudgingView({ load, retry, last = null }: { load: Load<JudgingList>; retry: () => void; last?: JudgingList | null }) {
   if (load.status === "loading") return last ? <JudgingBody list={last} busy /> : <JudgingSkeleton />;
   // A short answer, such as an error, holds a screen's height as the skeleton did, so the footer stays below the fold.
+  // A failed read's alert goes to the page's alert slot (PageAlert.tsx; ticket 102).
   if (load.status === "error") {
     return (
       <div className="min-h-svh">
         {refusedAs(load, "not_a_judge") ? (
           <NoAccess />
         ) : (
-          <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+          <PageAlert>
+            <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+          </PageAlert>
         )}
       </div>
     );
@@ -326,7 +330,8 @@ export function JudgingView({ load, retry, last = null }: { load: Load<JudgingLi
 }
 
 export function JudgingPage({ search }: { search: string }) {
-  const me = useMe();
+  // The sidebar's count under Lessons reads the viewer's roles, so the page asks for them once a page load.
+  useMe();
   const params = new URLSearchParams(search);
   const show = (SHOWS as readonly string[]).includes(params.get("show") ?? "") ? (params.get("show") as Show) : "to_judge";
   const page = Math.max(1, Number(params.get("page") ?? "1") || 1);
@@ -339,7 +344,7 @@ export function JudgingPage({ search }: { search: string }) {
     if (denied) setPageTitle(copy.pages.lessons.title);
   }, [denied]);
   return (
-    <LessonsFrame tabKey="judging" me={me}>
+    <LessonsFrame pageKey={denied ? "lessons" : "lessonsJudging"} failed={load.status === "error" && !denied}>
       <JudgingView load={load} retry={retry} last={last.current} />
     </LessonsFrame>
   );

@@ -1,17 +1,20 @@
 // The Lessons tab (ticket 29; the 29 design brief, sections 2.3 to 2.8 and 5.1 to 5.4), at /lessons and
 // /lessons/review:
 //
-// - The frame: the h1 and brief 06's purpose, then, for lesson reviewers only, a row of sub-tabs, "Lessons" and
-//   "Waiting for review ({waiting})". Everyone else sees no row, since a row of one tab offers no choice. The
-//   viewer's roles (/api/lessons/me) load once a page load, so switching tabs never moves the row.
+// - The frame: the page head. Lessons, the library, states the section's purpose under its h1. The reviewer pages,
+//   Waiting for review, Passage reports and Judging, are the sidebar's items under Lessons for the roles that have
+//   them, each with its count in a badge hidden at zero (ticket 102; web/src/components/sections.ts), so the frame
+//   draws no sub-tab row; each names itself in its h1, and its own purpose opens its body, 12 px under the h1. When a
+//   page's one read fails, its error alert sits in the page's alert slot and the frame draws only the h1.
 // - Lessons: ticket 39's page (web/src/pages/LessonsTab.tsx), which opens on what came in since your last visit.
-// - Waiting for review: the tab's purpose, the server's lead sentence, the quote check's caption, the rows
+// - Waiting for review: the page's purpose, the server's lead sentence, the quote check's caption, the rows
 //   grouped "Waiting for you" and "With other reviewers", oldest first, and the decisions of the last 90 days.
-//   Anyone who is not a lesson reviewer gets the no-access card (the route answers 403 not_a_reviewer).
+//   Anyone who is not a lesson reviewer gets the no-access card under the Lessons h1 (the route answers 403
+//   not_a_reviewer), since this page is not theirs to open.
 //
-// Every Lessons page keeps to columns 1 to 7 from a 1200 px window, so the evidence drawer opens into the
-// free space and the column never moves (DESIGN.md section 4, Page layouts, Workspace).
-import { useEffect, useState, type ReactNode } from "react";
+// The Lessons pages are wide (the shell redesign plan, 8.3): all 12 columns, with each sentence kept to the width of
+// prose. When the drawer opens, the page narrows and keeps its left edge.
+import { useEffect, type ReactNode } from "react";
 import { EmptyState } from "../components/Card";
 import { Fill, Joined } from "../components/Fill";
 import { Sentence, fillText } from "../components/LessonParts";
@@ -19,101 +22,42 @@ import { Pagination } from "../components/Pagination";
 import { QueueRow } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
-import { PageHeader } from "../components/PageHeader";
+import { PageAlert } from "../components/PageAlert";
+import { PageHead } from "../components/PageHead";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Table, type Row as TableRow } from "../components/Table";
-import { Tabs, type TabLink } from "../components/Tabs";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
-import { getJson } from "../lib/api";
-import { formatNumber } from "../lib/format";
-import { useStore } from "../lib/store";
 import { useLoad, type Load } from "../lib/load";
-import { createStore } from "../lib/store";
+import { lessonsMe, refreshLessonsMe, useLessonsMe, type MeState } from "../lib/lessonsMe";
 import { setPageTitle } from "../lib/title";
 import { itemHref, LESSONS_HREF, pageHref, QUEUE_HREF, type Me, type Queue, type QueueRow as Row } from "../lib/lessons";
-import { JUDGING_HREF, REPORTS_HREF } from "../lib/retrieval";
 import { dataReadinessHref } from "../routes";
 
 const words = copy.lessons;
-const page = copy.pages.lessons;
 
-// ── Who is viewing: loaded once a page load, refreshed after a save ─────
+// ── Who is viewing: loaded once a page load, refreshed after a save (lib/lessonsMe.ts) ─────
 
-type MeState = { status: "loading" } | { status: "ready"; me: Me } | { status: "error" };
-export const lessonsMe = createStore<MeState>({ status: "loading" });
-let asked = false;
-
-export async function refreshLessonsMe() {
-  try {
-    lessonsMe.set({ status: "ready", me: await getJson<Me>("/api/lessons/me") });
-  } catch {
-    lessonsMe.set((current) => (current.status === "ready" ? current : { status: "error" }));
-  }
-}
+export { lessonsMe, refreshLessonsMe, type MeState };
 
 export function useMe(): MeState {
-  const me = useStore(lessonsMe);
-  useEffect(() => {
-    if (asked) return;
-    asked = true;
-    void refreshLessonsMe();
-  }, []);
-  return me;
+  return useLessonsMe();
 }
 
-// The tab the frame last showed, so switching tabs says which one shows (the 29 brief, section 5.1).
-export type LessonsTab = "library" | "review" | "reports" | "judging";
-let lastTab: LessonsTab | null = null;
-const SHOWING: Record<LessonsTab, string> = {
-  library: words.tabs.showingLibrary,
-  review: words.tabs.showingQueue,
-  reports: words.tabs.showingReports,
-  judging: words.tabs.showingJudging,
-};
+// The pages the frame holds: the library, and the three reviewer pages the sidebar lists under Lessons.
+export type LessonsPageKey = "lessons" | "lessonsQueue" | "lessonsReports" | "lessonsJudging";
 
-// The sub-tabs the viewer may open, in the roles table's order, each with its count. Ticket 32 changes brief 29's
-// rule: the row shows for anyone who can open at least one page besides Lessons, and each tab only for its role.
-function tabsFor(me: Me, tab: LessonsTab) {
-  // Plain text, so a link's name reads "Waiting for review (3)" with no gaps around the number.
-  const count = (value: number | null | undefined) => formatNumber(value ?? 0, { compact: false });
-  const found: TabLink[] = [{ key: "library", label: words.tabs.library, href: LESSONS_HREF, current: tab === "library" }];
-  if (me.tabs.includes("review")) found.push({ key: "review", label: fillText(words.tabs.queue, { waiting: count(me.waiting) }), href: QUEUE_HREF, current: tab === "review" });
-  if (me.tabs.includes("reports")) found.push({ key: "reports", label: fillText(words.tabs.reports, { waiting: count(me.reports_waiting) }), href: REPORTS_HREF, current: tab === "reports" });
-  if (me.tabs.includes("judging")) found.push({ key: "judging", label: fillText(words.tabs.judging, { left: count(me.queries_left) }), href: JUDGING_HREF, current: tab === "judging" });
-  return found;
-}
-
-export function LessonsFrame({ tabKey: tab, me, children }: { tabKey: LessonsTab; me: MeState; children: ReactNode }) {
-  const [announced, setAnnounced] = useState("");
-  const tabs = me.status === "ready" ? tabsFor(me.me, tab) : [];
-  const reviewer = tabs.length > 1;
-  useEffect(() => {
-    if (lastTab && lastTab !== tab) setAnnounced(SHOWING[tab]);
-    lastTab = tab;
-  }, [tab]);
+export function LessonsFrame({ pageKey, failed = false, children }: { pageKey: LessonsPageKey; failed?: boolean; children: ReactNode }) {
+  const named = copy.pages[pageKey];
+  const library = pageKey === "lessons";
   // The wide layout (plan 8.3; ticket 110): all 12 columns, with each sentence kept to the width of prose, so the
   // margins even out beside the rail. When the drawer opens, the page narrows and keeps its left edge.
   return (
     <div className="layout-grid">
-      <div data-lessons-frame={tab} className="col-span-12 min-w-0">
-        <PageHeader title={page.title} purpose={page.purpose} />
-        {reviewer && (
-          <div className="mt-6" data-lessons-tabs>
-            <Tabs label={words.tabs.label} tabs={tabs} />
-          </div>
-        )}
-        <p role="status" className="clip-visually">
-          {announced}
-        </p>
-        {/* Until the viewer's roles return, only the h1 and the purpose show, so the sub-tab row never pushes
-            the content down (the 29 brief, section 5.1). An empty screen's height holds the footer below the
-            fold meanwhile, so it never shows and then drops away when the content arrives. */}
-        {me.status === "loading" ? (
-          <div className="min-h-svh" aria-hidden="true" />
-        ) : (
-          <div className={reviewer ? "mt-6 @md/page:mt-8" : "mt-8"}>{children}</div>
-        )}
+      <div data-lessons-frame={pageKey} className="col-span-12 min-w-0">
+        <PageHead title={named.title} purpose={library && !failed ? named.purpose : undefined} />
+        {/* A failed read's alert went to the alert slot, so nothing else draws here. */}
+        {failed ? children : <div className={library ? "mt-8" : "mt-3"}>{children}</div>}
       </div>
     </div>
   );
@@ -162,6 +106,8 @@ function CardFrame() {
   );
 }
 
+// The library zone's body while it loads: the count line and three cards' frames. The sources note above the zones is
+// static copy, so the page draws it for real (LessonsTab.tsx).
 export function LibrarySkeleton() {
   return (
     <div aria-busy="true" data-library="loading" className="flex flex-col">
@@ -169,8 +115,6 @@ export function LibrarySkeleton() {
         {words.library.loading}
       </p>
       <SkeletonLine className="text-caption" width="w-80 max-w-full" />
-      {/* Static copy, so it is in place before the lessons load. */}
-      <p className="mt-1 max-w-prose text-caption text-ink-muted">{words.sourcesNote}</p>
       <div className="mt-4 flex flex-col gap-4">
         {[0, 1, 2].map((index) => (
           <CardFrame key={index} />
@@ -318,7 +262,8 @@ export function QueueBody({ queue }: { queue: Queue }) {
       {empty ? (
         <EmptyState className="mt-6" title={q.emptyTitle} body={q.emptyBody} link={{ href: LESSONS_HREF, text: q.emptyLink }} />
       ) : (
-        <p tabIndex={-1} className="mt-4 text-lead text-ink-heading outline-none @md/page:mt-6" data-queue-lead>
+        // At most 65 characters a line, as the purpose above it wraps (ticket 91's critique; ticket 102).
+        <p tabIndex={-1} className="mt-4 max-w-prose text-lead text-ink-heading outline-none @md/page:mt-6" data-queue-lead>
           {queue.lead && <Sentence segments={queue.lead} />}
         </p>
       )}
@@ -395,11 +340,18 @@ export function NoAccess() {
   return <EmptyState title={q.noAccessTitle} body={q.noAccessBody} link={{ href: LESSONS_HREF, text: q.noAccessLink }} />;
 }
 
+const notAReviewer = (load: Load<Queue>) => load.status === "error" && load.error?.status === 403 && (load.error.body as { code?: string }).code === "not_a_reviewer";
+
+// A failed read's alert goes to the page's alert slot (PageAlert.tsx); in the design gallery it stays in place.
 export function QueueView({ load, retry, me = null }: { load: Load<Queue>; retry: () => void; me?: Me | null }) {
   if (load.status === "loading") return <QueueSkeleton me={me} />;
   if (load.status === "error") {
-    if (load.error?.status === 403 && (load.error.body as { code?: string }).code === "not_a_reviewer") return <NoAccess />;
-    return <LoadError error={load.error} message={words.queue.error} permission={words.queue.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />;
+    if (notAReviewer(load)) return <NoAccess />;
+    return (
+      <PageAlert>
+        <LoadError error={load.error} message={words.queue.error} permission={words.queue.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      </PageAlert>
+    );
   }
   return <QueueBody queue={load.data} />;
 }
@@ -407,14 +359,14 @@ export function QueueView({ load, retry, me = null }: { load: Load<Queue>; retry
 export function QueuePage({ search }: { search: string }) {
   const me = useMe();
   const [load, retry] = useLoad<Queue>(`/api/lessons/review?page=${pageOf(search)}`);
-  // Someone the roles file does not name sees the frame with no sub-tab row, and the page's title as the
-  // library's, since this page is not theirs to open.
-  const denied = load.status === "error" && load.error?.status === 403;
+  // Someone the roles file does not name sees the Lessons h1 and its purpose over the no-access card, and the
+  // page's title as the library's, since this page is not theirs to open.
+  const denied = notAReviewer(load);
   useEffect(() => {
-    if (denied) setPageTitle(page.title);
+    if (denied) setPageTitle(copy.pages.lessons.title);
   }, [denied]);
   return (
-    <LessonsFrame tabKey="review" me={denied ? { status: "error" } : me}>
+    <LessonsFrame pageKey={denied ? "lessons" : "lessonsQueue"} failed={load.status === "error" && !denied}>
       <QueueView load={load} retry={retry} me={me.status === "ready" ? me.me : null} />
     </LessonsFrame>
   );

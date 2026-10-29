@@ -1,15 +1,21 @@
 // The Lessons tab (ticket 39; the 39 design brief, sections 2 and 5), at /lessons, in the wireframe's order:
 //
 // - The opening sentence, the digest: what came in since your last visit, each count word opening the items it
-//   counts, then the sources note, then a quiet line for lessons you cite that only gained evidence.
+//   counts, then the sources note, then a quiet line for lessons you cite that only gained evidence. It is the page's
+//   finding (ticket 102; DESIGN.md section 1, principle 6); a first visit's sentence reports a state, so it takes lead.
+// - Then the Task zones, in this order (ticket 102; DESIGN.md section 5, Lessons page), each a panel when it holds
+//   lessons or a form and a row when it holds only its sentence:
 // - "Changed where you used it": one version notice per lesson and cited version in your open drafts, each with
 //   was and now and the choices for every row that cites it. Left out when you have none.
 // - "New": the lessons added since your last visit, at most eight cards.
-// - "Your reports": what your "Wrong passage" reports fixed.
-// - "The library": four filters, a count line that compares like with like, and the cards.
+// - "Your reports": what your "Wrong passage" reports fixed, a sentence, so always a row.
+// - "The library": four filters, a count line that compares like with like, and the cards. An empty library is a
+//   row whose sentences say whose lessons these are and where they show up, and never repeat the digest.
 //
 // One request returns everything, so the page renders once; a filter or a page change asks for the library alone.
 // The server counts, compares versions, decides each tier and writes each count's word; this page counts nothing.
+// When that one request fails, its error alert sits in the page's alert slot, the h1 names the page and nothing else
+// draws (the shell redesign plan, 8.5).
 import { Fragment, useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { Alert } from "../components/Alert";
@@ -20,9 +26,11 @@ import { LessonCard } from "../components/LessonCard";
 import { fillText } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
+import { PageAlert } from "../components/PageAlert";
 import { Pagination } from "../components/Pagination";
 import { ProjectId } from "../components/ProjectId";
-import { SkeletonLine } from "../components/Skeleton";
+import { SkeletonText } from "../components/Skeleton";
+import { TaskZone, ZoneBlock } from "../components/TaskZone";
 import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { VersionNotice } from "../components/VersionNotice";
@@ -220,15 +228,27 @@ function StrengthenedLine({ strengthened }: { strengthened: Strengthened }) {
   );
 }
 
+// The finding's style (DESIGN.md section 3): 28/36 Light, 24/32 below a 48rem window, at most 22.5em wide, about 45
+// characters a line, in balanced lines.
+const FINDING = "max-w-[22.5em] text-finding text-balance text-ink-heading";
+
+// The digest leads the page (ticket 102): the finding, with each count word still opening the items it counts, or on a
+// first visit the status sentence in lead (the shell redesign plan, 8.5), then its caption and the sources note.
 function DigestBlock({ page, isReviewer }: { page: LessonsPageAnswer; isReviewer: boolean }) {
   const digest = page.digest!;
+  const first = digest.kind === "first";
   return (
     <div data-digest={digest.kind}>
-      <p id="lessons-digest" className="max-w-prose text-lead text-ink-heading">
+      <p
+        id="lessons-digest"
+        className={first ? "max-w-prose text-lead text-pretty text-ink" : FINDING}
+        data-finding={first ? undefined : ""}
+        data-status-lead={first ? "" : undefined}
+      >
         <PageSentence segments={digest.segments} popover={digestPopover(digest, page.visit?.last_visit_on ?? null, isReviewer)} />
       </p>
-      {digest.kind === "first" && <p className="mt-2 max-w-prose text-caption text-ink-muted">{w.firstCaption}</p>}
-      <p className={cx("max-w-prose text-caption text-ink-muted", digest.kind === "first" ? "mt-1" : "mt-2")}>{copy.lessons.sourcesNote}</p>
+      {first && <p className="mt-2 max-w-prose text-caption text-ink-muted">{w.firstCaption}</p>}
+      <p className={cx("max-w-prose text-caption text-ink-muted", first ? "mt-1" : "mt-2")}>{copy.lessons.sourcesNote}</p>
       {digest.strengthened && <StrengthenedLine strengthened={digest.strengthened} />}
     </div>
   );
@@ -236,6 +256,7 @@ function DigestBlock({ page, isReviewer }: { page: LessonsPageAnswer; isReviewer
 
 // ── Your reports ─────────────────────────────────────────────────────────
 
+// A sentence about your reports, never a list of them, so the zone is a row (DESIGN.md section 1, principle 7).
 function Reports({ feedback }: { feedback: Feedback }) {
   const p = w.popovers;
   const popover = (key: string, word: ReactNode) => {
@@ -247,18 +268,20 @@ function Reports({ feedback }: { feedback: Feedback }) {
     );
   };
   return (
-    <section aria-labelledby="lessons-reports" data-reports={feedback.never ? "never" : "sentence"}>
-      <h2 id="lessons-reports" className="text-h2 text-ink-heading">
-        {w.reportsTitle}
-      </h2>
-      {feedback.never || !feedback.segments ? (
-        <p className="mt-4 max-w-prose text-body text-ink-muted">{w.reportsNone}</p>
-      ) : (
-        <p className="mt-4 max-w-prose text-body text-ink" data-feedback-line>
-          <PageSentence segments={feedback.segments} popover={popover} />
-        </p>
-      )}
-    </section>
+    <TaskZone
+      headingId="lessons-reports"
+      name={w.reportsTitle}
+      marks={{ "data-reports": feedback.never ? "never" : "sentence" }}
+      summary={
+        feedback.never || !feedback.segments ? (
+          <p>{w.reportsNone}</p>
+        ) : (
+          <p data-feedback-line>
+            <PageSentence segments={feedback.segments} popover={popover} />
+          </p>
+        )
+      }
+    />
   );
 }
 
@@ -290,8 +313,10 @@ function FilterBar({ library, onChange, busy }: { library: LibraryAnswer; onChan
                   aria-describedby={key === "method" && chosen.method ? "method-caption" : undefined}
                   data-filter={key}
                   onChange={(event) => onChange({ ...chosen, [key]: event.target.value || null })}
+                  // No type step of its own, so the base rule draws it at 16 px and a phone never zooms into it
+                  // (DESIGN.md section 4, Phone baseline; ticket 102).
                   className={cx(
-                    "h-11 w-full appearance-none rounded-sm border border-line-strong pr-10 pl-3 text-small text-ink hover:bg-tint-hover",
+                    "h-11 w-full appearance-none rounded-sm border border-line-strong pr-10 pl-3 text-ink hover:bg-tint-hover",
                     isSet ? "bg-tint shadow-[inset_0_0_0_2px_var(--color-primary)]" : "bg-surface",
                   )}
                 >
@@ -375,43 +400,49 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
   const noun = server.count.nouns[library.status][library.of === 1 ? "one" : "many"];
   const open = evidenceIn(here.search);
   if (library.of === 0 && library.status === "current" && !library.narrowed) {
-    // The empty-state card in place of the filters and the list: the library holds no lesson yet. It says whose lessons
-    // these are and where they show up on a package's page, and links where section 3's own empty state does
-    // (ticket 114); a reviewer with lessons waiting is led to them instead.
+    // The library holds no lesson yet, so its zone is a row (ticket 102) with no title of its own, since the digest
+    // above already says the library is empty. Its sentences say whose lessons these are and where they show up on a
+    // package's page, and it links where section 3's own empty state does (ticket 114); a reviewer with lessons
+    // waiting is led to them instead.
+    const link = isReviewerWaiting ? { href: QUEUE_HREF, text: copy.lessons.library.reviewerLink } : { href: RISKS_READINESS_HREF, text: copy.pages.lessons.link };
     return (
-      <EmptyState
-        title={copy.pages.lessons.emptyTitle}
-        body={copy.pages.lessons.emptyBody}
-        more={copy.pages.lessons.emptyMore}
-        link={isReviewerWaiting ? { href: QUEUE_HREF, text: copy.lessons.library.reviewerLink } : { href: RISKS_READINESS_HREF, text: copy.pages.lessons.link }}
+      <TaskZone
+        headingId="library"
+        name={w.libraryTitle}
+        // The page's empty state, as a zone row (DESIGN.md section 5, Task zone, No content).
+        marks={{ "data-library": "empty", "data-empty-state": "row" }}
+        summary={
+          <div className="flex flex-col gap-2" data-library-empty>
+            <p>{copy.pages.lessons.emptyBody}</p>
+            <p>{copy.pages.lessons.emptyMore}</p>
+            <p>
+              <TextLink href={link.href}>{link.text}</TextLink>
+            </p>
+          </div>
+        }
       />
     );
   }
   return (
-    <section aria-labelledby="library" data-library="ready" className="flex flex-col">
-      <h2 id="library" tabIndex={-1} className="text-h2 text-ink-heading outline-none">
-        {w.libraryTitle}
-      </h2>
+    <TaskZone panel headingId="library" name={w.libraryTitle} marks={{ "data-library": "ready" }}>
+      <ZoneBlock>
       {library.unknown_filter && (
-        <Alert state="info" className="mt-4">
+        <Alert state="info">
           {w.filters.unknown}
         </Alert>
       )}
-      <div className="mt-4">
-        <FilterBar library={library} onChange={change} busy={busy} />
-      </div>
+      <FilterBar library={library} onChange={change} busy={busy} />
       {failed && (
-        <Alert state="error" live="alert" className="mt-4">
+        <Alert state="error" live="alert">
           {w.filters.failed}
         </Alert>
       )}
-      <p ref={countRef} tabIndex={-1} role="status" className="mt-4 text-caption text-ink-muted outline-none" data-lead data-numbers>
+      <p ref={countRef} tabIndex={-1} role="status" className="text-caption text-ink-muted outline-none" data-lead data-numbers>
         {busy ? w.filters.updating : <PageSentence segments={library.count} />}
       </p>
       {library.lessons.length === 0 && library.total > 0 ? (
         // A page past the end: lessons match, but not on this page (brief 29's out-of-range card).
         <EmptyState
-          className="mt-4"
           level={3}
           title={fillText(copy.lessons.library.outOfRangeTitle, { page: library.page })}
           body={
@@ -425,14 +456,13 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
         />
       ) : library.lessons.length === 0 ? (
         <EmptyState
-          className="mt-4"
           level={3}
           title={fillText(w.nothingMatches, { noun })}
           body={w.nothingMatchesBody}
           link={{ href: libraryHref({ status: library.status === "current" ? null : library.status }), text: w.filters.reset }}
         />
       ) : (
-        <ul aria-label={copy.lessons.library.list} className="mt-4 flex flex-col gap-4">
+        <ul aria-label={copy.lessons.library.list} className="flex flex-col gap-4">
           {library.lessons.map((card) => (
             <li key={card.lesson_id}>
               <LessonCard
@@ -450,11 +480,12 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
         </ul>
       )}
       {library.pages > 1 && (
-        <div className="mt-8">
+        <div className="mt-4">
           <Pagination page={library.page} pages={library.pages} href={(n) => libraryHref(library.filters, n)} />
         </div>
       )}
-    </section>
+      </ZoneBlock>
+    </TaskZone>
   );
 }
 
@@ -471,19 +502,22 @@ function libraryQuery(search: string): string {
 
 // ── The page ─────────────────────────────────────────────────────────────
 
+// While the page loads: the digest's lines in the finding's style, the sources note (static copy, so it is in place
+// before the lessons load), and the library's zone with its real header over the cards' frames.
 function PageSkeleton() {
   return (
     <div aria-busy="true" data-lessons-page="loading" className="flex flex-col">
       <p role="status" className="clip-visually">
         {w.loading}
       </p>
-      <span className="flex max-w-prose flex-col text-lead">
-        <SkeletonLine width="w-full" />
-        <SkeletonLine width="w-[70%]" />
-      </span>
-      <SkeletonLine className="mt-2 text-caption" width="w-4/5" />
+      <SkeletonText className="max-w-[22.5em] text-finding" widths={["w-full", "w-full", "w-[70%]"]} />
+      <p className="mt-2 max-w-prose text-caption text-ink-muted">{copy.lessons.sourcesNote}</p>
       <div className="mt-8 @md/page:mt-12">
-        <LibrarySkeleton />
+        <TaskZone panel name={w.libraryTitle}>
+          <ZoneBlock>
+            <LibrarySkeleton />
+          </ZoneBlock>
+        </TaskZone>
       </div>
     </div>
   );
@@ -491,7 +525,7 @@ function PageSkeleton() {
 
 export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = false }: { page: LessonsPageAnswer; search: string; isReviewer: boolean; isReviewerWaiting?: boolean }) {
   return (
-    <div data-lessons-page="ready" className="flex flex-col gap-8 @md/page:gap-12">
+    <div data-lessons-page="ready" className="flex flex-col">
       {page.as_of ? (
         <Alert state="info">
           <Fill template={w.asOfNote} slots={{ date: <Num date={page.as_of} /> }} />
@@ -499,44 +533,45 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
       ) : (
         <>
           {page.digest && <DigestBlock page={page} isReviewer={isReviewer} />}
-          {page.view === "preview" && <p className="max-w-prose text-small text-ink-muted">{w.previewNote}</p>}
+          {page.view === "preview" && <p className="mt-4 max-w-prose text-small text-ink-muted">{w.previewNote}</p>}
         </>
       )}
-      {page.notices.length > 0 && (
-        <section aria-labelledby="lessons-changed" data-changed>
-          <h2 id="lessons-changed" className="text-h2 text-ink-heading">
-            {w.changedTitle}
-          </h2>
-          <p className="mt-1 max-w-prose text-caption text-ink-muted">{w.changedCaption}</p>
-          <ul className="mt-4">
-            {page.notices.map((notice) => (
-              <VersionNotice key={notice.anchor} notice={notice} />
-            ))}
-          </ul>
-        </section>
-      )}
-      {page.new_lessons && (
-        <section aria-labelledby="lessons-new" data-new>
-          <h2 id="lessons-new" className="text-h2 text-ink-heading">
-            {w.newTitle}
-          </h2>
-          <p className="mt-1 max-w-prose text-caption text-ink-muted">{w.newCaption}</p>
-          <ul className="mt-4 flex flex-col gap-4">
-            {page.new_lessons.cards.map((card) => (
-              <li key={card.lesson_id} id={`new-lesson-${card.lesson_id}`}>
-                <LessonCard card={card} level={3} anchor={false} />
-              </li>
-            ))}
-          </ul>
-          {page.new_lessons.more_segments && (
-            <p className="mt-4 max-w-prose text-caption text-ink-muted">
-              <PageSentence segments={page.new_lessons.more_segments} />
-            </p>
-          )}
-        </section>
-      )}
-      {page.feedback && <Reports feedback={page.feedback} />}
-      <LibrarySection initial={page.library} search={search} isReviewerWaiting={isReviewerWaiting} />
+      {/* The zones, in the order the page reads (DESIGN.md section 5, Lessons page). */}
+      <div data-zones className="mt-8 @md/page:mt-12">
+        {page.notices.length > 0 && (
+          <TaskZone panel headingId="lessons-changed" name={w.changedTitle} marks={{ "data-changed": "" }}>
+            <ZoneBlock>
+              <p className="max-w-prose text-caption text-ink-muted">{w.changedCaption}</p>
+              <ul>
+                {page.notices.map((notice) => (
+                  <VersionNotice key={notice.anchor} notice={notice} />
+                ))}
+              </ul>
+            </ZoneBlock>
+          </TaskZone>
+        )}
+        {page.new_lessons && (
+          <TaskZone panel headingId="lessons-new" name={w.newTitle} marks={{ "data-new": "" }}>
+            <ZoneBlock>
+              <p className="max-w-prose text-caption text-ink-muted">{w.newCaption}</p>
+              <ul className="flex flex-col gap-4">
+                {page.new_lessons.cards.map((card) => (
+                  <li key={card.lesson_id} id={`new-lesson-${card.lesson_id}`}>
+                    <LessonCard card={card} level={3} anchor={false} />
+                  </li>
+                ))}
+              </ul>
+              {page.new_lessons.more_segments && (
+                <p className="max-w-prose text-caption text-ink-muted">
+                  <PageSentence segments={page.new_lessons.more_segments} />
+                </p>
+              )}
+            </ZoneBlock>
+          </TaskZone>
+        )}
+        {page.feedback && <Reports feedback={page.feedback} />}
+        <LibrarySection initial={page.library} search={search} isReviewerWaiting={isReviewerWaiting} />
+      </div>
     </div>
   );
 }
@@ -549,11 +584,14 @@ export function LessonsPage({ search }: { search: string }) {
   const isReviewer = me.status === "ready" && me.me.tabs.includes("review");
   const isReviewerWaiting = isReviewer && me.status === "ready" && (me.me.waiting ?? 0) > 0;
   return (
-    <LessonsFrame tabKey="library" me={me}>
+    <LessonsFrame pageKey="lessons" failed={load.status === "error"}>
       {load.status === "loading" ? (
         <PageSkeleton />
       ) : load.status === "error" ? (
-        <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+        // The page's one read failed: its error alert goes to the alert slot, and the frame draws only the h1.
+        <PageAlert>
+          <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+        </PageAlert>
       ) : (
         <LessonsBody page={load.data} search={search} isReviewer={isReviewer} isReviewerWaiting={isReviewerWaiting} />
       )}

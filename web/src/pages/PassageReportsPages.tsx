@@ -22,6 +22,7 @@ import { fillText } from "../components/LessonParts";
 import { OutcomePanel } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
+import { PageAlert } from "../components/PageAlert";
 import { Pagination } from "../components/Pagination";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { StatusBadge } from "../components/StatusBadge";
@@ -267,24 +268,30 @@ function pageOf(search: string): number {
   return Number.isInteger(asked) && asked >= 1 ? asked : 1;
 }
 
+// A failed read's alert goes to the page's alert slot (PageAlert.tsx; ticket 102).
 export function ReportsView({ load, retry }: { load: Load<ReportsQueue>; retry: () => void }) {
   if (load.status === "loading") return <ReportsSkeleton />;
   if (load.status === "error") {
     if (refusedAs(load, "not_a_passage_reviewer")) return <NoAccess />;
-    return <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />;
+    return (
+      <PageAlert>
+        <LoadError error={load.error} message={w.error} permission={w.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
+      </PageAlert>
+    );
   }
   return <ReportsBody queue={load.data} />;
 }
 
 export function PassageReportsPage({ search }: { search: string }) {
-  const me = useMe();
+  // The sidebar's count under Lessons reads the viewer's roles, so the page asks for them once a page load.
+  useMe();
   const [load, retry] = useLoad<ReportsQueue>(`/api/passage-reports?page=${pageOf(search)}`);
   const denied = refusedAs(load, "not_a_passage_reviewer");
   useEffect(() => {
     if (denied) setPageTitle(copy.pages.lessons.title);
   }, [denied]);
   return (
-    <LessonsFrame tabKey="reports" me={me}>
+    <LessonsFrame pageKey={denied ? "lessons" : "lessonsReports"} failed={load.status === "error" && !denied}>
       <ReportsView load={load} retry={retry} />
     </LessonsFrame>
   );

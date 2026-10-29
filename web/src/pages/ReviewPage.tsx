@@ -27,8 +27,11 @@ import { ProjectId } from "../components/ProjectId";
 import { ClockLine, HistoryList, OutcomePanel, statusOf } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
+import { PageAlert } from "../components/PageAlert";
+import { SidePanel } from "../components/SidePanel";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { StatusBadge } from "../components/StatusBadge";
+import { Workspace } from "../components/Workspace";
 import { DRAWER_ID } from "../components/AnswerPanel";
 import type { State } from "../components/state";
 import { copy } from "../copy";
@@ -485,8 +488,12 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
     <Fill template={r.clockRegion} slots={{ clock: <ClockLine clock={item.clock} />, region: item.region }} />
   ) : null;
 
-  return (
-    <div data-review-page={item.item_id} className="flex flex-col">
+  // The workspace layout (ticket 102; DESIGN.md section 4, Page layouts, Workspace): the head and the work in columns
+  // 1 to 7 from a frame of 75rem, so the evidence drawer opens into the free columns and the work never moves, and the
+  // history as the side panel in columns 9 to 12, which hides while the drawer is open. Below that frame the page is
+  // one column and the history follows the work.
+  const head = (
+    <div data-page-head>
       <Breadcrumb
         held
         trail={[{ text: words.tabs.library, href: LESSONS_HREF }, { text: words.queueTitle, href: QUEUE_HREF }, { text: kind }]}
@@ -504,8 +511,18 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
         {item.may_repeat && !decided && <StatusBadge kind="may-repeat" />}
         {(item.clock?.overdue_days ?? 0) > 0 && <StatusBadge kind="overdue" />}
       </div>
+    </div>
+  );
+  const history = (
+    <SidePanel title={decided ? r.historyDone : r.historyOpen} headingId={historyId}>
+      <HistoryList events={item.history} lists={item.lists} headingId={historyId} stacked />
+    </SidePanel>
+  );
 
-      <section aria-labelledby={evidenceId} className="mt-8 @md/page:mt-12">
+  return (
+    <div data-review-page={item.item_id}>
+      <Workspace head={head} side={history}>
+      <section aria-labelledby={evidenceId}>
         <h2 id={evidenceId} className="text-h2 text-ink-heading">
           {r.evidenceTitle}
         </h2>
@@ -535,15 +552,8 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
           <Repeats item={item} numbers={numbers} />
         </div>
       )}
-      <section aria-labelledby={historyId} className="mt-8 @md/page:mt-12">
-        <h2 id={historyId} className="text-h2 text-ink-heading">
-          {decided ? r.historyDone : r.historyOpen}
-        </h2>
-        <div className="mt-4">
-          <HistoryList events={item.history} lists={item.lists} headingId={historyId} />
-        </div>
-      </section>
       {action && <div className="mt-8 @md/page:mt-12" data-review-action>{action}</div>}
+      </Workspace>
     </div>
   );
 }
@@ -645,17 +655,20 @@ export function ReviewPage({ itemId }: { itemId: string }) {
         </>
       );
     } else {
+      // The page's one read failed: its error alert sits in the page's alert slot, and under the breadcrumb the h1
+      // names the page (ticket 102; the shell redesign plan, 8.5).
       body = (
         <>
           {trail}
-          <h1 tabIndex={-1} className="clip-visually">{r.breadcrumbBack}</h1>
-          <div className="mt-6">
+          <h1 tabIndex={-1} className="mt-2 text-h1 text-ink-heading focus:outline-none">{copy.pages.lessonReview.title}</h1>
+          <PageAlert>
             <LoadError error={load.error} message={r.error} permission={r.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
-          </div>
+          </PageAlert>
         </>
       );
     }
-  } else body = <ReviewView item={load.data} />;
+  } else return <ReviewView item={load.data} />;
+  // Until the item arrives, and when it cannot, the page keeps to the workspace's work columns.
   return (
     <DocumentColumn>
       <div className="pb-0">{body}</div>

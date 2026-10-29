@@ -52,14 +52,42 @@ async function axe(page: Page) {
 
 // ── The page, in the wireframe's order ───────────────────────────────────
 
-test("the page opens on what came in since the last visit, then what changed where you used it, what is new, your reports and the library", async ({ page }) => {
+// Ticket 102 (DESIGN.md section 1, principle 6, and section 5, Lessons page): the digest is the page's finding, 28/36
+// Light and 24/32 below 48rem, and a first visit's status sentence is lead, 18/28 400.
+const typeOf = (element: ReturnType<Page["locator"]>) =>
+  element.evaluate((found) => {
+    const style = getComputedStyle(found);
+    return `${style.fontSize}/${style.lineHeight} ${style.fontWeight}`;
+  });
+
+// Each zone of the page in order: its name, and whether it is a panel or a row.
+const zones = (page: Page) =>
+  page.locator("main section[data-zone]").evaluateAll((all) => all.map((zone) => [zone.querySelector("[data-zone-name]")?.textContent, zone.getAttribute("data-zone")]));
+
+test("the digest is the page's finding inside the first screen at 390 by 844 and 1024 by 768, then the zones in order, each a panel or a row by what it holds", async ({ page }) => {
+  for (const [width, height, finding] of [[390, 844, "24px/32px 300"], [1024, 768, "28px/36px 300"]] as const) {
+    await openLessons(page);
+    await page.setViewportSize({ width, height });
+    const digest = page.locator("main [data-finding]");
+    await expect(digest).toHaveCount(1);
+    await expect(digest).toHaveAttribute("id", "lessons-digest");
+    expect(await typeOf(digest), `${width} px`).toBe(finding);
+    const end = await digest.evaluate((found) => found.getBoundingClientRect().bottom + window.scrollY);
+    expect(end, `${width} px`).toBeLessThanOrEqual(height);
+    await expect(page.locator("main [data-status-lead]")).toHaveCount(0);
+    await page.unrouteAll({ behavior: "ignoreErrors" });
+  }
   await openLessons(page);
   const digest = page.locator("#lessons-digest");
   await expect(digest).toHaveText(
     "Since your last visit on October 22, 2026, two completion reports and two ICR Reviews came in. Two lessons are new and two changed.",
   );
-  const headings = page.locator("main h2");
-  await expect(headings).toContainText(["Changed where you used it", "New", "Your reports", "The library"]);
+  expect(await zones(page)).toEqual([
+    ["Changed where you used it", "panel"],
+    ["New", "panel"],
+    ["Your reports", "row"],
+    ["The library", "panel"],
+  ]);
 
   // A count word opens the items it counts.
   await digest.getByRole("button", { name: "two" }).first().click();
@@ -233,33 +261,76 @@ test("a page past the end of the library says so and links to the first page, no
 
 // ── The first visit and nothing new ──────────────────────────────────────
 
-test("a first visit says so, and a visit with nothing new says that, with no new or gained-evidence lines", async ({ page }) => {
-  await openLessons(page, "lessons-page-empty.json");
-  await expect(page.locator("#lessons-digest")).toHaveText("This is your first visit to Lessons. The library has no lessons yet.");
-  await expect(page.locator("[data-digest=first]")).toContainText("From your next visit, I start this page with what came in since this one.");
-  await expect(page.locator("[data-empty-state] h2")).toHaveText("No lesson has entered the library yet.");
+test("a first visit's status sentence is lead, not the finding, and a visit with nothing new is the finding, with no new or gained-evidence lines", async ({ page }) => {
+  await openLessons(page, "lessons-page-first.json");
+  const status = page.locator("main [data-status-lead]");
+  await expect(status).toHaveText("This is your first visit to Lessons. The library holds two current lessons.");
+  expect(await typeOf(status)).toBe("18px/28px 400");
+  await expect(page.locator("main [data-finding]")).toHaveCount(0);
+  // Its caption, then the sources note, then the zones: the reader's reports and the library.
+  await expect(page.locator("[data-digest=first] p")).toHaveText([
+    "This is your first visit to Lessons. The library holds two current lessons.",
+    "From your next visit, I start this page with what came in since this one.",
+    "Lessons come from Implementation Completion and Results Reports (ICRs), and from ICR Reviews and Project Performance Assessment Reports (PPARs) by the Independent Evaluation Group (IEG).",
+  ]);
+  expect(await zones(page)).toEqual([
+    ["Your reports", "row"],
+    ["The library", "panel"],
+  ]);
+  // The count word in the status sentence still opens what it counts.
+  await status.getByRole("button", { name: "two" }).click();
+  await expect(page.getByRole("dialog", { name: "The library" })).toBeVisible();
+  await page.keyboard.press("Escape");
   expect(await axe(page)).toEqual([]);
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await openLessons(page, "lessons-page-nothing.json");
-  await expect(page.locator("#lessons-digest")).toHaveText("Nothing came in since your last visit on October 30, 2026, and no lesson changed.");
+  await expect(page.locator("main [data-finding]")).toHaveText("Nothing came in since your last visit on October 30, 2026, and no lesson changed.");
   await expect(page.locator("[data-new], [data-strengthened]")).toHaveCount(0);
   // The notice stays until the author chooses, whatever happened to the last visit.
   await expect(page.locator("[data-version-notice=narrowed]")).toHaveCount(1);
   expect(await axe(page)).toEqual([]);
 });
 
-// Ticket 114: the empty library's card answers whose lessons these are, who decides, what happens to the proposed ones
-// and where the lessons show up anyway, and links where section 3's own empty state links: Data readiness for the
-// sources the package page's risks draw on (the server's answer for section 3, risks-ke-nwwda-541055.json). One page
-// load serves both widths.
-test("at 1440 and 390 px the empty library says whose lessons they are, who decides, and where they show up on a package's page", async ({ page }) => {
+test("when the page's one read fails, its error alert is in the alert slot with Try again, the h1 names the page and nothing else draws", async ({ page }) => {
+  let fail = true;
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await serve(page, {
+    "/api/lessons/page": { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' },
+  });
+  const ready = await file("lessons-page.json");
+  await page.route("**/api/lessons/page", (route) => (fail ? route.fallback() : route.fulfill({ contentType: "application/json", body: ready.body })));
+  await page.goto("/lessons");
+  const slot = page.locator("[data-alert-slot]");
+  await expect(slot.locator("[role=alert]")).toHaveText("I couldn't load the lessons because the data service didn't answer.");
+  await expect(page.locator("main h1")).toHaveText("Lessons");
+  await expect(page.locator("main [data-zone], main [data-finding], main [data-status-lead]")).toHaveCount(0);
+  await expect(page.locator("main")).not.toContainText("These are lessons quoted from completion reports");
+  fail = false;
+  await slot.getByRole("button", { name: "Try again" }).click();
+  await expect(page.locator("[data-lessons-page=ready]")).toBeVisible();
+  await expect(slot).not.toContainText("I couldn't load the lessons");
+});
+
+// Ticket 114: the empty library's sentences answer whose lessons these are, who decides, what happens to the proposed
+// ones and where the lessons show up anyway, and link where section 3's own empty state links: Data readiness for the
+// sources the package page's risks draw on (the server's answer for section 3, risks-ke-nwwda-541055.json). Ticket 102:
+// they sit in the library's zone as a row, under its name, and never repeat the digest above them. One page load serves
+// both widths.
+test("at 1440 and 390 px the empty library is a row that says whose lessons they are, who decides, and where they show up on a package's page", async ({ page }) => {
   await openLessons(page, "lessons-page-empty.json");
+  await expect(page.locator("main [data-status-lead]")).toHaveText("This is your first visit to Lessons. The library has no lessons yet.");
+  expect(await zones(page)).toEqual([
+    ["Your reports", "row"],
+    ["The library", "row"],
+  ]);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
-    const card = page.locator("[data-empty-state]");
-    await expect(card.getByRole("heading", { level: 2 })).toHaveText("No lesson has entered the library yet.");
-    await expect(card.locator("p")).toHaveText([
+    const card = page.locator("[data-library=empty]");
+    await expect(card.getByRole("heading", { level: 2 })).toHaveText("The library");
+    await expect(card).not.toContainText("no lessons yet");
+    await expect(card).not.toContainText("No lesson has entered the library yet.");
+    await expect(card.locator("[data-library-empty] p")).toHaveText([
       "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of them. " +
         "I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
         "wait for that decision, and only lesson reviewers can read them.",
@@ -276,7 +347,7 @@ test("at 1440 and 390 px the empty library says whose lessons they are, who deci
     await expect(page.locator("main")).toContainText("by the Independent Evaluation Group (IEG)");
     await expect(page.locator("#lessons-digest")).toHaveText("This is your first visit to Lessons. The library has no lessons yet.");
     await expect(card).not.toContainText(/approv/i);
-    expect((await scan(page, "[data-empty-state]")).violations, `${width} px`).toEqual([]);
+    expect((await scan(page, "[data-library=empty]")).violations, `${width} px`).toEqual([]);
   }
 });
 

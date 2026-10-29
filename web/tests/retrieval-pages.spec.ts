@@ -3,7 +3,7 @@
 // The words are the ticket's and the 32 design brief's, copied here so the test checks the copy file.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, recorded, recordingFor, test, windowBeside } from "./mocked";
+import { expect, openSidebar, recorded, recordingFor, test, windowBeside } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
@@ -38,18 +38,25 @@ async function axe(page: Page) {
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
+// Ticket 102: the reviewer pages are the sidebar's items under Lessons, each only for its role and with its count in a
+// badge hidden at zero, and the sub-tab row is gone. The sub-items show in the open sidebar; the rail hides them.
 const subTabs = (page: Page) => page.getByRole("navigation", { name: "Lesson pages" });
+const lessonsItems = (page: Page) => page.getByRole("navigation", { name: "Main" }).locator("[data-sub-items=lessons] a");
 
-test("a passage reviewer sees Lessons and Passage reports, and a query judge Lessons and Judging, each with the page's own count", async ({ page }) => {
+test("a passage reviewer finds Passage reports under Lessons, and a query judge Judging, each with its count in a badge hidden at zero", async ({ page }) => {
+  await openSidebar(page);
   await serve(page, {
     "/api/lessons/me": await file("retrieval-me-passage-reviewer-waiting.json"),
     "/api/lessons/page": await file("lessons-page-empty.json"),
     "/api/passage-reports": await file("passage-reports.json"),
   });
   await page.goto("/lessons/reports");
-  await expect(subTabs(page).getByRole("link")).toHaveText(["Lessons", "Passage reports (2)"]);
-  await expect(subTabs(page).getByRole("link", { name: "Passage reports (2)" })).toHaveAttribute("aria-current", "page");
   await expect(page.locator("[data-reports-lead]")).toContainText("Reports on two passages are waiting for you.");
+  await expect(lessonsItems(page)).toHaveText(["Passage reports2"]);
+  await expect(lessonsItems(page)).toHaveAccessibleName("Passage reports, 2 waiting");
+  await expect(lessonsItems(page)).toHaveAttribute("aria-current", "page");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Passage reports");
+  await expect(subTabs(page)).toHaveCount(0);
 
   await page.unrouteAll();
   await serve(page, {
@@ -57,8 +64,34 @@ test("a passage reviewer sees Lessons and Passage reports, and a query judge Les
     "/api/judging/queries": await file("judging-queries.json"),
   });
   await page.goto("/lessons/judging");
-  await expect(subTabs(page).getByRole("link")).toHaveText(["Lessons", "Judging (2)"]);
   await expect(page.getByRole("radio", { name: "To judge (2)" })).toBeVisible();
+  await expect(lessonsItems(page)).toHaveAccessibleName("Judging, 2 left to judge");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Judging");
+  await expect(subTabs(page)).toHaveCount(0);
+
+  // A lead who reviews passage reports with none waiting: Waiting for review, then Passage reports with no badge.
+  await page.unrouteAll();
+  await serve(page, {
+    "/api/lessons/me": await file("retrieval-me-both.json"),
+    "/api/lessons/page": await file("lessons-page-reviewer.json"),
+  });
+  await page.goto("/lessons");
+  await expect(page.locator("[data-lessons-page=ready]")).toBeVisible();
+  await expect(lessonsItems(page)).toHaveText(["Waiting for review3", "Passage reports"]);
+  await expect(lessonsItems(page).nth(1)).toHaveAccessibleName("Passage reports");
+  await expect(lessonsItems(page).nth(1).locator("[data-sub-count]")).toHaveCount(0);
+
+  // The officer's preview hides the reviewer pages (config/roles.toml), whatever roles the viewer has.
+  await page.unrouteAll();
+  await serve(page, {
+    "/api/me": await file("me-preview-piu.json"),
+    "/api/lessons/me": await file("retrieval-me-both.json"),
+    "/api/lessons/page": await file("lessons-page-preview.json"),
+  });
+  await page.goto("/lessons?view=piu");
+  await expect(page.locator("[data-lessons-page=ready]")).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main" }).locator("[data-nav-item=lessons]")).toHaveAttribute("aria-current", "page");
+  await expect(lessonsItems(page)).toHaveCount(0);
 });
 
 test("Passage reports lists the groups waiting, oldest first, and the decisions of the last 90 days", async ({ page }) => {
@@ -68,8 +101,8 @@ test("Passage reports lists the groups waiting, oldest first, and the decisions 
   });
   await page.goto("/lessons/reports");
   await expect(page.locator("[data-reports-lead]")).toHaveText("Reports on one passage are waiting for you. The oldest came in on October 23, 2026.");
-  // The sub-tab counts what the lead says is waiting for you.
-  await expect(subTabs(page).getByRole("link", { name: "Passage reports (1)" })).toBeVisible();
+  // The sidebar's badge counts what the lead says is waiting for you.
+  await expect(page.locator("[data-sub-item=lessonsReports] [data-sub-count]")).toHaveText("1");
   await expect(page.getByText("Ranking a paragraph lower changes only questions like the ones in its reports. I never hide a paragraph, and I still show it when it is the only source.")).toBeVisible();
   const row = page.locator("[data-report-row]").first();
   await expect(row).toContainText("Wrong passage · needs your review");
@@ -202,6 +235,28 @@ test("a grade that fails to save says so on the grade bar, and Try again saves i
   await bar.getByRole("button", { name: "Try again" }).click();
   await expect(page.locator("[data-progress]")).toContainText("1 of 40 passages graded.");
   await expect(bar.getByRole("alert")).toHaveCount(0);
+});
+
+// Ticket 102: a review page keeps to the workspace's work columns from a frame of 75rem (1440 and 1280 px beside the
+// rail) and is one column below it, and its single-key grades work only inside its own panel (WCAG 2.2, 2.1.4).
+test("a query's page keeps to the work columns at 1440 and 1280 px and is one column at 1024 and 390 px, and A grades only inside its panel", async ({ page }) => {
+  const sent = await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") });
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  const panel = page.locator("[data-judging-panel]");
+  await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 1 of 40");
+  for (const width of [1440, 1280, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const [work, column] = [(await page.locator("[data-document-column]").boundingBox())!, (await page.locator("[data-page-column]").boundingBox())!];
+    if (width >= 1280) expect(work.width / column.width, `${width} px`).toBeLessThan(0.65);
+    else expect(work.width / column.width, `${width} px`).toBeGreaterThan(0.85);
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Outside the panel, on the page's h1, the key types nothing and grades nothing.
+  await page.getByRole("heading", { level: 1 }).focus();
+  await page.keyboard.press("a");
+  await page.waitForTimeout(350);
+  await expect(panel.getByRole("heading", { level: 2 })).toHaveText("Passage 1 of 40");
+  expect(sent.filter((call) => call.method === "PUT")).toEqual([]);
 });
 
 test("grading the last passage moves focus to the panel that says you graded them all", async ({ page }) => {

@@ -7,6 +7,7 @@
 // out, because its cards already link to every page. A wide page, such as the Plan check,
 // takes all 12 columns at every width, as its screen does, and puts the list after it.
 import { useState, type ReactNode } from "react";
+import leadReviewer from "../../../tests/fixtures/api/retrieval-me-both.json";
 import logo from "../assets/world-bank-logo.svg";
 import { OneBox } from "../components/OneBox";
 import { Frame } from "../components/Frame";
@@ -16,6 +17,7 @@ import { STAFF_MODE, TopNav, type NavMode, type Viewer } from "../components/Top
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
+import type { Me } from "../lib/lessons";
 import { galleryCopy } from "./copy";
 import { PAGES, type GalleryPage } from "./pages";
 import { useZonesSheet } from "./zones";
@@ -56,11 +58,9 @@ export function sampleMode(pill: string | null): NavMode {
 }
 
 // A section's own pages under its item while it is current (ticket 92's slot): Projects' as World Bank staff see them
-// (ticket 99), and a sample of what the Lessons ticket adds.
-const SAMPLE_SUB_ITEMS: SubItems = {
-  ...subItemsFor(true),
-  lessons: [{ pageKey: "lessonsQueue", label: copy.pages.lessonReview.title, href: "/lessons/review" }],
-};
+// (ticket 99), and the reviewer pages under Lessons for a lead who reviews lessons and passage reports, with three
+// lessons waiting and no report, so one badge shows and one is hidden at zero (ticket 102).
+const SAMPLE_SUB_ITEMS: SubItems = subItemsFor(true, leadReviewer as Me);
 
 // Each section's own page, which the gallery's sample page stands for, so the current item reads as that page.
 const SECTION_PAGE: Record<Section, string> = { packages: "/packages", projects: "/projects", lessons: "/lessons", drafts: "/drafts", data: "/data" };

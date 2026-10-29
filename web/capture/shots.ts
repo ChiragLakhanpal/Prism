@@ -221,13 +221,17 @@ const SIGNED_OUT = '{"email":null,"name":null,"signed_in":false,"has_token":fals
 type Answer = { recorded?: string; body?: string; status?: number };
 
 // An app shot: the page, with /api/me and /api/freshness answered from the recordings unless
-// the shot says otherwise.
+// the shot says otherwise. A page under /lessons also gets who is viewing it and the Lessons page's one read, so the
+// shell's shots there show the page and never a load error (ticket 102; ticket 60's routed note).
 function app(name: string, path: string, answers: { me?: Answer; freshness?: Answer } = {}, rest: Partial<Shot> = {}): Shot {
+  const lessons: Shot["api"] = path.startsWith("/lessons")
+    ? { "/api/lessons/me": { recorded: "lessons-me-viewer.json" }, "/api/lessons/page": { recorded: "lessons-page.json" } }
+    : {};
   return {
     name,
     path,
     server: "app",
-    api: { "/api/me": answers.me ?? { recorded: "me.json" }, "/api/freshness": answers.freshness ?? { recorded: "freshness.json" } },
+    api: { "/api/me": answers.me ?? { recorded: "me.json" }, "/api/freshness": answers.freshness ?? { recorded: "freshness.json" }, ...lessons },
     ...rest,
   };
 }
@@ -1057,9 +1061,10 @@ const LESSON_SHOTS: Shot[] = [
   lessonShot("card-many-sources", "/lessons", { "/api/lessons/page": libraryWith("lessons-page-reviewer.json", manySources) }),
   lessonShot("card-many-sources-open", "/lessons", { "/api/lessons/page": libraryWith("lessons-page-reviewer.json", manySources) }, { full: true, act: click("[data-library] [data-source-chips] button") }),
   // Ticket 39's states, at 1440 px until the design pass (the user's rule of October 25, 2026): the whole page, a
-  // first visit, nothing new, a lesson retired as wrong, and a draft row's notice with the bar's hold.
-  lessonShot("page", "/lessons", { "/api/lessons/page": { recorded: "lessons-page.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
-  lessonShot("page-first-visit", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-first.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
+  // first visit, nothing new, a lesson retired as wrong, and a draft row's notice with the bar's hold. Ticket 102: the
+  // whole page and a first visit at 1440, 1024 and 390 px, with the digest as the finding and the zones in order.
+  lessonShot("page", "/lessons", { "/api/lessons/page": { recorded: "lessons-page.json" } }, {}, NOT_A_REVIEWER),
+  lessonShot("page-first-visit", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-first.json" } }, {}, NOT_A_REVIEWER),
   lessonShot("page-nothing-new", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-nothing.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
   lessonShot("page-retired", "/lessons", { "/api/lessons/page": { recorded: "lessons-page-retired.json" } }, { widths: [1440] }, NOT_A_REVIEWER),
   lessonShot("draft-notice", "/drafts/draft-0001", { "/api/drafts/draft-0001": { recorded: "drafts-lesson-retired.json" }, "/api/drafts/existing": { body: '{"draft":null}' } }, { widths: [1440] }, NOT_A_REVIEWER),
@@ -1084,8 +1089,12 @@ const LESSON_SHOTS: Shot[] = [
     await click("#lesson-lesson-e903b07ad1 button[type=submit]")(page);
   } }),
   lessonShot("drawer-from-chip", "/lessons", LIBRARY, { widths: WIDE, act: click("#lesson-lesson-e903b07ad1 [data-source-chip] >> nth=0") }),
-  lessonShot("focus-subtab", "/lessons", LIBRARY, { act: focus("[aria-label='Lesson pages'] a[href='/lessons/review']") }),
-  lessonShot("hover-subtab", "/lessons", LIBRARY, { widths: WIDE, act: hover("[aria-label='Lesson pages'] a[href='/lessons/review']") }),
+  // Ticket 102: the reviewer pages are the sidebar's items under Lessons, with the count in a badge, shown with the
+  // sidebar opened, and an item's focus and hover; below 1024 px they sit in the Menu sheet.
+  lessonShot("sidebar-items", "/lessons", LIBRARY, { widths: WIDE, full: true, act: click("[data-sidebar-toggle]") }),
+  lessonShot("focus-sidebar-item", "/lessons", LIBRARY, { widths: WIDE, act: then(click("[data-sidebar-toggle]"), focus("[data-sub-item=lessonsQueue]")) }),
+  lessonShot("hover-sidebar-item", "/lessons", LIBRARY, { widths: WIDE, act: then(click("[data-sidebar-toggle]"), hover("[data-sub-item=lessonsQueue]")) }),
+  lessonShot("menu-sidebar-items", "/lessons", LIBRARY, { widths: NARROW, act: click("[aria-controls][aria-expanded]:not([aria-haspopup])") }),
   lessonShot("focus-chip", "/lessons", LIBRARY, { act: focus("[data-source-chip]") }),
   lessonShot("library-320", "/lessons", LIBRARY, { widths: [320] }),
 
@@ -2048,9 +2057,13 @@ export const SHOTS: Shot[] = [
   app("app--stamp-error", "/", { freshness: { status: 502, body: '{"code":"unreadable"}' } }),
   app("app--no-access", "/", { freshness: { status: 403, recorded: "freshness-no-access.json" } }),
   app("app--no-identity", "/", { me: { body: SIGNED_OUT }, freshness: { status: 401, recorded: "freshness-no-identity.json" } }),
-  app("app--view-piu", "/lessons?view=piu"),
-  app("app--view-public", "/lessons?view=public"),
-  app("app--asof", "/lessons?asof=2016-08-26"),
+  // A preview's and a past date's Lessons page, from the server's answers (ticket 102): the preview leaves out what is
+  // about you, and as of a date the page says it shows the library as it was.
+  app("app--view-piu", "/lessons?view=piu", {}, { api: { ...app("x", "/lessons").api, "/api/me": { recorded: "me-preview-piu.json" }, "/api/lessons/page": { recorded: "lessons-page-preview.json" } } }),
+  app("app--view-public", "/lessons?view=public", {}, { api: { ...app("x", "/lessons").api, "/api/me": { recorded: "me-preview-public.json" }, "/api/lessons/page": { recorded: "lessons-page-preview.json" } } }),
+  app("app--asof", "/lessons?asof=2016-08-26", {}, {
+    api: { ...app("x", "/lessons").api, "/api/me": { recorded: "me-asof.json" }, "/api/lessons/page": { body: derived("lessons-page.json", (body) => Object.assign(body, { as_of: "2016-08-26" })) } },
+  }),
   app("app--asof-unreadable", "/lessons?asof=last-tuesday"),
   app("app--box-with-text", "/", { }, { act: type("[data-box-slot] input", "P130164"), api: { ...app("x", "/").api, ...BOX_API } }),
   app("app--view-open", "/", {}, { widths: WIDE, act: click("[aria-haspopup=dialog]") }),

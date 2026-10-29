@@ -35,6 +35,7 @@ import { FOLLOWING_HREF, staffRole } from "./lib/following";
 import { officerAgency } from "./lib/uploads";
 import { startHereVisible } from "./lib/home";
 import { startHereList } from "./lib/startHere";
+import { useLessonsMe } from "./lib/lessonsMe";
 import { drawerClosed, evidenceIn, origin, routeOf, visited } from "./lib/evidence";
 import { readStamp, retryStamp, stamp, type Problem } from "./lib/freshness";
 import { formatDate } from "./lib/format";
@@ -244,6 +245,10 @@ export function App() {
     unknown: !applied && !preview && who.status === "loading",
   };
   const mode = modeWords(preview, asOf);
+  // The section the sidebar lights, and under Lessons the reviewer pages the viewer's roles open, with their counts
+  // (GET /api/lessons/me, asked once Lessons is current; ticket 102).
+  const lit = match.key === "home" ? "home" : litSection(match, navMode.tabs);
+  const lessonsRoles = useLessonsMe(lit === "lessons");
   // Start here in the sidebar (ticket 114): World Bank staff in their own view, today, while GET /api/me says the strip
   // shows, once Home has kept its links in this browser. Remove takes it off every page at once.
   const stripShows = useStore(startHereVisible);
@@ -424,13 +429,14 @@ export function App() {
         <Sidebar
           mode={navMode}
           viewer={who}
-          currentKey={match.key === "home" ? "home" : litSection(match, navMode.tabs)}
+          currentKey={lit}
           pathname={here.pathname}
           freshness={freshness}
           // World Bank staff open Following from Projects (ticket 37); a preview, and everyone else, All projects.
           projectsHref={staff && !preview ? FOLLOWING_HREF : undefined}
           // Following and All projects under Projects for World Bank staff; All projects alone for everyone else (ticket 99).
-          subItems={subItemsFor(staff === true && !preview)}
+          // Under Lessons, the reviewer pages for the roles that have them, each with its count (ticket 102).
+          subItems={subItemsFor(staff === true && !preview, lessonsRoles.status === "ready" ? lessonsRoles.me : null)}
           startHere={startHere}
         />
       }

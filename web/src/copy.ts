@@ -266,9 +266,11 @@ export const copy = {
       // Where section 3's own empty state links (routes.ts, RISKS_READINESS_HREF).
       link: "See which completion reports I have read",
     },
-    // Lessons > Waiting for review and one item's review page (ticket 29): the frame keeps the Lessons h1.
+    // Lessons > Waiting for review and one item's review page (ticket 29). The reviewer pages are sidebar items under
+    // Lessons (ticket 102), so each names itself in its h1, and its own purpose, which names its limits and regions
+    // from the server, opens its body.
     lessonsQueue: {
-      title: "Lessons",
+      title: "Waiting for review",
       documentTitle: "Waiting for review, Lessons",
       purpose: LESSONS_PURPOSE,
     },
@@ -277,10 +279,10 @@ export const copy = {
       documentTitle: "Waiting for review, Lessons",
       purpose: "One lesson waiting for review, with its evidence, its history and your part in deciding it.",
     },
-    // Lessons > Passage reports and Lessons > Judging (ticket 32): the frame keeps the Lessons h1, and one group's
-    // page and one query's page name themselves once they load.
+    // Lessons > Passage reports and Lessons > Judging (ticket 32): each names itself in its h1 (ticket 102), and one
+    // group's page and one query's page name themselves once they load.
     lessonsReports: {
-      title: "Lessons",
+      title: "Passage reports",
       documentTitle: "Passage reports, Lessons",
       purpose: LESSONS_PURPOSE,
     },
@@ -290,7 +292,7 @@ export const copy = {
       purpose: "One passage's reports, with the paragraph, what people reported and your decision.",
     },
     lessonsJudging: {
-      title: "Lessons",
+      title: "Judging",
       documentTitle: "Judging, Lessons",
       purpose: LESSONS_PURPOSE,
     },
@@ -433,13 +435,24 @@ export const copy = {
       data: "Data",
     },
     // A section's own pages, under its item while it is current (DESIGN.md section 5, Sidebar), by page key: Following
-    // and All projects under Projects for World Bank staff (ticket 99), and Data readiness and Sources and licenses
-    // under Data (ticket 104). The labels carry no count, so they never grow while a list loads.
+    // and All projects under Projects for World Bank staff (ticket 99), the reviewer pages under Lessons for the roles
+    // that have them (ticket 102), and Data readiness and Sources and licenses under Data (ticket 104). The labels
+    // carry no count, so they never grow while a list loads.
     sub: {
       following: "Following",
       projects: "All projects",
+      lessonsQueue: "Waiting for review",
+      lessonsReports: "Passage reports",
+      lessonsJudging: "Judging",
       data: "Data readiness",
       dataSources: "Sources and licenses",
+    },
+    // A reviewer page's count sits in a small badge after its label, hidden at zero (ticket 102). The badge shows the
+    // number alone, so the link's name says what it counts instead.
+    subCount: {
+      lessonsQueue: (count: string) => `Waiting for review, ${count} waiting`,
+      lessonsReports: (count: string) => `Passage reports, ${count} waiting`,
+      lessonsJudging: (count: string) => `Judging, ${count} left to judge`,
     },
     // One button that turns the sidebar into the rail of icons and back.
     collapse: "Collapse the sidebar",
@@ -6145,17 +6158,10 @@ export const copy = {
     sourcesNote:
       "Lessons come from Implementation Completion and Results Reports (ICRs), and from ICR Reviews and Project " +
       "Performance Assessment Reports (PPARs) by the Independent Evaluation Group (IEG).",
+    // The breadcrumb's first link on a review page. The reviewer pages are the sidebar's items under Lessons
+    // (ticket 102; copy.nav.sub), not sub-tabs.
     tabs: {
-      label: "Lesson pages",
       library: "Lessons",
-      queue: "Waiting for review ({waiting})",
-      // Ticket 32's reviewer pages, each shown only to its role.
-      reports: "Passage reports ({waiting})",
-      judging: "Judging ({left})",
-      showingLibrary: "Showing Lessons.",
-      showingQueue: "Showing Waiting for review.",
-      showingReports: "Showing Passage reports.",
-      showingJudging: "Showing Judging.",
     },
     queueTitle: "Waiting for review",
     // The kinds, stages and risk factors come from config/lessons.toml with the server's answers.
