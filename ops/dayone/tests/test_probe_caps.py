@@ -4,6 +4,7 @@ Azure is replaced by a fake that returns what Azure Resource Manager returns for
 """
 
 import shutil
+import tomllib
 import sys
 from dataclasses import replace
 from pathlib import Path
@@ -21,6 +22,7 @@ from strata.config import load_models  # noqa: E402
 
 # Each role's deployment, from the model file, so swapping a model there needs no change here.
 NAME = {role: model.deployment for role, model in load_models().items()}
+DAYONE = tomllib.loads((Path(__file__).resolve().parents[1] / "dayone.toml").read_text())  # the caps, read, not written here
 
 
 def deployment(name, sku, capacity, token_limit=None, state="Succeeded"):
@@ -146,7 +148,8 @@ def test_a_limit_above_its_cap_leaves_the_subscription_uncapped(place):
     assert run(place, FakeAzure(deployments=loose)) == 1
     caps = dayone.read_results(place / "results.md")["caps"]
     assert caps["Status"] == "not capped"
-    assert any("300,000" in line and "30,000" in line for line in caps["Deployments"])
+    cap = f"{DAYONE['caps']['deployments']['draft']['tokens_per_minute']:,}"  # the cap, from ops/dayone/dayone.toml
+    assert any("300,000" in line and cap in line for line in caps["Deployments"])
 
 
 def test_a_batch_capacity_above_its_cap_leaves_the_subscription_uncapped(place):
