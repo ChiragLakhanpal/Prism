@@ -5320,11 +5320,13 @@ export const copy = {
       "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
     introNoEstimate:
       "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
-    // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), so the intro says so.
+    // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), so the intro says so. A dot
+    // sits at its share's middle difference, which with an even count is the average of two, so no sentence names one
+    // package as signed there (the review of round 3, F2).
     introQuantile:
-      "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows how far the middle package of its group was signed above or below that package's own cost estimate.",
+      "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows the middle of how far its group's packages were signed above or below their own cost estimates.",
     introNoEstimateQuantile:
-      "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows how far the middle package of its group was signed above or below that package's own cost estimate.",
+      "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows the middle of how far its group's packages were signed above or below their own cost estimates.",
     amount: (amount: string) => `US$${amount}`,
     title: "{above} of {m} comparable packages were signed above their cost estimates.",
     titleOne: "One of the {m} comparable packages was signed above its cost estimate.",
@@ -5379,13 +5381,13 @@ export const copy = {
     // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), as on the past range.
     keyDots: (total: string, dots: string) => `Each dot is 1 in ${dots} of the ${total} packages.`,
     dotQuantile: (k: string, dots: string, count: string, total: string, diff: string) =>
-      `Dot ${k} of ${dots} stands for ${count} of the ${total} packages. Their middle one was signed ${diff} its cost estimate.`,
+      `Dot ${k} of ${dots} stands for ${count} of the ${total} packages. Their middle difference was ${diff} their cost estimates.`,
     tipQuantile: (count: string) => `${count} packages`,
-    tipQuantileLine: "The middle package's signed amount against its cost estimate.",
+    tipQuantileLine: "The middle of its packages' signed amounts against their cost estimates.",
     tooltipOpenDots: "Press Enter or click to see every package in the table.",
     alt: "One dot for each of {m} comparable packages, placed by how far its signed amount was from its own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altQuantile:
-      "{dots} dots, each standing for 1 in {dots} of the {m} comparable packages. Each dot shows how far the middle package of its group was signed above or below that package's own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
+      "{dots} dots, each standing for 1 in {dots} of the {m} comparable packages. Each dot shows the middle of how far its group's packages were signed above or below their own cost estimates. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altMiddle: "The middle half ran from {q25} to {q75}, and the middle package was {q50}.",
     countTooltip: "Comparable packages with both a cost estimate and a signed contract.",
     countAct: "Select to see the table.",

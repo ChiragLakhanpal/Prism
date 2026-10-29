@@ -46,6 +46,7 @@ import {
 } from "../lib/risks";
 import { useStore } from "../lib/store";
 import { useFocusWithin } from "../lib/useFocusWithin";
+import { useLastHeight } from "../lib/useLastHeight";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
@@ -196,22 +197,6 @@ export function RisksView({
       </ZoneBlock>
     </TaskZone>
   );
-}
-
-// The ready part's height, kept while it shows, so a rerun's skeleton can hold it (ticket 59).
-function useLastHeight(shown: boolean, key: unknown) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [height, setHeight] = useState<number | null>(null);
-  useLayoutEffect(() => {
-    const element = ref.current;
-    if (!shown || !element) return;
-    const keep = () => setHeight(element.getBoundingClientRect().height);
-    keep();
-    const watch = new ResizeObserver(keep);
-    watch.observe(element);
-    return () => watch.disconnect();
-  }, [shown, key]);
-  return [ref, height] as const;
 }
 
 // The empty states that are one sentence and at most one link, so the zone is a row.

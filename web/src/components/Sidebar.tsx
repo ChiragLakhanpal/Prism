@@ -74,9 +74,6 @@ function useRest(forced?: Rest): [Rest, () => void] {
 }
 
 const pathOf = (href: string) => href.split("?")[0];
-// The Menu sheet's head, its title and "Close the menu": 8 + 44 + 8 px and the 1 px line under it.
-const SHEET_HEAD = 61;
-
 // A tooltip's label, and a second line under it: the stamp's words on the Data item.
 type Tip = { text: string; line: string | null; top: number; instant: boolean };
 
@@ -133,6 +130,13 @@ export function Sidebar({
   // Below 768 px the sheet's view button opens the view switch's popover above it; it closes when the sheet closes.
   const [viewShown, setViewShown] = useState(viewOpen);
   const viewContent = useRef<HTMLDivElement>(null);
+  // The Menu sheet's head, its title and "Close the menu", which the view popover keeps clear. Its height is measured
+  // before the popover is painted, so a change to the head cannot let the popover cover it (the review of round 3, F3).
+  const sheetHead = useRef<HTMLDivElement>(null);
+  const [headHeight, setHeadHeight] = useState(0);
+  useLayoutEffect(() => {
+    if (viewShown && sheet.open && sheetHead.current) setHeadHeight(sheetHead.current.getBoundingClientRect().height);
+  }, [viewShown, sheet.open]);
   const whoId = useId();
   const sheetOpen = useRef(sheet.open);
   sheetOpen.current = sheet.open;
@@ -344,7 +348,7 @@ export function Sidebar({
           "lg:sticky lg:top-(--frame-top) lg:z-30 lg:h-[calc(100dvh-var(--frame-top))] lg:w-full lg:overflow-visible lg:bg-page lg:shadow-none",
         )}
       >
-        <div className="flex items-center justify-between border-b border-line py-2 pr-2 pl-4 lg:hidden">
+        <div ref={sheetHead} className="flex items-center justify-between border-b border-line py-2 pr-2 pl-4 lg:hidden">
           <p id={titleId} className="text-label text-ink-muted">
             {copy.nav.menu}
           </p>
@@ -452,7 +456,7 @@ export function Sidebar({
                 sideOffset={8}
                 avoidCollisions={false}
                 // It keeps the sheet's head clear, 8 px under it, so "Close the menu" stays in reach.
-                collisionPadding={{ top: SHEET_HEAD + 8 }}
+                collisionPadding={{ top: headHeight + 8 }}
                 aria-label={copy.nav.view.dialog}
                 aria-describedby={whoId}
                 onOpenAutoFocus={(event) => {

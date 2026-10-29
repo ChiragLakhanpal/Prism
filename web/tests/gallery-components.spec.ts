@@ -35,13 +35,15 @@ test("above 60 packages the cost lane draws one dot per quantile with its key li
   // package (ticket 59's round 1 reviews: the review's B1, the design review's B2).
   const intro = sample.locator("[data-cost-intro]");
   await expect(intro).toContainText(`Each dot below stands for 1 in ${share} of them.`);
-  // The design review of round 2, follow-up 3: the sentence names the package before its own cost estimate.
-  await expect(intro).toContainText("It shows how far the middle package of its group was signed above or below that package's own cost estimate.");
+  // The review of round 3, F2: a dot sits at its group's middle difference, which with an even count is the average
+  // of two packages', so no sentence names one package as signed there.
+  await expect(intro).toContainText("It shows the middle of how far its group's packages were signed above or below their own cost estimates.");
+  await expect(intro).not.toContainText("middle package");
   await expect(intro).not.toContainText("one of them");
   const drawing = sample.locator("[data-cost-drawing]");
   await expect(drawing).toHaveAccessibleName(
     new RegExp(
-      `^${share} dots, each standing for 1 in ${share} of the ${mock.counts.m} comparable packages\\. Each dot shows how far the middle package of its group was signed above or below that package's own cost estimate\\.`,
+      `^${share} dots, each standing for 1 in ${share} of the ${mock.counts.m} comparable packages\\. Each dot shows the middle of how far its group's packages were signed above or below their own cost estimates\\.`,
     ),
   );
   await expect(drawing).toHaveAccessibleName(
@@ -52,7 +54,7 @@ test("above 60 packages the cost lane draws one dot per quantile with its key li
   await expect(sample.locator("[data-cost-drawing] circle")).toHaveCount(mock.quantile_dots.length);
   const first = mock.quantile_dots[0];
   await expect(dots.first()).toHaveAccessibleName(
-    new RegExp(`^Dot 1 of ${share} stands for ${first.count} of the ${mock.counts.m} packages\\. Their middle one was signed `),
+    new RegExp(`^Dot 1 of ${share} stands for ${first.count} of the ${mock.counts.m} packages\\. Their middle difference was \\d`),
   );
   await dots.first().focus();
   await expect(sample.locator("[data-cost-tooltip]")).toContainText(`${first.count} packages`);

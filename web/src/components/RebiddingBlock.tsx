@@ -32,6 +32,7 @@ import { useStore } from "../lib/store";
 import { dataReadinessHref } from "../routes";
 import type { ComparablesResult } from "../lib/api";
 import { useFocusWithin } from "../lib/useFocusWithin";
+import { useLastHeight } from "../lib/useLastHeight";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -111,17 +112,7 @@ export function RebiddingView({
   // (ticket 59; the 28 review, follow-up 1).
   const [open, setOpen] = useState(initiallyOpen);
   // The ready block's last height: a rerun's skeleton holds it, so the sections under the block stay put (ticket 59).
-  const readyBlock = useRef<HTMLDivElement>(null);
-  const [lastHeight, setLastHeight] = useState<number | null>(null);
-  useLayoutEffect(() => {
-    if (!readyBlock.current) return;
-    const element = readyBlock.current;
-    const keep = () => setLastHeight(element.getBoundingClientRect().height);
-    keep();
-    const watch = new ResizeObserver(keep);
-    watch.observe(element);
-    return () => watch.disconnect();
-  }, [result, updating]);
+  const [readyBlock, lastHeight] = useLastHeight(Boolean(result) && !updating, result);
   // Zone 1's second block (ticket 101): its body, then its source line in its own foot strip.
   return (
     <>
