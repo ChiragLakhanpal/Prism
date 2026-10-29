@@ -102,3 +102,4 @@ Lessons, judging and drafts
   - The phone bar has two left edges, the Menu button at x 12 and the box at x 16 at 390 px; give `bar-brand` the window margin as its left padding below 1024 px and match `web/index.html`. (ticket 93, `.notes/93-critique.md`)
   - Optional, design-lead's call: the 35-character reference breaks over two lines in the chip at 390 px, where the prototype keeps it on one line with a 13 px mono ID. (ticket 93, `.notes/93-critique.md`)
   - Below 1024 px `min-h-main` leaves out the two-row bar, so a phone reader scrolls 108 px of empty page to reach the footer; measure the bar into a variable such as `--bar-block` and use it. (ticket 94, `.notes/94-design.md` follow-up 5)
+- October 28, 2026, orchestrator (11:52 PDT): the App redeploy ran from 357c30b9 (the catch-up block "Tickets 58 and 59, the App redeploy ran"); the page's check by eye is the owner's.
