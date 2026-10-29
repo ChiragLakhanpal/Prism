@@ -30,3 +30,4 @@ Read first: `src/strata/lakehouse/contacts.py` (the removal rules, `LEFT_EMAIL`,
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - Unblocks: none. No ticket names 121 on its `Blocked by` line.
 - October 28, 2026, orchestrator (13:40 PDT): steps 1 to 3 ran (the catch-up block "Tickets 120, 121 and 123, the live steps ran"): 149 notices on 33 pages were flagged before the re-read and 0 after, the Attention query returns 0, and the quality row reads found 0, passed true; criterion 3 holds.
+- October 29, 2026, orchestrator (02:58 PDT): a scheduled night confirms criterion 3: the contacts_left row reads found 0, passed true, at 2026-10-29T07:29 UTC (the same block).
