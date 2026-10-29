@@ -9,6 +9,8 @@ import documents from "../../../tests/fixtures/api/documents-p130164.json";
 import p130164 from "../../../tests/fixtures/api/project-p130164.json";
 import p156634 from "../../../tests/fixtures/api/project-p156634.json";
 import sourcePage from "../../../tests/fixtures/api/source-icr-p130164-23-54.json";
+import sourceTable from "../../../tests/fixtures/api/source-pad-p130164-65.json";
+import sourcePlanRows from "../../../tests/fixtures/api/source-plan-p161305-3.json";
 import summary from "../../../tests/fixtures/api/summary-p130164.json";
 import { useRef, useState, type ReactNode } from "react";
 import { BaselinePanel } from "../components/BaselinePanel";
@@ -73,6 +75,17 @@ function SourceSample() {
       <div className="mt-6">
         <Passages answer={SOURCE} blockRef={block} />
       </div>
+    </Column>
+  );
+}
+
+// A source page whose passages hold a table, or a plan's STEP rows: a table in its frame from 768 px and one card per
+// row below it (ticket 60).
+function SourcePassages({ answer }: { answer: SourcePageAnswer }) {
+  const block = useRef<HTMLDivElement>(null);
+  return (
+    <Column>
+      <Passages answer={answer} blockRef={block} />
     </Column>
   );
 }
@@ -229,6 +242,8 @@ export function hubPage(): GalleryPage {
         ),
       },
       { id: "source-page", title: t.sourcePage, body: <SourceSample /> },
+      { id: "source-table", title: t.sourceTable, body: <SourcePassages answer={sourceTable as unknown as SourcePageAnswer} /> },
+      { id: "source-plan-rows", title: t.sourcePlanRows, body: <SourcePassages answer={sourcePlanRows as unknown as SourcePageAnswer} /> },
       {
         id: "page-bar-loading",
         title: t.pageBarLoading,

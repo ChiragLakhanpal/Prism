@@ -88,6 +88,13 @@ test("the block ends section 1's card after a divider, labeled experimental with
   expect(await text(page, "[data-rebid-denominator]")).toBe(
     "I counted 52 packages here and 49 in the past range, because the past range leaves out canceled packages, and a canceled package counts here.",
   );
+  // Ticket 60 (ticket 28's design review, F7): both of the caption's counts explain themselves.
+  const counts = block(page).locator("[data-rebid-denominator] [data-num]");
+  await expect(counts).toHaveCount(2);
+  await counts.first().focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The comparable packages I counted for this.");
+  await counts.nth(1).focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The comparable packages in the past range above.");
   // No model results on the fixture: only the counts, and one sentence that says why.
   expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate: my model has no test results yet.");
   expect(await block(page).innerText()).not.toMatch(/%|percent| in 10/);
@@ -209,6 +216,17 @@ test("my model's estimate shows as about k in 10 with its track record, a long g
   await expect(group.getByRole("button", { name: "Open the records for KE-SAMPLE-310001-CW-RFB" })).toBeFocused();
 });
 
+// Ticket 60 (ticket 28's review, follow-up 9): a denominator reason the copy file has no words for draws no caption,
+// never a raw code.
+test("a denominator reason with no words in the copy file draws no caption", async ({ page }) => {
+  const body = JSON.parse(await recorded("rebidding-ke-nwwda-541055.json"));
+  await openPackage(page, { answer: { body: JSON.stringify({ ...body, denominator_reason: "a_reason_with_no_words" }) } });
+  await ready(page);
+  await expect(block(page).locator("[data-rebid-count]")).toBeVisible();
+  await expect(block(page).locator("[data-rebid-denominator]")).toHaveCount(0);
+  await expect(block(page)).not.toContainText("a_reason_with_no_words");
+});
+
 test("an activity advertised twice opens the drawer with a tab for each notice (mock)", async ({ page }) => {
   await openPackage(page, { rebidding: "rebidding-mock-model-shown.json" });
   await ready(page);
@@ -219,6 +237,9 @@ test("an activity advertised twice opens the drawer with a tab for each notice (
   const tabs = page.getByRole("dialog").getByRole("tablist", { name: "Sources for this sentence" }).getByRole("tab");
   await expect(tabs).toHaveText(["Notice OP90000011", "Notice OP90000012"]);
   await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+  // Ticket 60 (ticket 28's critique, follow-up 5): the line is dated by the second notice, so the claim ends with both
+  // records' numbers, whichever tab is open.
+  await expect(page.getByRole("dialog").locator("[data-rebid-claim] [data-claim-numbers]")).toHaveText("78");
   await tabs.nth(1).click();
   await expect(page).toHaveURL(/evidence=strata\.silver\.notices%3AOP90000012/);
   await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toHaveText("Notice OP90000012");

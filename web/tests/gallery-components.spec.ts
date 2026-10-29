@@ -1110,6 +1110,41 @@ test("buttons have 4 px corners, badges and citation markers keep the pill, and 
   }
 });
 
+// Ticket 60 (ticket 27's design review, round 2, R8): the other families' samples, whose steps have no comparable
+// package, say so in their coverage line, never "Based on 7 of 49".
+test("the planned dates' firms and individuals samples count no comparable package in their coverage line", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/steps");
+  for (const id of ["firms", "individuals"]) {
+    const line = page.locator(`[data-state-section=${id}] [data-coverage-line]`);
+    await expect(line, id).toBeVisible();
+    await expect(line, id).not.toContainText("Based on");
+  }
+});
+
+// Ticket 60 (ticket 30's critique, follow-up 16): the gallery's row removed for a number no record holds counts that
+// number as unmatched, so its check line and its removed box agree.
+test("the risks sample with a row removed for its number counts that number as unmatched", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/risks");
+  const sample = page.locator("[data-state-section=removed]");
+  await expect(sample.locator("[data-check-line]")).toContainText("3 of 4 numbers match records");
+  await expect(sample.locator("[data-removed-box] [data-removed-lead]")).toHaveText(/one/i);
+});
+
+// Ticket 60 (ticket 21's review, round 4, follow-up 3): the gallery shows a source page's table and a plan's STEP rows
+// as the source view draws them: a table in its frame at 1024 px, and cards at 390 px.
+test("the gallery's source page samples show a table at 1024 px and cards at 390 px", async ({ page }) => {
+  for (const [width, view] of [[1024, "table"], [390, "cards"]] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/hub");
+    for (const id of ["source-table", "source-plan-rows"]) {
+      const section = page.locator(`[data-state-section=${id}]`);
+      await expect(section.locator(`[data-table-view=${view}]`).first(), `${id} at ${width} px`).toBeVisible();
+    }
+  }
+});
+
 // Ticket 60 (ticket 12's design review, round 3): a text link that wraps draws its focus ring around each of its lines,
 // as a 2 px focus shadow cloned onto each line, so the ring never runs through the line above it; a transparent 2 px
 // outline stays for forced-colors mode, which drops shadows and draws the outline.

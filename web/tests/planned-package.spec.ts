@@ -641,6 +641,33 @@ test("keeping the guess makes it a typed chip, and the guess count goes away", a
   await expect(chip(page, "lots")).toBeFocused();
 });
 
+// Ticket 60 (ticket 28's review, follow-up 13): zone 1's "Advertised again" block on a planned package asks with the
+// package's own comparables query and counts what the server recorded for it.
+test("a planned package draws Advertised again from the rebidding answer for its comparables query", async ({ page }) => {
+  const asked = await openPackage(page, { answers: { "/api/rebidding": { body: await recorded("rebidding-planned-works-rfb-ke.json") } } });
+  await changes(page);
+  // The block follows the past range, which shows once the package has a plan.
+  const prompt = page.locator("[data-plan-prompt]");
+  await prompt.getByRole("textbox", { name: "Your plan, in months" }).fill("6");
+  await prompt.getByRole("button", { name: "Show the past range" }).click();
+  await expect(page.locator("[data-rebidding] [data-rebid-count]")).toHaveText("3 of the 52 comparable packages were advertised again.");
+  const query = asked.map((request) => new URL(request.url())).find((url) => url.pathname === "/api/rebidding")!;
+  const saved = JSON.parse(await recorded("planned-package-rural-roads.json")).package.comparables_query as Record<string, string>;
+  for (const [key, value] of Object.entries(saved)) expect(query.searchParams.get(key), key).toBe(value);
+});
+
+// Ticket 60 (ticket 15's critique, round 3, follow-up 11): on a guess, "Use this" would do what "Keep 2 lots" does, so
+// it shows only once you edit the value.
+test("on a guess, Use this shows only after you edit the value", async ({ page }) => {
+  await openPackage(page);
+  await chip(page, "lots").click();
+  const editor = page.getByRole("dialog", { name: "Number of lots" });
+  await expect(editor.getByRole("button", { name: "Keep 2 lots" })).toBeVisible();
+  await expect(editor.getByRole("button", { name: "Use this" })).toHaveCount(0);
+  await editor.getByRole("textbox").fill("3");
+  await expect(editor.getByRole("button", { name: "Use this" })).toBeVisible();
+});
+
 test("a computed chip you set yourself turns typed, the note shows both values, and Use the computed value goes back", async ({ page }) => {
   await openPackage(page);
   await changes(page);
@@ -691,6 +718,10 @@ test("a click on a dot opens its package's records in the evidence drawer, and c
   await expect(drawer(page)).toContainText("This package took 17.7 months from its notice on October 1, 2019 to its signed contract on March 23, 2021.");
   await expect(drawer(page).getByRole("heading", { name: "Specific procurement notice" })).toBeVisible();
   await expect(drawer(page).getByRole("heading", { name: "Contract award" })).toBeVisible();
+  // Ticket 60 (ticket 15's critique, round 3): "Why I compared it" lists only the criteria find_comparables used for
+  // this package, whose answer leaves market approach and review type out.
+  const why = drawer(page).locator("h3", { hasText: "Why I compared it" }).locator("xpath=following-sibling::dl[1]");
+  await expect(why.locator("dt")).toHaveText(["Method", "Procurement Category", "Country"]);
   // The opened dot keeps its ring while its records show, and the column did not move.
   await expect(page.locator("[data-opened-ring]")).toHaveCount(1);
   expect((await page.locator("[data-planned-package]").boundingBox())!.x).toBe(column.x);

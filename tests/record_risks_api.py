@@ -22,6 +22,8 @@ packages belong to projects still active, so:
   tests/record_packages_api.py records it), whose Kenya comparables reach no completion report either.
 - evidence-icr-review-p130164-10b.json: the ICR Review's section 10.b, the cost estimates row's second source,
   for the evidence drawer's switcher.
+- risks-planned-yourself.json: a package set up yourself (pkg-000000000002), which lacks the criteria that pick
+  comparables, so the section says what it lacks (ticket 60).
 """
 
 import asyncio
@@ -93,6 +95,11 @@ def answers(folder: Path) -> dict[str, str]:
             found["risks-planned-rural-roads.json"] = await get("/api/planned-packages/pkg-000000000001/risks")
             found["evidence-icr-review-p130164-10b.json"] = await get(
                 "/api/evidence", id="strata.gold.passage:34056616/v2/10.b", asof=TODAY.isoformat())
+            # Ticket 60: a package set up yourself (pkg-000000000002) lacks the criteria that pick comparables, so the
+            # section says what it lacks (empty_reason missing_criteria), as the capture's planned--missing shows it.
+            await client.post("/api/planned-packages", headers=ANA,
+                              json={"sentence": "rural roads, Kenya, about US$15 million", "read": False})
+            found["risks-planned-yourself.json"] = await get("/api/planned-packages/pkg-000000000002/risks")
         return found
 
     return asyncio.run(story())

@@ -630,7 +630,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
 
   let end: ReactNode;
   if (d.state === "exported" && d.export) {
-    end = <ExportSuccess className="mt-8" draft={d} fresh={fresh} headingRef={success} date={day} />;
+    end = <ExportSuccess className="mt-8" draft={d} fresh={fresh} headingRef={success} date={day} notice={conflict ? words.conflict : undefined} />;
   } else if (d.state === "discarded") {
     end = (
       <DiscardedNotice

@@ -105,6 +105,61 @@ test("the capture list photographs the check windows and a drawer's landed row a
   expect(SHOTS.find((shot) => shot.name === "checks--how-window-draft")?.api?.["/api/drafts/draft-0002"]?.recorded).toBe("drafts-review-notes-partial.json");
 });
 
+// Ticket 60: the outage states, the criteria with no judge, a draft another tab exported, and the view switch's shots,
+// which take 800 px since the switch sits in the bar from 768 px (ticket 93's design review, follow-up 7).
+test("the capture list photographs ticket 60's states at their widths", () => {
+  const widths = (name: string) => SHOTS.find((shot) => shot.name === name)?.widths ?? WIDTHS;
+  for (const name of [
+    "checks--judge-silent-some-failed",
+    "checks--removed-check-6-some-kept",
+    "checks--removed-check-6-mixed",
+    "checks--removed-check-2",
+    "checks--partial-refusal-unchecked",
+    "criteria--readings-unjudged",
+    "draft--conflict-exported",
+  ]) {
+    expect(SHOTS.some((shot) => shot.name === name), name).toBe(true);
+    expect(widths(name), name).toEqual([1440, 1024, 390]);
+  }
+  for (const name of ["navigation--hover-pill", "navigation--focus-pill", "navigation--view-open"]) expect(widths(name), name).toEqual([1440, 1024, 800]);
+});
+
+// Ticket 60 (ticket 21's review, round 4, follow-up 3): a source page's table and a plan's STEP rows show as a table in
+// its frame at 1024 px, so their shots take that width too, and the gallery shows both.
+test("the source page's table and plan rows are captured at 1440, 1024, 390 and 320 px", () => {
+  for (const name of ["source--table", "source--plan-rows"]) {
+    expect(SHOTS.find((shot) => shot.name === name)?.widths, name).toEqual([1440, 1024, 390, 320]);
+  }
+});
+
+// Ticket 60 (ticket 30's review, F12): the risks shots pair section 1 and section 3 as the app does, India's with
+// India's, and the planned shots whose packages lack criteria or divide a package answer section 3 too.
+test("the risks shots pair India's comparables with India's risks, and every planned shot answers section 3", () => {
+  for (const shot of SHOTS.filter((candidate) => candidate.name.startsWith("risks--"))) {
+    const risks = shot.api?.["/api/packages/KE-NWWDA-541055-CW-RFB/risks"]?.recorded ?? "";
+    const comparables = shot.api?.["/api/packages/KE-NWWDA-541055-CW-RFB/comparables"]?.recorded ?? "";
+    expect(comparables.includes("-india"), `${shot.name}: ${risks} with ${comparables}`).toBe(risks.includes("-india"));
+  }
+  expect(SHOTS.find((shot) => shot.name === "planned--missing")?.api?.["/api/planned-packages/pkg-000000000002/risks"]?.recorded).toBe("risks-planned-yourself.json");
+  expect(SHOTS.find((shot) => shot.name === "planned--dividing")?.api?.["/api/planned-packages/pkg-000000000003/risks"]).toBeDefined();
+  const missing = JSON.parse(readFileSync(new URL("../../tests/fixtures/api/risks-planned-yourself.json", import.meta.url), "utf8"));
+  expect(missing.empty_reason).toBe("missing_criteria");
+});
+
+// Ticket 60 (ticket 29's design review, round 3, F8): a change or a retirement is decided on a lesson that already has a
+// version, and its record's history names the version its outcome names, so the panel and the history agree.
+test("a changed or retired lesson's captured record names the same version in its history and its outcome", () => {
+  for (const name of ["lessons--review--decided-changed", "lessons--review--decided-retired"]) {
+    const shot = SHOTS.find((candidate) => candidate.name === name)!;
+    expect(shot.path, name).toContain("/recheck-");
+    const [, answer] = Object.entries(shot.api ?? {}).find(([key]) => key.startsWith("/api/lessons/review/"))!;
+    const body = JSON.parse(answer.body!);
+    const decided = body.history.findLast((event: { event: string }) => event.event === "decided");
+    expect(decided.version, name).toBe(body.outcome.version);
+    expect(body.outcome.version, name).toBe(2);
+  }
+});
+
 test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {
   expect(SHOTS.filter((shot) => shot.name.includes("--hover-")).length).toBeGreaterThan(5);
   expect(SHOTS.filter((shot) => shot.name.includes("--focus-")).length).toBeGreaterThan(5);

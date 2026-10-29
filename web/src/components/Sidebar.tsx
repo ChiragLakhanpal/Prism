@@ -41,7 +41,12 @@ export const SIDEBAR_KEY = "strata.sidebar";
 const AT_REST: Rest = "rail";
 // How long a hover waits before the first tooltip opens, and how soon after one closes the next opens at once.
 const TIP_DELAY = 150;
+// A rail tooltip hides this long after the pointer leaves its item and the tooltip (WCAG 1.4.13; ticket 60).
+const TIP_HIDE = 100;
 const TIP_RUN = 300;
+// How long a closing Menu sheet keeps its exit motion: well past the 120 ms of --motion-exit, so a busy page still
+// finishes it. A sheet opened again meanwhile takes its open motion.
+const SHEET_EXIT = 1000;
 
 // The person's choice, as web/index.html's first script wrote it on the root from local storage.
 function chosenRest(): Rest | null {
@@ -135,6 +140,20 @@ export function Sidebar({
   const tipClosedAt = useRef(-Infinity);
   const rail = wide && rest === "rail";
 
+  // A sheet that closes slides out over the exit's 120 ms, marked data-closing in the same render that drops data-open;
+  // a sidebar that a narrowing window hides goes at once (app.css, menu-sheet; ticket 60).
+  const [shownOpen, setShownOpen] = useState(sheet.open);
+  const [closing, setClosing] = useState(false);
+  if (shownOpen !== sheet.open) {
+    setShownOpen(sheet.open);
+    setClosing(!sheet.open);
+  }
+  useEffect(() => {
+    if (!closing) return;
+    const timer = window.setTimeout(() => setClosing(false), SHEET_EXIT);
+    return () => window.clearTimeout(timer);
+  }, [closing]);
+
   // Opening the sheet moves focus to the current page's item.
   const wasOpen = useRef(sheet.open);
   useEffect(() => {
@@ -161,6 +180,20 @@ export function Sidebar({
     tipOpen.current = false;
     setTip(null);
   };
+  // The pointer may move from an item onto its tooltip, so the tooltip hides 100 ms after the pointer leaves both
+  // (WCAG 1.4.13; ticket 60).
+  const hideTipLater = () => {
+    window.clearTimeout(tipTimer.current);
+    tipTimer.current = window.setTimeout(hideTip, TIP_HIDE);
+  };
+  // Escape hides the tooltip wherever focus is, while the pointer rests on its item (WCAG 1.4.13; ticket 60).
+  const shownTip = tip !== null;
+  useEffect(() => {
+    if (!shownTip) return;
+    const onKey = (event: KeyboardEvent) => event.key === "Escape" && hideTip();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [shownTip]);
   // A rail item's tooltip: after 150 ms on the first hover, at once on focus or right after another closed.
   const showTip = (target: HTMLElement, text: string, line: string | null, wait: boolean) => {
     window.clearTimeout(tipTimer.current);
@@ -181,7 +214,7 @@ export function Sidebar({
   }, [rail]);
   const tipProps = (text: string, line: string | null = null) => ({
     onPointerEnter: (event: { currentTarget: HTMLElement }) => showTip(event.currentTarget, text, line, true),
-    onPointerLeave: hideTip,
+    onPointerLeave: hideTipLater,
     onFocus: (event: FocusEvent<HTMLElement>) => showTip(event.currentTarget, text, line, false),
     onBlur: hideTip,
   });
@@ -213,7 +246,8 @@ export function Sidebar({
           {...tipProps(label, line)}
         >
           <Icon aria-hidden="true" className={cx("size-4 shrink-0", marked ? "text-primary" : "text-ink-muted")} />
-          <span className="truncate rail:clip-visually">{label}</span>
+          {/* A label wraps rather than cut off, as with WCAG 1.4.12's text spacing (ticket 60). */}
+          <span className="min-w-0 wrap-break-word rail:clip-visually">{label}</span>
         </a>
         {subs.length > 0 && (
           <ul data-sub-items={key} className="mt-0.5 mb-1 flex flex-col gap-0.5 rail:hidden">
@@ -292,6 +326,13 @@ export function Sidebar({
   };
 
   const foot = sections?.find((section) => section.key === FOOT_SECTION);
+  // The data stamp under Data, on its label's left edge (8 + 12 + 16 + 12 px in); the rail hides it. Built once, and
+  // drawn while the sections load too, so a preview whose viewer could not be read still shows it (ticket 60).
+  const stamp = freshness && (
+    <div data-sidebar-stamp className="mb-2 ml-10 rail:hidden">
+      <FreshnessStamp freshness={freshness} href={withModeOf("/data", mode.search)} />
+    </div>
+  );
   const open = rest === "open";
   const Toggle = open ? PanelLeftClose : PanelLeftOpen;
   const toggleLabel = open ? copy.nav.collapse : copy.nav.expand;
@@ -308,12 +349,16 @@ export function Sidebar({
         id={sheet.sheetId}
         data-sidebar
         data-open={sheet.open && dialog ? "" : undefined}
+        data-closing={closing && dialog ? "" : undefined}
         role={dialog ? "dialog" : undefined}
         aria-modal={dialog && sheet.open ? true : undefined}
         aria-labelledby={dialog ? titleId : undefined}
-        // A link chosen in the sheet opens its page, which takes focus, so the sheet closes without handing focus back.
+        // A link chosen in the sheet opens its page, which takes focus, so the sheet closes without handing focus back. A
+        // link to the page you are on opens nothing new, so focus goes back to the Menu button (ticket 60).
         onClick={(event) => {
-          if (dialog && sheet.open && (event.target as Element).closest("a[href]")) sheet.setOpen(false, false);
+          const link = (event.target as Element).closest<HTMLAnchorElement>("a[href]");
+          if (!dialog || !sheet.open || !link) return;
+          sheet.setOpen(false, link.pathname === window.location.pathname && link.search === window.location.search);
         }}
         onBlur={(event) => {
           const target = event.target as HTMLElement;
@@ -347,11 +392,14 @@ export function Sidebar({
         >
           {sections === null ? (
             // Until GET /api/me says which sections the view has: static bars at the items' height.
-            <div className="flex flex-col gap-0.5">
-              {[0, 1, 2, 3, 4, 5].map((index) => (
-                <Skeleton key={index} className="h-9 w-full" radius="rounded-sm" />
-              ))}
-            </div>
+            <>
+              <div className="flex flex-col gap-0.5">
+                {[0, 1, 2, 3, 4, 5].map((index) => (
+                  <Skeleton key={index} className="h-9 w-full" radius="rounded-sm" />
+                ))}
+              </div>
+              {stamp && <div className="mt-auto pt-6">{stamp}</div>}
+            </>
           ) : (
             <>
               <ul className="flex flex-col gap-0.5">
@@ -365,12 +413,7 @@ export function Sidebar({
               </ul>
               <div className="mt-auto flex flex-col gap-0.5 pt-6">
                 {foot && <ul className="flex flex-col gap-0.5">{item(foot.key, foot.href, foot.icon, copy.nav.tabs[foot.key], stampLine)}</ul>}
-                {/* The stamp under Data, on its label's left edge (8 + 12 + 16 + 12 px in); the rail hides it. */}
-                {freshness && (
-                  <div data-sidebar-stamp className="mb-2 ml-10 rail:hidden">
-                    <FreshnessStamp freshness={freshness} href={withModeOf("/data", mode.search)} />
-                  </div>
-                )}
+                {stamp}
                 {stampLine && (
                   <span id={stampId} hidden>
                     {stampLine}
@@ -389,7 +432,7 @@ export function Sidebar({
                   {...tipProps(toggleLabel)}
                 >
                   <Toggle aria-hidden="true" className="size-4 shrink-0" />
-                  <span className="truncate rail:clip-visually">{toggleLabel}</span>
+                  <span className="min-w-0 wrap-break-word rail:clip-visually">{toggleLabel}</span>
                 </button>
               </div>
             </>
@@ -411,7 +454,10 @@ export function Sidebar({
             aria-hidden="true"
             data-instant={tip.instant ? "" : undefined}
             style={{ top: tip.top }}
-            className="rail-tip pointer-events-none absolute left-full z-10 ml-2 w-max max-w-(--tooltip-width) -translate-y-1/2 rounded-sm border border-line bg-surface px-3 py-2 text-small text-ink shadow-popover"
+            // The pointer on the tooltip keeps it (WCAG 1.4.13; ticket 60).
+            onPointerEnter={() => window.clearTimeout(tipTimer.current)}
+            onPointerLeave={hideTipLater}
+            className="rail-tip absolute left-full z-10 ml-2 w-max max-w-(--tooltip-width) -translate-y-1/2 rounded-sm border border-line bg-surface px-3 py-2 text-small text-ink shadow-popover"
           >
             {tip.text}
             {tip.line && <span className="block text-caption text-ink-muted">{tip.line}</span>}

@@ -161,8 +161,25 @@ def answers(folder: Path) -> dict[str, str]:
             run = await client.post(f"/api/packages/{WORKS}/criteria/run", headers=ANA, json={})
             return {"criteria-run-ke-nwwda-541055-made-up-disagreement.sse": run.text}
 
+    # Ticket 60: the swapped reading again when check 4's judge does not respond, in its own app state and check ids,
+    # after the stories above, so they are unchanged.
+    no_judge_case = criteria_cases["criteria-swapped-reading-no-judge"]
+    no_judge_state = folder / "no-judge-state.duckdb"
+    with DuckDBEngine.open(no_judge_state) as engine:
+        appstate.build(engine)
+    no_judge_checks = iter(f"chk-no-judge-{number:06d}" for number in range(1, 100))
+    no_judge = create_app(engine_for=reading, criteria=CriteriaStore(lambda: DuckDBEngine.open(no_judge_state)),
+                          criteria_reader=lambda: ScriptedAgent(no_judge_case), today=lambda: TODAY, now=now,
+                          new_check_id=lambda: next(no_judge_checks), judge=ScriptedJudge(no_judge_case))
+
+    async def no_judge_story() -> dict[str, str]:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=no_judge), base_url="http://strata.test") as client:
+            compared = await client.post(f"/api/packages/{CONSULTANT}/criteria/compare", headers=ANA,
+                                         json={"text": no_judge_case.question})
+            return {"criteria-compare-swapped-reading-no-judge.sse": compared.text}
+
     with mock.patch.object(registry, "today", lambda: RECORDED_ON):
-        return {**asyncio.run(story()), **asyncio.run(made_up_story())}
+        return {**asyncio.run(story()), **asyncio.run(made_up_story()), **asyncio.run(no_judge_story())}
 
 
 def main() -> int:

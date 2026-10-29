@@ -983,10 +983,9 @@ test("when only the comparison fails, the change line says so and links the sect
   await expect(line.getByRole("link", { name: "Go to that section" })).toHaveAttribute("href", "#changes");
   const section = page.locator("[data-changes=error]");
   await expect(section.getByRole("heading", { level: 2 })).toHaveText("What changed in this plan");
-  await expect(section.getByRole("alert")).toHaveText("I couldn't load what changed in this plan because the data service didn't answer.");
-  // Try again sits 16 px under the alert, as on every other load error.
-  const [alert, retry] = await Promise.all([section.getByRole("alert").boundingBox(), section.getByRole("button", { name: "Try again" }).boundingBox()]);
-  expect(Math.round(retry!.y - (alert!.y + alert!.height))).toBe(16);
+  await expect(section.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load what changed in this plan because the data service didn't answer.");
+  // Try again sits inside the alert, under its sentence, as on every other load error (ticket 60; plan 8.5).
+  await expect(section.getByRole("alert").getByRole("button", { name: "Try again" })).toBeVisible();
   // As on the Summary's error, the reference to send the data team (the 21 critique, round 3, item 8).
   await expect(section).toContainText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.");
   // The crumb names the project as its tabs do, and the window names the agency's plan.
@@ -1069,6 +1068,32 @@ test("a write that fails reads the check again, so the panel says what the basel
   await expect(panel).not.toContainText("Nothing changed");
   expect(reads).toBe(before + 1);
   await expect(panel.getByRole("status")).toContainText("The baseline is the plan of July 21, 2025");
+});
+
+// Ticket 60 (ticket 21's review, round 4, follow-up 1): a save that loses a race answers with the plan that won as the
+// baseline, so the panel names that plan and never claims it saved the one you pressed.
+test("a save that another save beat names the plan that won, and never says it saved yours", async ({ page }) => {
+  const check = `/api${NWWDA}/2026-10-09`;
+  let saved = false;
+  await open(page, `${NWWDA}/2026-10-09`, 1440, await p156634());
+  const won = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09-baseline.json")).baseline;
+  await page.route(`**${check}`, async (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: await recorded(saved ? "check-plan-p156634-nwwda-2026-10-09-baseline.json" : "check-plan-p156634-nwwda-2026-10-09.json") }),
+  );
+  await page.route(`**/api${NWWDA}/baseline`, async (route) => {
+    saved = true;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ baseline: won }) });
+  });
+  await page.reload();
+  const panel = page.getByRole("region", { name: "Baseline for delay" });
+  await panel.getByRole("button", { name: "Save as the baseline" }).click();
+
+  await expect(panel.getByRole("status")).toHaveText(
+    "The baseline is the plan of July 21, 2025, saved by Ana Example on October 23, 2026. I measure delay from its dates as well as from the first published planned dates.",
+  );
+  await expect(panel.getByRole("status")).toBeFocused();
+  await expect(panel).not.toContainText("I saved the plan of October 9, 2026");
+  await expect(panel.getByRole("button", { name: "Undo" })).toHaveCount(0);
 });
 
 test("a later plan's check names the saved baseline and who saved it, gives both delays, and asks in place before replacing it", async ({ page }) => {

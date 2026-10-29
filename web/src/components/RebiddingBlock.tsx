@@ -189,14 +189,21 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
     setFocusFirst(true);
   };
   const different = result.denominator_reason !== null;
+  // The caption that says why the count differs from the past range's, drawn only when the copy file has words for
+  // its reason, never with a raw code (ticket 60).
+  const denominatorReason = result.denominator_reason ? words.denominatorReasons[result.denominator_reason] : undefined;
   // Each count comes from every record set the tool read (a package canceled in the Procurement Plan comes from the
   // plan's rows, in Documents & Reports) and, when any was advertised again, opens the list below (ticket 96).
   const records = recordsFrom(result.sources, result.records_through, result.sources.map((source) => source.key));
   // A count standing alone is one to nine in words; "{n} of the {m}" keeps its numerals (DESIGN.md section 7, rule 12).
-  const count = (value: number, tooltip: string, act: string, alone = false) => {
+  const count = (value: number, tooltip: string, act: string, alone = false, inCaption = false) => {
     const base = { tooltip, from: records ? <FromLine words={records} /> : undefined };
     const check = n > 0 ? { ...base, act, opens: "rows" as const, onOpen: toRows } : base;
-    return alone ? <Num count={value} check={check} /> : <Num value={value} options={{ compact: false }} check={check} />;
+    return alone ? (
+      <Num count={value} check={check} inCaption={inCaption} />
+    ) : (
+      <Num value={value} options={{ compact: false }} check={check} inCaption={inCaption} />
+    );
   };
   const nNum = count(n, words.tips.n, words.tips.nAct);
   const mNum = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct);
@@ -217,14 +224,22 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
       <p className="mt-3 max-w-prose text-body text-ink" data-rebid-count>
         {sentence}
       </p>
-      {different && (
+      {denominatorReason && (
         <p className="mt-1 max-w-prose text-caption text-ink-muted" data-rebid-denominator>
+          {/* Both counts explain themselves: {m} as the count sentence's, and the past range's total (ticket 60). */}
           <Fill
             template={words.denominator}
             slots={{
-              m: <Num value={m} options={{ compact: false }} />,
-              total: <Num value={result.past_range_total} options={{ compact: false }} />,
-              reason: words.denominatorReasons[result.denominator_reason!] ?? result.denominator_reason!,
+              m: count(m, words.tips.mOther, words.tips.mAct, false, true),
+              total: (
+                <Num
+                  value={result.past_range_total}
+                  options={{ compact: false }}
+                  check={{ tooltip: words.tips.m, from: records ? <FromLine words={records} /> : undefined }}
+                  inCaption
+                />
+              ),
+              reason: denominatorReason,
             }}
           />
         </p>

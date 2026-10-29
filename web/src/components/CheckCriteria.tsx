@@ -172,18 +172,23 @@ function summaryKey(summary: CriteriaSummary): string {
 // The words for a removed sentence follow what the server says it was (entry.source): an award notice is a record
 // with no pages, so a reason quoted from it and not found is "not in the record it cites", and a reading is about
 // your own words.
-function toRemoved(entries: RemovedEntry[]): Removed[] {
-  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
+// unjudged: every entry lost the judge, so the lead says the cause once and each other item reads "I couldn't check
+// it." (the 24 brief, 5.4 and 5.5; ticket 60).
+function toRemoved(entries: RemovedEntry[], unjudged = false): Removed[] {
+  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string; underAlert?: string }>;
   return entries.map((entry) => {
     const onRecord = entry.reason === "quote_not_on_page" && entry.source === "record_quote";
     const reading = entry.reason === "not_supported" && entry.source === "reading";
     const reason = onRecord ? words.quoteNotInSource : reading ? words.readingNotSupported : (reasons[entry.reason] ?? copy.removed.unknownReason);
-    return { sentence: entry.sentence, reason: reason.item, reasonJoined: reason.joined };
+    const item = unjudged && "underAlert" in reason && reason.underAlert ? reason.underAlert : reason.item;
+    return { sentence: entry.sentence, reason: item, reasonJoined: reason.joined };
   });
 }
 
-function SectionChecks({ checks, removed, compared }: { checks: Checks | null; removed: RemovedEntry[]; compared: boolean }) {
+function SectionChecks({ checks, removed, compared, onRetry }: { checks: Checks | null; removed: RemovedEntry[]; compared: boolean; onRetry: () => void }) {
   if (!checks) return null;
+  // The model that judges sentences did not respond for any of them: Try again compares again (ticket 60).
+  const unjudged = removed.length > 0 && removed.every((entry) => entry.reason === "judge_unavailable");
   const noPages = checks.quotes_without_pages > 0;
   // The line counts what is on screen, as the answer panel's does (ticket 24), with check 4's judged part.
   const shown = checks.shown ?? checks;
@@ -198,7 +203,7 @@ function SectionChecks({ checks, removed, compared }: { checks: Checks | null; r
         quoteWords={noPages ? words.quotesInSources : undefined}
         notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables"]}
         notCheckedText={compared ? [words.notCheckedItems] : []}
-        removed={removed.length > 0 && <RemovedBox removed={toRemoved(removed)} />}
+        removed={removed.length > 0 && <RemovedBox removed={toRemoved(removed, unjudged)} retry={unjudged ? { onRetry } : undefined} />}
       />
     </div>
   );
@@ -402,7 +407,7 @@ export function CheckCriteriaView(props: ViewProps) {
           edited={props.edited} comparing={comparison.status === "running"} preview={preview} saveFailed={props.saveFailed} />
       )}
       {run.status === "running" && <Skeleton className="mt-6 h-9 w-full" />}
-      <SectionChecks checks={props.checks} removed={removed} compared={Boolean(compared && compared.items.length)} />
+      <SectionChecks checks={props.checks} removed={removed} compared={Boolean(compared && compared.items.length)} onRetry={props.onCompare} />
       {runSteps}
       <PartOne comparison={comparison} readinessHref={readiness("compare_criteria", compared?.sources.map((source) => source.key) ?? publicKeys)}
         steps={compareSteps} onRetry={props.onCompare} asOf={props.asOf ?? null} />

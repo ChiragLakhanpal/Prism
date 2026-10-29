@@ -1,0 +1,36 @@
+{
+  "rows": [],
+  "p": null,
+  "m": null,
+  "most_common": null,
+  "max_rows": 5,
+  "coverage": {
+    "missing": [],
+    "sources": [
+      "notices",
+      "awards",
+      "documents",
+      "projects"
+    ]
+  },
+  "counted": [],
+  "verifier": null,
+  "empty_reason": "missing_criteria",
+  "missing": [
+    "category",
+    "country",
+    "method"
+  ],
+  "written": null,
+  "selected_keys": [],
+  "selected_not_shown": [],
+  "counts_evidence_id": null,
+  "source_names": [
+    "Procurement Notices",
+    "Contract Awards in Investment Project Financing (Since FY 2020)",
+    "Documents & Reports: Documents API",
+    "World Bank Projects & Operations"
+  ],
+  "data_through": null,
+  "as_of": "2026-10-28"
+}

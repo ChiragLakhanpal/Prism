@@ -280,6 +280,22 @@ test("a link to a source as of a date before it was public says it may not have 
   await expect(drawer(page)).toContainText("I have no source with this ID. The link may be incomplete.");
 });
 
+// Ticket 60 (ticket 92's review, follow-up 1): one Escape closes only the Menu sheet, never the evidence drawer behind it.
+test("one Escape in the open Menu sheet closes the sheet and leaves the evidence drawer open", async ({ page }) => {
+  await open(page, { width: 900 });
+  await page.goto(`/projects/P130164?evidence=${encodeURIComponent(ICR_54)}`);
+  await expect(drawer(page)).toBeVisible();
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: "Menu" });
+  await expect(sheet).toBeVisible();
+
+  await page.keyboard.press("Escape");
+
+  await expect(sheet).toBeHidden();
+  await expect(page.getByRole("button", { name: "Menu", exact: true })).toBeFocused();
+  await expect(page.locator("[data-evidence-drawer]")).toBeVisible();
+});
+
 test("Back closes a drawer the page opened, and the answer stays", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);

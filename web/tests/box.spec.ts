@@ -638,4 +638,14 @@ test("at 390 px the package's suggestions open above the box with no WCAG 2.2 AA
     .poll(() => list.evaluate((el) => ({ height: Math.round(el.getBoundingClientRect().height), scrolls: el.scrollHeight > el.clientHeight })))
     .toEqual({ height: 360 - 56 - 96, scrolls: true });
   await listAboveTheBox(page);
+
+  // Ticket 60 (ticket 93's review, F2): the active option scrolls into the list's view as the arrow keys move to it.
+  const options = group(page, "Ask about this package").getByRole("option");
+  for (let step = 0; step < 3; step++) await page.keyboard.press("ArrowDown");
+  await expect(options.last()).toHaveAttribute("aria-selected", "true");
+  const inside = async () => {
+    const [frame, option] = [(await list.boundingBox())!, (await options.last().boundingBox())!];
+    return option.y >= frame.y - 1 && option.y + option.height <= frame.y + frame.height + 1;
+  };
+  await expect.poll(inside).toBe(true);
 });

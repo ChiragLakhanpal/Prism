@@ -31,7 +31,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult, Comparison } from "../lib/api";
-import { forgetDotList, openPlanRow, openWentWith, rangeIds, rememberDots, type OpenComparable } from "../lib/packages";
+import { forgetDotList, openPlanRow, openWentWith, rangeCriteria, rangeIds, rememberDots, type OpenComparable } from "../lib/packages";
 import {
   CompareControl,
   dotComparisonName,
@@ -188,7 +188,11 @@ export function PastRange({
     if (result.quantile_dots) rememberDots(result);
     else forgetDotList();
     rangeIds.set(result.rows.map((row) => row.evidence_id));
-    return () => rangeIds.set([]);
+    rangeCriteria.set(result.criteria);
+    return () => {
+      rangeIds.set([]);
+      rangeCriteria.set(null);
+    };
   }, [canOpen, result]);
 
   // The section's one polite live region, which says steps and results (the 12 brief), the comparisons too.

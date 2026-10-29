@@ -283,7 +283,7 @@ test("All projects says when it holds no records, and when the data service didn
   const panel = listZone(page);
   await expect(panel).toHaveAttribute("data-zone", "panel");
   await expect(panel.getByRole("searchbox", { name: "Search projects" })).toBeVisible();
-  await expect(panel.getByRole("alert")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
+  await expect(panel.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
   await expect(panel.getByRole("button", { name: "Try again" })).toBeVisible();
   await expect(panel.locator("[data-table], [data-page-lead], [data-pagination], [data-foot-strip]")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 900 });
@@ -444,7 +444,7 @@ test("a long list of implementing agencies keeps to one line until you show them
 test("a project's page says when the data service didn't answer, and when your account can't read Strata's tables", async ({ page }) => {
   const api = (answer: Answer) => ({ "/api/projects/P156634": answer });
   await open(page, "/projects/P156634", api({ status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }), windowBeside(1100));
-  await expect(page.getByRole("alert")).toHaveText("I couldn't load this project because the data service didn't answer.");
+  await expect(page.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load this project because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   // From a 1024 px page area the alert holds columns 1 to 8, as on every other page: in a 1100 px page area (the
   // window less the rail, ticket 92) with the 1164 px window's 32 px margins (ticket 94), 8 columns of 57 px and 7

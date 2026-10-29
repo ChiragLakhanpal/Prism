@@ -302,7 +302,12 @@
 @utility menu-sheet {
   transform: translateX(-100%);
   visibility: hidden;
-  transition: transform var(--motion-exit) var(--ease-out), visibility 0s linear var(--motion-exit);
+  /* Only a sheet that closes slides out (data-closing); a sidebar that a narrowing window hides goes at once, so the
+     Main navigation leaves the accessibility tree with it (ticket 60). */
+  transition: none;
+  &[data-closing] {
+    transition: transform var(--motion-exit) var(--ease-out), visibility 0s linear var(--motion-exit);
+  }
   &[data-open] {
     transform: none;
     visibility: visible;

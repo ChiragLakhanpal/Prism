@@ -222,6 +222,12 @@ export function draftsPage(plan: CheckedPlan): GalleryPage {
                 <ExportSuccess draft={MISSING} fresh={false} date={day} />
               </Column>
             </Labeled>
+            {/* Ticket 60: exported in another tab or window while this page was open. */}
+            <Labeled label={ds.conflictExported}>
+              <Column>
+                <ExportSuccess draft={EXPORTED} fresh={false} date={day} notice={copy.draft.conflict} />
+              </Column>
+            </Labeled>
             <Labeled label={ds.discarded}>
               <Column>
                 <DiscardedNotice sentence={kind.discarded} restoring={false} may_act failed={false} onRestore={nothing} />

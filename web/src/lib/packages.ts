@@ -231,6 +231,10 @@ export const COMPARABLE = "strata.gold.package:";
 // says a package is "in the past range" only when it is. A project's timeline opens the same kind of record for
 // a contract mark, and that page has no past range.
 export const rangeIds = createStore<string[]>([]);
+// The criteria find_comparables used for that past range, so the drawer's "Why I compared it" lists only those it
+// used, and none it left out, such as a planned package's market approach and review type (ticket 60). Null with no
+// past range on the page: the drawer then lists all five.
+export const rangeCriteria = createStore<ComparablesResult["criteria"]>(null);
 // A quantile dot's list of the packages it stands for, by the dot's number. It is no source: the page that
 // draws the dots holds the list (rememberDots), so the drawer never asks the server for it.
 export const DOT = "comparables-dot:";

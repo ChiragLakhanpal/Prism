@@ -305,9 +305,12 @@ export type SuccessProps = {
   revisitTeammate?: (author: string, date: string, count: number, countText: string) => string;
   date: (iso: string) => string;
   className?: string;
+  // An info line at the panel's top, such as "This draft changed in another tab or window, so I reloaded it." when the
+  // export came from elsewhere, so the panel never reads as the result of your own press (ticket 60).
+  notice?: ReactNode;
 };
 
-export function ExportSuccess({ draft, fresh, headingRef, date, className }: SuccessProps) {
+export function ExportSuccess({ draft, fresh, headingRef, date, className, notice }: SuccessProps) {
   const headingId = useId();
   const words = copy.draft.exported;
   const record = draft.export!;
@@ -333,6 +336,11 @@ export function ExportSuccess({ draft, fresh, headingRef, date, className }: Suc
     >
       <Check aria-hidden="true" className="size-5 shrink-0 text-success" />
       <div className="min-w-0">
+        {notice && (
+          <p className="mb-2 max-w-[72ch] text-small text-ink" data-export-notice>
+            {notice}
+          </p>
+        )}
         <h2 id={headingId} ref={headingRef} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none" data-numbers>
           {title}
         </h2>

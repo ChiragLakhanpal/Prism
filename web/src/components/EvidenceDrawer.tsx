@@ -59,7 +59,7 @@ import { caseOf, pageCases } from "../lib/rebidding";
 import { LoadingLabel, Skeleton, SkeletonText } from "./Skeleton";
 import { FeedbackRow, type RowStart } from "./FeedbackRow";
 import { showsRow } from "../lib/retrieval";
-import { criteriaLessonOf, heldOnPage, pageLessons, type LessonEntry } from "../lib/criteria";
+import { criteriaLessonOf, heldOnPage, lessonSources, pageLessons, type LessonEntry } from "../lib/criteria";
 import { routeStepRef, useWhy, WhyThisSource } from "./WhyThisSource";
 import { backLabel, criteriaClose, CriteriaDrawerBody, criteriaTitle, LessonClaim } from "./CriteriaDrawer";
 import { ClaimLine, isTimelineView, timelineClose, timelineTitle, TimelineView, UnknownDisagreement } from "./TimelineDrawer";
@@ -670,16 +670,20 @@ export function EvidenceDrawerView({
   const inRange = useStore(rangeIds).includes(id);
   const rebidCase = !claim && !riskRow ? caseOf(id, cases.rows) : null;
   const caseSwitcher = rebidCase && rebidCase.evidence.length > 1 ? rebidCase : null;
+  // A lesson's paragraph opened from section 5 (ticket 31, view F): the lesson and its IEG line, and, when IEG restated
+  // it, a tab for its paragraph and one for IEG's words (ticket 60).
+  const lessons = useStore(pageLessons);
+  const criteriaLesson = !claim && !riskRow && evidence?.kind === "passage" ? (givenLesson ?? criteriaLessonOf(id, lessons)) : null;
+  const lessonSwitcher = criteriaLesson && criteriaLesson.ieg_quote ? { sources: lessonSources(criteriaLesson) } : null;
   const switcherIds = claim && claim.evidence_ids.length > 1
     ? claim.evidence_ids
     : rowSwitcher
       ? rowSwitcher.sources.map((source) => source.evidence_id)
       : caseSwitcher
         ? caseSwitcher.evidence.map((item) => item.evidence_id)
-        : null;
-  // A lesson's paragraph opened from section 5 (ticket 31, view F): the lesson and its IEG line.
-  const lessons = useStore(pageLessons);
-  const criteriaLesson = !claim && !riskRow && evidence?.kind === "passage" ? (givenLesson ?? criteriaLessonOf(id, lessons)) : null;
+        : lessonSwitcher
+          ? lessonSwitcher.sources.map((source) => source.evidence_id)
+          : null;
   // A comparable package from the range chart (ticket 15): its region names it as one, and its close says
   // what it closes. A quantile dot's list of packages is named by its count and its dot, and a package
   // opened from that list has a way back to it above its title.
@@ -847,6 +851,7 @@ export function EvidenceDrawerView({
             <SourceSwitcher ids={switcherIds} current={id} run={run} panelId={passageId} onChoose={onChoose} />
           )}
           {rowSwitcher && <RowSwitcher row={rowSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
+          {lessonSwitcher && <RowSwitcher row={lessonSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
           {caseSwitcher && <CaseSwitcher row={caseSwitcher} current={id} panelId={passageId} onChoose={onChooseRow ?? onChoose} />}
           <div
             id={passageId}

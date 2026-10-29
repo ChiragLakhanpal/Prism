@@ -1074,8 +1074,11 @@ test("a service that didn't answer gives Try again and a reference; Try again th
   });
   await page.goto(PLAN);
 
-  await expect(page.getByRole("alert")).toHaveText("I couldn't load this plan's check because the data service didn't answer.");
+  await expect(page.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load this plan's check because the data service didn't answer.");
   await expect(page.getByText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.")).toBeVisible();
+  // Ticket 60 (ticket 94's critique; plan 8.5): one block, with Try again and the reference inside the alert.
+  await expect(page.getByRole("alert").getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.");
   // The h1 names the page, "Procurement Plan", and nothing else draws under it (ticket 100; plan 8.5). The status no
   // longer says it is checking.
   await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("Procurement Plan");

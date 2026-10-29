@@ -95,6 +95,9 @@ export function EditorBody({
   onCommit: (change: Change) => void;
 }) {
   const [text, setText] = useState(() => initialText(field, value.value, form));
+  // Whether the person changed the value: on a guess, "Use this" would do what "Keep" does until then (ticket 60).
+  const [edited, setEdited] = useState(false);
+  const guessed = value.provenance === "guess" && value.value !== null;
   const [error, setError] = useState<string | null>(null);
   const [settingComputed, setSettingComputed] = useState(false);
   const inputId = useId();
@@ -250,6 +253,7 @@ export function EditorBody({
                   maxLength={field.kind === "text" ? form.text_limit : undefined}
                   onChange={(event) => {
                     setText(event.target.value);
+                    setEdited(true);
                     setError(null);
                   }}
                   onKeyDown={onTypeKey}
@@ -278,12 +282,12 @@ export function EditorBody({
           )}
           <p className="text-caption text-ink-muted">{field.picks ? words.picks : words.doesNotPick}</p>
           <div className="flex flex-wrap gap-2">
-            {!choosing && (
+            {!choosing && (!guessed || edited) && (
               <Button variant="secondary" onClick={commitText}>
                 {words.use}
               </Button>
             )}
-            {value.provenance === "guess" && value.value !== null && (
+            {guessed && (
               <Button variant="secondary" onClick={() => onCommit({ field: field.key, action: "keep" })}>
                 {words.keep(valueText(field, value.value, form, approximate))}
               </Button>

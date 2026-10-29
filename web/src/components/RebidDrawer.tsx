@@ -6,7 +6,7 @@
 import { useRef, type KeyboardEvent } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
-import { useMarkerNumber } from "../lib/markers";
+import { useMarkerNumbers } from "../lib/markers";
 import type { RebidCase } from "../lib/rebidding";
 import { WORD_JOINER } from "./CitationMarker";
 import { SourceNumber } from "./EvidenceCard";
@@ -15,20 +15,24 @@ import { caseLine, recordTab } from "./RebiddingBlock";
 const words = copy.rebid;
 
 // number: the marker's number, for the design gallery; the page reads it from the page's numbers.
+// The claim ends with the number of every record the row cites, in marker order, so a line dated by its second
+// notice names that notice's number too, whichever record's tab is open (ticket 60).
 export function CaseClaim({ row, id, through, number }: { row: RebidCase; id: string; through: string | null; number?: number }) {
-  const held = useMarkerNumber(id);
-  const n = number ?? held;
+  const held = useMarkerNumbers(row.evidence.length > 0 ? row.evidence.map((item) => item.evidence_id) : [id]);
+  const numbers = number !== undefined ? [number] : held;
   const lang = row.quote && row.quote.lang !== "en" ? row.quote.lang : undefined;
   return (
     <div data-claim data-rebid-claim={row.step_reference}>
       <p className="text-caption text-ink-muted">{words.fromPage}</p>
       <p className="mt-1 border-l-2 border-line-strong pl-3 text-small text-ink" lang={lang}>
         {caseLine(row, through)}
-        {n !== null && (
+        {numbers.length > 0 && (
           <>
             {WORD_JOINER}
-            <span className="ml-1 inline-flex align-[1px]">
-              <SourceNumber n={n} />
+            <span className="ml-1 inline-flex gap-1 align-[1px]" data-claim-numbers>
+              {numbers.map((n) => (
+                <SourceNumber key={n} n={n} />
+              ))}
             </span>
           </>
         )}

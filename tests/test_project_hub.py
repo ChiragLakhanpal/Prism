@@ -816,7 +816,12 @@ def test_a_save_that_lands_after_a_later_one_never_replaces_it(writable, tmp_pat
         kept = engine.run("SELECT count(*) FROM strata.ops.plan_baseline_steps AS s JOIN strata.ops.plan_baselines AS b "
                           "ON s.project_id = b.project_id AND s.agency_id = b.agency_id AND s.saved_at = b.saved_at "
                           "WHERE b.project_id = :pid", {"pid": "P156634"})
+        # Ticket 60 (the 21 review, round 4, follow-up 1): the losing save takes its own steps back at once, so only
+        # the winning save's steps stay.
+        saves = engine.run("SELECT DISTINCT saved_at FROM strata.ops.plan_baseline_steps WHERE project_id = :pid",
+                           {"pid": "P156634"})
     assert kept.rows[0][0] > 0
+    assert saves.rows == ((SAVED_AT + dt.timedelta(minutes=1),),)
 
 
 def test_the_baseline_s_record_does_not_open_in_the_public_view(writable):

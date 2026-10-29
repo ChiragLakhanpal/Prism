@@ -180,10 +180,11 @@ test("below 1024 px the Menu button opens the Menu sheet, a modal dialog; Escape
   expect(await sheet.evaluate(motion)).toEqual(["0.2s", "cubic-bezier(0.32, 0.72, 0, 1)"]);
 
   await page.keyboard.press("Escape");
+  // A sheet that closes slides out; a narrowing window hides the sidebar with no motion (ticket 60).
+  expect(await page.locator("[data-sidebar]").evaluate(motion)).toEqual(["0.12s, 0s", "cubic-bezier(0.23, 1, 0.32, 1), linear"]);
   await expect(sheet).toHaveCount(0);
   await expect(menu).toHaveAttribute("aria-expanded", "false");
   await expect(menu).toBeFocused();
-  expect(await page.locator("[data-sidebar]").evaluate(motion)).toEqual(["0.12s, 0s", "cubic-bezier(0.23, 1, 0.32, 1), linear"]);
 
   await menu.click();
   await sheet.getByRole("button", { name: "Close the menu" }).click();
@@ -297,6 +298,15 @@ test("a resize across 768 or 1024 px moves focus to the control that now holds t
   await page.setViewportSize({ width: 900, height: 900 });
   await expect(menu).toBeFocused();
   await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(pill).toBeFocused();
+
+  // Ticket 60 (ticket 92's review, follow-up 2): "Close the menu", which hides from 1024 px, hands focus to the view pill
+  // when the window widens with the sheet open, never to the page.
+  await page.setViewportSize({ width: 900, height: 900 });
+  await menu.click();
+  await page.getByRole("button", { name: "Close the menu" }).focus();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.getByRole("dialog", { name: "Menu" })).toHaveCount(0);
   await expect(pill).toBeFocused();
 });
 

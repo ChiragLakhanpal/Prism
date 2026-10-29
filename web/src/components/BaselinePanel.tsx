@@ -92,14 +92,14 @@ export function BaselinePanel({
   // Runs one write, reads the check again, then shows the message. A failure says why, and the check is read
   // again anyway, so the panel's sentence says what the baseline is now (the server writes in an order that a
   // failure part way leaves safe).
-  const run = (action: Action, write: () => Promise<unknown>, after: () => Mode) => {
+  const run = <T,>(action: Action, write: () => Promise<T>, after: (result: T) => Mode) => {
     const attempt = async () => {
       setMode({ kind: "busy", action });
       try {
-        await write();
+        const result = await write();
         await refresh();
         focusAfter.current = "status";
-        setMode(after());
+        setMode(after(result));
       } catch (error) {
         await refresh().catch(() => undefined);
         focusAfter.current = "status";
@@ -115,6 +115,10 @@ export function BaselinePanel({
   });
   const undoTo = (to: string | null) => async () =>
     run("undo", () => (to ? save(to) : remove()), () => undone(to));
+  // A save that another save beat answers with the plan that won as the baseline: the panel then says what the
+  // baseline is, naming that plan, and never that it saved yours (ticket 60).
+  const unlessBeaten = (made: () => Mode) => (result: { baseline: Baseline | null }): Mode =>
+    result.baseline && result.baseline.plan_date !== planDate ? { kind: "idle" } : made();
 
   const isThis = baseline?.plan_date === planDate;
   const savedOn = baseline ? date(baseline.saved_on) : null;
@@ -154,7 +158,9 @@ export function BaselinePanel({
           variant="secondary"
           loading={busy === "save" || busy === "undo"}
           busyLabel={words.saving}
-          onClick={() => run("save", () => save(planDate), () => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) }))}
+          onClick={() =>
+            run("save", () => save(planDate), unlessBeaten(() => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) })))
+          }
         >
           {words.save}
         </Button>
@@ -244,11 +250,11 @@ export function BaselinePanel({
               variant="secondary"
               onClick={() => {
                 const old = baseline.plan_date;
-                run("replace", () => save(planDate), () => ({
+                run("replace", () => save(planDate), unlessBeaten(() => ({
                   kind: "done",
                   message: <Fill template={words.justReplaced} slots={{ plan_date: date(planDate), old_date: date(old) }} />,
                   undo: undoTo(old),
-                }));
+                })));
               }}
             >
               {words.replace}

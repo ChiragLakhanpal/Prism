@@ -36,6 +36,19 @@ def rebidding(engine, **arguments):
     return registry.call("rebidding_risk", arguments, registry.Context(engine=engine, viewer=ANA))
 
 
+def test_every_denominator_reason_the_tool_can_return_has_its_words_in_the_copy_file():
+    """The tool returns a denominator reason as a code; the screen draws the caption only when the copy file has words
+    for it, so a code with none would leave the caption out (ticket 60; ticket 09's one copy sentence per reason)."""
+    import re
+
+    from strata.tools.rebidding_risk import CANCELED_INCLUDED
+
+    text = (ROOT / "web" / "src" / "copy.ts").read_text()
+    words = text[text.index("\n    denominatorReasons: {"):]
+    words = words[:words.index("\n    }")]
+    assert CANCELED_INCLUDED in re.findall(r"^ {6}(\w+):", words, flags=re.MULTILINE)
+
+
 def test_on_the_fixture_three_of_the_52_comparables_were_advertised_again_as_the_direct_count_says(engine):
     result = rebidding(engine, step_reference=REF)
 

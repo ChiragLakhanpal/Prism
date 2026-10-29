@@ -958,6 +958,9 @@ test("after a change made elsewhere exported the draft, focus goes to the export
   const heading = page.locator("[data-export-success] h2");
   await expect(heading).toBeFocused();
   await expect(page.locator("[data-export-success]")).toBeInViewport();
+  // Ticket 60 (ticket 35's design review, round 4, P3): the panel says the export came from elsewhere, at its top, so
+  // "Exported on ..." never reads as the result of your own press.
+  await expect(page.locator("[data-export-success] [data-export-notice]")).toHaveText("This draft changed in another tab or window, so I reloaded it.");
 });
 
 test("a refused act shows its failure in the bar and keeps the state; a change made elsewhere reloads the draft", async ({ page }) => {
