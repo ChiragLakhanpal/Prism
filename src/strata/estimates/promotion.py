@@ -191,8 +191,8 @@ def shadow_check(engine: Engine, model: str, challenger: int, champion: int | No
     errors = {"challenger": [], "champion": []}
     for row in pairs:
         days = (as_date(row["contract_signed_on"]) - as_date(row["first_notice_date"])).days
-        errors["challenger"].append(abs(days - int(row["challenger_q50_days"])))
-        errors["champion"].append(abs(days - int(row["champion_q50_days"])))
+        errors["challenger"].append(abs(days - row["challenger_q50_days"]))
+        errors["champion"].append(abs(days - row["champion_q50_days"]))
     mine = float(statistics.median(errors["challenger"])) if pairs else None
     theirs = float(statistics.median(errors["champion"])) if pairs else None
     won = long_enough and len(pairs) >= settings.min_cases and mine < theirs

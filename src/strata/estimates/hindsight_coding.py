@@ -257,7 +257,7 @@ def agreement(engine: Engine, as_of: dt.date = EVERY_DAY) -> list[dict]:
     found: dict[tuple[str, str], dict] = {}
     for row in _rows(engine, ALL_AGREEMENT, as_of=as_of):
         found[(row["coder_a"], row["coder_b"])] = {
-            "coder_a": row["coder_a"], "coder_b": row["coder_b"], "projects": int(row["projects"]),
-            "pairs": int(row["pairs"]), "agree": int(row["agree"]),
+            "coder_a": row["coder_a"], "coder_b": row["coder_b"], "projects": row["projects"],
+            "pairs": row["pairs"], "agree": row["agree"],
             "kappa": None if row["kappa"] in (None, "") else float(row["kappa"]), "computed_at": row["computed_at"]}
     return list(found.values())

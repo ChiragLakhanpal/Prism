@@ -792,8 +792,8 @@ INTS = {"version", "sequence", "pdf_page"}
 
 
 def typed(column: str, value):
-    """A column of strata.gold.assertion or strata.gold.disagreement as Python holds it, from DuckDB's types or
-    the warehouse's text."""
+    """A column of strata.gold.assertion or strata.gold.disagreement as Python holds it, from typed values or
+    from text."""
     if column in DATES:
         return _date(value)
     if column in INTS:

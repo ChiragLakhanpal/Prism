@@ -216,11 +216,11 @@ def finished_measures(engine: Engine, run_id: str, month: dt.date, settings: Set
     for row in given:
         notice, signed = as_date(row["first_notice_date"]), as_date(row["contract_signed_on"])
         days = (signed - notice).days
-        inside += days <= int(row["q80_days"])
+        inside += days <= row["q80_days"]
         past = Reader(engine, notice, thresholds).call("find_comparables", step_reference=row["step_reference"])
         middle = ((past.get("past_range") or {}).get("days") or {}).get("q50")
         if middle is not None and row["q50_days"] is not None:
-            errors.append((float(months(abs(days - int(row["q50_days"])))), float(months(abs(days - int(middle))))))
+            errors.append((float(months(abs(days - row["q50_days"]))), float(months(abs(days - int(middle))))))
     enough = len(given) >= settings.min_cases
     detail = {"window_start": window_start.isoformat(), "finished": len(finished), "given": len(given)}
     found = [_watch_row(run_id, month, "coverage", "all", inside, len(given), None, detail,
@@ -341,9 +341,9 @@ def _month_before(month: dt.date) -> dt.date:
 
 def _outside(row: dict, low: Fraction, high: Fraction, least: int) -> bool:
     """Whether a month's coverage, from enough packages, fell outside the band."""
-    if row is None or row["denominator"] is None or int(row["denominator"]) < least:
+    if row is None or row["denominator"] is None or row["denominator"] < least:
         return False
-    share = Fraction(int(row["count"]), int(row["denominator"]))
+    share = Fraction(row["count"], row["denominator"])
     return not low <= share <= high
 
 
@@ -360,8 +360,8 @@ def triggered(series: dict[dt.date, dict[tuple[str, str], dict]], month: dt.date
         months_in_a_row.append((series.get(day) or {}).get(("coverage", "all")))
         day = _month_before(day)
     if all(_outside(row, low, high, settings.min_cases) for row in months_in_a_row):
-        found.append(("coverage_outside", {"months": [{"month": row["month"], "inside": int(row["count"]),
-                                                       "finished": int(row["denominator"])} for row in months_in_a_row]}))
+        found.append(("coverage_outside", {"months": [{"month": row["month"], "inside": row["count"],
+                                                       "finished": row["denominator"]} for row in months_in_a_row]}))
     current = series.get(month) or {}
     estimate, past = current.get(("error_estimate", "all")), current.get(("error_past_range", "all"))
     if estimate and past and estimate["value"] is not None and past["value"] is not None:
@@ -499,7 +499,7 @@ def retrain_due(engine: Engine, today: dt.date, thresholds: Thresholds | None = 
 
 
 def _moment(value) -> dt.datetime:
-    """A stored time in UTC: DuckDB gives it without a zone, the SQL warehouse as text."""
+    """A stored time in UTC: from a datetime with or without a zone, or from text."""
     if not isinstance(value, dt.datetime):
         value = dt.datetime.fromisoformat(str(value).replace("Z", "+00:00"))
     return value if value.tzinfo else value.replace(tzinfo=dt.UTC)

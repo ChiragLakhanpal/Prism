@@ -150,7 +150,7 @@ def history(engine: Engine) -> dict[str, list[dict]]:
 
 
 def _version(row: dict) -> int:
-    return int(row["version"])
+    return row["version"]
 
 
 def changed_ranges(was: str, now: str) -> tuple[list[list[int]], list[list[int]]]:
