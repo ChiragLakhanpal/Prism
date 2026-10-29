@@ -403,7 +403,13 @@
       "writer_project_paper": "whether this summary is what you would write in the Project Paper",
       "writer_step_rows": "whether these comparable packages fit your activities",
       "upload_dates": "whether the dates in your plan are the ones you meant"
-    }
+    },
+    "how": "How was that checked?",
+    "howTitle": "How I checked this answer",
+    "howTitleDraft": "How I checked this draft",
+    "rounding": "A number passes only when a record holds it at the same rounding.",
+    "runId": "Answer ID {id}",
+    "draftId": "Draft ID {id}, run {run}"
   },
   "removed": {
     "reasons": {

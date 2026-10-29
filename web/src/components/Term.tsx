@@ -79,13 +79,19 @@ type DefinitionWindowProps = {
   describedBy?: string;
   // Opens on hover and keyboard focus too, as a step label does (see the top of this file).
   openOnHover?: boolean;
+  // The word sits in a line of running text, as a Term does: its hit area grows 2 px above and below without making
+  // its line taller, as a number's does (Num), so it never pushes the lines of "In short" apart (ticket 59's item,
+  // settled by ticket 105). A label that stands on its own line, such as a card's or a column's, keeps its 24 px box.
+  inText?: boolean;
 };
 
 export function DefinitionWindow({ openOnHover = false, ...props }: DefinitionWindowProps) {
   return openOnHover ? <HoverDefinitionWindow {...props} /> : <ClickDefinitionWindow {...props} />;
 }
 
-function ClickDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy }: Omit<DefinitionWindowProps, "openOnHover">) {
+const inLine = (inText = false) => (inText ? "-my-0.5" : undefined);
+
+function ClickDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy, inText }: Omit<DefinitionWindowProps, "openOnHover">) {
   const titleId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   return (
@@ -95,7 +101,7 @@ function ClickDefinitionWindow({ label, title, children, rows, triggerClassName,
           type="button"
           data-term
           aria-describedby={describedBy}
-          className={cx("inline cursor-pointer py-0.5 text-left", DOTTED_UNDERLINE, triggerClassName)}
+          className={cx("inline cursor-pointer py-0.5 text-left", inLine(inText), DOTTED_UNDERLINE, triggerClassName)}
         >
           {label}
         </button>
@@ -127,7 +133,7 @@ function ClickDefinitionWindow({ label, title, children, rows, triggerClassName,
 // from a click, Enter or a tap, with focus on its title.
 type Shown = "closed" | "peek" | "pinned";
 
-function HoverDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy }: Omit<DefinitionWindowProps, "openOnHover">) {
+function HoverDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy, inText }: Omit<DefinitionWindowProps, "openOnHover">) {
   const titleId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const [shown, setShown] = useState<Shown>("closed");
@@ -178,7 +184,7 @@ function HoverDefinitionWindow({ label, title, children, rows, triggerClassName,
           type="button"
           data-term
           aria-describedby={describedBy}
-          className={cx("inline cursor-pointer py-0.5 text-left", DOTTED_UNDERLINE, triggerClassName)}
+          className={cx("inline cursor-pointer py-0.5 text-left", inLine(inText), DOTTED_UNDERLINE, triggerClassName)}
           // A click, Enter or a tap pins the window, or closes a pinned one; Radix's own toggle would close a peek.
           onClick={(event) => {
             event.preventDefault();
@@ -255,11 +261,13 @@ function HoverDefinitionWindow({ label, title, children, rows, triggerClassName,
   );
 }
 
-export function Term({ term, children }: { term: string; children?: ReactNode }) {
+// A Term is a word in a sentence, so by default it keeps to its line's height (inText); a Term that heads a column
+// stands on its own line and passes inText={false}.
+export function Term({ term, children, inText = true }: { term: string; children?: ReactNode; inText?: boolean }) {
   const definition = terms[term];
   if (!definition) throw new Error(`GLOSSARY.md has no term "${term}".`);
   return (
-    <DefinitionWindow title={term} label={children ?? term}>
+    <DefinitionWindow title={term} label={children ?? term} inText={inText}>
       {definition}
     </DefinitionWindow>
   );

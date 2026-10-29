@@ -188,7 +188,8 @@ function SectionChecks({ checks, removed, compared }: { checks: Checks | null; r
   // The line counts what is on screen, as the answer panel's does (ticket 24), with check 4's judged part.
   const shown = checks.shown ?? checks;
   return (
-    <div className="mt-6 flex flex-col gap-2" data-section-checks>
+    // The check line and the removed box in one block (ticket 105).
+    <div className="mt-6" data-section-checks>
       <CheckLine
         numbers={shown.numbers}
         dates={shown.dates}
@@ -197,8 +198,8 @@ function SectionChecks({ checks, removed, compared }: { checks: Checks | null; r
         quoteWords={noPages ? words.quotesInSources : undefined}
         notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables"]}
         notCheckedText={compared ? [words.notCheckedItems] : []}
+        removed={removed.length > 0 && <RemovedBox removed={toRemoved(removed)} />}
       />
-      {removed.length > 0 && <RemovedBox removed={toRemoved(removed)} />}
     </div>
   );
 }

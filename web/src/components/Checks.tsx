@@ -16,13 +16,21 @@
 // Removed box: the sentences the checks removed, with their reasons, open under "In short". Every
 // one is listed, the first in the lead and the others below, all visible, as plain text with no
 // dotted numbers and no markers (the 24 brief, section 4.3).
-import { useId, type ReactNode } from "react";
+// Ticket 105 (DESIGN.md section 5, Check line and Removed box): the check line, "How was that checked?" and the
+// removed box share one surface-2 block, each on the block's text edge, the removed box after a 1 px line. The
+// button opens How I checked: the verifier's done line, its six checks in the steps' own words, the rounding rule and
+// the answer's or the draft's ID, counted over every sentence written, so it says so first when any was removed.
+import { createContext, useContext, useId, useRef, useState, type ReactNode } from "react";
+import * as RadixPopover from "@radix-ui/react-popover";
 import { Check, CircleDashed } from "lucide-react";
 import { copy } from "../copy";
+import type { ChecksEvent } from "../lib/answer";
 import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
 import { Button } from "./Button";
+import { Fill } from "./Fill";
 import { Num, numText, type NumCheck } from "./Num";
+import { DEFINITION_WINDOW, DefinitionContent } from "./Term";
 import { TextLink } from "./TextLink";
 
 const n = (value: number) => formatNumber(value, { compact: false });
@@ -73,6 +81,8 @@ export function CheckLine({
   quoteWords,
   notCheckedText = [],
   reveal = false,
+  how,
+  removed,
 }: {
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
@@ -90,6 +100,10 @@ export function CheckLine({
   // The line arrives with an answer that just streamed: its tick draws left to right 120 ms after the answer lands
   // (ticket 111). Everywhere else the tick is drawn at once.
   reveal?: boolean;
+  // "How was that checked?" (HowChecked), after the line's parts (ticket 105).
+  how?: ReactNode;
+  // The removed box under the line, in the same block after a 1 px line (ticket 105).
+  removed?: ReactNode;
 }) {
   const words = copy.checkLine;
   const clauses = [
@@ -101,10 +115,11 @@ export function CheckLine({
   const unchecked = [...notChecked.map((clause) => words.notCheckedClauses[clause]), ...notCheckedText];
   const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
   return (
-    // The line's surface-2 block starts on the text edge of the panel it sits in, the removed box's edge, with no
-    // indent and 12 px padding, so the two stacked blocks share both edges (DESIGN.md section 5, Check line; ticket 100
-    // settles ticket 59's indent item, and its design review, item 3, puts the block on the edge).
-    <p data-check-line data-numbers className="rounded-md bg-neutral-bg p-3 text-small text-neutral">
+    // The surface-2 block starts on the text edge of the panel it sits in, with no indent and 12 px padding (DESIGN.md
+    // section 5, Check line; ticket 100 settles ticket 59's indent item). The line, "How was that checked?" and the
+    // removed box sit on the block's text edge, the removed box after a 1 px line (ticket 105).
+    <div data-check-block className="rounded-md bg-neutral-bg p-3 text-small text-neutral">
+    <p data-check-line data-numbers>
       <span data-check-part="checked" className="block">
         {/* The tick (ticket 111): 16 px in ink-muted before "Checked", on the text edge. The line's words say
             "Checked", so a screen reader skips it, and the line stays neutral, never green. */}
@@ -142,6 +157,134 @@ export function CheckLine({
         {words.end}
       </span>
     </p>
+      {how && <div className="mt-1">{how}</div>}
+      {removed && (
+        <InCheckBlock.Provider value={true}>
+          <div className="mt-3 border-t border-line pt-3">{removed}</div>
+        </InCheckBlock.Provider>
+      )}
+    </div>
+  );
+}
+
+// A removed box under a check line drops its own frame, since the block around both is its frame.
+const InCheckBlock = createContext(false);
+
+// The six checks, each in the past tense, with its counts over every sentence the agent wrote (the 24 brief, section
+// 5.1): the answer's steps list them under the verifier's step, and How I checked lists them for an answer or a draft,
+// whose step 2 says its sources came back for this draft (ticket 105).
+export function sixChecks(checks: ChecksEvent, { draft = false }: { draft?: boolean } = {}): string[] {
+  const six = copy.steps.check.six;
+  const judge = checks.judge;
+  const fourth = !judge
+    ? []
+    : judge.called && judge.responded === false
+      ? [six.judgeSilent(judge.unjudged, formatCount(judge.unjudged))]
+      : judge.called
+        ? [six.judged(judge.judged, formatCount(judge.judged), judge.followed), ...(judge.proven > 0 ? [six.proven(judge.proven, formatCount(judge.proven))] : [])]
+        : [six.notJudged(judge.proven, formatCount(judge.proven))];
+  const disputed = checks.disagreements?.disputed ?? 0;
+  const sixth =
+    disputed === 0
+      ? six.disputedNone
+      : (checks.disagreements?.attached ?? 0) > 0
+        ? six.disputedAdded(disputed, formatCount(disputed, { capital: true }))
+        : six.disputedBoth(disputed, formatCount(disputed, { capital: true }));
+  return [
+    six.numbers(checks.checked?.matched ?? 0, checks.checked?.total ?? 0),
+    (draft ? six.sourcesDraft : six.sources)(checks.sources.returned, checks.sources.total),
+    six.quotes(checks.quotes.found, checks.quotes.total),
+    fourth.join(" "),
+    six.advice(checks.advice?.cited ?? 0, checks.advice?.total ?? 0),
+    sixth,
+  ].filter(Boolean);
+}
+
+// What How I checked names: an answer by its run, or a draft by its ID and the run that wrote it.
+export type CheckedId = { answer: string } | { draft: string; run: string | null };
+
+// "How was that checked?": a flush text button after the check line that opens a non-modal window, as the refusal
+// window and a Term's do. Focus moves to its title as it opens; Escape, its 44 px close or a press outside close it
+// and give focus back to the button. Only an answer or a draft that ran the six checks (ticket 24) has one.
+export function HowChecked({ checks, id }: { checks: ChecksEvent; id: CheckedId }) {
+  const [open, setOpen] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const titleId = useId();
+  if (!checks.judge) return null;
+  const words = copy.checkLine;
+  const draft = "draft" in id;
+  const { written, kept, removed } = checks.sentences;
+  // An ID may break anywhere, so a long run ID never breaks only after "run-".
+  const mono = (text: string) => <span className="font-mono break-all">{text}</span>;
+  return (
+    <RadixPopover.Root open={open} onOpenChange={setOpen}>
+      <RadixPopover.Anchor asChild>
+        <span className="inline-flex">
+          <button
+            ref={button}
+            type="button"
+            data-how-checked
+            aria-haspopup="dialog"
+            aria-expanded={open}
+            onClick={() => setOpen((was) => !was)}
+            className="inline-flex min-h-6 cursor-pointer items-center text-left text-small font-semibold text-primary underline decoration-dotted decoration-1 underline-offset-3 hover:decoration-solid"
+          >
+            {words.how}
+          </button>
+        </span>
+      </RadixPopover.Anchor>
+      <RadixPopover.Portal>
+        <RadixPopover.Content
+          side="bottom"
+          align="start"
+          sideOffset={8}
+          collisionPadding={16}
+          aria-labelledby={titleId}
+          aria-modal="false"
+          data-how-window
+          onOpenAutoFocus={(event) => {
+            event.preventDefault();
+            heading.current?.focus();
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            button.current?.focus();
+          }}
+          // A press on the button itself toggles the window; it is not a press outside it.
+          onInteractOutside={(event) => {
+            if (button.current?.contains(event.target as Node)) event.preventDefault();
+          }}
+          className={cx(DEFINITION_WINDOW, "max-h-[min(36rem,var(--radix-popover-content-available-height))] overflow-y-auto")}
+        >
+          <DefinitionContent titleId={titleId} heading={heading} title={draft ? words.howTitleDraft : words.howTitle}>
+            <div className="flex flex-col gap-3">
+              {removed > 0 && <p data-how-scope>{words.howScope(removed, formatCount(removed), kept)}</p>}
+              <p data-how-done>{copy.steps.check.doneSix(written, formatCount(written), removed, formatCount(removed))}</p>
+              <ol className="flex list-decimal flex-col gap-2 pl-6">
+                {sixChecks(checks, { draft }).map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ol>
+              <p data-how-rounding>{words.rounding}</p>
+              <p data-how-id className="text-caption text-ink-muted">
+                {"draft" in id ? (
+                  id.run ? (
+                    <Fill template={words.draftId} slots={{ id: mono(id.draft), run: mono(id.run) }} />
+                  ) : (
+                    <>
+                      {copy.draft.idLabel} {mono(id.draft)}
+                    </>
+                  )
+                ) : (
+                  <Fill template={words.runId} slots={{ id: mono(id.answer) }} />
+                )}
+              </p>
+            </div>
+          </DefinitionContent>
+        </RadixPopover.Content>
+      </RadixPopover.Portal>
+    </RadixPopover.Root>
   );
 }
 
@@ -268,8 +411,12 @@ export function RemovedBox({
           ? leads.one
           : leads.several(numText({ count }));
   const [first, ...others] = removed;
+  const inBlock = useContext(InCheckBlock);
   return (
-    <div data-removed-box className="flex gap-3 rounded-r-md border-l-4 border-line-strong bg-neutral-bg px-4 py-3 text-small text-neutral">
+    <div
+      data-removed-box
+      className={cx("flex text-small text-neutral", inBlock ? "gap-2" : "gap-3 rounded-r-md border-l-4 border-line-strong bg-neutral-bg px-4 py-3")}
+    >
       <CircleDashed aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-line-strong" />
       <div className="min-w-0">
         <p>

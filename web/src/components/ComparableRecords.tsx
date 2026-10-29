@@ -276,14 +276,20 @@ export function ComparableDotList({
       <ul className="flex flex-col divide-y divide-line border-y border-line">
         {row.entries.map((entry) => {
           const months = entry.still_open ? w.open(months1(entry.months)) : w.signed(months1(entry.months));
+          // The list lands on the row that was clicked, marked with tint (ticket 105).
+          const landed = entry.step_reference === focusEntry;
           return (
             <li key={entry.step_reference}>
               <button
-                ref={entry.step_reference === focusEntry ? back : undefined}
+                ref={landed ? back : undefined}
                 type="button"
                 data-dot-entry={entry.step_reference}
+                data-landed={landed ? "" : undefined}
                 onClick={() => onOpen?.(entry)}
-                className="flex min-h-11 w-full cursor-pointer flex-wrap items-baseline justify-between gap-x-4 px-2 py-2 text-left hover:bg-tint-hover"
+                className={cx(
+                  "flex min-h-11 w-full cursor-pointer flex-wrap items-baseline justify-between gap-x-4 px-2 py-2 text-left",
+                  landed ? "bg-tint" : "hover:bg-tint-hover",
+                )}
               >
                 <span className="min-w-0 font-mono text-small wrap-anywhere text-primary underline decoration-1 underline-offset-3">
                   {entry.step_reference}

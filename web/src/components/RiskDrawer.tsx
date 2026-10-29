@@ -150,8 +150,13 @@ export function RiskReportsView({ evidence, focusEntry = null, onOpen }: { evide
               ref={entry.evidence_id === focusEntry ? back : undefined}
               type="button"
               data-report-entry={entry.evidence_id}
+              // The list lands on the report you came back from, marked with tint (ticket 105).
+              data-landed={entry.evidence_id === focusEntry ? "" : undefined}
               onClick={() => entry.evidence_id && onOpen?.(entry.evidence_id)}
-              className="flex min-h-11 w-full cursor-pointer flex-col items-start gap-1 px-2 py-2 text-left hover:bg-tint-hover"
+              className={cx(
+                "flex min-h-11 w-full cursor-pointer flex-col items-start gap-1 px-2 py-2 text-left",
+                entry.evidence_id === focusEntry ? "bg-tint" : "hover:bg-tint-hover",
+              )}
             >
               <span className="text-small text-primary underline decoration-1 underline-offset-3">
                 {entry.project_name ?? entry.project_id} (<span className="font-mono">{entry.project_id}</span>)

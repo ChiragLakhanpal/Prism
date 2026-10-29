@@ -149,6 +149,8 @@ test("a row's count opens the completion reports that raised its risk, and each 
   await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph 54$/);
   await drawer(page).getByRole("button", { name: "Back to the report" }).click();
   await expect(drawer(page).locator(`[data-report-entry='${ICR_54}']`)).toBeFocused();
+  // The list lands on the report you came back from, marked with tint (ticket 105).
+  await expect(drawer(page).locator("[data-landed]")).toHaveAttribute("data-report-entry", ICR_54);
 });
 
 test("row selections save at once and persist when the package is reopened", async ({ page }) => {

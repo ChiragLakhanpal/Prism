@@ -693,6 +693,20 @@ export const copy = {
       writer_step_rows: "whether these comparable packages fit your activities",
       upload_dates: "whether the dates in your plan are the ones you meant",
     },
+    // "How was that checked?" after the line, and its window (ticket 105; the redesign's plan, section 9.1, pattern 3).
+    // The window counts every sentence I wrote, as the verifier's six checks do, and the line only those on screen,
+    // so when I removed any the window opens on howScope, which says which sentences it counts.
+    how: "How was that checked?",
+    howTitle: "How I checked this answer",
+    howTitleDraft: "How I checked this draft",
+    howScope: (removed: number, removedText: string, kept: number) =>
+      `These counts include ${removed === 1 ? "the one sentence" : `the ${removedText} sentences`} I removed. The check line counts only ${
+        kept === 1 ? "the sentence" : "the sentences"
+      } I kept.`,
+    rounding: "A number passes only when a record holds it at the same rounding.",
+    // {id} and {run} are set in mono and may break anywhere.
+    runId: "Answer ID {id}",
+    draftId: "Draft ID {id}, run {run}",
   },
 
   // The coverage line: a sentence with its denominator, linked to Data readiness.
@@ -883,6 +897,11 @@ export const copy = {
           total === 1
             ? `${returned} of 1 source I cited came back for this question.`
             : `${returned} of ${total} sources I cited came back for this question.`,
+        // A draft's step 2: its sources came back for the draft, not for a question (ticket 105).
+        sourcesDraft: (returned: number, total: number) =>
+          total === 1
+            ? `${returned} of 1 source I cited came back for this draft.`
+            : `${returned} of ${total} sources I cited came back for this draft.`,
         quotes: (found: number, total: number) =>
           total === 0
             ? "None of the sentences quoted a source."

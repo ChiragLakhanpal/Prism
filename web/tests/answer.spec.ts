@@ -317,7 +317,8 @@ test("a streamed answer's Strata, in short block enters over 200 ms and the chec
   const tick = line.locator("[data-check-tick]");
   await expect(tick).toHaveAttribute("aria-hidden", "true");
   await expect(line).toHaveText(/^Checked: /);
-  const [edge, mark, checked] = [(await line.boundingBox())!, (await tick.boundingBox())!, (await line.locator("[data-check-part=checked]").boundingBox())!];
+  const block = panel(page).locator("[data-check-block]");
+  const [edge, mark, checked] = [(await block.boundingBox())!, (await tick.boundingBox())!, (await line.locator("[data-check-part=checked]").boundingBox())!];
   expect([Math.round(mark.x - edge.x), Math.round(mark.width)]).toEqual([12, 16]);
   expect(mark.y).toBeGreaterThanOrEqual(checked.y);
   expect(mark.y + mark.height).toBeLessThanOrEqual(checked.y + 20);
@@ -343,13 +344,17 @@ test("the evidence drawer enters with opacity and 12 px from the right over 160 
   await forgetTransitions(page);
   const moves = async () => (await page.evaluate(() => (window as unknown as { moved: Moved[] }).moved)).filter((entry) => ["opacity", "translate", "transform"].includes(entry.property));
 
-  await panel(page).locator("[data-sentence-text='3'] [data-citation='4']").click();
+  const opener = panel(page).locator("[data-sentence-text='3'] [data-citation='4']");
+  await opener.click();
   await expect(drawer(page)).toBeVisible();
   // It arrives from its own edge without pushing the page sideways.
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
   await animationsDone(page);
   expect(await transitionsOn(page, "evidenceDrawer")).toEqual([{ property: "opacity", from: "0", duration: 160, delay: 0 }]);
   expect(await transitionsOn(page, "drawerPanel")).toEqual([{ property: "translate", from: "12px", duration: 160, delay: 0 }]);
+  // The marker that opened it keeps the current mark, a tint, while the drawer shows its source (ticket 105).
+  await expect(opener).toHaveAttribute("aria-expanded", "true");
+  expect(await opener.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgb(233, 247, 253)");
 
   await forgetTransitions(page);
   await drawer(page).getByRole("tab").first().click();
@@ -360,18 +365,34 @@ test("the evidence drawer enters with opacity and 12 px from the right over 160 
   await drawer(page).getByRole("button", { name: "Close the source" }).click();
   await expect(drawer(page)).toHaveCount(0);
   expect(await moves()).toEqual([]);
+  await expect(opener).toBeFocused();
+
+  // "How was that checked?" opens its window over 160 ms, as every window does (DESIGN.md section 4, Motion), and it
+  // closes at once (ticket 105).
+  await forgetTransitions(page);
+  await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+  await expect(page.getByRole("dialog", { name: "How I checked this answer" })).toBeVisible();
+  await animationsDone(page);
+  expect(await transitionsOn(page, "howWindow")).toEqual([{ property: "opacity", from: "0", duration: 160, delay: 0 }]);
+  await forgetTransitions(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(await moves()).toEqual([]);
 });
 
-test("under reduced motion the answer's block, the check line's tick and the evidence drawer arrive with no transition", async ({ page }) => {
+test("under reduced motion the answer's block, the check line's tick, the check window and the evidence drawer arrive with no transition", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await recordTransitions(page);
   await open(page, { stream: "ask-ke-nwwda-541055-past-range.sse" });
   await askFromTheBox(page);
   await landed(page);
+  await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+  await expect(page.getByRole("dialog", { name: "How I checked this answer" })).toBeVisible();
+  await page.keyboard.press("Escape");
   await marker(page, 1).click();
   await expect(drawer(page)).toBeVisible();
 
-  for (const part of ["inShortBlock", "checkTick", "evidenceDrawer", "drawerPanel"]) expect(await transitionsOn(page, part), part).toEqual([]);
+  for (const part of ["inShortBlock", "checkTick", "howWindow", "evidenceDrawer", "drawerPanel"]) expect(await transitionsOn(page, part), part).toEqual([]);
 });
 
 test("below 768 px the drawer is a full-screen sheet, and the page behind it is inert", async ({ page }) => {
@@ -683,15 +704,20 @@ for (const [width, height] of [
 }
 
 // The claim beside its source is why the drawer exists, so opening it never slides "From the answer"
-// under the sticky header for a highlight already in view. Only a highlight out of view scrolls, and it
-// then sits in the middle of the space under the header (the 14 critique, round 4). At 1024 by 900 and
-// 390 by 844 the ISR's highlight is in view on open; at 320 by 568 it is below the fold.
+// under the sticky header for a highlight already in view. Only a highlight out of view scrolls (the 14 critique,
+// round 4). It then stops with the passage block's top 8 px under the header when the whole highlight fits below
+// it, so no tab or meta line is cut under the header, and centers the highlight under the header only when it does
+// not (ticket 59's item, settled by ticket 105). At 1024 by 900 and 390 by 844 the ISR's highlight is in view on open;
+// at 320 by 568 and 1024 by 600 it is below the fold and fits under the block's top; at 320 by 480 it does not. (Ticket
+// 59 named 800 by 600 as the centered case; the drawer's head has since lost its eyebrow, and there the highlight fits.)
 for (const [width, height, scrolls] of [
-  [1024, 900, false],
-  [390, 844, false],
-  [320, 568, true],
+  [1024, 900, "no"],
+  [390, 844, "no"],
+  [320, 568, "to the block"],
+  [1024, 600, "to the block"],
+  [320, 480, "to the middle"],
 ] as const) {
-  test(`at ${width} by ${height} px the drawer opens ${scrolls ? "with the highlight in the middle under its header" : "with the claim, its sources and the highlight all in view"}`, async ({ page }) => {
+  test(`at ${width} by ${height} px the drawer opens ${scrolls === "to the middle" ? "with the highlight in the middle under its header" : scrolls === "to the block" ? "with the passage block's top under its header" : "with the claim, its sources and the highlight all in view"}`, async ({ page }) => {
     await open(page, { stream: "ask-p130164-isr-section.sse", width });
     await page.setViewportSize({ width, height });
     await askFromTheBox(page);
@@ -706,9 +732,14 @@ for (const [width, height, scrolls] of [
       const shown = (await mark.boundingBox())!;
       expect(shown.y).toBeGreaterThanOrEqual(under);
       expect(shown.y + shown.height).toBeLessThanOrEqual(height);
-      if (scrolls) {
+      const block = (await drawer(page).locator("[data-passage-block]").boundingBox())!;
+      if (scrolls === "to the middle") {
         const middle = under + (height - under) / 2;
         expect(Math.abs(shown.y + shown.height / 2 - middle)).toBeLessThanOrEqual(2);
+        // Snapping to the block would have left the highlight's end below the window.
+        expect(block.y).toBeLessThan(under + 8);
+      } else if (scrolls === "to the block") {
+        expect(Math.abs(block.y - (under + 8))).toBeLessThanOrEqual(1);
       } else {
         expect((await drawer(page).locator("[data-claim]").boundingBox())!.y).toBeGreaterThanOrEqual(under);
         expect((await drawer(page).getByRole("tab").first().boundingBox())!.y).toBeGreaterThanOrEqual(under);
@@ -874,7 +905,8 @@ test("the check line never uses the success state", async ({ page }) => {
   await landed(page);
 
   const line = panel(page).locator("[data-check-line]");
-  const look = await line.evaluate((el) => ({ background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
+  // The line's block holds its surface-2 fill (ticket 105).
+  const look = await line.evaluate((el) => ({ background: getComputedStyle(el.closest("[data-check-block]")!).backgroundColor, color: getComputedStyle(el).color }));
   expect(look).toEqual({ background: "rgb(231, 237, 243)", color: "rgb(61, 76, 92)" });
   // Ticket 111: its one icon is the tick beside "Checked", in ink-muted, never success green.
   await expect(line.locator("svg")).toHaveCount(1);
@@ -882,13 +914,44 @@ test("the check line never uses the success state", async ({ page }) => {
 });
 
 for (const width of [1440, 390]) {
-  test(`axe finds no WCAG 2.2 AA violations in the answer and the open drawer at ${width} px`, async ({ page }) => {
+  test(`axe finds no WCAG 2.2 AA violations in the answer, the check window and the open drawer at ${width} px`, async ({ page }) => {
     await open(page, { width });
     await askFromTheBox(page);
     await landed(page);
     await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
     let results = await scan(page);
     expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+
+    // The opening quote mark stays on the line of the number it opens: at 390 px the line once ended 'because "' and
+    // the next started "108 of 328 cases" (ticket 94's review, routed to ticket 105).
+    const [quoteMark, number] = await panel(page).locator("[data-sentence-text='0']").evaluate((sentence) => {
+      const walker = document.createTreeWalker(sentence, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const at = node.textContent!.indexOf('"');
+        if (at < 0) continue;
+        const range = document.createRange();
+        range.setStart(node, at);
+        range.setEnd(node, at + 1);
+        return [range.getBoundingClientRect().bottom, sentence.querySelector("button[data-num]")!.getBoundingClientRect().bottom];
+      }
+      return [0, -100];
+    });
+    expect(Math.abs(quoteMark - number)).toBeLessThanOrEqual(4);
+
+    // How I checked this answer, which opens on the one sentence the verifier removed (ticket 105).
+    await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+    const how = page.getByRole("dialog", { name: "How I checked this answer" });
+    await expect(how.locator("[data-how-scope]")).toHaveText(
+      "These counts include the one sentence I removed. The check line counts only the sentences I kept.",
+    );
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== "running" || a.effect?.getTiming().iterations === Infinity));
+    results = await scan(page, "[data-how-window]");
+    expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+    // The window keeps to the screen.
+    const box = (await how.boundingBox())!;
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(width);
+    await page.keyboard.press("Escape");
 
     await marker(page, 1).click();
     await expect(drawer(page)).toBeVisible();

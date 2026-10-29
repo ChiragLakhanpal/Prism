@@ -40,6 +40,8 @@ type Checks = {
   names?: string[];
   // A service a check needs did not answer: "Try again" in the removed box, with its note.
   retry?: { onRetry: () => void; note?: string };
+  // "How was that checked?" and its window, after the check line (ticket 105).
+  how?: ReactNode;
 };
 
 export type AnswerState =
@@ -106,17 +108,20 @@ export function StepsTaken({ steps: all, runId, idLabel = copy.steps.answerId }:
         <Steps steps={steps} />
         {/* On the steps' text edge, past their icon rail, so the opened list has one left edge. */}
         <p className="mt-2 pl-6 text-caption text-ink-muted">
-          {idLabel} <span className="font-mono">{runId}</span>
+          {/* The ID may break anywhere, so a live run ID never breaks only after "run-" (ticket 59's item, settled by
+              ticket 105). */}
+          {idLabel} <span className="font-mono break-all">{runId}</span>
         </p>
       </div>
     </div>
   );
 }
 
-// The check line and the removed box keep the answer's measure, about 65 characters a line.
+// The check line, "How was that checked?" and the removed box, in one block that keeps the answer's measure, about 65
+// characters a line (ticket 105).
 function ChecksBlock({ checks, reveal = false }: { checks: Checks; reveal?: boolean }) {
   return (
-    <div className="mt-4 flex max-w-prose flex-col gap-2">
+    <div className="mt-4 max-w-prose">
       <CheckLine
         numbers={checks.numbers}
         dates={checks.dates}
@@ -124,8 +129,9 @@ function ChecksBlock({ checks, reveal = false }: { checks: Checks; reveal?: bool
         judged={checks.judged}
         notChecked={checks.notChecked}
         reveal={reveal}
+        how={checks.how}
+        removed={<RemovedBox removed={checks.removed} names={checks.names} retry={checks.retry} />}
       />
-      <RemovedBox removed={checks.removed} names={checks.names} retry={checks.retry} />
     </div>
   );
 }
@@ -225,7 +231,7 @@ export function Answer({ state, reveal = false }: { state: AnswerState; reveal?:
           )}
           {state.runId && (
             <p className="mt-2 text-caption text-ink-muted">
-              {copy.steps.answerId} <span className="font-mono">{state.runId}</span>
+              {copy.steps.answerId} <span className="font-mono break-all">{state.runId}</span>
             </p>
           )}
         </div>

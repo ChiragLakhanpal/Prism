@@ -236,15 +236,18 @@ function Summary({ item, numbers, onRetried }: { item: ReviewItem; numbers: Map<
           </div>
         )}
         {shown.status === "nothing_survived" && <p className="text-body text-ink">{r.summaryNoneSurvived}</p>}
-        {checks && (
+        {/* The check line and the removed box in one block; with no line, the removed box stands alone (ticket 105). */}
+        {checks ? (
           <CheckLine
             numbers={checks.numbers.total ? checks.numbers : undefined}
             dates={checks.dates.total ? checks.dates : undefined}
             quotes={checks.quotes.total ? checks.quotes : undefined}
             notChecked={notCheckedFor(checks)}
+            removed={(shown.removed ?? []).length > 0 && <RemovedBox removed={removedOf(shown)} all={shown.status === "nothing_survived"} />}
           />
+        ) : (
+          (shown.removed ?? []).length > 0 && <RemovedBox removed={removedOf(shown)} all={shown.status === "nothing_survived"} />
         )}
-        {(shown.removed ?? []).length > 0 && <RemovedBox removed={removedOf(shown)} all={shown.status === "nothing_survived"} />}
       </div>
     );
   }

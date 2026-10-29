@@ -21,7 +21,7 @@ import { StepsTaken } from "../components/Answer";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
 import { ExampleNote } from "../components/ExampleNote";
-import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
+import { CheckLine, HowChecked, notCheckedFor, RemovedBox, type Removed } from "../components/Checks";
 import { BAR_BUTTONS, BAR_MAIN, BAR_ROOM, checkedLine, Consequence, DiscardedNotice, DraftBar, ExportSuccess, STICKY } from "../components/DraftBar";
 import { DraftNotes, NoteSentences, WrittenIn, type NoteRow } from "../components/DraftNotes";
 import { ENGLISH, languageName, workingLanguage } from "../lib/lang";
@@ -724,17 +724,19 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             </p>
           )}
         </div>
-        <div className="mt-4 flex max-w-prose flex-col gap-2">
+        <div className="mt-4 max-w-prose">
           {/* Counts over the notes' sentences on screen, and the model's part when one was judged (ticket 24), as
-              src/strata/drafts/files.py writes the evidence pack's line. A draft saved before then has no shown counts. */}
+              src/strata/drafts/files.py writes the evidence pack's line. A draft saved before then has no shown counts.
+              "How was that checked?" and the removed box share its block (ticket 105). */}
           <CheckLine
             numbers={(d.checks.shown ?? d.checks).numbers}
             dates={(d.checks.shown ?? d.checks).dates}
             quotes={(d.checks.shown ?? d.checks).quotes}
             judged={d.checks.shown ? { judged: d.checks.shown.judged, proven: d.checks.shown.proven } : undefined}
             notChecked={notCheckedFor(d.checks, d.layout.not_checked)}
+            how={d.checks.judge && <HowChecked checks={d.checks} id={{ draft: d.draft_id, run: d.writer?.run_id ?? null }} />}
+            removed={showRemoved && <RemovedBox removed={removed} />}
           />
-          {showRemoved && <RemovedBox removed={removed} />}
         </div>
         {!dates && <StepsTaken steps={stepsOf(d, kind)} runId={d.draft_id} idLabel={words.idLabel} />}
         {dates ? (
@@ -890,11 +892,10 @@ function DraftSkeleton() {
           {lines(["w-full", "w-full", "w-1/2"], ["w-full", "w-2/5"], "max-w-[22.5em] text-finding")}
           {lines(["w-full", "w-full", "w-full", "w-3/5"], ["w-full", "w-4/5"], "mt-2 text-body")}
         </div>
-        <div className="mt-4 flex max-w-prose flex-col gap-2">
-          {/* The check line, five lines of small text in its box below 48rem and three from it, and the
-              one-line removed box. */}
-          <Skeleton className="h-29 w-full md:h-19" radius="rounded-sm" />
-          <Skeleton className="h-11 w-full" radius="rounded-sm" />
+        <div className="mt-4 max-w-prose">
+          {/* The check line's block: five lines of small text below 48rem and three from it, "How was that checked?"
+              and the one-line removed box after its rule (ticket 105). */}
+          <Skeleton className="h-49 w-full md:h-39" radius="rounded-md" />
         </div>
         <div className="mt-4 flex h-11 items-center">
           <Skeleton className="h-4 w-56" />

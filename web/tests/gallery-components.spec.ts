@@ -182,7 +182,8 @@ test("the check line uses the neutral state, never success green", async ({ page
     "Checked: 23 of 23 numbers match records; 14 of 14 quotes are on their pages. Not checked: whether these are the right comparables.",
   );
   for (const line of await lines.all()) {
-    const style = await line.evaluate((el) => ({ background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
+    // The fill is the line's block's, which also holds the removed box under it (ticket 105).
+    const style = await line.evaluate((el) => ({ background: getComputedStyle(el.closest("[data-check-block]")!).backgroundColor, color: getComputedStyle(el).color }));
     expect(style).toEqual({ background: "rgb(231, 237, 243)", color: "rgb(61, 76, 92)" });
     // Ticket 111: the line's one icon is the tick beside "Checked", in ink-muted, never success green.
     const ticks = await line.locator("svg").evaluateAll((icons) => icons.map((icon) => [icon.hasAttribute("data-check-tick"), getComputedStyle(icon).color]));
@@ -520,6 +521,13 @@ test("a term, a measure, a checkable number and the data date share one dotted u
     ...(await underlines(page.locator("[data-state-section=terms] [data-term]"), 2)),
     ...(await underlines(page.locator("[data-state-section=checkable] button[data-num]"), 1)),
   ];
+  // A Term's hit area grows 2 px above and below, as a number's does, without making its line taller: its box in the
+  // line is one line high, so a term in "In short" never pushes its lines apart (ticket 59's item, settled by 105).
+  const inLine = await page.locator("[data-state-section=terms] [data-term]").first().evaluate((term) => {
+    const style = getComputedStyle(term);
+    return Math.round(term.getBoundingClientRect().height + parseFloat(style.marginTop) + parseFloat(style.marginBottom) - parseFloat(style.lineHeight));
+  });
+  expect(inLine).toBe(0);
   await page.goto("/gallery/navigation");
   marks.push(...(await underlines(page.locator("[data-stamp] a").first(), 1)));
   expect(marks).toHaveLength(4);

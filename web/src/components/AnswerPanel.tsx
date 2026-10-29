@@ -34,7 +34,7 @@ import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
 import { Lang } from "./Lang";
-import { notCheckedFor, type Removed } from "./Checks";
+import { HowChecked, notCheckedFor, sixChecks, type Removed } from "./Checks";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
@@ -85,35 +85,6 @@ function stepLines(step: StepEvent, checks: ChecksEvent | null, refused = false)
   if (!checks) return { running: words.running, done: words.done };
   const { written, removed } = checks.sentences;
   return { running: words.running, done: words.doneSix(written, formatCount(written), removed, formatCount(removed)) };
-}
-
-// The six checks under the verifier's done line, each in the past tense, with its counts over every
-// sentence the agent wrote (the 24 brief, section 5.1).
-export function sixChecks(checks: ChecksEvent): string[] {
-  const six = copy.steps.check.six;
-  const judge = checks.judge;
-  const fourth = !judge
-    ? []
-    : judge.called && judge.responded === false
-      ? [six.judgeSilent(judge.unjudged, formatCount(judge.unjudged))]
-      : judge.called
-        ? [six.judged(judge.judged, formatCount(judge.judged), judge.followed), ...(judge.proven > 0 ? [six.proven(judge.proven, formatCount(judge.proven))] : [])]
-        : [six.notJudged(judge.proven, formatCount(judge.proven))];
-  const disputed = checks.disagreements?.disputed ?? 0;
-  const sixth =
-    disputed === 0
-      ? six.disputedNone
-      : (checks.disagreements?.attached ?? 0) > 0
-        ? six.disputedAdded(disputed, formatCount(disputed, { capital: true }))
-        : six.disputedBoth(disputed, formatCount(disputed, { capital: true }));
-  return [
-    six.numbers(checks.checked?.matched ?? 0, checks.checked?.total ?? 0),
-    six.sources(checks.sources.returned, checks.sources.total),
-    six.quotes(checks.quotes.found, checks.quotes.total),
-    fourth.join(" "),
-    six.advice(checks.advice?.cited ?? 0, checks.advice?.total ?? 0),
-    sixth,
-  ].filter(Boolean);
 }
 
 // A step's line with its project ID in mono, as every ID Strata writes (DESIGN.md section 3).
@@ -287,9 +258,11 @@ export function sentenceText(
   let at = 0;
   for (const mention of found) {
     if (mention.start < at) continue;
-    // A currency sign right before the number stays on its line ("US$" never ends a line apart from its amount).
+    // A currency sign right before the number stays on its line ("US$" never ends a line apart from its amount), and
+    // so does an opening quote mark or bracket before it (a line never ends 'because "' with "108 of 328" on the next;
+    // ticket 94's review, routed to ticket 105).
     const before = sentence.text.slice(at, mention.start);
-    const sign = /(US\$|\$|€|£)$/.exec(before)?.[0] ?? "";
+    const sign = /[("“‘[]?(?:US\$|\$|€|£)?$/.exec(before)?.[0] ?? "";
     parts.push(...plain(at, mention.start - sign.length));
     const tooltip = numTooltip(evidence[mention.id], mention.date ? { sentence: sentence.index, text: mention.text } : null);
     const from = evidenceFrom(evidence[mention.id]);
@@ -614,6 +587,8 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       removed: removedItems(run),
       names: names(run),
       retry: notes.length ? { onRetry: askAgain, note: mixed ? notes.join(" ") : undefined } : undefined,
+      // The window counts every sentence written, by the run that wrote this answer (ticket 105).
+      how: runId && checks.judge ? <HowChecked checks={checks} id={{ answer: runId }} /> : undefined,
     },
   };
 }
@@ -692,7 +667,9 @@ export function AnswerPanel({
 
   return (
     <section aria-label={copy.answer.panel} aria-busy={run.phase === "streaming"} data-answer-panel className="mb-8">
-      <div className="rounded-md border border-line bg-surface p-4 @md/page:p-6 @lg/page:p-8">
+      {/* 24 px of padding from a page area of 768 px, as DESIGN.md section 4 and the prototype give it, and 16 below it
+          (ticket 94's review, routed to ticket 105). */}
+      <div className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
         {/* The Asked line sits a fixed 4 px under the question, whatever its length; the close
             button beside them sets no gap. */}
         <div className="flex items-start justify-between gap-4">

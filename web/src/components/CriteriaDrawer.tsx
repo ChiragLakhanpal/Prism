@@ -10,6 +10,7 @@ import { Fragment, useEffect, useRef, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { ComparedItem, CostRow, ItemNotice, LessonEntry, PublicEntry, Relation } from "../lib/criteria";
+import { cx } from "../lib/cx";
 import { formatAmountText, formatCount } from "../lib/format";
 import { IegLine } from "./RiskDrawer";
 import { Fill } from "./Fill";
@@ -38,8 +39,13 @@ export function criteriaClose(evidence: EvidenceEvent | null, id: string): strin
   return words.close;
 }
 
-function Entry({ children }: { children: ReactNode }) {
-  return <li className="border-t border-line py-3 first:border-t-0">{children}</li>;
+// landed: the row you came back to, marked with tint (ticket 105).
+function Entry({ children, landed = false }: { children: ReactNode; landed?: boolean }) {
+  return (
+    <li data-landed={landed ? "" : undefined} className={cx("border-t border-line py-3 first:border-t-0", landed && "-mx-2 bg-tint px-2")}>
+      {children}
+    </li>
+  );
 }
 
 function PublicList({ evidence, onOpen, focusEntry }: { evidence: EvidenceEvent; onOpen: OpenEntry; focusEntry: string | null }) {
@@ -53,7 +59,7 @@ function PublicList({ evidence, onOpen, focusEntry }: { evidence: EvidenceEvent;
       <p className="text-body text-ink">{words.publicSentence}</p>
       <ul ref={list} className="flex flex-col">
         {entries.map((entry) => (
-          <Entry key={entry.step_reference}>
+          <Entry key={entry.step_reference} landed={`${PASSAGE}${entry.passage_id}` === focusEntry}>
             <button
               type="button"
               data-entry={`${PASSAGE}${entry.passage_id}`}
@@ -106,7 +112,7 @@ function ItemList({ evidence, onOpen, focusEntry }: { evidence: EvidenceEvent; o
           </h3>
           <ul className="mt-2 flex flex-col">
             {group.notices.map((notice) => (
-              <NoticeEntry key={notice.step_reference} notice={notice} onOpen={(element) =>
+              <NoticeEntry key={notice.step_reference} notice={notice} landed={`${PASSAGE}${notice.passage_id}` === focusEntry} onOpen={(element) =>
                 onOpen(`${PASSAGE}${notice.passage_id}`, { id: evidence.id, count: item.stated }, element,
                   [notice.requirement.start, notice.requirement.end])} />
             ))}
@@ -122,9 +128,9 @@ function ItemList({ evidence, onOpen, focusEntry }: { evidence: EvidenceEvent; o
   );
 }
 
-function NoticeEntry({ notice, onOpen }: { notice: ItemNotice; onOpen: (element: HTMLElement) => void }) {
+function NoticeEntry({ notice, landed, onOpen }: { notice: ItemNotice; landed: boolean; onOpen: (element: HTMLElement) => void }) {
   return (
-    <Entry>
+    <Entry landed={landed}>
       <p className="text-small text-ink">
         <MonoWords text={notice.step_reference} />
         {notice.country_name && <span className="text-ink-muted">{copy.list.comma}{notice.country_name}</span>}
