@@ -1105,4 +1105,38 @@ test("a planned package puts What I understood in an unnumbered panel before the
   await expect(head.locator("[data-id-line]")).toContainText("No STEP reference yet");
   await expect(head.locator("button[data-button=primary]")).toHaveCount(0);
   expect(await page.locator("[data-package-header]").evaluate((element) => getComputedStyle(element).position)).toBe("static");
+  // The computed note and its source line end the panel in its foot strip, provenance's one place (ticket 101's critique).
+  await expect(understood.locator("[data-foot-strip] [data-computed-note]")).toBeVisible();
+});
+
+// Reopened with its plan set, the package folds What I understood to the sentence you wrote and a Show button, so zone
+// 1's finding leads the first screen (DESIGN.md section 1, principle 6; ticket 101's critique, hierarchy). A package
+// whose plan you set while you read keeps the panel open, so nothing above zone 1 moves while you work in it.
+test("reopened with its plan, a planned package folds What I understood to your sentence, and zone 1's finding is in the first screen", async ({ page }) => {
+  const withPlan = JSON.stringify({
+    ...JSON.parse(await recorded("planned-package-rural-roads.json")),
+    package: JSON.parse(await recorded("planned-package-change-plan.json")).package,
+  });
+  for (const [width, height] of [
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    const where = `${width} by ${height}`;
+    await openPackage(page, { width, height, answers: { "GET /api/planned-packages/pkg-000000000001": { body: withPlan } } });
+    const understood = card(page);
+    await expect(understood, where).toHaveAttribute("data-zone", "row");
+    await expect(understood.locator("[data-you-wrote]")).toContainText(SENTENCE);
+    await expect(understood.locator("[data-chip]")).toHaveCount(0);
+    const show = understood.getByRole("button", { name: "Show what I understood" });
+    await expect(show).toHaveAttribute("aria-expanded", "false");
+    const finding = page.locator("[data-past-range] [data-finding]");
+    await expect(finding).toBeVisible();
+    expect((await finding.boundingBox())!.y, where).toBeLessThan(height);
+
+    await show.click();
+    await expect(understood).toHaveAttribute("data-zone", "panel");
+    await expect(understood.getByRole("button", { name: "Hide what I understood" })).toBeFocused();
+    await expect(chip(page, "plan_months")).toHaveText("Your plan: 6 months");
+    await expect(understood.locator("[data-foot-strip] [data-computed-note]")).toBeVisible();
+  }
 });

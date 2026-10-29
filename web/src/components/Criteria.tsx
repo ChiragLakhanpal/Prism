@@ -204,7 +204,8 @@ export function ruleSentence(field: FormField, pkg: PlannedPackage, form: Packag
 // The computed note under the chips (the 15 brief, section 7.4), in its order: what a recompute changed, the
 // rules and their thresholds from the thresholds file, the risk rating assumed, each computed field the person
 // set themselves, then the source line.
-export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: PackageForm }) {
+// In a panel's foot strip, the strip gives it its place, so it takes no margin of its own (inStrip).
+export function ComputedNote({ pkg, form, inStrip = false }: { pkg: PlannedPackage; form: PackageForm; inStrip?: boolean }) {
   const n = words.note;
   const field = (key: string) => form.fields.find((one) => one.key === key);
   const text = (key: string, value: string | number | null) => {
@@ -225,7 +226,7 @@ export function ComputedNote({ pkg, form }: { pkg: PlannedPackage; form: Package
   const yours = pkg.fields.filter((value) => field(value.key)?.source === "computed" && value.provenance === "you" && value.computed !== null);
   const sources = [review, market].filter((rule): rule is NonNullable<typeof rule> => Boolean(rule));
   return (
-    <div className="mt-4 flex flex-col gap-1 text-caption text-ink-muted" data-computed-note>
+    <div className={cx("flex flex-col gap-1 text-caption text-ink-muted", !inStrip && "mt-4")} data-computed-note>
       {pkg.changed.map((change) => (
         <p key={change.field} data-recomputed className="text-ink">
           {change.to === null
@@ -314,13 +315,19 @@ export function CardTop({
       <p className={named ? "mt-2 text-small text-ink" : "text-small text-ink"} data-you-wrote>
         <span className="text-ink-muted">{words.card.youWrote}</span> {words.card.quoted(sentence)}
       </p>
-      {guesses !== null && (
-        <p className="mt-1 text-small text-ink" data-instruction>
-          {preview ? words.preview : words.card.instruction}
-          {!preview && guesses > 0 && <> {words.card.guesses(guesses, formatCount(guesses, { capital: true }))}</>}
-        </p>
-      )}
+      {guesses !== null && <CardInstruction guesses={guesses} preview={preview} />}
     </>
+  );
+}
+
+// The instruction with the guess count, which follows the sentence: on its own where the sentence is a folded panel's
+// summary (ticket 101).
+export function CardInstruction({ guesses, preview = false }: { guesses: number; preview?: boolean }) {
+  return (
+    <p className="mt-1 text-small text-ink" data-instruction>
+      {preview ? words.preview : words.card.instruction}
+      {!preview && guesses > 0 && <> {words.card.guesses(guesses, formatCount(guesses, { capital: true }))}</>}
+    </p>
   );
 }
 

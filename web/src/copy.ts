@@ -3975,6 +3975,8 @@ export const copy = {
       // The flush button after a pressed number's count line, which shows every row again.
       showAll: (total: string) => `Show all ${total}`,
       caption: (total: string) => `All ${total} comparable packages, shortest first.`,
+      // While a pressed number filters the rows, the count line says which show, so the title claims no "All".
+      captionFiltered: "Comparable packages, shortest first.",
       captionOne: "The one comparable package.",
       noun: "packages",
       nounOne: "package",
@@ -4324,6 +4326,7 @@ export const copy = {
     waiting: "I'll list the options after you add your plan in section 1, or choose to see the past range without it.",
     empty: "I can't compare approaches for this package, because I have no comparable packages I can measure.",
     error: "I couldn't load the approach options.",
+    sectionFailed: "I'll list approach options when the comparable packages in section 1 load.",
     tryAgain: "Try again",
   },
 
@@ -4385,6 +4388,10 @@ export const copy = {
       instruction: "Choose any part to change it.",
       guesses: (count: number, words: string) => (count === 1 ? `${words} guess to check.` : `${words} guesses to check.`),
       noGuesses: "No guesses left to check.",
+      // A package reopened with its plan set starts with the panel folded to your sentence, so zone 1's finding leads
+      // the first screen (ticket 101's critique).
+      show: "Show what I understood",
+      hide: "Hide what I understood",
     },
     // A chip's words, by the kind of its field. The suffixes say a chip's state in words (DESIGN.md section 10).
     chip: {
@@ -5347,7 +5354,8 @@ export const copy = {
     intro:
       "Lessons from completion reports that a lead procurement specialist added to the library. I rank them by how well they fit this package and how strong their evidence is, never by how often people open them.",
     groups: { cost_estimates: "Cost estimates", designs_and_specifications: "Specifications" } as Record<string, string>,
-    eyebrow: "Why · evaluation",
+    // The drawer's card form, the one word, so zone 5 shows no middle-dot label (ticket 101's design review, item 12).
+    eyebrow: "Why",
     quoted: (quote: string) => `"${quote}"`,
     sourceLead: "Source:",
     // The first ICR and IEG on the screen are spelled out (DESIGN.md section 7, rule 22).

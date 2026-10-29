@@ -37,6 +37,7 @@ export function PageHead({
   title,
   titleRef,
   loading = false,
+  narrowLines = 2,
   id,
   idAction,
   meta,
@@ -58,6 +59,9 @@ export function PageHead({
   title: ReactNode;
   titleRef?: Ref<HTMLHeadingElement>;
   loading?: boolean;
+  // How many h1 lines the skeleton holds below a 48rem page area, where a long title wraps more, such as a package's
+  // Description (3; ticket 101's design review). From 48rem it holds two.
+  narrowLines?: number;
   // An object's ID, such as its STEP reference.
   id?: string;
   // What follows the ID on its line, such as the copy key that copies it (ticket 112; the package page, ticket 101).
@@ -90,7 +94,8 @@ export function PageHead({
             },
             loading ? (
               <>
-                <SkeletonText className="text-h1" widths={["w-full", "w-3/5"]} />
+                <SkeletonText className="text-h1 @md/page:hidden" widths={[...Array.from({ length: narrowLines - 1 }, () => "w-full"), "w-3/5"]} />
+                <SkeletonText className="hidden text-h1 @md/page:flex" widths={["w-full", "w-3/5"]} />
                 <LoadingLabel />
               </>
             ) : (
@@ -111,9 +116,14 @@ export function PageHead({
             </div>
           )}
           {purpose != null && <p className="mt-3 max-w-prose text-body text-pretty text-ink-muted">{purpose}</p>}
+          {/* The facts line's place: below a 48rem page area its two lines over "Show the plan row"'s 44 px row, from
+              48rem one row (ticket 101's design review). */}
           {facts && loading && (
-            <div data-facts-line aria-hidden="true" className="mt-3 flex min-h-11 items-center">
-              <SkeletonLine className="text-small" width="w-4/5" />
+            <div data-facts-line aria-hidden="true" className="mt-3">
+              <SkeletonText className="text-small @md/page:hidden" widths={["w-full", "w-2/5"]} />
+              <div className="flex min-h-11 items-center">
+                <SkeletonLine className="hidden text-small @md/page:flex" width="w-4/5" />
+              </div>
             </div>
           )}
           {facts && !loading && (

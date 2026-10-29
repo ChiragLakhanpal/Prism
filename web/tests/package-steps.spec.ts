@@ -82,6 +82,10 @@ test("collapsed by default, the summary takes its step count and ran-longest cou
   await expect(disclosure(page)).toHaveText("Hide the steps");
   await expect(disclosure(page)).toBeFocused();
   await expect(view(page)).toBeVisible();
+  // The opened zone ends its evidence in its foot strip, as zones 1 and 3 do: provenance has one place (ticket 101's
+  // design review, item 6).
+  await expect(section(page).locator("[data-foot-strip] [data-step-notes]")).toBeVisible();
+  await expect(section(page).locator("[data-section-body] [data-step-notes]")).toHaveCount(0);
   await page.keyboard.press("Space");
   await expect(disclosure(page)).toHaveAttribute("aria-expanded", "false");
   await expect(disclosure(page)).toHaveText("Show the steps");

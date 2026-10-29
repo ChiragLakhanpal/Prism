@@ -181,7 +181,7 @@ test("with fewer than 20 comparable packages and none advertised again, only the
   await openPackage(page, { rebidding: "rebidding-ke-nwwda-541055-prior.json", comparables: "comparables-ke-nwwda-541055-prior.json" });
   await expect(block(page)).toHaveAttribute("data-rebidding", "none");
 
-  expect(await text(page, "[data-rebid-count]")).toBe("I found no sign that any of the 7 comparable packages were advertised again.");
+  expect(await text(page, "[data-rebid-count]")).toBe("I found no sign that any of the seven comparable packages were advertised again.");
   expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate: I give one only from 20 or more comparable packages.");
   expect(await block(page).innerText()).not.toMatch(/%|percent| in 10/);
   await expect(disclosure(page)).toHaveCount(0);

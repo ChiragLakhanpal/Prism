@@ -113,6 +113,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         title={stepRef}
         id={stepRef}
         loading
+        narrowLines={3}
         purpose={copy.pages.package.purpose}
         facts={{ line: null, show: words.factsShow, onShow: () => undefined }}
       />
@@ -221,7 +222,6 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             section.status === "ready" ? { status: "ready", result: section.data } : { status: section.status },
             estimate,
             false,
-            retrySection,
           )}
         />
         <StageLabel>{words.stages.tender}</StageLabel>

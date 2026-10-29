@@ -1441,11 +1441,19 @@ function ComparablesTable({
       <Table
         title={
           <span ref={captionRef} tabIndex={-1} className="focus:outline-none" data-table-caption>
-            {total === 1 ? t.captionOne : t.caption(spelled(total))}
+            {total === 1 ? t.captionOne : filter ? t.captionFiltered : t.caption(spelled(total))}
           </span>
         }
         level={4}
-        count={{ noun: t.noun, one: t.nounOne, total, from: from + 1, to: from + shown.length, text: filter?.line }}
+        count={{
+          noun: t.noun,
+          one: t.nounOne,
+          total,
+          from: from + 1,
+          to: from + shown.length,
+          // Every row of a few, one to nine in words, as the finding counts them (DESIGN.md section 7, rule 12).
+          text: filter?.line ?? (!paged && total > 1 && total < 10 ? copy.table.showingAll(spelled(total), t.noun) : undefined),
+        }}
         countRef={countRef}
         countAction={
           filter && (

@@ -271,8 +271,10 @@ test("below 20 comparables the cost estimate abstains in the first person and li
   await openSection(page);
 
   const part = section(page).locator("[data-criteria-part=cost]");
+  // A count standing alone is one to nine in words (DESIGN.md section 7, rule 12; ticket 101's design review).
+  const alone = (n: number) => (n >= 1 && n <= 9 ? ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"][n - 1] : String(n));
   await expect(part.locator("[data-cost-abstain]")).toHaveText(
-    copy.cost.abstain.replaceAll("{m}", String(run.cost.rows.length)),
+    copy.cost.abstain.replaceAll("{m}", alone(run.cost.rows.length)),
   );
   await expect(part.locator("[data-cost-title]")).toHaveText(
     copy.cost.title.replace("{above}", String(run.cost.counts.above)).replace("{m}", String(run.cost.counts.m)),
@@ -298,6 +300,8 @@ test("every disagreement check 6 attached to a lesson's quote shows under it, as
   await openSection(page);
 
   const card = section(page).locator("[data-criteria-part=lessons] [data-lesson-card]").first();
+  // Its label is the drawer card's one word, with no middle dot (ticket 101's design review, item 12).
+  await expect(card.locator("p").first()).toHaveText("Why");
   const cards = card.locator("[data-criteria-disagreement]");
   await expect(cards).toHaveCount(2);
   await expect(cards.first()).toContainText("ICR");

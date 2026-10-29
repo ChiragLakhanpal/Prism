@@ -30,20 +30,22 @@ export type ApproachOptionsState =
   | { kind: "loading" }
   | { kind: "waiting" }
   | { kind: "empty" }
+  // Section 1's comparables failed: zone 1's alert is the one place to try again, so this zone says it waits on them.
+  | { kind: "blocked" }
   | { kind: "error"; onRetry: () => void }
   | { kind: "ready"; comparables: ComparablesResult; estimate: EstimateResult };
 
 // The state section 4 takes from section 1's two answers and the page: the comparables, the time estimate, and
-// whether section 1 is still asking for the plan.
+// whether section 1 is still asking for the plan. A failed time estimate keeps its own "Try again"; failed comparables
+// are tried again from zone 1's alert.
 export function approachState(
   comparables: { status: "loading" } | { status: "error" } | { status: "ready"; result: ComparablesResult },
   estimate: EstimateState | undefined,
   waiting: boolean,
-  onRetry: () => void,
 ): ApproachOptionsState {
   if (waiting) return { kind: "waiting" };
   if (comparables.status === "loading") return { kind: "loading" };
-  if (comparables.status === "error") return { kind: "error", onRetry };
+  if (comparables.status === "error") return { kind: "blocked" };
   const reason = comparables.result.abstention?.reason;
   if (reason === "no_comparables" || reason === "none_measurable" || reason === "no_public_notice" || reason === "unknown_package") {
     return { kind: "empty" };
@@ -241,6 +243,8 @@ export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
   if (state.kind === "loading") shown = "loading";
   else if (state.kind === "waiting") summary = words.waiting;
   else if (state.kind === "empty") summary = words.empty;
+  // One failed request draws one alert and one "Try again", in zone 1 (ticket 101's design review, item 8).
+  else if (state.kind === "blocked") summary = words.sectionFailed;
   else if (state.kind === "error") {
     shown = "error";
     error = (

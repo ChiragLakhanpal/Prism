@@ -609,7 +609,7 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
       );
     case "no_reports":
       return (
-        <EmptyCard title={result.p === 1 ? e.noReportsOne : <Fill template={e.noReports} slots={{ p: <Num value={result.p ?? 0} options={{ compact: false }} /> }} />}>
+        <EmptyCard title={result.p === 1 ? e.noReportsOne : <Fill template={e.noReports} slots={{ p: <Num count={result.p ?? 0} /> }} />}>
           <p className="mt-2 max-w-prose text-body text-ink">{e.noReportsBody}</p>
           <p className="mt-2">
             <TextLink href={readiness}>{e.noReportsLink}</TextLink>

@@ -196,19 +196,22 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
   // Each count comes from every record set the tool read (a package canceled in the Procurement Plan comes from the
   // plan's rows, in Documents & Reports) and, when any was advertised again, opens the list below (ticket 96).
   const records = recordsFrom(result.sources, result.records_through, result.sources.map((source) => source.key));
-  const count = (value: number, tooltip: string, act: string) => {
+  // A count standing alone is one to nine in words; "{n} of the {m}" keeps its numerals (DESIGN.md section 7, rule 12).
+  const count = (value: number, tooltip: string, act: string, alone = false) => {
     const base = { tooltip, from: records ? <FromLine words={records} /> : undefined };
-    return <Num value={value} options={{ compact: false }} check={n > 0 ? { ...base, act, opens: "rows", onOpen: toRows } : base} />;
+    const check = n > 0 ? { ...base, act, opens: "rows" as const, onOpen: toRows } : base;
+    return alone ? <Num count={value} check={check} /> : <Num value={value} options={{ compact: false }} check={check} />;
   };
   const nNum = count(n, words.tips.n, words.tips.nAct);
   const mNum = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct);
+  const mAlone = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct, true);
   const sentence =
     n === 0 ? (
-      <Fill template={words.countNone} slots={{ m: mNum }} />
+      <Fill template={words.countNone} slots={{ m: mAlone }} />
     ) : n === m ? (
-      <Fill template={words.countAll} slots={{ m: mNum }} />
+      <Fill template={words.countAll} slots={{ m: mAlone }} />
     ) : n === 1 ? (
-      <Fill template={words.countOne} slots={{ m: mNum }} />
+      <Fill template={words.countOne} slots={{ m: mAlone }} />
     ) : (
       <Fill template={words.count} slots={{ n: nNum, m: mNum }} />
     );
@@ -243,7 +246,7 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
             onClick={() => setOpen((now) => !now)}
             data-rebid-disclosure
           >
-            {open ? (n === 1 ? words.listHideOne : words.listHide) : n === 1 ? words.listShowOne : <Fill template={words.listShow} slots={{ n: String(n) }} />}
+            {open ? (n === 1 ? words.listHideOne : words.listHide) : n === 1 ? words.listShowOne : <Fill template={words.listShow} slots={{ n: formatCount(n) }} />}
           </Button>
         </div>
       ) : (

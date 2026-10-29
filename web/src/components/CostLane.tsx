@@ -492,7 +492,7 @@ export function CostEstimate({ cost, readinessHref, asOf = null }: {
       </p>
       {abstain && (
         <p className="max-w-prose text-body text-pretty text-ink" data-cost-abstain>
-          {cost.counts.m === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ m: <Num value={cost.counts.m} /> }} />}
+          {cost.counts.m === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ m: <Num count={cost.counts.m} /> }} />}
         </p>
       )}
       <p className="text-chart-text-subtle" style={{ fontSize: type.m }}>{words.subtitle}</p>

@@ -31,6 +31,7 @@ export function CollapsedSection({
   busy = false,
   sectionKey,
   live,
+  foot,
 }: {
   id?: string;
   tag?: ReactNode;
@@ -52,6 +53,8 @@ export function CollapsedSection({
   // A polite live region inside the section and outside its body, present before any text changes, so it speaks
   // whether the section is open or not (ticket 27's section 2).
   live?: ReactNode;
+  // The Foot strip that ends the opened zone's evidence: its note, coverage line and source line (ticket 101).
+  foot?: ReactNode;
 }) {
   return (
     <TaskZone
@@ -67,6 +70,7 @@ export function CollapsedSection({
       busy={busy}
       sectionKey={sectionKey}
       live={live}
+      foot={foot}
       marks={{ "data-collapsed-section": open ? "open" : state === "ready" ? "collapsed" : state }}
       className="scroll-mt-24"
     >

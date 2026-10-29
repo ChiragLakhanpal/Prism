@@ -182,7 +182,7 @@ test("on the fixture's Kenya comparables the section says no completion report c
 
   // Ticket 101: holding only its sentence and one link, zone 3 is a row.
   await expect(section(page)).toHaveAttribute("data-zone", "row");
-  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
+  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the three projects with comparable packages has a completion report I could read.");
   await expect(section(page).getByRole("link", { name: "See which completion reports I have read" })).toHaveAttribute(
     "href",
     "/data?sources=notices,awards,documents,projects&from=package_risks",
@@ -217,7 +217,7 @@ test("the rural roads package from a sentence reaches no completion report on th
   await openPlanned(page, { body: await recorded("risks-planned-rural-roads.json") });
 
   await expect(section(page).locator("[data-zone-tag]")).toHaveText("PPSD section 3");
-  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the 3 projects with comparable packages has a completion report I could read.");
+  await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the three projects with comparable packages has a completion report I could read.");
 });
 
 test("on a package from a sentence, a selection saves with the package under the saved stamp", async ({ page }) => {

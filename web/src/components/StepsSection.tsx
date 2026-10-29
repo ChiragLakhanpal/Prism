@@ -53,6 +53,7 @@ import { SegmentedControl } from "./SegmentedControl";
 import { Source } from "./Source";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
+import { FootStrip } from "./FootStrip";
 
 const words = copy.stepDates;
 const SLOW_MS = 400;
@@ -374,7 +375,7 @@ function abstention(row: Row, recordsDate: string): ReactNode {
   const n = row.step.comparables_n ?? 0;
   switch (row.step.abstain_reason) {
     case "few_comparables":
-      return n === 0 ? words.abstainNone : n === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ n: number(n) }} />;
+      return n === 0 ? words.abstainNone : n === 1 ? words.abstainOne : <Fill template={words.abstain} slots={{ n: <Num count={n} /> }} />;
     case "not_reached": {
       const reached = row.step.reached_n ?? 0;
       const slots = { reached: number(reached), n: number(n), date: <Num date={recordsDate} /> };
@@ -773,7 +774,8 @@ function Notes({ dates, family, choice, kind, result, asOf, from }: { dates: Ste
   const plain = (value: number) => <Num value={value} options={{ compact: false }} />;
   const date = asOf ?? result.records_through;
   return (
-    <div className="mt-4 flex max-w-prose flex-col gap-2 text-caption text-ink-muted" data-step-notes>
+    // In the zone's foot strip (ticket 101's design review), which gives it its place and its caption type.
+    <div className="flex max-w-prose flex-col gap-2 text-caption text-ink-muted" data-step-notes>
       {family.abbreviation_note && <p>{family.abbreviation_note}</p>}
       {track && (
         <p data-track-record>
@@ -963,9 +965,15 @@ export function StepsView({
             />
           </div>
         </div>
-        <Notes dates={dates} family={family} choice={choice} kind={kind} result={result} asOf={asOf} from={from} />
       </div>
     ) : null;
+  // The zone's note, coverage line and source line end it in its foot strip, as zones 1 and 3 end theirs (ticket 101).
+  const foot =
+    state.status !== "loading" && dates && family && result ? (
+      <FootStrip>
+        <Notes dates={dates} family={family} choice={choice} kind={kind} result={result} asOf={asOf} from={from} />
+      </FootStrip>
+    ) : undefined;
   return (
     <CollapsedSection
       id="planned-dates"
@@ -983,6 +991,7 @@ export function StepsView({
       busy={state.status === "loading" && open}
       headingRef={headingRef}
       sectionKey="steps"
+      foot={foot}
       live={
         <p className="sr-only" role="status" aria-live="polite">
           {announce}

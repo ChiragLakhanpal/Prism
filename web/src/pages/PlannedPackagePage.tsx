@@ -22,7 +22,8 @@ import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { ExampleNote } from "../components/ExampleNote";
 import { EditorBody, EditorSheet } from "../components/ChipEditor";
-import { CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, ruleSentence, valueText } from "../components/Criteria";
+import { CardInstruction, CardTop, ChipGroups, ChipSkeletons, ComputedNote, CriterionChip, RefusalAlert, ruleSentence, valueText } from "../components/Criteria";
+import { FootStrip } from "../components/FootStrip";
 import { Fill } from "../components/Fill";
 import { Num } from "../components/Num";
 import { ApproachOptions, approachState } from "../components/ApproachOptions";
@@ -242,11 +243,38 @@ function Header({
 const packagesOnly = [{ text: words.breadcrumbPackages, href: "/packages" }];
 
 // "What I understood" (the 15 brief): the sentence, the chips and the computed note, in an unnumbered Task zone panel
-// before zone 1 (ticket 101), named by the zone's h2, whose id the editor and links name.
-function UnderstoodZone({ children }: { children: ReactNode }) {
+// before zone 1 (ticket 101), named by the zone's h2, whose id the editor and links name. The computed note and its
+// source line end it in its foot strip. A package reopened with its plan set folds it (fold): a row holding the
+// sentence you wrote and "Show what I understood", which opens the chips in place as a panel, so zone 1's finding
+// leads the first screen (ticket 101's critique).
+function UnderstoodZone({
+  children,
+  foot,
+  fold,
+}: {
+  children: ReactNode;
+  foot?: ReactNode;
+  fold?: { open: boolean; onToggle: () => void; summary: ReactNode };
+}) {
+  const strip = foot != null && <FootStrip>{foot}</FootStrip>;
+  if (fold) {
+    return (
+      <TaskZone
+        name={words.card.heading}
+        headingId="what-i-understood"
+        sectionKey="understood"
+        marks={{ "data-criteria-card": "" }}
+        summary={fold.summary}
+        toggle={{ open: fold.open, onToggle: fold.onToggle, show: words.card.show, hide: words.card.hide }}
+        foot={strip || undefined}
+      >
+        {children}
+      </TaskZone>
+    );
+  }
   return (
     <TaskZone name={words.card.heading} headingId="what-i-understood" panel sectionKey="understood" marks={{ "data-criteria-card": "" }}>
-      <ZoneBlock data-block="understood">
+      <ZoneBlock data-block="understood" foot={strip || undefined}>
         <div>{children}</div>
       </ZoneBlock>
     </TaskZone>
@@ -510,6 +538,12 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
   const planTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const editorHeading = useId();
   const plan = typeof valueOf(pkg, "plan_months") === "number" ? (valueOf(pkg, "plan_months") as number) : null;
+  // A package reopened with its plan set and nothing missing starts with What I understood folded, so the finding leads
+  // (ticket 101's critique). One whose plan you set while you read keeps the panel open, so nothing above zone 1 moves.
+  const [folds] = useState(
+    () => typeof valueOf(initial.package, "plan_months") === "number" && initial.package.missing.length === 0 && !initial.package.refusal,
+  );
+  const [understoodOpen, setUnderstoodOpen] = useState(false);
   // Ticket 26: estimate_time for the package as saved, read again when a save changes what describes it.
   const [describedKey, setDescribedKey] = useState(() => estimateKey(initial.package));
   const estimatePath = pkg.comparables_query ? `/api/planned-packages/${encodeURIComponent(pkg.package_id)}/estimate` : null;
@@ -865,13 +899,27 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
           </>
         }
       >
-        <UnderstoodZone>
-          <CardTop sentence={pkg.sentence} guesses={pkg.guesses} preview={preview} named={false} />
+        <UnderstoodZone
+          foot={<ComputedNote pkg={pkg} form={form} inStrip />}
+          fold={
+            folds
+              ? {
+                  open: understoodOpen,
+                  onToggle: () => setUnderstoodOpen((now) => !now),
+                  summary: <CardTop sentence={pkg.sentence} guesses={null} preview={preview} named={false} />,
+                }
+              : undefined
+          }
+        >
+          {folds ? (
+            pkg.guesses !== null && <CardInstruction guesses={pkg.guesses} preview={preview} />
+          ) : (
+            <CardTop sentence={pkg.sentence} guesses={pkg.guesses} preview={preview} named={false} />
+          )}
           {pkg.refusal === "dividing" && <RefusalAlert />}
           <div className="mt-4">
             <ChipGroups form={form} chip={chip} />
           </div>
-          <ComputedNote pkg={pkg} form={form} />
         </UnderstoodZone>
         <StageLabel>{copy.packagePage.stages.planning}</StageLabel>
         {/* Zone 1, the past range, read from the criteria that pick comparables. */}
@@ -931,7 +979,6 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
                   section.status === "ready" ? { status: "ready", result: section.result } : section.status === "error" ? { status: "error" } : { status: "loading" },
                   estimate,
                   prompting,
-                  () => fetchComparables(pkg),
                 )
           }
         />

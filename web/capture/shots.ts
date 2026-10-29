@@ -1466,7 +1466,8 @@ const PACKAGE_SHOTS: Shot[] = [
     },
     api: { "/api/evidence": { recorded: "evidence-plan-row-ke-nwwda-541055.json" }, "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' } },
   }),
-  packageShot("package--pressed-within", comparables(COMPARABLES), { widths: [1440, 390], act: click("[data-finding] button[data-num]") }),
+  // At 1024 px too, where the filtered rows are a table (ticket 101's design review: the filtered state at three widths).
+  packageShot("package--pressed-within", comparables(COMPARABLES), { widths: [1440, 1024, 390], act: click("[data-finding] button[data-num]") }),
   packageShot("package--error", null, {}, { status: 503, body: SERVICE_DOWN }),
   packageShot("package--not-found", null, {}, { status: 404, body: '{"code":"unknown_package"}' }, "/packages/KE-NWWDA-000000-CW-RFB"),
   packageShot("package--moved", comparables(COMPARABLES), { widths: wideAndNarrow, act: type("[data-plan-control] input", "6") }),

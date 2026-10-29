@@ -1182,6 +1182,32 @@ test("from 768 px the heading's skeleton holds the Description's two lines, so t
   }
 });
 
+// Below 768 px the head holds the demo package's three h1 lines and its facts line's two lines over the 44 px row of
+// "Show the plan row", so zone 1 stays put when the package arrives (DESIGN.md section 1, principle 5; ticket 101's
+// design review, item 3).
+test("below 768 px the head's skeleton holds the package's h1 and facts line, so zone 1 stays put when the package arrives", async ({ page }) => {
+  for (const width of [390, 320]) {
+    let answer: () => void = () => {};
+    const arrived = new Promise<void>((resolve) => (answer = resolve));
+    await openPackage(page, { width, height: 844, pkg: null });
+    await page.unroute(`**${API}`);
+    await page.route(`**${API}`, async (route) => {
+      await arrived;
+      await route.fulfill({ contentType: "application/json", body: await recorded("package-ke-nwwda-541055.json") });
+    });
+    await page.reload();
+    const top = () => page.locator("[data-zones]").evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    await expect(page.locator("[data-page-head] [data-facts-line]")).toBeAttached();
+    const held = await top();
+
+    answer();
+    await expect(page.locator("main h1")).toContainText("Equipping of Exploratory");
+    await expect(page.locator("[data-page-head] [data-facts-line] button")).toBeVisible();
+    // At 320 px the facts line wraps to a third line, which a hold for 390 px leaves out: one small line, 20 px.
+    expect(Math.abs((await top()) - held), `${width} px`).toBeLessThanOrEqual(width === 320 ? 20 : 8);
+  }
+});
+
 test("the section's skeleton holds the chart where the chart arrives, with the summary first below 768 px", async ({ page }) => {
   for (const width of [390, 1440]) {
     let answer: () => void = () => {};
@@ -1731,14 +1757,38 @@ for (const [width, height] of [
     const refs = view.locator("tbody th, li > :first-child");
     await expect(refs).toHaveText(WITHIN_PLAN);
     await expect(refs.first()).toBeInViewport({ ratio: 1 });
+    // While filtered the title claims no "All 49": the count line says which rows show (ticket 101's critique, 7a).
+    const title = table.locator("[data-table-caption]").last();
+    await expect(title).toHaveText("Comparable packages, shortest first.");
 
     await all.click();
+    await expect(title).toHaveText("All 49 comparable packages, shortest first.");
     await expect(count).toHaveText("Showing 1–20 of 49 packages");
     await expect(count).toBeFocused();
     await expect(refs).toHaveCount(20);
     await expect(table.getByRole("button", { name: "Show all 49" })).toHaveCount(0);
   });
 }
+
+// A keyboard press carries focus down to the count line, so the line shows the focus ring every control shows; a
+// pointer's press shows none (ticket 101's design review, item 4).
+test("a number pressed from the keyboard lands on a count line that shows its focus ring, and a click shows none", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  const two = section(page).locator("[data-finding]").getByRole("button", { name: "2", exact: true });
+  const count = section(page).locator("[data-comparables-table] [data-count-row] p").first();
+  const ring = () => count.evaluate((el) => getComputedStyle(el).outlineStyle);
+  await two.focus();
+  await page.keyboard.press("Enter");
+  await expect(count).toBeFocused();
+  expect(await ring()).not.toBe("none");
+
+  await section(page).getByRole("button", { name: "Show all 49" }).click();
+  await section(page).getByRole("button", { name: "Hide the table" }).click();
+  await two.click();
+  await expect(count).toBeFocused();
+  expect(await ring()).toBe("none");
+});
 
 test("only a pressed number filters the table: hidden and shown again, it lists every package", async ({ page }) => {
   await openPackage(page);
@@ -1916,6 +1966,8 @@ test("below 20 comparables the sentence that holds back is zone 1's finding, the
   await expect(page.locator("[data-chart-drawing] :is([data-band], [data-middle], [data-in10])")).toHaveCount(0);
   await expect(section(page).getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   await expect(section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody tr, li")).toHaveCount(7);
+  // One to nine in words, as the finding writes the count (DESIGN.md section 7, rule 12; ticket 101's design review).
+  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing all seven packages");
 });
 
 // How far apart, in pixels, the tops of a phrase's characters sit inside an element, with a no-break space read as a
@@ -1982,6 +2034,13 @@ test("when the past range fails, zone 1 shows the error alert under its header a
   expect(head.y + head.height).toBeLessThanOrEqual(error.y);
   expect(error.y).toBeLessThan(again.y);
   await expect(zone.locator("[data-rebid-count]")).toHaveText("3 of the 52 comparable packages were advertised again.");
+  // Zone 4 waits on the same request, so it says so in one sentence, and zone 1's alert is the one place to try again
+  // (ticket 101's design review, item 8).
+  const options = page.locator("[data-approach-options]");
+  await expect(options).toHaveAttribute("data-zone", "row");
+  await expect(options.locator("[data-section-summary]")).toHaveText("I'll list approach options when the comparable packages in section 1 load.");
+  await expect(options.getByRole("button")).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveCount(1);
 });
 
 for (const [width, open, least] of [
