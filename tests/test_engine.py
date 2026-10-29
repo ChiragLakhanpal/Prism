@@ -8,8 +8,11 @@ runs the real thing.
 import datetime as dt
 import http.client
 import io
+import json
 import urllib.error
 import urllib.request
+from decimal import Decimal
+from pathlib import Path
 
 import pytest
 
@@ -71,6 +74,43 @@ def test_the_warehouse_engine_waits_for_a_running_statement_and_reads_every_chun
     assert [call[:2] for call in warehouse.calls[1:]] == [
         ("GET", "/api/2.0/sql/statements/s-1"), ("GET", "/api/2.0/sql/statements/s-1/result/chunks/1")]
     assert result.as_text() == [("ISR 7", "2016-08-26"), ("ISR 12", "2018-04-10")]
+
+
+# The warehouse's answer to one statement with a column of each type, every value written as text (ticket 128).
+EVERY_TYPE = json.loads((Path(__file__).parent / "fixtures" / "warehouse" / "every_type.json").read_text())
+
+
+def every_type_on_the_warehouse():
+    return WarehouseEngine("wh-1", FakeWarehouse([EVERY_TYPE["reply"]])).run(EVERY_TYPE["statement"])
+
+
+@pytest.mark.parametrize("column, value", [
+    ("contracts", 2), ("version", 2), ("pdf_page", 23), ("lots", 1),
+    ("estimated_amount_usd", Decimal("1230000.00")), ("share", 0.25), ("weight", 0.5), ("latest", True),
+    ("document_date", dt.date(2016, 5, 16)), ("fetched_at", dt.datetime(2026, 10, 23, 23, 30, tzinfo=dt.UTC)),
+    ("made_at", dt.datetime(2026, 10, 23, 23, 30)), ("document_type", "ISR")])
+def test_the_warehouse_engine_types_each_value_as_the_manifest_names_its_column_and_keeps_null_as_none(column, value):
+    """Ticket 128: the warehouse writes "2" for an INT, so the engine reads every value by its column's type."""
+    result = every_type_on_the_warehouse()
+    written, empty = (dict(zip(result.columns, row, strict=True))[column] for row in result.rows)
+
+    assert (type(written), written) == (type(value), value)
+    if isinstance(value, dt.datetime):  # a TIMESTAMP keeps its zone, and a TIMESTAMP_NTZ has none
+        assert written.utcoffset() == value.utcoffset()
+    assert empty is None
+
+
+def test_duckdb_and_the_warehouse_give_the_same_python_values_for_the_same_columns():
+    """A page that works on the fixture works on the workspace: one statement, the same types from both engines."""
+    with DuckDBEngine.open() as engine:
+        fixture = engine.run(EVERY_TYPE["statement"])
+    warehouse = every_type_on_the_warehouse()
+
+    assert warehouse.columns == fixture.columns
+    assert [[type(value) for value in row] for row in warehouse.rows] == \
+        [[type(value) for value in row] for row in fixture.rows]
+    assert warehouse.rows == fixture.rows
+    assert warehouse.as_text() == fixture.as_text()
 
 
 def test_a_statement_the_warehouse_refuses_raises_its_reason():
