@@ -4324,3 +4324,30 @@ Record the exit code, the App's address and what `/data` showed here under ticke
 ## Tickets 58 and 59, the App redeploy ran: the App runs 357c30b9
 
 **Ran on October 28, 2026 (orchestrator), from a snapshot of 357c30b9.** `ops/app/deploy_app.py --keep-secrets` exited 0 with the running line; the watchdog holds 357c30b9; the local copy moved to the same commit and answers at http://127.0.0.1:50263 (`.notes/local-run.md`). The App carries the polish tickets 58 (copy and wording across screens) and 59 (layout, spacing, skeletons and wrapping) over every redesign page; 60 (accessibility) follows with the wave's last redeploy. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 58, step 1 of 3: sync the orchestrator agent, since its instructions changed
+
+Parked on October 29, 2026 with ticket 58, which merged into build/strata as 37499409 (branch `strata/58-copy-and-wording-across-screens` at fab7f107). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs these three steps, one at a time and in this order, from a snapshot that includes this merge (37499409, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`).
+
+What ticket 58 changes for the agent: `src/strata/agent/instructions/orchestrator.md` now has the agent write a STEP reference with no quote marks, so the screen can set it in Roboto Mono. The verifier also gains the reason `beyond_abstention` and the counts `sources.uncited`, `shown.sources` and `judge.on_abstention`; these run in the App, not in Foundry. Run from the snapshot:
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked if the first run makes a new version of strata-orchestrator, the second reports no difference, and `--check` reports no drift and exits 0. Record the version number here under ticket 58.
+
+## Ticket 58, step 2 of 3: deploy the bundle, so the dashboards and the sources' covers carry the new words
+
+Parked on October 29, 2026 with ticket 58 (merge 37499409). Run after step 1, from the same snapshot. What changes: both `bundle/dashboards/*.lvdash.json` files and `src/strata/dashboard/copy.json` give the new reason `beyond_abstention` its words ("Said more than my tools reported"), and `config/sources.toml`'s `covers` lines read "fiscal 2001 to 2016" (it was "fiscal 2001–16"), "appraisal, status and completion reports and reviews, Project Papers and Project Performance Assessment Reports" and "scope and qualification text of the notices", which the coverage sentences on Data readiness use. No table changed.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if it exits 0, its "3. What changed:" names the two dashboards and no table for this ticket, and the Data readiness tile on the workspace dashboard shows the new covers text ("fiscal 2001 to 2016", with no en dash). As after the deploys of tickets 121 to 123, put the nightly window back to 18000 seconds afterwards (ticket 108's step 2 has the command). Record the exit code and the "3. What changed:" lines here under ticket 58.
+
+## Ticket 58, step 3 of 3: the App's two checks, since the App redeploy already ran
+
+The builder's third step was the App redeploy (`uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets`). The orchestrator ran it at 11:52 PDT on October 29, 2026 from a snapshot of 357c30b9, which holds this merge (the block "Tickets 58 and 59, the App redeploy ran" above). What ticket 58 changed on the App: the wording on every screen the ticket's Items name, the check line and steps for an answer with no cited sentence, the count lines, and `GET /api/packages/{step_reference}`, which now returns the project's `display_name` beside the tool's own `project_name`. That block records neither of the builder's two checks. Make them on the App, signed in, and record them here under ticket 58:
+
+- `GET /api/packages/KE-NWWDA-541055-CW-RFB` returns `package.display_name` "Water and Sanitation Development".
+- On Data readiness, the shelf window's Layout parser row still shows `ai_parse_document` in mono, since the live parser keeps its registry name (only the offline parser reads "My offline substitute").
