@@ -420,6 +420,14 @@ test("a card's Process status takes its full width, as Method does, so STEP's Pe
     await expect(status).toHaveText("Pending Implementation");
     expect(await status.evaluate(textLines), `${width} px`).toBe(1);
   }
+  // Ticket 59: the card's Description is in ink-muted and its reason in ink, so the reason reads as the finding.
+  await page.setViewportSize({ width: 390, height: 900 });
+  const color = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => getComputedStyle(element).color);
+  const description = card.locator("article > p").filter({ hasText: "Equipping of Exploratory" });
+  await expect(description).toBeVisible();
+  // ink-muted, #4b5e71, and ink, #181f25 (app.css).
+  expect(await color(description)).toBe("rgb(75, 94, 113)");
+  expect(await color(card.locator("article > div > p").first())).toBe("rgb(24, 31, 37)");
 });
 
 test("from 1024 px the header sticks and focused rows stay 8 px clear of it; below 1024 px it scrolls away", async ({ page }) => {
@@ -675,13 +683,14 @@ function landing(ref: string) {
   };
 }
 
-test("a link that lands on any row leaves no row cut under the bar and the head at 1440 by 900, 1440 by 700, 1024 by 768 and 320 by 568", async ({ page }) => {
+test("a link that lands on any row leaves no row cut under the bar and the head at 1440 by 900, 1440 by 700, 1024 by 768, 1024 by 600 and 320 by 568", async ({ page }) => {
   const sizes: [number, number, number][] = [
     // Width, height, and how many parts stick: the bar and the head, the bar alone in a window under 50rem tall,
-    // and nothing below 1024 px.
+    // and nothing below 1024 px. Ticket 59's criterion 2 adds 1024 by 600.
     [1440, 900, 2],
     [1440, 700, 1],
     [1024, 768, 1],
+    [1024, 600, 1],
     [320, 568, 0],
   ];
   for (const [width, height, sticking] of sizes) {

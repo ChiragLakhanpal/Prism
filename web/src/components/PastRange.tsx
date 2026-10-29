@@ -59,7 +59,7 @@ import { MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { FromLine, fromText, planFrom, recordsFrom, wholeDate } from "./NumFrom";
 import { axisFor, chartType, RangeChart, type PlanMove, type RangeMark } from "./RangeChart";
-import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { Skeleton, SkeletonLine, SkeletonText, SkeletonWords } from "./Skeleton";
 import { Source } from "./Source";
 import { Table, type Column, type Row } from "./Table";
 import { TaskZone, ZoneBlock } from "./TaskZone";
@@ -123,6 +123,23 @@ function useWidth<T extends HTMLElement>(): [RefObject<T | null>, number] {
     return () => observer.disconnect();
   }, []);
   return [element, width];
+}
+
+// Whether the page's fonts have loaded: at once when they already have, as on every later visit, and otherwise when
+// document.fonts says they are ready.
+function useFontsReady(): boolean {
+  const [ready, setReady] = useState(() => typeof document === "undefined" || !document.fonts || document.fonts.status === "loaded");
+  useEffect(() => {
+    if (ready) return;
+    let live = true;
+    document.fonts.ready.then(() => {
+      if (live) setReady(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [ready]);
+  return ready;
 }
 
 // Ticket 15: a dot or a table row opens its comparable package in the evidence drawer, and the opened one
@@ -237,10 +254,10 @@ export function PastRange({
     setAnnounce(copy.timeEstimate.planDates.announce(formatNumber(months, { decimals: 1, compact: false })));
   }, [savedCount]);
   const populated = result !== null && !body && ["range", "dots", "abstention"].includes(kind(result));
+  // "Compare with" shows only with a given time estimate. Nothing holds its row while the estimate loads, since a
+  // held-back estimate, as on the demo package, draws none (ticket 59; the critique of round 2).
   let compareSlot: ReactNode = null;
-  if (populated && estimate?.status === "loading") {
-    compareSlot = <Skeleton className="h-8 w-60 rounded-pill" />;
-  } else if (populated && estimateResult && estimateResult.abstention === null && estimateResult.estimate) {
+  if (populated && estimateResult && estimateResult.abstention === null && estimateResult.estimate) {
     compareSlot = <CompareControl result={estimateResult} pressed={pressed} onPress={press} />;
   }
 
@@ -297,12 +314,7 @@ export function PastRange({
           </div>
         </ZoneBlock>
       ) : state.status === "loading" ? (
-        <ZoneBlock data-block="took">
-          <div>
-            {leadLine}
-            <PastRangeSkeleton twoLanes={estimate !== undefined} />
-          </div>
-        </ZoneBlock>
+        <PastRangeLoading lead={leadLine} twoLanes={estimate !== undefined} />
       ) : state.status === "error" ? (
         // A failed block's error alert takes the block's place; the header and "Advertised again" stay.
         <ZoneBlock data-block="took">
@@ -330,7 +342,10 @@ export function PastRange({
           pressedNumber={pressedNumber}
         />
       )}
-      {!body && state.status !== "loading" && (typeof after === "function" ? after(comparison !== null) : after)}
+      {/* The block after the result is drawn in every state but a body, the loading one too: it decides itself what
+          stands in its place while the section loads, its own skeleton or nothing, so the card ends where it will and
+          a rerun keeps it (ticket 59; the 28 review, follow-up 2; the critique of round 1). */}
+      {!body && (typeof after === "function" ? after(comparison !== null) : after)}
     </TaskZone>
   );
 }
@@ -645,6 +660,7 @@ function Populated({
   const [filter, setFilter] = useState<RowFilter | null>(() => (pressedNumber ? rowFilters(result)[pressedNumber] : null));
   const [measure, width] = useWidth<HTMLDivElement>();
   const narrow = usePageNarrow(measure);
+  const fontsReady = useFontsReady();
   const inputRef = useRef<HTMLInputElement>(null);
   const captionRef = useRef<HTMLSpanElement>(null);
   const countRef = useRef<HTMLParagraphElement>(null);
@@ -881,12 +897,14 @@ function Populated({
         months: dot.months,
         hollow: !dot.reached,
         beyond: !dot.reached,
-        name: [(dot.reached ? c.dotQuantile : c.dotQuantileOpen)(whole(dot.k), whole(total), months1(dot.months)), dotFrom, dotAct].filter(Boolean).join(" "),
+        name: [(dot.reached ? c.dotQuantile : c.dotQuantileOpen)(whole(dot.k), whole(quantile.length), whole(total), months1(dot.months)), dotFrom, dotAct]
+          .filter(Boolean)
+          .join(" "),
         tip: {
-          header: c.tipQuantile(whole(dot.k)),
+          header: c.tipQuantile(whole(dot.k), whole(quantile.length)),
           mono: false,
           number: dot.reached ? c.tipMonths(months1(dot.months)) : c.tipPast(months1(dot.months)),
-          line: dot.reached ? c.tipQuantileLine(whole(total)) : c.tipQuantileOpen,
+          line: dot.reached ? c.tipQuantileLine(whole(total), whole(quantile.length)) : c.tipQuantileOpen,
           from: dotFromTip,
         },
       }))
@@ -894,7 +912,7 @@ function Populated({
 
   const altParts = [
     quantile
-      ? c.altDots(whole(total), whole(axis.max))
+      ? c.altDots(whole(total), whole(quantile.length), whole(axis.max))
       : open > 0
         ? c.alt(spelled(total), whole(axis.max), spelled(counts.signed), spelled(open))
         : c.altAllSigned(spelled(total), whole(axis.max), spelled(counts.signed)),
@@ -988,7 +1006,9 @@ function Populated({
     </p>
   );
 
-  const chart = width > 0 && (
+  // The chart draws once the section has its width and the fonts have loaded, since its rows' heights come from its
+  // labels' widths in Open Sans; until then the placeholder holds its height (ticket 59; the 12 review, round 11, P1).
+  const chart = width > 0 && fontsReady && (
           <RangeChart
             readOnly={Boolean(figure)}
             width={width}
@@ -1017,7 +1037,7 @@ function Populated({
               in10: range?.q80 != null ? c.in10(months1(range.q80)) : null,
               axisLast: c.axisLast(whole(axis.max)),
               alt: altParts.join(" "),
-              group: quantile ? c.groupDots(whole(total)) : c.group(whole(total)),
+              group: quantile ? c.groupDots(whole(total), whole(quantile.length)) : c.group(whole(total)),
               groupHelp: opening ? (quantile ? c.groupHelpOpenDots : c.groupHelpOpen) : c.groupHelp,
               slider: c.slider,
               openHint: quantile ? c.openHintDots : c.openHint,
@@ -1053,7 +1073,7 @@ function Populated({
             }
           />
   );
-  const placeholder = width === 0 && <div style={{ height: estimate ? TWO_LANE_HEIGHT : CHART_HEIGHT }} />;
+  const placeholder = !(width > 0 && fontsReady) && <div style={{ height: estimate ? TWO_LANE_HEIGHT : CHART_HEIGHT }} data-chart-placeholder />;
 
   // Ticket 47: a slide shows the chart alone, read-only, or its table twin in the chart's place (the 47 brief,
   // section 4.4). The slide's own title states the finding, so there is no heading, plan control or summary here.
@@ -1118,7 +1138,7 @@ function Populated({
         {abstained && more}
         {narrow && <div className="mt-2">{summaryBlock}</div>}
         <p className="mt-2 text-ink-muted" style={{ fontSize: type.m }}>
-          {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total) }} /> : words.subtitle}
+          {quantile ? <Fill template={words.subtitleDots} slots={{ total: whole(total), dots: whole(quantile.length) }} /> : words.subtitle}
         </p>
         <div className="mt-4">{control}</div>
         {compare}
@@ -1130,6 +1150,17 @@ function Populated({
           <div className="mt-4 flex items-start gap-2" data-lane2-message="abstain">
             <CircleDashed aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-line-strong" />
             <p className="min-w-0 max-w-prose text-body text-ink">{heldBack}</p>
+          </div>
+        )}
+        {/* While the time estimate loads, the sentence of one that holds back keeps its place under the chart, unseen and
+            unheard, as the demo package draws it, so the chart and the card's end stay put (ticket 59; the critique of
+            round 2). A given estimate draws its track record here instead. */}
+        {estimate?.status === "loading" && (
+          <div aria-hidden="true" className="mt-4 flex items-start gap-2" data-lane2-message="loading">
+            <span className="size-5 shrink-0" />
+            <p className="min-w-0 max-w-prose text-body">
+              <SkeletonWords text={copy.timeEstimate.abstain.outsideOther} />
+            </p>
           </div>
         )}
         {!narrow && <div className="mt-4">{summaryBlock}</div>}
@@ -1298,11 +1329,9 @@ function PlanControl({
         </span>
         {resetButton(narrow ? "hidden" : "inline", false)}
       </div>
-      {/* One caption line is kept for the error, so it appears without moving the chart. */}
-      <p id={ids.error} className="mt-1 min-h-lh text-caption text-error">
-        {invalid && w.invalid(whole(maxMonths))}
-      </p>
-      <div className={narrow ? "grid" : "block"}>
+      {/* The helper sits right under the input it explains, and one caption line is kept under the helper for the
+          error, so the error appears between the helper and the chart without moving the chart (ticket 59). */}
+      <div className={cx("mt-1", narrow ? "grid" : "block")}>
       <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && narrow && "invisible")}>
         {planned ? (
           plan !== null ? w.helperPlanned : w.helperPlannedNone
@@ -1317,6 +1346,9 @@ function PlanControl({
       </p>
       {resetButton(cx("col-start-1 row-start-1 self-start", !narrow && "hidden"), true)}
       </div>
+      <p id={ids.error} className="mt-1 min-h-lh text-caption text-error">
+        {invalid && w.invalid(whole(maxMonths))}
+      </p>
     </div>
   );
 }
@@ -1502,53 +1534,95 @@ function ComparablesTable({
 
 // ── Loading ──────────────────────────────────────────────────────────────
 
-// Sized like the populated section at each width, in its order: below 768 px the summary comes right
-// after the title, and the helper's place is at least the reset button's height; from 768 px the summary follows
-// the chart. Its type sizes are the chart's own (chartType), read from the section's width, as the
-// populated section reads them.
-function PastRangeSkeleton({ twoLanes = false }: { twoLanes?: boolean }) {
+// The block while find_comparables answers: the skeleton in the block's body and the foot strip's three lines under
+// it, as the drawn block has its Note, coverage line and source line in its foot strip (ticket 101). The lines each part
+// takes are read from the block's own width, w, and set from the demo package's section at 320 to 1440 px, so the
+// chart starts within 24 px of the skeleton's and the block ends within 48 px of it (ticket 59).
+function PastRangeLoading({ lead, twoLanes }: { lead: ReactNode; twoLanes: boolean }) {
   const [measure, width] = useWidth<HTMLDivElement>();
-  const type = chartType(width || 800);
-  const lines = (count: number, last = "w-3/5") => Array.from({ length: count }, (_, index) => (index === count - 1 ? last : "w-full"));
-  // The title and the summary hold checkable numbers, whose buttons make each line a little taller: pb-2.
+  const narrow = usePageNarrow(measure);
+  const w = width || 800;
   return (
-    <div ref={measure} aria-hidden="true" data-past-range-skeleton>
+    <ZoneBlock
+      data-block="took"
+      foot={
+        <FootStrip>
+          <PastRangeFootSkeleton width={w} />
+        </FootStrip>
+      }
+    >
+      <div ref={measure}>
+        {lead}
+        <PastRangeSkeleton twoLanes={twoLanes} width={w} narrow={narrow} />
+      </div>
+    </ZoneBlock>
+  );
+}
+
+const skeletonLines = (count: number, last = "w-3/5") => Array.from({ length: count }, (_, index) => (index === count - 1 ? last : "w-full"));
+
+// Sized like the populated section at each width, in its order: below 768 px (narrow, as the drawn section reads it)
+// the summary comes right after the finding, and the helper's place is at least the reset button's height; from 768 px
+// the summary follows the chart. The subtitle is the copy file's own sentence, held as skeleton words, at the chart's
+// type size (chartType), read from the section's width as the populated section reads it.
+function PastRangeSkeleton({ twoLanes, width, narrow }: { twoLanes: boolean; width: number; narrow: boolean }) {
+  const type = chartType(width);
+  const finding = narrow ? (width < 300 ? 5 : width < 380 ? 4 : width < 560 ? 3 : 2) : width < 560 ? 3 : 2;
+  // With lane 2 the summary holds its sentences too.
+  const summary = twoLanes
+    ? narrow
+      ? width < 290 ? 10 : width < 350 ? 8 : width < 400 ? 7 : width < 460 ? 6 : width < 600 ? 5 : 4
+      : width < 780 ? 4 : 3
+    : narrow
+      ? width < 290 ? 8 : width < 350 ? 6 : width < 470 ? 5 : width < 600 ? 4 : 3
+      : width < 640 ? 4 : width < 900 ? 3 : 2;
+  const summaryLines = <SkeletonText className={cx(narrow ? "mt-2" : "mt-4", "text-body")} widths={skeletonLines(summary, "w-2/5")} />;
+  // Lane 2's sentence under the chart, as when the time estimate holds back (the fixture's demo package).
+  const lane2Lines = width < 300 ? 4 : width < 420 ? 3 : 2;
+  return (
+    <div aria-hidden="true" data-past-range-skeleton>
       {/* The byline's line over the finding (ticket 111), and the finding's lines in its own style (ticket 101). */}
-      <SkeletonLine className="mb-2 text-label" width="w-24" />
-      <SkeletonText className="max-w-[22.5em] pb-2 text-finding @md/page:hidden" widths={lines(4)} />
-      <SkeletonText className="hidden max-w-[22.5em] pb-2 text-finding @md/page:flex" widths={lines(2)} />
-      <SkeletonText className="mt-2 pb-2 text-body @md/page:hidden" widths={lines(7, "w-2/5")} />
-      <SkeletonText className="mt-2 @md/page:hidden" widths={lines(3)} style={{ fontSize: type.m }} />
-      <SkeletonLine className="mt-2 hidden @md/page:flex" width="w-4/5" style={{ fontSize: type.m }} />
+      <SkeletonLine className="text-label" width="w-24" />
+      <SkeletonText className="mt-2 max-w-[22.5em] text-finding" widths={skeletonLines(finding)} />
+      {narrow && summaryLines}
+      <p className="mt-2" style={{ fontSize: type.m }}>
+        <SkeletonWords text={words.subtitle} />
+      </p>
       <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
         <SkeletonLine className="text-small" width="w-28" />
         <Skeleton className="h-11 w-[88px] rounded-sm" />
       </div>
+      {/* Under 300 px the plan's row takes a second row of its own. */}
+      {width < 300 && <span className="block h-11" />}
+      {/* The helper under the input, then the error's held line. Below 768 px the helper's place holds the reset button
+          too, so it is at least 44 px tall. */}
+      {narrow ? <SkeletonText className="mt-1 min-h-11 text-caption" widths={skeletonLines(2)} /> : <SkeletonLine className="mt-1 text-caption" width="w-3/5" />}
       <span className="mt-1 block min-h-lh text-caption" />
-      {/* Below 768 px the helper's place holds the reset button too, so it is at least 44 px tall. */}
-      <SkeletonText className="min-h-11 text-caption @md/page:hidden" widths={lines(2)} />
-      <SkeletonLine className="hidden text-caption @md/page:flex" width="w-3/5" />
-      <div className="mt-4" style={{ height: twoLanes ? TWO_LANE_HEIGHT : CHART_HEIGHT }} data-chart-skeleton>
+      {/* Under 300 px the chart's key takes a second line of row A (DESIGN.md section 6). */}
+      <div className="mt-4" style={{ height: (twoLanes ? TWO_LANE_HEIGHT : CHART_HEIGHT) + (width < 300 ? 16 : 0) }} data-chart-skeleton>
         <Skeleton className="h-full w-full rounded-md" />
       </div>
-      <SkeletonText className="mt-4 hidden pb-2 text-body @md/page:flex" widths={lines(3, "w-2/5")} />
-      {/* Ticket 26: the track record and the plan-date choice keep 112 px, so nothing jumps when they land. */}
-      {twoLanes && (
-        <div className="mt-4 flex min-h-28 flex-col gap-2" style={{ fontSize: type.s }}>
-          <SkeletonLine width="w-full" />
-          <SkeletonLine width="w-3/5" />
-          <Skeleton className="h-8 w-full max-w-90 rounded-pill" />
-        </div>
-      )}
-      <div className="mt-4 flex flex-col gap-2" style={{ fontSize: type.s }}>
-        <SkeletonText className="@md/page:hidden" widths={lines(3)} />
-        <SkeletonText className="hidden @md/page:flex" widths={lines(2)} />
-        <SkeletonText className="pb-2 text-small @md/page:hidden" widths={lines(6)} />
-        <SkeletonText className="hidden pb-2 text-small @md/page:flex" widths={lines(2)} />
-        <SkeletonText className="@md/page:hidden" widths={lines(4)} />
-        <SkeletonText className="hidden @md/page:flex" widths={lines(2)} />
-      </div>
+      {/* Ticket 26: lane 2's sentence after the chart, as a time estimate that holds back writes it; one that is given
+          has its track record and its plan-date choice there instead (ticket 59, set from the fixture). */}
+      {twoLanes && <SkeletonText className="mt-4 text-body" widths={skeletonLines(lane2Lines)} />}
+      {!narrow && summaryLines}
+      {/* "Show the table". */}
       <span className="mt-4 block h-11" />
     </div>
+  );
+}
+
+// The foot strip's places while the block loads: the Note, the coverage line, whose numbers you can check make its
+// lines 24 px, and the source line.
+function PastRangeFootSkeleton({ width }: { width: number }) {
+  const note = width < 300 ? 5 : width < 360 ? 4 : 3;
+  const coverage = width < 300 ? 7 : width < 420 ? 5 : 4;
+  const source = width < 300 ? 6 : width < 360 ? 5 : width < 480 ? 4 : 3;
+  return (
+    <>
+      <SkeletonText className="text-caption" widths={skeletonLines(note)} />
+      <SkeletonText className="text-caption leading-6" widths={skeletonLines(coverage)} />
+      <SkeletonText className="text-caption" widths={skeletonLines(source)} />
+    </>
   );
 }

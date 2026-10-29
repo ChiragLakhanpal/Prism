@@ -14,7 +14,7 @@
 //   its top, so it sticks with it. The page's bottom scroll padding follows its height while it sticks (DESIGN.md
 //   section 10): the frame's one hook sets it from data-sticky="bottom" (lib/sticky.ts; ticket 94).
 import { useId, type ReactNode } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { GRADES, type Grade } from "../lib/retrieval";
@@ -52,7 +52,7 @@ export function PassageMap({ open, onToggle, count, current, graded, href, onCho
   return (
     <div className="flex flex-col gap-2" data-passage-map={open ? "open" : "closed"}>
       <div>
-        <Button variant="ghost" flush onPage icon={ChevronDown} aria-expanded={open} onClick={onToggle}>
+        <Button variant="ghost" flush onPage icon={open ? ChevronUp : ChevronDown} aria-expanded={open} onClick={onToggle}>
           {open ? words.mapHide : fillText(words.mapShow, { pool: count })}
         </Button>
       </div>

@@ -7,6 +7,7 @@ import { scan } from "./axe";
 import type { Locator, Page } from "@playwright/test";
 import { expect, test, windowBeside } from "./mocked";
 import { fontsLoaded } from "./settled";
+import { formatSignedPercent } from "../src/lib/format";
 
 async function axe(page: Page) {
   await page.waitForFunction(() =>
@@ -18,6 +19,108 @@ async function axe(page: Page) {
 
 // Moved from web/tests/routes.spec.ts when the package workspace replaced the last placeholder page
 // whose empty state named a STEP reference; the gallery's page header sample keeps that empty state.
+// Ticket 59 (the 31 review, round 3, F5): above 60 comparable packages the cost lane draws the tool's 20 quantile dots,
+// each at its share's middle difference, under brief 12's key line, and a dot's press opens the table twin, which keeps
+// every package. The sample is a mock the fixture cannot hold, and says so.
+const QUANTILE_MOCK = new URL("../../tests/fixtures/api/criteria-cost-mock-quantile-dots.json", import.meta.url);
+
+test("above 60 packages the cost lane draws one dot per quantile with its key line, and a dot opens every package in the table", async ({ page }) => {
+  const mock = JSON.parse(await readFile(QUANTILE_MOCK, "utf8"));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/check-criteria");
+  const sample = page.locator("[data-cost-sample=quantile]");
+  const share = mock.quantile_dots.length;
+  await expect(sample.locator("[data-cost-key]")).toHaveText(`Each dot is 1 in ${share} of the ${mock.counts.m} packages.`);
+  // The intro and the drawing's text alternative say what a quantile dot stands for, and never that a dot is one
+  // package (ticket 59's round 1 reviews: the review's B1, the design review's B2).
+  const intro = sample.locator("[data-cost-intro]");
+  await expect(intro).toContainText(`Each dot below stands for 1 in ${share} of them.`);
+  // The review of round 3, F2: a dot sits at its group's middle difference, which with an even count is the average
+  // of two packages', so no sentence names one package as signed there.
+  await expect(intro).toContainText("It shows the middle of how far its group's packages were signed above or below their own cost estimates.");
+  await expect(intro).not.toContainText("middle package");
+  await expect(intro).not.toContainText("one of them");
+  const drawing = sample.locator("[data-cost-drawing]");
+  await expect(drawing).toHaveAccessibleName(
+    new RegExp(
+      `^${share} dots, each standing for 1 in ${share} of the ${mock.counts.m} comparable packages\\. Each dot shows the middle of how far its group's packages were signed above or below their own cost estimates\\.`,
+    ),
+  );
+  await expect(drawing).toHaveAccessibleName(
+    new RegExp(`${mock.counts.below} were signed below, ${mock.counts.at} at, and ${mock.counts.above} above their cost estimates\\.`),
+  );
+  const dots = sample.locator("[data-cost-dot]");
+  await expect(dots).toHaveCount(mock.quantile_dots.length);
+  await expect(sample.locator("[data-cost-drawing] circle")).toHaveCount(mock.quantile_dots.length);
+  const first = mock.quantile_dots[0];
+  await expect(dots.first()).toHaveAccessibleName(
+    new RegExp(`^Dot 1 of ${share} stands for ${first.count} of the ${mock.counts.m} packages\\. Their middle difference was \\d`),
+  );
+  await dots.first().focus();
+  await expect(sample.locator("[data-cost-tooltip]")).toContainText(`${first.count} packages`);
+  await page.keyboard.press("Enter");
+  await expect(sample.locator("[data-cost-table] [data-count-row] p").first()).toHaveText(`Showing all ${mock.counts.m} packages.`);
+});
+
+// The critique of round 1: at 390 px the 20 quantile dots sat on one line with their rings touching, so a reader could
+// not count them. They are r 4 below 400 px, and move off the centre line far enough that each dot's 2 px surface ring
+// keeps 1 px clear of the next (centres at least 2r + 3 apart).
+test("the cost lane's quantile dots never touch, at 390 and 320 px as at 1440", async ({ page }) => {
+  // As many dots as the tool returned (the review of round 2, F2).
+  const mock = JSON.parse(await readFile(QUANTILE_MOCK, "utf8"));
+  await page.goto("/gallery/check-criteria");
+  for (const width of [1440, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const circles = page.locator("[data-cost-sample=quantile] [data-cost-drawing] circle");
+    await expect(circles).toHaveCount(mock.quantile_dots.length);
+    await expect
+      .poll(
+        () =>
+          circles.evaluateAll((dots) => {
+            const at = dots.map((dot) => ({ x: Number(dot.getAttribute("cx")), y: Number(dot.getAttribute("cy")), r: Number(dot.getAttribute("r")) }));
+            const touching: string[] = [];
+            at.forEach((a, i) => at.slice(i + 1).forEach((b, j) => Math.hypot(a.x - b.x, a.y - b.y) < a.r + b.r + 3 - 0.01 && touching.push(`${i + 1} and ${i + j + 2}`)));
+            return touching;
+          }),
+        `${width} px`,
+      )
+      .toEqual([]);
+  }
+});
+
+// The design review of round 2, follow-up 2: at 320 px each dot's 24 px target covers the next dot's centre, so a hover
+// on dot 10 showed dot 11's value. The tooltip now names the dot nearest the pointer.
+test("at 320 px a hover on a quantile dot shows that dot's own tooltip, not the next one's", async ({ page }) => {
+  const mock = JSON.parse(await readFile(QUANTILE_MOCK, "utf8"));
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.goto("/gallery/check-criteria");
+  const sample = page.locator("[data-cost-sample=quantile]");
+  const dots = sample.locator("[data-cost-dot]");
+  await expect(dots).toHaveCount(mock.quantile_dots.length);
+  await dots.first().scrollIntoViewIfNeeded();
+  const wrong: string[] = [];
+  for (const [index, dot] of (mock.quantile_dots as { diff_pct: number }[]).entries()) {
+    const box = (await dots.nth(index).boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    const shown = (await sample.locator("[data-cost-tooltip] p").nth(1).textContent()) ?? "";
+    if (shown !== formatSignedPercent(dot.diff_pct)) wrong.push(`dot ${index + 1}: ${shown}`);
+  }
+  expect(wrong).toEqual([]);
+});
+
+// The design review of round 1, follow-up 9: the gallery draws "Advertised again" as the page does, its foot strip run
+// out to the panel's edges, not inset inside a padded card.
+test("the gallery's Advertised again samples run the foot strip to the panel's edges, as the page does", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/rebidding");
+  const sample = page.locator("[data-state-section=fixture]");
+  const panel = (await sample.locator("[data-zone=panel]").boundingBox())!;
+  const strip = (await sample.locator("[data-foot-strip]").boundingBox())!;
+  expect(Math.abs(strip.x - (panel.x + 1)), "the strip's left edge on the panel's inside").toBeLessThanOrEqual(1);
+  expect(Math.abs(strip.x + strip.width - (panel.x + panel.width - 1)), "the strip's right edge on the panel's inside").toBeLessThanOrEqual(1);
+  expect(Math.abs(strip.y + strip.height - (panel.y + panel.height - 1)), "the strip ends the panel").toBeLessThanOrEqual(1);
+});
+
 test("an empty state's title keeps a STEP reference on one line whenever it fits", async ({ page }) => {
   await page.goto("/gallery/pages");
   for (const width of [390, 768, 1024, 1279]) {
@@ -607,10 +710,70 @@ test("a term opens GLOSSARY.md's definition in a window, focus moves to its titl
   await expect(term).toBeFocused();
 });
 
+// The review of round 2, F1: the gallery shows the two held states round 2 added. The plan check's skeleton holds the
+// change line's place under the narration, and section 1's skeleton has Advertised again's under it, which sends no
+// request while section 1 has no result.
+test("the gallery shows the plan check's held change line and section 1's skeleton with Advertised again's under it", async ({ page }) => {
+  const asked: string[] = [];
+  page.on("request", (request) => new URL(request.url()).pathname.startsWith("/api/") && asked.push(request.url()));
+  await page.goto("/gallery/plan-check");
+  const plan = page.locator("[data-state-section=loading-change-line]");
+  await expect(plan.getByRole("heading", { name: "Loading, with the change line's place held under the narration" })).toBeVisible();
+  await expect(plan.locator("[data-change-line-held]")).toBeVisible();
+  await expect(plan.locator("[data-change-line-held] [data-skeleton-words]")).toHaveAttribute("aria-hidden", "true");
+  await page.goto("/gallery/past-range");
+  const range = page.locator("[data-state-section=loading-with-again]");
+  await expect(range.getByRole("heading", { name: "Loading, with Advertised again's skeleton under the past range's" })).toBeVisible();
+  await expect(range.locator("[data-rebidding=loading]")).toBeVisible();
+  expect(asked).toEqual([]);
+});
+
+// The review of round 3, B2: the gallery shows round 3's held state too. While the time estimate loads, section 1 holds
+// no Compare with row, and a held-back estimate's sentences are held as skeleton words under the chart and in the
+// summary, unseen and unheard.
+test("the gallery shows section 1 while the time estimate loads, with a held-back estimate's sentences held", async ({ page }) => {
+  await page.goto("/gallery/past-range");
+  const range = page.locator("[data-state-section=loading-estimate]");
+  await expect(
+    range.getByRole("heading", { name: "Loading the time estimate, with a held-back estimate's sentences held under the chart and in the summary" }),
+  ).toBeVisible();
+  await expect(range.locator("[data-chart-figure]")).toBeVisible();
+  const held = range.locator("[data-lane2-message=loading] [data-skeleton-words]");
+  await expect(held).toBeVisible();
+  await expect(held).toHaveAttribute("aria-hidden", "true");
+  await expect(range.locator("[data-skeleton-words]")).toHaveCount(2);
+  await expect(range.getByText("Compare with")).toHaveCount(0);
+});
+
+// The review of round 3, B1: held skeleton words are a typical answer's words, not this page's answer, so they stay
+// unseen in a Windows contrast theme too. There the browser would otherwise paint them in the system text colour and
+// drop their bar, and a reader would see a count or a claim no tool returned while the page loads.
+test("held skeleton words stay unseen, with their bar, when the reader's system forces its own colours", async ({ page }) => {
+  await page.emulateMedia({ forcedColors: "active" });
+  for (const [slug, section] of [
+    ["skeleton", "words"],
+    ["plan-check", "loading-change-line"],
+    ["past-range", "loading-estimate"],
+  ]) {
+    await page.goto(`/gallery/${slug}`);
+    const held = page.locator(`[data-state-section=${section}] [data-skeleton-words]`);
+    await expect(held.first()).toBeAttached();
+    for (const words of await held.all()) {
+      const style = await words.evaluate((el) => ({ color: getComputedStyle(el).color, bar: getComputedStyle(el).backgroundImage }));
+      expect(style.color, `${slug} ${section}`).toBe("rgba(0, 0, 0, 0)");
+      expect(style.bar, `${slug} ${section}`).toContain("gradient");
+    }
+  }
+});
+
 test("the open Menu panel and the view popover pass axe", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await page.goto("/gallery/navigation?menu=open&viewer=loading");
   await expect(page.locator("[data-menu-panel]")).toBeVisible();
+  expect(await axe(page)).toEqual([]);
+  // The sheet's view button pressed, its popover with the view lines and language choice above it (ticket 59).
+  await page.goto("/gallery/navigation?menu=open&menuview=open");
+  await expect(page.locator("[data-menu-panel] [data-view-row]")).toHaveCount(3);
   expect(await axe(page)).toEqual([]);
 
   await page.setViewportSize({ width: 1440, height: 900 });

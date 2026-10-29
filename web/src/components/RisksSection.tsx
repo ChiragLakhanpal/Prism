@@ -30,7 +30,7 @@ import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
 import { evidenceIn, openEvidence, origin, visited as visitedStore } from "../lib/evidence";
 import { address } from "../lib/router";
-import { dataReadinessHref } from "../routes";
+import { dataReadinessHref, fill } from "../routes";
 import {
   allReportsId,
   forgetRisks,
@@ -46,6 +46,7 @@ import {
 } from "../lib/risks";
 import { useStore } from "../lib/store";
 import { useFocusWithin } from "../lib/useFocusWithin";
+import { useLastHeight } from "../lib/useLastHeight";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
@@ -54,7 +55,7 @@ import { Fill, Joined } from "./Fill";
 import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
 import { FromLine, reportsFrom } from "./NumFrom";
-import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
+import { Skeleton, SkeletonLine, SkeletonText, SkeletonWords } from "./Skeleton";
 import { Source } from "./Source";
 import { SourcePill } from "./SourcePill";
 import { TaskZone, ZoneBlock } from "./TaskZone";
@@ -125,6 +126,7 @@ export function RisksView({
 }: RisksViewProps) {
   const result = state.status === "ready" ? state.result : null;
   const populated = Boolean(result && result.rows.length > 0 && !result.empty_reason);
+  const [readyPart, lastHeight] = useLastHeight(Boolean(result) && !updating, result);
   // Zone 3 (ticket 101): a row while it holds only its sentence (no completion report, no lesson, no comparable
   // package, or a criterion still missing), and a panel when it has risks, or a removed box when every row was
   // removed, since a zone that holds a removed sentence is never closed.
@@ -146,17 +148,35 @@ export function RisksView({
     marks: { "data-risks": state.status === "ready" ? (result!.empty_reason ?? "rows") : state.status },
     live,
   };
-  if (state.status === "loading" && !updating) return <TaskZone {...zone} state="loading" />;
+  if (state.status === "loading" && !updating) return <TaskZone {...zone} state="loading" loading={kind === "step" ? <NoReportsHeld /> : undefined} />;
   if (state.status === "error") return <TaskZone {...zone} state="error" error={<RisksError state={state} />} />;
   if (sentence) return <TaskZone {...zone} state="empty" summary={<Empty result={sentence} kind={kind} missingList={missingList} />} />;
+  // A rerun over 400 ms keeps the instruction, holds the ready part's last height with the skeleton, and keeps the foot
+  // strip's place with its last lines unseen, so nothing under the zone moves (ticket 59; the 30 design review, F6).
   return (
     <TaskZone {...zone} panel>
-      <ZoneBlock data-block="risks" foot={populated && result && !updating ? <FootStrip><Notes result={result} /></FootStrip> : undefined}>
+      <ZoneBlock
+        data-block="risks"
+        foot={
+          populated && result ? (
+            <FootStrip>
+              <div className={cx(updating && "invisible")} aria-hidden={updating || undefined}>
+                <Notes result={result} />
+              </div>
+            </FootStrip>
+          ) : undefined
+        }
+      >
         <div className="@container/risks">
           <p className="max-w-prose text-body text-ink">{words.intro}</p>
-          {populated && !updating && <p className="mt-2 max-w-prose text-body text-ink">{words.instruction}</p>}
-          {updating && <RisksSkeleton />}
+          {populated && <p className="mt-2 max-w-prose text-body text-ink">{words.instruction}</p>}
+          {updating && (
+            <div className={cx(lastHeight !== null && "overflow-hidden")} style={{ height: lastHeight ?? undefined }} data-risks-updating>
+              <RisksSkeleton />
+            </div>
+          )}
           {result && !updating && (
+            <div ref={readyPart} className="flow-root">
             <Ready
               result={result}
               packageKey={packageKey}
@@ -171,6 +191,7 @@ export function RisksView({
               handlers={handlers}
               action={action}
             />
+            </div>
           )}
         </div>
       </ZoneBlock>
@@ -235,12 +256,16 @@ function Ready({
         </p>
       </div>
       {saveFailed && (
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-small text-error" data-save-failed>
-          <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
-          {words.saveFailed}
-          <Button variant="ghost" flush onClick={onRetrySave}>
-            {words.tryAgain}
-          </Button>
+        // The icon keeps to the first line, and the sentence and "Try again" wrap beside it as one block, so the icon is
+        // never left alone on a line (ticket 59). The button keeps its 44 px target over the 20 px line.
+        <p className="mt-2 flex items-start gap-2 text-small text-error" data-save-failed>
+          <CircleX aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-error-icon" />
+          <span className="flex min-w-0 flex-wrap items-center gap-x-2">
+            <span>{words.saveFailed}</span>
+            <Button variant="ghost" flush onClick={onRetrySave} className="-my-3">
+              {words.tryAgain}
+            </Button>
+          </span>
         </p>
       )}
       {dropped.length > 0 && (
@@ -362,9 +387,9 @@ function RiskColumns() {
     <>
       <colgroup>
         <col className="w-12" />
-        <col className="w-[23%]" />
-        <col className="w-[15%]" />
-        <col className="w-[34%]" />
+        <col className="w-[21%]" />
+        <col className="w-[18%]" />
+        <col className="w-[28%]" />
         <col />
       </colgroup>
       <thead className="bg-surface-2 text-left align-bottom">
@@ -474,7 +499,8 @@ function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, han
       {rows.map((row) => (
         <li key={row.risk_key} data-risk-row={row.risk_key} data-open={rowIsOpen(row, opened) || undefined} className={cx("border-b border-line py-4", rowIsOpen(row, opened) && "-mx-2 rounded-md bg-tint px-2")}>
           <Checkbox checked={selected.includes(row.risk_key)} onChange={(checked) => onToggle(row.risk_key, checked)} name={words.checkbox(row.risk_label)} readOnly={preview}>
-            <span className="text-small font-semibold text-ink-heading">{row.risk_label}</span>
+            {/* A block, so a two-line name is set at small's own leading (ticket 59). */}
+            <span className="block text-small font-semibold text-ink-heading">{row.risk_label}</span>
           </Checkbox>
           <div className="mt-1 flex flex-col gap-2 pl-8">
             <p className="text-small">
@@ -658,6 +684,27 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
 
 // Static surface-2 blocks where the finding, the count line and three rows will be: the real header and 88 px
 // rows in table form, 168 px items in list form.
+// A package's first load holds the lines of its most common answer, that none of the comparables' projects has a
+// completion report yet (the fixture's demo package): the sentence, its body and its link from the copy file, held as
+// skeleton words, so the zone ends within a few pixels of where it will (ticket 59; the critique of round 1, follow-up
+// 2). A package whose risks come back is longer, and its zone grows when they arrive.
+function NoReportsHeld() {
+  const e = words.empty;
+  return (
+    <div aria-hidden="true" data-risks-held>
+      <p className="max-w-prose text-body">
+        <SkeletonWords text={fill(e.noReports, { p: formatCount(3) })} />
+      </p>
+      <p className="mt-2 max-w-prose text-body">
+        <SkeletonWords text={e.noReportsBody} />
+      </p>
+      <p className="mt-2">
+        <SkeletonWords text={e.noReportsLink} />
+      </p>
+    </div>
+  );
+}
+
 export function RisksSkeleton() {
   return (
     <div aria-hidden="true" data-risks-skeleton>
@@ -692,7 +739,7 @@ export function RisksSkeleton() {
       </div>
       <ol className="mt-3 border-t border-line @min-[49rem]/risks:hidden">
         {[0, 1, 2].map((n) => (
-          <li key={n} className="flex h-42 gap-4 border-b border-line py-4">
+          <li key={n} className="flex h-42 gap-3 border-b border-line py-4">
             <Skeleton className="size-5 shrink-0" />
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <SkeletonLine width="w-3/5" />
@@ -722,7 +769,8 @@ function RisksError({ state }: { state: Extract<RisksState, { status: "error" }>
       </div>
       {code && (
         <p className="text-caption text-ink-muted">
-          <Fill template={words.errorCode} slots={{ code: <span className="font-mono">{code}</span> }} />
+          {/* The code breaks anywhere, so at 320 px it never crosses the card's edge (ticket 59). */}
+          <Fill template={words.errorCode} slots={{ code: <span className="font-mono wrap-anywhere">{code}</span> }} />
         </p>
       )}
     </div>

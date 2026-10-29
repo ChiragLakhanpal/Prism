@@ -55,11 +55,29 @@ const ROWS_BEFORE_REGISTRY = 3;
 // about 45 characters a line, in balanced lines.
 const FINDING = "max-w-[22.5em] text-finding text-balance text-ink-heading";
 // The headline's skeleton: as many lines as the real headline runs in the finding style, measured on the fixture's page
-// at 1440, 1024 and 390 px (six from a 768 px page area, where its 22.5em holds it at 1440 and 1024 alike, and nine
-// below), so nothing moves when it arrives.
-const lines = (count: number) => [...Array.from({ length: count - 1 }, () => "w-full"), "w-3/5"];
-// Ten lines below 768 px since ticket 58's paragraph-number gap ("where I found no paragraph numbers") runs a line longer.
-const HEADLINE_LINES = { wide: lines(6), narrow: lines(10) };
+// at 320 to 1440 px (ticket 59, and again at the merge with ticket 58, whose gap sentence runs a line longer in a narrow
+// page area): six from a 34rem page area, where its 22.5em holds it, seven from 30rem, eight from 26rem, ten from 22.5rem
+// and twelve below it, so nothing moves when it arrives. Each line is its width and the classes that show it. At each
+// page area the short line is the last one shown, so the bars read as one paragraph (the critique of round 1).
+const HEADLINE_LINES: [string, string?][] = [
+  ...Array.from({ length: 5 }, (): [string] => ["w-full"]),
+  // Six lines from 34rem: the sixth is the short one.
+  ["w-3/5", "hidden @[34rem]/page:flex"],
+  ["w-full", "@[34rem]/page:hidden"],
+  // Seven from 30rem to 34rem.
+  ["w-3/5", "hidden @[30rem]/page:flex @[34rem]/page:hidden"],
+  ["w-full", "@[30rem]/page:hidden"],
+  // Eight from 26rem to 30rem.
+  ["w-3/5", "hidden @[26rem]/page:flex @[30rem]/page:hidden"],
+  ["w-full", "@[26rem]/page:hidden"],
+  ["w-full", "@[26rem]/page:hidden"],
+  // Ten from 22.5rem to 26rem.
+  ["w-3/5", "hidden @[22.5rem]/page:flex @[26rem]/page:hidden"],
+  ["w-full", "@[22.5rem]/page:hidden"],
+  ["w-full", "@[22.5rem]/page:hidden"],
+  // Twelve below 22.5rem.
+  ["w-2/5", "@[22.5rem]/page:hidden"],
+];
 
 const plain = (count: number) => <Num count={count} />;
 const day = (iso: string, today: string, style: "sentence" | "table" = "sentence") => <Num date={iso} style={style} today={today} />;
@@ -790,11 +808,14 @@ function render(
         <>
           <span className="clip-visually">{copy.loading}</span>
           <div className={FINDING} aria-hidden="true">
-            <SkeletonText className="hidden text-finding @md/page:flex" widths={HEADLINE_LINES.wide} />
-            <SkeletonText className="text-finding @md/page:hidden" widths={HEADLINE_LINES.narrow} />
+            <span className="flex flex-col text-finding">
+              {HEADLINE_LINES.map(([width, shown], index) => (
+                <SkeletonLine key={index} width={width} className={shown} />
+              ))}
+            </span>
           </div>
-          {/* As tall as the caption it stands for: two lines below 768 px, one above. */}
-          <div role="status" className="mt-2 min-h-[2lh] text-caption text-ink-muted @md/page:min-h-lh">
+          {/* As tall as the caption it stands for: two lines below a 34rem page area, one from it (ticket 59). */}
+          <div role="status" className="mt-2 min-h-[2lh] text-caption text-ink-muted @[34rem]/page:min-h-lh">
             {slow ? words.loading.slow : null}
           </div>
         </>

@@ -1157,9 +1157,9 @@ export const copy = {
     highlightEnds: "Highlight ends.",
     // What a PDF's private-use character, such as a Wingdings bullet, shows as: one character for one.
     privateGlyph: "\u2022",
-    openAtPage: (page: string) => `Open at page ${page} in the World Bank's PDF`,
+    openAtPage: (page: string) => `Open at page\u00a0${page} in the World Bank's PDF`,
     // Ticket 21: the drawer's link opens the in-app source view at the page, in the same tab.
-    openAtPageHere: (page: string) => `Open at page ${page}`,
+    openAtPageHere: (page: string) => `Open at page\u00a0${page}`,
     newTab: ", opens in a new tab",
     failed: "I couldn't load this source.",
     missing: "I have no source with this ID. The link may be incomplete.",
@@ -4028,7 +4028,7 @@ export const copy = {
     },
     subtitle: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
     subtitleDots:
-      "Each dot is 1 in 20 of the {total} packages, placed by the months from the specific procurement notice to the signed contract.",
+      "Each dot is 1 in {dots} of the {total} packages, placed by the months from the specific procurement notice to the signed contract.",
     summary: {
       middle: "The middle half of these packages took {q25} to {q75} months, and the middle one took {q50}.",
       // With no plan dates the title already gives the middle half, so the summary starts here.
@@ -4104,7 +4104,7 @@ export const copy = {
       in10: (q80: string) => `8 in 10 within ${q80}`,
       axisLast: (months: string) => `${months} months`,
       group: (total: string) => `${total} comparable packages, one dot each`,
-      groupDots: (total: string) => `20 dots, each 1 in 20 of the ${total} comparable packages`,
+      groupDots: (total: string, dots: string) => `${dots} dots, each 1 in ${dots} of the ${total} comparable packages`,
       groupHelp: "Use the arrow keys to move between packages. Press Escape to hide the details.",
       // Where a dot opens its package's records in the evidence drawer (ticket 15).
       groupHelpOpen: "Use the arrow keys to move between packages. Press Enter to open a package's records, or Escape to hide the details.",
@@ -4120,10 +4120,10 @@ export const copy = {
       // the tooltip's sentence, where it came from and what Enter does (said), then its place among the dots.
       dotName: (ref: string, months: string, said: string, index: string, total: string) =>
         `${ref}, ${months} months. ${said} Dot ${index} of ${total}.`,
-      dotQuantile: (k: string, total: string, months: string) =>
-        `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. This one is at ${months} months.`,
-      dotQuantileOpen: (k: string, total: string, months: string) =>
-        `Dot ${k} of 20. Each dot is 1 in 20 of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
+      dotQuantile: (k: string, dots: string, total: string, months: string) =>
+        `Dot ${k} of ${dots}. Each dot is 1 in ${dots} of the ${total} comparable packages. This one is at ${months} months.`,
+      dotQuantileOpen: (k: string, dots: string, total: string, months: string) =>
+        `Dot ${k} of ${dots}. Each dot is 1 in ${dots} of the ${total} comparable packages. Too many of these packages are still open to place this dot, so it sits past ${months} months.`,
       tipMonths: (months: string) => `${months} months`,
       tipPast: (months: string) => `Past ${months} months`,
       // A dot's sentence, with its dates in full (DESIGN.md section 7, rule 13). The country leads, as it follows the
@@ -4131,8 +4131,8 @@ export const copy = {
       tipSigned: (country: string, notice: string, signed: string) =>
         `${country}. Its notice was published ${notice}, and its contract was signed ${signed}.`,
       tipOpen: (country: string, notice: string) => `${country}. Its notice was published ${notice}, and the records I hold show no signed contract.`,
-      tipQuantile: (k: string) => `Dot ${k} of 20`,
-      tipQuantileLine: (total: string) => `Each dot is 1 in 20 of the ${total} comparable packages.`,
+      tipQuantile: (k: string, dots: string) => `Dot ${k} of ${dots}`,
+      tipQuantileLine: (total: string, dots: string) => `Each dot is 1 in ${dots} of the ${total} comparable packages.`,
       tipQuantileOpen: "Too many of these packages are still open to place this dot.",
       slider: "Planned months",
       valueText: (months: string, within: string, total: string) =>
@@ -4145,8 +4145,8 @@ export const copy = {
         `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed and ${open} still open.`,
       altAllSigned: (total: string, axisMax: string, signed: string) =>
         `Dot chart of ${total} comparable packages on a month axis from 0 to ${axisMax} months: ${signed} signed.`,
-      altDots: (total: string, axisMax: string) =>
-        `Dot chart of 20 dots, each 1 in 20 of the ${total} comparable packages, on a month axis from 0 to ${axisMax} months.`,
+      altDots: (total: string, dots: string, axisMax: string) =>
+        `Dot chart of ${dots} dots, each 1 in ${dots} of the ${total} comparable packages, on a month axis from 0 to ${axisMax} months.`,
       altRange: (q25: string, q75: string, q50: string, q80: string) =>
         `The middle half took ${q25} to ${q75} months, the middle one took ${q50}, and 8 in 10 were signed within ${q80}.`,
       altMiddle: (q25: string, q75: string, q50: string) => `The middle half took ${q25} to ${q75} months, and the middle one took ${q50}.`,
@@ -5585,6 +5585,13 @@ export const copy = {
       "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
     introNoEstimate:
       "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below is one of them, placed by how far its signed amount was from its own cost estimate.",
+    // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), so the intro says so. A dot
+    // sits at its share's middle difference, which with an even count is the average of two, so no sentence names one
+    // package as signed there (the review of round 3, F2).
+    introQuantile:
+      "Your cost estimate is {estimate}. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows the middle of how far its group's packages were signed above or below their own cost estimates.",
+    introNoEstimateQuantile:
+      "The plan row gives no cost estimate for this package. The comparable packages had cost estimates from {low} to {high}. Each dot below stands for 1 in {dots} of them. It shows the middle of how far its group's packages were signed above or below their own cost estimates.",
     amount: (amount: string) => `US$${amount}`,
     title: "{above} of {m} comparable packages were signed above their cost estimates.",
     titleOne: "One of the {m} comparable packages was signed above its cost estimate.",
@@ -5637,7 +5644,16 @@ export const copy = {
     tooltipOpen: "Press Enter or click to open its records.",
     tooltipOpenTouch: "Open its records",
     dotName: (ref: string, diff: string) => `${ref}, signed ${diff} its cost estimate`,
+    // Above 60 comparable packages each dot stands for an equal share of them (ticket 59), as on the past range.
+    keyDots: (total: string, dots: string) => `Each dot is 1 in ${dots} of the ${total} packages.`,
+    dotQuantile: (k: string, dots: string, count: string, total: string, diff: string) =>
+      `Dot ${k} of ${dots} stands for ${count} of the ${total} packages. Their middle difference was ${diff} their cost estimates.`,
+    tipQuantile: (count: string) => `${count} packages`,
+    tipQuantileLine: "The middle of its packages' signed amounts against their cost estimates.",
+    tooltipOpenDots: "Press Enter or click to see every package in the table.",
     alt: "One dot for each of {m} comparable packages, placed by how far its signed amount was from its own cost estimate. {below} were signed below, {at} at, and {above} above their cost estimates.",
+    altQuantile:
+      "{dots} dots, each standing for 1 in {dots} of the {m} comparable packages. Each dot shows the middle of how far its group's packages were signed above or below their own cost estimates. {below} were signed below, {at} at, and {above} above their cost estimates.",
     altMiddle: "The middle half ran from {q25} to {q75}, and the middle package was {q50}.",
     countTooltip: "Comparable packages with both a cost estimate and a signed contract.",
     countAct: "Select to see the table.",
@@ -6023,7 +6039,7 @@ export const copy = {
       stoppedNote: "I stopped at today's limit of {cap} pages, which covers every document in the run. The next run reads the rest.",
       notRead: "Not read yet. The next document run reads it.",
       // The Page cell: the link, then where it lands.
-      pageLink: "Open at page {page}",
+      pageLink: "Open at page\u00a0{page}",
       // The link's whole name, starting with its words on screen, so five "Open at page" links are told
       // apart: "Open at page 65 of the Project Appraisal Document for P130164". Ticket 21 points it at the
       // in-app source view, in the same tab, where the World Bank's PDF is linked at the same page.
@@ -6031,7 +6047,7 @@ export const copy = {
       // Under it, the World Bank's PDF at the same page, since the source view shows the page's passages and
       // tables but not its picture (the 21 design review, round 2, F16). The name goes on with
       // pdfLinkName, then ", opens in a new tab".
-      pdfLink: "Open page {page} in the World Bank's PDF",
+      pdfLink: "Open page\u00a0{page} in the World Bank's PDF",
       pdfLinkName: (docType: string, pid: string) => ` of the ${docType} for ${pid}`,
       pageLines: {
         scan_annex: "where the {part} starts",
@@ -7422,7 +7438,10 @@ export const copy = {
   },
   why: {
     title: "Why this source",
-    link: "This paragraph appeared together with {record_noun} {ref}, signed {signed_date}.",
+    // The record's noun and its reference move to a new line together, so "notice" never ends a line alone (ticket 59).
+    link: "This paragraph appeared together with {record}, signed {signed_date}.",
+    // The record's noun before its reference, joined by a no-break space.
+    recordLabel: (noun: string) => `${noun}\u00a0`,
     recordNoun: { "award notice": "award notice", contract: "contract" } as Record<string, string>,
     topics: "Both concern {topics}, in a project that {project_state}.",
     sameProject: "Both come from {pid}, a project that {project_state}.",

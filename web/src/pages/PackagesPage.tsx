@@ -10,7 +10,7 @@ import { FootStrip } from "../components/FootStrip";
 import { Num } from "../components/Num";
 import { Tag } from "../components/LessonParts";
 import { PageHead } from "../components/PageHead";
-import { SkeletonLine } from "../components/Skeleton";
+import { SkeletonLine, SkeletonWords } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { countText, Table, type Column, type Row } from "../components/Table";
 import { TaskZone } from "../components/TaskZone";
@@ -152,8 +152,35 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
   }
   if (load.status === "loading") {
     return (
-      <TaskZone panel leadName name={<SkeletonLine className="text-lead" width="w-3/5" />} tag={<SkeletonLine className="text-caption" width="w-40" />} busy sectionKey="packages-list">
-        <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" inPanel state={{ status: "loading", rows: 5 }} />
+      // The title and the count line as most lists read, held as skeleton words, so they take the lines the real ones
+      // take at every width (ticket 59).
+      <TaskZone
+        panel
+        leadName
+        name={<SkeletonWords text={words.title(2, formatCount(2), 1, formatCount(1))} />}
+        tag={<SkeletonWords text={countText({ noun: words.noun, one: words.nounOne, total: 3 })} />}
+        busy
+        sectionKey="packages-list"
+      >
+        {/* Each loading row holds a row's name and its caption line, the STEP reference under it, so the rows and the
+            source line stay put when the list arrives (ticket 59; the 15 design review, round 3, G6). */}
+        <Table
+          title={null}
+          labelledBy={headingId}
+          columns={columns}
+          rowHeader="name"
+          inPanel
+          state={{
+            status: "loading",
+            rows: 5,
+            header: (
+              <span className="flex flex-col">
+                <SkeletonLine width="w-4/5" />
+                <SkeletonLine className="text-caption" width="w-2/5" />
+              </span>
+            ),
+          }}
+        />
         <FootStrip>
           <SkeletonLine className="text-caption" width="w-2/5" />
         </FootStrip>

@@ -41,8 +41,8 @@ import {
   type StepsResult,
 } from "../lib/steps";
 import { useStore } from "../lib/store";
-import { dataReadinessHref } from "../routes";
-import { familyStep, stepFamily, type StepEntry, type StepFamily } from "../steps";
+import { dataReadinessHref, fill } from "../routes";
+import { familyStep, stepFamilies, stepFamily, type StepEntry, type StepFamily } from "../steps";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CollapsedSection } from "./CollapsedSection";
@@ -54,6 +54,7 @@ import { Source } from "./Source";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 import { FootStrip } from "./FootStrip";
+import { SkeletonWords } from "./Skeleton";
 
 const words = copy.stepDates;
 const SLOW_MS = 400;
@@ -103,6 +104,22 @@ function dayCaption(point: StepPoint, previous: StepEntry | null): ReactNode {
 }
 
 // ── The summary line ─────────────────────────────────────────────────────
+
+// While the steps load, the summary holds the lines of its most common answer, the demo package's: goods, works and
+// non-consulting services' six steps, none dated for too few comparable packages. The words are the copy file's, held
+// as skeleton words, unseen and unheard, so at 390 and 320 px the summary keeps the four lines it will take and the
+// sections under it stay put (ticket 59; the design review of round 3, follow-up 1). A package whose summary is longer
+// or shorter moves the sections under it when the steps arrive.
+function SummaryHeld() {
+  const steps = stepFamilies.goods.steps;
+  const slots = { first: steps[0].phrase, last: steps[steps.length - 1].phrase };
+  return (
+    <span aria-hidden="true" data-steps-summary-held>
+      <SkeletonWords text={fill(words.summarySteps(formatCount(steps.length, { capital: true })), slots)} />{" "}
+      <SkeletonWords text={words.summaryPartialAll(formatCount(steps.length))} />
+    </span>
+  );
+}
 
 function Summary({ dates, packageKey, onOpen, from }: { dates: StepDates; packageKey: string; onOpen: Opener; from: ReactNode }) {
   const family = stepFamily(dates.family);
@@ -550,7 +567,8 @@ type Body = {
 function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOpen, slow, caption, recordsDate, from }: Body) {
   const dating = !dates.abstain_all;
   const plan = kind === "step";
-  const widths = plan ? (dating ? ["32%", "24%", "26%", "18%"] : ["44%", "32%", "24%"]) : dating ? ["40%", "36%", "24%"] : ["70%", "30%"];
+  // A STEP row's planned date takes 30 percent, so "15 days after the plan's date" keeps one line (ticket 59).
+  const widths = plan ? (dating ? ["30%", "22%", "30%", "18%"] : ["44%", "32%", "24%"]) : dating ? ["40%", "36%", "24%"] : ["70%", "30%"];
   const head = "px-3 py-3 align-bottom text-left text-small font-bold text-ink-heading";
   const note = "block text-caption font-normal text-ink-muted";
   const firstVersion = rows.find((row) => row.step.plan_first_version_date)?.step.plan_first_version_date ?? null;
@@ -672,7 +690,7 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
           {/* Every item's label column is two fifths of the list and never under 7rem, so the labels line up from step
               to step and never print over a value; a long value, such as "30 days after the issued bidding
               document", wraps inside its own column, right-aligned. */}
-          <dl className="mt-2 grid grid-cols-[minmax(7rem,2fr)_minmax(0,3fr)] gap-x-2 gap-y-2">
+          <dl className="mt-2 grid grid-cols-[minmax(7rem,2fr)_minmax(0,3fr)] items-baseline gap-x-2 gap-y-2">
             {kind === "step" && (
               <>
                 <dt className={label}>{words.columns.plan}</dt>
@@ -1017,6 +1035,7 @@ export function StepsView({
       headingRef={headingRef}
       sectionKey="steps"
       foot={foot}
+      loading={<SummaryHeld />}
       live={
         <p className="sr-only" role="status" aria-live="polite">
           {announce}

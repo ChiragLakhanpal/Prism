@@ -32,6 +32,7 @@ export function CollapsedSection({
   sectionKey,
   live,
   foot,
+  loading,
 }: {
   id?: string;
   tag?: ReactNode;
@@ -55,6 +56,8 @@ export function CollapsedSection({
   live?: ReactNode;
   // The Foot strip that ends the opened zone's evidence: its note, coverage line and source line (ticket 101).
   foot?: ReactNode;
+  // What holds the summary's place while it loads, in place of the zone's two skeleton bars (ticket 59).
+  loading?: ReactNode;
 }) {
   return (
     <TaskZone
@@ -71,6 +74,7 @@ export function CollapsedSection({
       sectionKey={sectionKey}
       live={live}
       foot={foot}
+      loading={loading}
       marks={{ "data-collapsed-section": open ? "open" : state === "ready" ? "collapsed" : state }}
       className="scroll-mt-24"
     >

@@ -9,7 +9,7 @@
 //   is blind: the page never shows a passage's rank, score or search setup, highlighted words, live feedback, or
 //   the other judge's grades before both finish.
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { Button, PRIMARY_LINK } from "../components/Button";
@@ -223,9 +223,13 @@ export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList;
               </a>
             </div>
           )}
-          <div className="mt-6 @md/page:mt-8">
-            <Agreement list={list} />
-          </div>
+          {/* The agreement block and its space show only while a pair has been judged by both, so the filter keeps
+              32 px under the next query's link either way (the 32 brief, 2.10; ticket 59). */}
+          {list.agreement.both_done > 0 && (
+            <div className="mt-6 @md/page:mt-8">
+              <Agreement list={list} />
+            </div>
+          )}
           <div className="mt-6 @md/page:mt-8">
             <SegmentedControl<Show>
               legend={w.show}
@@ -370,7 +374,7 @@ function Differences({ query }: { query: JudgingQuery }) {
   return (
     <div className="flex flex-col gap-3" data-differences>
       <div>
-        <Button variant="ghost" flush onPage icon={ChevronDown} aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Button variant="ghost" flush onPage icon={open ? ChevronUp : ChevronDown} aria-expanded={open} onClick={() => setOpen(!open)}>
           {open ? w.differencesHide : w.differencesShow}
         </Button>
       </div>
@@ -665,7 +669,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
             className="flex flex-col gap-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             data-judging-panel
           >
-            <h2 id={panelId} ref={panelHeading} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
+            <h2 id={panelId} ref={panelHeading} tabIndex={-1} className="scroll-mt-4 text-h2 text-ink-heading focus:outline-none">
               {fillText(w.panel, { i: at, pool })}
             </h2>
             {!wide && failedAlert}

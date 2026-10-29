@@ -39,7 +39,7 @@ import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
-import { MonoWords } from "./MonoWords";
+import { inSentence, MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { evidenceFrom, FromLine } from "./NumFrom";
 import { RETURNING } from "./Popover";
@@ -53,7 +53,9 @@ const STILL_WORKING_MS = 30_000;
 export const DRAWER_ID = "evidence-drawer";
 
 // An ID in a line Strata writes: a P-code links to its project page (ticket 21), anything else is in mono.
-const mono = (text: string) => <IdText id={text} />;
+// A P-code as the page header sets it; a STEP reference as the box sets it, by MonoWords, so "Asked within
+// KE-NWWDA-541055-CW-RFB." never breaks inside the reference while it fits a line (ticket 59).
+const mono = (text: string) => (/^P\d{6}$/.test(text) ? <IdText id={text} /> : <MonoWords text={text} />);
 
 // ── Steps ──────────────────────────────────────────────────────────────
 
@@ -247,15 +249,16 @@ export function sentenceText(
   const quoteStart = sentence.quote && quoteLang && quoteLang !== around ? sentence.text.indexOf(sentence.quote.text) : -1;
   const quoteEnd = quoteStart < 0 ? -1 : quoteStart + sentence.quote!.text.length;
   // A cited record's STEP reference is a name, not a quote: it is set by MonoWords, so it moves to the next line whole
-  // and never breaks after "KE-" (ticket 58).
+  // and never breaks after "KE-" (ticket 58). Any other STEP reference in the text between stays whole too, in the
+  // sentence's own type (inSentence; ticket 59's verifier saw "KE-ICTA-571738-" end a line).
   const references = referencePattern(stepReferences(sentence, evidence));
   const named = (start: number, end: number): ReactNode[] => {
     const text = sentence.text.slice(start, end);
-    if (!references) return [text];
+    if (!references) return inSentence(text, start);
     const pieces: ReactNode[] = [];
     let at = 0;
     for (const match of text.matchAll(references)) {
-      pieces.push(text.slice(at, match.index));
+      pieces.push(...inSentence(text.slice(at, match.index), start + at));
       pieces.push(
         <span key={`reference-${start + match.index}`} data-step-reference>
           <MonoWords text={match[1]} after={match[2]} medium />
@@ -263,7 +266,7 @@ export function sentenceText(
       );
       at = match.index + match[0].length;
     }
-    pieces.push(text.slice(at));
+    pieces.push(...inSentence(text.slice(at), start + at));
     return pieces.filter((piece) => piece !== "");
   };
   // Plain text from start to end of the sentence, with the part inside the quote marked as the source's language.
@@ -274,7 +277,7 @@ export function sentenceText(
     return [
       ...named(start, from),
       <Lang key={`quote-${from}`} code={quoteLang}>
-        {sentence.text.slice(from, to)}
+        {inSentence(sentence.text.slice(from, to), from)}
       </Lang>,
       ...named(to, end),
     ];

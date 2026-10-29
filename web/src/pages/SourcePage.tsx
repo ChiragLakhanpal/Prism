@@ -29,6 +29,7 @@ import { Num } from "../components/Num";
 import { MethodText } from "../components/PlanCheck";
 import { linkProjectIds, ProjectId, ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
+import { CARD_FIELD, CARD_FIELDS } from "../components/Table";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
 import type { SourcePageAnswer } from "../lib/api";
@@ -127,12 +128,14 @@ export function PageBar({
     onMove();
     navigate(pageAddress(pid, doc, pages === null ? to : Math.min(to, pages)));
   };
+  // Below a page area of 30rem, 480 px, the two links say "Previous" and "Next", so "Page 65 of 100" keeps one row with
+  // them on a phone (the 21 brief, 7.2; ticket 59).
   return (
     <nav aria-label={words.pages.label} data-page-bar className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-y border-line py-2">
       <TextLink href={pageAddress(pid, doc, page - 1)} onClick={onMove} className={cx(link, page <= 1 && "invisible")} aria-label={copy.pagination.previous}>
         <ChevronLeft aria-hidden="true" className="size-4 shrink-0" />
-        <span className="xs:hidden">{copy.pagination.previousShort}</span>
-        <span className="hidden xs:inline">{copy.pagination.previous}</span>
+        <span className="@table-narrow/page:hidden">{copy.pagination.previousShort}</span>
+        <span className="hidden @table-narrow/page:inline">{copy.pagination.previous}</span>
       </TextLink>
       {full ? (
         <>
@@ -162,8 +165,8 @@ export function PageBar({
         <span aria-hidden="true" />
       )}
       <TextLink href={pageAddress(pid, doc, page + 1)} onClick={onMove} className={cx(link, atEnd && "invisible")} aria-label={copy.pagination.next}>
-        <span className="xs:hidden">{copy.pagination.nextShort}</span>
-        <span className="hidden xs:inline">{copy.pagination.next}</span>
+        <span className="@table-narrow/page:hidden">{copy.pagination.nextShort}</span>
+        <span className="hidden @table-narrow/page:inline">{copy.pagination.next}</span>
         <ChevronRight aria-hidden="true" className="size-4 shrink-0" />
       </TextLink>
     </nav>
@@ -206,10 +209,10 @@ export function Passages({ answer, blockRef }: { answer: SourcePageAnswer; block
   const highlight = answer.highlight;
   let section: string | null = null;
   // A plan's STEP rows take the column's width, so each Activity Reference No. stays whole (the 58 critique, round
-  // 3); the text keeps its reading measure.
+  // 3). The words keep to 72 characters a line; a table on the page spans the page bar's width (ticket 59).
   const planRows = (answer.plan_rows ?? []).length > 0;
   return (
-    <div className={cx("flex flex-col gap-4", !planRows && "max-w-[72ch]")} data-passages>
+    <div className="flex flex-col gap-4" data-passages>
       {passages.map((passage) => {
         const newSection = passage.section_path && passage.section_path !== section ? passage.section_path : null;
         section = passage.section_path ?? section;
@@ -299,22 +302,31 @@ function RowsTable({
           </tbody>
         </table>
       )}
-      cards={rows.map((row) => (
-        <li
-          key={row.passage_id}
-          data-passage-id={row.passage_id}
-          className={cx("rounded-md border border-line p-4", row.passage_id === highlight ? "border-l-4 border-l-primary bg-highlight" : "bg-surface")}
-        >
-          <dl className="flex flex-col gap-2">
-            {heads.map((head) => (
-              <div key={head}>
-                <dt className="text-caption text-ink-muted">{head}</dt>
-                <dd className="text-small wrap-break-word text-ink">{cell(row, head)}</dd>
-              </div>
-            ))}
-          </dl>
-        </li>
-      ))}
+      // Each card is headed by its row's name, the first column's value, as Table's cards are, and lists the other
+      // columns under their heads (DESIGN.md section 5, Tables; ticket 59). A row with no name lists every column.
+      cards={rows.map((row) => {
+        const name = cell(row, heads[0]);
+        const fields = name ? heads.slice(1) : heads;
+        return (
+          <li
+            key={row.passage_id}
+            data-passage-id={row.passage_id}
+            className={cx("rounded-md border border-line p-4", row.passage_id === highlight ? "border-l-4 border-l-primary bg-highlight" : "bg-surface")}
+          >
+            {name && <h2 className="text-small font-semibold wrap-break-word text-ink-heading">{name}</h2>}
+            {fields.length > 0 && (
+              <dl className={cx("flex flex-col gap-2", name && "mt-2")}>
+                {fields.map((head) => (
+                  <div key={head}>
+                    <dt className="text-caption text-ink-muted">{head}</dt>
+                    <dd className="text-small wrap-break-word text-ink">{cell(row, head)}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+          </li>
+        );
+      })}
     />
   );
   return marked ? (
@@ -396,22 +408,24 @@ function PlanRows({ answer }: { answer: SourcePageAnswer }) {
         <li key={row.activity_reference_no} className="rounded-md border border-line bg-surface p-4">
           <h2 className="font-mono text-small font-semibold wrap-anywhere text-ink-heading">{row.activity_reference_no}</h2>
           {row.description && <p className="mt-1 text-small text-ink">{drawable(row.description)}</p>}
-          <dl className="mt-2 flex flex-col gap-2">
-            <div>
+          {/* Method at the card's full width, then the review, the estimate and Process status sharing Table's 120 px
+              grid (DESIGN.md section 5, Tables; ticket 59; the review field is ticket 58's). */}
+          <dl className={cx("mt-2", CARD_FIELDS)}>
+            <div className={cx(CARD_FIELD, "col-span-full")}>
               <dt className="text-caption text-ink-muted">{columns.method}</dt>
               <dd className="text-small text-ink">{method(row)}</dd>
             </div>
-            <div>
+            <div className={CARD_FIELD}>
               <dt className="text-caption text-ink-muted">{columns.review}</dt>
               <dd className="text-small text-ink">{row.review_type ?? words.noReview}</dd>
             </div>
-            <div>
+            <div className={CARD_FIELD}>
               <dt className="text-caption text-ink-muted">{columns.estimated}</dt>
-              <dd className="text-small text-ink tabular-nums">{amount(row.estimated_amount_usd)}</dd>
+              <dd className="text-small whitespace-nowrap text-ink tabular-nums">{amount(row.estimated_amount_usd)}</dd>
             </div>
-            <div>
+            <div className={CARD_FIELD}>
               <dt className="text-caption text-ink-muted">{columns.status}</dt>
-              <dd className="text-small text-ink">{row.process_status ?? words.noStatus}</dd>
+              <dd className="text-small wrap-break-word text-ink">{row.process_status ?? words.noStatus}</dd>
             </div>
           </dl>
         </li>

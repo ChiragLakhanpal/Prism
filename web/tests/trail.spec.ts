@@ -8,6 +8,7 @@ import type { Page, Request } from "@playwright/test";
 import { scan } from "./axe";
 import { expect, mockApi, modelRoutes, recorded, test } from "./mocked";
 import { ICR_54, KENYA, SHOWCASE, trailApi } from "./trail-api";
+import { brokenInside, WHOLE } from "./unbroken";
 
 type Answer = { status?: number; body: string };
 const KENYA_PATH = `/projects/P156634/packages/${KENYA}`;
@@ -88,6 +89,41 @@ test("the trail shows no supplier score, rank or profile: bids keep the notice's
   await expect(bids.getByRole("button")).toHaveCount(0);
   await expect(bids.locator("tbody th a, [data-stage=contract] dd a")).toHaveCount(0);
   await expect(page.locator("main")).not.toContainText(/score|rank|profile/i);
+});
+
+// Ticket 59, criterion 5, and the critique of round 1, follow-up 1: "Why this source" broke "award notice
+// IN-RRSMP-7431-CW-" from "RFB" in the drawer at 1440 px. Its reference and its dates stay whole at every width.
+test("Why this source keeps its STEP reference and its dates whole in the drawer", async ({ page }) => {
+  await open(page, `${SHOWCASE_PATH}?evidence=${ICR_54}`, 1440);
+  const sentence = page.getByRole("dialog").locator("[data-why-sentence]");
+  await expect(sentence).toContainText("IN-RRSMP-7431-CW-RFB");
+  for (const width of [1440, 1024, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    // This older reference has four digits and no space, so it may not break anywhere. The critique of round 2,
+    // follow-up 7: "award notice" sat alone at the first line's end, apart from its reference.
+    const labelled = "notice\\sIN-RRSMP-7431-CW-RFB";
+    for (const [kind, pattern, count] of [["reference", WHOLE.reference, 1], ["date", WHOLE.date, 2], ["labelled reference", labelled, 1]] as const) {
+      const { found, broken } = await brokenInside(page, "[data-why-sentence]", pattern);
+      expect(found, `${width} px: the ${kind}s`).toBe(count);
+      expect(broken, `${width} px`).toEqual([]);
+    }
+  }
+});
+
+// The design review of round 1, follow-up 10: an activity page whose request found nothing broke its reference in the
+// h1 and the empty card at 320 px ("Activity IN-RRSMP-7431-CW-" over "RFB") though it fits a line.
+test("an activity page that found nothing keeps its STEP reference whole in the h1 and the empty card", async ({ page }) => {
+  const missing = "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB";
+  await open(page, missing, 320, { [`/api${missing}`]: { status: 404, body: '{"code":"unknown_activity"}' } });
+  await expect(page.locator("[data-activity-page=not-found]")).toBeVisible();
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    const { found, broken } = await brokenInside(page, "main h1, [data-empty-state] h2, [data-empty-state] h3", "IN-RRSMP-7431-CW-RFB");
+    expect(found, `${width} px`).toBe(2);
+    expect(broken, `${width} px`).toEqual([]);
+  }
 });
 
 test("an individual consultant is never named on the trail", async ({ page }) => {

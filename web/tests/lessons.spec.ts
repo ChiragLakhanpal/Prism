@@ -184,6 +184,18 @@ test("the decided table keeps each date on one line, and each day count says wha
   await expect(date).toHaveText("Oct 27, 2026");
   const lines = await date.evaluate((cell) => Math.round(cell.querySelector("span")!.getBoundingClientRect().height / parseFloat(getComputedStyle(cell).lineHeight)));
   expect(lines).toBe(1);
+  // Ticket 59 (the 29 critique, round 3, follow-up 4): the statement's first line is level with the Outcome's and
+  // Decided's first lines.
+  const firstLines = await table.locator("tbody tr").first().evaluate((row) =>
+    [...row.children].slice(0, 3).map((cell) => {
+      const range = document.createRange();
+      const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+      const text = walker.nextNode()!;
+      range.selectNodeContents(text);
+      return Math.round(range.getClientRects()[0].top);
+    }),
+  );
+  expect(Math.max(...firstLines) - Math.min(...firstLines), `first lines at ${firstLines.join(", ")}`).toBeLessThanOrEqual(1);
   await table.locator("tbody button[data-num]").first().focus();
   await expect(page.getByRole("tooltip")).toHaveText("Days from November 2, 2019, when the report became public, to the decision on October 27, 2026.");
 });

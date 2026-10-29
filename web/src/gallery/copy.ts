@@ -327,6 +327,8 @@ export const galleryCopy = {
     default: "Default",
     disabled: "Disabled",
     loading: "Loading",
+    // Ticket 59: words the page already knows, held as a skeleton, so their lines break where the real words' will.
+    skeletonWords: "Skeleton words: an agency's name and a caption before the check arrives",
     withIcon: "With an icon",
     iconOnly: "Icon only",
     empty: "Empty",
@@ -338,6 +340,10 @@ export const galleryCopy = {
     missing: "Missing",
     slow: "Loading, after one second",
     slowTwo: "Loading, after two seconds",
+    // Ticket 59, round 2: the held states the page draws while its answers load.
+    loadingChangeLine: "Loading, with the change line's place held under the narration",
+    loadingWithAgain: "Loading, with Advertised again's skeleton under the past range's",
+    loadingEstimate: "Loading the time estimate, with a held-back estimate's sentences held under the chart and in the summary",
     withText: "With text",
     opened: "Opened before",
     active: "Open in the drawer",
@@ -541,6 +547,7 @@ export const galleryCopy = {
     noLessons: "No lesson fits",
     asOf: "As of a date",
     loading: "Loading",
+    updating: "Updating, over 400 ms: the skeleton holds the risks' last height",
     error: "Error",
     claim: "The drawer's claim, when IEG's review restates the lesson",
     awaiting: "The IEG line, when IEG has not reviewed the project yet",
@@ -804,6 +811,7 @@ export const galleryCopy = {
     rejectedLanguage: "A reason in French, with its language named",
     removedRow: "A reason the verifier removed, with the removed box",
     costNoEstimate: "The plan row gives no cost estimate for this package",
+    costQuantile: "Above 60 packages: 20 quantile dots, each 1 in 20 of the packages (mock, made up)",
     sampleNoun: "sample",
   },
 

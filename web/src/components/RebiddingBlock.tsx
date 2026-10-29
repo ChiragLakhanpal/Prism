@@ -32,6 +32,7 @@ import { useStore } from "../lib/store";
 import { dataReadinessHref } from "../routes";
 import type { ComparablesResult } from "../lib/api";
 import { useFocusWithin } from "../lib/useFocusWithin";
+import { useLastHeight } from "../lib/useLastHeight";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -107,6 +108,11 @@ export function RebiddingView({
   const headingId = useId();
   const result = state.status === "ready" ? state.result : null;
   const loading = state.status === "loading";
+  // The list's open state lives here, above the ready block, so a rerun that shows the skeleton for a while keeps it
+  // (ticket 59; the 28 review, follow-up 1).
+  const [open, setOpen] = useState(initiallyOpen);
+  // The ready block's last height: a rerun's skeleton holds it, so the sections under the block stay put (ticket 59).
+  const [readyBlock, lastHeight] = useLastHeight(Boolean(result) && !updating, result);
   // Zone 1's second block (ticket 101): its body, then its source line in its own foot strip.
   return (
     <>
@@ -129,29 +135,54 @@ export function RebiddingView({
           {words.why}
         </p>
       )}
-      {(loading || updating) && <RebidSkeleton />}
+      {loading && <RebidSkeleton />}
+      {updating && (
+        <div className={cx(lastHeight !== null && "overflow-hidden")} style={{ height: lastHeight ?? undefined }} data-rebid-updating>
+          <RebidSkeleton />
+        </div>
+      )}
       {state.status === "error" && <RebidError state={state} />}
       {/* A failed load is said once, politely; the Alert itself is no alert, so it is not heard twice. */}
       <p role="status" className="sr-only">
         {state.status === "error" ? words.error : ""}
       </p>
       {result && !updating && (
-        <Ready
-          result={result}
-          numbers={numbers}
-          asOf={asOf}
-          comparing={comparing}
-          openId={openId}
-          visited={visited}
-          handlers={handlers}
-          initiallyOpen={initiallyOpen}
-        />
+        <div ref={readyBlock} className="flow-root">
+          <Ready
+            result={result}
+            numbers={numbers}
+            asOf={asOf}
+            comparing={comparing}
+            openId={openId}
+            visited={visited}
+            handlers={handlers}
+            open={open}
+            setOpen={setOpen}
+          />
+        </div>
       )}
       </div>
     </div>
-    {result && !updating && (
+    {/* While the block loads, the foot strip holds the source line's lines: three in the card from a 26rem page area,
+        a fourth below it and a fifth below 22.5rem, as the fixture's source line takes (ticket 59; the critique of round
+        1, measured at 320 to 1440 px). */}
+    {loading && (
       <FootStrip>
-        <RebidSource result={result} asOf={asOf} />
+        <div aria-hidden="true" data-rebid-source-skeleton>
+          <SkeletonLine className="text-caption" width="w-full" />
+          <SkeletonLine className="text-caption" width="w-full" />
+          <SkeletonLine className="hidden text-caption @max-[26rem]/page:flex" width="w-full" />
+          <SkeletonLine className="hidden text-caption @max-[22.5rem]/page:flex" width="w-full" />
+          <SkeletonLine className="text-caption" width="w-2/5" />
+        </div>
+      </FootStrip>
+    )}
+    {/* While a rerun shows the skeleton, the foot strip keeps its place with the last source line unseen. */}
+    {result && (
+      <FootStrip>
+        <div className={cx(updating && "invisible")} aria-hidden={updating || undefined}>
+          <RebidSource result={result} asOf={asOf} />
+        </div>
       </FootStrip>
     )}
     </>
@@ -173,12 +204,11 @@ function RebidSource({ result, asOf }: { result: RebiddingResult; asOf: string |
   );
 }
 
-function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, initiallyOpen }: {
+function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, open, setOpen }: {
   result: RebiddingResult; numbers: Map<string, number>; asOf: string | null; comparing: boolean; openId: string | null;
-  visited: ReadonlySet<string>; handlers: RebidHandlers; initiallyOpen: boolean;
+  visited: ReadonlySet<string>; handlers: RebidHandlers; open: boolean; setOpen: (open: boolean | ((now: boolean) => boolean)) => void;
 }) {
   const listId = useId();
-  const [open, setOpen] = useState(initiallyOpen);
   const [focusFirst, setFocusFirst] = useState(false);
   const { n, m } = result;
   // Selecting {n} or {m} opens the list and moves focus to its first group's heading, where the count can be
@@ -219,7 +249,7 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
   const byRef = new Map(result.rows.map((row) => [row.step_reference, row]));
   return (
     <>
-      <p className="mt-3 max-w-prose text-body text-ink" data-rebid-count>
+      <p className="mt-3 max-w-prose text-body text-pretty text-ink" data-rebid-count>
         {sentence}
       </p>
       {different && (
@@ -260,7 +290,7 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
           </p>
         </div>
       )}
-      <div id={listId} hidden={!open} className="mt-4 flex animate-open-in flex-col gap-6" data-rebid-list>
+      <div id={listId} hidden={!open} className="mt-4 flex max-w-prose animate-open-in flex-col gap-6" data-rebid-list>
         {result.groups.map((group, index) => (
           <div key={group.reason_code} className="@container/reasons" data-rebid-group={group.reason_code}>
             <ReasonGroup
@@ -293,7 +323,7 @@ function ModelLines({ model }: { model: RebidModel }) {
     const tip = { tooltip: words.tips.track, from: <FromLine words={testsFrom(track.run_date)} /> };
     return (
       <>
-        <p className="mt-2 max-w-prose text-body text-ink" data-rebid-model>
+        <p className="mt-2 max-w-prose text-body text-pretty text-ink" data-rebid-model>
           {model.band === "below_1" ? words.modelBelow1 : model.band === "above_9" ? words.modelAbove9 : <Fill template={words.model} slots={{ k }} />}
         </p>
         <p className="mt-2 max-w-prose text-caption text-ink-muted" data-rebid-track>
@@ -314,7 +344,7 @@ function ModelLines({ model }: { model: RebidModel }) {
   // The smallest count the model gives an estimate from is one of my settings, as the scored run used it.
   const setting = model.score_date ? <FromLine words={settingsFrom(model.score_date)} /> : undefined;
   return (
-    <p className="mt-2 max-w-prose text-body text-ink" data-rebid-model-off={reason}>
+    <p className="mt-2 max-w-prose text-body text-pretty text-ink" data-rebid-model-off={reason}>
       <Fill
         template={words.off[reason] ?? words.off.no_results}
         slots={{
@@ -419,6 +449,10 @@ function RebidSkeleton() {
     <div aria-hidden="true" className="mt-3 flex flex-col gap-2" data-rebid-skeleton>
       <SkeletonLine className="text-body" width="w-[70%]" />
       <SkeletonLine className="text-body" width="w-[90%]" />
+      {/* The sentences take a line more below a page area of 34rem, and another below 22.5rem (ticket 59, measured on
+          the fixture's demo package at 320 to 1440 px). */}
+      <SkeletonLine className="hidden text-body @max-[34rem]/page:flex" width="w-4/5" />
+      <SkeletonLine className="hidden text-body @max-[22.5rem]/page:flex" width="w-3/5" />
       <SkeletonLine className="text-caption" width="w-4/5" />
       <Skeleton className="mt-2 h-11 w-60" radius="rounded-sm" />
       <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
@@ -437,7 +471,7 @@ function RebidError({ state }: { state: Extract<RebidState, { status: "error" }>
       </div>
       {state.requestId && (
         <p className="text-caption text-ink-muted">
-          <Fill template={words.errorCode} slots={{ code: <span className="font-mono">{state.requestId}</span> }} />
+          <Fill template={words.errorCode} slots={{ code: <Mono text={state.requestId} /> }} />
         </p>
       )}
     </div>
@@ -446,11 +480,15 @@ function RebidError({ state }: { state: Extract<RebidState, { status: "error" }>
 
 // ── The block on a page: it reads, reruns and opens ──────────────────────
 
-export function Rebidding({ path, section, sectionFailed = false, comparing = false }: {
+export function Rebidding({ path, section, sectionFailed = false, sectionLoading = false, comparing = false }: {
   // GET .../rebidding with section 1's criteria, or null while the package has none.
   path: string | null;
   // Section 1's result, when it has loaded: the block counts the same comparable packages.
   section: ComparablesResult | null;
+  // Section 1 is loading its first result: the block holds its own skeleton under the past range's, so the card ends
+  // where it will and the sections under it stay put (ticket 59; the critique of round 1). A page whose first result
+  // may be a prompt in place of the range, such as a planned package, leaves it unset.
+  sectionLoading?: boolean;
   // Section 1's own request failed: the block comes from its own tool, so it still shows under the error (ticket 101).
   sectionFailed?: boolean;
   comparing?: boolean;
@@ -533,6 +571,7 @@ export function Rebidding({ path, section, sectionFailed = false, comparing = fa
     if (focusInside.current && block && !block.contains(document.activeElement)) heading.current?.focus();
   }, [state]);
 
+  if (!shown && sectionLoading && path !== null) return <RebiddingView state={{ status: "loading" }} numbers={numbers} headingRef={heading} />;
   if (!shown || hidden) return null;
   const fallback = () => heading.current;
   const handlers: RebidHandlers = {

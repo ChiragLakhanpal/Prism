@@ -241,7 +241,16 @@ export function StepTracker({ state }: { state: StepsState }) {
 // One line of words as a static bar, at the caption's 20 px line height. A wide line shows only from a 36rem card,
 // where a label and a date take two lines in their narrow column; a narrow one only below it, where the source line
 // takes up to three, as it does when it names the contract awards data too.
-const SHOWN = { always: "flex", wide: "hidden @min-[36rem]/tracker:flex", narrow: "flex @min-[36rem]/tracker:hidden" };
+const SHOWN = {
+  always: "flex",
+  wide: "hidden @min-[36rem]/tracker:flex",
+  narrow: "flex @min-[36rem]/tracker:hidden",
+  // In a row narrower than 52, 40 and 37.5rem, a step's words take one, two and three more lines than in a wide one, as
+  // the demo package's steps do (ticket 59, the critique of round 2).
+  rowBelow52: "hidden @min-[36rem]/tracker:@max-[52rem]/tracker:flex",
+  rowBelow40: "hidden @min-[36rem]/tracker:@max-[40rem]/tracker:flex",
+  rowBelow37: "hidden @min-[36rem]/tracker:@max-[37.5rem]/tracker:flex",
+};
 function Bar({ width, kind = "always" }: { width: string; kind?: keyof typeof SHOWN }) {
   return (
     <span className={cx("h-5 items-center", SHOWN[kind])}>
@@ -254,7 +263,8 @@ function Bar({ width, kind = "always" }: { width: string; kind?: keyof typeof SH
 // the title, six nodes with their words, and the source line.
 export function TrackerSkeleton() {
   return (
-    <div aria-hidden="true" data-step-tracker-skeleton className={CARD}>
+    <div aria-hidden="true" data-step-tracker-skeleton className={FRAME}>
+      <div className={INSIDE}>
       <span className="flex h-6 items-center">
         <span className="block h-4 w-48 rounded-xs bg-surface-2" />
       </span>
@@ -265,6 +275,9 @@ export function TrackerSkeleton() {
             <span className="flex flex-col @min-[36rem]/tracker:items-center">
               <Bar width="w-32 @min-[36rem]/tracker:w-16" />
               <Bar width="w-12" kind="wide" />
+              <Bar width="w-14" kind="rowBelow52" />
+              <Bar width="w-10" kind="rowBelow40" />
+              <Bar width="w-12" kind="rowBelow37" />
               <Bar width="w-24 @min-[36rem]/tracker:w-16" />
               <Bar width="w-40 @min-[36rem]/tracker:w-16" />
               <Bar width="w-12" kind="wide" />
@@ -272,11 +285,16 @@ export function TrackerSkeleton() {
           </span>
         ))}
       </span>
-      <span className="mt-4 flex flex-col">
-        <Bar width="w-4/5" />
-        <Bar width="w-4/5" kind="narrow" />
-        <Bar width="w-2/5" kind="narrow" />
-      </span>
+      </div>
+      {/* The source line in the foot strip, to the card's edges, as the drawn tracker ends (ticket 101; ticket 59, the
+          critique of round 2). */}
+      <FootStrip>
+        <span className="flex flex-col">
+          <Bar width="w-4/5" />
+          <Bar width="w-2/5" />
+          <Bar width="w-2/5" kind="narrow" />
+        </span>
+      </FootStrip>
     </div>
   );
 }

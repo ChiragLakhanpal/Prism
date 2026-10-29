@@ -568,9 +568,6 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
   );
 }
 
-// A line of skeleton that shows only below a page area of 768 px, where the words it stands for wrap once more.
-const NARROW_ONLY = "@md/page:hidden";
-
 // One evidence card's frame, block for block, as tall as an ICR card at each width: the eyebrow and marker,
 // the title, the quote, the source line and the check line.
 function EvidenceFrame() {
@@ -580,17 +577,23 @@ function EvidenceFrame() {
         <SkeletonLine className="text-label" width="w-1/4" />
         <Skeleton className="size-5" radius="rounded-pill" />
       </div>
+      {/* The title and the quote take more lines as the page area narrows, as the fixture's ICR card does at 320 to
+          1440 px (ticket 59): the title a second line below 26rem and a third below 22.5rem; the quote a line more
+          below 40rem, 31rem and 26rem, and two more below 22.5rem. */}
       <span className="-mt-1 flex flex-col text-h2">
         <SkeletonLine width="w-3/4" />
-        <SkeletonLine width="w-1/3" className={NARROW_ONLY} />
+        <SkeletonLine width="w-1/3" className="@[26rem]/page:hidden" />
+        <SkeletonLine width="w-1/4" className="@[22.5rem]/page:hidden" />
       </span>
       <span className="flex max-w-prose flex-col text-body">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-1/2" />
-        <SkeletonLine width="w-full" className={NARROW_ONLY} />
-        <SkeletonLine width="w-full" className={NARROW_ONLY} />
-        <SkeletonLine width="w-3/5" className={NARROW_ONLY} />
+        <SkeletonLine width="w-full" className="@[40rem]/page:hidden" />
+        <SkeletonLine width="w-full" className="@[31rem]/page:hidden" />
+        <SkeletonLine width="w-full" className="@[26rem]/page:hidden" />
+        <SkeletonLine width="w-full" className="@[22.5rem]/page:hidden" />
+        <SkeletonLine width="w-3/5" className="@[22.5rem]/page:hidden" />
       </span>
       <SkeletonText className="text-caption" widths={["w-full", "w-1/4"]} />
       <Skeleton className="h-14 w-full @md/page:h-10" radius="rounded-sm" />
@@ -604,18 +607,21 @@ export function ReviewSkeleton() {
       <p role="status" className="clip-visually">
         {r.loading}
       </p>
+      {/* The statement takes three lines below a page area of 22.5rem, two below 40rem and one from there, and the line
+          under it two lines below 31rem, as the fixture's lessons do at 320 to 1440 px (ticket 59). */}
       <SkeletonLine className="mt-4 text-small" width="w-[30%]" />
       <span className="mt-2 flex flex-col text-h1">
         <SkeletonLine width="w-full" />
-        <SkeletonLine width="w-3/5" />
-        <SkeletonLine width="w-2/5" className={NARROW_ONLY} />
+        <SkeletonLine width="w-3/5" className="@[40rem]/page:hidden" />
+        <SkeletonLine width="w-2/5" className="@[22.5rem]/page:hidden" />
       </span>
       <span className="mt-2 flex flex-col text-body">
         <SkeletonLine width="w-1/2" />
-        <SkeletonLine width="w-1/3" className={NARROW_ONLY} />
+        <SkeletonLine width="w-1/3" className="@[31rem]/page:hidden" />
       </span>
       <Skeleton className="mt-3 h-[30px] w-40" radius="rounded-pill" />
-      <h2 className="mt-8 text-h2 text-ink-heading @md/page:mt-12">{r.evidenceTitle}</h2>
+      {/* 32 px from the page head to the first zone (DESIGN.md section 4, Space). */}
+      <h2 className="mt-8 text-h2 text-ink-heading">{r.evidenceTitle}</h2>
       {/* Static copy, so "The evidence" and the cards never move when the item arrives. */}
       <p className="mt-1 max-w-prose text-caption text-ink-muted">{words.sourcesNote}</p>
       <div className="mt-4 flex flex-col gap-4">

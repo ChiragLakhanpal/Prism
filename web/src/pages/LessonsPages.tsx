@@ -162,7 +162,11 @@ function Decided({ queue }: { queue: Queue }) {
     cells: {
       lesson: (
         <span className="flex flex-col gap-0.5">
-          <TextLink href={itemHref(row.item_id)}>{row.statement}</TextLink>
+          {/* The link sits inside a line of its own, so its padding takes no room and its first line is level with the
+              Outcome's and Decided's (ticket 59). */}
+          <span>
+            <TextLink href={itemHref(row.item_id)}>{row.statement}</TextLink>
+          </span>
           <span className="text-caption text-ink-muted">
             <Fill template={q.project} slots={{ name: row.project_name ?? "", pid: <span className="font-mono">{row.pid}</span> }} />
           </span>
@@ -288,37 +292,47 @@ export function QueueSkeleton({ me }: { me?: Me | null }) {
       ) : (
         <SkeletonText className="max-w-prose text-body" widths={["w-full", "w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
       )}
-      {/* Each part in the text style of what it stands for, so each line is as tall as the line it holds. */}
+      {/* Each part in the text style of what it stands for, so each line is as tall as the line it holds. The lines
+          each part takes by the page area were measured on the fixture's queue at 320 to 1440 px (ticket 59): the
+          lead takes a third line below 26rem, the quote check's caption a fourth below 26rem and a fifth below 22.5rem;
+          a row's statement takes two lines below 37.5rem, and its source sentence two below 43rem and three below
+          22.5rem. */}
       <span className="mt-4 flex max-w-prose flex-col text-lead @md/page:mt-6">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-3/5" />
-        <SkeletonLine width="w-2/5" className={NARROW_ONLY} />
+        <SkeletonLine width="w-2/5" className="@[26rem]/page:hidden" />
       </span>
       <span className="mt-2 flex max-w-prose flex-col text-caption">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-1/3" />
-        <SkeletonLine width="w-1/2" className={NARROW_ONLY} />
+        <SkeletonLine width="w-1/2" className="@[26rem]/page:hidden" />
+        <SkeletonLine width="w-1/3" className="@[22.5rem]/page:hidden" />
       </span>
       <div className="mt-8 @md/page:mt-12">
         <SkeletonLine className="text-h2" width="w-40" />
         <SkeletonLine className="mt-1 text-caption" width="w-24" />
         <div className="mt-4">
           {[0, 1, 2].map((index) => (
-            <div key={index} className="flex flex-col gap-1 border-t-2 border-line py-4" data-skeleton-row>
-              <SkeletonLine className="text-small" width="w-2/5" />
-              <span className="flex flex-col text-h2">
-                <SkeletonLine width="w-[90%]" />
-                <SkeletonLine width="w-1/2" className={NARROW_ONLY} />
-              </span>
-              <span className="flex flex-col text-caption">
-                <SkeletonLine width="w-full" />
-                <SkeletonLine width="w-3/5" className={NARROW_ONLY} />
-              </span>
-              <div className="py-1">
-                <Skeleton className="h-[30px] w-40" radius="rounded-pill" />
+            <div key={index} className="border-t-2 border-line py-4" data-skeleton-row>
+              {/* Every bar in the row keeps to the prose width, as the lead's do, since a row's lines end there on a
+                  wide page (the critique of round 1; the design review of round 2, follow-up 4). */}
+              <div className="flex max-w-prose flex-col gap-1">
+                <SkeletonLine className="text-small" width="w-2/5" />
+                <span className="flex flex-col text-h2">
+                  <SkeletonLine width="w-[90%]" />
+                  <SkeletonLine width="w-1/2" className="@[37.5rem]/page:hidden" />
+                </span>
+                <span className="flex flex-col text-caption">
+                  <SkeletonLine width="w-full" />
+                  <SkeletonLine width="w-3/5" className="@[43rem]/page:hidden" />
+                  <SkeletonLine width="w-2/5" className="@[22.5rem]/page:hidden" />
+                </span>
+                <div className="py-1">
+                  <Skeleton className="h-[30px] w-40" radius="rounded-pill" />
+                </div>
+                <SkeletonLine className="text-small" width="w-3/5" />
               </div>
-              <SkeletonLine className="text-small" width="w-3/5" />
             </div>
           ))}
         </div>

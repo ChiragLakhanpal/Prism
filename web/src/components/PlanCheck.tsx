@@ -28,6 +28,7 @@ import { evidenceIn, openEvidence, remember } from "../lib/evidence";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { planRowCheckId } from "../lib/planRows";
 import { address } from "../lib/router";
+import { fill } from "../routes";
 import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { Button } from "./Button";
@@ -533,7 +534,8 @@ function ActivityCard({ row, result, fresh, mark, change, onOpen }: RowProps) {
             <Reference row={row} open={mark === "open"} onOpen={onOpen} />
           </span>
         </h3>
-        {row.description && <p className="mt-1 text-small text-ink">{row.description}</p>}
+        {/* The Description in ink-muted and the reasons in ink, so the reason under it reads as the finding (ticket 59). */}
+        {row.description && <p className="mt-1 text-small text-ink-muted">{row.description}</p>}
         <UploadLines row={row} />
         <ChangedLine change={change} />
         <div className="mt-2 flex flex-col gap-2">
@@ -649,6 +651,37 @@ function bringIntoView(target: HTMLElement) {
     if (edge > partTop && edge < partBottom) top = (fits(partTop - barStuck) ? partTop : partBottom) - barStuck;
   }
   window.scrollTo({ top: Math.max(0, top) });
+}
+
+// A landing aims once, and a later change of layout, such as the fonts arriving on a slow connection or the floating ask
+// bar taking its height, can move the row after it and leave it cut under the parts that stick. So for a second after a
+// landing, the row is aimed again once the fonts have loaded and whenever it moves on the page. The reader's own scroll,
+// key or touch ends this at once, so it never fights them (ticket 59; the design review of round 1, follow-up 2).
+const SETTLE_MS = 1000;
+function landAndHold(target: HTMLElement): () => void {
+  const at = () => Math.round(target.getBoundingClientRect().top + window.scrollY);
+  bringIntoView(target);
+  let last = at();
+  let done = false;
+  const again = () => {
+    if (done || !target.isConnected) return;
+    const now = at();
+    if (now === last) return;
+    last = now;
+    bringIntoView(target);
+  };
+  const watch = new ResizeObserver(again);
+  watch.observe(document.documentElement);
+  void document.fonts?.ready.then(again);
+  const stop = () => {
+    done = true;
+    watch.disconnect();
+    clearTimeout(timer);
+    for (const kind of ["wheel", "touchstart", "keydown", "pointerdown"]) window.removeEventListener(kind, stop, true);
+  };
+  const timer = setTimeout(stop, SETTLE_MS);
+  for (const kind of ["wheel", "touchstart", "keydown", "pointerdown"]) window.addEventListener(kind, stop, { capture: true, passive: true });
+  return stop;
 }
 
 export function PlanCheckHeader({ agency, plan, pill, action, feedforward, level = 1, sticky = false, rule = true }: {
@@ -777,6 +810,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
   // A link whose hash names an activity: open the fold if the activity is in it, then bring the
   // activity into view and focus it.
   useEffect(() => {
+    let stop = () => {};
     const follow = () => {
       const ref = hashReference();
       if (!ref || !result.rows.some((row) => rowKey(row) === ref)) return;
@@ -785,13 +819,17 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
       requestAnimationFrame(() => {
         const target = visibleActivity(ref);
         if (!target) return;
-        bringIntoView(target);
+        stop();
+        stop = landAndHold(target);
         target.focus({ preventScroll: true });
       });
     };
     follow();
     window.addEventListener("hashchange", follow);
-    return () => window.removeEventListener("hashchange", follow);
+    return () => {
+      stop();
+      window.removeEventListener("hashchange", follow);
+    };
     // The rows are fixed for a result, so following once per result is enough.
   }, [result]);
 
@@ -979,11 +1017,27 @@ export function PlanSource({ result }: { result: CheckedPlan }) {
   );
 }
 
+// A finding as long as most are, "One needs a look and two are worth watching; three have data notes.", from the
+// finding's own templates. It only holds the finding's place, unseen, while the check loads.
+function typicalFinding(): string {
+  const f = words.finding;
+  return (
+    fill(f.lookAndWatch(1, 2), { look: formatCount(1, { capital: true }), watch: formatCount(2) }) +
+    fill(f.notes(3), { notes: formatCount(3) }) +
+    f.end
+  );
+}
+
 // While the check loads: the header's places, then the narration in the places of the finding's byline, the
 // finding and the method sentence (ticket 111), then the activities panel with its real name and column heads over
 // five skeleton rows, or three skeleton cards below a frame of 34rem. Nothing moves when the rows arrive, and nothing
 // shimmers.
-export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
+export function PlanCheckSkeleton({ slow, afterNarration }: {
+  slow?: boolean;
+  // The change line under the narration (ticket 59; the critique of round 1): the line itself once what changed has
+  // answered, which needs nothing from the check, or its held lines until then, so the panel below stays put.
+  afterNarration?: ReactNode;
+}) {
   const rows = [0, 1, 2, 3, 4];
   // The narration (ticket 111): the answer panel's own steps, with one running step and how I check under it, then,
   // after two seconds, why it can take longer. The page's polite status says the step, so the steps announce nothing.
@@ -998,23 +1052,23 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
     <div data-plan-skeleton>
       <EightColumns prose className="mt-6">
         {/* The narration and the places it holds share one grid cell, so it is exactly as tall as the byline, the
-            finding and the method sentence it stands for. In the finding style the finding takes three lines below
-            768 px and two from it, where the eight columns hold their 65 characters; the method sentence five lines
-            below 768 px and three from it. Its count words keep to the line's height (Num). */}
+            finding and the method sentence it stands for. The places are a typical finding and the method sentence
+            with every check, written from the copy file's templates in the finding's and the method's own styles and
+            never seen or heard, so they take the lines the real ones take at every width (ticket 59). Its count
+            words keep to the line's height (Num). */}
         <div className="grid" data-plan-narration>
           <div aria-hidden="true" className="invisible col-start-1 row-start-1">
             <SkeletonLine className="text-label" width="w-24" />
-            <div className="mt-2">
-              <SkeletonText className="text-finding @md/page:hidden" widths={["w-full", "w-full", "w-2/5"]} />
-              <SkeletonText className="hidden text-finding @md/page:flex" widths={["w-full", "w-2/5"]} />
-            </div>
-            <SkeletonText className="mt-4 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
-            <SkeletonText className="mt-4 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
+            <p className="mt-2 text-finding text-pretty">{typicalFinding()}</p>
+            <p className="mt-4 text-body">
+              <Fill template={words.method} slots={{ checks: <Joined items={Object.values(words.checks)} /> }} />
+            </p>
           </div>
           <div className="col-start-1 row-start-1">
             <Steps steps={[narration]} announce={false} />
           </div>
         </div>
+        {afterNarration}
       </EightColumns>
       <div className="mt-8">
         <ActivitiesZone busy tag={<SkeletonLine className="text-caption" width="w-40" />}>

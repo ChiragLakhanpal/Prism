@@ -1,0 +1,2275 @@
+{
+  "mock": "A made-up cost estimate part above 60 comparable packages, for the quantile dots (ticket 59). Its 80 packages and their amounts are made up; the quartiles and the dots come from the tool's own helpers.",
+  "rows": [
+    {
+      "evidence_id": "package-cost:KE-MOCK-900000-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900000-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "400000.00",
+      "signed_amount_usd": "280000.00",
+      "diff_pct": -30.0,
+      "contracts": [],
+      "rank": 1
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900032-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900032-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "688000.00",
+      "signed_amount_usd": "488480.00",
+      "diff_pct": -29.0,
+      "contracts": [],
+      "rank": 33
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900064-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900064-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "976000.00",
+      "signed_amount_usd": "702720.00",
+      "diff_pct": -28.0,
+      "contracts": [],
+      "rank": 65
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900005-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900005-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "445000.00",
+      "signed_amount_usd": "324850.00",
+      "diff_pct": -27.0,
+      "contracts": [],
+      "rank": 6
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900037-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900037-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "733000.00",
+      "signed_amount_usd": "542420.00",
+      "diff_pct": -26.0,
+      "contracts": [],
+      "rank": 38
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900069-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900069-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1021000.00",
+      "signed_amount_usd": "765750.00",
+      "diff_pct": -25.0,
+      "contracts": [],
+      "rank": 70
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900010-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900010-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "490000.00",
+      "signed_amount_usd": "372400.00",
+      "diff_pct": -24.0,
+      "contracts": [],
+      "rank": 11
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900042-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900042-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "778000.00",
+      "signed_amount_usd": "599060.00",
+      "diff_pct": -23.0,
+      "contracts": [],
+      "rank": 43
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900074-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900074-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1066000.00",
+      "signed_amount_usd": "831480.00",
+      "diff_pct": -22.0,
+      "contracts": [],
+      "rank": 75
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900015-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900015-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "535000.00",
+      "signed_amount_usd": "422650.00",
+      "diff_pct": -21.0,
+      "contracts": [],
+      "rank": 16
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900047-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900047-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "823000.00",
+      "signed_amount_usd": "658400.00",
+      "diff_pct": -20.0,
+      "contracts": [],
+      "rank": 48
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900079-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900079-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1111000.00",
+      "signed_amount_usd": "899910.00",
+      "diff_pct": -19.0,
+      "contracts": [],
+      "rank": 80
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900020-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900020-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "580000.00",
+      "signed_amount_usd": "475600.00",
+      "diff_pct": -18.0,
+      "contracts": [],
+      "rank": 21
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900052-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900052-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "868000.00",
+      "signed_amount_usd": "720440.00",
+      "diff_pct": -17.0,
+      "contracts": [],
+      "rank": 53
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900025-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900025-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "625000.00",
+      "signed_amount_usd": "531250.00",
+      "diff_pct": -15.0,
+      "contracts": [],
+      "rank": 26
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900057-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900057-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "913000.00",
+      "signed_amount_usd": "785180.00",
+      "diff_pct": -14.0,
+      "contracts": [],
+      "rank": 58
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900030-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900030-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "670000.00",
+      "signed_amount_usd": "589600.00",
+      "diff_pct": -12.0,
+      "contracts": [],
+      "rank": 31
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900062-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900062-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "958000.00",
+      "signed_amount_usd": "852620.00",
+      "diff_pct": -11.0,
+      "contracts": [],
+      "rank": 63
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900003-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900003-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "427000.00",
+      "signed_amount_usd": "384300.00",
+      "diff_pct": -10.0,
+      "contracts": [],
+      "rank": 4
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900035-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900035-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "715000.00",
+      "signed_amount_usd": "650650.00",
+      "diff_pct": -9.0,
+      "contracts": [],
+      "rank": 36
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900067-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900067-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1003000.00",
+      "signed_amount_usd": "922760.00",
+      "diff_pct": -8.0,
+      "contracts": [],
+      "rank": 68
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900008-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900008-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "472000.00",
+      "signed_amount_usd": "438960.00",
+      "diff_pct": -7.0,
+      "contracts": [],
+      "rank": 9
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900040-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900040-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "760000.00",
+      "signed_amount_usd": "714400.00",
+      "diff_pct": -6.0,
+      "contracts": [],
+      "rank": 41
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900072-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900072-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1048000.00",
+      "signed_amount_usd": "995600.00",
+      "diff_pct": -5.0,
+      "contracts": [],
+      "rank": 73
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900013-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900013-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "517000.00",
+      "signed_amount_usd": "496320.00",
+      "diff_pct": -4.0,
+      "contracts": [],
+      "rank": 14
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900045-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900045-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "805000.00",
+      "signed_amount_usd": "780850.00",
+      "diff_pct": -3.0,
+      "contracts": [],
+      "rank": 46
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900077-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900077-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1093000.00",
+      "signed_amount_usd": "1071140.00",
+      "diff_pct": -2.0,
+      "contracts": [],
+      "rank": 78
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900018-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900018-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "562000.00",
+      "signed_amount_usd": "556380.00",
+      "diff_pct": -1.0,
+      "contracts": [],
+      "rank": 19
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900050-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900050-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "850000.00",
+      "signed_amount_usd": "850000.00",
+      "diff_pct": 0.0,
+      "contracts": [],
+      "rank": 51
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900023-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900023-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "607000.00",
+      "signed_amount_usd": "619140.00",
+      "diff_pct": 2.0,
+      "contracts": [],
+      "rank": 24
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900055-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900055-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "895000.00",
+      "signed_amount_usd": "921850.00",
+      "diff_pct": 3.0,
+      "contracts": [],
+      "rank": 56
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900028-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900028-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "652000.00",
+      "signed_amount_usd": "684600.00",
+      "diff_pct": 5.0,
+      "contracts": [],
+      "rank": 29
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900060-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900060-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "940000.00",
+      "signed_amount_usd": "996400.00",
+      "diff_pct": 6.0,
+      "contracts": [],
+      "rank": 61
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900001-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900001-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "409000.00",
+      "signed_amount_usd": "437630.00",
+      "diff_pct": 7.0,
+      "contracts": [],
+      "rank": 2
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900033-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900033-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "697000.00",
+      "signed_amount_usd": "752760.00",
+      "diff_pct": 8.0,
+      "contracts": [],
+      "rank": 34
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900065-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900065-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "985000.00",
+      "signed_amount_usd": "1073650.00",
+      "diff_pct": 9.0,
+      "contracts": [],
+      "rank": 66
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900006-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900006-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "454000.00",
+      "signed_amount_usd": "499400.00",
+      "diff_pct": 10.0,
+      "contracts": [],
+      "rank": 7
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900038-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900038-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "742000.00",
+      "signed_amount_usd": "823620.00",
+      "diff_pct": 11.0,
+      "contracts": [],
+      "rank": 39
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900070-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900070-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1030000.00",
+      "signed_amount_usd": "1153600.00",
+      "diff_pct": 12.0,
+      "contracts": [],
+      "rank": 71
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900011-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900011-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "499000.00",
+      "signed_amount_usd": "563870.00",
+      "diff_pct": 13.0,
+      "contracts": [],
+      "rank": 12
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900043-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900043-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "787000.00",
+      "signed_amount_usd": "897180.00",
+      "diff_pct": 14.0,
+      "contracts": [],
+      "rank": 44
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900075-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900075-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1075000.00",
+      "signed_amount_usd": "1236250.00",
+      "diff_pct": 15.0,
+      "contracts": [],
+      "rank": 76
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900016-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900016-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "544000.00",
+      "signed_amount_usd": "631040.00",
+      "diff_pct": 16.0,
+      "contracts": [],
+      "rank": 17
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900048-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900048-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "832000.00",
+      "signed_amount_usd": "973440.00",
+      "diff_pct": 17.0,
+      "contracts": [],
+      "rank": 49
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900021-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900021-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "589000.00",
+      "signed_amount_usd": "700910.00",
+      "diff_pct": 19.0,
+      "contracts": [],
+      "rank": 22
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900053-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900053-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "877000.00",
+      "signed_amount_usd": "1052400.00",
+      "diff_pct": 20.0,
+      "contracts": [],
+      "rank": 54
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900026-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900026-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "634000.00",
+      "signed_amount_usd": "773480.00",
+      "diff_pct": 22.0,
+      "contracts": [],
+      "rank": 27
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900058-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900058-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "922000.00",
+      "signed_amount_usd": "1134060.00",
+      "diff_pct": 23.0,
+      "contracts": [],
+      "rank": 59
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900031-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900031-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "679000.00",
+      "signed_amount_usd": "848750.00",
+      "diff_pct": 25.0,
+      "contracts": [],
+      "rank": 32
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900063-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900063-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "967000.00",
+      "signed_amount_usd": "1218420.00",
+      "diff_pct": 26.0,
+      "contracts": [],
+      "rank": 64
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900004-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900004-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "436000.00",
+      "signed_amount_usd": "553720.00",
+      "diff_pct": 27.0,
+      "contracts": [],
+      "rank": 5
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900036-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900036-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "724000.00",
+      "signed_amount_usd": "926720.00",
+      "diff_pct": 28.0,
+      "contracts": [],
+      "rank": 37
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900068-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900068-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1012000.00",
+      "signed_amount_usd": "1305480.00",
+      "diff_pct": 29.0,
+      "contracts": [],
+      "rank": 69
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900009-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900009-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "481000.00",
+      "signed_amount_usd": "625300.00",
+      "diff_pct": 30.0,
+      "contracts": [],
+      "rank": 10
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900041-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900041-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "769000.00",
+      "signed_amount_usd": "1007390.00",
+      "diff_pct": 31.0,
+      "contracts": [],
+      "rank": 42
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900073-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900073-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1057000.00",
+      "signed_amount_usd": "1395240.00",
+      "diff_pct": 32.0,
+      "contracts": [],
+      "rank": 74
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900014-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900014-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "526000.00",
+      "signed_amount_usd": "699580.00",
+      "diff_pct": 33.0,
+      "contracts": [],
+      "rank": 15
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900046-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900046-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "814000.00",
+      "signed_amount_usd": "1090760.00",
+      "diff_pct": 34.0,
+      "contracts": [],
+      "rank": 47
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900078-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900078-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1102000.00",
+      "signed_amount_usd": "1487700.00",
+      "diff_pct": 35.0,
+      "contracts": [],
+      "rank": 79
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900019-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900019-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "571000.00",
+      "signed_amount_usd": "776560.00",
+      "diff_pct": 36.0,
+      "contracts": [],
+      "rank": 20
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900051-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900051-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "859000.00",
+      "signed_amount_usd": "1176830.00",
+      "diff_pct": 37.0,
+      "contracts": [],
+      "rank": 52
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900024-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900024-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "616000.00",
+      "signed_amount_usd": "856240.00",
+      "diff_pct": 39.0,
+      "contracts": [],
+      "rank": 25
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900056-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900056-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "904000.00",
+      "signed_amount_usd": "1265600.00",
+      "diff_pct": 40.0,
+      "contracts": [],
+      "rank": 57
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900029-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900029-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "661000.00",
+      "signed_amount_usd": "938620.00",
+      "diff_pct": 42.0,
+      "contracts": [],
+      "rank": 30
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900061-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900061-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "949000.00",
+      "signed_amount_usd": "1357070.00",
+      "diff_pct": 43.0,
+      "contracts": [],
+      "rank": 62
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900002-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900002-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "418000.00",
+      "signed_amount_usd": "601920.00",
+      "diff_pct": 44.0,
+      "contracts": [],
+      "rank": 3
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900034-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900034-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "706000.00",
+      "signed_amount_usd": "1023700.00",
+      "diff_pct": 45.0,
+      "contracts": [],
+      "rank": 35
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900066-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900066-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "994000.00",
+      "signed_amount_usd": "1451240.00",
+      "diff_pct": 46.0,
+      "contracts": [],
+      "rank": 67
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900007-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900007-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "463000.00",
+      "signed_amount_usd": "680610.00",
+      "diff_pct": 47.0,
+      "contracts": [],
+      "rank": 8
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900039-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900039-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "751000.00",
+      "signed_amount_usd": "1111480.00",
+      "diff_pct": 48.0,
+      "contracts": [],
+      "rank": 40
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900071-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900071-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1039000.00",
+      "signed_amount_usd": "1548110.00",
+      "diff_pct": 49.0,
+      "contracts": [],
+      "rank": 72
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900012-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900012-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "508000.00",
+      "signed_amount_usd": "762000.00",
+      "diff_pct": 50.0,
+      "contracts": [],
+      "rank": 13
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900044-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900044-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "796000.00",
+      "signed_amount_usd": "1201960.00",
+      "diff_pct": 51.0,
+      "contracts": [],
+      "rank": 45
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900076-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900076-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "1084000.00",
+      "signed_amount_usd": "1647680.00",
+      "diff_pct": 52.0,
+      "contracts": [],
+      "rank": 77
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900017-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900017-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "553000.00",
+      "signed_amount_usd": "846090.00",
+      "diff_pct": 53.0,
+      "contracts": [],
+      "rank": 18
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900049-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900049-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "841000.00",
+      "signed_amount_usd": "1295140.00",
+      "diff_pct": 54.0,
+      "contracts": [],
+      "rank": 50
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900022-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900022-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "598000.00",
+      "signed_amount_usd": "932880.00",
+      "diff_pct": 56.0,
+      "contracts": [],
+      "rank": 23
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900054-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900054-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "886000.00",
+      "signed_amount_usd": "1391020.00",
+      "diff_pct": 57.0,
+      "contracts": [],
+      "rank": 55
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900027-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900027-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "643000.00",
+      "signed_amount_usd": "1022370.00",
+      "diff_pct": 59.0,
+      "contracts": [],
+      "rank": 28
+    },
+    {
+      "evidence_id": "package-cost:KE-MOCK-900059-CW-RFB",
+      "public_from": "2026-07-31",
+      "source": {
+        "plan": {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "pdf_page": 3,
+          "implementing_agency": "Coast Water Services Board"
+        },
+        "contract_ids": [
+          "1676946"
+        ]
+      },
+      "step_reference": "KE-MOCK-900059-CW-RFB",
+      "project_id": null,
+      "country_code": "KE",
+      "country_name": "Kenya",
+      "description": "Made-up works package for the quantile dots mock",
+      "estimated_amount_usd": "931000.00",
+      "signed_amount_usd": "1489600.00",
+      "diff_pct": 60.0,
+      "contracts": [],
+      "rank": 60
+    }
+  ],
+  "coverage": {
+    "matched": 80,
+    "used": 80,
+    "not_used": []
+  },
+  "package": {
+    "step_reference": "KE-NWWDA-541055-CW-RFB",
+    "estimated_amount_usd": "1230000.00",
+    "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+    "given": false
+  },
+  "counts": {
+    "total": 80,
+    "m": 80,
+    "open": 0,
+    "no_estimate": 0,
+    "no_usd": 0,
+    "above": 51,
+    "below": 28,
+    "at": 1
+  },
+  "band": {
+    "low_usd": "300000.00",
+    "high_usd": "14000000.00"
+  },
+  "quartiles": {
+    "q25": -8.3,
+    "q50": 13.5,
+    "q75": 36.3
+  },
+  "quantile_dots": [
+    {
+      "k": 1,
+      "diff_pct": -28.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900000-CW-RFB",
+        "KE-MOCK-900032-CW-RFB",
+        "KE-MOCK-900064-CW-RFB",
+        "KE-MOCK-900005-CW-RFB"
+      ]
+    },
+    {
+      "k": 2,
+      "diff_pct": -24.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900037-CW-RFB",
+        "KE-MOCK-900069-CW-RFB",
+        "KE-MOCK-900010-CW-RFB",
+        "KE-MOCK-900042-CW-RFB"
+      ]
+    },
+    {
+      "k": 3,
+      "diff_pct": -20.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900074-CW-RFB",
+        "KE-MOCK-900015-CW-RFB",
+        "KE-MOCK-900047-CW-RFB",
+        "KE-MOCK-900079-CW-RFB"
+      ]
+    },
+    {
+      "k": 4,
+      "diff_pct": -16.0,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900020-CW-RFB",
+        "KE-MOCK-900052-CW-RFB",
+        "KE-MOCK-900025-CW-RFB",
+        "KE-MOCK-900057-CW-RFB"
+      ]
+    },
+    {
+      "k": 5,
+      "diff_pct": -10.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900030-CW-RFB",
+        "KE-MOCK-900062-CW-RFB",
+        "KE-MOCK-900003-CW-RFB",
+        "KE-MOCK-900035-CW-RFB"
+      ]
+    },
+    {
+      "k": 6,
+      "diff_pct": -6.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900067-CW-RFB",
+        "KE-MOCK-900008-CW-RFB",
+        "KE-MOCK-900040-CW-RFB",
+        "KE-MOCK-900072-CW-RFB"
+      ]
+    },
+    {
+      "k": 7,
+      "diff_pct": -2.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900013-CW-RFB",
+        "KE-MOCK-900045-CW-RFB",
+        "KE-MOCK-900077-CW-RFB",
+        "KE-MOCK-900018-CW-RFB"
+      ]
+    },
+    {
+      "k": 8,
+      "diff_pct": 2.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900050-CW-RFB",
+        "KE-MOCK-900023-CW-RFB",
+        "KE-MOCK-900055-CW-RFB",
+        "KE-MOCK-900028-CW-RFB"
+      ]
+    },
+    {
+      "k": 9,
+      "diff_pct": 7.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900060-CW-RFB",
+        "KE-MOCK-900001-CW-RFB",
+        "KE-MOCK-900033-CW-RFB",
+        "KE-MOCK-900065-CW-RFB"
+      ]
+    },
+    {
+      "k": 10,
+      "diff_pct": 11.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900006-CW-RFB",
+        "KE-MOCK-900038-CW-RFB",
+        "KE-MOCK-900070-CW-RFB",
+        "KE-MOCK-900011-CW-RFB"
+      ]
+    },
+    {
+      "k": 11,
+      "diff_pct": 15.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900043-CW-RFB",
+        "KE-MOCK-900075-CW-RFB",
+        "KE-MOCK-900016-CW-RFB",
+        "KE-MOCK-900048-CW-RFB"
+      ]
+    },
+    {
+      "k": 12,
+      "diff_pct": 21.0,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900021-CW-RFB",
+        "KE-MOCK-900053-CW-RFB",
+        "KE-MOCK-900026-CW-RFB",
+        "KE-MOCK-900058-CW-RFB"
+      ]
+    },
+    {
+      "k": 13,
+      "diff_pct": 26.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900031-CW-RFB",
+        "KE-MOCK-900063-CW-RFB",
+        "KE-MOCK-900004-CW-RFB",
+        "KE-MOCK-900036-CW-RFB"
+      ]
+    },
+    {
+      "k": 14,
+      "diff_pct": 30.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900068-CW-RFB",
+        "KE-MOCK-900009-CW-RFB",
+        "KE-MOCK-900041-CW-RFB",
+        "KE-MOCK-900073-CW-RFB"
+      ]
+    },
+    {
+      "k": 15,
+      "diff_pct": 34.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900014-CW-RFB",
+        "KE-MOCK-900046-CW-RFB",
+        "KE-MOCK-900078-CW-RFB",
+        "KE-MOCK-900019-CW-RFB"
+      ]
+    },
+    {
+      "k": 16,
+      "diff_pct": 39.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900051-CW-RFB",
+        "KE-MOCK-900024-CW-RFB",
+        "KE-MOCK-900056-CW-RFB",
+        "KE-MOCK-900029-CW-RFB"
+      ]
+    },
+    {
+      "k": 17,
+      "diff_pct": 44.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900061-CW-RFB",
+        "KE-MOCK-900002-CW-RFB",
+        "KE-MOCK-900034-CW-RFB",
+        "KE-MOCK-900066-CW-RFB"
+      ]
+    },
+    {
+      "k": 18,
+      "diff_pct": 48.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900007-CW-RFB",
+        "KE-MOCK-900039-CW-RFB",
+        "KE-MOCK-900071-CW-RFB",
+        "KE-MOCK-900012-CW-RFB"
+      ]
+    },
+    {
+      "k": 19,
+      "diff_pct": 52.5,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900044-CW-RFB",
+        "KE-MOCK-900076-CW-RFB",
+        "KE-MOCK-900017-CW-RFB",
+        "KE-MOCK-900049-CW-RFB"
+      ]
+    },
+    {
+      "k": 20,
+      "diff_pct": 58.0,
+      "count": 4,
+      "step_references": [
+        "KE-MOCK-900022-CW-RFB",
+        "KE-MOCK-900054-CW-RFB",
+        "KE-MOCK-900027-CW-RFB",
+        "KE-MOCK-900059-CW-RFB"
+      ]
+    }
+  ],
+  "min_comparables": 20,
+  "sources": [
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    }
+  ],
+  "records_through": "2026-10-13",
+  "abstention": null,
+  "as_of": "2026-10-28"
+}

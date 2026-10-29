@@ -46,7 +46,12 @@ export function ReasonGroup({
         className="flex flex-col text-small font-bold text-ink-heading focus:outline-none @[30rem]/reasons:flex-row @[30rem]/reasons:items-baseline @[30rem]/reasons:justify-between @[30rem]/reasons:gap-4"
       >
         <span aria-hidden="true">{label}</span>
-        <span aria-hidden="true" className="font-semibold text-ink tabular-nums">
+        {/* Under its label, below 480 px of the group's width, the count is a caption; beside it, small at 600 (the 28
+            brief, 3.4; ticket 59). */}
+        <span
+          aria-hidden="true"
+          className="text-caption font-normal text-ink-muted tabular-nums @[30rem]/reasons:text-small @[30rem]/reasons:font-semibold @[30rem]/reasons:text-ink"
+        >
           {count}
         </span>
         <span className="sr-only">{name}</span>

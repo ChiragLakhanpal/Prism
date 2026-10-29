@@ -64,13 +64,14 @@ function numberSources(summary: Summary): Map<string, number> {
 }
 
 // The words of a source cell, and the name its marker reads: "Projects API, Aug 1, 2023".
-function sourceWords(source: FactSource): { cell: string; name: string } {
+// The cell's date is one unbroken run, "Sep 30, 2026" or "Nov 2022", so it never splits across two lines (ticket 59).
+function sourceWords(source: FactSource): { cell: ReactNode; name: string } {
   const date = source.date ?? "";
   const sequence = source.sequence != null ? String(source.sequence) : null;
   const kind = source.kind === "isr" && !sequence ? "isrUnnumbered" : source.kind;
   const shortDate = source.kind === "loan_history" ? month(date) : table(date);
   return {
-    cell: fill(words.source[kind], { date: date ? shortDate : "", sequence: sequence ?? "" }),
+    cell: <Fill template={words.source[kind]} slots={{ date: date ? <span className="whitespace-nowrap">{shortDate}</span> : "", sequence: sequence ?? "" }} />,
     name: fill(words.markerSource[kind], { date: date ? formatDate(date) : "", sequence: sequence ?? "" }),
   };
 }
@@ -223,7 +224,8 @@ const historyColumns: Column[] = [
   { key: "first", header: words.history.col.first, short: true },
   { key: "before", header: words.history.col.before, short: true },
   { key: "after", header: words.history.col.after, short: true },
-  { key: "source", header: words.history.col.source, short: true },
+  // The Source spans both of a card's columns, so its date keeps to one line in a 390 px card (ticket 59).
+  { key: "source", header: words.history.col.source },
 ];
 
 function History({ summary, numbers, events }: { summary: Summary; numbers: Map<string, number>; events: Record<string, EvidenceEvent> }) {

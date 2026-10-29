@@ -78,8 +78,23 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // 390 px the kinds' four cards stood 45 px shorter each, the Sources' fifteen 50.7 px and the hardest documents' five
 // 47.2 px. The hardest documents open inside their zone's body now, so in a 1024 px page area their table is narrower
 // and its five rows stood 16 px taller each.
-const ROW_HEIGHT = { kinds: "h-[7.956rem] @xl/page:h-[7.297rem]", sources: "h-[8.3625rem] @xl/page:h-[7.3125rem]", shelf: "h-[9.556rem] @xl/page:h-[7.6707rem]" } as const;
-const CARD_HEIGHT = { kinds: "h-[13.873rem]", sources: "h-[12.9173rem]", shelf: "h-[18.975rem]" } as const;
+// Ticket 59 measured them again at 320 to 1440 px and gave each its steps by the page area, since one height for every
+// page area under 1200 px left the rows at 768 px and the cards at 320 px far from the rows they stand for (the Sources'
+// fifteen rows 490 px short at 768 px): the rows from 48rem, 56rem, 62rem, 68rem, 72rem and 80rem, and the cards below 22.5rem,
+// from it, and from 26rem, 34rem and, for the Sources, 44rem. The merge with ticket 58, whose words made some rows and
+// cards taller, measured them again at the nine widths: the Sources' rows from 62rem take ticket 58's 8.3625rem, and the
+// kinds' and the Sources' cards gain a step at 30rem (and the kinds' one at 44rem), since 450 and 496 px, and 640 and
+// 767 px, needed different heights.
+const ROW_HEIGHT = {
+  kinds: "h-[9.525rem] @[56rem]/page:h-[7.9625rem] @[72rem]/page:h-[7.3375rem] @[80rem]/page:h-[7.306rem]",
+  sources: "h-[10.2375rem] @[56rem]/page:h-[8.475rem] @[62rem]/page:h-[8.3625rem] @[68rem]/page:h-[7.8625rem] @[72rem]/page:h-[7.5625rem] @[80rem]/page:h-[7.3125rem]",
+  shelf: "h-[13.306rem] @[56rem]/page:h-[9.556rem] @[68rem]/page:h-[8.306rem] @[72rem]/page:h-[8.406rem] @[80rem]/page:h-[7.906rem]",
+} as const;
+const CARD_HEIGHT = {
+  kinds: "h-[15.25rem] @[22.5rem]/page:h-[13.873rem] @[26rem]/page:h-[12.875rem] @[30rem]/page:h-[12.5625rem] @[34rem]/page:h-[11.9375rem] @[44rem]/page:h-[11.5rem]",
+  sources: "h-[22.0925rem] @[22.5rem]/page:h-[12.9173rem] @[26rem]/page:h-[12.2025rem] @[30rem]/page:h-[12.469rem] @[34rem]/page:h-[8.2167rem] @[44rem]/page:h-[7.47rem]",
+  shelf: "h-[26.16rem] @[22.5rem]/page:h-[18.975rem] @[26rem]/page:h-[17.54rem] @[34rem]/page:h-[16.16rem]",
+} as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
 const HEAD = "px-4 py-3 align-top font-semibold text-ink-heading";
@@ -168,7 +183,7 @@ export function ReadinessTable({
       ))}
     </dl>
   );
-  // The source line's skeleton: as many lines as the real line runs, from a 768 px page area and below it. The hardest
+  // The source line's skeleton: as many lines as the real line runs, from a 26rem page area and below it (ticket 59). The hardest
   // documents' line names their collection too, so it runs a line longer.
   const [wideLines, narrowLines] = skeletonRows === "shelf" ? [["w-full", "w-1/3"], ["w-full", "w-full", "w-1/3"]] : [["w-1/3"], ["w-full", "w-1/3"]];
   const foot =
@@ -178,8 +193,8 @@ export function ReadinessTable({
           <Source>{source}</Source>
         ) : (
           <>
-            <SkeletonText widths={wideLines} className="hidden text-caption @md/page:flex" />
-            <SkeletonText widths={narrowLines} className="text-caption @md/page:hidden" />
+            <SkeletonText widths={wideLines} className="hidden text-caption @[26rem]/page:flex" />
+            <SkeletonText widths={narrowLines} className="text-caption @[26rem]/page:hidden" />
           </>
         )}
       </FootStrip>
@@ -203,12 +218,13 @@ export function ReadinessTable({
         </thead>
         <tbody>
           {placeholders.map((index) => (
-            <tr key={index} aria-hidden="true" className={cx("border-t border-line", ROW_HEIGHT[skeletonRows])}>
-              <td className="px-4">
+            // Each bar sits on its cell's first line, where the drawn row's text starts (the critique of round 1).
+            <tr key={index} aria-hidden="true" className={cx("border-t border-line align-top", ROW_HEIGHT[skeletonRows])}>
+              <td className="px-4 py-3">
                 <SkeletonLine width="w-4/5" className="text-small" />
               </td>
               {columns.map((column) => (
-                <td key={column.key} className={cx("px-4", column.className)}>
+                <td key={column.key} className={cx("px-4 py-3", column.className)}>
                   <SkeletonLine width={column.numeric ? "ml-auto w-1/2" : "w-4/5"} className="text-small" />
                 </td>
               ))}

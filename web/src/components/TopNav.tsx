@@ -74,6 +74,9 @@ const BELOW_BAR = 12 + 8;
 // In a preview the pill and the Menu button fill white with navy text (about 16:1), tint on hover and when open.
 const PREVIEW_LOOK = "border-surface bg-surface text-navy hover:bg-tint data-[state=open]:bg-tint aria-expanded:bg-tint";
 const OWN_LOOK = "border-surface text-surface hover:bg-primary-hover data-[state=open]:bg-primary-hover aria-expanded:bg-primary-hover";
+// The Menu button at rest has no outline, so the bar never holds two outlined boxes beside the view switch; its border
+// turns white on hover and while the sheet is open (ticket 59; web/index.html paints it the same).
+const MENU_LOOK = "border-transparent text-surface hover:border-surface hover:bg-primary-hover aria-expanded:border-surface aria-expanded:bg-primary-hover";
 
 export function pillLabel(mode: NavMode): string {
   const words = copy.nav.view.pill;
@@ -115,8 +118,9 @@ function WhoLine({ viewer, id }: { viewer: Viewer; id?: string }) {
   );
 }
 
-// One view as a link row: its label and what it is, the current one marked with a check, tint and a 3 px bar.
-function ViewRow({ view, mode, current }: { view: View; mode: NavMode; current: boolean }) {
+// One view as a link row: its label and what it is, the current one marked with a check, tint and a 3 px bar. In the
+// Menu sheet the check alone marks it, so the page's item keeps the sheet's one tint and bar (ticket 59).
+function ViewRow({ view, mode, current, checkOnly = false }: { view: View; mode: NavMode; current: boolean; checkOnly?: boolean }) {
   const desc = useId();
   const rows = copy.nav.view.rows;
   const own = view === mode.own;
@@ -134,7 +138,7 @@ function ViewRow({ view, mode, current }: { view: View; mode: NavMode; current: 
         className={cx(
           "relative flex min-h-12 items-start gap-2 rounded-sm px-3 py-2 transition-paint duration-150",
           "before:absolute before:inset-y-0 before:left-0 before:w-[3px] before:rounded-l-sm",
-          current ? "bg-tint before:bg-primary" : "hover:bg-tint-hover",
+          current && !checkOnly ? "bg-tint before:bg-primary" : "hover:bg-tint-hover",
         )}
       >
         <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center">
@@ -210,7 +214,20 @@ function DateForm({ mode, onDone }: { mode: NavMode; onDone: () => void }) {
 // only the error line (the 40 brief, 7.1). "See Strata as" names the group in the label style, so it never reads as a
 // fourth view: 16 px under the signed-in line, as between blocks, and 8 px over the first row (ticket 110). Nothing in
 // the panel is bold, since DESIGN.md keeps 700 for the h1 and the wordmark.
-export function ViewPanel({ viewer, mode, onDone, whoId }: { viewer: Viewer; mode: NavMode; onDone: () => void; whoId?: string }) {
+export function ViewPanel({
+  viewer,
+  mode,
+  onDone,
+  whoId,
+  checkOnly = false,
+}: {
+  viewer: Viewer;
+  mode: NavMode;
+  onDone: () => void;
+  whoId?: string;
+  // The current view marked by its check alone, as the Menu sheet shows it.
+  checkOnly?: boolean;
+}) {
   const group = useId();
   const current: View = mode.preview ?? mode.own;
   if (viewer.status === "error") return <WhoLine viewer={viewer} id={whoId} />;
@@ -224,7 +241,7 @@ export function ViewPanel({ viewer, mode, onDone, whoId }: { viewer: Viewer; mod
         {mode.offered.length > 0 ? (
           <ul aria-labelledby={group} className="mt-2 flex flex-col gap-1">
             {mode.offered.map((view) => (
-              <ViewRow key={view} view={view} mode={mode} current={view === current} />
+              <ViewRow key={view} view={view} mode={mode} current={view === current} checkOnly={checkOnly} />
             ))}
           </ul>
         ) : (
@@ -411,7 +428,7 @@ export function TopNav({
       {/* Shown below the bar, over the page, so it never covers the logo or the wordmark (DESIGN.md section 10). */}
       <SkipLink />
       <div data-bar-row className="bar-row">
-        <div className="bar-brand flex h-14 min-w-0 items-center pl-3 lg:pl-4">
+        <div className="bar-brand flex h-14 min-w-0 items-center">
           {/* A fixed width, 96 px or 44 px below 360 px, so the logo after it never moves when the font arrives and
               web/index.html paints it in the same place. */}
           <button
@@ -427,7 +444,7 @@ export function TopNav({
             className={cx(
               "flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-sm border text-button xs:w-24 lg:hidden",
               "transition-paint duration-150",
-              mode.preview ? PREVIEW_LOOK : OWN_LOOK,
+              mode.preview ? PREVIEW_LOOK : MENU_LOOK,
             )}
           >
             <MenuIcon aria-hidden="true" className="size-4 shrink-0" />
@@ -441,7 +458,7 @@ export function TopNav({
           )}
           <a
             href={withModeOf(homeHref, mode.search)}
-            className="ml-6 flex h-10 shrink-0 items-center rounded-sm px-1 text-h3 text-surface underline-offset-4 hover:underline"
+            className="ml-6 flex h-10 shrink-0 items-center rounded-sm px-1 text-h2 font-bold text-surface underline-offset-4 hover:underline"
           >
             {copy.appName}
           </a>

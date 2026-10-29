@@ -352,8 +352,20 @@ for (const [name, path, api] of SHORT_STATES) {
     await expect(page.locator(LOADING)).toHaveCount(0);
     for (const width of [1440, 1024, 390]) {
       await page.setViewportSize({ width, height: 900 });
-      const top = await page.getByRole("contentinfo").evaluate((footer) => footer.getBoundingClientRect().top + window.scrollY);
+      const [top, ask, short] = await page.evaluate(() => {
+        const main = document.querySelector("main")!;
+        return [
+          document.querySelector("footer, [role=contentinfo]")!.getBoundingClientRect().top + window.scrollY,
+          document.querySelector("[data-box-slot]")!.getBoundingClientRect().height,
+          // main is only as tall as its least height: its answer is shorter than the window.
+          Number(main.getBoundingClientRect().height <= parseFloat(getComputedStyle(main).minHeight) + 1),
+        ];
+      });
       expect(top, `${name} at ${width} px`).toBeGreaterThanOrEqual(900);
+      // Ticket 59 (the 94 design review, follow-up 5): on a page whose answer is shorter than the window, the footer sits
+      // just past the fold, under the ask bar, and not a bar's height further down where the bar scrolls with the page
+      // below 1024 px.
+      if (short) expect(top - 900, `${name} at ${width} px: no empty screen to scroll past`).toBeLessThanOrEqual(ask + 1);
     }
   });
 }

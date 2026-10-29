@@ -4,7 +4,7 @@
 // (web/capture/shots.ts, the risks-- shots).
 import india from "../../../tests/fixtures/api/risks-ke-nwwda-541055-india.json";
 import kenya from "../../../tests/fixtures/api/risks-ke-nwwda-541055.json";
-import { useState, type ReactNode } from "react";
+import { useLayoutEffect, useState, type ReactNode } from "react";
 import { Checkbox } from "../components/Checkbox";
 import { AllReportsView, RiskReportsView, RowClaim, RowSwitcher } from "../components/RiskDrawer";
 import { RisksView, type RisksState } from "../components/RisksSection";
@@ -86,6 +86,18 @@ function Section({ state, selected = [], ...rest }: { state: RisksState; selecte
         onRetrySave={nothing}
         missingList={rest.missingList}
       />
+    </Column>
+  );
+}
+
+// A rerun over 400 ms (ticket 59): the risks draw once, so their height is known, then the rerun starts before the first
+// paint, and the skeleton holds that height with the instruction and the foot strip's place kept.
+function Updating() {
+  const [updating, setUpdating] = useState(false);
+  useLayoutEffect(() => setUpdating(true), []);
+  return (
+    <Column>
+      <RisksView state={ready(READY)} packageKey={KEY} kind="step" selected={[]} onToggle={nothing} updating={updating} />
     </Column>
   );
 }
@@ -182,6 +194,7 @@ export function risksPage(): GalleryPage {
       { id: "no-lessons", title: t.noLessons, body: <Section state={ready(empty({ empty_reason: "no_lessons" }))} /> },
       { id: "as-of", title: t.asOf, body: <Section state={ready(asOf)} /> },
       { id: "loading", title: t.loading, body: <Section state={{ status: "loading" }} /> },
+      { id: "updating", title: t.updating, body: <Updating /> },
       { id: "error", title: t.error, body: <Section state={{ status: "error", error: null, onRetry: nothing }} /> },
       {
         id: "claim",

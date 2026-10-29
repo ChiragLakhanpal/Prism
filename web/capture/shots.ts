@@ -1475,6 +1475,9 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package", comparables(COMPARABLES)),
   packageShot("package--loading", null, {}, null),
   packageShot("package--section-loading", null),
+  // Ticket 59, round 3: the time estimate held alone. Section 1 draws no Compare with row, and the held-back estimate's
+  // sentences keep their places, unseen, under the chart and at the end of the summary.
+  packageShot("package--estimate-loading", comparables(COMPARABLES), { pending: [`/api${PACKAGE}/estimate`] }),
   packageShot("package--no-plan-dates", { body: noPlanDates }),
   packageShot("package--quantile-dots", comparables("comparables-ke-nwwda-541055-any-category.json")),
   packageShot("package--abstention", comparables("comparables-ke-nwwda-541055-prior.json")),
@@ -2016,6 +2019,9 @@ export const SHOTS: Shot[] = [
   { name: "navigation--rail", path: "/gallery/navigation?sidebar=rail", widths: [1440] },
   { name: "navigation--rail-tip", path: "/gallery/navigation?sidebar=rail", widths: [1440], act: hover("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--sub-items", path: "/gallery/navigation?sub=1", widths: [1440] },
+  // Ticket 59: the sidebar before GET /api/me answers, its bars where Home, the sections and Data will be.
+  { name: "navigation--sidebar-loading", path: "/gallery/navigation?pill=loading&sidebar=open", widths: [1440] },
+  { name: "navigation--menu-loading", path: "/gallery/navigation?pill=loading&menu=open", widths: [390] },
   { name: "navigation--public", path: "/gallery/navigation?pill=public", widths: WIDE },
   { name: "navigation--focus-wordmark", path: "/gallery/navigation", act: focus("[data-nav-bar] a[href='/']") },
   { name: "navigation--focus-skip-link", path: "/gallery/navigation", act: (page) => page.keyboard.press("Tab") },
@@ -2028,6 +2034,8 @@ export const SHOTS: Shot[] = [
   { name: "navigation--hover-menu", path: "/gallery/navigation", widths: NARROW, act: hover("[data-menu-button]") },
   { name: "navigation--focus-menu", path: "/gallery/navigation", widths: NARROW, act: focus("[data-menu-button]") },
   { name: "navigation--menu-open", path: "/gallery/navigation?menu=open", widths: NARROW },
+  // Ticket 59: the sheet's view button pressed, its popover with the view lines and language choice above it.
+  { name: "navigation--menu-view-open", path: "/gallery/navigation?menu=open&menuview=open", widths: [390] },
   { name: "navigation--menu-row-focus", path: "/gallery/navigation?menu=open", widths: NARROW, act: focus("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--menu-row-hover", path: "/gallery/navigation?menu=open", widths: NARROW, act: hover("[data-sidebar] [data-nav-item=drafts]") },
   // Ticket 93: the box in the bar, the stamp at the sidebar's foot (the Menu sheet's below 1024 px), and the fixture's

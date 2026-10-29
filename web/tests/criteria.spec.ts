@@ -27,7 +27,7 @@ function events(text: string): { type: string; data: any }[] {
 async function open(
   page: Page,
   ref: string,
-  options: { width?: number; compare?: string; summary?: string; run?: string; hash?: boolean; asof?: string } = {},
+  options: { width?: number; compare?: string; summary?: string; run?: string; runBody?: string; hash?: boolean; asof?: string } = {},
 ) {
   const { width = 1440 } = options;
   await page.setViewportSize({ width, height: 900 });
@@ -39,7 +39,7 @@ async function open(
     [api]: { body: await recorded(`package-${slug}.json`) },
     [`${api}/comparables`]: { body: await recorded(`comparables-${slug}.json`) },
     [`${api}/criteria`]: { body: await recorded(options.summary ?? `criteria-summary-${slug}.json`) },
-    [`${api}/criteria/run`]: { body: await recorded(options.run ?? `criteria-run-${slug}.sse`) },
+    [`${api}/criteria/run`]: { body: options.runBody ?? (await recorded(options.run ?? `criteria-run-${slug}.sse`)) },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
   };
   // A comparison whose save failed: the server's error event, with nothing saved before it.
@@ -327,6 +327,65 @@ test("in the work column at 1440 px the cost table's packages are cards, so no S
   });
   expect(Object.keys(lines).length).toBeGreaterThan(0);
   expect(Object.entries(lines).filter(([, count]) => count > 1)).toEqual([]);
+  // Ticket 59 (the 31 critique, round 3, follow-up 6): in a 390 px card Country takes a row of its own, so its head
+  // never starts a line below the two-line head of the amount beside it.
+  await page.setViewportSize({ width: 390, height: 900 });
+  const fields = await part.locator("[data-cost-table] [data-table-view=cards] li").first().evaluate((card) =>
+    Object.fromEntries(
+      [...card.querySelectorAll("dl > div")].map((field) => {
+        const box = field.getBoundingClientRect();
+        return [field.querySelector("dt")!.textContent, { top: Math.round(box.top), bottom: Math.round(box.bottom) }];
+      }),
+    ),
+  );
+  expect(fields.Country, "Country's own row, above the amounts").toBeDefined();
+  for (const [head, box] of Object.entries(fields)) if (head !== "Country") expect(box.top, head).toBeGreaterThanOrEqual(fields.Country.bottom);
+  // Ticket 59 (the 31 critique, round 3, follow-up 5): where a count has no room beside the zero line, the two counts
+  // stack as two rows from one left edge under the line's label, never as a stair-step across it.
+  // The design review of round 1, follow-up 5: the line's label shares that edge, so the three lines read as one block.
+  // The lane lays out again from its width after a resize, so each width is read until the drawing has settled there.
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const edges = () =>
+      part.locator("[data-cost-drawing]").evaluate((drawing) => {
+        const left = (selector: string) => [...drawing.querySelectorAll(selector)].map((text) => text.getBoundingClientRect());
+        const [label] = left("[data-line-label]");
+        const counts = left("[data-row-b]");
+        if (counts.length !== 2) return "not two counts";
+        // Side by side the counts sit beside the line, and the rule is about stacking only.
+        if (Math.round(counts[0].top) === Math.round(counts[1].top)) return "one left edge";
+        return new Set([label, ...counts].map((box) => Math.round(box.left))).size === 1 ? "one left edge" : "two left edges";
+      });
+    await expect.poll(edges, `${width} px`).toBe("one left edge");
+  }
+});
+
+// The review of round 1, F2: above 60 comparable packages the package page's own cost part, from the check's stream,
+// draws the tool's quantile dots, not only the gallery's sample. The stream is the recorded run with its cost part
+// replaced by the made-up mock's fields (tests/fixtures/api/criteria-cost-mock-quantile-dots.json says it is made up).
+test("on the package page above 60 packages the cost part draws one dot per quantile, and a dot opens every package in the table", async ({ page }) => {
+  const cost = JSON.parse(await recorded("criteria-cost-mock-quantile-dots.json"));
+  delete cost.mock;
+  const run = (await recorded("criteria-run-ke-nwwda-541055.sse"))
+    .split("\n\n")
+    .map((block) => {
+      if (!block.startsWith("event: package_run")) return block;
+      const [head, data] = block.split("\n");
+      return `${head}\ndata: ${JSON.stringify({ ...JSON.parse(data.slice("data: ".length)), cost })}`;
+    })
+    .join("\n\n");
+  await open(page, WORKS, { runBody: run });
+  await openSection(page);
+  const part = section(page).locator("[data-criteria-part=cost]");
+  const share = cost.quantile_dots.length;
+  await expect(part.locator("[data-cost-key]")).toHaveText(`Each dot is 1 in ${share} of the ${cost.counts.m} packages.`);
+  await expect(part.locator("[data-cost-intro]")).toContainText(`Each dot below stands for 1 in ${share} of them.`);
+  const dots = part.locator("[data-cost-dot]");
+  await expect(dots).toHaveCount(share);
+  await expect(part.locator("[data-cost-table]")).toHaveCount(0);
+  await dots.first().focus();
+  await page.keyboard.press("Enter");
+  await expect(part.locator("[data-cost-table] [data-count-row] p").first()).toHaveText(`Showing all ${cost.counts.m} packages.`);
 });
 
 test("rejected bids and the cost estimate each end in a foot strip across the panel, holding the coverage and source lines", async ({ page }) => {

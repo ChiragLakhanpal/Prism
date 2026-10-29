@@ -735,6 +735,36 @@ test("opening a source, by click or by Enter, or switching to another, keeps the
   expect((await openFrom(wide, wide, 450)).moved).toBeLessThanOrEqual(8);
 });
 
+// Ticket 59 (the 35 design review, round 4, P1): at 1024 by 768 the notes turn into cards when the drawer opens, and the
+// marker is put back before the browser paints, so no frame shows it jumped. Every frame from the press on is read where
+// the browser reads it, in an animation frame, until the drawer has settled.
+test("at 1024 by 768 no painted frame shows the marker away from where it was when its source opens", async ({ page }) => {
+  await openDraft(page, { width: 1024, height: 768 });
+  const marker = notes(page).locator("[data-citation='2']").first();
+  await expect
+    .poll(async () => {
+      const off = (await marker.boundingBox())!.y - 450;
+      if (Math.abs(off) > 2) await page.evaluate((by) => window.scrollBy(0, by), off);
+      return Math.abs(off);
+    })
+    .toBeLessThanOrEqual(2);
+  await page.evaluate(() => {
+    const seen: number[] = [];
+    (window as unknown as { seen: number[] }).seen = seen;
+    const tick = () => {
+      const shown = [...document.querySelectorAll("[data-draft-notes] [data-view] [data-citation='2']")].find((element) => element.getClientRects().length > 0);
+      if (shown) seen.push(Math.round(shown.getBoundingClientRect().top));
+      if (seen.length < 40) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await marker.click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { seen: number[] }).seen.length)).toBe(40);
+  const seen = await page.evaluate(() => (window as unknown as { seen: number[] }).seen);
+  expect(seen.filter((top) => Math.abs(top - 450) > 8), "frames with the marker away from 450").toEqual([]);
+});
+
 test("beside the open drawer at 768 and 800 px the column is phone-sized, so the bar sits at its end with its buttons stacked inside it", async ({ page }) => {
   for (const [width, height] of [[768, 1024], [800, 900]]) {
     await openDraft(page, { width, height });

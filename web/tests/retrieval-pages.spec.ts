@@ -192,6 +192,33 @@ test("Judging shows your progress, your agreement with Cohen's kappa, and the qu
   expect(await axe(page)).toEqual([]);
 });
 
+// Ticket 59 (the 32 critique, round 3, follow-ups 3 and 4): where neither judge has finished a query, no agreement
+// block shows, and the filter sits 32 px under "Judge the next query", as the 32 brief's 2.10 sets it; an open disclosure
+// points its chevron up.
+test("with no query finished by both, Show sits 32 px under Judge the next query, and an open passage list points up", async ({ page }) => {
+  await serve(page, {
+    "/api/lessons/me": await file("retrieval-me-judge-after.json"),
+    "/api/judging/queries": await file("judging-queries-start.json"),
+    "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json"),
+  });
+  await page.goto("/lessons/judging");
+  await expect(page.locator("[data-next-query]")).toBeVisible();
+  await expect(page.locator("[data-agreement]")).toHaveCount(0);
+  const [next, show] = await page.evaluate(() =>
+    [document.querySelector("[data-next-query]")!, document.querySelector("[data-judging=ready] fieldset, [data-judging=ready] [role=group]")!].map((part) =>
+      part.getBoundingClientRect().toJSON(),
+    ),
+  );
+  expect(Math.round(show.top - next.bottom)).toBe(32);
+
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  const map = page.locator("[data-passage-map]").getByRole("button").first();
+  await expect(map.locator("svg")).toHaveClass(/lucide-chevron-down/);
+  await map.click();
+  await expect(map).toHaveAttribute("aria-expanded", "true");
+  await expect(map.locator("svg")).toHaveClass(/lucide-chevron-up/);
+});
+
 for (const width of [1440, 390]) {
   test(`at ${width} px a judge grades a passage with A, the next ungraded passage takes its place, and a held key grades nothing more`, async ({ page }) => {
     const sent = await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") }, width);
@@ -242,7 +269,10 @@ for (const width of [1440, 390]) {
       // Below 1024 px the grade buttons come right after the passage, before the definitions, and the page scrolled
       // so the next passage's heading is at the top of the window.
       expect(await panel.evaluate((el) => [...el.querySelectorAll("[data-grade-bar], dl")].map((node) => node.tagName))).toEqual(["DIV", "DL"]);
-      expect((await panel.getByRole("heading", { level: 2 }).boundingBox())!.y).toBeLessThan(8);
+      // Ticket 59 (the 32 critique, round 3, follow-up 2): 16 px from the window's top, its scroll margin.
+      const y = (await panel.getByRole("heading", { level: 2 }).boundingBox())!.y;
+      expect(y).toBeGreaterThanOrEqual(12);
+      expect(y).toBeLessThanOrEqual(20);
     }
   });
 }

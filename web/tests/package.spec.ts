@@ -291,6 +291,25 @@ test("a drag gives the slider focus, so the arrow keys nudge the line you just m
   await expect(slider).toHaveAttribute("aria-valuenow", "6.5");
 });
 
+// Ticket 59 (the 12 review, round 11, P1): the chart's row B is measured in Open Sans, so the chart draws only once the
+// fonts have loaded; until then its placeholder holds the chart's height, and the chart takes the same height.
+test("while the fonts load the chart's place holds its height, and the chart draws once they are in", async ({ page }) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/*.woff2", async (route) => {
+    await held;
+    await route.fallback();
+  });
+  await openPackage(page, { width: 496 });
+  await expect(page.locator("[data-chart-placeholder]")).toBeVisible();
+  await expect(page.locator("[data-range-chart]")).toHaveCount(0);
+  const placeholder = await page.locator("[data-chart-placeholder]").evaluate((element) => Math.round(element.getBoundingClientRect().height));
+  release();
+  await expect(page.locator("[data-range-chart]")).toBeVisible();
+  await expect(page.locator("[data-chart-placeholder]")).toHaveCount(0);
+  expect(await page.locator("[data-range-chart] svg").first().evaluate((svg) => Math.round(svg.getBoundingClientRect().height))).toBe(placeholder);
+});
+
 // At 496 and 512 px the chart is just over 400 px wide, so the readout is one line only where one line
 // fits beside a line in the middle of the plot.
 test("at narrow widths the readout never crosses the knob, wherever the line sits", async ({ page }) => {
@@ -303,6 +322,11 @@ test("at narrow widths the readout never crosses the knob, wherever the line sit
     for (const months of ["1.5", "6", "9", "14"]) {
       await input.fill(months);
       await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", String(Number(months)));
+      // Ticket 59 (design-lead's call on ticket 12's round 11, P1): the chart keeps its height wherever the readout
+      // takes two lines, at 496 and 512 px too, because row B's 16 px come out of lane 1. With lane 2 it is 392 px.
+      const drawn = await page.locator("[data-range-chart] svg").first().evaluate((svg) => [Math.round(svg.getBoundingClientRect().height), svg.closest("[data-past-range]")!.getAttribute("data-lane2")]);
+      // At 320 px the key takes a second line of row A, which DESIGN.md section 6 lets grow.
+      if (width >= 390) expect(drawn[0], `${width} px, ${months} months: the chart's height`).toBe(drawn[1] ? 392 : 240);
       // Under 400 px wide, the readout is the copy's two lines wherever the line sits.
       if (width < 400) {
         const within = await signedWithin(Number(months));
@@ -335,10 +359,18 @@ test("the plan line never runs through a statistic's label: the label moves off 
   for (const width of [1440, 390]) {
     await openPackage(page, { width });
     await ready(page);
-    // 10 months sits just past the 8-in-10 point, where a reader drags the line to ask whether 10 would be enough.
-    for (const months of ["10", "6", "3.5"]) {
+    // 10 months sits just past the 8-in-10 point, where a reader drags the line to ask whether 10 would be enough; 4.4
+    // and 5 sit on and just past the middle, where ticket 59 re-checked that the middle's label, moved off the line,
+    // never stacks over the 8-in-10 label.
+    for (const months of ["10", "6", "3.5", "4.4", "5"]) {
       await page.getByRole("textbox", { name: "Planned months" }).fill(months);
       await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", String(Number(months)));
+      const stacked = await page.evaluate(() => {
+        const boxes = [...document.querySelectorAll("[data-chart-drawing] [data-row-c]")].map((label) => label.getBoundingClientRect());
+        // Two rows of row C sit 16 px apart, so their letters' boxes may touch by a few pixels; over each other is more.
+        return boxes.some((a, i) => boxes.some((b, j) => i < j && a.left < b.right && b.left < a.right && a.top < b.bottom - 6 && b.top < a.bottom - 6));
+      });
+      expect(stacked, `${width} px, ${months} months: two statistics' labels over each other`).toBe(false);
       // A label the line's x falls inside must sit on its knockout, drawn over the line and wider than the label.
       const through = await page.evaluate(() => {
         const svg = document.querySelector("[data-chart-drawing]")!;
@@ -395,10 +427,13 @@ test("below 768 px the reset button takes the helper's place while the line is o
     const helperBox = await pageBox(helper);
     const before = await chartTop();
 
-    expect(helperBox.top - inputBox.bottom, `${width} px`).toBeLessThanOrEqual(28);
-    // The chart follows the helper with no empty row between: 16 px, or a few more where the held
-    // button is taller than the helper's lines.
-    expect(before - helperBox.bottom, `${width} px`).toBeLessThanOrEqual(24);
+    // Ticket 59 (the 12 critique, round 11, item 3): the helper sits right under the input it explains, and the error's
+    // held line sits under the helper, so the helper reads as the input's and an error appears between it and the chart.
+    expect(helperBox.top - inputBox.bottom, `${width} px`).toBeLessThanOrEqual(8);
+    const errorBox = await pageBox(page.locator("[data-plan-control] > p.text-error"));
+    expect(errorBox.top, `${width} px: the error's line under the helper`).toBeGreaterThanOrEqual(helperBox.bottom);
+    expect(before, `${width} px: and the chart under it`).toBeGreaterThanOrEqual(errorBox.bottom);
+    expect(before - helperBox.bottom, `${width} px`).toBeLessThanOrEqual(48);
 
     await page.getByRole("slider").focus();
     await page.keyboard.press("ArrowRight");
@@ -950,6 +985,29 @@ test("section 1's finding opens with Strata's byline, its abstention with Strata
   await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range from only seven comparable packages. Here are all seven.");
   await expect(bylines).toHaveText(["Strata held back"]);
 });
+
+// Ticket 59, item 59, as the design review of round 1 settled it: on the 0 to 12 axis under 400 px wide, where the label
+// "9" would come within 8 px of "12 months", every second tick from 0 is labeled instead (0, 6, 12 months), and every
+// tick and gridline stays, so no gridline is left with a lone missing label. At 390 px all five labels fit today.
+for (const [width, labels] of [
+  [390, ["0", "3", "6", "9", "12 months"]],
+  [320, ["0", "6", "12 months"]],
+] as const) {
+  test(`at ${width} px the 0 to 12 axis labels ${labels.length === 5 ? "every tick" : "every second tick from 0"} and keeps every tick`, async ({ page }) => {
+    await openPackage(page, {
+      width,
+      comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
+      estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
+    });
+    await ready(page);
+    const chart = page.locator("[data-chart-drawing]");
+    const shown = await chart.locator("[data-tick-label]").evaluateAll((elements) =>
+      elements.filter((el) => el.getAttribute("opacity") !== "0").map((el) => el.textContent),
+    );
+    expect(shown).toEqual(labels);
+    await expect(chart.locator("[data-tick-label]")).toHaveCount(5);
+  });
+}
 
 test("below 20 comparables there is no range and no share: the copy file's sentence, every package, and the table open", async ({ page }) => {
   await openPackage(page, {
