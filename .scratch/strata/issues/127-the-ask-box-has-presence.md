@@ -17,6 +17,6 @@ Read first: `docs/design/notes-2026-10-29/ask-bar-and-width-proposal.md` (Option
 
 ## Comments
 
-- October 29, 2026, orchestrator: parked at 14:05 PDT at the owner's word ("parking the design related stuff so that the lead can use mobbin's mcp for inspo and the build"); the lead's proposal moved to docs/design/notes-2026-10-29/ so a builder in a worktree can read it.
+- October 29, 2026, orchestrator: parked at 12:49 PDT at the owner's word ("parking the design related stuff so that the lead can use mobbin's mcp for inspo and the build"); the lead's proposal moved to docs/design/notes-2026-10-29/ so a builder in a worktree can read it.
 
-- October 29, 2026, orchestrator: opened at 13:30 PDT from the design lead's proposal of the same day; the owner's Mobbin pick may refine the look later, as a follow-up.
+- October 29, 2026, orchestrator: opened at 12:38 PDT from the design lead's proposal of the same day; the owner's Mobbin pick may refine the look later, as a follow-up.

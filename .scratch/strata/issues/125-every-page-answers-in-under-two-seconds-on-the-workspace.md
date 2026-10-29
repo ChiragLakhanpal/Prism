@@ -17,4 +17,4 @@ Read first: `src/strata/lakehouse/engine.py` (`WarehouseEngine.run`, the stateme
 
 ## Comments
 
-- October 29, 2026, orchestrator: opened at 12:35 PDT from the owner's report that every lookup takes seconds; the traces named the cause (statements one after another at two seconds each).
+- October 29, 2026, orchestrator: opened at 12:15 PDT from the owner's report that every lookup takes seconds; the traces named the cause (statements one after another at two seconds each).
