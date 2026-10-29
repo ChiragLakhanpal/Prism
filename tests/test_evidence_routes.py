@@ -150,6 +150,15 @@ def test_an_evidence_id_no_source_has_is_not_recorded_as_opened(ops_db, evidence
     "steps:KE-NWWDA-541055-CW-RFB:bid_evaluation",  # section 2's list of a step, which a draft's page records
     "steps-longest:KE-NWWDA-541055-CW-RFB",
     "upload-row:upload-0001:3",  # an upload's row, read through the one access rule
+    # Section 5's lists and cost records, which the page hands the drawer (web/src/lib/criteria.ts).
+    "criteria-public:KE-NWWDA-541055-CW-RFB",
+    "criteria-item:check-1:item-1",
+    "package-cost:KE-NWWDA-541055-CW-RFB",
+    # A record in a table the catalog defines, which a tool returns and an answer or a draft may cite (ticket 62's
+    # review round 1, B2): check_plan's plan version, estimate_time's score and check_plan's upload.
+    "strata.silver.plan_versions:40132287",
+    "strata.gold.time_estimate_score:KE-NWWDA-541055-CW-RFB",
+    "strata.ops.uploads:upload-0001",
 ])
 def test_a_source_the_drawer_opens_without_a_reader_by_id_is_recorded(ops_db, evidence_id):
     app = create_app(opened=OpenedLog(lambda: DuckDBEngine.open(ops_db)))

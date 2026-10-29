@@ -110,23 +110,43 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
 
 
 # The sources the drawer opens that no reader above fetches by id: a tool's summary of derived figures, which comes
-# inside the answer that cited it; an implementing agency's upload row, which the route reads through the one access
-# rule (ticket 38); and section 2's list of a step's comparables, which a draft's page records (ticket 27).
+# inside the answer that cited it; a record in a table the catalog defines, which a tool returned and an answer or a
+# draft cites (check_plan's plan version or upload, estimate_time's score); an implementing agency's upload row, which
+# the route reads through the one access rule (ticket 38); section 2's list of a step's comparables, which a draft's
+# page records (ticket 27); and section 5's lists and cost records, which the page hands the drawer
+# (web/src/lib/criteria.ts).
 TOOL_SUMMARY = "strata.tools."
-OPENED_WITHOUT_A_READER = ("upload-row:", "steps:", "steps-longest:")
+OPENED_WITHOUT_A_READER = ("upload-row:", "steps:", "steps-longest:", "criteria-public:", "criteria-item:",
+                           "package-cost:")
+
+
+@cache
+def _tool_names() -> frozenset[str]:
+    """The tools config/tools.toml defines, read once, since every opened tool summary needs them (ticket 62's review
+    round 1, follow-up 5)."""
+    from strata.config import load_tools
+
+    return frozenset(load_tools())
+
+
+@cache
+def _catalog_tables() -> frozenset[str]:
+    """Every table and view the catalog defines (src/strata/lakehouse/tables and views), read once."""
+    from strata.lakehouse import catalog
+
+    return frozenset(definition.full_name for definition in catalog.table_definitions() + catalog.view_definitions())
 
 
 def recordable(evidence_id: str) -> bool:
     """Whether an id names a kind of source the evidence drawer opens, so POST /api/evidence/opened writes a row for
     it; an id no source could have is not written (ticket 14's verification round 5, observation 4)."""
-    from strata.config import load_tools
-
     table, colon, key = evidence_id.partition(":")
     if not colon or not key:
         return False
     if table.startswith(TOOL_SUMMARY):
-        return table.removeprefix(TOOL_SUMMARY) in load_tools()
-    return table in READERS or evidence_id.startswith(OPENED_WITHOUT_A_READER)
+        return table.removeprefix(TOOL_SUMMARY) in _tool_names()
+    return (table in READERS or evidence_id.startswith(OPENED_WITHOUT_A_READER)
+            or table in _catalog_tables())
 
 
 def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None = None, why: bool = True,
