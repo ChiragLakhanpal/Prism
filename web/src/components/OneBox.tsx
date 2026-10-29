@@ -378,7 +378,8 @@ export function stampWords(freshness: Freshness): string | null {
 
 // The data-freshness stamp: caption text, a link to the Data page with a dotted underline
 // (the mark of a value you can check), and five honest states, in a 24 px line box. It is not a live region.
-export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Freshness; href?: string }) {
+// hang: the error's icon hangs left of the stamp's edge, as at the sidebar's foot, where the stamp starts on its label's edge.
+export function FreshnessStamp({ freshness, href = "/data", hang = false }: { freshness: Freshness; href?: string; hang?: boolean }) {
   const descriptionId = useId();
   const link = (text: string) => (
     <>
@@ -405,8 +406,10 @@ export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Fresh
   } else if (freshness.status === "ready") body = link(copy.stamp.ready(freshness.date));
   else if (freshness.status === "empty") body = link(copy.stamp.empty);
   else
+    // The icon hangs left of the stamp's edge, so the words start on the label's edge, as the date does, and keep to
+    // one 24 px line at the sidebar's foot (ticket 59; the 93 review).
     body = (
-      <span className="inline-flex items-center gap-1 text-caption text-ink-muted">
+      <span className={cx(hang ? "-ml-6 gap-2" : "gap-1", "inline-flex items-center text-caption text-ink-muted")} data-stamp-error>
         <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
         {copy.stamp.error}
       </span>

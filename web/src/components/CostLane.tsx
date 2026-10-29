@@ -134,7 +134,10 @@ function Lane({ cost, onOpen, title, width }: {
   const height = rowB + lane + (ranged ? ROW_C : 0) + AXIS;
   const laneTop = rowB;
   const centre = laneTop + lane / 2;
-  const keep = (start: number, text: string) => Math.min(Math.max(start, PAD), Math.max(PAD, width - PAD - textWidth(text)));
+  // Stacked, the two counts are two rows from one left edge, the block centred under the line's label as far as the
+  // plot allows, so they never step down and across each other (ticket 59; the 31 critique, round 3, follow-up 5).
+  const stackWidth = Math.max(below > 0 ? textWidth(belowText) : 0, above > 0 ? textWidth(aboveText) : 0);
+  const stackX = Math.min(Math.max(zero - stackWidth / 2, PAD), Math.max(PAD, width - PAD - stackWidth));
   const tip = shown !== null && !hidden ? rows[shown] : null;
   const middleLabel = cost.quartiles
     ? words.middleLabel
@@ -222,12 +225,12 @@ function Lane({ cost, onOpen, title, width }: {
             </text>
           )}
           {stacked && below > 0 && (
-            <text x={keep(zero - 8 - textWidth(belowText), belowText)} y={27} textAnchor="start" fontSize={type.s} className="fill-chart-text" style={HALO} data-row-b="below">
+            <text x={stackX} y={27} textAnchor="start" fontSize={type.s} className="fill-chart-text" style={HALO} data-row-b="below">
               {belowText}
             </text>
           )}
           {stacked && above > 0 && (
-            <text x={keep(zero + 8, aboveText)} y={below > 0 ? 43 : 27} textAnchor="start" fontSize={type.s} className="fill-chart-text" style={HALO} data-row-b="above">
+            <text x={stackX} y={below > 0 ? 43 : 27} textAnchor="start" fontSize={type.s} className="fill-chart-text" style={HALO} data-row-b="above">
               {aboveText}
             </text>
           )}

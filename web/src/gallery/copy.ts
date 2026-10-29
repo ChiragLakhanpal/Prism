@@ -323,6 +323,8 @@ export const galleryCopy = {
     default: "Default",
     disabled: "Disabled",
     loading: "Loading",
+    // Ticket 59: words the page already knows, held as a skeleton, so their lines break where the real words' will.
+    skeletonWords: "Skeleton words: an agency's name and a caption before the check arrives",
     withIcon: "With an icon",
     iconOnly: "Icon only",
     empty: "Empty",

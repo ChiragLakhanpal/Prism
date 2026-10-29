@@ -343,15 +343,22 @@ export function Sidebar({
         <nav
           aria-label={copy.nav.label}
           onScroll={hideTip}
-          className="flex flex-none flex-col px-2 py-3 lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
+          // On the rail the items sit 12 px from its edges, as the prototype draws them (ticket 59).
+          className="flex flex-none flex-col px-2 py-3 rail:px-3 lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
         >
           {sections === null ? (
-            // Until GET /api/me says which sections the view has: static bars at the items' height.
-            <div className="flex flex-col gap-0.5">
-              {[0, 1, 2, 3, 4, 5].map((index) => (
-                <Skeleton key={index} className="h-9 w-full" radius="rounded-sm" />
-              ))}
-            </div>
+            // Until GET /api/me says which sections the view has: static bars at the items' height and in their places,
+            // Home, then 16 px and the four sections a view has at most, and Data at the foot (ticket 59).
+            <>
+              <div className="flex flex-col gap-0.5" data-sidebar-loading>
+                <Skeleton className="h-9 w-full" radius="rounded-sm" />
+              </div>
+              <div className="mt-4 flex flex-col gap-0.5">
+                {[0, 1, 2, 3].map((index) => (
+                  <Skeleton key={index} className="h-9 w-full" radius="rounded-sm" />
+                ))}
+              </div>
+            </>
           ) : (
             <>
               <ul className="flex flex-col gap-0.5">
@@ -363,12 +370,20 @@ export function Sidebar({
                   .filter((section) => section.key !== FOOT_SECTION)
                   .map((section) => item(section.key, hrefOf(section.key, section.href), section.icon, copy.nav.tabs[section.key]))}
               </ul>
+            </>
+          )}
+              {/* The foot: Data, the stamp under it and "Collapse the sidebar", which needs no view and so shows from the
+                  first paint (ticket 59). */}
               <div className="mt-auto flex flex-col gap-0.5 pt-6">
-                {foot && <ul className="flex flex-col gap-0.5">{item(foot.key, foot.href, foot.icon, copy.nav.tabs[foot.key], stampLine)}</ul>}
+                {sections === null ? (
+                  <Skeleton className="h-9 w-full" radius="rounded-sm" />
+                ) : (
+                  foot && <ul className="flex flex-col gap-0.5">{item(foot.key, foot.href, foot.icon, copy.nav.tabs[foot.key], stampLine)}</ul>
+                )}
                 {/* The stamp under Data, on its label's left edge (8 + 12 + 16 + 12 px in); the rail hides it. */}
                 {freshness && (
                   <div data-sidebar-stamp className="mb-2 ml-10 rail:hidden">
-                    <FreshnessStamp freshness={freshness} href={withModeOf("/data", mode.search)} />
+                    <FreshnessStamp freshness={freshness} href={withModeOf("/data", mode.search)} hang />
                   </div>
                 )}
                 {stampLine && (
@@ -392,8 +407,6 @@ export function Sidebar({
                   <span className="truncate rail:clip-visually">{toggleLabel}</span>
                 </button>
               </div>
-            </>
-          )}
         </nav>
         {/* Below 768 px the view lines and the language of answers and drafts sit at the sheet's foot (tickets 40, 42);
             from 768 px the view switch is in the bar (ticket 93). */}

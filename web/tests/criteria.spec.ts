@@ -327,6 +327,16 @@ test("in the work column at 1440 px the cost table's packages are cards, so no S
   );
   expect(fields.Country, "Country's own row, above the amounts").toBeDefined();
   for (const [head, box] of Object.entries(fields)) if (head !== "Country") expect(box.top, head).toBeGreaterThanOrEqual(fields.Country.bottom);
+  // Ticket 59 (the 31 critique, round 3, follow-up 5): where a count has no room beside the zero line, the two counts
+  // stack as two rows from one left edge under the line's label, never as a stair-step across it.
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    const counts = await part.locator("[data-cost-drawing] [data-row-b]").evaluateAll((texts) =>
+      texts.map((text) => ({ x: Math.round(text.getBoundingClientRect().left), y: Math.round(text.getBoundingClientRect().top) })),
+    );
+    expect(counts.length, `${width} px`).toBe(2);
+    if (counts[0].y !== counts[1].y) expect(counts[0].x, `${width} px: one left edge`).toBe(counts[1].x);
+  }
 });
 
 test("rejected bids and the cost estimate each end in a foot strip across the panel, holding the coverage and source lines", async ({ page }) => {

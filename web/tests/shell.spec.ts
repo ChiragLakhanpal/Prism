@@ -411,6 +411,71 @@ test("while it loads, the stamp holds a static bar for the first second and then
   await expect(stamp.getByRole("link")).toHaveText(/^Data through /);
 });
 
+// Ticket 59 (the 93 design review, follow-up 3; the 93 critique): below 1024 px the Menu button starts on the window's
+// margin, the page's own left edge, with no outline at rest, so at 800 px the bar holds one outlined box, the view
+// switch; its border turns white on hover and while the sheet is open. The wordmark is 18/24 at 700 (DESIGN.md sections 3
+// and 9).
+test("the Menu button starts on the window's margin with no outline at rest, and the wordmark is 18/24 at 700", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/");
+  const menu = page.locator("[data-menu-button]");
+  const border = () => menu.evaluate((element) => getComputedStyle(element).borderTopColor);
+  for (const [width, margin] of [[390, 16], [800, 32]] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(Math.round((await menu.boundingBox())!.x), `${width} px`).toBe(margin);
+    const h1 = page.locator("main h1").first();
+    expect(Math.round((await h1.boundingBox())!.x), `${width} px: the page's own left edge`).toBe(margin);
+  }
+  expect(await border()).toBe("rgba(0, 0, 0, 0)");
+  await menu.hover();
+  await expect.poll(border).toBe("rgb(255, 255, 255)");
+  await page.mouse.move(400, 600);
+  await menu.click();
+  await expect(menu).toHaveAttribute("aria-expanded", "true");
+  await expect.poll(border).toBe("rgb(255, 255, 255)");
+  const wordmark = page.locator("[data-nav-bar] a").filter({ hasText: "Strata" });
+  expect(await wordmark.evaluate((element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight])).toEqual(["18px", "24px", "700"]);
+});
+
+// Ticket 59 (the 92 design review, follow-ups 5 and 6): until GET /api/me says which sections a preview has, the
+// sidebar draws one bar for Home, four for the sections 16 px under it and one for Data at its foot, each where its item
+// will be, and "Collapse the sidebar" is already there. On the rail its items sit 12 px from its edges.
+test("while the view loads, the sidebar's bars stand where Home, the sections and Data will be", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
+  let answer: () => void = () => {};
+  const answered = new Promise<void>((resolve) => (answer = resolve));
+  await mockShell(page);
+  await page.route((url) => url.pathname === "/api/me", async (route) => {
+    await answered;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("me-preview-piu.json") });
+  });
+  await page.goto("/?view=piu");
+  const sidebar = page.locator("[data-sidebar]");
+  await expect(sidebar.locator("[data-sidebar-loading]")).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "Collapse the sidebar" })).toBeVisible();
+  const bars = await sidebar.locator("nav [data-skeleton]").evaluateAll((all) => all.map((bar) => Math.round(bar.getBoundingClientRect().top)));
+  expect(bars).toHaveLength(6);
+  expect(bars[1] - bars[0], "16 px between Home and the sections, as between their lists").toBe(36 + 16);
+  answer();
+  await expect(sidebar.locator("[data-nav-item=home]")).toBeVisible();
+  const items: Record<string, number> = await sidebar.locator("nav [data-nav-item]").evaluateAll((all) =>
+    Object.fromEntries(all.map((item) => [item.getAttribute("data-nav-item") ?? "", Math.round(item.getBoundingClientRect().top)])),
+  );
+  expect(items.home, "Home where its bar was").toBe(bars[0]);
+  const sections = Object.entries(items).filter(([key]) => key !== "home" && key !== "data" && key !== "start-here");
+  expect(Math.min(...sections.map(([, top]) => top)), "the first section where its bar was").toBe(bars[1]);
+  if (items.data !== undefined) expect(items.data, "Data where its bar was").toBe(bars[5]);
+
+  // The rail: its items 12 px in from its edges.
+  await sidebar.getByRole("button", { name: "Collapse the sidebar" }).click();
+  const [rail, home] = await page.evaluate(() =>
+    ["[data-sidebar] nav", "[data-sidebar] [data-nav-item=home]"].map((selector) => document.querySelector(selector)!.getBoundingClientRect().toJSON()),
+  );
+  expect([Math.round(home.left - rail.left), Math.round(rail.right - home.right)]).toEqual([12, 12]);
+});
+
 test("when the server fails, the stamp says it can't read the date, and tries again on a later page at most once a minute", async ({ page }) => {
   await page.clock.install({ time: TODAY });
   await mockShell(page);
@@ -428,6 +493,16 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
   await expect(stamp).toHaveText("I can't read the data date.");
   await expect(stamp.getByRole("link")).toHaveCount(0);
   await expect(stamp.locator("svg.lucide-circle-x")).toHaveCount(1);
+  // Ticket 59 (the 93 review): the icon hangs left of the stamp's edge, so the words start at x 48, on Data's label's
+  // edge, on one 24 px line.
+  const words = await stamp.evaluate((element) => {
+    const text = [...element.querySelectorAll("span")].flatMap((span) => [...span.childNodes]).find((node) => node.nodeType === Node.TEXT_NODE)!;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const lines = new Set([...range.getClientRects()].map((box) => Math.round(box.top))).size;
+    return { left: Math.round(range.getBoundingClientRect().left), lines, height: Math.round(element.getBoundingClientRect().height) };
+  });
+  expect(words).toEqual({ left: 48, lines: 1, height: 24 });
 
   const tabs = page.getByRole("navigation", { name: "Main" });
   await tabs.getByRole("link", { name: "Packages" }).click();

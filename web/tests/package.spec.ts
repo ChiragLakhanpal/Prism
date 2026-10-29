@@ -283,6 +283,25 @@ test("a drag gives the slider focus, so the arrow keys nudge the line you just m
   await expect(slider).toHaveAttribute("aria-valuenow", "6.5");
 });
 
+// Ticket 59 (the 12 review, round 11, P1): the chart's row B is measured in Open Sans, so the chart draws only once the
+// fonts have loaded; until then its placeholder holds the chart's height, and the chart takes the same height.
+test("while the fonts load the chart's place holds its height, and the chart draws once they are in", async ({ page }) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route("**/*.woff2", async (route) => {
+    await held;
+    await route.fallback();
+  });
+  await openPackage(page, { width: 496 });
+  await expect(page.locator("[data-chart-placeholder]")).toBeVisible();
+  await expect(page.locator("[data-range-chart]")).toHaveCount(0);
+  const placeholder = await page.locator("[data-chart-placeholder]").evaluate((element) => Math.round(element.getBoundingClientRect().height));
+  release();
+  await expect(page.locator("[data-range-chart]")).toBeVisible();
+  await expect(page.locator("[data-chart-placeholder]")).toHaveCount(0);
+  expect(await page.locator("[data-range-chart] svg").first().evaluate((svg) => Math.round(svg.getBoundingClientRect().height))).toBe(placeholder);
+});
+
 // At 496 and 512 px the chart is just over 400 px wide, so the readout is one line only where one line
 // fits beside a line in the middle of the plot.
 test("at narrow widths the readout never crosses the knob, wherever the line sits", async ({ page }) => {
@@ -295,6 +314,11 @@ test("at narrow widths the readout never crosses the knob, wherever the line sit
     for (const months of ["1.5", "6", "9", "14"]) {
       await input.fill(months);
       await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", String(Number(months)));
+      // Ticket 59 (design-lead's call on ticket 12's round 11, P1): the chart keeps its height wherever the readout
+      // takes two lines, at 496 and 512 px too, because row B's 16 px come out of lane 1. With lane 2 it is 392 px.
+      const drawn = await page.locator("[data-range-chart] svg").first().evaluate((svg) => [Math.round(svg.getBoundingClientRect().height), svg.closest("[data-past-range]")!.getAttribute("data-lane2")]);
+      // At 320 px the key takes a second line of row A, which DESIGN.md section 6 lets grow.
+      if (width >= 390) expect(drawn[0], `${width} px, ${months} months: the chart's height`).toBe(drawn[1] ? 392 : 240);
       // Under 400 px wide, the readout is the copy's two lines wherever the line sits.
       if (width < 400) {
         const within = await signedWithin(Number(months));
@@ -387,10 +411,13 @@ test("below 768 px the reset button takes the helper's place while the line is o
     const helperBox = await pageBox(helper);
     const before = await chartTop();
 
-    expect(helperBox.top - inputBox.bottom, `${width} px`).toBeLessThanOrEqual(28);
-    // The chart follows the helper with no empty row between: 16 px, or a few more where the held
-    // button is taller than the helper's lines.
-    expect(before - helperBox.bottom, `${width} px`).toBeLessThanOrEqual(24);
+    // Ticket 59 (the 12 critique, round 11, item 3): the helper sits right under the input it explains, and the error's
+    // held line sits under the helper, so the helper reads as the input's and an error appears between it and the chart.
+    expect(helperBox.top - inputBox.bottom, `${width} px`).toBeLessThanOrEqual(8);
+    const errorBox = await pageBox(page.locator("[data-plan-control] > p.text-error"));
+    expect(errorBox.top, `${width} px: the error's line under the helper`).toBeGreaterThanOrEqual(helperBox.bottom);
+    expect(before, `${width} px: and the chart under it`).toBeGreaterThanOrEqual(errorBox.bottom);
+    expect(before - helperBox.bottom, `${width} px`).toBeLessThanOrEqual(48);
 
     await page.getByRole("slider").focus();
     await page.keyboard.press("ArrowRight");

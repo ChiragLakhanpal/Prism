@@ -67,7 +67,7 @@ import { CitationMarker } from "../components/CitationMarker";
 import { Document, type Passage } from "../components/Document";
 import { Num, type NumValue } from "../components/Num";
 import { PageHeader, WithIds } from "../components/PageHeader";
-import { Skeleton, SkeletonText } from "../components/Skeleton";
+import { Skeleton, SkeletonText, SkeletonWords } from "../components/Skeleton";
 import { DocumentSource } from "../components/Source";
 import { DesignedNotBuilt } from "../components/DesignedNotBuilt";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
@@ -1355,6 +1355,26 @@ export const PAGES: GalleryPage[] = [
       },
       // Ticket 95: a Task zone loads with its real header over bars sized to the summary they stand for.
       { id: "zone", title: galleryCopy.zones.labels.skeleton, body: <LoadingZone /> },
+      // Ticket 59: words held as a skeleton, at a narrow width too, where the name takes two lines and draws two bars.
+      {
+        id: "words",
+        title: s.skeletonWords,
+        body: (
+          <Panel>
+            <div className="flex flex-col gap-4">
+              <p className="text-h1">
+                <SkeletonWords text={galleryCopy.sampleAgency} />
+              </p>
+              <p className="max-w-60 text-h1">
+                <SkeletonWords text={galleryCopy.sampleAgency} />
+              </p>
+              <p className="text-caption">
+                <SkeletonWords text={copy.checkPlan.draftAction.feedforward} />
+              </p>
+            </div>
+          </Panel>
+        ),
+      },
     ],
   },
   {

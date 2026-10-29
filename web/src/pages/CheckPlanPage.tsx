@@ -25,7 +25,7 @@ import { ChangeTables, changedRows } from "../components/ChangeTables";
 import { Num } from "../components/Num";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { ProjectIdText } from "../components/ProjectId";
-import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
+import { Skeleton, SkeletonLine, SkeletonWords } from "../components/Skeleton";
 import { copy } from "../copy";
 import { ApiError, getJson, type CheckPlanResult, type PlanChanges } from "../lib/api";
 import { changed, changeList } from "../lib/changes";
@@ -184,6 +184,17 @@ function ChangeLine({ changes, onSee }: { changes: PlanChanges; onSee: () => voi
   );
 }
 
+// The agency's name as its address writes it, such as "northern-water-works-development-agency", in the words and the
+// capitals a name takes: "Northern Water Works Development Agency". It only holds the name's place while the check
+// loads, unseen (SkeletonWords), so its lines break where the real name's will.
+function agencyWords(agencyId: string): string {
+  return agencyId
+    .split("-")
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyId: string; version?: string }) {
   const path = withReadParams(`/api/projects/${encodeURIComponent(pid)}/procurement/${encodeURIComponent(agencyId)}${version ? `/${version}` : ""}`, useStore(address).search);
   const [load, retry] = useLoad<CheckPlanResult>(path);
@@ -309,30 +320,25 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       <>
         <PlanCheckHeader
           agency={
-            // An agency's name takes two lines below 768 px and one from it, as most do. Beside the pill and
-            // the draft action (ticket 35), which keep one row since ticket 100, a long name takes two lines again
-            // below a page area of 75rem.
+            // The agency's name from the address, held as skeleton words, so its lines break where the name's will at
+            // every width, beside the pill and the draft action or under them (ticket 59).
             <>
               <span className="sr-only">{words.status.checking}</span>
-              {slotShown ? (
-                <>
-                  <SkeletonText className="@xl/page:hidden" widths={["w-full", "w-3/5"]} />
-                  <SkeletonLine className="hidden @xl/page:flex" width="w-3/5 max-w-[560px]" />
-                </>
-              ) : (
-                <>
-                  <SkeletonText className="@md/page:hidden" widths={["w-full", "w-3/5"]} />
-                  <SkeletonLine className="hidden @md/page:flex" width="w-3/5 max-w-[560px]" />
-                </>
-              )}
+              <SkeletonWords text={agencyWords(agencyId)} />
             </>
           }
           plan={<SkeletonLine width="w-60" />}
           pill={<Skeleton className="h-[30px] w-[170px] rounded-pill" />}
-          // The draft action's places, so the rows stay put when the check arrives (ticket 35). Its caption
-          // takes one line from a 390 px window, in the window's 16 px margins (ticket 94).
+          // The draft action's places, so the rows stay put when the check arrives (ticket 35). Its caption is the
+          // copy file's own sentence, held as skeleton words, so it takes the lines it will (ticket 59).
           action={slotShown ? <Skeleton className="h-11 w-56 rounded-sm" /> : undefined}
-          feedforward={slotShown ? <SkeletonLine className="text-caption" width="w-80 max-w-full" /> : undefined}
+          feedforward={
+            slotShown ? (
+              <p className="text-caption @lg/page:text-right">
+                <SkeletonWords text={words.draftAction.feedforward} />
+              </p>
+            ) : undefined
+          }
           sticky={false}
         />
         <PlanCheckSkeleton slow={load.status === "loading" && load.slow} />

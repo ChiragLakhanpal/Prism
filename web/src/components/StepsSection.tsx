@@ -544,7 +544,8 @@ type Body = {
 function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOpen, slow, caption, recordsDate, from }: Body) {
   const dating = !dates.abstain_all;
   const plan = kind === "step";
-  const widths = plan ? (dating ? ["32%", "24%", "26%", "18%"] : ["44%", "32%", "24%"]) : dating ? ["40%", "36%", "24%"] : ["70%", "30%"];
+  // A STEP row's planned date takes 30 percent, so "15 days after the plan's date" keeps one line (ticket 59).
+  const widths = plan ? (dating ? ["30%", "22%", "30%", "18%"] : ["44%", "32%", "24%"]) : dating ? ["40%", "36%", "24%"] : ["70%", "30%"];
   const head = "px-3 py-3 align-bottom text-left text-small font-bold text-ink-heading";
   const note = "block text-caption font-normal text-ink-muted";
   const firstVersion = rows.find((row) => row.step.plan_first_version_date)?.step.plan_first_version_date ?? null;
@@ -657,7 +658,7 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
           {/* Every item's label column is two fifths of the list and never under 7rem, so the labels line up from step
               to step and never print over a value; a long value, such as "30 days after the issued bidding
               document", wraps inside its own column, right-aligned. */}
-          <dl className="mt-2 grid grid-cols-[minmax(7rem,2fr)_minmax(0,3fr)] gap-x-2 gap-y-2">
+          <dl className="mt-2 grid grid-cols-[minmax(7rem,2fr)_minmax(0,3fr)] items-baseline gap-x-2 gap-y-2">
             {kind === "step" && (
               <>
                 <dt className={label}>{words.columns.plan}</dt>

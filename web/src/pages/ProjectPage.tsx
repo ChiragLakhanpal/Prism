@@ -152,12 +152,13 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
                   <span className="sr-only">
                     <Fill template={copy.pages.project.title} slots={{ pid: idText }} />
                   </span>
-                  {/* The line takes three lines below 768 px, two to 1024 px and one from there, for a name of about
-                      35 characters, such as P156634's, in the window's margins (ticket 94); below 768 px each dot keeps to
-                      the word before it, so the name's last word takes the second line (ticket 99). */}
-                  <SkeletonText className="@md/page:hidden" widths={["w-full", "w-4/5", "w-2/5"]} />
-                  <SkeletonText className="hidden @md/page:flex @lg/page:hidden" widths={["w-full max-w-[560px]", "w-2/5"]} />
-                  <SkeletonLine className="hidden @lg/page:flex" width="w-3/5 max-w-[560px]" />
+                  {/* The line takes three lines below a page area of 26rem, two to 56rem and one from there, for a name of
+                      about 35 characters, such as P156634's, with its P-code, country and status (ticket 59, measured
+                      at 320 to 1440 px); below 768 px each dot keeps to the word before it, so the name's last word takes
+                      the second line (ticket 99). */}
+                  <SkeletonText className="@[26rem]/page:hidden" widths={["w-full", "w-4/5", "w-2/5"]} />
+                  <SkeletonText className="hidden @[26rem]/page:flex @[56rem]/page:hidden" widths={["w-full max-w-[560px]", "w-2/5"]} />
+                  <SkeletonLine className="hidden @[56rem]/page:flex" width="w-3/5 max-w-[560px]" />
                 </>
               )}
             </h1>
@@ -165,7 +166,8 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
               <AgencyLine names={data.project.implementing_agencies} />
             ) : (
               // The agency line and the place of "Show all agencies" beside it, as a project with many agencies has
-              // them, so the tabs below never move down when the project arrives; with one agency they move up.
+              // them, so the tabs below never move down when the project arrives; with one agency they move up 20 px
+              // (ticket 99's rule, kept by ticket 59, whose skeleton test allows 48).
               <div aria-hidden="true" className="mt-2 flex h-11 items-center">
                 <Skeleton className="h-[1em] w-3/5 max-w-[480px]" />
               </div>

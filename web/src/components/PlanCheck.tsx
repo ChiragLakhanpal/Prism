@@ -28,6 +28,7 @@ import { evidenceIn, openEvidence, remember } from "../lib/evidence";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { planRowCheckId } from "../lib/planRows";
 import { address } from "../lib/router";
+import { fill } from "../routes";
 import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { Button } from "./Button";
@@ -978,6 +979,17 @@ export function PlanSource({ result }: { result: CheckedPlan }) {
   );
 }
 
+// A finding as long as most are, "One needs a look and two are worth watching; three have data notes.", from the
+// finding's own templates. It only holds the finding's place, unseen, while the check loads.
+function typicalFinding(): string {
+  const f = words.finding;
+  return (
+    fill(f.lookAndWatch(1, 2), { look: formatCount(1, { capital: true }), watch: formatCount(2) }) +
+    fill(f.notes(3), { notes: formatCount(3) }) +
+    f.end
+  );
+}
+
 // While the check loads: the header's places, then the narration in the places of the finding's byline, the
 // finding and the method sentence (ticket 111), then the activities panel with its real name and column heads over
 // five skeleton rows, or three skeleton cards below a frame of 34rem. Nothing moves when the rows arrive, and nothing
@@ -997,18 +1009,17 @@ export function PlanCheckSkeleton({ slow }: { slow?: boolean }) {
     <div data-plan-skeleton>
       <EightColumns prose className="mt-6">
         {/* The narration and the places it holds share one grid cell, so it is exactly as tall as the byline, the
-            finding and the method sentence it stands for. In the finding style the finding takes three lines below
-            768 px and two from it, where the eight columns hold their 65 characters; the method sentence five lines
-            below 768 px and three from it. Its count words keep to the line's height (Num). */}
+            finding and the method sentence it stands for. The places are a typical finding and the method sentence
+            with every check, written from the copy file's templates in the finding's and the method's own styles and
+            never seen or heard, so they take the lines the real ones take at every width (ticket 59). Its count
+            words keep to the line's height (Num). */}
         <div className="grid" data-plan-narration>
           <div aria-hidden="true" className="invisible col-start-1 row-start-1">
             <SkeletonLine className="text-label" width="w-24" />
-            <div className="mt-2">
-              <SkeletonText className="text-finding @md/page:hidden" widths={["w-full", "w-full", "w-2/5"]} />
-              <SkeletonText className="hidden text-finding @md/page:flex" widths={["w-full", "w-2/5"]} />
-            </div>
-            <SkeletonText className="mt-4 text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-full", "w-2/5"]} />
-            <SkeletonText className="mt-4 hidden text-body @md/page:flex" widths={["w-full", "w-full", "w-2/5"]} />
+            <p className="mt-2 text-finding text-pretty">{typicalFinding()}</p>
+            <p className="mt-4 text-body">
+              <Fill template={words.method} slots={{ checks: <Joined items={Object.values(words.checks)} /> }} />
+            </p>
           </div>
           <div className="col-start-1 row-start-1">
             <Steps steps={[narration]} announce={false} />

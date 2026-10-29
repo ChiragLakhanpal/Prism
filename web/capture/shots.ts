@@ -2010,6 +2010,9 @@ export const SHOTS: Shot[] = [
   { name: "navigation--rail", path: "/gallery/navigation?sidebar=rail", widths: [1440] },
   { name: "navigation--rail-tip", path: "/gallery/navigation?sidebar=rail", widths: [1440], act: hover("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--sub-items", path: "/gallery/navigation?sub=1", widths: [1440] },
+  // Ticket 59: the sidebar before GET /api/me answers, its bars where Home, the sections and Data will be.
+  { name: "navigation--sidebar-loading", path: "/gallery/navigation?pill=loading&sidebar=open", widths: [1440] },
+  { name: "navigation--menu-loading", path: "/gallery/navigation?pill=loading&menu=open", widths: [390] },
   { name: "navigation--public", path: "/gallery/navigation?pill=public", widths: WIDE },
   { name: "navigation--focus-wordmark", path: "/gallery/navigation", act: focus("[data-nav-bar] a[href='/']") },
   { name: "navigation--focus-skip-link", path: "/gallery/navigation", act: (page) => page.keyboard.press("Tab") },

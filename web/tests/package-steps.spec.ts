@@ -150,6 +150,61 @@ test("each step's planned date is the cautious one by default, names its compara
   await expect.poll(() => puts.map((put) => put.postDataJSON())).toEqual([{ choice: "middle" }]);
 });
 
+// Ticket 59 (the 27 critique, round 2, follow-ups 5 and 6): in the narrowest table, a 900 px window, the planned date's
+// column keeps "52 days after the plan's date" on one line; in the list at 390 px each label sits on its value's first
+// line.
+test("the table keeps each planned date's sentence on one line, and the list sets each label on its value's first line", async ({ page }) => {
+  await openPackage(page, { width: TABLE_WIDTH });
+  await disclosure(page).click();
+  // The narrowest window that still draws the table, where its planned date's column is narrowest.
+  let narrowest = TABLE_WIDTH;
+  for (let width = TABLE_WIDTH - 16; width >= 880; width -= 16) {
+    await page.setViewportSize({ width, height: 900 });
+    if ((await section(page).locator("[data-step-table]:visible").count()) === 0) break;
+    narrowest = width;
+  }
+  await page.setViewportSize({ width: narrowest, height: 900 });
+  await expect(section(page).locator("[data-step-table]:visible")).toHaveCount(1);
+  // The lines a planned date's sentence takes: the distinct line tops of the text after its date.
+  const sentenceLines = (cell: Element) => {
+    const range = document.createRange();
+    const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+    const tops = new Set<number>();
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!/after the plan/.test(node.textContent ?? "") && !node.parentElement?.closest("[data-after]")) continue;
+      range.selectNodeContents(node);
+      for (const box of range.getClientRects()) if (box.width > 0) tops.add(Math.round(box.top));
+    }
+    return tops.size;
+  };
+  const lines = await view(page).locator("[data-planned]").evaluateAll((cells, count) => cells.map((cell) => new Function("cell", `return (${count})(cell)`)(cell)), sentenceLines.toString());
+  expect(lines.filter((count) => count > 0).length, "dated rows").toBeGreaterThan(2);
+  expect(lines.filter((count) => count > 1), "sentences on two lines").toEqual([]);
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(section(page).locator("[data-step-list]:visible")).toHaveCount(1);
+  const gaps = await view(page).locator("li[data-step-item] dl").first().evaluate((list) => {
+    // The bottom of an element's first line of text, from its text's own boxes.
+    const firstLine = (element: Element) => {
+      const range = document.createRange();
+      const boxes: DOMRect[] = [];
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        range.selectNodeContents(node);
+        boxes.push(...[...range.getClientRects()].filter((box) => box.width > 0));
+      }
+      const top = Math.min(...boxes.map((box) => box.top));
+      return Math.max(...boxes.filter((box) => box.top - top < 4).map((box) => box.bottom));
+    };
+    // A value beside its label, not a sentence that takes the item's full width under it.
+    return [...list.querySelectorAll("dt")]
+      .filter((label) => label.nextElementSibling!.getBoundingClientRect().left > label.getBoundingClientRect().right)
+      .map((label) => Math.round(Math.abs(firstLine(label) - firstLine(label.nextElementSibling!))));
+  });
+  expect(gaps.length, "labels beside their values").toBeGreaterThan(1);
+  for (const gap of gaps) expect(gap, "a label's first line against its value's").toBeLessThanOrEqual(3);
+});
+
 test("Strata writes no actual date into a step: every date on screen is a planned date or the plan's own", async ({ page }) => {
   const result = JSON.parse(await recorded("steps-ke-hand-900000.json"));
   const withActuals = JSON.stringify({ ...result, step_dates: { ...result.step_dates, actual_steps_count: 5 } });

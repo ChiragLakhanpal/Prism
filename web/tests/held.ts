@@ -61,6 +61,8 @@ export async function skeletonShift(
     height?: number;
     // What shows only once the answer is drawn, when `drawn` names a part that shows in both states, such as a head.
     loaded?: string;
+    // A step to run once the skeleton shows and before it is measured, such as opening a closed section.
+    prepare?: (page: Page) => Promise<void>;
     // A step to run once the answer is drawn and before it is measured, such as waiting for a chart.
     ready?: (page: Page) => Promise<void>;
   },
@@ -74,6 +76,7 @@ export async function skeletonShift(
     await route.fulfill({ status: options.answer.status ?? 200, contentType: "application/json", body: options.answer.body });
   });
   await page.goto(options.path);
+  await options.prepare?.(page);
   await expect(page.locator(first(options.skeleton)).filter({ visible: true }).first()).toBeVisible();
   await fontsLoaded(page);
   const before = await placesAt(page, options.skeleton, widths, height);

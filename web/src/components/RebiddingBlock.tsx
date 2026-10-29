@@ -443,6 +443,10 @@ function RebidSkeleton() {
     <div aria-hidden="true" className="mt-3 flex flex-col gap-2" data-rebid-skeleton>
       <SkeletonLine className="text-body" width="w-[70%]" />
       <SkeletonLine className="text-body" width="w-[90%]" />
+      {/* The sentences take a line more below a page area of 34rem, and another below 22.5rem (ticket 59, measured on
+          the fixture's demo package at 320 to 1440 px). */}
+      <SkeletonLine className="hidden text-body @max-[34rem]/page:flex" width="w-4/5" />
+      <SkeletonLine className="hidden text-body @max-[22.5rem]/page:flex" width="w-3/5" />
       <SkeletonLine className="text-caption" width="w-4/5" />
       <Skeleton className="mt-2 h-11 w-60" radius="rounded-sm" />
       <SkeletonLine className="mt-2 text-caption" width="w-1/2" />

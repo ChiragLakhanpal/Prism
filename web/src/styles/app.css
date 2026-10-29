@@ -260,8 +260,14 @@
     padding-right: calc(var(--spacing) * 6);
   }
 }
+/* The Menu button starts on the window's margin, the page's own left edge, below 1024 px; from there the logo sits
+   16 px from the edge (ticket 59; web/index.html paints the same). */
 @utility bar-brand {
   grid-area: brand;
+  padding-left: var(--window-margin);
+  @media (width >= 64rem) {
+    padding-left: calc(var(--spacing) * 4);
+  }
 }
 @utility bar-view {
   grid-area: view;
@@ -728,11 +734,13 @@ li[data-row-mark="open"] {
   min-height: 100vh;
   min-height: 100dvh;
 }
-/* main holds at least the window's height less the bar that sticks (DESIGN.md section 10; ticket 94), so a short page,
-   such as a not-found or an error, never pulls the footer into the first screen. */
+/* main holds at least the window's height less the bar (DESIGN.md section 10; ticket 94), so a short page, such as a
+   not-found or an error, never pulls the footer into the first screen. Below 1024 px the bar scrolls with the page but
+   still takes its 56 px above main, so main leaves it out there too, and the footer sits just under the fold rather
+   than a bar's height further down (ticket 59). */
 @utility min-h-main {
-  min-height: calc(100vh - var(--frame-top));
-  min-height: calc(100dvh - var(--frame-top));
+  min-height: calc(100vh - var(--bar-height));
+  min-height: calc(100dvh - var(--bar-height));
 }
 
 /* A control inside a sticky part shifts its scroll margin by the part's scroll padding, so the Tab key does
@@ -803,6 +811,21 @@ li[data-row-mark="open"] {
     background-color: transparent;
     background-image: repeating-linear-gradient(to bottom, var(--color-line-strong) 0 4px, transparent 4px 8px);
   }
+}
+
+/* Words held as a skeleton (DESIGN.md section 5, Skeleton words; ticket 59): the words are laid out but unseen, and each
+   of their lines is drawn as a surface-2 bar as tall as the font, centred on its line as a SkeletonLine's bar is. Each
+   line's fragment draws its own bar (box-decoration-break), so a name that takes two lines shows two bars. */
+@utility skeleton-words {
+  color: transparent;
+  background-image: linear-gradient(var(--color-surface-2), var(--color-surface-2));
+  background-size: 100% 1em;
+  background-position: 0 50%;
+  background-repeat: no-repeat;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  border-radius: var(--radius-xs);
+  user-select: none;
 }
 
 /* Text that screen readers skip but a copy keeps, such as the brackets around "[1]". */

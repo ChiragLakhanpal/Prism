@@ -74,6 +74,9 @@ const BELOW_BAR = 12 + 8;
 // In a preview the pill and the Menu button fill white with navy text (about 16:1), tint on hover and when open.
 const PREVIEW_LOOK = "border-surface bg-surface text-navy hover:bg-tint data-[state=open]:bg-tint aria-expanded:bg-tint";
 const OWN_LOOK = "border-surface text-surface hover:bg-primary-hover data-[state=open]:bg-primary-hover aria-expanded:bg-primary-hover";
+// The Menu button at rest has no outline, so the bar never holds two outlined boxes beside the view switch; its border
+// turns white on hover and while the sheet is open (ticket 59; web/index.html paints it the same).
+const MENU_LOOK = "border-transparent text-surface hover:border-surface hover:bg-primary-hover aria-expanded:border-surface aria-expanded:bg-primary-hover";
 
 export function pillLabel(mode: NavMode): string {
   const words = copy.nav.view.pill;
@@ -411,7 +414,7 @@ export function TopNav({
       {/* Shown below the bar, over the page, so it never covers the logo or the wordmark (DESIGN.md section 10). */}
       <SkipLink />
       <div data-bar-row className="bar-row">
-        <div className="bar-brand flex h-14 min-w-0 items-center pl-3 lg:pl-4">
+        <div className="bar-brand flex h-14 min-w-0 items-center">
           {/* A fixed width, 96 px or 44 px below 360 px, so the logo after it never moves when the font arrives and
               web/index.html paints it in the same place. */}
           <button
@@ -427,7 +430,7 @@ export function TopNav({
             className={cx(
               "flex h-11 w-11 shrink-0 items-center justify-center gap-2 rounded-sm border text-button xs:w-24 lg:hidden",
               "transition-paint duration-150",
-              mode.preview ? PREVIEW_LOOK : OWN_LOOK,
+              mode.preview ? PREVIEW_LOOK : MENU_LOOK,
             )}
           >
             <MenuIcon aria-hidden="true" className="size-4 shrink-0" />
@@ -441,7 +444,7 @@ export function TopNav({
           )}
           <a
             href={withModeOf(homeHref, mode.search)}
-            className="ml-6 flex h-10 shrink-0 items-center rounded-sm px-1 text-h3 text-surface underline-offset-4 hover:underline"
+            className="ml-6 flex h-10 shrink-0 items-center rounded-sm px-1 text-h2 font-bold text-surface underline-offset-4 hover:underline"
           >
             {copy.appName}
           </a>

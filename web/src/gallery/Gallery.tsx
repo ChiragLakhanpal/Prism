@@ -51,7 +51,8 @@ export function sampleMode(pill: string | null): NavMode {
     preview,
     offered: officer ? ["piu", "public"] : ["staff", "piu", "public"],
     agency,
-    tabs: preview === "public" ? PUBLIC_TABS : STAFF_MODE.tabs,
+    // ?pill=loading: before GET /api/me says which sections the view has, so the sidebar shows its loading bars (ticket 59).
+    tabs: pill === "loading" ? null : preview === "public" ? PUBLIC_TABS : STAFF_MODE.tabs,
     hidden: preview === "public" ? PUBLIC_HIDDEN : preview === "piu" || officer ? OFFICER_HIDDEN : [],
     pathname: "/gallery/navigation",
   };
@@ -196,7 +197,8 @@ function Index() {
 // The frame's own states come from the address, so the capture command can open each one:
 // ?menu=open opens the Menu sheet, ?view=open the view popover, ?viewer=loading,
 // ?viewer=signed-out or ?viewer=error sets what the view lines say, ?pill=officer, ?pill=piu, ?pill=public or
-// ?pill=officer-public shows that view's pill and sections (ticket 40), and ?sidebar=open or ?sidebar=rail draws the
+// ?pill=officer-public shows that view's pill and sections (ticket 40), ?pill=loading the sidebar before the view is known
+// (ticket 59), and ?sidebar=open or ?sidebar=rail draws the
 // sidebar open or as the rail at any width from 1024 px, and ?sub=1 adds the sample sub-items (ticket 92). ?scope= puts
 // a package's scope chip in the box (ticket 93).
 function frameState(search: string): { menuOpen: boolean; viewOpen: boolean; viewer: Viewer; mode: NavMode; rest?: Rest; subs: boolean; scope?: string } {
