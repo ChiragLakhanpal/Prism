@@ -254,10 +254,10 @@ export function PastRange({
     setAnnounce(copy.timeEstimate.planDates.announce(formatNumber(months, { decimals: 1, compact: false })));
   }, [savedCount]);
   const populated = result !== null && !body && ["range", "dots", "abstention"].includes(kind(result));
+  // "Compare with" shows only with a given time estimate. Nothing holds its row while the estimate loads, since a
+  // held-back estimate, as on the demo package, draws none (ticket 59; the critique of round 2).
   let compareSlot: ReactNode = null;
-  if (populated && estimate?.status === "loading") {
-    compareSlot = <Skeleton className="h-8 w-60 rounded-pill" />;
-  } else if (populated && estimateResult && estimateResult.abstention === null && estimateResult.estimate) {
+  if (populated && estimateResult && estimateResult.abstention === null && estimateResult.estimate) {
     compareSlot = <CompareControl result={estimateResult} pressed={pressed} onPress={press} />;
   }
 
@@ -1148,6 +1148,17 @@ function Populated({
           <div className="mt-4 flex items-start gap-2" data-lane2-message="abstain">
             <CircleDashed aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-line-strong" />
             <p className="min-w-0 max-w-prose text-body text-ink">{heldBack}</p>
+          </div>
+        )}
+        {/* While the time estimate loads, the sentence of one that holds back keeps its place under the chart, unseen and
+            unheard, as the demo package draws it, so the chart and the card's end stay put (ticket 59; the critique of
+            round 2). A given estimate draws its track record here instead. */}
+        {estimate?.status === "loading" && (
+          <div aria-hidden="true" className="mt-4 flex items-start gap-2" data-lane2-message="loading">
+            <span className="size-5 shrink-0" />
+            <p className="min-w-0 max-w-prose text-body">
+              <SkeletonWords text={copy.timeEstimate.abstain.outsideOther} />
+            </p>
           </div>
         )}
         {!narrow && <div className="mt-4">{summaryBlock}</div>}

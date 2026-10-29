@@ -94,6 +94,43 @@ test("section 1's card ends where its skeleton ended, with Advertised again's sk
   expect(jumps(shifts)).toEqual([]);
 });
 
+// The critique of round 2, follow-up 1: while the time estimate loaded, section 1 held a "Compare with" row above the
+// chart and three bars under it, which the demo package never draws: its estimate holds back. The chart rose 48 px and
+// the card's end 88 to 112. Now the estimate's held place is the held-back sentences', so neither moves.
+for (const [part, section] of [
+  ["the chart", { from: "[data-chart-figure]", to: "[data-chart-figure]" }],
+  ["the card's end", { from: "[data-section=took]", to: "[data-section=took]" }],
+] as const) {
+  test(`while the time estimate loads, section 1 holds ${part} where the demo package draws it`, async ({ page }) => {
+    await mockApi(page, await packageAnswers());
+    const shifts = await skeletonShift(page, {
+      path: "/packages/KE-NWWDA-541055-CW-RFB",
+      hold: `**${PACKAGE}/estimate*`,
+      answer: { body: await recorded("estimate-ke-nwwda-541055.json") },
+      skeleton: section,
+      drawn: section,
+      loaded: "[data-past-range][data-lane2=ready]",
+      prepare: (page) => expect(page.locator("[data-lane2-message=loading]")).toBeVisible(),
+      widths: [320, 390, 768, 1024, 1440],
+    });
+    expect(jumps(shifts)).toEqual([]);
+  });
+}
+
+// The critique of round 2, follow-up 2: the steps tracker's skeleton had no foot strip, so "Where the steps stand" grew
+// 57 px when the steps arrived, and sections 2 to 5 dropped with it.
+test("the steps tracker's skeleton holds the tracker's place, its foot strip too", async ({ page }) => {
+  await mockApi(page, await packageAnswers());
+  const shifts = await skeletonShift(page, {
+    path: "/packages/KE-NWWDA-541055-CW-RFB",
+    hold: `**${PACKAGE}/steps`,
+    answer: { body: await recorded("steps-ke-nwwda-541055.json") },
+    skeleton: "[data-step-tracker-skeleton]",
+    drawn: "[data-step-tracker]",
+  });
+  expect(jumps(shifts)).toEqual([]);
+});
+
 test("Advertised again's skeleton holds the block's place under section 1", async ({ page }) => {
   await mockApi(page, await packageAnswers());
   const shifts = await skeletonShift(page, {
