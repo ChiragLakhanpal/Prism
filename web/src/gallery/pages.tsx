@@ -67,7 +67,7 @@ import { CitationMarker } from "../components/CitationMarker";
 import { Document, type Passage } from "../components/Document";
 import { Num, type NumValue } from "../components/Num";
 import { PageHeader, WithIds } from "../components/PageHeader";
-import { Skeleton, SkeletonText } from "../components/Skeleton";
+import { Skeleton, SkeletonText, SkeletonWords } from "../components/Skeleton";
 import { DocumentSource } from "../components/Source";
 import { DesignedNotBuilt } from "../components/DesignedNotBuilt";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
@@ -80,10 +80,13 @@ import type { Section } from "../components/sections";
 import { FactsPanel, factsLine } from "../components/PackageFacts";
 import { PageHead } from "../components/PageHead";
 import { PastRange } from "../components/PastRange";
+import { Rebidding } from "../components/RebiddingBlock";
+import { rebiddingPath } from "../lib/rebidding";
 import { copy } from "../copy";
 import type { Readiness, ReadinessState, RegistryState, Segment, ShelfEntry } from "../lib/dataPages";
 import type { Comparable, ComparablesResult, PackageFacts } from "../lib/api";
 import { formatDate } from "../lib/format";
+import { HeldChangeLine } from "../pages/CheckPlanPage";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { RefusalWindow, WhatIDontDo } from "../components/WhatIDontDo";
@@ -1355,6 +1358,26 @@ export const PAGES: GalleryPage[] = [
       },
       // Ticket 95: a Task zone loads with its real header over bars sized to the summary they stand for.
       { id: "zone", title: galleryCopy.zones.labels.skeleton, body: <LoadingZone /> },
+      // Ticket 59: words held as a skeleton, at a narrow width too, where the name takes two lines and draws two bars.
+      {
+        id: "words",
+        title: s.skeletonWords,
+        body: (
+          <Panel>
+            <div className="flex flex-col gap-4">
+              <p className="text-h1">
+                <SkeletonWords text={galleryCopy.sampleAgency} />
+              </p>
+              <p className="max-w-60 text-h1">
+                <SkeletonWords text={galleryCopy.sampleAgency} />
+              </p>
+              <p className="text-caption">
+                <SkeletonWords text={copy.checkPlan.draftAction.feedforward} />
+              </p>
+            </div>
+          </Panel>
+        ),
+      },
     ],
   },
   {
@@ -1399,6 +1422,8 @@ export const PAGES: GalleryPage[] = [
       { id: "open", title: t.planOpen, body: <PlanCheck result={planSample} defaultOpen /> },
       { id: "partial", title: t.planPartial, body: <PlanCheck result={partialSample} /> },
       { id: "loading", title: s.loading, body: <PlanCheckSkeleton /> },
+      // Ticket 59, round 2: what changed has not answered either, so its line's place is held under the narration.
+      { id: "loading-change-line", title: s.loadingChangeLine, body: <PlanCheckSkeleton afterNarration={<HeldChangeLine />} /> },
       { id: "slow", title: s.slowTwo, body: <PlanCheckSkeleton slow /> },
     ],
   },
@@ -1478,6 +1503,25 @@ export const PAGES: GalleryPage[] = [
         ),
       },
       { id: "loading", title: s.loading, body: <PastRange state={{ status: "loading" }} /> },
+      // Ticket 59, round 2: on the package page, Advertised again holds its own skeleton under the past range's while
+      // section 1 loads. With no section yet, it sends no request.
+      {
+        id: "loading-with-again",
+        title: s.loadingWithAgain,
+        body: (
+          <PastRange
+            state={{ status: "loading" }}
+            after={() => <Rebidding path={rebiddingPath("/api/packages/sample")} section={null} sectionLoading />}
+          />
+        ),
+      },
+      // Ticket 59, round 3: while the time estimate loads, section 1 holds no Compare with row, and a held-back
+      // estimate's two sentences are held as skeleton words, under the chart and at the end of the summary.
+      {
+        id: "loading-estimate",
+        title: s.loadingEstimate,
+        body: <PastRange state={{ status: "ready", result: rangeReady }} estimate={{ status: "loading" }} />,
+      },
       {
         id: "error",
         title: s.error,

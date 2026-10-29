@@ -20,6 +20,7 @@
 import { useId, useState, type ClipboardEvent, type ReactNode } from "react";
 import { ChevronDown } from "lucide-react";
 import { copy } from "../copy";
+import type { ShownSources } from "../lib/answer";
 import { cx } from "../lib/cx";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
@@ -35,6 +36,8 @@ type Checks = {
   dates?: { matched: number; total: number };
   quotes?: { found: number; total: number };
   judged?: { judged: number; proven: number; crossLanguage?: number };
+  // When a sentence on screen cites nothing (ticket 58), the checks event's shown.sources.
+  sources?: ShownSources;
   notChecked: NotChecked[];
   removed: Removed[];
   names?: string[];
@@ -128,6 +131,7 @@ function ChecksBlock({ checks, reveal = false }: { checks: Checks; reveal?: bool
         dates={checks.dates}
         quotes={checks.quotes}
         judged={checks.judged}
+        sources={checks.sources}
         notChecked={checks.notChecked}
         reveal={reveal}
         how={checks.how}

@@ -113,9 +113,11 @@ export function Frame({
     // Escape closes the sheet, and only the sheet: the evidence drawer behind it stays open (ticket 60). "/" closes it
     // before the box takes focus, so the box is no longer inert when it does: this listens in the capture phase, ahead
     // of the box's own listener.
+    // A layer open inside the sheet, such as the view switch's popover (ticket 59), takes Escape first and closes alone.
     const onKey = (event: KeyboardEvent) => {
       if (!openNow.current) return;
       if (event.key === "Escape") {
+        if (document.getElementById(sheetId)?.querySelector("[data-sheet-layer]")) return;
         event.preventDefault();
         setOpen(false);
       } else if (isBoxShortcut(event)) flushSync(() => setOpen(false, false));
@@ -126,7 +128,7 @@ export function Frame({
       wide.removeEventListener("change", widened);
       document.removeEventListener("keydown", onKey, true);
     };
-  }, [setOpen]);
+  }, [setOpen, sheetId]);
 
   const sheet = useMemo(() => ({ open: menuOpen, setOpen, button, sheetId }), [menuOpen, setOpen, sheetId]);
   const inert = inertPage || menuOpen;

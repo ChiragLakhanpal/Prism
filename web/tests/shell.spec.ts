@@ -257,10 +257,10 @@ test("on a preview link with who is viewing unread, the sidebar and the Menu she
   await mockShell(page, { me: { status: 503, body: '{"code":"data_service"}' } });
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/?view=public");
-  await expect(page.locator("[data-sidebar] [data-sidebar-stamp]")).toContainText("Data through Oct 23");
+  await expect(page.locator("[data-sidebar] [data-sidebar-stamp]")).toContainText("Data updated Oct 23");
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Menu", exact: true }).click();
-  await expect(page.getByRole("dialog", { name: "Menu" }).locator("[data-sidebar-stamp]")).toContainText("Data through Oct 23");
+  await expect(page.getByRole("dialog", { name: "Menu" }).locator("[data-sidebar-stamp]")).toContainText("Data updated Oct 23");
 });
 
 // Ticket 60 (ticket 92's review, follow-up 3): choosing the page you are on in the Menu sheet opens nothing new, so the
@@ -419,7 +419,7 @@ test("the stamp sits at the sidebar's foot under Data, shows the day the server 
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]").getByRole("link");
-  await expect(stamp).toHaveText("Data through Oct 23");
+  await expect(stamp).toHaveText("Data updated Oct 23");
   await expect(stamp).toHaveAttribute("href", "/data");
   await expect(stamp).toHaveAccessibleDescription("Open the Data page.");
   await expect(page.locator("[data-stamp]")).not.toHaveAttribute("aria-busy");
@@ -447,8 +447,8 @@ test("as a rail, the sidebar hides the stamp, and the Data item's tooltip and de
   await expect(page.locator("[data-stamp]")).toBeHidden();
   const data = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Data", exact: true });
   await data.focus();
-  await expect(page.locator("[data-rail-tip]")).toHaveText("DataData through Oct 23");
-  await expect(data).toHaveAccessibleDescription("Data through Oct 23");
+  await expect(page.locator("[data-rail-tip]")).toHaveText("DataData updated Oct 23");
+  await expect(data).toHaveAccessibleDescription("Data updated Oct 23");
   await page.locator("[data-sidebar-toggle]").click();
   await expect(data).not.toHaveAttribute("aria-describedby");
   await expect(page.locator("[data-stamp]").getByRole("link")).toBeVisible();
@@ -461,7 +461,7 @@ test("a data date from another year shows its year", async ({ page }) => {
   await openSidebar(page);
   await page.goto("/");
 
-  await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("Data through Dec 30, 2025");
+  await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("Data updated Dec 30, 2025");
 });
 
 test("before any daily source has loaded, the stamp says no data are loaded and still links to the Data page", async ({ page }) => {
@@ -491,7 +491,72 @@ test("while it loads, the stamp holds a static bar for the first second and then
   await expect(stamp.locator("[data-skeleton]")).toHaveCount(1);
   await expect(stamp).toHaveText("Reading the data date", { timeout: 3000 });
   answer();
-  await expect(stamp.getByRole("link")).toHaveText(/^Data through /);
+  await expect(stamp.getByRole("link")).toHaveText(/^Data updated /);
+});
+
+// Ticket 59 (the 93 design review, follow-up 3; the 93 critique): below 1024 px the Menu button starts on the window's
+// margin, the page's own left edge, with no outline at rest, so at 800 px the bar holds one outlined box, the view
+// switch; its border turns white on hover and while the sheet is open. The wordmark is 18/24 at 700 (DESIGN.md sections 3
+// and 9).
+test("the Menu button starts on the window's margin with no outline at rest, and the wordmark is 18/24 at 700", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 390, height: 900 });
+  await page.goto("/");
+  const menu = page.locator("[data-menu-button]");
+  const border = () => menu.evaluate((element) => getComputedStyle(element).borderTopColor);
+  for (const [width, margin] of [[390, 16], [800, 32]] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(Math.round((await menu.boundingBox())!.x), `${width} px`).toBe(margin);
+    const h1 = page.locator("main h1").first();
+    expect(Math.round((await h1.boundingBox())!.x), `${width} px: the page's own left edge`).toBe(margin);
+  }
+  expect(await border()).toBe("rgba(0, 0, 0, 0)");
+  await menu.hover();
+  await expect.poll(border).toBe("rgb(255, 255, 255)");
+  await page.mouse.move(400, 600);
+  await menu.click();
+  await expect(menu).toHaveAttribute("aria-expanded", "true");
+  await expect.poll(border).toBe("rgb(255, 255, 255)");
+  const wordmark = page.locator("[data-nav-bar] a").filter({ hasText: "Strata" });
+  expect(await wordmark.evaluate((element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight])).toEqual(["18px", "24px", "700"]);
+});
+
+// Ticket 59 (the 92 design review, follow-ups 5 and 6): until GET /api/me says which sections a preview has, the
+// sidebar draws one bar for Home, four for the sections 16 px under it and one for Data at its foot, each where its item
+// will be, and "Collapse the sidebar" is already there. On the rail its items sit 12 px from its edges.
+test("while the view loads, the sidebar's bars stand where Home, the sections and Data will be", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
+  let answer: () => void = () => {};
+  const answered = new Promise<void>((resolve) => (answer = resolve));
+  await mockShell(page);
+  await page.route((url) => url.pathname === "/api/me", async (route) => {
+    await answered;
+    await route.fulfill({ status: 200, contentType: "application/json", body: await recorded("me-preview-piu.json") });
+  });
+  await page.goto("/?view=piu");
+  const sidebar = page.locator("[data-sidebar]");
+  await expect(sidebar.locator("[data-sidebar-loading]")).toBeVisible();
+  await expect(sidebar.getByRole("button", { name: "Collapse the sidebar" })).toBeVisible();
+  const bars = await sidebar.locator("nav [data-skeleton]").evaluateAll((all) => all.map((bar) => Math.round(bar.getBoundingClientRect().top)));
+  expect(bars).toHaveLength(6);
+  expect(bars[1] - bars[0], "16 px between Home and the sections, as between their lists").toBe(36 + 16);
+  answer();
+  await expect(sidebar.locator("[data-nav-item=home]")).toBeVisible();
+  const items: Record<string, number> = await sidebar.locator("nav [data-nav-item]").evaluateAll((all) =>
+    Object.fromEntries(all.map((item) => [item.getAttribute("data-nav-item") ?? "", Math.round(item.getBoundingClientRect().top)])),
+  );
+  expect(items.home, "Home where its bar was").toBe(bars[0]);
+  const sections = Object.entries(items).filter(([key]) => key !== "home" && key !== "data" && key !== "start-here");
+  expect(Math.min(...sections.map(([, top]) => top)), "the first section where its bar was").toBe(bars[1]);
+  if (items.data !== undefined) expect(items.data, "Data where its bar was").toBe(bars[5]);
+
+  // The rail: its items 12 px in from its edges.
+  await sidebar.getByRole("button", { name: "Collapse the sidebar" }).click();
+  const [rail, home] = await page.evaluate(() =>
+    ["[data-sidebar] nav", "[data-sidebar] [data-nav-item=home]"].map((selector) => document.querySelector(selector)!.getBoundingClientRect().toJSON()),
+  );
+  expect([Math.round(home.left - rail.left), Math.round(rail.right - home.right)]).toEqual([12, 12]);
 });
 
 test("when the server fails, the stamp says it can't read the date, and tries again on a later page at most once a minute", async ({ page }) => {
@@ -511,6 +576,16 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
   await expect(stamp).toHaveText("I can't read the data date.");
   await expect(stamp.getByRole("link")).toHaveCount(0);
   await expect(stamp.locator("svg.lucide-circle-x")).toHaveCount(1);
+  // Ticket 59 (the 93 review): the icon hangs left of the stamp's edge, so the words start at x 48, on Data's label's
+  // edge, on one 24 px line.
+  const words = await stamp.evaluate((element) => {
+    const text = [...element.querySelectorAll("span")].flatMap((span) => [...span.childNodes]).find((node) => node.nodeType === Node.TEXT_NODE)!;
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const lines = new Set([...range.getClientRects()].map((box) => Math.round(box.top))).size;
+    return { left: Math.round(range.getBoundingClientRect().left), lines, height: Math.round(element.getBoundingClientRect().height) };
+  });
+  expect(words).toEqual({ left: 48, lines: 1, height: 24 });
 
   const tabs = page.getByRole("navigation", { name: "Main" });
   await tabs.getByRole("link", { name: "Packages" }).click();
@@ -519,7 +594,7 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
 
   await page.clock.fastForward("01:01");
   await tabs.getByRole("link", { name: "Projects" }).click();
-  await expect(stamp.getByRole("link")).toHaveText("Data through Oct 23");
+  await expect(stamp.getByRole("link")).toHaveText("Data updated Oct 23");
   expect(reads).toBe(2);
 });
 
@@ -602,6 +677,95 @@ test("the view popover says who is signed in and offers each view as a link, wit
   await expect(dialog.getByRole("group")).toHaveAccessibleName("Language of answers and drafts");
 });
 
+// Ticket 59, the pm's routed item from ticket 93's critique: below 768 px the Menu sheet's foot held the whole view panel,
+// about three times the navigation's height, with a second current mark. Now the foot holds Data, the stamp under it and
+// one view button, the bar's view switch, pinned to the sheet's bottom. Pressed, it opens the view switch's popover above
+// it (round 3: the rows opened in place, which moved the button 355 px up and drew a second mark), and the button stays
+// where the thumb is. The chosen view is marked by its check alone, so the page's item keeps the one tint and bar.
+test("at 390 px the Menu sheet's foot holds one view button under Data and the stamp, and it opens its popover above it", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: "Menu" });
+  const view = sheet.getByRole("button", { name: "View: World Bank staff", exact: true });
+  await expect(view).toHaveAttribute("aria-expanded", "false");
+  await expect(sheet.locator("[data-view-row]")).toHaveCount(0);
+  await expect(sheet.getByText("See Strata as", { exact: true })).toHaveCount(0);
+  // Data, then the stamp, then the view button, which ends the sheet.
+  const data = (await sheet.locator("[data-nav-item=data]").boundingBox())!;
+  const stamp = (await sheet.locator("[data-sidebar-stamp]").boundingBox())!;
+  const button = (await view.boundingBox())!;
+  const box = (await sheet.boundingBox())!;
+  expect(stamp.y, "the stamp under Data").toBeGreaterThanOrEqual(data.y + data.height - 1);
+  expect(button.y, "the view button under the stamp").toBeGreaterThan(stamp.y + stamp.height - 1);
+  expect(box.y + box.height - (button.y + button.height), "pinned to the sheet's bottom").toBeLessThanOrEqual(24);
+  // One current mark: the page's item.
+  await expect(sheet.locator("[aria-current]")).toHaveCount(1);
+  // The marks a reader sees: a tinted link row, or one with the 3 px bar.
+  const marks = () =>
+    sheet.evaluate((root) =>
+      [...root.querySelectorAll("a")]
+        .filter((element) => element.getClientRects().length > 0)
+        .filter((element) => getComputedStyle(element).backgroundColor !== "rgba(0, 0, 0, 0)" || getComputedStyle(element, "::before").backgroundColor.startsWith("rgb("))
+        .map((element) => (element.textContent ?? "").trim().split(/\s{2,}|\n/)[0]),
+    );
+  expect(await marks()).toEqual(["Home"]);
+
+  await view.click();
+  await expect(view).toHaveAttribute("aria-expanded", "true");
+  const popover = sheet.getByRole("dialog", { name: "Your view" });
+  await expect(popover.locator("[data-view-row]")).toHaveCount(3);
+  await expect(popover.getByText("See Strata as", { exact: true })).toBeVisible();
+  // Focus lands on the current view's row, as in the bar's popover.
+  await expect(popover.locator("[data-view-row=staff]")).toBeFocused();
+  await expect(popover.locator("[data-view-row=staff] svg")).toHaveCount(1);
+  // The button has not moved, and the popover sits 8 px above it on its left edge, as wide as it is.
+  const pressed = (await view.boundingBox())!;
+  expect(Math.round(pressed.y), "the view button stays put").toBe(Math.round(button.y));
+  const above = (await popover.boundingBox())!;
+  expect(Math.round(pressed.y - (above.y + above.height)), "8 px above the button").toBe(8);
+  expect(Math.round(above.x), "on the button's left edge").toBe(Math.round(pressed.x));
+  expect(Math.round(above.width), "as wide as the button").toBe(Math.round(pressed.width));
+  // Still one mark: the chosen view has its check alone, with no tint and no bar.
+  expect(await marks()).toEqual(["Home"]);
+
+  // Escape closes the popover only, and focus goes back to the button.
+  await page.keyboard.press("Escape");
+  await expect(popover).toBeHidden();
+  await expect(sheet).toBeVisible();
+  await expect(view).toBeFocused();
+  await expect(view).toHaveAttribute("aria-expanded", "false");
+  await view.click();
+  await expect(popover.locator("[data-view-row]")).toHaveCount(3);
+  await view.click();
+  await expect(sheet.locator("[data-view-row]")).toHaveCount(0);
+});
+
+// On the smallest phone the popover keeps to the room above the button and scrolls inside itself, so the language choice
+// can still be reached.
+test("at 320 x 568 the Menu sheet's view popover fits above its button and scrolls to the language choice", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 320, height: 568 });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  const sheet = page.getByRole("dialog", { name: "Menu" });
+  const view = sheet.getByRole("button", { name: "View: World Bank staff", exact: true });
+  await view.click();
+  const popover = sheet.getByRole("dialog", { name: "Your view" });
+  await expect(popover).toBeVisible();
+  const above = (await popover.boundingBox())!;
+  const button = (await view.boundingBox())!;
+  const close = (await sheet.getByRole("button", { name: "Close the menu" }).boundingBox())!;
+  expect(above.y, "clear of the sheet's head, so Close the menu stays in reach").toBeGreaterThanOrEqual(close.y + close.height + 8);
+  expect(above.y + above.height, "above the button").toBeLessThanOrEqual(button.y);
+  const last = popover.locator("[data-language-choice] label").last();
+  await last.scrollIntoViewIfNeeded();
+  await expect(last).toBeInViewport();
+  const at = (await last.boundingBox())!;
+  expect(at.y + at.height, "the last language above the button").toBeLessThanOrEqual(button.y);
+});
+
 // Ticket 110, from the user's review of October 27, 2026: "See Strata as" names the group in the label style (DESIGN.md
 // section 3: 13/16, 600, ink-muted), so it no longer reads as a fourth view. It sits 16 px under the signed-in line
 // (between blocks) and 8 px above the first view row (a heading to its first line; section 4). DESIGN.md keeps 700 for
@@ -613,6 +777,8 @@ for (const width of [1440, 390]) {
     await page.goto("/");
     const sheet = width < 768;
     await page.getByRole("button", { name: sheet ? "Menu" : "View: World Bank staff", exact: true }).click();
+    // In the Menu sheet the view rows show once its view button is pressed (ticket 59).
+    if (sheet) await page.locator("[data-menu-panel]").getByRole("button", { name: "View: World Bank staff", exact: true }).click();
     const panel = sheet ? page.locator("[data-menu-panel]") : page.getByRole("dialog", { name: "Your view" });
     const label = panel.getByText("See Strata as", { exact: true });
     await expect(label).toBeVisible();
@@ -760,6 +926,7 @@ for (const width of [390, 320]) {
 
     // The Menu's view rows wrap with text-pretty, so no description ends on one word (ticket 40).
     await page.getByRole("button", { name: "Menu", exact: true }).click();
+    await page.locator("[data-menu-panel]").getByRole("button", { name: "View: World Bank staff", exact: true }).click();
     const view = page.locator("[data-menu-panel]").getByText("A preview of what a member of the public sees. It has projects, lessons and data only.");
     await expect(view).toBeVisible();
     expect((await view.evaluate(lastLine)).words).toBeGreaterThan(1);

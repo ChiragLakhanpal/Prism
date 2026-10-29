@@ -24,6 +24,7 @@ import { Num } from "../../components/Num";
 import { ProjectIdText } from "../../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
+import { countLineOf } from "../../components/Table";
 import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
 import { cx } from "../../lib/cx";
@@ -514,7 +515,8 @@ export function ConnectionsTab({ pid }: { pid: string }) {
             </div>
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-caption text-ink-muted">
-                <Fill template={words.count} slots={{ shown: String(data.shown), total: String(data.total) }} />
+                {/* One rule for every count line: "all" when every item shows (the 58 design review, round 2, 6). */}
+                {countLineOf(data.shown, data.total, words.countNoun)}
               </p>
               {/* Offered only where the diagram can show: below a 768 px page area it is always the list. */}
               <span className="hidden @md/page:block">

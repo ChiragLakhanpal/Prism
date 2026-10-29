@@ -27,6 +27,7 @@ import { SignalLine } from "../components/SignalLine";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
+import { countLineOf } from "../components/Table";
 import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -226,9 +227,17 @@ export function FollowingBody({ data }: { data: Following }) {
             {words.defEnd}
           </p>
         </div>
-        <p className="mt-4 text-caption text-ink-muted @xl/page:mt-6" data-count-line>
-          {words.countLine(shownCount, counts.total)}
-        </p>
+        {/* The count line shows only with the rows, so a list whose every project is folded has none (DESIGN.md
+            section 5, Tables; the 58 design review, B1). */}
+        {/* While every row is folded, an empty line holds the count line's place, so "Show them" stays under the
+            pointer as the fold opens (the 58 design review, round 2, follow-up 1). */}
+        {shownCount > 0 ? (
+          <p className="mt-4 text-caption text-ink-muted @xl/page:mt-6" data-count-line>
+            {countLineOf(shownCount, counts.total, words.countNoun)}
+          </p>
+        ) : (
+          <div aria-hidden="true" className="mt-4 h-5 @xl/page:mt-6" data-count-place />
+        )}
 
         {/* The table, from a page area of 1,200 px. */}
         <div data-following-view="table" className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @xl/page:block">

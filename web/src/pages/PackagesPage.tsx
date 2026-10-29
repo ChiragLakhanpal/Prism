@@ -10,14 +10,14 @@ import { FootStrip } from "../components/FootStrip";
 import { Num } from "../components/Num";
 import { Tag } from "../components/LessonParts";
 import { PageHead } from "../components/PageHead";
-import { SkeletonLine } from "../components/Skeleton";
+import { SkeletonLine, SkeletonWords } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { countText, Table, type Column, type Row } from "../components/Table";
 import { TaskZone } from "../components/TaskZone";
 import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
-import { formatCount, formatDate } from "../lib/format";
+import { formatCount, formatDate, formatTime, isToday, localDay } from "../lib/format";
 import { useLoad, type Load } from "../lib/load";
 import { enterBoxMode, type PlannedList, type PlannedRow } from "../lib/packages";
 import { PublicView } from "./PlannedPackagePage";
@@ -106,10 +106,11 @@ function rowOf(row: PlannedRow): Row {
 }
 
 // A row's "Last worked on" date, which never breaks inside (plan 7.10), however narrow the column is beside the sidebar.
+// A row worked on today gives its time instead, so two rows from one sentence on one day differ (ticket 58).
 function LastDate({ on }: { on: string }) {
   return (
-    <span className="whitespace-nowrap">
-      <Num date={on.slice(0, 10)} style="table" />
+    <span className="whitespace-nowrap" data-last-worked>
+      {on.length > 10 && isToday(on) ? words.lastToday(formatTime(on)) : <Num date={localDay(on)} style="table" />}
     </span>
   );
 }
@@ -151,8 +152,35 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
   }
   if (load.status === "loading") {
     return (
-      <TaskZone panel leadName name={<SkeletonLine className="text-lead" width="w-3/5" />} tag={<SkeletonLine className="text-caption" width="w-40" />} busy sectionKey="packages-list">
-        <Table title={null} labelledBy={headingId} columns={columns} rowHeader="name" inPanel state={{ status: "loading", rows: 5 }} />
+      // The title and the count line as most lists read, held as skeleton words, so they take the lines the real ones
+      // take at every width (ticket 59).
+      <TaskZone
+        panel
+        leadName
+        name={<SkeletonWords text={words.title(2, formatCount(2), 1, formatCount(1))} />}
+        tag={<SkeletonWords text={countText({ noun: words.noun, one: words.nounOne, total: 3 })} />}
+        busy
+        sectionKey="packages-list"
+      >
+        {/* Each loading row holds a row's name and its caption line, the STEP reference under it, so the rows and the
+            source line stay put when the list arrives (ticket 59; the 15 design review, round 3, G6). */}
+        <Table
+          title={null}
+          labelledBy={headingId}
+          columns={columns}
+          rowHeader="name"
+          inPanel
+          state={{
+            status: "loading",
+            rows: 5,
+            header: (
+              <span className="flex flex-col">
+                <SkeletonLine width="w-4/5" />
+                <SkeletonLine className="text-caption" width="w-2/5" />
+              </span>
+            ),
+          }}
+        />
         <FootStrip>
           <SkeletonLine className="text-caption" width="w-2/5" />
         </FootStrip>

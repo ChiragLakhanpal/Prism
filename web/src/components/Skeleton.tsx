@@ -41,6 +41,18 @@ export function SkeletonText({ widths, className, style }: { widths: string[]; c
   );
 }
 
+// Words the page already knows while it loads, such as an agency's name from the address or a fixed caption from the
+// copy file, held as a skeleton: the words themselves, unseen, with each of their lines drawn as a bar as tall as the
+// font, so the lines break where the real words' lines will and nothing moves when they arrive (ticket 59; DESIGN.md
+// section 5, Skeleton words). A screen reader skips them; the loading region says what it waits for.
+export function SkeletonWords({ text, className }: { text: string; className?: string }) {
+  return (
+    <span aria-hidden="true" data-skeleton data-skeleton-words className={cx("skeleton-words", className)}>
+      {text}
+    </span>
+  );
+}
+
 // The words a screen reader hears while a region loads.
 export function LoadingLabel() {
   return <span className="sr-only">{copy.loading}</span>;

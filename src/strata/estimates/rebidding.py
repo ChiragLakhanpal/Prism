@@ -292,8 +292,11 @@ def natural_frequency(call, m: int, floor: int, step_reference: str | None) -> d
     block = {**block, "learner": held["learner"], "track_record": track}
     if not track["beat_baseline"]:
         return {**block, "not_shown_reason": "not_better"}
-    scored = rows(sql("score.sql"), step_reference=step_reference, model=held["model"],
-                  version=held["version"]) if step_reference else []
+    # A package planned from a sentence is in no Procurement Plan, and the nightly job scores only those, so it will
+    # never have a score: not_in_plan, never "not yet" (ticket 58).
+    if step_reference is None:
+        return {**block, "not_shown_reason": "not_in_plan"}
+    scored = rows(sql("score.sql"), step_reference=step_reference, model=held["model"], version=held["version"])
     if not scored:
         return {**block, "not_shown_reason": "not_scored"}
     k = int(scored[0]["in10"])

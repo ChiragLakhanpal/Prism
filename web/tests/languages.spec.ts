@@ -230,7 +230,7 @@ test("an English answer keeps the French words it quotes in French, and its chec
   await expect(quoted).toHaveText("des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés");
   expect(await readIn(page, "[data-sentence-text='0']")).toBe("en");
   await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 1 of 1 sentence follows from its sources. The other two needed no model, because everything they stated matched a record or a page. It cites a source written in another language.",
+    "Judged by a model: 1 of 1 sentence follows from its sources. The other two needed no model, because every number, date and quote in them matched a record or a page. It cites a source written in another language.",
   );
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
 });

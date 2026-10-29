@@ -230,7 +230,7 @@ test("your reports read the retrieval loop's counts, with words for one to nine"
 test("the library's filters change the list at once, keep the address, and the count line compares like with like", async ({ page }) => {
   const asked = await openLessons(page, "lessons-page.json", { "/api/lessons/library": await file("lessons-library-method-rfq.json") });
   const library = page.locator("[data-library=ready]");
-  await expect(library.locator("[data-lead]")).toHaveText("Showing all two current lessons, newest first.");
+  await expect(library.locator("[data-lead]")).toHaveText("Showing both current lessons, newest first.");
   // The four filters sit in one row at 1440 px, each as wide as its words, and stack on a phone.
   const boxes = () => library.locator("[data-filter]").evaluateAll((all) => all.map((select) => select.getBoundingClientRect()).map(({ top, width }) => ({ top: Math.round(top), width })));
   const wide = await boxes();
@@ -248,7 +248,8 @@ test("the library's filters change the list at once, keep the address, and the c
   expect(new Set((await boxes()).map((box) => box.top)).size).toBe(4);
   await page.setViewportSize({ width: 1440, height: 900 });
   await library.getByLabel("Method").selectOption("Request for Quotations");
-  await expect(library.locator("[data-lead]")).toHaveText("Showing one of two current lessons, newest first.");
+  // A part of the whole keeps its numerals (DESIGN.md section 7, rule 42; the 58 critique, follow-up 13).
+  await expect(library.locator("[data-lead]")).toHaveText("Showing 1 of 2 current lessons, newest first.");
   await expect(page).toHaveURL(/\/lessons\?method=Request\+for\+Quotations$/);
   await expect(library.locator("#method-caption")).toHaveText("Lessons that name no method are included, because they apply to every method.");
   await expect(library.locator("[data-lesson-card]")).toHaveCount(1);
@@ -262,7 +263,7 @@ test("the library's filters change the list at once, keep the address, and the c
     return route.fulfill({ contentType: "application/json", body: unfiltered });
   });
   await library.getByRole("button", { name: "Reset the filters" }).click();
-  await expect(library.locator("[data-lead]")).toHaveText("Showing all two current lessons, newest first.");
+  await expect(library.locator("[data-lead]")).toHaveText("Showing both current lessons, newest first.");
   await expect(page).toHaveURL(/\/lessons$/);
   await expect(library.getByLabel("Method")).toHaveValue("");
   await expect(library.locator("[data-lesson-card]")).toHaveCount(2);

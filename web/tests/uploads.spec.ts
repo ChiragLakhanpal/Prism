@@ -91,7 +91,7 @@ test("Uploading the fixture plan opens its check: nine activities with the label
   const request = await sent;
   expect(request.url()).not.toContain("nwwda-plan");
   expect(request.headers()["x-strata-file-name"]).toBe("nwwda-plan-2026-10-09.csv");
-  await expect(page.locator("[data-check-pill]")).toHaveText("9 activities checked");
+  await expect(page.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   expect(await shownText(page, "[data-upload-check-page] [data-access-label]")).toBe(ACCESS);
   await expect(page.getByRole("button", { name: "Draft planned dates (9 activities)" })).toBeVisible();
   await expect(page.locator("[data-reading-line]")).toContainText(

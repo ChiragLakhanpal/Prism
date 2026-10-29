@@ -9,7 +9,7 @@
 //   is blind: the page never shows a passage's rank, score or search setup, highlighted words, live feedback, or
 //   the other judge's grades before both finish.
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { Button, PRIMARY_LINK } from "../components/Button";
@@ -32,6 +32,7 @@ import type { EvidenceEvent } from "../lib/answer";
 import { ApiError, getJson, putJson } from "../lib/api";
 import { cx } from "../lib/cx";
 import { evidenceHref, openEvidence } from "../lib/evidence";
+import { formatCount } from "../lib/format";
 import { refusedAs, useLoad, type Load } from "../lib/load";
 import { LESSONS_HREF } from "../lib/lessons";
 import { navigate } from "../lib/router";
@@ -85,6 +86,8 @@ function NoticeLink({ query }: { query: { notice_id: string; notice_ref: string 
 function Agreement({ list }: { list: JudgingList }) {
   const a = list.agreement;
   if (a.both_done === 0) return null;
+  // One query is "the one query", and a count to nine is a word (ticket 58).
+  const pairsTip = a.both_done === 1 ? w.tooltipPairsOne : fillText(w.tooltipPairs, { done: formatCount(a.both_done) });
   if (a.withheld || a.kappa === null) {
     return (
       <p className="max-w-prose text-small text-ink" data-agreement="withheld">
@@ -98,8 +101,8 @@ function Agreement({ list }: { list: JudgingList }) {
         <Fill
           template={w.agree}
           slots={{
-            agree: <Num value={a.agree} options={{ compact: false }} check={{ tooltip: fillText(w.tooltipPairs, { done: a.both_done }) }} />,
-            pairs: <Num value={a.pairs} options={{ compact: false }} check={{ tooltip: fillText(w.tooltipPairs, { done: a.both_done }) }} />,
+            agree: <Num value={a.agree} options={{ compact: false }} check={{ tooltip: pairsTip }} />,
+            pairs: <Num value={a.pairs} options={{ compact: false }} check={{ tooltip: pairsTip }} />,
             kappaName: w.kappaName,
             kappa: <Num value={a.kappa} options={{ decimals: 2, compact: false }} check={{ tooltip: fillText(w.tooltipKappa, { pairs: a.pairs }) }} />,
           }}
@@ -222,9 +225,13 @@ export function JudgingBody({ list, onShow, busy = false, show: chosen }: { list
               </a>
             </div>
           )}
-          <div className="mt-6 @md/page:mt-8">
-            <Agreement list={list} />
-          </div>
+          {/* The agreement block and its space show only while a pair has been judged by both, so the filter keeps
+              32 px under the next query's link either way (the 32 brief, 2.10; ticket 59). */}
+          {list.agreement.both_done > 0 && (
+            <div className="mt-6 @md/page:mt-8">
+              <Agreement list={list} />
+            </div>
+          )}
           <div className="mt-6 @md/page:mt-8">
             <SegmentedControl<Show>
               legend={w.show}
@@ -369,7 +376,7 @@ function Differences({ query }: { query: JudgingQuery }) {
   return (
     <div className="flex flex-col gap-3" data-differences>
       <div>
-        <Button variant="ghost" flush onPage icon={ChevronDown} aria-expanded={open} onClick={() => setOpen(!open)}>
+        <Button variant="ghost" flush onPage icon={open ? ChevronUp : ChevronDown} aria-expanded={open} onClick={() => setOpen(!open)}>
           {open ? w.differencesHide : w.differencesShow}
         </Button>
       </div>
@@ -634,6 +641,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
         theirs={passage.other_grade}
         onGrade={grade}
         notice={(wide && failedAlert) || undefined}
+        done={done === pool}
       />
     );
     main = (
@@ -670,7 +678,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
             className="flex flex-col gap-3 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             data-judging-panel
           >
-            <h2 id={panelId} ref={panelHeading} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
+            <h2 id={panelId} ref={panelHeading} tabIndex={-1} className="scroll-mt-4 text-h2 text-ink-heading focus:outline-none">
               {fillText(w.panel, { i: at, pool })}
             </h2>
             {!wide && failedAlert}

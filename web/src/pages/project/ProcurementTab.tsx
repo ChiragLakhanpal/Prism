@@ -21,6 +21,7 @@ import { copy } from "../../copy";
 import type { Agency, ProjectPage as Page } from "../../lib/api";
 import { changed, changeList } from "../../lib/changes";
 import { formatDate, formatNumber } from "../../lib/format";
+import { TAB_PATH } from "../../routes";
 import type { Load } from "../../lib/load";
 import { Packages } from "./Packages";
 
@@ -73,7 +74,9 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
   );
 }
 
-function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; through: string | null }) {
+// last: the last agency with a table, whose table alone ends with the source line, since every agency's plans come from
+// the same documents (ticket 58; the 10 critique, round 5).
+function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: string; through: string | null; last: boolean }) {
   const [open, setOpen] = useState(false);
   const [opened, setOpened] = useState(false);
   const tableId = useId();
@@ -134,7 +137,7 @@ function AgencyPlans({ agency, pid, through }: { agency: Agency; pid: string; th
           rowHeader="version"
           state={{ status: "ready", rows }}
           source={
-            through ? (
+            !last ? undefined : through ? (
               <Fill template={plans.source} slots={{ date: formatDate(through) }} />
             ) : (
               plans.sourceUndated
@@ -212,7 +215,13 @@ export function ProcurementTab({ pid, load, retry }: { pid: string; load: Load<P
     hasPlans = false;
     plansBody = (
       <EightColumns>
-        <EmptyState level={3} title={plans.projectEmptyTitle} body={plans.projectEmptyBody} link={{ href: "/data", text: plans.projectEmptyLink }} />
+        <EmptyState
+          level={3}
+          title={plans.projectEmptyTitle}
+          body={plans.projectEmptyBody}
+          link={{ href: "/data", text: plans.projectEmptyLink }}
+          also={{ href: `/projects/${pid}${TAB_PATH.documents}`, text: plans.projectEmptyDocuments }}
+        />
       </EightColumns>
     );
   } else {
@@ -221,8 +230,14 @@ export function ProcurementTab({ pid, load, retry }: { pid: string; load: Load<P
     plansBody = (
       <EightColumns breakpoint="xl">
         <div className="flex flex-col gap-12">
-          {(without.length > 1 ? withPlans : load.data.agencies).map((agency) => (
-            <AgencyPlans key={agency.agency_id} agency={agency} pid={pid} through={load.data.documents_through} />
+          {(without.length > 1 ? withPlans : load.data.agencies).map((agency, index, shown) => (
+            <AgencyPlans
+              key={agency.agency_id}
+              agency={agency}
+              pid={pid}
+              through={load.data.documents_through}
+              last={agency.agency_id === shown.filter((one) => one.version_count > 0).at(-1)?.agency_id}
+            />
           ))}
           {without.length > 1 && <OtherAgencies agencies={without} />}
         </div>

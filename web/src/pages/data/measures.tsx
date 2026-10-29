@@ -91,11 +91,24 @@ function said(noun: Noun | null, n: number): string {
 
 export type TooltipKind = "ratio" | "count" | "day" | "missing";
 
-function tooltip(row: MeasureRow, noun: Noun | null, asOf: string, kind: TooltipKind, count?: number, lack?: string | null): string {
+function tooltip(
+  row: MeasureRow,
+  noun: Noun | null,
+  asOf: string,
+  kind: TooltipKind,
+  count?: number,
+  lack?: string | null,
+  notFound?: string | null,
+): string {
   const n = (value: number) => numText({ value, options: { compact: false } });
   // The date stays on one line in the tooltip (ticket 59).
   // A date in a sentence is written in full (DESIGN.md rule 13), as its From line writes it.
   if (kind === "day" && row.as_of) return words.number.day(wholeDate(numText({ date: row.as_of })));
+  // A check of what I found says where I found none: "I found no paragraph numbers on 70 of 264 pages of the reports'
+  // main text." (ticket 58).
+  if (kind === "missing" && notFound && count !== undefined && row.denominator !== null) {
+    return words.number.notFound(n(count), n(row.denominator), said(noun, row.denominator), notFound);
+  }
   // A shortfall names what its records lack: "75 of 603 contracts lack a STEP reference."
   if (kind === "missing" && lack && count !== undefined && row.denominator !== null) {
     const says = count === 1 ? words.number.missingOne : words.number.missing;
@@ -121,6 +134,7 @@ export function MeasureValue({
   tooltipKind = "count",
   role,
   lack,
+  notFound,
   className,
   extraRows,
   window: own,
@@ -134,6 +148,8 @@ export function MeasureValue({
   tooltipKind?: TooltipKind;
   role?: Role | null;
   lack?: string | null;
+  // A check of what I found: what I found none of (ticket 58).
+  notFound?: string | null;
   className?: string;
   // More rows for the window, after the measure's own numbers, such as a share's split by route.
   extraRows?: { label: string; value: ReactNode }[];
@@ -149,7 +165,15 @@ export function MeasureValue({
     <MeasureNum
       value={value}
       className={className}
-      tooltip={tooltip(row, noun, measures.asOf, role === "missing" && (lack || row.kind === "read_well") ? "missing" : tooltipKind, count, lack)}
+      tooltip={tooltip(
+        row,
+        noun,
+        measures.asOf,
+        role === "missing" && (lack || notFound || row.kind === "read_well") ? "missing" : tooltipKind,
+        count,
+        lack,
+        notFound,
+      )}
       from={<FromLine words={measuresFrom(row.measured_on)} />}
       inText={inText}
       measure={measureWindow(row, owner, measures.asOf, role && count !== undefined ? { role, value: count } : null, extraRows, own)}
@@ -177,9 +201,8 @@ export function Sentence({
   // A headline in lead type, whose lines keep their 28 px pitch with a number in them (MeasureNum's inText).
   inText?: boolean;
 }) {
-  return (
-    <>
-      {segments.map((segment, index): ReactNode => {
+  const isNumber = (segment: Segment | undefined) => segment !== undefined && "number" in segment;
+  const one = (segment: Segment, index: number): ReactNode => {
         if ("text" in segment) return <Fragment key={index}>{segment.text}</Fragment>;
         if ("mono" in segment) {
           return (
@@ -210,12 +233,31 @@ export function Sentence({
             noun={segment.noun ? { many: segment.noun, one: segment.noun_one } : null}
             role={segment.role}
             lack={segment.lack}
+            notFound={segment.not_found}
             inText={inText}
           />
         );
-      })}
-    </>
-  );
+  };
+  // A part of a whole, such as "70 of 264", sits on one line, so a line never ends on "of" with no whole (the 58
+  // critique, round 2). The words between the two numbers are the tool's own, with their spaces made no-break: a
+  // number you can press is a button, and a browser breaks before a button even inside a span that does not wrap.
+  const out: ReactNode[] = [];
+  for (let index = 0; index < segments.length; index++) {
+    const between = segments[index + 1];
+    if (isNumber(segments[index]) && between && "text" in between && between.text === words.partOfWhole && isNumber(segments[index + 2])) {
+      out.push(
+        <span key={index} data-part-whole className="whitespace-nowrap">
+          {one(segments[index], index)}
+          {between.text.replace(/ /g, "\u00a0")}
+          {one(segments[index + 2], index + 2)}
+        </span>,
+      );
+      index += 2;
+    } else {
+      out.push(one(segments[index], index));
+    }
+  }
+  return <>{out}</>;
 }
 
 // Opens the page's closed row whose heading has this id, such as the hardest documents' (ticket 104): the page provides

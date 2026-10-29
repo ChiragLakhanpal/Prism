@@ -16,6 +16,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";
+import { MonoWords } from "../components/MonoWords";
 import { ContractTrail } from "../components/ContractTrail";
 import { Fill, Joined } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
@@ -245,9 +246,9 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
         <Breadcrumb trail={trail} />
         <h1 ref={title} tabIndex={-1} className="mt-2 text-h1 wrap-break-word text-ink-heading focus:outline-none">
           {notFound || load.status !== "ready" ? (
-            // The reference moves to a line of its own whole when it fits there, and breaks only when it does not
-            // (WithIds' whole; ticket 60).
-            <Fill template={words.titleFallback} slots={{ stepRef: <span className="inline-block max-w-full font-mono font-medium wrap-anywhere">{stepRef}</span> }} />
+            // The reference moves to the next line whole when it fits there (MonoWords; ticket 59, the design review of
+            // round 1, follow-up 10).
+            <Fill template={words.titleFallback} slots={{ stepRef: <MonoWords text={stepRef} medium /> }} />
           ) : (
             heading
           )}
@@ -255,7 +256,7 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
         {notFound ? (
           <EmptyState
             className="mt-6"
-            title={<Fill template={words.notFoundTitle} slots={{ stepRef: <span className="inline-block max-w-full font-mono wrap-anywhere">{stepRef}</span>, pid: <ProjectId pid={pid} /> }} />}
+            title={<Fill template={words.notFoundTitle} slots={{ stepRef: <MonoWords text={stepRef} />, pid: <ProjectId pid={pid} /> }} />}
             body={words.notFoundBody}
             link={{ href: `/projects/${pid}/procurement`, text: <Fill template={words.notFoundLink} slots={{ pid }} /> }}
           />

@@ -41,8 +41,8 @@ import {
   type StepsResult,
 } from "../lib/steps";
 import { useStore } from "../lib/store";
-import { dataReadinessHref } from "../routes";
-import { familyStep, stepFamily, type StepEntry, type StepFamily } from "../steps";
+import { dataReadinessHref, fill } from "../routes";
+import { familyStep, stepFamilies, stepFamily, type StepEntry, type StepFamily } from "../steps";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CollapsedSection } from "./CollapsedSection";
@@ -54,6 +54,7 @@ import { Source } from "./Source";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 import { FootStrip } from "./FootStrip";
+import { SkeletonWords } from "./Skeleton";
 
 const words = copy.stepDates;
 const SLOW_MS = 400;
@@ -103,6 +104,22 @@ function dayCaption(point: StepPoint, previous: StepEntry | null): ReactNode {
 }
 
 // ── The summary line ─────────────────────────────────────────────────────
+
+// While the steps load, the summary holds the lines of its most common answer, the demo package's: goods, works and
+// non-consulting services' six steps, none dated for too few comparable packages. The words are the copy file's, held
+// as skeleton words, unseen and unheard, so at 390 and 320 px the summary keeps the four lines it will take and the
+// sections under it stay put (ticket 59; the design review of round 3, follow-up 1). A package whose summary is longer
+// or shorter moves the sections under it when the steps arrive.
+function SummaryHeld() {
+  const steps = stepFamilies.goods.steps;
+  const slots = { first: steps[0].phrase, last: steps[steps.length - 1].phrase };
+  return (
+    <span aria-hidden="true" data-steps-summary-held>
+      <SkeletonWords text={fill(words.summarySteps(formatCount(steps.length, { capital: true })), slots)} />{" "}
+      <SkeletonWords text={words.summaryPartialAll(formatCount(steps.length))} />
+    </span>
+  );
+}
 
 function Summary({ dates, packageKey, onOpen, from }: { dates: StepDates; packageKey: string; onOpen: Opener; from: ReactNode }) {
   const family = stepFamily(dates.family);
@@ -351,16 +368,22 @@ export function dateCheck(point: StepPoint, row: Row, family: StepFamily, onOpen
     previous: row.previous?.phrase ?? "",
     first: family.steps[0].phrase,
   };
+  // None ran later than the date's days, so the tooltip never says "0 of 25, about 0 in 10" (ticket 58).
+  const noneLater = (point.longer ?? 0) === 0 && n > 0;
   const tip =
     row.step.abstain_reason === "needs_earlier_step"
       ? words.tips.daysNeedsEarlier
       : !point.planned_date
         ? words.tips.dateUndated
         : point.days_relation === "after_previous"
-          ? words.tips.dateDuration
+          ? noneLater
+            ? words.tips.dateNoneLater
+            : words.tips.dateDuration
           : point.days_relation === "before_plan"
             ? words.tips.dateBefore
-            : words.tips.dateDelay;
+            : noneLater
+              ? words.tips.dateNoneLaterDelay
+              : words.tips.dateDelay;
   return {
     tooltip: <Fill template={tip} slots={slots} />,
     from: row.from,
@@ -486,7 +509,7 @@ function Comparables({ row, onOpen, side }: { row: Row; onOpen: Opener; side?: "
       options={{ compact: false }}
       className="-mx-3 px-3 text-small"
       check={{
-        tooltip: words.tips.count(entry.phrase),
+        tooltip: step.abstain_reason === "not_reached" ? words.tips.countChecked(entry.phrase) : words.tips.count(entry.phrase),
         from: row.from,
         act: words.tips.listAct,
         opens: "record",
@@ -544,7 +567,8 @@ type Body = {
 function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOpen, slow, caption, recordsDate, from }: Body) {
   const dating = !dates.abstain_all;
   const plan = kind === "step";
-  const widths = plan ? (dating ? ["32%", "24%", "26%", "18%"] : ["44%", "32%", "24%"]) : dating ? ["40%", "36%", "24%"] : ["70%", "30%"];
+  // A STEP row's planned date takes 30 percent, so "15 days after the plan's date" keeps one line (ticket 59).
+  const widths = plan ? (dating ? ["30%", "22%", "30%", "18%"] : ["44%", "32%", "24%"]) : dating ? ["40%", "36%", "24%"] : ["70%", "30%"];
   const head = "px-3 py-3 align-bottom text-left text-small font-bold text-ink-heading";
   const note = "block text-caption font-normal text-ink-muted";
   const firstVersion = rows.find((row) => row.step.plan_first_version_date)?.step.plan_first_version_date ?? null;
@@ -572,8 +596,17 @@ function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOp
           )}
           {dating && (
             <th scope="col" className={head} data-choice-header={choice}>
-              {choice === "cautious" ? words.columns.cautious : words.columns.middle}
-              <span className={note}>{choice === "cautious" ? words.columns.cautiousNote(String(dates.cautious_in10)) : words.columns.middleNote}</span>
+              {/* No step dated: the column says what dating takes, not how often packages ran later (ticket 58). */}
+              {dates.none_dated ? words.columns.planned : choice === "cautious" ? words.columns.cautious : words.columns.middle}
+              <span className={note}>
+                {dates.none_dated ? (
+                  <Fill template={words.columns.noneNote} slots={{ min: number(dates.min_comparables) }} />
+                ) : choice === "cautious" ? (
+                  words.columns.cautiousNote(String(dates.cautious_in10))
+                ) : (
+                  words.columns.middleNote
+                )}
+              </span>
             </th>
           )}
           <th scope="col" className={cx(head, "text-right")}>
@@ -657,7 +690,7 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
           {/* Every item's label column is two fifths of the list and never under 7rem, so the labels line up from step
               to step and never print over a value; a long value, such as "30 days after the issued bidding
               document", wraps inside its own column, right-aligned. */}
-          <dl className="mt-2 grid grid-cols-[minmax(7rem,2fr)_minmax(0,3fr)] gap-x-2 gap-y-2">
+          <dl className="mt-2 grid grid-cols-[minmax(7rem,2fr)_minmax(0,3fr)] items-baseline gap-x-2 gap-y-2">
             {kind === "step" && (
               <>
                 <dt className={label}>{words.columns.plan}</dt>
@@ -669,7 +702,7 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
             {dating && (
               <>
                 <dt className={cx(label, row.step.abstain_reason && "col-span-2")}>
-                  {choice === "cautious" ? words.columns.cautious : words.columns.middle}
+                  {dates.none_dated ? words.columns.planned : choice === "cautious" ? words.columns.cautious : words.columns.middle}
                 </dt>
                 {/* A sentence takes the item's full width under its label, so the labels keep their column. */}
                 <dd className={row.step.abstain_reason ? "col-span-2" : "flex min-w-0 justify-end text-right"}>
@@ -703,8 +736,10 @@ type CaptionPick =
 function pickCaption(dates: StepDates, family: StepFamily, rows: Row[], choice: Choice): CaptionPick {
   // A package from a sentence whose only date is your start date says no later step is dated.
   const none = (): CaptionPick => (dates.basis === "duration" && dates.start_date ? { kind: "noneAfter" } : { kind: "none" });
+  // No step dated: the caption names the steps, and the summary above says why (ticket 58), unless a package from a
+  // sentence has its start date, whose caption says no later step is dated.
   if (dates.abstain_all) return { kind: "abstain" };
-  if (dates.none_dated) return none();
+  if (dates.none_dated) return dates.basis === "duration" && dates.start_date ? none() : { kind: "abstain" };
   if (dates.needs_start_date) return { kind: "undated" };
   const signed = rows.find((row) => row.step.step_key === family.longest_through);
   const point = signed?.step[choice];
@@ -912,6 +947,9 @@ export function StepsView({
   // No step has a date or days in either choice: the choice and the start date would change nothing, so the section
   // offers neither and says why no step is dated.
   const controls = dates !== null && !dates.abstain_all && !dates.none_dated;
+  // A row's "had reached this step by" names the date the source line names (ticket 58): the page's as-of date, or the
+  // records' own.
+  const recordsDate = result ? (asOf ?? result.records_through ?? result.as_of) : "";
   const body =
     state.status === "loading" ? (
       <div className="mt-6 @container/steps">
@@ -927,6 +965,9 @@ export function StepsView({
             <Fill template={words.introNoneDated(family.family_name)} slots={{ min: number(dates.min_comparables) }} />
           ) : dates.basis === "delay" ? (
             words.introDelay(family.family_name)
+          ) : dates.needs_start_date && !dates.start_date ? (
+            // No step is dated before the start date, so the intro says how I date them, in the present (ticket 58).
+            words.introDurationUndated(family.family_name)
           ) : (
             words.introDuration(family.family_name)
           )}
@@ -954,7 +995,7 @@ export function StepsView({
             <StepTable
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={`${captionId}-wide`}
-              recordsDate={result.as_of}
+              recordsDate={recordsDate}
               from={from}
             />
           </div>
@@ -962,7 +1003,7 @@ export function StepsView({
             <StepList
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={captionId}
-              recordsDate={result.as_of}
+              recordsDate={recordsDate}
               from={from}
             />
           </div>
@@ -994,6 +1035,7 @@ export function StepsView({
       headingRef={headingRef}
       sectionKey="steps"
       foot={foot}
+      loading={<SummaryHeld />}
       live={
         <p className="sr-only" role="status" aria-live="polite">
           {announce}
@@ -1115,8 +1157,8 @@ export function StepsSection({
 
   // Hold each step's list for the drawer while the section shows it.
   useEffect(() => {
-    if (state.status === "ready") rememberStepLists(packageKey, state.result);
-  }, [state, packageKey]);
+    if (state.status === "ready") rememberStepLists(packageKey, state.result, asOf);
+  }, [state, packageKey, asOf]);
 
   useEffect(() => {
     onState?.(state);

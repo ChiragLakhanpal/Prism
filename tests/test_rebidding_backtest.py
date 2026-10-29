@@ -250,6 +250,21 @@ def test_with_20_comparables_and_a_champion_that_beat_its_baseline_the_model_giv
         assert model["track_record"]["n_test"] == KNOWN["test_packages"] and model["track_record"]["beat_baseline"]
 
 
+def test_a_package_planned_from_a_sentence_is_not_in_a_plan_so_the_model_never_scores_it(scored):
+    """Ticket 58 (ticket 28's review, follow-up 3): a package someone is planning has no STEP reference, and the nightly
+    job scores only packages listed in a Procurement Plan, so the model says it is not in a plan, never "not yet"."""
+    engine, day = scored
+    prior = next(reference for reference, _, review, _ in advertised_in_2021() if review == "Prior")
+    criteria = rebidding(engine, day, step_reference=prior)["criteria"]
+    params = {"method", "category", "market_approach", "review_type", "size_from_usd", "size_to_usd", "country",
+              "notice_from", "notice_to"}
+    planned = {key: value for key, value in criteria.items() if key in params and value is not None}
+
+    result = rebidding(engine, day, **planned)
+    assert result["m"] >= 20
+    assert (result["model"]["shown"], result["model"]["not_shown_reason"]) == (False, "not_in_plan")
+
+
 def test_below_20_comparables_only_the_counts_appear(scored):
     engine, day = scored
     reference = advertised_in_2021()[-1][0]

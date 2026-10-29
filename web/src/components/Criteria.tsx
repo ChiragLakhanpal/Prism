@@ -17,7 +17,7 @@ import type { FieldValue, FormField, PackageForm, PlannedPackage } from "../lib/
 import { Alert } from "./Alert";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
-import { Skeleton } from "./Skeleton";
+import { Skeleton, SkeletonLine } from "./Skeleton";
 import { Source } from "./Source";
 
 const words = copy.packageWorkspace;
@@ -163,7 +163,11 @@ export function ChipSkeletons({ form }: { form: PackageForm | null }) {
     <div aria-hidden="true" className="flex flex-col gap-3" data-chip-skeletons>
       {(groups.length ? groups : [{ key: "what", label: "" }, { key: "where", label: "" }, { key: "how", label: "" }]).map((group) => (
         <div key={group.key} className="grid gap-x-3 gap-y-2 @md/page:grid-cols-[64px_1fr]">
-          <p className="flex text-label text-ink-muted @md/page:min-h-8 @md/page:items-center @md/page:self-start">{group.label}</p>
+          {/* Before the form arrives its labels are not known (config/package_form.toml holds them), so a bar holds
+              each label's place and the pills never sit indented under nothing (ticket 59). */}
+          <p className="flex text-label text-ink-muted @md/page:min-h-8 @md/page:items-center @md/page:self-start">
+            {group.label || <SkeletonLine width="w-12" />}
+          </p>
           <div className="flex flex-wrap gap-2">
             {(SKELETON_WIDTHS[group.key] ?? ["w-24", "w-32"]).map((width, index) => (
               <Skeleton key={index} className={cx("h-8", width)} radius="rounded-pill" />
@@ -237,7 +241,8 @@ export function ComputedNote({ pkg, form, inStrip = false }: { pkg: PlannedPacka
       ))}
       {review || market ? (
         <p data-numbers>
-          {n.intro}{" "}
+          {/* Says only what I computed: both, or the one the thresholds give (ticket 58). */}
+          {review && market ? n.intro : review ? n.introReview : n.introMarket}{" "}
           {review && (
             <>
               <Fill
@@ -264,13 +269,21 @@ export function ComputedNote({ pkg, form, inStrip = false }: { pkg: PlannedPacka
         <p>{n.noRule}</p>
       )}
       {review?.risk_rating && <p>{n.assumed(review.risk_rating)}</p>}
-      {yours.map((value) => (
-        <p key={value.key} data-set-by-you>
-          {value.value === value.computed
-            ? n.youSetSame(lower(field(value.key)?.label ?? value.key), text(value.key, value.value))
-            : n.youSet(lower(field(value.key)?.label ?? value.key), text(value.key, value.value), text(value.key, value.computed))}
-        </p>
-      ))}
+      {yours.map((value) => {
+        const name = lower(field(value.key)?.label ?? value.key);
+        // A value an old method name set, such as ICB's market approach, names what you chose (ticket 58).
+        return (
+          <p key={value.key} data-set-by-you>
+            {value.via
+              ? value.value === value.computed
+                ? n.youChoseSame(value.via, name, text(value.key, value.value))
+                : n.youChose(value.via, name, text(value.key, value.value), text(value.key, value.computed))
+              : value.value === value.computed
+                ? n.youSetSame(name, text(value.key, value.value))
+                : n.youSet(name, text(value.key, value.value), text(value.key, value.computed))}
+          </p>
+        );
+      })}
       {sources.length > 0 && (
         <Source className="mt-1">
           {sources.map((rule, index) => (

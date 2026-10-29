@@ -247,12 +247,16 @@ RECORDED_STREAMS = {
     "p130164-judge-no-response": "ask-p130164-judge-no-response.sse",
     "p130164-summaries-judge-no-response": "ask-p130164-judge-no-response-none-kept.sse",
     "refuses-part-supplier-scores": "ask-refuses-part-supplier-scores.sse",
-    # Ticket 60: the outage states, check 2's removal of a summary that cites nothing, and a partial refusal whose
-    # other sentences all lost check 6's service.
+    # Ticket 58: an answer whose one kept sentence cites nothing and says only what check_plan could not answer, and
+    # the same with a second sentence the judge removed for saying more.
+    "p156634-plan-not-yet-public": "ask-p156634-plan-not-yet-public.sse",
+    "p156634-uncited-blame": "ask-p156634-uncited-blame.sse",
+    # And check 2's removal of a sentence that cites nothing when no tool held back, which its step counts.
+    "p130164-uncited-summary": "ask-p130164-uncited-summary.sse",
+    # Ticket 60: the outage states, and a partial refusal whose other sentences all lost check 6's service.
     "p130164-summaries-judge-no-response-number": "ask-p130164-judge-no-response-some-failed.sse",
     "ke-nwwda-541055-disagreements-unavailable": "ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse",
     "ke-nwwda-541055-disagreements-unavailable-number": "ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse",
-    "p130164-uncited-summary": "ask-p130164-uncited-summary.sse",
     "refuses-part-supplier-scores-disagreements-unavailable": "ask-refuses-part-supplier-scores-disagreements-unavailable.sse",
     # Ticket 42: an answer asked for in French.
     "p127203-fr-procurement-delays": "ask-p127203-fr.sse",

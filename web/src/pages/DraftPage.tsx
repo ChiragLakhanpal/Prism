@@ -30,7 +30,7 @@ import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
 import { ListedRefs } from "../components/MonoWords";
 import { Num, type NumCheck } from "../components/Num";
-import { checkFrom, FromLine } from "../components/NumFrom";
+import { checkFrom, FromLine, wholeDate } from "../components/NumFrom";
 import { PaperSheet } from "../components/PaperSheet";
 import { PpsdRows } from "../components/PpsdRows";
 import { PpsdSources } from "../components/PpsdSources";
@@ -55,6 +55,7 @@ import { evidenceIn, openEvidence, openedAt, origin, remember } from "../lib/evi
 import { download } from "../lib/export";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { address } from "../lib/router";
+import { shortProjectName } from "../lib/sources";
 import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { setPageTitle } from "../lib/title";
@@ -64,7 +65,8 @@ type KindWords = (typeof copy.draft.kinds)[keyof typeof copy.draft.kinds];
 // Before a draft loads, its kind is not known yet: the skeleton draws the one kind there is today.
 const SKELETON_KIND: KindWords = copy.draft.kinds.review_notes;
 const whole = (value: number) => formatNumber(value, { compact: false });
-const day = (iso: string) => formatDate(iso.slice(0, 10));
+// A date on a draft never breaks inside itself (ticket 59; the design review of round 1, follow-up 1).
+const day = (iso: string) => wholeDate(formatDate(iso.slice(0, 10)));
 const short = (iso: string) => formatDate(iso.slice(0, 10), { style: "table" });
 
 type Loaded =
@@ -425,21 +427,23 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
   // and the cards each have one; a marker in the Sources list is the one that was opened.
   const openId = evidenceIn(here.search);
   const draftOrigin = from && from.serial === null && from.id === openId ? from : null;
-  // It waits a second frame, so the scroll padding has followed the bar, which may wrap taller.
-  useEffect(() => {
+  // The marker goes back to its height before the browser paints, so no frame shows the notes jumped (ticket 59; the 35
+  // design review, round 4, P1). Keeping it clear of the bar waits a second frame, so the scroll padding has followed the
+  // bar, which may wrap taller.
+  useLayoutEffect(() => {
     if (!openId || !draftOrigin) return;
     const { sentence, marker, top } = draftOrigin;
+    const shownMarker = () => {
+      const candidates =
+        sentence === null
+          ? [marker]
+          : [...document.querySelectorAll<HTMLElement>(`[data-draft-notes] [data-citation-id="${CSS.escape(openId)}"][data-sentence="${sentence}"]`)];
+      return candidates.find((element) => element?.isConnected && element.getClientRects().length > 0);
+    };
+    const now = shownMarker();
+    if (now && top !== null) window.scrollBy({ top: now.getBoundingClientRect().top - top, behavior: "instant" });
     let frame = requestAnimationFrame(() => {
-      frame = requestAnimationFrame(() => {
-        const candidates =
-          sentence === null
-            ? [marker]
-            : [...document.querySelectorAll<HTMLElement>(`[data-draft-notes] [data-citation-id="${CSS.escape(openId)}"][data-sentence="${sentence}"]`)];
-        const shown = candidates.find((element) => element?.isConnected && element.getClientRects().length > 0);
-        if (!shown) return;
-        if (top !== null) window.scrollBy({ top: shown.getBoundingClientRect().top - top, behavior: "instant" });
-        shown.scrollIntoView({ block: "nearest" });
-      });
+      frame = requestAnimationFrame(() => shownMarker()?.scrollIntoView({ block: "nearest" }));
     });
     return () => cancelAnimationFrame(frame);
   }, [openId, draftOrigin]);
@@ -674,7 +678,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         {ppsd ? (
           <PackageCrumbs title={subject.package_title ?? ""} href={packageHref(subject)} last={kind.crumb("")} />
         ) : (
-          <DraftCrumbs pid={subject.project_id} name={subject.project_name} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
+          // The project's name as its page and Check a plan's crumb give it, without a final "Project": the same rule as
+          // the server's display_name (src/strata/server/projects.py), which a draft's subject does not carry (ticket 58).
+          <DraftCrumbs pid={subject.project_id} name={shortProjectName(subject.project_name)} last={brief ? kind.title : kind.crumb(short(subject.plan_date))} />
         )}
         <DraftHeader
           title={kind.title}
@@ -733,6 +739,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             dates={(d.checks.shown ?? d.checks).dates}
             quotes={(d.checks.shown ?? d.checks).quotes}
             judged={d.checks.shown ? { judged: d.checks.shown.judged, proven: d.checks.shown.proven } : undefined}
+            sources={d.checks.shown?.sources}
             notChecked={notCheckedFor(d.checks, d.layout.not_checked)}
             how={d.checks.judge && <HowChecked checks={d.checks} id={{ draft: d.draft_id, run: d.writer?.run_id ?? null }} />}
             removed={showRemoved && <RemovedBox removed={removed} />}
@@ -781,7 +788,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
         ) : (
           <>
             <p className="mt-6 text-caption text-ink-muted" data-count-line data-numbers>
-              {kind.countLine(signal, whole(signal))}
+              {kind.countLine(signal, formatCount(signal))}
             </p>
             <div className="mt-2">
               <DraftNotes
@@ -879,23 +886,45 @@ function DraftSkeleton() {
         <nav aria-hidden="true" className="flex h-7 items-center text-caption">
           <Skeleton className="h-[1em] w-16 md:w-[200px] md:max-w-full" />
         </nav>
-        {/* The h1, the subtitle and, below a frame of 75rem, the stepper on a line of its own under it. */}
+        {/* The h1, the subtitle and, below a frame of 75rem, the state on a line of its own under it. The lines each part
+            takes by the document column's width were measured on the fixture's review notes at 320 to 1440 px (ticket
+            59): the subtitle takes two lines below 40rem and three below 20rem; the state a second row below 20rem. */}
         <div className="border-b border-line pt-2 pb-4">
           <h1 tabIndex={-1} className="text-h1 focus:outline-none">
             <span className="sr-only">{copy.pages.draft.title}</span>
             <SkeletonLine width="w-[200px] max-w-full" />
           </h1>
-          {lines(["w-full", "w-3/5"], ["w-[280px] max-w-full"], "mt-2 text-body")}
-          <SkeletonLine className="mt-3 text-small @xl/frame:hidden" width="w-[300px] max-w-full" />
+          <span className="mt-2 flex flex-col text-body">
+            <SkeletonLine width="w-full max-w-[280px]" />
+            <SkeletonLine width="w-3/5" className="@[40rem]/doc:hidden" />
+            <SkeletonLine width="w-2/5" className="@[20rem]/doc:hidden" />
+          </span>
+          <span className="mt-2 flex flex-col text-small @xl/frame:hidden">
+            <SkeletonLine width="w-[300px] max-w-full" />
+            <span className="block h-6 @[20rem]/doc:hidden" />
+          </span>
         </div>
+        {/* The lede: the finding takes two lines, three below 32rem and four below 20rem; the sentence under it two,
+            three below 37rem, four below 25rem and five below 20rem. */}
         <div className="mt-6 max-w-[72ch]">
-          {lines(["w-full", "w-full", "w-1/2"], ["w-full", "w-2/5"], "max-w-[22.5em] text-finding")}
-          {lines(["w-full", "w-full", "w-full", "w-3/5"], ["w-full", "w-4/5"], "mt-2 text-body")}
+          <span className="flex max-w-[22.5em] flex-col text-finding">
+            <SkeletonLine width="w-full" />
+            <SkeletonLine width="w-2/5" />
+            <SkeletonLine width="w-1/2" className="@[32rem]/doc:hidden" />
+            <SkeletonLine width="w-1/3" className="@[20rem]/doc:hidden" />
+          </span>
+          <span className="mt-2 flex flex-col text-body">
+            <SkeletonLine width="w-full" />
+            <SkeletonLine width="w-4/5" />
+            <SkeletonLine width="w-3/5" className="@[37rem]/doc:hidden" />
+            <SkeletonLine width="w-1/2" className="@[25rem]/doc:hidden" />
+            <SkeletonLine width="w-2/5" className="@[20rem]/doc:hidden" />
+          </span>
         </div>
         <div className="mt-4 max-w-prose">
-          {/* The check line's block: five lines of small text below 48rem and three from it, "How was that checked?"
-              and the one-line removed box after its rule (ticket 105). */}
-          <Skeleton className="h-49 w-full md:h-39" radius="rounded-md" />
+          {/* The check line's block: its lines of small text, "How was that checked?" and the one-line removed box after
+              its rule (ticket 105), a line taller below 31rem, 27rem and 20rem. */}
+          <Skeleton className="h-54 w-full @[20rem]/doc:h-49 @[27rem]/doc:h-44 @[31rem]/doc:h-39" radius="rounded-md" />
         </div>
         <div className="mt-4 flex h-11 items-center">
           <Skeleton className="h-4 w-56" />
@@ -929,9 +958,13 @@ function DraftSkeleton() {
           </table>
         </div>
         {/* Each card's parts where they will be: the badge, the reference, two lines of description, the
-            rule, then the note. */}
+            rule, then the note, each card as tall as the fixture's notes are at that width (ticket 59). */}
         <ul aria-hidden="true" className="mt-2 flex flex-col gap-3 @min-[35rem]/doc:hidden">
-          {["h-72", "h-72", "h-77"].map((height, index) => (
+          {[
+            "h-72 @[20rem]/doc:h-62 @[25rem]/doc:h-57",
+            "h-77 @[20rem]/doc:h-72 @[25rem]/doc:h-67 @[32rem]/doc:h-57",
+            "h-82 @[20rem]/doc:h-77 @[25rem]/doc:h-67 @[32rem]/doc:h-57",
+          ].map((height, index) => (
             <li key={index} className={cx(height, "rounded-md border border-line bg-surface p-4")}>
               <Skeleton className="h-7 w-28" radius="rounded-pill" />
               <SkeletonLine className="mt-1 text-small" width="w-48" />

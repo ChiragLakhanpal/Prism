@@ -414,6 +414,9 @@ export type PackageFacts = {
   description: string | null;
   project_id: string;
   project_name: string | null;
+  // The project's name as its page header gives it, by the server's rule: GET /api/packages/{stepRef} adds it,
+  // and find_comparables' package field does not (the 58 critique, "one project name").
+  display_name?: string | null;
   country_code: string | null;
   country_name: string | null;
   section: string | null;

@@ -69,6 +69,14 @@ test("the copy lint checks the words the source registry puts on the Data readin
   expect(passed.code).toBe(0);
 });
 
+// Ticket 58: the thresholds file's source line reaches the computed note on the package page, so its words are linted.
+test("the copy lint checks the thresholds file's source line, which the computed note shows", () => {
+  const failed = lint({ registry: `[review]\nsource = "Starting values the Bank cleared"\n` });
+  expect(failed.code, failed.output).toBe(1);
+  expect(failed.output).toMatch(/sources\.toml:2: "Starting values the Bank cleared"/);
+  expect(lint({ registry: `[review]\nsource = "Starting values I have not yet checked against the World Bank's prior review thresholds"\n` }).code).toBe(0);
+});
+
 // Ticket 22: a link between a contract and a paragraph is "appeared together", never a cause, so the blocks that
 // write about links refuse causal words, "because" included, and only those blocks.
 test("the copy lint refuses causal wording on the contract trail, the Connections tab and Why this source, and only there", () => {
@@ -180,6 +188,9 @@ test("every measure a number on /data can open that fills no column has its own 
   const words = copy.dataReadiness.measureWindows;
   const missing = needed.filter((measure) => !words[measure]?.title || !words[measure]?.definition);
   expect(missing, "add each to copy.dataReadiness.measureWindows").toEqual([]);
+  // And no window's words wait for a measure no number opens, such as slice_projects once Coverage stopped showing it
+  // (ticket 58; CLAUDE.md rule 4).
+  expect(Object.keys(words).filter((measure) => !needed.includes(measure)), "delete words no number opens").toEqual([]);
   expect([...placed].filter(([, placement]) => !placement.table).map(([key]) => key), "every window names its table").toEqual([]);
   // Review r6 P3: the words are keyed by measure name alone, and a column's measure names repeat
   // across sources, so words for one would retitle every cell of that column that counts it.

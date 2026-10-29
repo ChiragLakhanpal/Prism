@@ -12,6 +12,7 @@ import { cx } from "../lib/cx";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { LoadingLabel, SkeletonLine, SkeletonText } from "./Skeleton";
+import { withAbbreviations } from "./Abbreviations";
 import { DocumentSource } from "./Source";
 import { Lang } from "./Lang";
 import { TextLink } from "./TextLink";
@@ -42,21 +43,22 @@ export function drawable(text: string): string {
 }
 
 // The paragraph with the given character ranges highlighted. In the evidence drawer the highlight
-// settles in once, after the drawer's content (settle).
+// settles in once, after the drawer's content (settle). A GLOSSARY.md abbreviation in it opens its Term (ticket 58).
 export function highlighted(source: string, ranges: [number, number][] = [], settle = false): ReactNode[] {
   const text = drawable(source);
   const parts: ReactNode[] = [];
   let at = 0;
+  const plain = (from: number, to: number) => withAbbreviations(text.slice(from, to), from);
   for (const [start, end] of [...ranges].sort((a, b) => a[0] - b[0])) {
-    if (start > at) parts.push(text.slice(at, start));
+    if (start > at) parts.push(...plain(at, start));
     parts.push(
       <Highlight key={start} settle={settle}>
-        {text.slice(Math.max(start, at), end)}
+        {withAbbreviations(text.slice(Math.max(start, at), end), Math.max(start, at))}
       </Highlight>,
     );
     at = Math.max(at, end);
   }
-  if (at < text.length) parts.push(text.slice(at));
+  if (at < text.length) parts.push(...plain(at, text.length));
   return parts;
 }
 

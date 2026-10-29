@@ -868,6 +868,10 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
 
   // ── Section 1 ──
   const result = section.status === "ready" ? section.result : null;
+  // The last result the section drew: while a rerun shows the skeleton, "Advertised again" keeps counting it and shows
+  // its own skeleton in place, instead of leaving the card (ticket 59; the 28 review, follow-up 2).
+  const lastReady = useRef<ComparablesResult | null>(null);
+  if (section.status === "ready" && !skeleton) lastReady.current = section.result;
   const rangeable = result !== null && result.abstention === null && result.rows.length >= result.thresholds.min_comparables;
   const prompting = rangeable && plan === null && !showWithout;
   const missing = pkg.missing.map((key) => field(key)).filter(Boolean);
@@ -998,7 +1002,7 @@ function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPa
           after={(comparing, say) => (
             <Rebidding
               path={pkg.comparables_query && missing.length === 0 ? plannedRebiddingPath(pkg.comparables_query) : null}
-              section={section.status === "ready" && !skeleton ? section.result : null}
+              section={section.status === "ready" && !skeleton ? section.result : skeleton ? lastReady.current : null}
               sectionFailed={section.status === "error" && !skeleton}
               comparing={comparing}
               onStatus={say}

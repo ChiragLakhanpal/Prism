@@ -30,7 +30,12 @@ export function Checkbox({
     // With a label, the box keeps its 44 px target but sits flush with the label's top left, and the label starts
     // 32 px in (the 20 px box and 12 px, the nearest step on DESIGN.md's space scale to the 30 brief's 36), so the
     // column under it stays clean (the 30 brief, section 3.4).
-    <label data-checkbox={checked ? "checked" : "unchecked"} className={cx("inline-flex min-h-11 min-w-11 cursor-pointer items-start", readOnly && "cursor-default", className)}>
+    // With a label it is a block as tall as the label's lines, so a one-line name leaves no gap under it; the input's
+    // ::after keeps the 44 px target (ticket 59).
+    <label
+      data-checkbox={checked ? "checked" : "unchecked"}
+      className={cx(children !== undefined ? "flex" : "inline-flex min-h-11 min-w-11", "cursor-pointer items-start", readOnly && "cursor-default", className)}
+    >
       <span className={cx("relative inline-flex size-11 shrink-0 items-center justify-center", children !== undefined && "-my-3 -ml-3")}>
         <input
           type="checkbox"

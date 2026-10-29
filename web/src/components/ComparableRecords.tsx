@@ -187,7 +187,8 @@ export function ComparableRecords({ evidence }: { evidence: EvidenceEvent }) {
         )}
       </p>
       <div>
-        <h3 className="text-small font-bold text-ink-heading">{words.whyHeading}</h3>
+        {/* A canceled package was left out of the comparables, so it says how it matches, not why I compared it (ticket 58). */}
+        <h3 className="text-small font-bold text-ink-heading">{row.canceled ? words.whyHeadingCanceled : words.whyHeading}</h3>
         <dl className="mt-2 grid grid-cols-[minmax(8rem,auto)_1fr] gap-x-4 gap-y-1 text-small">
           {why.map(([label, value]) => (
             <div key={label} className="contents">

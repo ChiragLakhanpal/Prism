@@ -1498,6 +1498,9 @@ const PACKAGE_SHOTS: Shot[] = [
   packageShot("package", comparables(COMPARABLES)),
   packageShot("package--loading", null, {}, null),
   packageShot("package--section-loading", null),
+  // Ticket 59, round 3: the time estimate held alone. Section 1 draws no Compare with row, and the held-back estimate's
+  // sentences keep their places, unseen, under the chart and at the end of the summary.
+  packageShot("package--estimate-loading", comparables(COMPARABLES), { pending: [`/api${PACKAGE}/estimate`] }),
   packageShot("package--no-plan-dates", { body: noPlanDates }),
   packageShot("package--quantile-dots", comparables("comparables-ke-nwwda-541055-any-category.json")),
   packageShot("package--abstention", comparables("comparables-ke-nwwda-541055-prior.json")),
@@ -1768,6 +1771,7 @@ const PAST_RANGE = CASE_QUESTIONS.pastRange;
 const SUMMARIES = CASE_QUESTIONS.summaries;
 const ISR_7 = CASE_QUESTIONS.isr7;
 const BOTH_SIDES = CASE_QUESTIONS.bothSides;
+const NOT_YET_PUBLIC = CASE_QUESTIONS.planNotYetPublic;
 const PARTIAL = REFUSED.partial;
 // Ticket 23: a project's Timeline tab, as the 23 brief's section 13 lists it, against the answers the server wrote on
 // the fixture (tests/record_timeline_api.py): loading, populated, the drawer on the disagreement and on a mark and a
@@ -1856,14 +1860,18 @@ const CHECK_SHOTS: Shot[] = [
   answerShot("checks--removed-check-5", "ask-p130164-advice-without-lesson.sse", { act: askInBox() }),
   answerShot("checks--removed-check-6", "ask-p130164-disagreements-unavailable.sse", { act: askInBox() }),
   answerShot("checks--removed-several", "ask-p130164-several-removed.sse", { act: askInBox() }),
+  // Ticket 58: an answer whose kept sentence cites nothing, with its steps open; the same with a sentence check 4
+  // removed for saying more than a tool reported; and check 2's removal of a sentence that cites nothing.
+  answerShot("checks--none-cited", "ask-p156634-plan-not-yet-public.sse", { act: then(askInBox(NOT_YET_PUBLIC), click(steps)) }),
+  answerShot("checks--removed-beyond-abstention", "ask-p156634-uncited-blame.sse", { act: then(askInBox(NOT_YET_PUBLIC), click(steps)) }),
+  answerShot("checks--removed-no-source", "ask-p130164-uncited-summary.sse", { act: then(askInBox(), click(steps)) }),
   answerShot("checks--judge-silent", "ask-p130164-judge-no-response.sse", { act: askInBox() }),
   answerShot("checks--judge-silent-nothing-kept", "ask-p130164-judge-no-response-none-kept.sse", { act: askInBox(SUMMARIES) }),
-  // Ticket 60: the outage states, check 2's removal and a partial refusal whose other sentences lost check 6's service,
-  // each from its scripted case's recorded stream, at 1440, 1024 and 390 px.
+  // Ticket 60: the outage states and a partial refusal whose other sentences lost check 6's service, each from its
+  // scripted case's recorded stream, at 1440, 1024 and 390 px (check 2's removal is checks--removed-no-source above).
   answerShot("checks--judge-silent-some-failed", "ask-p130164-judge-no-response-some-failed.sse", { act: askInBox(SUMMARIES) }),
   answerShot("checks--removed-check-6-some-kept", "ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse", { act: askInBox(PAST_RANGE) }, "/"),
   answerShot("checks--removed-check-6-mixed", "ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse", { act: askInBox(PAST_RANGE) }, "/"),
-  answerShot("checks--removed-check-2", "ask-p130164-uncited-summary.sse", { act: askInBox() }),
   answerShot("checks--partial-refusal-unchecked", "ask-refuses-part-supplier-scores-disagreements-unavailable.sse", { act: askInBox(PARTIAL) }),
   answerShot("checks--focus-try-again", "ask-p130164-judge-no-response.sse", { full: false, act: then(askInBox(), focus("[data-removed-box] [data-button]")) }),
   answerShot("checks--disagreement-warning", "ask-p130164-isr-7-rating.sse", { act: askInBox(ISR_7) }),
@@ -2044,6 +2052,9 @@ export const SHOTS: Shot[] = [
   { name: "navigation--rail", path: "/gallery/navigation?sidebar=rail", widths: [1440] },
   { name: "navigation--rail-tip", path: "/gallery/navigation?sidebar=rail", widths: [1440], act: hover("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--sub-items", path: "/gallery/navigation?sub=1", widths: [1440] },
+  // Ticket 59: the sidebar before GET /api/me answers, its bars where Home, the sections and Data will be.
+  { name: "navigation--sidebar-loading", path: "/gallery/navigation?pill=loading&sidebar=open", widths: [1440] },
+  { name: "navigation--menu-loading", path: "/gallery/navigation?pill=loading&menu=open", widths: [390] },
   { name: "navigation--public", path: "/gallery/navigation?pill=public", widths: WIDE },
   { name: "navigation--focus-wordmark", path: "/gallery/navigation", act: focus("[data-nav-bar] a[href='/']") },
   { name: "navigation--focus-skip-link", path: "/gallery/navigation", act: (page) => page.keyboard.press("Tab") },
@@ -2057,6 +2068,8 @@ export const SHOTS: Shot[] = [
   { name: "navigation--hover-menu", path: "/gallery/navigation", widths: NARROW, act: hover("[data-menu-button]") },
   { name: "navigation--focus-menu", path: "/gallery/navigation", widths: NARROW, act: focus("[data-menu-button]") },
   { name: "navigation--menu-open", path: "/gallery/navigation?menu=open", widths: NARROW },
+  // Ticket 59: the sheet's view button pressed, its popover with the view lines and language choice above it.
+  { name: "navigation--menu-view-open", path: "/gallery/navigation?menu=open&menuview=open", widths: [390] },
   { name: "navigation--menu-row-focus", path: "/gallery/navigation?menu=open", widths: NARROW, act: focus("[data-sidebar] [data-nav-item=lessons]") },
   { name: "navigation--menu-row-hover", path: "/gallery/navigation?menu=open", widths: NARROW, act: hover("[data-sidebar] [data-nav-item=drafts]") },
   // Ticket 93: the box in the bar, the stamp at the sidebar's foot (the Menu sheet's below 1024 px), and the fixture's

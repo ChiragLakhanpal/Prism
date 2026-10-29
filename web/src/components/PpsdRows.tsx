@@ -20,7 +20,7 @@ import { cx } from "../lib/cx";
 import type { Draft, DraftNote, Footnote, PpsdColumn, PpsdRow } from "../lib/drafts";
 import { valueOf } from "../lib/drafts";
 import { evidenceHref, openEvidence } from "../lib/evidence";
-import { formatAmountText, formatNumber } from "../lib/format";
+import { formatAmountText, formatCount, formatNumber } from "../lib/format";
 import { DRAWER_ID, sentenceText } from "./AnswerPanel";
 import { CitationMarker } from "./CitationMarker";
 import { FillChip } from "./FillChip";
@@ -60,7 +60,7 @@ function dollars(amount: string | null): string {
 }
 
 // The marker's name lists every source it carries (the 36 brief, 4.6): "Source 2: ICR P130164 paragraph 54, page
-// 23, and ICR Review paragraph 10.b".
+// 23, and ICR Review section 10.b".
 export function footnoteSources(footnote: Footnote, row: PpsdRow): string {
   const named = footnote.evidence_ids.map((id) => {
     if (id === row.counts_evidence_id) return words.markerCount;
@@ -245,7 +245,7 @@ export function PpsdRows({ draft, editable, opened, open, ledeId, onSave, onForm
         {long ? words.progressLong : words.progressShort}
       </p>
       <p className="mt-2 text-caption text-ink-muted" data-count-line data-numbers>
-        {kind.countLine(counts.total, whole(counts.total))}
+        {kind.countLine(counts.total, formatCount(counts.total))}
       </p>
       <div className="mt-2">
         {table ? (

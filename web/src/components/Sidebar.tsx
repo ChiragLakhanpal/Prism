@@ -8,8 +8,9 @@
 // stamp hides, and the Data item's tooltip and description carry its words.
 //
 // Below 1024 px the same element is the Menu sheet: a modal dialog named "Menu" that slides in from the left, with
-// the page and the bar inert behind it (Frame.tsx holds its state), the stamp under Data and, below 768 px, the view
-// switch's lines at its foot. It closes on Escape, on "Close the menu" and on
+// the page and the bar inert behind it (Frame.tsx holds its state), the stamp under Data and, below 768 px, the bar's
+// view switch as one button pinned to its foot, which opens the view lines and the language choice in a popover above
+// it when it is pressed (ticket 59, from ticket 93's critique). It closes on Escape, on "Close the menu" and on
 // the scrim, and focus goes back to the Menu button. When the window narrows past 1024 px, focus on an item moves
 // to the Menu button.
 //
@@ -18,7 +19,8 @@
 // all done it says so and leads to Home's strip, where Remove stays. As a rail it shows its icon and the short count,
 // and its tooltip says the rest. App.tsx decides when it shows (lib/startHere.ts).
 import { useEffect, useId, useLayoutEffect, useRef, useState, type FocusEvent } from "react";
-import { ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
+import * as RadixPopover from "@radix-ui/react-popover";
+import { ChevronUp, ListChecks, PanelLeftClose, PanelLeftOpen, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
@@ -29,9 +31,10 @@ import { Fill } from "./Fill";
 import { fillText } from "./LessonParts";
 import { useMenuSheet, WIDE } from "./Frame";
 import { LanguageChoice } from "./LanguageChoice";
+import { POPOVER } from "./Popover";
 import { FOOT_SECTION, HOME_ITEM, SECTIONS, type Section, type SubItem, type SubItems } from "./sections";
 import { Skeleton } from "./Skeleton";
-import { ViewPanel, withModeOf, type NavMode, type Viewer } from "./TopNav";
+import { pillLabel, ViewPanel, withModeOf, type NavMode, type Viewer } from "./TopNav";
 
 export type Rest = "open" | "rail";
 
@@ -76,7 +79,6 @@ function useRest(forced?: Rest): [Rest, () => void] {
 }
 
 const pathOf = (href: string) => href.split("?")[0];
-
 // A tooltip's label, and a second line under it: the stamp's words on the Data item.
 type Tip = { text: string; line: string | null; top: number; instant: boolean };
 
@@ -106,6 +108,7 @@ export function Sidebar({
   freshness,
   rest: forced,
   startHere,
+  viewOpen = false,
 }: {
   // The view the server applied: its sections, the pages it hides, and the address's mode, which every link keeps.
   mode: NavMode;
@@ -125,8 +128,26 @@ export function Sidebar({
   rest?: Rest;
   // Start here's examples and the ones followed (ticket 114), while the item shows; App.tsx decides when.
   startHere?: StartHereList | null;
+  // For the gallery: the Menu sheet's view popover starts open.
+  viewOpen?: boolean;
 }) {
   const sheet = useMenuSheet();
+  // Below 768 px the sheet's view button opens the view switch's popover above it; it closes when the sheet closes.
+  const [viewShown, setViewShown] = useState(viewOpen);
+  const viewContent = useRef<HTMLDivElement>(null);
+  // The Menu sheet's head, its title and "Close the menu", which the view popover keeps clear. Its height is measured
+  // before the popover is painted, so a change to the head cannot let the popover cover it (the review of round 3, F3).
+  const sheetHead = useRef<HTMLDivElement>(null);
+  const [headHeight, setHeadHeight] = useState(0);
+  useLayoutEffect(() => {
+    if (viewShown && sheet.open && sheetHead.current) setHeadHeight(sheetHead.current.getBoundingClientRect().height);
+  }, [viewShown, sheet.open]);
+  const whoId = useId();
+  const sheetOpen = useRef(sheet.open);
+  sheetOpen.current = sheet.open;
+  useEffect(() => {
+    if (!sheet.open) setViewShown(viewOpen);
+  }, [sheet.open, viewOpen]);
   const wide = useMedia(WIDE);
   const [rest, toggle] = useRest(forced);
   const titleId = useId();
@@ -326,13 +347,6 @@ export function Sidebar({
   };
 
   const foot = sections?.find((section) => section.key === FOOT_SECTION);
-  // The data stamp under Data, on its label's left edge (8 + 12 + 16 + 12 px in); the rail hides it. Built once, and
-  // drawn while the sections load too, so a preview whose viewer could not be read still shows it (ticket 60).
-  const stamp = freshness && (
-    <div data-sidebar-stamp className="mb-2 ml-10 rail:hidden">
-      <FreshnessStamp freshness={freshness} href={withModeOf("/data", mode.search)} />
-    </div>
-  );
   const open = rest === "open";
   const Toggle = open ? PanelLeftClose : PanelLeftOpen;
   const toggleLabel = open ? copy.nav.collapse : copy.nav.expand;
@@ -372,7 +386,7 @@ export function Sidebar({
           "lg:sticky lg:top-(--frame-top) lg:z-30 lg:h-[calc(100dvh-var(--frame-top))] lg:w-full lg:overflow-visible lg:bg-page lg:shadow-none",
         )}
       >
-        <div className="flex items-center justify-between border-b border-line py-2 pr-2 pl-4 lg:hidden">
+        <div ref={sheetHead} className="flex items-center justify-between border-b border-line py-2 pr-2 pl-4 lg:hidden">
           <p id={titleId} className="text-label text-ink-muted">
             {copy.nav.menu}
           </p>
@@ -388,17 +402,22 @@ export function Sidebar({
         <nav
           aria-label={copy.nav.label}
           onScroll={hideTip}
-          className="flex flex-none flex-col px-2 py-3 lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
+          // On the rail the items sit 12 px from its edges, as the prototype draws them (ticket 59).
+          // In the Menu sheet it grows, so Data, the stamp and the view button under it sit at the sheet's bottom (ticket 59).
+          className="flex flex-none flex-col px-2 py-3 max-lg:grow rail:px-3 lg:min-h-0 lg:flex-1 lg:overflow-x-hidden lg:overflow-y-auto lg:overscroll-contain"
         >
           {sections === null ? (
-            // Until GET /api/me says which sections the view has: static bars at the items' height.
+            // Until GET /api/me says which sections the view has: static bars at the items' height and in their places,
+            // Home, then 16 px and the four sections a view has at most, and Data at the foot (ticket 59).
             <>
-              <div className="flex flex-col gap-0.5">
-                {[0, 1, 2, 3, 4, 5].map((index) => (
+              <div className="flex flex-col gap-0.5" data-sidebar-loading>
+                <Skeleton className="h-9 w-full" radius="rounded-sm" />
+              </div>
+              <div className="mt-4 flex flex-col gap-0.5">
+                {[0, 1, 2, 3].map((index) => (
                   <Skeleton key={index} className="h-9 w-full" radius="rounded-sm" />
                 ))}
               </div>
-              {stamp && <div className="mt-auto pt-6">{stamp}</div>}
             </>
           ) : (
             <>
@@ -411,9 +430,22 @@ export function Sidebar({
                   .filter((section) => section.key !== FOOT_SECTION)
                   .map((section) => item(section.key, hrefOf(section.key, section.href), section.icon, copy.nav.tabs[section.key]))}
               </ul>
+            </>
+          )}
+              {/* The foot: Data, the stamp under it and "Collapse the sidebar", which needs no view and so shows from the
+                  first paint (ticket 59). */}
               <div className="mt-auto flex flex-col gap-0.5 pt-6">
-                {foot && <ul className="flex flex-col gap-0.5">{item(foot.key, foot.href, foot.icon, copy.nav.tabs[foot.key], stampLine)}</ul>}
-                {stamp}
+                {sections === null ? (
+                  <Skeleton className="h-9 w-full" radius="rounded-sm" />
+                ) : (
+                  foot && <ul className="flex flex-col gap-0.5">{item(foot.key, foot.href, foot.icon, copy.nav.tabs[foot.key], stampLine)}</ul>
+                )}
+                {/* The stamp under Data, on its label's left edge (8 + 12 + 16 + 12 px in); the rail hides it. */}
+                {freshness && (
+                  <div data-sidebar-stamp className="mb-2 ml-10 rail:hidden">
+                    <FreshnessStamp freshness={freshness} href={withModeOf("/data", mode.search)} hang />
+                  </div>
+                )}
                 {stampLine && (
                   <span id={stampId} hidden>
                     {stampLine}
@@ -435,17 +467,59 @@ export function Sidebar({
                   <span className="min-w-0 wrap-break-word rail:clip-visually">{toggleLabel}</span>
                 </button>
               </div>
-            </>
-          )}
         </nav>
-        {/* Below 768 px the view lines and the language of answers and drafts sit at the sheet's foot (tickets 40, 42);
-            from 768 px the view switch is in the bar (ticket 93). */}
-        <div data-menu-panel className="border-t border-line px-4 pt-4 pb-4 md:hidden">
-          <ViewPanel viewer={viewer} mode={mode} onDone={() => sheet.setOpen(false, false)} />
-          {viewer.status !== "error" && (
-            <div className="mt-4 border-t border-line pt-4">
-              <LanguageChoice />
-            </div>
+        {/* Below 768 px the bar's view switch sits at the sheet's foot as one button, under Data and the stamp, pinned to
+            the sheet's bottom. Pressed, it opens the view switch's popover above it, with the view lines and the language
+            of answers and drafts, so the button stays under the thumb (tickets 40, 42; ticket 59, from ticket 93's
+            critique). The popover stays inside the sheet, which is modal, and the current view has its check alone. From
+            768 px the view switch is in the bar (ticket 93). */}
+        <div data-menu-panel className="border-t border-line px-2 py-3 md:hidden">
+          {mode.unknown ? (
+            <Skeleton className="h-11 w-full" radius="rounded-sm" />
+          ) : (
+            <RadixPopover.Root open={viewShown && sheet.open} onOpenChange={setViewShown}>
+              <RadixPopover.Trigger
+                data-menu-view
+                aria-haspopup="dialog"
+                className={cx(ITEM, "min-h-11 justify-between text-ink hover:bg-surface-2")}
+              >
+                <span className="min-w-0">{pillLabel(mode)}</span>
+                <ChevronUp aria-hidden="true" className={cx("size-4 shrink-0 transition-transform duration-150", viewShown && "rotate-180")} />
+              </RadixPopover.Trigger>
+              <RadixPopover.Content
+                ref={viewContent}
+                data-sheet-layer
+                side="top"
+                align="start"
+                sideOffset={8}
+                avoidCollisions={false}
+                // It keeps the sheet's head clear, 8 px under it, so "Close the menu" stays in reach.
+                collisionPadding={{ top: headHeight + 8 }}
+                aria-label={copy.nav.view.dialog}
+                aria-describedby={whoId}
+                onOpenAutoFocus={(event) => {
+                  // Focus lands on the current view's row, as in the bar's popover (the 40 brief, 8.2).
+                  event.preventDefault();
+                  const row = viewContent.current?.querySelector<HTMLElement>("[data-view-row][aria-current]");
+                  (row ?? viewContent.current?.querySelector<HTMLElement>("a, input, button"))?.focus();
+                }}
+                onCloseAutoFocus={(event) => {
+                  // Closing the sheet closes the popover too, and focus then goes to the Menu button, not back here.
+                  if (!sheetOpen.current) event.preventDefault();
+                }}
+                className={cx(
+                  POPOVER,
+                  "max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) overflow-y-auto overscroll-contain p-4",
+                )}
+              >
+                <ViewPanel viewer={viewer} mode={mode} whoId={whoId} checkOnly onDone={() => sheet.setOpen(false, false)} />
+                {viewer.status !== "error" && (
+                  <div className="mt-4 border-t border-line pt-4">
+                    <LanguageChoice />
+                  </div>
+                )}
+              </RadixPopover.Content>
+            </RadixPopover.Root>
           )}
         </div>
         {tip && (

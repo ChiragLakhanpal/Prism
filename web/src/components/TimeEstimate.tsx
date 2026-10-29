@@ -13,7 +13,7 @@ import { Num, type NumCheck } from "./Num";
 import { backtestFrom, estimateFrom, FromLine, modelFrom } from "./NumFrom";
 import type { Lane2 } from "./RangeChart";
 import { SegmentedControl } from "./SegmentedControl";
-import { Skeleton, SkeletonLine } from "./Skeleton";
+import { Skeleton, SkeletonLine, SkeletonWords } from "./Skeleton";
 import { Source } from "./Source";
 import { Table, type Column, type Row } from "./Table";
 
@@ -40,8 +40,8 @@ const whole = (value: number) => formatNumber(value, { compact: false });
 // sentence ("open national", "3 lots", "prequalification").
 export function optionWords(lever: string, value: string | number): { label: string; inSentence: string } {
   if (lever === "lots") {
-    const text = what.lots(Number(value));
-    return { label: text, inSentence: text };
+    const count = Number(value);
+    return { label: what.lots(count), inSentence: what.lotsInSentence(count, formatCount(count)) };
   }
   const labels = lever === "market_approach" ? what.label_market_approach : what.label_prequalification;
   const inSentence = lever === "market_approach" ? what.inSentence_market_approach : what.inSentence_prequalification;
@@ -179,6 +179,9 @@ function WentWithCount({ comparison, option, capital, onOpen, from }: { comparis
 // The sentences lane 2 adds to the summary paragraph: the time estimate, why the lanes differ and, while
 // comparing, the comparison; or the sentence an abstention adds.
 export function EstimateSentences({ state, comparison, links }: { state: EstimateState; comparison: Comparison | null; links: SummaryLinks }) {
+  // While the estimate loads, the sentence a held-back estimate adds holds its place, unseen and unheard, so the summary
+  // keeps its lines when the answer arrives (ticket 59; the critique of round 2).
+  if (state.status === "loading") return <SkeletonWords text={words.abstain.outsideSummary} />;
   if (state.status !== "ready") return null;
   const result = state.result;
   if (result.abstention?.reason === "too_few_comparables") {
@@ -412,15 +415,9 @@ export function EstimateExtras({
   onOpenYears: () => void;
   yearsCaptionRef: Ref<HTMLSpanElement>;
 }) {
-  if (state.status === "loading") {
-    return (
-      <div aria-hidden="true" className="flex min-h-28 flex-col gap-2" data-estimate-extras="loading">
-        <SkeletonLine className="text-caption" width="w-full" />
-        <SkeletonLine className="text-caption" width="w-3/5" />
-        <Skeleton className="h-8 w-full max-w-90 rounded-pill" />
-      </div>
-    );
-  }
+  // While the estimate loads, the past range holds a held-back estimate's sentence above this place, as the demo package
+  // draws it, and nothing is held here (ticket 59; the critique of round 2).
+  if (state.status === "loading") return null;
   if (state.status === "error") {
     const code = state.error?.body?.trace_id;
     return (
@@ -507,7 +504,12 @@ function TestYearTable({ result, captionRef }: { result: EstimateResult; caption
         noun: y.noun,
         one: y.nounOne,
         total: years.length,
-        text: years.length === 1 ? y.countOne(String(first)) : y.count(formatCount(years.length), String(first), String(last)),
+        text:
+          years.length === 1
+            ? y.countOne(String(first))
+            : years.length === 2
+              ? y.countBoth(String(first), String(last))
+              : y.count(formatCount(years.length), String(first), String(last)),
       }}
       columns={columns}
       rowHeader="year"

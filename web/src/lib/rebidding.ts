@@ -39,7 +39,7 @@ export type RebidModel = {
   shown: boolean;
   in10: number | null;
   band: "below_1" | "about" | "above_9" | null;
-  not_shown_reason: "too_few" | "not_better" | "no_results" | "not_scored" | null;
+  not_shown_reason: "too_few" | "not_better" | "no_results" | "not_scored" | "not_in_plan" | null;
   min_comparables: number;
   learner: string | null;
   track_record: { n_test: number; test_year: number; beat_baseline: boolean; baseline_code: string; run_date: string } | null;

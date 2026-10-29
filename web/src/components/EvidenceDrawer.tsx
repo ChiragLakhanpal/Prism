@@ -31,7 +31,7 @@ import {
   type Origin,
 } from "../lib/evidence";
 import { address } from "../lib/router";
-import { highlightsFor, lessonOf, passageFields, placeOf, recordReference } from "../lib/sources";
+import { highlightsFor, lessonOf, namedSection, passageFields, placeOf, recordReference } from "../lib/sources";
 import { useStore } from "../lib/store";
 import { viewOf } from "../lib/view";
 import { Alert } from "./Alert";
@@ -44,6 +44,7 @@ import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { linkProjectIds, ProjectId } from "./ProjectId";
 import { TextLink } from "./TextLink";
 import { RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
+import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
 import { planRowCaption, PlanRowRecords, planRowTitle } from "./PlanRowRecords";
@@ -73,6 +74,41 @@ export type DrawerData =
 
 // The passages' table, before the colon of a passage's evidence id.
 const PASSAGE_TABLE = "strata.gold.passage:";
+
+// The plans' rows' table, before the colon of a plan row's evidence id.
+const PLAN_ROWS_TABLE = "strata.silver.plan_rows";
+
+// The drawer head's caption for a passage, a record, a timeline view or a section 5 view (ticket 58): what kind of source
+// is open. A report is named by its type, and only a source with no type falls back to its stratum (the 58 design
+// review, B2). A plan row and a comparable package have their own, above; a list of packages, a dot or a lesson has none.
+function kindCaption(evidence: EvidenceEvent): ReactNode {
+  const captions = copy.evidence.captions;
+  const byType = (type: unknown) => (typeof type === "string" ? captions.documentType[type] : undefined);
+  if (evidence.kind === "passage") {
+    if (evidence.row?.kind === "notice_text") return captions.notice;
+    return byType(passageFields(evidence).docType) ?? (evidence.stratum ? (captions.stratum[evidence.stratum] ?? null) : null);
+  }
+  if (evidence.kind === "record") {
+    if (lessonOf(evidence)) return null;
+    // A plan row records a plan, not what happened: "Activity in the {agency} plan of {date}", as the plan check's
+    // drawer says (the 58 design review, follow-up 12).
+    const source = (evidence.row?.source ?? {}) as Record<string, unknown>;
+    if (evidence.id.split(":")[0] === PLAN_ROWS_TABLE && typeof source.implementing_agency === "string" && typeof source.document_date === "string") {
+      return <Fill template={copy.evidence.planRowCaption} slots={{ agency: source.implementing_agency, date: <Num date={source.document_date} /> }} />;
+    }
+    return captions.stratum[evidence.stratum ?? "What"] ?? null;
+  }
+  if (evidence.kind === "document") return byType(evidence.row?.document_type) ?? captions.document;
+  const byKind: Record<string, string> = {
+    ratings: captions.ratings,
+    contracts: captions.contracts,
+    disagreement: captions.disagreement,
+    criteria_public: captions.criteriaPublic,
+    criteria_item: captions.criteriaItem,
+    package_cost: captions.packageCost,
+  };
+  return byKind[evidence.kind] ?? null;
+}
 
 // How far under the sticky header the passage block's top stops when the drawer scrolls to a highlight on open: the
 // panel's own scroll padding below its header (8 px), so a tab focused later sits in the same place.
@@ -154,6 +190,7 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
   const table = fields.kind === "table_row" || fields.kind === "table_summary";
   const notice = fields.kind === "notice_text";
   const language = fields.lang && fields.lang !== "en" ? copy.language.name[fields.lang] : null;
+  const sectionText = place.kind === "section" && fields.numbered ? place.text : fields.section;
   const parts: { text: ReactNode; whole: boolean }[] = [
     { text: fields.docType, whole: false },
     {
@@ -177,7 +214,12 @@ function MetaLine({ evidence }: { evidence: EvidenceEvent }) {
           ? [{ text: fields.section, whole: false }]
           : []
         : [
-            ...(fields.section ? [{ text: words.section(fields.section), whole: fields.section.length <= SHORT_SECTION }] : []),
+            // A numbered section, such as an ICR Review's 10.b, is named by its own number (ticket 58). A section named
+            // in words, such as an ISR's "Project Development Objective Indicators", stands alone, as the title names it
+            // (the 58 critique, round 2, follow-up 10).
+            ...(sectionText
+              ? [{ text: namedSection({ kind: "section", text: sectionText }) ? sectionText : words.section(sectionText), whole: sectionText.length <= SHORT_SECTION }]
+              : []),
             ...(place.kind === "paragraph" ? [{ text: words.para(place.text), whole: true }] : []),
           ]),
     ...(fields.page
@@ -315,7 +357,7 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
         <MetaLine evidence={evidence} />
         {summary && fields.page && (
           <p className="px-4 pt-3 text-caption text-ink-muted">
-            {copy.evidence.summaryNote(String(fields.page), fields.lastPage && fields.lastPage !== fields.page ? String(fields.lastPage) : null)}
+            {copy.evidence.summaryNote}
           </p>
         )}
         {fromAnswer && ranges.length === 0 && (
@@ -623,7 +665,6 @@ export function EvidenceDrawerView({
 }) {
   const headingId = useId();
   const passageId = useId();
-  const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 
   // The browser keeps a focused element below the sticky header (WCAG 2.2 SC 2.4.11, technique C43):
@@ -731,7 +772,6 @@ export function EvidenceDrawerView({
       <div
         ref={panelRef}
         data-drawer-panel
-        onScroll={(event) => setScrolled(event.currentTarget.scrollTop > 0)}
         className={cx(
           !sample && "overflow-y-auto",
           !sample && (narrow ? "h-dvh" : "sticky top-(--frame-top) max-h-[calc(100dvh-var(--frame-top))] animate-drawer-slide"),
@@ -741,7 +781,8 @@ export function EvidenceDrawerView({
         <div
           ref={headerRef}
           data-drawer-header
-          className={cx("sticky top-0 z-10 flex items-start gap-4 border-b bg-surface px-6 pt-6 pb-4", scrolled ? "border-line" : "border-transparent")}
+          // A hairline under the head at rest too, as the prototype draws it (ticket 58).
+          className="sticky top-0 z-10 flex items-start gap-4 border-b border-line bg-surface px-6 pt-6 pb-4"
         >
           <div className="min-w-0 flex-1">
             {backTo && onBack && (
@@ -755,8 +796,8 @@ export function EvidenceDrawerView({
                       : copy.evidence.package.dot.back(formatCount(backTo.count))}
               </Button>
             )}
-            {/* The head is the title, with no eyebrow above it and no middle dots (ticket 94). The one caption sentence
-                under it, which says what the source is, takes the words ticket 58 writes. */}
+            {/* The head is the title, with no eyebrow above it and no middle dots (ticket 94), then one caption that says
+                what kind of source is open (ticket 58). */}
             <h2 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 wrap-break-word text-ink-heading focus:outline-none">
               {evidence ? (
                 criteriaView ? criteriaTitle(evidence) : timelineView ? timelineTitle(evidence) : evidence.kind === "plan-row-check" ? planRowTitle(evidence) : sourceTitle(evidence)
@@ -782,6 +823,11 @@ export function EvidenceDrawerView({
             {evidence?.kind === "package" && inRange && (
               <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
                 {copy.evidence.package.caption}
+              </p>
+            )}
+            {evidence && kindCaption(evidence) !== null && (
+              <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
+                {kindCaption(evidence)}
               </p>
             )}
           </div>

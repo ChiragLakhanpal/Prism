@@ -29,7 +29,7 @@ import { ENGLISH, langOf, languageName, workingLanguage } from "../lib/lang";
 import { useRevealAfterWait } from "../lib/reveal";
 import { useStore } from "../lib/store";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
-import { highlightsFor, lessonOf, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
+import { highlightsFor, lessonOf, namedSection, passageFields, placeOf, recordKind, recordReference } from "../lib/sources";
 import { Answer, type AnswerState } from "./Answer";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -39,7 +39,7 @@ import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
-import { MonoWords } from "./MonoWords";
+import { inSentence, MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { evidenceFrom, FromLine } from "./NumFrom";
 import { RETURNING } from "./Popover";
@@ -53,7 +53,9 @@ const STILL_WORKING_MS = 30_000;
 export const DRAWER_ID = "evidence-drawer";
 
 // An ID in a line Strata writes: a P-code links to its project page (ticket 21), anything else is in mono.
-const mono = (text: string) => <IdText id={text} />;
+// A P-code as the page header sets it; a STEP reference as the box sets it, by MonoWords, so "Asked within
+// KE-NWWDA-541055-CW-RFB." never breaks inside the reference while it fits a line (ticket 59).
+const mono = (text: string) => (/^P\d{6}$/.test(text) ? <IdText id={text} /> : <MonoWords text={text} />);
 
 // ── Steps ──────────────────────────────────────────────────────────────
 
@@ -65,7 +67,9 @@ function toolLines(step: StepEvent): { running: string; done: string } {
     return { running: copy.steps.otherTool.running(name), done: copy.steps.otherTool.done(name) };
   }
   const scope = step.project_id ?? null;
-  return { running: words.running(scope), done: words.done(count, formatCount(count), scope) };
+  // A call that abstained says why, when its tool has a sentence for the code (ticket 58).
+  const abstained = step.abstention ? (words as { abstained?: Record<string, string> }).abstained?.[step.abstention] : undefined;
+  return { running: words.running(scope), done: abstained ?? words.done(count, formatCount(count), scope) };
 }
 
 function stepLines(step: StepEvent, checks: ChecksEvent | null, refused = false): { running: string; done: string } {
@@ -207,8 +211,28 @@ function numTooltip(evidence: EvidenceEvent | undefined, date: { sentence: numbe
   return place.kind === "paragraph" ? (
     <Fill template={words.numTooltip} slots={{ para: place.text, kind, pid }} />
   ) : (
-    <Fill template={words.numTooltipSection} slots={{ section: place.text, kind, pid }} />
+    <Fill template={namedSection(place) ? words.numTooltipSection : words.numTooltipSectionNumbered} slots={{ section: place.text, kind, pid }} />
   );
+}
+
+// The STEP references of the records a sentence cites, longest first, so a reference that holds a shorter one is
+// found whole. The sentence sets each one in Roboto Mono, as an ID in a sentence (ticket 58).
+function stepReferences(sentence: SentenceEvent, evidence: Record<string, EvidenceEvent>): string[] {
+  const ids = [...sentence.evidence_ids, ...sentence.numbers.map((m) => m.evidence_id), ...sentence.dates.map((m) => m.evidence_id)];
+  const found = new Set<string>();
+  for (const id of ids) {
+    const reference = id ? evidence[id]?.row?.step_reference : undefined;
+    if (evidence[id ?? ""]?.kind === "record" && typeof reference === "string" && reference) found.add(reference);
+  }
+  return [...found].sort((a, b) => b.length - a.length);
+}
+
+// A pattern that finds those references whole in a sentence, with the punctuation right after one, which stays in its
+// last part's box so it never starts a line.
+function referencePattern(references: string[]): RegExp | null {
+  if (references.length === 0) return null;
+  const alternatives = references.map((reference) => reference.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+  return new RegExp(`(?<![\\w-])(${alternatives})(?![\\w-])([.,;:)\\]]*)`, "g");
 }
 
 // A sentence's text with each number and date the verifier matched drawn by Num: a dotted underline and a
@@ -227,18 +251,39 @@ export function sentenceText(
   const quoteLang = sentence.quote ? (evidence[sentence.quote.evidence_id]?.row?.language as string | undefined) : undefined;
   const quoteStart = sentence.quote && quoteLang && quoteLang !== around ? sentence.text.indexOf(sentence.quote.text) : -1;
   const quoteEnd = quoteStart < 0 ? -1 : quoteStart + sentence.quote!.text.length;
+  // A cited record's STEP reference is a name, not a quote: it is set by MonoWords, so it moves to the next line whole
+  // and never breaks after "KE-" (ticket 58). Any other STEP reference in the text between stays whole too, in the
+  // sentence's own type (inSentence; ticket 59's verifier saw "KE-ICTA-571738-" end a line).
+  const references = referencePattern(stepReferences(sentence, evidence));
+  const named = (start: number, end: number): ReactNode[] => {
+    const text = sentence.text.slice(start, end);
+    if (!references) return inSentence(text, start);
+    const pieces: ReactNode[] = [];
+    let at = 0;
+    for (const match of text.matchAll(references)) {
+      pieces.push(...inSentence(text.slice(at, match.index), start + at));
+      pieces.push(
+        <span key={`reference-${start + match.index}`} data-step-reference>
+          <MonoWords text={match[1]} after={match[2]} medium />
+        </span>,
+      );
+      at = match.index + match[0].length;
+    }
+    pieces.push(...inSentence(text.slice(at), start + at));
+    return pieces.filter((piece) => piece !== "");
+  };
   // Plain text from start to end of the sentence, with the part inside the quote marked as the source's language.
   const plain = (start: number, end: number): ReactNode[] => {
-    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return [sentence.text.slice(start, end)];
+    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return named(start, end);
     const from = Math.max(start, quoteStart);
     const to = Math.min(end, quoteEnd);
     return [
-      sentence.text.slice(start, from),
+      ...named(start, from),
       <Lang key={`quote-${from}`} code={quoteLang}>
-        {sentence.text.slice(from, to)}
+        {inSentence(sentence.text.slice(from, to), from)}
       </Lang>,
-      sentence.text.slice(to, end),
-    ].filter((piece) => piece !== "");
+      ...named(to, end),
+    ];
   };
   const found: { start: number; end: number; text: string; id: string; date: boolean }[] = [];
   // Numbers and dates each come in the order the sentence writes them, but a date may come before
@@ -565,10 +610,16 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     };
   }
   // "Try again" when a service did not let me check some sentences, with a note on how many when other
-  // sentences were removed for other reasons, since then the lead does not say why.
+  // sentences were removed for other reasons, since then the lead does not say why. When the lead's sentence is that
+  // service's only one, the lead already says it, so its note is left out and "Try again" follows the lead (ticket 58).
+  const lead = run.removed[0]?.reason;
   const notes = [
-    outage.judge > 0 && copy.removed.unjudged(outage.judge, formatCount(outage.judge)),
-    outage.unasked > 0 && copy.removed.unasked(outage.unasked, formatCount(outage.unasked)),
+    outage.judge > 0 &&
+      !(outage.judge === 1 && lead === "judge_unavailable") &&
+      copy.removed.unjudged(outage.judge, formatCount(outage.judge)),
+    outage.unasked > 0 &&
+      !(outage.unasked === 1 && lead === "disagreements_unavailable") &&
+      copy.removed.unasked(outage.unasked, formatCount(outage.unasked)),
   ].filter((note): note is string => Boolean(note));
   const mixed = new Set(run.removed.map((item) => item.reason)).size > 1;
   // The check line counts the sentences on screen; an answer from before ticket 24 has only the counts
@@ -588,10 +639,14 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       judged: checks.shown
         ? { judged: checks.shown.judged, proven: checks.shown.proven, crossLanguage: checks.shown.cross_language }
         : undefined,
+      sources: checks.shown?.sources,
       notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),
-      retry: notes.length ? { onRetry: askAgain, note: mixed ? notes.join(" ") : undefined } : undefined,
+      retry:
+        outage.judge + outage.unasked > 0
+          ? { onRetry: askAgain, note: mixed && notes.length ? notes.join(" ") : undefined }
+          : undefined,
       // The window counts every sentence written, by the run that wrote this answer (ticket 105).
       how: runId && checks.judge ? <HowChecked checks={checks} id={{ answer: runId }} /> : undefined,
     },

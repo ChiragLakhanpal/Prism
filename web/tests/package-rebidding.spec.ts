@@ -96,7 +96,7 @@ test("the block ends section 1's card after a divider, labeled experimental with
   await counts.nth(1).focus();
   await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The comparable packages in the past range above.");
   // No model results on the fixture: only the counts, and one sentence that says why.
-  expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate: my model has no test results yet.");
+  expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate, because my model has no test results yet.");
   expect(await block(page).innerText()).not.toMatch(/%|percent| in 10/);
   await expect(disclosure(page)).toHaveAttribute("aria-expanded", "false");
   await expect(block(page).locator("[data-rebid-list]")).toBeHidden();
@@ -167,9 +167,14 @@ test("a canceled plan row opens with its Process Status highlighted, and a STEP 
   await ready(page);
   await disclosure(page).click();
 
+  // The marker names the row as the drawer heads it, an activity (ticket 58; the 28 design review, F2).
+  await expect(block(page).locator(`[data-citation-id='${PLAN_ROW}']`).first()).toHaveAccessibleName(/^Source \d+: Activity KE-KIMAWASCO-157517-CW-RFB, /);
   await block(page).locator(`[data-citation-id='${PLAN_ROW}']`).click();
   const drawer = page.getByRole("dialog");
   await expect(drawer.getByRole("heading", { level: 2 })).toHaveText("Activity KE-KIMAWASCO-157517-CW-RFB");
+  // A plan row records a plan, so its caption names the plan, as the plan check's drawer does (the 58 design review,
+  // follow-up 12).
+  await expect(drawer.locator("[data-drawer-caption]")).toHaveText("Activity in the Kilifi - Mariakani Water and Sewerage Company Ltd plan of March 19, 2025");
   await expect(drawer.locator("mark")).toContainText("Canceled");
   // Its place in Check a plan, on the plan version that canceled it (ticket 28's design review, F1).
   await expect(drawer.getByRole("link", { name: copy.trail.plan.showInPlan })).toHaveAttribute(
@@ -184,12 +189,31 @@ test("a canceled plan row opens with its Process Status highlighted, and a STEP 
   await expect(drawer.locator("[data-drawer-caption]")).toHaveCount(0);
 });
 
+// Ticket 58 (ticket 28's review, follow-up 3): a package planned from a sentence is in no plan, so the nightly job never
+// scores it, and the block says so rather than "not yet". The fixture registers no model, so the server's reason
+// (tests/test_rebidding_backtest.py proves it) is set in memory.
+test("a package planned from a sentence says my model scores only packages listed in a plan", async ({ page }) => {
+  const planned = JSON.parse(await recorded("rebidding-planned-works-rfb-ke.json"));
+  planned.model = { ...planned.model, not_shown_reason: "not_in_plan" };
+  await openPackage(page, { answer: { body: JSON.stringify(planned) } });
+  await ready(page);
+
+  expect(await text(page, "[data-rebid-model-off]")).toBe(
+    "I'm not giving an estimate. My model scores only packages listed in a Procurement Plan, and this one is not in a plan yet.",
+  );
+});
+
 test("with fewer than 20 comparable packages and none advertised again, only the counts appear, then where to look next", async ({ page }) => {
   await openPackage(page, { rebidding: "rebidding-ke-nwwda-541055-prior.json", comparables: "comparables-ke-nwwda-541055-prior.json" });
   await expect(block(page)).toHaveAttribute("data-rebidding", "none");
 
   expect(await text(page, "[data-rebid-count]")).toBe("I found no sign that any of the seven comparable packages were advertised again.");
-  expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate: I give one only from 20 or more comparable packages.");
+  // None was advertised again, so the count says what it counted and opens nothing (ticket 58; the 28 design review, F4).
+  const seven = block(page).locator("[data-rebid-count] [data-num]");
+  await seven.focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The comparable packages I checked for this count.");
+  await expect(page.getByRole("tooltip")).not.toContainText("Select to see");
+  expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate, because I give one only from 20 or more comparable packages.");
   expect(await block(page).innerText()).not.toMatch(/%|percent| in 10/);
   await expect(disclosure(page)).toHaveCount(0);
   await expect(block(page).getByRole("link", { name: "See how complete the notices are" })).toHaveAttribute("href", "/data?sources=notices&from=rebidding_risk");
@@ -201,7 +225,7 @@ test("my model's estimate shows as about k in 10 with its track record, a long g
 
   expect(await text(page, "[data-rebid-model]")).toBe("My model estimates that about 3 in 10 packages like this one are advertised again.");
   expect(await text(page, "[data-rebid-track]")).toBe(
-    "Track record: in tests on 61 packages from 2025 that it had not seen, my model matched what happened better than the rate among their comparable packages.",
+    "Track record: I tested my model on 61 packages from 2025 that it had not seen. It matched what happened better than the rate among their comparable packages did.",
   );
   await disclosure(page).click();
   const group = block(page).locator("[data-rebid-group=all_bids_rejected]");
@@ -250,7 +274,7 @@ test("a model that did no better than its baseline gives no estimate, and says s
   await ready(page);
 
   expect(await text(page, "[data-rebid-model-off]")).toBe(
-    "I'm not giving an estimate: in tests on 44 packages from 2025 that my model had not seen, it did no better than the rate among their comparable packages.",
+    "I'm not giving an estimate. In tests on 44 packages from 2025 that my model had not seen, it did no better than the rate among their comparable packages.",
   );
   expect(await block(page).innerText()).not.toMatch(/ in 10/);
 });
@@ -306,4 +330,67 @@ test("at 320 px nothing scrolls sideways with the reasons open", async ({ page }
   await disclosure(page).click();
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
+
+// The last line of an element's text: the characters that sit lowest.
+function lastLine(element: Element) {
+  const range = document.createRange();
+  const chars: { top: number; text: string }[] = [];
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+    for (let i = 0; i < node.length; i++) {
+      range.setStart(node, i);
+      range.setEnd(node, i + 1);
+      const rect = range.getClientRects()[0];
+      if (rect) chars.push({ top: Math.round(rect.top), text: node.data[i] });
+    }
+  }
+  const bottom = Math.max(...chars.map((char) => char.top));
+  return chars
+    .filter((char) => Math.abs(char.top - bottom) < 4)
+    .map((char) => char.text)
+    .join("")
+    .trim();
+}
+
+// Ticket 59 (the 28 design review, F6 and F9; the 28 critique, follow-ups 1 to 4): the group counts keep to the
+// prose width beside their labels, and below 480 px of the group's width they sit under them as captions; the count
+// sentence never leaves one word on its last line; and a failed load's code wraps inside the card at 320 px.
+test("the group counts sit by their labels within the prose width, as captions under them below 480 px, and a failed load's code stays in the card", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  await disclosure(page).click();
+  const heading = block(page).getByRole("heading", { level: 4 }).first();
+  const count = heading.locator("span[aria-hidden]").nth(1);
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    // The group lays out again by its own width once the window has drawn at this size.
+    await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
+    await expect.poll(() => count.evaluate((element) => getComputedStyle(element).fontSize)).toBe(width === 390 ? "13px" : "14px");
+    // The three boxes in one read, so a scroll between two reads cannot move one against the other.
+    const [label, number, prose] = await block(page).evaluate((element) => {
+      const parts = element.querySelectorAll("h4")[0].querySelectorAll("span[aria-hidden]");
+      return [parts[0], parts[1], element.querySelector("[data-rebid-count]")!].map((part) => {
+        const box = part.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height };
+      });
+    });
+    expect(number.x + number.width, `${width} px: the count keeps to the prose width`).toBeLessThanOrEqual(prose.x + prose.width + 1);
+    const style = await count.evaluate((element) => [getComputedStyle(element).fontSize, getComputedStyle(element).fontWeight]);
+    if (width === 390) {
+      expect(number.y, "the count under its label").toBeGreaterThanOrEqual(label.y + label.height - 1);
+      expect(style, "a caption").toEqual(["13px", "400"]);
+    } else {
+      expect(Math.abs(number.y + number.height / 2 - (label.y + label.height / 2)), "the count beside its label").toBeLessThanOrEqual(3);
+      expect(style).toEqual(["14px", "600"]);
+    }
+    expect((await block(page).locator("[data-rebid-count]").evaluate(lastLine)).split(" ").length, `${width} px: the count sentence's last line`).toBeGreaterThan(1);
+  }
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await openPackage(page, { width: 320, answer: { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
+  await expect(block(page)).toHaveAttribute("data-rebidding", "error");
+  const code = block(page).getByText("0af7651916cd43dd8448eb211c80319c");
+  const [inner, outer] = [(await code.boundingBox())!, (await block(page).boundingBox())!];
+  expect(inner.x + inner.width, "the code inside the card").toBeLessThanOrEqual(outer.x + outer.width);
 });

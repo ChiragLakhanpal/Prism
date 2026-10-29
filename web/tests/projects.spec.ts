@@ -82,7 +82,7 @@ test("All projects shows 20 projects a page with the range it shows, sets projec
   expect([...parts].sort((a, b) => a! - b!), "in order").toEqual(parts);
   const table = panel.locator("[data-table-view=table] tbody tr");
   await expect(table).toHaveCount(20);
-  await expect(panel.locator("[data-page-lead]")).toHaveText("Showing 1 to 20 of 93 projects");
+  await expect(panel.locator("[data-page-lead]")).toHaveText("Showing 1 to 20 of 93 projects.");
   const first = panel.locator("[data-table-view=table]").getByRole("link", { name: "P176704" });
   await expect(first).toHaveAttribute("href", "/projects/P176704");
   expect(await first.evaluate((el) => [getComputedStyle(el).fontFamily.split(",")[0], getComputedStyle(el).fontWeight])).toEqual(['"Roboto Mono"', "500"]);
@@ -104,11 +104,11 @@ test("All projects shows 20 projects a page with the range it shows, sets projec
 
   await expect(page).toHaveURL(/\/projects\?page=2$/);
   const countLine = main.locator("[data-page-lead]");
-  await expect(countLine).toHaveText("Showing 21 to 40 of 93 projects");
+  await expect(countLine).toHaveText("Showing 21 to 40 of 93 projects.");
   await expect(countLine).toBeFocused();
   await expect(table.first().getByRole("link")).toHaveText("P167814");
   await page.goBack();
-  await expect(countLine).toHaveText("Showing 1 to 20 of 93 projects");
+  await expect(countLine).toHaveText("Showing 1 to 20 of 93 projects.");
   expect(unrecorded).toEqual([]);
 });
 
@@ -157,7 +157,7 @@ test("the list search filters on the server as you type, by name, project ID or 
 
   await field.pressSequentially("india");
 
-  await expect(main.locator("[data-page-lead]")).toHaveText("Showing 1 project");
+  await expect(main.locator("[data-page-lead]")).toHaveText("Showing the one project.");
   await expect(main.locator("[data-table-view=table] tbody tr")).toHaveCount(1);
   await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P130164" })).toBeVisible();
   // One request for the word, sent once typing stopped, and the address keeps the search in place.
@@ -173,7 +173,7 @@ test("the list search filters on the server as you type, by name, project ID or 
   // Escape empties the field and shows every project again.
   await field.press("Escape");
   await expect(field).toHaveValue("");
-  await expect(main.locator("[data-page-lead]")).toHaveText("Showing 1 to 20 of 93 projects");
+  await expect(main.locator("[data-page-lead]")).toHaveText("Showing 1 to 20 of 93 projects.");
   await expect(page).toHaveURL(/\/projects$/);
 });
 
@@ -311,7 +311,7 @@ test("a project's Procurement tab shows each agency's plan versions newest first
   expect(await size(main.getByRole("heading", { level: 2, name: "Procurement Plans" }))).toBe("18px");
   expect(await size(nwwda.getByRole("heading", { level: 3 }))).toBe("16px");
   expect(await size(main.locator("[data-other-agencies]").getByRole("heading", { level: 3 }))).toBe("16px");
-  await expect(nwwda.getByText("Showing all 5 versions")).toBeVisible();
+  await expect(nwwda.getByText("Showing all five versions.")).toBeVisible();
   await expect(nwwda.locator("[data-table-view=table] tbody th")).toHaveText([
     "Plan of Oct 9, 2026 Latest",
     "Plan of Mar 5, 2026",
@@ -320,7 +320,11 @@ test("a project's Procurement tab shows each agency's plan versions newest first
     "Plan of Dec 7, 2020",
   ]);
   await expect(nwwda.locator("[data-table-view=table] tbody tr").first().locator("td")).toHaveText(["Oct 9, 2026", "9"]);
-  await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText("Showing 1 version")).toBeVisible();
+  await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText("Showing the one version.")).toBeVisible();
+  // One source line, under the last agency's table, not the same line under each (ticket 58).
+  const sources = main.locator("[data-agency] [data-source]");
+  await expect(sources).toHaveCount(1);
+  expect(await sources.evaluate((line) => line.closest("[data-agency]") === [...document.querySelectorAll("[data-agency]")].filter((agency) => agency.querySelector("table")).at(-1))).toBe(true);
   // The agencies with no plan share one block after the ones with plans, rather than ten alike.
   const others = main.locator("[data-other-agencies]");
   await expect(others.getByRole("heading", { level: 3 })).toHaveText("Other implementing agencies");
@@ -467,7 +471,7 @@ test("an agency's count line states the route's count of its versions", async ({
   body.agencies[0].shown_count = 7;
   await open(page, "/projects/P156634/procurement", { ...(await p156634()), "/api/projects/P156634": { body: JSON.stringify(body) } });
 
-  await expect(page.locator("[data-agency=northern-water-works-development-agency]").getByText("Showing all 7 versions")).toBeVisible();
+  await expect(page.locator("[data-agency=northern-water-works-development-agency]").getByText("Showing all seven versions.")).toBeVisible();
 });
 
 test("a project with no plans says so, and a project with no record is not found", async ({ page }) => {
@@ -478,6 +482,9 @@ test("a project with no plans says so, and a project with no record is not found
   // P130164's Documents tab lists 15 Procurement Plans I haven't read, so the title says I haven't read one,
   // as the Packages line does, rather than that I have none (the 21 critique, round 3, item 7).
   await expect(page.locator("[data-empty-state] h3")).toHaveText("I haven't read a Procurement Plan for this project yet.");
+  // Its Documents tab lists them, so the card links there beside Data readiness (ticket 58).
+  await expect(page.locator("[data-empty-state]").getByRole("link", { name: "This project's documents" })).toHaveAttribute("href", "/projects/P130164/documents");
+  await expect(page.locator("[data-empty-state]").getByRole("link", { name: "Data readiness" })).toHaveAttribute("href", "/data");
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "no plans at 390 px").toEqual([]);
 

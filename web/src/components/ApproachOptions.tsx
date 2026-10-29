@@ -14,7 +14,7 @@ import { formatCount, formatNumber } from "../lib/format";
 import { openWentWith } from "../lib/packages";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
-import { Fill, Joined } from "./Fill";
+import { Fill, Joined, Unbroken } from "./Fill";
 import { FootStrip } from "./FootStrip";
 import { TaskZone, ZoneBlock, type ZoneState } from "./TaskZone";
 import { Num } from "./Num";
@@ -61,7 +61,7 @@ function approachName(approach: Approach, inSentence = false): string {
   const market = inSentence ? what.inSentence_market_approach : what.label_market_approach;
   return words.approach(
     market[approach.market_approach] ?? approach.market_approach,
-    what.lots(approach.lots),
+    inSentence ? what.lotsInSentence(approach.lots, formatCount(approach.lots)) : what.lots(approach.lots),
     what.inSentence_prequalification[approach.prequalification] ?? approach.prequalification,
   );
 }
@@ -120,8 +120,10 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
     <div className="@container/options flex flex-col gap-3" data-approach-table>
       <table className="w-full border-collapse text-small @max-[30rem]/options:hidden">
         <caption className="pb-2 text-left text-h2 text-ink-heading">
-          <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
-          <span className="mt-1 block text-caption font-normal text-ink-muted">{words.count(formatCount(options.approaches.length))}</span>
+          <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: <Unbroken text={approachName(first, true)} /> }} />
+          <span className="mt-1 block text-caption font-normal text-ink-muted">
+            {options.approaches.length === 2 ? words.countBoth : words.count(formatCount(options.approaches.length))}
+          </span>
         </caption>
         <thead className="bg-surface-2 text-left text-caption text-ink-muted">
           <tr>
@@ -167,9 +169,11 @@ function OptionsTable({ comparables, estimate }: { comparables: ComparablesResul
       {/* Below a 480 px frame: one card per approach. */}
       <div className="hidden flex-col gap-3 @max-[30rem]/options:flex">
         <p className="text-h2 text-ink-heading">
-          <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: approachName(first, true) }} />
+          <Fill template={title} slots={{ k1: <Num count={first.k} capital />, n: <Num value={options.n} options={{ compact: false }} />, option1: <Unbroken text={approachName(first, true)} /> }} />
         </p>
-        <p className="text-caption text-ink-muted">{words.count(formatCount(options.approaches.length))}</p>
+        <p className="text-caption text-ink-muted">
+          {options.approaches.length === 2 ? words.countBoth : words.count(formatCount(options.approaches.length))}
+        </p>
         <ul className="flex flex-col gap-3">
           {options.approaches.map((approach, index) => (
             <li key={index} className="rounded-md border border-line p-4" data-approach-card={index}>
@@ -287,7 +291,7 @@ export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
           slots={{
             k1: <Num count={only.k} capital />,
             n: <Num value={n} options={{ compact: false }} />,
-            option1: approachName(only, true),
+            option1: <Unbroken text={approachName(only, true)} />,
             ruled: <Num count={options.ruled_out} capital />,
           }}
         />
@@ -300,7 +304,7 @@ export function ApproachOptions({ state }: { state: ApproachOptionsState }) {
           template={options.ruled_out > 0 ? words.summaryAllowed : words.summary}
           slots={{
             count: <Num count={options.count} />,
-            option1: approachName(first, true),
+            option1: <Unbroken text={approachName(first, true)} />,
             k1: <Num value={first.k} options={{ compact: false }} />,
             n: <Num value={n} options={{ compact: false }} />,
           }}

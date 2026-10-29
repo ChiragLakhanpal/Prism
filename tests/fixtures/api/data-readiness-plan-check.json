@@ -2390,7 +2390,7 @@
       "denominator_from": "text_references",
       "counted_on": null,
       "parts": null,
-      "parser": "recorded words (pdftotext -bbox)",
+      "parser": "recorded words",
       "parser_limit_pages": 500,
       "daily_page_cap": 500,
       "measured_on": "2026-10-23"

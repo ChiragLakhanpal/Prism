@@ -122,6 +122,9 @@ def change(form: Form, before: Criteria, key: str, action: str, raw, thresholds:
         method = old_method(str(raw)) if field.aliases else None
         if method is not None and method.market_approach and form.has("market_approach"):
             _set(after, "market_approach", method.market_approach, YOU)
+            # The old method name that set it, so the note says you chose that name, not that you set the market
+            # approach (ticket 58). Setting the market approach itself writes a value with none.
+            after.values["market_approach"]["via"] = str(raw).strip()
         if field.kind == "amount":
             after.approximate = False
     elif action == "remove":
@@ -155,7 +158,10 @@ def view(form: Form, criteria: Criteria, thresholds: Thresholds) -> dict:
                        "computed": result.value if result else None,
                        # The sentence's own words for a value the schema does not list.
                        **({"read_as": criteria.values[field.key].get("read_as")}
-                          if criteria.provenance(field.key) == UNLISTED else {})})
+                          if criteria.provenance(field.key) == UNLISTED else {}),
+                       # The old method name that set a value, when one did (ticket 58).
+                       **({"via": criteria.values[field.key]["via"]}
+                          if criteria.values.get(field.key, {}).get("via") else {})})
         if field.picks:
             if criteria.get(field.key) is None:
                 missing.append(field.key)

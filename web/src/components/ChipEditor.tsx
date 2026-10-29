@@ -56,7 +56,11 @@ function optionsFor(field: FormField, form: PackageForm, typed: string): Option[
   const old = field.aliases ? form.aliases[typed.trim().replace(/\s+/g, " ").replace(/[\u2018\u2019]/g, "'").toUpperCase()] : undefined;
   if (old) {
     const now = field.options.find((option) => option.value === old.method);
-    if (now) return [{ value: now.value, label: now.label, caption: words.oldName(typed.trim()), send: typed.trim() }, ...listed.filter((one) => one.value !== now.value)];
+    // The caption also says what else the old name sets, so choosing it is no surprise (ticket 58).
+    const approach = old.market_approach ? form.fields.find((one) => one.key === "market_approach") : undefined;
+    const caption =
+      approach && old.market_approach ? words.oldNameSets(typed.trim(), valueText(approach, old.market_approach, form)) : words.oldName(typed.trim());
+    if (now) return [{ value: now.value, label: now.label, caption, send: typed.trim() }, ...listed.filter((one) => one.value !== now.value)];
   }
   return listed;
 }

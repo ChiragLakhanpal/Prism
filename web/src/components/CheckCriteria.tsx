@@ -132,7 +132,12 @@ function Summary({ summary, compared }: { summary: CriteriaSummary; compared: Co
     );
   }
   if (compared && compared.item_count > 0) {
-    const date = <Num date={compared.compared_at.slice(0, 10)} />;
+    // "On October 28, 2026," as one unit, so "On" never ends a line alone (ticket 58).
+    const date = (
+      <span className="whitespace-nowrap">
+        <Fill template={words.summaryOn} slots={{ date: <Num date={compared.compared_at.slice(0, 10)} /> }} />
+      </span>
+    );
     return (
       <p>
         {compared.item_count === 1 ? (
@@ -176,16 +181,29 @@ function summaryKey(summary: CriteriaSummary): string {
 // it." (the 24 brief, 5.4 and 5.5; ticket 60).
 function toRemoved(entries: RemovedEntry[], unjudged = false): Removed[] {
   const reasons = copy.removed.reasons as Record<string, { item: string; joined: string; underAlert?: string }>;
-  return entries.map((entry) => {
+  return entries.map((entry, index) => {
     const onRecord = entry.reason === "quote_not_on_page" && entry.source === "record_quote";
-    const reading = entry.reason === "not_supported" && entry.source === "reading";
-    const reason = onRecord ? words.quoteNotInSource : reading ? words.readingNotSupported : (reasons[entry.reason] ?? copy.removed.unknownReason);
-    const item = unjudged && "underAlert" in reason && reason.underAlert ? reason.underAlert : reason.item;
-    return { sentence: entry.sentence, reason: item, reasonJoined: reason.joined };
+    // A reading is about your own words, whatever check removed it (ticket 58), and it is quoted whole, so the box
+    // never reads "It said I read this as ...". A reading the judge could not check says so (ticket 60).
+    const reading = entry.source === "reading";
+    const reason: { item: string; joined: string; underAlert?: string } = onRecord
+      ? words.quoteNotInSource
+      : reading
+        ? (words.readingReasons[entry.reason] ?? reasons[entry.reason] ?? words.readingNotSupported)
+        : (reasons[entry.reason] ?? copy.removed.unknownReason);
+    // The first entry says the cause in the lead, quoted or not; the others say only "I couldn't check it."
+    const item = unjudged && index > 0 && reason.underAlert ? reason.underAlert : reason.item;
+    return { sentence: entry.sentence, reason: item, reasonJoined: reason.joined, quoted: reading };
   });
 }
 
-function SectionChecks({ checks, removed, compared, onRetry }: { checks: Checks | null; removed: RemovedEntry[]; compared: boolean; onRetry: () => void }) {
+function SectionChecks({ checks, removed, compared, lessons, onRetry }: {
+  checks: Checks | null;
+  removed: RemovedEntry[];
+  compared: boolean;
+  lessons: boolean;
+  onRetry: () => void;
+}) {
   if (!checks) return null;
   // The model that judges sentences did not respond for any of them: Try again compares again (ticket 60).
   const unjudged = removed.length > 0 && removed.every((entry) => entry.reason === "judge_unavailable");
@@ -201,7 +219,10 @@ function SectionChecks({ checks, removed, compared, onRetry }: { checks: Checks 
         quotes={shown.quotes}
         judged={checks.shown ? { judged: checks.shown.judged, proven: checks.shown.proven } : undefined}
         quoteWords={noPages ? words.quotesInSources : undefined}
-        notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables"]}
+        // With a comparison, some numbers match your own words (ticket 58).
+        numberWords={compared ? words.numberWords : undefined}
+        // A lesson card below leaves its gap too (ticket 58; config/tools.toml, get_lessons' not_checked_when).
+        notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables", ...(lessons ? (["get_lessons"] as const) : [])]}
         notCheckedText={compared ? [words.notCheckedItems] : []}
         removed={removed.length > 0 && <RemovedBox removed={toRemoved(removed, unjudged)} retry={unjudged ? { onRetry } : undefined} />}
       />
@@ -407,7 +428,13 @@ export function CheckCriteriaView(props: ViewProps) {
           edited={props.edited} comparing={comparison.status === "running"} preview={preview} saveFailed={props.saveFailed} />
       )}
       {run.status === "running" && <Skeleton className="mt-6 h-9 w-full" />}
-      <SectionChecks checks={props.checks} removed={removed} compared={Boolean(compared && compared.items.length)} onRetry={props.onCompare} />
+      <SectionChecks
+        checks={props.checks}
+        removed={removed}
+        compared={Boolean(compared && compared.items.length)}
+        lessons={Boolean(result?.lessons.groups.length)}
+        onRetry={props.onCompare}
+      />
       {runSteps}
       <PartOne comparison={comparison} readinessHref={readiness("compare_criteria", compared?.sources.map((source) => source.key) ?? publicKeys)}
         steps={compareSteps} onRetry={props.onCompare} asOf={props.asOf ?? null} />

@@ -109,7 +109,9 @@ Word = tuple[float, float, float, float, str]  # x0, y0, x1, y1, text, in points
 class RecordedLayout:
     """The layout parser's offline stand-in, which reads each page from its document's recorded words."""
 
-    name = "recorded words (pdftotext -bbox)"
+    # The registry name every shelf window looks up in web/src/copy.ts's dataReadiness.shelf.parserNames, which gives
+    # it plain words ("My offline substitute"); rename both together, or the window falls back to this name in mono.
+    name = "recorded words"
 
     def __init__(self, manifest, rejoin_split_words: bool | None = None):
         from strata.config import load_rejoin_split_words

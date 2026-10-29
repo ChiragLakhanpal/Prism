@@ -113,7 +113,6 @@ test("the capture list photographs ticket 60's states at their widths", () => {
     "checks--judge-silent-some-failed",
     "checks--removed-check-6-some-kept",
     "checks--removed-check-6-mixed",
-    "checks--removed-check-2",
     "checks--partial-refusal-unchecked",
     "criteria--readings-unjudged",
     "draft--conflict-exported",

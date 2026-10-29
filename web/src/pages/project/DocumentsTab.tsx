@@ -24,6 +24,7 @@ import { Num } from "../../components/Num";
 import { LoadingLabel, Skeleton, SkeletonLine } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
 import { StatusBadge } from "../../components/StatusBadge";
+import { countLineOf } from "../../components/Table";
 import { DefinitionWindow } from "../../components/Term";
 import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
@@ -358,7 +359,7 @@ export function DocumentsList({ data, pid }: { data: DocumentList; pid: string }
   return (
     <>
       <p className="text-caption text-ink-muted tabular-nums" data-documents-count>
-        {shownRows === data.total ? copy.table.showingAll(whole(data.total), words.noun) : words.showing(whole(shownRows), whole(data.total))}
+        {countLineOf(shownRows, data.total, words.countNoun)}
       </p>
       <div className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @md/page:block" data-view="table">
         <table className="w-full table-fixed border-collapse text-small">

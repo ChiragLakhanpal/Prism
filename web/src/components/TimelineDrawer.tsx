@@ -15,11 +15,11 @@ import { sourcePageHref } from "../lib/documents";
 import { evidenceHref, openEvidence } from "../lib/evidence";
 import { cx } from "../lib/cx";
 import { capitalize, shortName } from "../lib/timeline";
-import { formatDate } from "../lib/format";
+import { formatCount, formatDate } from "../lib/format";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { asOfOf, withMode } from "../lib/view";
-import { sideContext, sideInSentence, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
+import { placeWordOf, sideContext, sideInSentence, sideMeta, sideOpen, sideShort, sideTitle, subjectOf, ruleSentence, whatChanges, type SideData } from "../lib/disagreement";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
@@ -40,7 +40,7 @@ const reportLabel = (row: Record<string, any>) => {
   return row.replaced_by ? copy.timeline.replaced.replace("{label}", base) : row.reissued ? copy.timeline.reissued.replace("{label}", base) : base;
 };
 
-// The heading each view shows: "ISR 7, August 26, 2016", "ISRs 1–9, rated Satisfactory", "Contracts signed in 2019",
+// The heading each view shows: "ISR 7, August 26, 2016", "ISRs 1 to 9, rated Satisfactory", "Contracts signed in 2019",
 // "ISR 7 and ICR paragraph 78".
 export function timelineTitle(evidence: EvidenceEvent): ReactNode {
   const row = evidence.row;
@@ -212,7 +212,7 @@ function RatingsView({ evidence }: { evidence: EvidenceEvent }) {
         title={words.ratings.caption}
         level={3}
         cardsBelow="narrow"
-        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.ratings.count(String(row.count)) }}
+        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.ratings.count(row.count, formatCount(row.count)) }}
         columns={columns}
         rowHeader="isr"
         state={{
@@ -249,7 +249,7 @@ function ContractsView({ evidence }: { evidence: EvidenceEvent }) {
         title={words.contracts.tableTitle.replace("{year}", String(row.year))}
         level={3}
         cardsBelow="fit"
-        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.contracts.count(String(row.count)) }}
+        count={{ noun: copy.timeline.itemsNoun, total: row.count, text: words.contracts.count(row.count, formatCount(row.count)) }}
         columns={columns}
         rowHeader="contract"
         state={{
@@ -312,13 +312,15 @@ function DisagreementView({ evidence, renderSide }: { evidence: EvidenceEvent; r
   const panelId = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const sides = (row.sides ?? []) as SideData[];
-  // A side's tab reads "ICR ¶78", and a screen reader hears "ICR paragraph 78", as the source switcher does.
+  // A side's tab reads "ICR ¶78", and a screen reader hears "ICR paragraph 78", as the source switcher does. An ICR
+  // Review's place is a section, which has no mark: "ICR Review section 5" (the 58 critique, follow-up 2).
   const tabs: ReactNode[] = [
     words.disagreement.both,
     ...sides.map((side) => {
       const short = sideShort({ ...side, paragraph_numbered: false });
       const paragraph = side.paragraph_numbered ? side.paragraph : null;
       if (!paragraph) return short;
+      if (placeWordOf(side) !== copy.disagreement.placeWordOther) return sideShort(side);
       return (
         <span>
           {short}{" "}

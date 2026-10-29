@@ -56,7 +56,9 @@ function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void })
       className="flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
     >
       <span className="min-w-0 py-1 text-small">
-        <span className="mr-2 hidden text-ink-muted md:@min-[35rem]/box:inline">{copy.box.chipWithin}</span>
+        {/* A reference that holds a space, such as KE-UASIN GISHU COUNTY-571338-CW-RFB, is long enough without "Within",
+            which would cut the placeholder beside it (ticket 59; DESIGN.md section 5, Scope chip). */}
+        <span className={cx("mr-2 hidden text-ink-muted", !scope.includes(" ") && "md:@min-[35rem]/box:inline")}>{copy.box.chipWithin}</span>
         <MonoWords text={scope} className="align-top text-ink" />
       </span>
       {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}
@@ -91,6 +93,7 @@ export function OneBox({
   shortcut = true,
   focusedHint,
   modePlaceholder,
+  modePlaceholderShort,
   modeHelp,
   suggestions = null,
   suggestionActive = -1,
@@ -100,6 +103,8 @@ export function OneBox({
   // A mode the Packages tab put the box in (ticket 15): its own placeholder, and a help line that describes
   // the box and takes the hint's place.
   modePlaceholder?: string;
+  // The mode's placeholder below 768 px, so it is never cut (ticket 58).
+  modePlaceholderShort?: string;
   modeHelp?: string;
   // Ticket 112: focused and empty, a group of questions for the page under the hint, named by the page, in the list's
   // own option rows. None is chosen until Down or Up moves to one.
@@ -193,8 +198,10 @@ export function OneBox({
         <span className="block wrap-anywhere">{option.label}</span>
         {option.line && <span className="block text-caption wrap-anywhere text-ink-muted">{option.line}</span>}
       </span>
+      {/* Below 360 px the Enter hint hides, as the box's search icon does, so a STEP reference under the option's name
+          keeps to one line (ticket 59; DESIGN.md section 4, Breakpoints). */}
       {selected && !option.disabled && (
-        <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted">
+        <kbd aria-hidden="true" className="shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted max-xs:hidden">
           {copy.box.enter}
         </kbd>
       )}
@@ -282,7 +289,17 @@ export function OneBox({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 hidden items-center truncate text-body text-ink-muted peer-placeholder-shown:flex"
             >
-              {placeholder ? (
+              {placeholder && modePlaceholder && modePlaceholderShort ? (
+                // A mode's placeholder has a short form below 768 px too (ticket 58).
+                <>
+                  <span className="truncate md:hidden" data-placeholder>
+                    {modePlaceholderShort}
+                  </span>
+                  <span className="hidden truncate md:inline" data-placeholder>
+                    {placeholder}
+                  </span>
+                </>
+              ) : placeholder ? (
                 <span className="truncate" data-placeholder>
                   {placeholder}
                 </span>
@@ -381,7 +398,8 @@ export function stampWords(freshness: Freshness): string | null {
 
 // The data-freshness stamp: caption text, a link to the Data page with a dotted underline
 // (the mark of a value you can check), and five honest states, in a 24 px line box. It is not a live region.
-export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Freshness; href?: string }) {
+// hang: the error's icon hangs left of the stamp's edge, as at the sidebar's foot, where the stamp starts on its label's edge.
+export function FreshnessStamp({ freshness, href = "/data", hang = false }: { freshness: Freshness; href?: string; hang?: boolean }) {
   const descriptionId = useId();
   const link = (text: string) => (
     <>
@@ -408,8 +426,10 @@ export function FreshnessStamp({ freshness, href = "/data" }: { freshness: Fresh
   } else if (freshness.status === "ready") body = link(copy.stamp.ready(freshness.date));
   else if (freshness.status === "empty") body = link(copy.stamp.empty);
   else
+    // The icon hangs left of the stamp's edge, so the words start on the label's edge, as the date does, and keep to
+    // one 24 px line at the sidebar's foot (ticket 59; the 93 review).
     body = (
-      <span className="inline-flex items-center gap-1 text-caption text-ink-muted">
+      <span className={cx(hang ? "-ml-6 gap-2" : "gap-1", "inline-flex items-center text-caption text-ink-muted")} data-stamp-error>
         <CircleX aria-hidden="true" className="size-4 shrink-0 text-error-icon" />
         {copy.stamp.error}
       </span>

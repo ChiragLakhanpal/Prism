@@ -77,7 +77,7 @@ const NOT_FOUND: Route[] = [
   {
     path: "/nowhere",
     h1: "Page not found",
-    purpose: "I don't have a page at this address. Check the address, or go to Home.",
+    purpose: "I don't have a page at this address. Check the address.",
     link: ["Go to Home", "/"],
   },
   // The deck is /present, /present/{n}, /present/page and /present/notes (ticket 47); any other address under
@@ -85,7 +85,7 @@ const NOT_FOUND: Route[] = [
   {
     path: "/present/nowhere",
     h1: "Page not found",
-    purpose: "I don't have a page at this address. Check the address, or go to Home.",
+    purpose: "I don't have a page at this address. Check the address.",
     link: ["Go to Home", "/"],
   },
   {
@@ -249,7 +249,7 @@ test("the stamp is read once per page load and kept across route changes", async
     await route.fulfill({ status: 200, contentType: "application/json", body: '{"data_through": "2026-10-21"}' });
   });
   await page.goto("/");
-  await expect(page.locator("[data-stamp]")).toContainText("Data through");
+  await expect(page.locator("[data-stamp]")).toContainText("Data updated");
 
   for (const tab of ["Packages", "Projects", "Data"]) {
     await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: tab, exact: true }).click();
@@ -270,7 +270,7 @@ test("below 768 px the Menu sheet holds the items; an item opens its page, close
   // Every item, and the stamp under Data (ticket 93), shows in full in the sheet's first screen, above the view lines
   // at its foot.
   for (const link of await nav.getByRole("link").all()) await expect(link).toBeInViewport({ ratio: 1 });
-  await expect(nav.locator("[data-stamp]").getByRole("link")).toHaveText(/^Data through /);
+  await expect(nav.locator("[data-stamp]").getByRole("link")).toHaveText(/^Data updated /);
   await nav.getByRole("link", { name: "Drafts" }).click();
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Drafts");
@@ -382,8 +382,20 @@ for (const [name, path, api, words] of SHORT_STATES) {
     await expect(page.locator("main").getByText(words, { exact: false }).first(), name).toBeVisible();
     for (const width of [1440, 1024, 390]) {
       await page.setViewportSize({ width, height: 900 });
-      const top = await page.getByRole("contentinfo").evaluate((footer) => footer.getBoundingClientRect().top + window.scrollY);
+      const [top, ask, short] = await page.evaluate(() => {
+        const main = document.querySelector("main")!;
+        return [
+          document.querySelector("footer, [role=contentinfo]")!.getBoundingClientRect().top + window.scrollY,
+          document.querySelector("[data-box-slot]")!.getBoundingClientRect().height,
+          // main is only as tall as its least height: its answer is shorter than the window.
+          Number(main.getBoundingClientRect().height <= parseFloat(getComputedStyle(main).minHeight) + 1),
+        ];
+      });
       expect(top, `${name} at ${width} px`).toBeGreaterThanOrEqual(900);
+      // Ticket 59 (the 94 design review, follow-up 5): on a page whose answer is shorter than the window, the footer sits
+      // just past the fold, under the ask bar, and not a bar's height further down where the bar scrolls with the page
+      // below 1024 px.
+      if (short) expect(top - 900, `${name} at ${width} px: no empty screen to scroll past`).toBeLessThanOrEqual(ask + 1);
     }
   });
 }

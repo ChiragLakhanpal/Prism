@@ -32,9 +32,14 @@ const TWICE = SHOWN.rows.find((row) => row.evidence.length > 1) as RebidCase;
 
 const ready = (result: RebiddingResult): RebidState => ({ status: "ready", result });
 
-// A sample as wide as the workspace column at 1440 px, inside a card like section 1's.
+// A sample as wide as the workspace column at 1440 px, inside a panel like section 1's, whose geometry pads the block and
+// runs its foot strip out to the panel's edges, as the page draws it (the design review of round 1, follow-up 9).
 function Card({ children }: { children: ReactNode }) {
-  return <div className="max-w-[46.5rem] rounded-md border border-line bg-surface p-4 @md/page:p-6">{children}</div>;
+  return (
+    <div data-zone="panel" className="max-w-[46.5rem] pt-3">
+      {children}
+    </div>
+  );
 }
 
 function Block({ state, ...rest }: { state: RebidState; open?: boolean; comparing?: boolean; asOf?: string; updating?: boolean }) {

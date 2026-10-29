@@ -22,7 +22,7 @@ const MARKED = [
   "KE-NWWDA-199461-GO-RFB",
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
-const FINDING = "One needs a look and two are worth watching; three have data notes.";
+const FINDING = "One activity needs a look and two are worth watching; three have data notes.";
 // Ticket 111's narration, word for word: the step, how I check, and why it can take longer.
 const NARRATION = {
   running: "I'm checking the plan.",
@@ -85,9 +85,9 @@ test("the plan check finds every activity, states the finding, and folds the act
 
   await expect(main.getByRole("heading", { level: 1 })).toHaveText("Northern Water Works Development Agency");
   await expect(main.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
-  await expect(main.locator("[data-check-pill]")).toHaveText("9 activities checked");
+  await expect(main.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(main.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
-  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities");
+  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities.");
   await expect(view(page, "table")).toBeVisible();
   expect(await refsIn(page, "table")).toEqual(MARKED);
   const fold = view(page, "table").locator("[data-fold]:visible");
@@ -155,7 +155,7 @@ test("in the public preview the plan check is lit as Projects, its breadcrumb st
   // The finding holds the signals back, so its byline says so (DESIGN.md section 5, Byline).
   await expect(page.locator("[data-finding-block] [data-byline]")).toHaveText("Strata held back");
   const head = page.locator("[data-plan-header]");
-  await expect(head.locator("[data-check-pill]")).toHaveText("9 activities checked");
+  await expect(head.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(head.getByRole("button")).toHaveCount(0);
   await expect(head.locator("[data-draft-slot]")).toHaveCount(0);
   expect(await head.evaluate((el) => getComputedStyle(el).position)).toBe("static");
@@ -187,7 +187,7 @@ test("Show them opens the folded activities by mouse, and Hide them folds them a
   await expect(hide).toHaveAttribute("aria-expanded", "true");
   await expect(hide).toBeFocused();
   expect(await refsIn(page, "table")).toEqual([...MARKED, ...FOLDED]);
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing all 9 activities");
+  await expect(page.locator("[data-count-line]")).toHaveText("Showing all nine activities.");
   for (const ref of FOLDED) {
     await expect(view(page, "table").locator(`tr[id="${ref}"]`)).toContainText("No signals.");
   }
@@ -420,6 +420,14 @@ test("a card's Process status takes its full width, as Method does, so STEP's Pe
     await expect(status).toHaveText("Pending Implementation");
     expect(await status.evaluate(textLines), `${width} px`).toBe(1);
   }
+  // Ticket 59: the card's Description is in ink-muted and its reason in ink, so the reason reads as the finding.
+  await page.setViewportSize({ width: 390, height: 900 });
+  const color = (locator: import("@playwright/test").Locator) => locator.evaluate((element) => getComputedStyle(element).color);
+  const description = card.locator("article > p").filter({ hasText: "Equipping of Exploratory" });
+  await expect(description).toBeVisible();
+  // ink-muted, #4b5e71, and ink, #181f25 (app.css).
+  expect(await color(description)).toBe("rgb(75, 94, 113)");
+  expect(await color(card.locator("article > div > p").first())).toBe("rgb(24, 31, 37)");
 });
 
 test("from 1024 px the header sticks and focused rows stay 8 px clear of it; below 1024 px it scrolls away", async ({ page }) => {
@@ -693,13 +701,14 @@ function landing(ref: string) {
   };
 }
 
-test("a link that lands on any row leaves no row cut under the bar and the head at 1440 by 900, 1440 by 700, 1024 by 768 and 320 by 568", async ({ page }) => {
+test("a link that lands on any row leaves no row cut under the bar and the head at 1440 by 900, 1440 by 700, 1024 by 768, 1024 by 600 and 320 by 568", async ({ page }) => {
   const sizes: [number, number, number][] = [
     // Width, height, and how many parts stick: the bar and the head, the bar alone in a window under 50rem tall,
-    // and nothing below 1024 px.
+    // and nothing below 1024 px. Ticket 59's criterion 2 adds 1024 by 600.
     [1440, 900, 2],
     [1440, 700, 1],
     [1024, 768, 1],
+    [1024, 600, 1],
     [320, 568, 0],
   ];
   for (const [width, height, sticking] of sizes) {
@@ -963,7 +972,7 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
   await expect(h1).toBeFocused();
   // While the check loads, the focused h1 names the plan the address gives, never "Checking this plan.", which is no
   // heading (WCAG 2.4.6; ticket 60). The status says what I'm doing.
-  await expect(h1).toHaveText("Procurement Plan of October 9, 2026");
+  await expect(h1).toHaveAccessibleName("Procurement Plan of October 9, 2026");
 
   release();
 

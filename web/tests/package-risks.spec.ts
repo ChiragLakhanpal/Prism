@@ -24,8 +24,8 @@ type Answer = { status?: number; body: string };
 
 async function openPackage(
   page: Page,
-  { width = 1440, risks = "risks-ke-nwwda-541055-india.json", save, evidence, me = "me.json", query = "" }:
-    { width?: number; risks?: string; save?: Answer; evidence?: string; me?: string; query?: string } = {},
+  { width = 1440, risks = "risks-ke-nwwda-541055-india.json", save, evidence, risksBody, me = "me.json", query = "" }:
+    { width?: number; risks?: string; save?: Answer; evidence?: string; risksBody?: string; me?: string; query?: string } = {},
 ) {
   await page.setViewportSize({ width, height: 900 });
   const puts: Request[] = [];
@@ -34,7 +34,7 @@ async function openPackage(
     "/api/freshness": { body: await recorded("freshness.json") },
     [API]: { body: await recorded("package-ke-nwwda-541055.json") },
     [`${API}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
-    [`${API}/risks`]: { body: await recorded(risks) },
+    [`${API}/risks`]: { body: risksBody ?? (await recorded(risks)) },
     [`${API}/steps`]: { body: await recorded("steps-ke-nwwda-541055.json") },
     [`${API}/risk-selection`]: save ?? { body: await recorded("risks-selection-saved.json") },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
@@ -93,8 +93,13 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   await expect(cost.getByRole("rowheader")).toHaveText(RISK);
   await expect(cost.locator("[data-helped]")).toHaveText(LESSON);
   // The count names its reference class in its cell and its column head, as a count of the one denominator.
-  expect(await text(cost.locator("[data-count]"))).toBe("1 of 1 completion reports");
+  // One report read keeps its numerals beside "of", with the noun in the singular (the 58 design review, round 2, 3).
+  expect(await text(cost.locator("[data-count]"))).toBe("1 of 1 completion report");
   await expect(view(page).locator("thead")).toContainText("In completion reports for projects with comparable packages");
+  // The finding reads the one report as one, with no "1 of 1" (the 58 design review, follow-up 5).
+  await expect(section(page).locator("[data-finding]")).toHaveText(
+    `"${RISK}" and "Land, forest and other permits not in place before award" both came up in the one completion report I read for projects with comparable packages.`,
+  );
   const pills = cost.getByRole("list", { name: "Sources" }).getByRole("link");
   expect(await shown(pills)).toEqual(["ICR P130164 ¶54", "ICR Review 10.b"]);
   await expect(pills.first()).toHaveAccessibleName(/^ICR P130164 paragraph 54 ?, Implementation Completion and Results Report, October 10, 2019$/);
@@ -102,12 +107,43 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   const all = await text(section(page));
   expect(all).not.toMatch(/%|percent| in 10/);
   await expect(section(page).locator("[data-check-line]")).toContainText("Not checked:");
+  // Ticket 58: the intro is true in every state, and the finding reads "in 1 of 1", never "in 1 of the 1".
+  await expect(section(page)).toContainText(
+    "This section lists the procurement risks that came up again and again in the completion reports of projects with comparable packages.",
+  );
+  await expect(section(page)).not.toContainText("of the 1 completion");
+  // The count opens one report, so its tooltip says "the report", never "the 1".
+  await cost.locator("[data-count] button").focus();
+  await expect(page.getByRole("tooltip")).toContainText("Select to see the report.");
+  // The finding's "one" opens the one report, so its tooltip never says "all 1" (the 58 design review, round 2, 3).
+  await section(page).locator("[data-finding] button").first().focus();
+  await expect(page.getByRole("tooltip")).toContainText("Select to see it.");
+  await expect(page.getByRole("tooltip")).not.toContainText("all 1");
+  await expect(section(page)).toContainText("An ICR Review is a review of it by the Independent Evaluation Group (IEG).");
+  await expect(section(page)).not.toContainText("(IEG's)");
+  // The package page names Data readiness one way (the 58 critique, round 2, follow-up 4).
+  await expect(section(page).locator("[data-coverage-line]")).toContainText("See Data readiness for these sources");
   // The rows restate their records' names and lessons, which are not quotes from a page (ticket 30's review F3).
   await expect(section(page).locator("[data-check-line] [data-check-part=checked]")).toHaveText(
     "Checked: 4 of 4 numbers match records; 4 of 4 names and lessons match their records.",
   );
   await expect(section(page).locator("[data-check-line]")).not.toContainText("on their pages");
   await expect(section(page).locator("[data-removed-box]")).toHaveText("I removed no risks.");
+  // The source line lists its sources with one "and", the lesson library last (the 58 critique, round 3).
+  await expect(section(page).locator("[data-source]").last()).toContainText(
+    "Documents & Reports: Documents API, World Bank Projects & Operations and Strata's lesson library. Records",
+  );
+});
+
+// Ticket 58 (the 30 design review, F7 d): a section of rows says whether each row follows from its sources. The risks
+// table runs all six checks since ticket 61, so the gap shows only for a result that ran checks 1 to 3, set in memory.
+test("a risks result that ran checks 1 to 3 says it did not check whether each row follows from its sources", async ({ page }) => {
+  const answer = JSON.parse(await recorded("risks-ke-nwwda-541055-india.json"));
+  answer.verifier.counts.checks_run = [1, 2, 3];
+  await openPackage(page, { risksBody: JSON.stringify(answer) });
+
+  await expect(section(page).locator("[data-check-part=not-checked]")).toContainText("whether each row follows from its sources");
+  await expect(section(page).locator("[data-check-line]")).not.toContainText("whether each sentence follows");
 });
 
 test("a source click opens the drawer at its paragraph with the row's claim, the switcher and IEG's badge", async ({ page }) => {
@@ -117,7 +153,7 @@ test("a source click opens the drawer at its paragraph with the row's claim, the
   await pill.click();
 
   await expect(page).toHaveURL(new RegExp(`evidence=${encodeURIComponent(ICR_54).replace(/\./g, "\\.")}`));
-  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph 54$/);
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph\u00a054$/);
   await expect(drawer(page).locator("[data-row-claim]")).toContainText(`From this page${RISK}What helped: ${LESSON}`);
   await expect(drawer(page).locator("[data-badge='ieg-restates']")).toHaveText("IEG's review restates this lesson");
   const tabs = drawer(page).getByRole("tablist", { name: "Sources for this risk" }).getByRole("tab");
@@ -129,6 +165,13 @@ test("a source click opens the drawer at its paragraph with the row's claim, the
   await tabs.nth(1).click();
   await expect(page).toHaveURL(/evidence=strata\.gold\.passage%3A34056616/);
   await expect(drawer(page).locator("[data-ieg-line='restated']")).toBeVisible();
+  // Ticket 58: the heading names the report that is open, and an ICR Review's place has one name everywhere: the
+  // pill's "10.b", the heading's and the meta line's "section 10.b", never "paragraph 10.b" or "¶10.b".
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("ICR Review, Rajasthan Road Sector Modernization, section 10.b");
+  await expect(drawer(page).locator("[data-meta-line]")).toContainText("Section 10.b");
+  await expect(drawer(page).locator("[data-meta-line]")).not.toContainText("¶10.b");
+  // IEG is spelled out with its short form after it, never a possessive in brackets (the 58 design review, round 2, 4).
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("A review of the completion report by the Independent Evaluation Group (IEG)");
 
   await page.keyboard.press("Escape");
   await expect(drawer(page)).toHaveCount(0);
@@ -148,9 +191,10 @@ test("a row's count opens the completion reports that raised its risk, and each 
   await row(page, "cost_estimates").locator("[data-count] button").click();
 
   await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("Completion reports that raised this risk");
-  await expect(drawer(page)).toContainText(`1 of the 1 completion reports for projects with comparable packages raised "${RISK}".`);
+  // One report read, so no "1 of 1 completion reports" (the 58 design review, follow-up 5).
+  await expect(drawer(page)).toContainText(`The one completion report I read for projects with comparable packages raised "${RISK}".`);
   await drawer(page).locator(`[data-report-entry='${ICR_54}']`).click();
-  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph 54$/);
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph\u00a054$/);
   await drawer(page).getByRole("button", { name: "Back to the report" }).click();
   await expect(drawer(page).locator(`[data-report-entry='${ICR_54}']`)).toBeFocused();
   // The list lands on the report you came back from, marked with tint (ticket 105).
@@ -247,7 +291,7 @@ test("with no lesson that fits, the count of completion reports I read explains 
   const body = JSON.parse(await recorded("risks-ke-nwwda-541055-india.json"));
   await openPlanned(page, { body: JSON.stringify({ ...body, empty_reason: "no_lessons", m: 4, rows: [] }) });
   await expect(section(page).locator("[data-no-risks-title]")).toHaveText(
-    "I found 4 completion reports for projects with comparable packages, but no lesson in the library fits this package yet.",
+    "I found four completion reports for projects with comparable packages, but no lesson in the library fits this package yet.",
   );
   await section(page).locator("[data-no-risks-title] [data-num]").focus();
   await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("Completion reports of projects with comparable packages that I read.");
@@ -340,6 +384,46 @@ test("on a package from a sentence, one Try again sends again both a failed chan
 
   await expect.poll(() => posts.length).toBe(2);
   await expect.poll(() => puts.length).toBe(2);
+});
+
+// Ticket 59 (the 30 design review, F2 to F4 and F13; the 30 critique, follow-ups 2, 3, 9 and 10). At 1024 px the
+// table's pills keep to one line and How often's head no longer breaks a word or two a line, so the head is shorter;
+// at 390 px a one-line risk name sits 4 px over its count and a two-line name keeps small's 20 px leading; a failed
+// save keeps its icon on the sentence's first line; and the foot strip's lines keep to 65 characters.
+test("the table's pills keep one line, a risk's name sits on its count, a failed save keeps its icon with its words, and the notes keep to the prose width", async ({ page }) => {
+  await openPackage(page, { width: 1024, save: { status: 503, body: '{"code":"not_saved","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
+  await expect(view(page)).toHaveAttribute("data-risk-view", "table");
+  const table = view(page);
+  const pills = await table.locator("[data-source-pill]").evaluateAll((all) => all.map((pill) => Math.round(pill.getBoundingClientRect().height)));
+  expect(pills.length).toBeGreaterThan(2);
+  for (const height of pills) expect(height, "one line").toBeLessThanOrEqual(24);
+  const often = await table.locator("thead th").nth(2).evaluate((cell) => Math.round(cell.getBoundingClientRect().width));
+  expect(often, "How often's column").toBeGreaterThanOrEqual(140);
+  // The notes, the coverage line and the source line, each at most 65 characters a line.
+  const widths = await section(page).locator("[data-risk-notes] > *").evaluateAll((lines) => lines.map((line) => Math.round(line.getBoundingClientRect().width)));
+  const prose = await section(page).locator("[data-risk-notes] > p").first().evaluate((line) => parseFloat(getComputedStyle(line).maxWidth));
+  for (const width of widths) expect(width, "a foot strip line").toBeLessThanOrEqual(Math.ceil(prose));
+
+  await page.setViewportSize({ width: 390, height: 900 });
+  await expect(view(page)).toHaveAttribute("data-risk-view", "list");
+  const items = await view(page).locator("li[data-risk-row]").evaluateAll((all) =>
+    all.map((item) => {
+      const name = item.querySelector("label span.block")!;
+      const label = item.querySelector("label")!.getBoundingClientRect();
+      const count = item.querySelector("[data-count]")!.getBoundingClientRect();
+      const lines = Math.round(name.getBoundingClientRect().height / parseFloat(getComputedStyle(name).lineHeight));
+      return { lines, leading: getComputedStyle(name).lineHeight, gap: Math.round(count.top - label.bottom) };
+    }),
+  );
+  expect(items.some((item) => item.lines === 1)).toBe(true);
+  for (const item of items) expect(item, "the name over its count").toMatchObject({ leading: "20px", gap: 4 });
+
+  await view(page).getByRole("checkbox", { name: `Select ${RISK} for the PPSD` }).check();
+  const failed = section(page).locator("[data-save-failed]");
+  await expect(failed).toContainText("I couldn't save your selection.");
+  // Both boxes in one read, so a scroll between two reads cannot move one against the other.
+  const [icon, words] = await failed.evaluate((line) => [line.querySelector("svg")!, line.querySelector("span > span")!].map((part) => part.getBoundingClientRect().toJSON()));
+  expect(Math.abs(icon.y + icon.height / 2 - (words.y + 10)), "the icon on the sentence's first line").toBeLessThanOrEqual(2);
 });
 
 // The table shows where the zone gives it 49rem, as the past range's does (DESIGN.md section 5, Tables): at 1024 px. At

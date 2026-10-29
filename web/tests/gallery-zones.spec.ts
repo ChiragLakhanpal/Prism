@@ -50,6 +50,20 @@ test("a zone with evidence is a white panel with 8 px corners that ends in a foo
   ).toBe(16);
 });
 
+// The gallery shows what the app does (the 58 design review, round 3, follow-up 4): zone 4's "post-qualification" sits
+// whole on one line, and zone 1's "1 in 10" and "1.5 months" keep their words together, wide and narrow.
+test("the sequence's zone 1 and zone 4 keep a hyphenated word and a count's words whole on one line", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await openZones(page, width);
+    const whole = sequence(page).locator("section[data-section=approach]").getByText("post-qualification", { exact: true });
+    await expect(whole).toHaveCount(1);
+    expect(await whole.evaluate((one) => one.getClientRects().length)).toBe(1);
+    // The text itself, since toContainText reads a no-break space as a space.
+    const took = await sequence(page).locator("[data-zone=panel]").first().evaluate((zone) => zone.textContent);
+    expect(took).toContain("fewer than 1\u00a0in\u00a010, were signed within the plan's 1.5\u00a0months.");
+  }
+});
+
 // The workspace sample (DESIGN.md section 4, Page layouts, Workspace). Worked out by hand from section 4's grid: at
 // 1440 px with the sidebar open (224 px) and at 1280 px as a rail (64 px) the frame is 1216 px, the margin 40 and the
 // gutter 32, so the content is 1136 px and a column (1136 - 11 x 32) / 12 = 65.33 px. Columns 1 to 7 are then

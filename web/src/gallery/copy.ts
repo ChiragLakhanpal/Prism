@@ -279,10 +279,12 @@ export const galleryCopy = {
       bothSides: "A disagreement the draft showed, which changes nothing",
       judgeSilent: "The model that judges sentences did not respond, and some sentences survived",
       judgeSilentNoneKept: "The model that judges sentences did not respond, and nothing survived",
+      planNotYetPublic: "The one sentence kept cites nothing and says only what a tool could not answer",
+      uncitedBlame: "A sentence that cites nothing removed by check 4 for saying more than a tool reported",
+      uncitedSummary: "A sentence that cites nothing removed by check 2",
       judgeSilentSomeFailed: "The model that judges sentences did not respond, and another sentence failed check 1",
       disagreementsSomeKept: "Check 6 could not ask which reports disagree, and one sentence survived",
       disagreementsMixed: "Check 6 could not ask which reports disagree, and another sentence failed check 1",
-      uncited: "One sentence removed by check 2, because it cited nothing",
       refusals: "Every refusal",
       partial: "A partial refusal",
       partialUnchecked: "A partial refusal whose other sentences check 6 could not check",
@@ -306,6 +308,7 @@ export const galleryCopy = {
       summaries: "In a few words, what went wrong with the works contracts in P130164?",
       isr7: "How did the status reports rate P130164's progress towards its development objective in 2016?",
       bothSides: "Did the reports agree on how P130164 was progressing towards its development objective?",
+      planNotYetPublic: "Check the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634.",
     },
     refusalQuestions: {
       supplier_scores: "Which suppliers did the best work on P156634? Rank them for me.",
@@ -328,6 +331,8 @@ export const galleryCopy = {
     default: "Default",
     disabled: "Disabled",
     loading: "Loading",
+    // Ticket 59: words the page already knows, held as a skeleton, so their lines break where the real words' will.
+    skeletonWords: "Skeleton words: an agency's name and a caption before the check arrives",
     withIcon: "With an icon",
     iconOnly: "Icon only",
     empty: "Empty",
@@ -339,6 +344,10 @@ export const galleryCopy = {
     missing: "Missing",
     slow: "Loading, after one second",
     slowTwo: "Loading, after two seconds",
+    // Ticket 59, round 2: the held states the page draws while its answers load.
+    loadingChangeLine: "Loading, with the change line's place held under the narration",
+    loadingWithAgain: "Loading, with Advertised again's skeleton under the past range's",
+    loadingEstimate: "Loading the time estimate, with a held-back estimate's sentences held under the chart and in the summary",
     withText: "With text",
     opened: "Opened before",
     active: "Open in the drawer",
@@ -388,7 +397,7 @@ export const galleryCopy = {
     // Ticket 100: what a plan check row's reference opens in the drawer.
     planRowCheck: "A plan check row's records: the reason, what I checked, the plan row, its source and its links",
     unknown: "An ID no source has",
-    unknownAsOf: "An ID no source has as of the address's date",
+    unknownAsOf: "An ID with no source by the address's date",
     drawerPreview: "In a preview",
     // Ticket 18's kinds of passage (design review r2 P9).
     scanned: "A paragraph the layout parser read from a scanned page",
@@ -544,10 +553,12 @@ export const galleryCopy = {
     noLessons: "No lesson fits",
     asOf: "As of a date",
     loading: "Loading",
+    updating: "Updating, over 400 ms: the skeleton holds the risks' last height",
     error: "Error",
     claim: "The drawer's claim, when IEG's review restates the lesson",
     awaiting: "The IEG line, when IEG has not reviewed the project yet",
     notRestated: "The IEG line, when IEG's review did not restate the lesson",
+    iegLesson: "The IEG line, when IEG wrote the lesson itself",
     reports: "The reports behind a row's count",
     allReports: "Every report counted",
   },
@@ -808,6 +819,7 @@ export const galleryCopy = {
     rejectedLanguage: "A reason in French, with its language named",
     removedRow: "A reason the verifier removed, with the removed box",
     costNoEstimate: "The plan row gives no cost estimate for this package",
+    costQuantile: "Above 60 packages: 20 quantile dots, each 1 in 20 of the packages (mock, made up)",
     sampleNoun: "sample",
   },
 
@@ -1101,7 +1113,7 @@ export const galleryCopy = {
       },
     },
     runId: "run-0001",
-    abstention: "I'm not giving a range: only 12 comparable packages. Here are all 12.",
+    abstention: "I'm not giving a range from only 12 comparable packages. Here are all 12.",
     abstentionTitle: "The 12 comparable packages",
     abstentionNoun: "comparable packages",
     abstentionHeaders: ["Activity Reference No.", "Method", "Months from notice to contract"],
@@ -1393,7 +1405,7 @@ export const galleryCopy = {
         { type: "measured", id: "papers", source_key: "papers", label: "Sample reports", stratum: "Why", scope: { kind: "projects", count: 1 }, covers: null, cells: {
           coverage: { measure: "passages", row: 11, counts: "passages read", noun: "passages", status: null, note: null },
           linked: { measure: null, row: null },
-          read_well: { measure: "read", row: 9, counts: "body pages with their paragraph numbers found", noun: "body pages", status: "partial", note: null },
+          read_well: { measure: "read", row: 9, counts: "pages of the reports' main text with their paragraph numbers found", noun: "pages of the reports' main text", status: "partial", note: null },
           fresh: { measure: "fresh", row: 10, counts: "newest report", noun: "reports", status: null, note: null, schedule: "as published", late_days: null },
         } },
         { type: "unmeasured", id: "scores", source_key: "scores", label: "Sample scores", stratum: "What", scope: { kind: "countries", names: ["Kenya", "Bangladesh"] }, covers: null, cells: {
@@ -1415,7 +1427,7 @@ export const galleryCopy = {
       ],
       fixes: [
         { rank: 1, gap: "sample/linked", projects: 12, row: 2, projects_row: 4, projects_from: "measure", sentence: [{ text: "Find a STEP reference for the " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " sample contracts that lack one." }] },
-        { rank: 2, gap: "papers/read_well", projects: 1, row: 9, projects_row: null, projects_from: "subjects", sentence: [{ text: "Use the layout parser on the " }, { number: 20, row: 9, noun: "body pages", role: "missing" }, { text: " body pages where I found no paragraph numbers." }] },
+        { rank: 2, gap: "papers/read_well", projects: 1, row: 9, projects_row: null, projects_from: "subjects", sentence: [{ text: "Use the layout parser on the " }, { number: 20, row: 9, noun: "pages of the reports' main text", role: "missing" }, { text: " pages of the reports' main text where I found no paragraph numbers." }] },
       ],
     },
   },
@@ -1454,7 +1466,7 @@ export const galleryCopy = {
     stages: { planning: "Planning", tender: "Tender design" },
     took: {
       name: "How long it took",
-      finding: "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.",
+      finding: "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.",
       body: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
       noteLabel: "Note:",
       note: "I compared packages with the same Method (Request for Bids) and Category (Works). They were in Kenya and had notices from July 1, 2019 to October 9, 2026.",
@@ -1491,7 +1503,7 @@ export const galleryCopy = {
     approach: {
       name: "Procurement approach options",
       tag: "PPSD section 6",
-      sentence: "Three of the 49 comparable packages went with open national, 1 lot, post-qualification. The rest don't record their whole approach, so I have no other approach to compare.",
+      sentence: "Three of the 49 comparable packages went with open national, one lot, post-qualification. The rest don't record their whole approach, so I have no other approach to compare.",
     },
     criteria: {
       name: "Check your criteria",
@@ -1502,7 +1514,7 @@ export const galleryCopy = {
     },
     activities: {
       name: "Activities in this plan",
-      tag: "Showing 6 of 9 activities",
+      tag: "Showing 6 of 9 activities.",
       body: "Each activity with a signal is a row of the table here, with what I found.",
       source: "Procurement Plan of October 9, 2026, from the World Bank documents API.",
     },

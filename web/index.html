@@ -32,11 +32,12 @@
     <style>
       body { margin: 0; background: #f5f7f9; }
       [data-boot-bar] { box-sizing: border-box; height: 56px; background: #002244; }
-      [data-boot-row] { box-sizing: border-box; display: flex; align-items: center; height: 56px; padding-left: 12px; }
-      [data-boot-menu] { box-sizing: border-box; flex: none; width: 44px; height: 44px; margin-right: 12px; border: 1px solid #ffffff; border-radius: 4px; }
+      [data-boot-row] { box-sizing: border-box; display: flex; align-items: center; height: 56px; padding-left: 16px; }
+      [data-boot-menu] { box-sizing: border-box; flex: none; width: 44px; height: 44px; margin-right: 12px; border: 1px solid transparent; border-radius: 4px; }
       [data-boot-row] img { display: block; width: 120px; height: 24px; }
       [data-boot-sidebar-column] { display: none; }
       @media (width >= 22.5rem) { [data-boot-menu] { width: 6rem; } }
+      @media (width >= 48rem) and (width < 64rem) { [data-boot-row] { padding-left: 32px; } }
       @media (width >= 64rem) {
         [data-boot-row] { padding-left: 16px; }
         [data-boot-menu] { display: none; }

@@ -14,7 +14,7 @@
 //   its top, so it sticks with it. The page's bottom scroll padding follows its height while it sticks (DESIGN.md
 //   section 10): the frame's one hook sets it from data-sticky="bottom" (lib/sticky.ts; ticket 94).
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { GRADES, type Grade } from "../lib/retrieval";
@@ -52,7 +52,7 @@ export function PassageMap({ open, onToggle, count, current, graded, href, onCho
   return (
     <div className="flex flex-col gap-2" data-passage-map={open ? "open" : "closed"}>
       <div>
-        <Button variant="ghost" flush onPage icon={ChevronDown} aria-expanded={open} onClick={onToggle}>
+        <Button variant="ghost" flush onPage icon={open ? ChevronUp : ChevronDown} aria-expanded={open} onClick={onToggle}>
           {open ? words.mapHide : fillText(words.mapShow, { pool: count })}
         </Button>
       </div>
@@ -94,7 +94,7 @@ export function PassageMap({ open, onToggle, count, current, graded, href, onCho
   );
 }
 
-export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, theirs, sample = false, notice }: {
+export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, theirs, sample = false, notice, done = false }: {
   n: number;
   chosen: Grade | null;
   // Both judges finished: the buttons give way to the two grades.
@@ -107,6 +107,8 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
   sample?: boolean;
   // An alert about the grades, such as a save that failed: at the top of the bar, so it sticks with it.
   notice?: ReactNode;
+  // Every passage is graded, so a grade only changes one and opens nothing next (ticket 58).
+  done?: boolean;
 }) {
   const id = useId();
   const labelId = `${id}-label`;
@@ -136,8 +138,14 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
           </p>
           {!locked && (
             <p id={noteId} className="text-caption text-ink-muted">
-              <span className="hidden @lg/page:inline">{words.barNote}</span>
-              <span className="@lg/page:hidden">{words.barNoteNarrow}</span>
+              {done ? (
+                words.barNoteChange
+              ) : (
+                <>
+                  <span className="hidden @lg/page:inline">{words.barNote}</span>
+                  <span className="@lg/page:hidden">{words.barNoteNarrow}</span>
+                </>
+              )}
             </p>
           )}
         </div>

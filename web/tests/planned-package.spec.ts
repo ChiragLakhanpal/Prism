@@ -190,7 +190,11 @@ test("a reload of the reading page goes to the Packages tab with the box in plan
 
   await expect(page).toHaveURL("/packages");
   await expect(box(page)).toBeFocused();
-  await expect(page.locator("[data-box-slot] [data-placeholder]")).toHaveText("Describe the package in one sentence");
+  await expect(page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true })).toHaveText("Describe the package in one sentence");
+  // Below 768 px the short form, so it is never cut (ticket 58).
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true })).toHaveText("Describe the package");
+  await page.setViewportSize({ width: 1440, height: 900 });
   await expect(box(page)).toHaveAccessibleDescription(
     "Say what is being bought, where, and about how much. For example: rural roads, Kenya, about US$15 million.",
   );
@@ -198,6 +202,9 @@ test("a reload of the reading page goes to the Packages tab with the box in plan
 
 test("a sentence with no package in it keeps the sentence, saves nothing, and offers to change it or set the criteria yourself", async ({ page }) => {
   await planFromTheBox(page, { answers: { "POST /api/planned-packages": await stream("package-plan-no-package.sse") } });
+  // The purpose is true when nothing could be read, too (ticket 58; ticket 06's rule for a purpose).
+  await expect(page.locator("main")).toContainText("I turn your sentence into criteria you can change, and compare them with past packages.");
+  await expect(page.locator("main")).not.toContainText("I read your sentence as the criteria below");
 
   await expect(page).toHaveURL("/packages/new");
   await expect(page.locator("[data-planned-package=no-package]")).toBeVisible();
@@ -335,6 +342,21 @@ test("the computed note states the rules with the thresholds file's values and i
   );
 });
 
+// Ticket 58 (the 15 design review, round 3, G3): when a change empties a computed value, the note says what to do, and
+// the intro says only what I computed. The server's answer to changing the category to goods empties market approach.
+test("an emptied computed value says to choose one, and the note's intro names only what I computed", async ({ page }) => {
+  const recorded_ = JSON.parse(await recorded("planned-package-rural-roads.json"));
+  recorded_.package = JSON.parse(await recorded("planned-package-change-category-goods.json")).package;
+  await openPackage(page, { answers: { "GET /api/planned-packages/pkg-000000000001": { body: JSON.stringify(recorded_) } } });
+
+  const note = page.locator("[data-computed-note]");
+  await expect(note.locator("[data-recomputed]")).toHaveText(
+    "Market approach is now empty. The thresholds have no value for this category, so choose one yourself.",
+  );
+  await expect(note.locator("p[data-numbers]:not([data-source])")).toContainText("I computed review type from the thresholds.");
+  await expect(note).not.toContainText("I computed review type and market approach");
+});
+
 test("the number of lots editor holds the number alone, with its unit beside it, and commits it as it is", async ({ page }) => {
   await openPackage(page);
   const sent = await changes(page);
@@ -358,7 +380,10 @@ test("typing ICB into the method chip stores Request for Bids with an open inter
   await editor.getByRole("textbox", { name: "Method" }).fill("ICB");
   const first = editor.getByRole("radio").first();
   await expect(first).toHaveAccessibleName(/^Request for Bids \(RFB\)/);
-  await expect(editor).toContainText('I read "ICB" as this, the name the Procurement Regulations use now.');
+  // The caption says what else the old name sets (ticket 58).
+  await expect(editor).toContainText(
+    'I read "ICB" as this, the name the Procurement Regulations use now. This also sets market approach to Open international.',
+  );
   await page.keyboard.press("Enter");
 
   await expect(editor).toHaveCount(0);
@@ -366,7 +391,8 @@ test("typing ICB into the method chip stores Request for Bids with an open inter
   await expect(chip(page, "method")).toHaveText("Request for Bids (RFB)");
   await expect(chip(page, "market_approach")).toHaveText("Open international");
   // The value set matches what the thresholds give, so the note says so once rather than naming it twice.
-  await expect(page.locator("[data-set-by-you]")).toHaveText("You set market approach to Open international, the same as the thresholds give.");
+  // The method set the market approach, so the note says what you chose, not that you set the market approach (ticket 58).
+  await expect(page.locator("[data-set-by-you]")).toHaveText("You chose ICB, so market approach is Open international, the value the thresholds give.");
   await expect(chip(page, "method")).toBeFocused();
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved October 23, 2026");
 });
@@ -431,6 +457,62 @@ test("changing a chip that picks the comparables reruns find_comparables and red
   expect(await page.locator("[data-no-chart] h3").evaluate((reason) =>
     Boolean(reason.compareDocumentPosition(document.querySelector("[data-more]")!) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
   await expect(live(page)).toHaveText("Updated. 27 past packages matched this one, but I can't measure how long any of them took.");
+});
+
+// Ticket 59 (the 28 review, follow-ups 1 and 2; the 28 design review, F3): when a chip reruns section 1 and the
+// answers take over 400 ms, "Advertised again" stays in the card with its own skeleton, as tall as its ready part was,
+// and its reasons list is still open when its answer comes. The rerun's comparables are the Request for Bids ones again,
+// so the block has packages to count: the layout is under test here, not the facts.
+test("a slow rerun keeps Advertised again in the card with its own skeleton at its height, and its list stays open", async ({ page }) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await openPackage(page, {
+    answers: {
+      "/api/comparables?category=Works&country=KE&method=Request+for+Quotations": { body: await recorded("comparables-planned-works-rfb-ke.json"), delay: 1500 },
+    },
+  });
+  // Each block's second read waits until the test releases it. Zone 3 lists the India comparables' two risks, so it has
+  // a ready part to hold.
+  const holdSecond = async (glob: string, file: string) => {
+    let reads = 0;
+    await page.route(glob, async (route) => {
+      reads += 1;
+      if (reads > 1) await held;
+      await route.fulfill({ contentType: "application/json", body: await recorded(file) });
+    });
+  };
+  await holdSecond("**/api/rebidding?*", "rebidding-planned-works-rfb-ke.json");
+  await holdSecond("**/api/planned-packages/pkg-000000000001/risks*", "risks-ke-nwwda-541055-india.json");
+  // The first read, now that the route answers it, by a reload of the saved package; the range shows without a plan.
+  await page.reload();
+  await page.getByRole("button", { name: "Show it without a plan" }).click();
+  const block = page.locator("[data-rebidding]");
+  await expect(block).toHaveAttribute("data-rebidding", "found");
+  await block.locator("[data-rebid-disclosure]").click();
+  await expect(block.locator("[data-rebid-list]")).toBeVisible();
+  const height = () =>
+    block.evaluate((element) => Math.round(element.nextElementSibling!.getBoundingClientRect().bottom - element.getBoundingClientRect().top));
+  const risks = page.locator("section#risks");
+  await expect(risks.locator("[data-finding]")).toBeVisible();
+  const risksHeight = () => risks.evaluate((element) => Math.round(element.getBoundingClientRect().height));
+  const before = { block: await height(), risks: await risksHeight() };
+
+  await changes(page);
+  await chip(page, "method").click();
+  await page.getByRole("dialog", { name: "Method" }).locator("label", { hasText: "Request for Quotations (RFQ)" }).click();
+
+  await expect(page.locator("[data-past-range-skeleton]")).toBeVisible();
+  await expect(block.locator("[data-rebid-updating]")).toBeVisible();
+  expect(Math.abs((await height()) - before.block), "the block holds its height").toBeLessThanOrEqual(1);
+  // Zone 3 keeps its instruction and its foot strip's place, and its skeleton holds the ready part's height.
+  await expect(risks.locator("[data-risks-updating]")).toBeVisible();
+  await expect(risks).toContainText("Select the risks that belong in section 3 of the borrower's Project Procurement Strategy for Development (PPSD).");
+  expect(Math.abs((await risksHeight()) - before.risks), "zone 3 holds its height").toBeLessThanOrEqual(1);
+  release();
+  await expect(block.locator("[data-rebid-updating]")).toHaveCount(0);
+  await expect(block.locator("[data-rebid-disclosure]")).toHaveAttribute("aria-expanded", "true");
+  await expect(block.locator("[data-rebid-list]")).toBeVisible();
+  await expect(risks.locator("[data-risks-updating]")).toHaveCount(0);
 });
 
 test("a change made while the last one is still saving waits for it, so the server changes the latest save", async ({ page }) => {
@@ -747,15 +829,20 @@ test("a still-open package's records name the day its months ran to, and a cance
   const records = (ref: string) => page.getByRole("dialog", { name: `Records for comparable package ${ref}` });
 
   // tests/ground_truth/values.toml: notice OP00471871 of September 29, 2026; the page's as-of is October 23.
+  // Three sentences, with the comma after the year (ticket 58; the 15 design review, round 3, G5).
   await expect(records(ICTA).locator("[data-finding]")).toHaveText(
-    "I count this package as still open after 0.8 months, from its notice on September 29, 2026 to October 23, 2026. " +
-      "The records I hold run through October 13, 2026 and show no signed contract.",
+    "I count this package as still open after 0.8 months. I counted from its notice on September 29, 2026 to October 23, 2026. " +
+      "The records I hold run through October 13, 2026, and they show no signed contract.",
   );
+  await expect(records(ICTA).getByRole("heading", { level: 3 }).first()).toHaveText("Why I compared it");
 
   await page.goto(`${PACKAGE}?evidence=${encodeURIComponent(`strata.gold.package:${KIMAWASCO}`)}`);
   await expect(records(KIMAWASCO).locator("[data-finding]")).toHaveText(
     "This package was canceled before a contract was signed, so I left it out of the comparables.",
   );
+  // So its heading says how it matches, not why I compared it (ticket 58).
+  await expect(records(KIMAWASCO).getByRole("heading", { level: 3 }).first()).toHaveText("How it matches your criteria");
+  await expect(records(KIMAWASCO)).not.toContainText("Why I compared it");
 });
 
 test("a comparable package whose records could not load is still titled by its reference", async ({ page }) => {
@@ -974,7 +1061,7 @@ test("the Packages tab's buttons put the one box into plan mode or check mode an
 
   await page.getByRole("button", { name: "Plan a package" }).click();
   await expect(box(page)).toBeFocused();
-  await expect(page.locator("[data-box-slot] [data-placeholder]")).toHaveText("Describe the package in one sentence");
+  await expect(page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true })).toHaveText("Describe the package in one sentence");
   await page.keyboard.type(SENTENCE);
   await expect(options(page).first()).toHaveAccessibleName(/^Plan a package from this sentence/);
   await expect(options(page).first()).toHaveAttribute("aria-selected", "true");
@@ -985,9 +1072,31 @@ test("the Packages tab's buttons put the one box into plan mode or check mode an
   await expect(box(page)).toBeFocused();
   await expect(page.locator("[data-box-slot] [data-placeholder]")).toHaveText("Type a project ID, such as P156634");
   await page.keyboard.type("P156634");
-  await expect(options(page).first()).toHaveAccessibleName(/^Check the Northern Water Works Development Agency plan of October 9, 2026/);
+  // The plan's date is kept whole with no-break spaces (ticket 59, criterion 5), which \s matches.
+  await expect(options(page).first()).toHaveAccessibleName(/^Check the Northern Water Works Development Agency plan of October\s9,\s2026/);
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL("/projects/P156634/procurement/northern-water-works-development-agency");
+});
+
+// Ticket 58 (the 15 critique, round 3, follow-up 10): two packages planned from one sentence on one day looked the same
+// in the list, so a row worked on today gives its time on the reader's clock. The recording's rows were all worked on
+// October 23, 2026, so the reader's clock is set to that afternoon, in UTC.
+test.describe("on the day the rows were worked on", () => {
+  test.use({ timezoneId: "UTC" });
+  test("a row worked on today gives its time, and an older row its date", async ({ page }) => {
+    await page.clock.setFixedTime(new Date("2026-10-23T18:00:00Z"));
+    const list = JSON.parse(await recorded("planned-packages-list.json"));
+    list.rows[list.rows.length - 1].last_worked_on = "2026-10-20T09:00:00Z";
+    await serve(page, { "GET /api/planned-packages": { body: JSON.stringify(list) } });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/packages");
+    await expect(page.locator("[data-packages-page=ready]")).toBeVisible();
+
+    const last = page.locator("[data-table-view=table] [data-last-worked]");
+    await expect(last.first()).toHaveText("Today, 2:26\u00a0p.m.");
+    await expect(last.nth(1)).toHaveText("Today, 2:16\u00a0p.m.");
+    await expect(last.last()).toHaveText("Oct 20, 2026");
+  });
 });
 
 // Ticket 100 (DESIGN.md section 5, Page head and Task zone): the head holds "Check a plan" and "Plan a package" at its
@@ -1020,7 +1129,7 @@ test("the Packages head holds its two buttons at its right or under the purpose,
     await expect(list.getByRole("heading", { level: 2 })).toHaveText("You have three packages in progress and one checked plan.");
     await expect(list).toHaveAttribute("data-zone", "panel");
     await expect(list.getByRole("heading", { level: 2 })).toHaveCSS("font-size", "18px");
-    await expect(list.locator("[data-count-line]")).toHaveText("Showing all 4 packages and plans");
+    await expect(list.locator("[data-count-line]")).toHaveText("Showing all four packages and plans.");
     await expect(list.locator("[data-foot-strip] [data-source]")).toHaveText("Source: your packages and plan checks, saved in Strata.");
     // The panel is the table's frame, as All projects' is: no box inside it, and its rows start on the name's text
     // edge, 16 px under the name and its count line (the critique of ticket 100, round 1).
@@ -1290,6 +1399,8 @@ test("reopened with its plan, a planned package folds What I understood to your 
     await expect(understood.locator("[data-instruction]")).toHaveText("Choose any part to change it.");
     expect((await understood.innerText()).match(/guess to check/g), where).toHaveLength(1);
     // The plan's line says what it shows whether the row is folded or open (ticket 101's design review, round 2).
-    await expect(page.locator("[data-past-range]")).toContainText("The line shows your plan. Moving the line changes it.");
+    await expect(page.locator("[data-past-range]")).toContainText(
+      'The line shows your plan, the same months as "Your plan" in the How group. Moving the line changes your plan.',
+    );
   }
 });

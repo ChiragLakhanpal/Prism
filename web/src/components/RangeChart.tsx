@@ -13,7 +13,7 @@
 //
 // The chart is 240 px tall, in five rows: the lane label and its key (A), the plan's readout (B), the
 // lane with the middle half, the middle, the 8-in-10 line and the dots, the statistics' labels (C), and
-// the axis. From 400 px wide, a readout that takes two lines makes row B, and the chart, 16 px taller.
+// the axis. A readout that takes two lines makes row B 16 px taller and the lane 16 px shorter (ticket 59).
 // A swarm too tall for the lane makes the lane taller in 16 px steps before the first paint, and never
 // after. A reader's text spacing can make rows A, B and C taller too. Each dot's centre is exactly its
 // months, and dots that would overlap move up or down from the lane's centre in a fixed order, so the
@@ -538,14 +538,12 @@ export function RangeChart({
   const helpId = useId();
   const narrow = width < 400;
   const type = chartType(width);
-  const baseLane = narrow ? 96 : 112;
   const plotRight = width - PAD;
   const x = useCallback((months: number) => PAD + (Math.min(months, axisMax) / axisMax) * (width - 2 * PAD), [axisMax, width]);
   const monthsAt = (px: number) => ((px - PAD) / Math.max(1, width - 2 * PAD)) * axisMax;
 
   const r0 = big ? (narrow ? 5 : 6) : narrow ? 4 : 4.5;
   const xs = useMemo(() => marks.map((mark) => (mark.beyond ? plotRight - r0 - 2 : x(mark.months))), [marks, x, plotRight, r0]);
-  const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
   const widestKeys = readoutWidest.map((_, index) => [`widest${index}`, `widest${index}-0`, `widest${index}-1`] as const);
   const { widths, boxes, breaks, ref } = useTextWidths(
     ["lane", "keySigned", "keyHollow", "plan", ...READOUT_LINES, ...widestKeys.flat(), "middle", "in10", "tickLast", "tickPrev",
@@ -641,6 +639,10 @@ export function RangeChart({
   const bandEnds = bands.map((band) => (readoutKind === "wrap" ? wrapAt(band.breaks, band.one, band.room) : []));
   const readoutRows = readoutKind === "one" ? 1 : readoutKind === "copy" ? 2 : Math.max(1, ...bandEnds.map((ends) => ends.length + 1));
   const rowB = (readoutRows >= 2 ? 48 : 32) + Math.max(0, readoutRows + (ownPlan !== null ? 1 : 0) - 3) * readoutStep;
+  // The chart keeps 240 px: where the readout takes two lines, row B's 16 px more come out of the lane, which is 96 px
+  // then, as below 400 px wide (ticket 59; design-lead's call on ticket 12's design review, round 11, P1).
+  const baseLane = narrow || readoutRows >= 2 ? 96 : 112;
+  const layout = useMemo(() => fit(xs, r0, big ? r0 : 4, baseLane), [xs, r0, big, baseLane]);
   const laneTop = rowA + rowB;
   const laneBottom = laneTop + layout.lane;
   // Row C grows by a line when the middle's label takes two (breakFor).
@@ -996,10 +998,14 @@ export function RangeChart({
   const rowE2 = rowE1 + rowCStep * (middle2Break ? 2 : 1);
 
   // The axis: the label before the last one is dropped when it comes within 8 px of the last, whose
-  // tick and gridline stay.
+  // tick and gridline stay. Under 400 px wide, where that would leave one tick unlabeled among labeled ones, every
+  // second tick from 0 is labeled instead, as on the 0 to 12 axis: 0, 6, 12 months (ticket 59, item 59, as the design
+  // review of round 1 settled it). Every tick and gridline stays.
   const lastTick = ticks[ticks.length - 1];
   const prevTick = ticks.length > 2 ? ticks[ticks.length - 2] : null;
   const dropPrev = prevTick !== null && x(prevTick) + (widths.tickPrev ?? 0) / 2 > x(lastTick) - (widths.tickLast ?? 0) - 8;
+  const everySecond = dropPrev && width < 400 && (ticks.length - 1) % 2 === 0;
+  const tickShown = (index: number) => (everySecond ? index % 2 === 0 : !(ticks[index] === prevTick && dropPrev));
 
   // The tooltip covers no dot, so the pointer can move onto it and keep it (WCAG 1.4.13) and can still
   // reach every other dot: it sits above every dot in the lane when that fits inside the card, and below
@@ -1240,7 +1246,7 @@ export function RangeChart({
               y={axisY + 6 + type.s}
               textAnchor={index === 0 ? "start" : index === ticks.length - 1 ? "end" : "middle"}
               fontSize={type.s}
-              opacity={tick === prevTick && dropPrev ? 0 : 1}
+              opacity={tickShown(index) ? 1 : 0}
               data-tick-label
               className="fill-chart-text-subtle tabular-nums"
             >

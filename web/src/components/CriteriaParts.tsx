@@ -137,13 +137,9 @@ function Excerpt({ item }: { item: ComparedItem }) {
 }
 
 function Reading({ item }: { item: ComparedItem }) {
-  if (item.reading_removed) {
-    return (
-      <span className="mt-1 block">
-        <RemovedLine text={words.removedInPlace} />
-      </span>
-    );
-  }
+  // A removed reading's row says it once, in its count cells, which the comparison went with (ticket 58; the 31
+  // design review, round 3, P3).
+  if (item.reading_removed) return null;
   if (!item.reading) return null;
   return <span className="mt-1 block text-caption text-ink-muted">{item.reading}</span>;
 }
