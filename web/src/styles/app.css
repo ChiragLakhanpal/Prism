@@ -523,6 +523,12 @@
 [data-foot-strip] :has(button[data-num]) {
   line-height: calc(var(--spacing) * 6);
 }
+/* The coverage line (Checks.tsx's CoverageLine) is small ink where it stands alone; in a foot strip it is caption in
+   ink-muted, as the Note and the Source beside it are (ticket 101's design review). */
+[data-foot-strip] [data-coverage-line] {
+  font-size: var(--text-caption);
+  color: var(--color-ink-muted);
+}
 [data-zone="panel"] > [data-foot-strip]:last-child {
   border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
 }

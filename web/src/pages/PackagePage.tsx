@@ -37,10 +37,10 @@ import { Workspace } from "../components/Workspace";
 import { useAnswerInPage } from "../components/AnswerSlot";
 import { copy } from "../copy";
 import type { ComparablesResult, EstimateResult, PackageFacts, PackageResult } from "../lib/api";
-import { evidenceIn, openEvidence } from "../lib/evidence";
+import { evidenceIn } from "../lib/evidence";
 import { usePlanDateChoice } from "../lib/estimates";
 import { useLoad } from "../lib/load";
-import { useOpenComparable } from "../lib/packages";
+import { openPlanRow, useOpenComparable } from "../lib/packages";
 import { rebiddingPath } from "../lib/rebidding";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
@@ -56,8 +56,7 @@ const SECTION_1_CRITERIA = new URLSearchParams();
 
 // The plan row's record in the evidence drawer, opened from the side panel's marker, the facts line's button or the
 // finding's plan months; the opener gets focus back when it closes.
-const openPlanRow = (pkg: PackageFacts) => (element: HTMLElement) =>
-  openEvidence(pkg.evidence_id, { serial: null, sentence: null, marker: element, runId: null });
+const planRowOf = (pkg: PackageFacts) => (element: HTMLElement) => openPlanRow(pkg.evidence_id, element);
 
 export function PackagePage({ stepRef }: { stepRef: string }) {
   const base = `/api/packages/${encodeURIComponent(stepRef)}`;
@@ -172,10 +171,10 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         // Ticket 112: the copy key copies the STEP reference. The 24 px key keeps the 20 px line's height.
         idAction={<CopyKey text={facts.step_reference} what={copy.copyKey.reference} className="-my-0.5 align-top" />}
         purpose={copy.pages.package.purpose}
-        facts={{ line: factsLine(facts), show: words.factsShow, onShow: openPlanRow(facts), expanded: planRowOpen }}
+        facts={{ line: factsLine(facts), show: words.factsShow, onShow: planRowOf(facts), expanded: planRowOpen }}
       />
     );
-    side = <FactsPanel pkg={facts} opened={planRowOpen} onOpen={openPlanRow(facts)} />;
+    side = <FactsPanel pkg={facts} opened={planRowOpen} onOpen={planRowOf(facts)} />;
     const sectionState: PastRangeState =
       section.status === "loading"
         ? { status: "loading" }

@@ -95,6 +95,13 @@ test("the workspace's one solid button suggests a row for each risk you selected
   await expect(action).toContainText("The draft waits in Drafts for you to check. I send nothing.");
   await expect(page.locator("[data-ppsd-action]")).toHaveCount(1);
   await expect(page.locator("[data-page-head] [data-ppsd-action]")).toHaveCount(0);
+  // The check line touches the risks it checks, and the zone ends on its action (ticket 101's design review).
+  expect(
+    await page.locator("section#risks").evaluate((zone) => {
+      const checks = zone.querySelector("[data-risk-checks]")!;
+      return Boolean(checks.compareDocumentPosition(zone.querySelector("[data-ppsd-action]")!) & Node.DOCUMENT_POSITION_FOLLOWING);
+    }),
+  ).toBe(true);
 
   // Selecting the second risk counts it at once.
   await page.locator("section#risks [data-risk-view]:visible").getByRole("checkbox", { name: new RegExp(PERMITS) }).check();

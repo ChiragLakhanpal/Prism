@@ -54,7 +54,9 @@ export function SidePanel({
       {facts && (
         <dl className="mt-4 grid grid-cols-1 gap-4 @facts/side:grid-cols-2">
           {facts.map((fact, index) => (
-            <div key={index} data-side-fact className={cx("min-w-0", fact.wide && "@facts/side:col-span-2")}>
+            // Each fact's value sits at its cell's foot, so a label that wraps keeps the row's values on one line, as a
+            // table card's fields do (Table.tsx's CARD_FIELD; ticket 101's design review).
+            <div key={index} data-side-fact className={cx("flex min-w-0 flex-col justify-end", fact.wide && "@facts/side:col-span-2")}>
               <dt className="text-label text-ink-muted">{fact.label}</dt>
               <dd className="mt-1 text-small wrap-break-word text-ink">{loading ? <SkeletonLine width="w-3/4" /> : fact.value}</dd>
             </div>

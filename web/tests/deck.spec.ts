@@ -475,6 +475,12 @@ test("the package demo's recorded answer: no button without a recording; with on
   await expect(reading.locator("[data-recorded-toggle]")).toHaveAttribute("aria-expanded", "true");
   await expect(reading.locator("[data-recorded-answer] svg[data-chart-drawing]")).toBeVisible();
   expect(numberCheck({ "The recorded answer, reading view": await reading.evaluate((element) => element.outerHTML) })).toEqual([]);
+  // Its table lists every package at once, as it did before the package page's 20-row pages: a slide's twin pages only
+  // above the quantile dots' threshold (ticket 101's review, follow-up 3).
+  await reading.getByRole("button", { name: deckCopy.reading.showTable }).click();
+  const twin = reading.locator("[data-recorded-answer] [data-range-figure=table] [data-table-view]:visible");
+  await expect(twin.locator("tbody tr, li")).toHaveCount(comparables.rows.length);
+  await expect(reading.getByRole("button", { name: "Next 20" })).toHaveCount(0);
 });
 
 test("below the size of the canvas the deck is a page that reflows, with every slide whole, its figure text and its notes, and the footer once", async ({ page }) => {

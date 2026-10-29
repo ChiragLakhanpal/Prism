@@ -31,6 +31,7 @@ import { address } from "../lib/router";
 import { useStore } from "../lib/store";
 import { dataReadinessHref } from "../routes";
 import type { ComparablesResult } from "../lib/api";
+import { useFocusWithin } from "../lib/useFocusWithin";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { CitationMarker } from "./CitationMarker";
@@ -461,19 +462,12 @@ export function Rebidding({ path, section, sectionFailed = false, comparing = fa
   const [updating, setUpdating] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const heading = useRef<HTMLHeadingElement>(null);
-  const focusInside = useRef(false);
   const last = useRef<RebiddingResult | null>(null);
   const retried = useRef(false);
   // The block is zone 1's second block, with no element of its own around it (ticket 101): its body is the one its
   // heading sits in, and focus is tracked from the document.
   const body = () => heading.current?.closest<HTMLElement>("[data-block=again]") ?? null;
-  useEffect(() => {
-    const track = (event: FocusEvent) => {
-      focusInside.current = Boolean(body()?.contains(event.target as Node | null));
-    };
-    document.addEventListener("focusin", track);
-    return () => document.removeEventListener("focusin", track);
-  }, []);
+  const focusInside = useFocusWithin(body);
 
   useEffect(() => {
     if (!shown) return;

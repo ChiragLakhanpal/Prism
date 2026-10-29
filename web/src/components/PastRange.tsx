@@ -23,13 +23,15 @@
 //
 // Every width here is the page area's, not the window's, since the evidence drawer narrows it
 // (DESIGN.md section 4): the classes are container queries on the page column (@md/page:, @lg/page:),
-// and the summary's place follows the page column's width too. The one exception is the table twin,
-// which reads its own frame's width (@table-fit/table:, 49rem), as the comment at its columns says.
+// and the summary's place follows the page column's width too. The exceptions are the table twin,
+// which reads its own frame's width (@table-fit/table:, 49rem), as the comment at its columns says, and,
+// in the workspace from a frame of 75rem, the summary's place and the plan control's reset button, which
+// keep theirs when the drawer opens (usePageNarrow), as the zones keep their width.
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode, type Ref, type RefObject } from "react";
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult, Comparison } from "../lib/api";
-import { forgetDotList, openWentWith, rememberDots, type OpenComparable } from "../lib/packages";
+import { forgetDotList, openPlanRow, openWentWith, rememberDots, type OpenComparable } from "../lib/packages";
 import {
   CompareControl,
   dotComparisonName,
@@ -62,7 +64,6 @@ import { Source } from "./Source";
 import { Table, type Column, type Row } from "./Table";
 import { TaskZone, ZoneBlock } from "./TaskZone";
 import { TextLink } from "./TextLink";
-import { openEvidence } from "../lib/evidence";
 
 const words = copy.pastRange;
 const PAGE = 20;
@@ -86,17 +87,24 @@ export type PastRangeState =
 // there is none. The first guess is the window's, and the page column's width replaces it before the
 // first paint, so the summary never moves on screen. It reads the exact width, as the container
 // queries do, since clientWidth rounds and a page area beside the drawer has fractions of a pixel.
+// In the workspace layout, from a frame of 75rem the zones keep their place and width when the drawer narrows
+// the page area (app.css, "The workspace layout"), so the summary keeps its place too: there the page is never
+// narrow, and a dot and its records share one screen with nothing moving (principle 5; ticket 101's critique).
 function usePageNarrow(element: RefObject<HTMLElement | null>): boolean {
   const [narrow, setNarrow] = useState(() => typeof window !== "undefined" && window.matchMedia("(width < 48rem)").matches);
   useLayoutEffect(() => {
-    const column = element.current?.closest<HTMLElement>("[data-page-column]") ?? document.documentElement;
+    const node = element.current;
+    const column = node?.closest<HTMLElement>("[data-page-column]") ?? document.documentElement;
+    const frame = node?.closest("[data-workspace]") ? node.closest<HTMLElement>("[data-frame]") : null;
     const update = () => {
       const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      setNarrow(column.getBoundingClientRect().width < 48 * rem);
+      const steady = frame !== null && frame.getBoundingClientRect().width >= 75 * rem;
+      setNarrow(!steady && column.getBoundingClientRect().width < 48 * rem);
     };
     update();
     const observer = new ResizeObserver(update);
     observer.observe(column);
+    if (frame) observer.observe(frame);
     return () => observer.disconnect();
   }, [element]);
   return narrow;
@@ -738,18 +746,13 @@ function Populated({
   });
   const explainMiddle = statistic(words.explain.middle(whole(total)), filters.middle ? opensRows(words.act.middle, filters.middle) : toAll);
   const explainMedian = statistic(words.explain.median, filters.median ? opensRows(words.act.median, filters.median) : toAll);
-  const explainIn10 = statistic(words.explain.in10, filters.in10 ? opensRows(words.act.in10, filters.in10) : toAll);
+  const explainIn10 = statistic(words.explain.in10, filters.in10 && range?.q80 != null ? opensRows(words.act.in10(months1(range.q80)), filters.in10) : toAll);
   // The plan's months open the plan row they came from in the evidence drawer.
   const planWhat = pkg ? { tooltip: words.explain.plan, from: <FromLine words={planFrom(pkg.plan.implementing_agency, pkg.plan.plan_date)} /> } : null;
   const explainPlan: NumCheck | undefined = !pkg || !planWhat
     ? undefined
     : pkg.evidence_id && !figure
-      ? {
-          ...planWhat,
-          act: copy.num.act.planRow,
-          opens: "record",
-          onOpen: (element: HTMLElement) => openEvidence(pkg.evidence_id, { serial: null, sentence: null, marker: element, runId: null }),
-        }
+      ? { ...planWhat, act: copy.num.act.planRow, opens: "record", onOpen: (element: HTMLElement) => openPlanRow(pkg.evidence_id, element) }
       : planWhat;
 
   const type = chartType(width || 800);
@@ -931,6 +934,7 @@ function Populated({
       notice={result.plan?.planned_notice_on ?? null}
       signing={result.plan?.planned_signing_on ?? null}
       planned={Boolean(planned)}
+      narrow={narrow}
       onType={onType}
       onReset={reset}
     />
@@ -1041,7 +1045,17 @@ function Populated({
     return (
       <div ref={measure} data-range-figure={figure.twin ? "table" : "chart"}>
         {figure.twin ? (
-          <ComparablesTable result={result} plan={plan} page={page} onPage={setPage} captionRef={captionRef} comparison={null} />
+          // A slide's twin lists every row at once up to the quantile dots' threshold, as before the page's 20-row pages
+          // (ticket 101's review, follow-up 3).
+          <ComparablesTable
+            result={result}
+            plan={plan}
+            page={page}
+            onPage={setPage}
+            captionRef={captionRef}
+            comparison={null}
+            pageAbove={result.thresholds.quantile_dots_above}
+          />
         ) : (
           <>
             {chart}
@@ -1122,7 +1136,15 @@ function Populated({
             flush
             aria-expanded={tableOpen}
             aria-controls={ids.table}
-            onClick={() => setTableOpen((now) => !now)}
+            onClick={() => {
+              // Only a pressed number filters the table: opened by this button, it lists every package from the first
+              // page (ticket 101's review, follow-up 4).
+              if (!tableOpen) {
+                setFilter(null);
+                setPage(0);
+              }
+              setTableOpen(!tableOpen);
+            }}
           >
             {tableOpen ? words.table.hide : words.table.show}
           </Button>
@@ -1197,11 +1219,14 @@ function PlanControl({
   notice,
   signing,
   planned = false,
+  narrow,
   onType,
   onReset,
 }: {
   // A package planned from a sentence: the line is the person's own plan, with no plan row behind it.
   planned?: boolean;
+  // Whether the page lays out narrow (usePageNarrow), which places the reset button.
+  narrow: boolean;
   ids: { input: string; helper: string; error: string };
   inputRef: Ref<HTMLInputElement>;
   text: string;
@@ -1255,14 +1280,14 @@ function PlanControl({
           />
           <span className="text-small text-ink">{w.unit}</span>
         </span>
-        {resetButton("hidden @md/page:inline", false)}
+        {resetButton(narrow ? "hidden" : "inline", false)}
       </div>
       {/* One caption line is kept for the error, so it appears without moving the chart. */}
       <p id={ids.error} className="mt-1 min-h-lh text-caption text-error">
         {invalid && w.invalid(whole(maxMonths))}
       </p>
-      <div className="grid @md/page:block">
-      <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && "invisible @md/page:visible")}>
+      <div className={narrow ? "grid" : "block"}>
+      <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && narrow && "invisible")}>
         {planned ? (
           plan !== null ? w.helperPlanned : w.helperPlannedNone
         ) : notice && signing ? (
@@ -1274,7 +1299,7 @@ function PlanControl({
           w.helperNoPlan
         )}
       </p>
-      {resetButton("col-start-1 row-start-1 self-start @md/page:hidden", true)}
+      {resetButton(cx("col-start-1 row-start-1 self-start", !narrow && "hidden"), true)}
       </div>
     </div>
   );
@@ -1298,20 +1323,25 @@ function rowFilters(result: ComparablesResult): Record<RowFilter["key"], RowFilt
   const q80 = range?.q80 ?? null;
   // A filter that would leave no row is not offered: its number opens every row instead.
   const some = (filter: RowFilter | null) => (filter && result.rows.some(filter.keep) ? filter : null);
+  // Nor is "the middle package" when two or more packages share the middle's months, at one decimal.
+  const one = (filter: RowFilter | null) => (filter && result.rows.filter(filter.keep).length === 1 ? filter : null);
+  // The quartiles are Kaplan-Meier days on which a package was signed, and a package still open is censored, so every
+  // statistic's rows are signed packages, as the plan's count is (ticket 101's review, follow-up 2).
+  const signed = (row: Comparable) => !row.still_open;
   return {
     // The plan's count is the tool's own (plan.within); a plan of none counted opens no rows.
     within: some(
       plan && plan.within > 0
-        ? { key: "within", line: shown.within(whole(plan.within), total, months1(plan.months)), keep: (row) => !row.still_open && row.months <= plan.months }
+        ? { key: "within", line: shown.within(whole(plan.within), total, months1(plan.months)), keep: (row) => signed(row) && row.months <= plan.months }
         : null,
     ),
     middle: some(
       q25 !== null && q75 !== null
-        ? { key: "middle", line: shown.middle(months1(q25), months1(q75)), keep: (row) => row.months >= q25 && row.months <= q75 }
+        ? { key: "middle", line: shown.middle(months1(q25), months1(q75)), keep: (row) => signed(row) && row.months >= q25 && row.months <= q75 }
         : null,
     ),
-    median: some(q50 !== null ? { key: "median", line: shown.median(months1(q50)), keep: (row) => row.months === q50 } : null),
-    in10: some(q80 !== null ? { key: "in10", line: shown.in10(months1(q80)), keep: (row) => !row.still_open && row.months <= q80 } : null),
+    median: one(q50 !== null ? { key: "median", line: shown.median(months1(q50)), keep: (row) => signed(row) && row.months === q50 } : null),
+    in10: some(q80 !== null ? { key: "in10", line: shown.in10(months1(q80)), keep: (row) => signed(row) && row.months <= q80 } : null),
   };
 }
 
@@ -1326,9 +1356,12 @@ function ComparablesTable({
   onShowAll,
   open,
   comparison = null,
+  pageAbove = PAGE,
 }: {
   result: ComparablesResult;
   plan: number | null;
+  // Above how many rows the table pages, 20 at a time.
+  pageAbove?: number;
   page: number;
   onPage: (page: number) => void;
   captionRef: Ref<HTMLSpanElement>;
@@ -1346,7 +1379,7 @@ function ComparablesTable({
   const rows = filter ? all.filter(filter.keep) : all;
   const total = all.length;
   // Twenty rows a page (ticket 101; the plan's section 7.4: "Show all 49" shows the first 20 of 49).
-  const paged = rows.length > PAGE;
+  const paged = rows.length > pageAbove;
   const from = paged ? page * PAGE : 0;
   const shown = paged ? rows.slice(from, from + PAGE) : rows;
   // With one line per cell the six columns need about 776 px, so the table shows when its frame has
@@ -1375,6 +1408,7 @@ function ComparablesTable({
     ...(plan === null ? [] : [{ key: "within", header: t.columns.within(months1(plan)), short: true }]),
     ...(comparison ? [{ key: "wentWith", header: copy.whatIf.table.column(optionWords(comparison.lever, comparison.value).inSentence), short: true }] : []),
   ];
+  // Its source line is the zone's foot strip's, or a slide's RangeFigureLines', so the table repeats none (ticket 101).
   const tableRows: Row[] = shown.map((row) => ({
     id: row.step_reference,
     cells: {
@@ -1423,10 +1457,10 @@ function ComparablesTable({
         columns={columns}
         rowHeader="package"
         cardsBelow="fit"
+        cardRows
         cardsNote={t.columns.monthsCards}
         selected={open?.opened ?? null}
         state={{ status: "ready", rows: tableRows }}
-        source={<SourceLine result={result} />}
       />
       {paged && (
         <div className="mt-3 flex flex-wrap gap-3">

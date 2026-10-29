@@ -39,7 +39,7 @@ import { StepsSection, type StepsState } from "../components/StepsSection";
 import { PageHead } from "../components/PageHead";
 import { StageLabel } from "../components/StageLabel";
 import { TaskZone, ZoneBlock } from "../components/TaskZone";
-import { Workspace as WorkspaceLayout } from "../components/Workspace";
+import { Workspace } from "../components/Workspace";
 import { useAnswerInPage } from "../components/AnswerSlot";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
@@ -303,7 +303,7 @@ function ReadingPage() {
   const retry = current.error !== "no_reader";
   return (
     <div data-planned-package={current.phase === "no_package" ? "no-package" : failed ? "failed" : "reading"} aria-busy={!failed && current.phase === "reading"}>
-      <WorkspaceLayout
+      <Workspace
         answer={asked}
         head={<Header title={words.titleNew} headingRef={heading} stamp={<SavedStamp saving={{ status: "unsaved" }} preview={false} />} />}
       >
@@ -362,7 +362,7 @@ function ReadingPage() {
             <PastRange state={{ status: "loading" }} quiet />
           </>
         )}
-      </WorkspaceLayout>
+      </Workspace>
     </div>
   );
 }
@@ -468,25 +468,25 @@ function SavedPackage({ packageId, preview }: { packageId: string; preview: bool
       </DocumentColumn>
     );
   }
-  return <Workspace initial={page.data} preview={preview} focusHeading={handed?.focusHeading ?? false} />;
+  return <SavedWorkspace initial={page.data} preview={preview} focusHeading={handed?.focusHeading ?? false} />;
 }
 
 function LoadingPackage() {
   const asked = useAnswerInPage();
   return (
     <div data-planned-package="loading" aria-busy="true" className="min-h-svh">
-      <WorkspaceLayout answer={asked} head={<Header title={words.loading} stamp={null} loading />}>
+      <Workspace answer={asked} head={<Header title={words.loading} stamp={null} loading />}>
         <UnderstoodZone>
           <ChipSkeletons form={null} />
         </UnderstoodZone>
         <StageLabel>{copy.packagePage.stages.planning}</StageLabel>
         <PastRange state={{ status: "loading" }} />
-      </WorkspaceLayout>
+      </Workspace>
     </div>
   );
 }
 
-function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; preview: boolean; focusHeading: boolean }) {
+function SavedWorkspace({ initial, preview, focusHeading }: { initial: PlannedPage; preview: boolean; focusHeading: boolean }) {
   const form = initial.form;
   const [pkg, setPkg] = useState(initial.package);
   const [saving, setSaving] = useState<Saving>({ status: "saved", at: initial.package.saved_at });
@@ -844,7 +844,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
 
   return (
     <div data-planned-package="ready">
-      <WorkspaceLayout
+      <Workspace
         answer={asked}
         head={
           <>
@@ -939,7 +939,7 @@ function Workspace({ initial, preview, focusHeading }: { initial: PlannedPage; p
         {/* Zone 5, "Check your criteria" (ticket 31), on this package's comparables: a change of criteria reads its
             summary again. */}
         <CheckCriteria base={`/api/planned-packages/${encodeURIComponent(pkg.package_id)}`} version={queryKey(pkg)} preview={preview} />
-      </WorkspaceLayout>
+      </Workspace>
       <p role="status" className="sr-only" data-workspace-live>
         {announce}
       </p>

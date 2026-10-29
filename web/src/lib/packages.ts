@@ -309,6 +309,12 @@ export function wentWithList(result: ComparablesResult, comparison: WentWith, op
   };
 }
 
+// A package's own plan row in the evidence drawer, from the side panel's marker, the facts line's "Show the plan row"
+// or the plan's months in the finding (ticket 101): focus goes back to the element that opened it.
+export function openPlanRow(evidenceId: string, element: HTMLElement) {
+  openEvidence(evidenceId, { serial: null, sentence: null, marker: element, runId: null });
+}
+
 export function openWentWith(result: ComparablesResult, comparison: WentWith, option: string, element: HTMLElement) {
   const list = wentWithList(result, comparison, option);
   remember(list);

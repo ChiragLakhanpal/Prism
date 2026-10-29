@@ -117,10 +117,11 @@ export function FactsPanel({
   );
 }
 
-// The facts in one line, for the page head below a frame of 75rem: "Request for Bids, Open - National, US$1,230,000,
-// Pending Implementation", each value the plan row has.
+// The facts in one line, for the page head below a frame of 75rem: "Request for Bids, Open - National, US$1,230,000.00,
+// Pending Implementation", each value the plan row has. The amount keeps STEP's form with its cents, as the side panel's
+// does, so it is the tool's own rounding (plan section 7.6; CLAUDE.md rule 1; ticket 101's review, follow-up 1).
 export function factsLine(pkg: PackageFacts): ReactNode {
-  const amount = pkg.estimated_amount_usd ? words.factsAmount(formatNumber(Number(pkg.estimated_amount_usd), { decimals: 0, compact: false })) : null;
+  const amount = pkg.estimated_amount_usd ? words.factsAmount(formatNumber(Number(pkg.estimated_amount_usd), { decimals: 2, compact: false })) : null;
   const parts = [pkg.method, pkg.market_approach, amount, pkg.process_status].filter((part): part is string => Boolean(part));
   return words.factsLine(parts);
 }

@@ -78,7 +78,8 @@ const shown = (locator: Locator) =>
   );
 
 test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped, its count and its sources", async ({ page }) => {
-  await openPackage(page);
+  // The table's form, with its column heads, shows where the zone gives it 49rem: at 1024 px.
+  await openPackage(page, { width: 1024 });
 
   await expect(section(page).locator("[data-zone-tag]")).toHaveText("PPSD section 3");
   // Ticket 101: with risks to select, zone 3 is a panel.
@@ -229,11 +230,14 @@ test("on a package from a sentence, a selection saves with the package under the
   expect(puts.map((request) => request.postDataJSON())).toEqual([{ changes: { cost_estimates: true } }]);
 });
 
-for (const width of [1440, 1024, 390]) {
-  test(`the section is a ${width >= 1024 ? "table" : "list"} at ${width} px, and axe finds no WCAG 2.2 AA violation`, async ({ page }) => {
+// The table shows where the zone gives it 49rem, as the past range's does (DESIGN.md section 5, Tables): at 1024 px. At
+// 1440 px the zones keep to the work's seven columns beside the side panel, so the risks are a list there, as at 390
+// px, and no column head runs to six lines (ticket 101's design review and critique).
+for (const [width, form] of [[1440, "list"], [1024, "table"], [390, "list"]] as const) {
+  test(`the section is a ${form} at ${width} px, and axe finds no WCAG 2.2 AA violation`, async ({ page }) => {
     await openPackage(page, { width });
 
-    await expect(view(page)).toHaveAttribute("data-risk-view", width >= 1024 ? "table" : "list");
+    await expect(view(page)).toHaveAttribute("data-risk-view", form);
     expect(await axe(page)).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   });

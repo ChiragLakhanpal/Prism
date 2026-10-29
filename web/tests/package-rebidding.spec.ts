@@ -172,6 +172,9 @@ test("a canceled plan row opens with its Process Status highlighted, and a STEP 
 
   await block(page).getByRole("button", { name: "Open the records for KE-KIMAWASCO-149448-CW-RFB" }).click();
   await expect(page).toHaveURL(/evidence=strata\.gold\.package%3AKE-KIMAWASCO-149448-CW-RFB/);
+  // A canceled package is left out of the past range, so the drawer never says it is in it (ticket 101's review, B1).
+  await expect(drawer.locator("[data-comparable=canceled]")).toBeVisible();
+  await expect(drawer.locator("[data-drawer-caption]")).toHaveCount(0);
 });
 
 test("with fewer than 20 comparable packages and none advertised again, only the counts appear, then where to look next", async ({ page }) => {

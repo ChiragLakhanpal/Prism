@@ -1252,9 +1252,11 @@ test("at 1024 px with the evidence drawer open, the workspace lays out as its pa
 });
 
 // At a browser zoom such as 110 percent, the page area beside the drawer can be a fraction of a pixel
-// under 768 px. The sentence's place reads the same exact width the container queries read.
+// under 768 px. The sentence's place reads the same exact width the container queries read. At 1024 px the
+// frame is under 75rem, where the zones take the page area's width (from a frame of 75rem they keep theirs, and
+// the summary keeps its place: the drawer test at 1440 and 1280 px).
 test("a page area a fraction of a pixel under 768 px puts the sentence first, as the header and facts lay out narrow", async ({ page }) => {
-  await openPackage(page);
+  await openPackage(page, { width: 1024 });
   await ready(page);
   await page.locator("[data-page-column]").evaluate((column) => {
     column.style.flex = "none";
@@ -1323,7 +1325,20 @@ test("the past range's table shows its rows where its frame has 49rem, every cel
     const cards = section(page).locator("[data-table-view=cards]");
     await expect(view === "table" ? table : cards, where).toBeVisible();
     await expect(view === "table" ? cards : table, where).toBeHidden();
-    if (view === "cards") continue;
+    // The zone's foot strip holds the one source line, so the table repeats none of its own (ticket 101's critique).
+    await expect(section(page).locator("[data-comparables-table] [data-source]"), where).toHaveCount(0);
+    await expect(section(page).locator("[data-foot-strip] [data-source]"), where).toHaveCount(1);
+    if (view === "cards") {
+      // Inside zone 1's panel the cards are rows divided by a 1 px line, not boxes (DESIGN.md section 5, Tables).
+      const form = await cards.locator(":scope > li").evaluateAll((items) =>
+        items.map((item) => {
+          const style = getComputedStyle(item);
+          return [style.borderTopLeftRadius, style.borderLeftWidth, style.borderTopWidth].join(" ");
+        }),
+      );
+      expect(form.slice(1).every((f) => f === "0px 0px 1px"), where).toBe(true);
+      continue;
+    }
 
     // No cell's text runs past its cell, and the frame does not scroll sideways.
     expect(await spillOf(table), where).toEqual({ scroll: 0, cells: [] });
@@ -1623,8 +1638,22 @@ test("each Check a plan row links to its package's past range, named with its re
 // ── Ticket 101: the package workspace as numbered task zones, with its facts in a side panel ──────────
 
 // The facts line below a frame of 75rem: STEP's values for the package's plan row in tests/fixtures/api/package-ke-nwwda-541055.json,
-// with its Estimated Amount (US$) of 1,230,000.00 written without its cents, as the plan's section 7.6 draws it.
-const FACTS_LINE = "Request for Bids, Open - National, US$1,230,000, Pending Implementation";
+// with its Estimated Amount (US$) of 1,230,000.00 in STEP's form with its cents, as the plan's section 7.6 says facts keep
+// it (ticket 101's review, follow-up 1: the tool's rounding, CLAUDE.md rule 1).
+const FACTS_LINE = "Request for Bids, Open - National, US$1,230,000.00, Pending Implementation";
+
+test("with the sidebar open, a side panel label that wraps keeps its value on the row's line", async ({ page }) => {
+  await openSidebar(page);
+  await openPackage(page);
+  await ready(page);
+  const side = page.getByRole("region", { name: "From the plan row" });
+  const value = (label: string) => side.locator("[data-side-fact]", { has: page.getByText(label, { exact: true }) }).locator("dd");
+  const post = (await value("Review Type").boundingBox())!;
+  const amount = (await value("Estimated Amount (US$)").boundingBox())!;
+  // The two share a row of the panel's two columns, so their values line up.
+  expect(amount.x).toBeGreaterThan(post.x);
+  expect(Math.round(amount.y)).toBe(Math.round(post.y));
+});
 
 test("from a frame of 75rem the facts are the side panel From the plan row, whose marker opens the plan row in the drawer in its place while the zones keep their place", async ({ page }) => {
   await openPackage(page, { planRow: true });
@@ -1711,6 +1740,17 @@ for (const [width, height] of [
   });
 }
 
+test("only a pressed number filters the table: hidden and shown again, it lists every package", async ({ page }) => {
+  await openPackage(page);
+  await ready(page);
+  await section(page).locator("[data-finding]").getByRole("button", { name: "2", exact: true }).click();
+  const count = section(page).locator("[data-comparables-table] [data-count-row] p").first();
+  await expect(count).toHaveText("Showing the 2 of 49 packages signed within 1.5 months.");
+  await section(page).getByRole("button", { name: "Hide the table" }).click();
+  await section(page).getByRole("button", { name: "Show the table" }).click();
+  await expect(count).toHaveText("Showing 1–20 of 49 packages");
+});
+
 test("each number in the finding and the summary says what a click lands on, and every count line states only the number pressed", async ({ page }) => {
   await openPackage(page);
   await ready(page);
@@ -1730,7 +1770,7 @@ test("each number in the finding and the summary says what a click lands on, and
     ["finding", "49", "Select to see all 49.", "Showing 1–20 of 49 packages"],
     ["summary", "3.3", "Select to see the packages in the middle half.", "Showing the packages in the middle half, from 3.3 to 7.9 months."],
     ["summary", "4.4", "Select to see the middle package.", "Showing the middle package, at 4.4 months."],
-    ["summary", "9.1", "Select to see the packages signed within it.", "Showing the packages signed within 9.1 months."],
+    ["summary", "9.1", "Select to see the packages signed within 9.1 months.", "Showing the packages signed within 9.1 months."],
   ] as const) {
     const scope = where === "finding" ? section(page).locator("[data-finding]") : summary;
     const number = scope.getByRole("button", { name, exact: true }).first();
@@ -1748,6 +1788,34 @@ test("each number in the finding and the summary says what a click lands on, and
   // The middle package's row is the one at the middle's months.
   await summary.getByRole("button", { name: "4.4", exact: true }).click();
   await expect(section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody th, li > :first-child")).toHaveText(["KE-TAVEVO-151330-CW-RFB"]);
+});
+
+// The quartiles are Kaplan-Meier days on which a package was signed, and a package still open is censored (ticket 15),
+// so the middle half and the middle count only signed packages; and two packages at the middle's months are not "the
+// middle package", so its number opens every row (ticket 101's review, follow-up 2). A derived answer puts a still-open
+// package inside the middle half and a second signed package at the middle's months.
+test("the middle half and the middle list only signed packages, and a middle two packages share opens every row", async ({ page }) => {
+  const body = JSON.parse(await recorded("comparables-ke-nwwda-541055.json")) as Comparables & { past_range: { q25: number; q50: number; q75: number } };
+  const { q25, q50, q75 } = body.past_range;
+  const open = body.rows.find((row) => row.still_open)!;
+  open.months = 5;
+  body.rows.find((row) => !row.still_open && row.months > q25 && row.months < q50)!.months = q50;
+  await openPackage(page, { comparables: { body: JSON.stringify(body) } });
+  await ready(page);
+  const summary = section(page).locator("[data-summary]");
+  const refs = section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody th, li > :first-child");
+
+  await summary.getByRole("button", { name: "3.3", exact: true }).first().click();
+  const middle = body.rows.filter((row) => !row.still_open && row.months >= q25 && row.months <= q75).map((row) => row.step_reference);
+  await expect(refs).toHaveText(middle.slice(0, 20));
+  expect(middle).not.toContain(open.step_reference);
+
+  await page.mouse.move(0, 0);
+  const median = summary.getByRole("button", { name: "4.4", exact: true });
+  await median.hover();
+  await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to see all 49.");
+  await median.click();
+  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing 1–20 of 49 packages");
 });
 
 test("the plan's months in the finding open the plan row in the drawer", async ({ page }) => {
@@ -1824,6 +1892,11 @@ test("zone 1 opens on its finding in the finding style, inside the first screen 
       Math.max(...[...main.querySelectorAll<HTMLElement>("*")].filter((el) => el.offsetParent !== null && el.childNodes.length && [...el.childNodes].some((node) => node.nodeType === 3 && node.textContent!.trim())).map((el) => parseFloat(getComputedStyle(el).fontSize))),
     );
     expect(largest).toBe(width < 768 ? 24 : 28);
+    // The foot strip's three lines share one style, caption in ink-muted (DESIGN.md, Foot strip), the coverage line's
+    // 24 px line box aside, which holds its numbers' buttons (ticket 101's design review).
+    const strip = section(page).locator("[data-foot-strip]").first();
+    const look = (selector: string) => strip.locator(selector).first().evaluate((el) => [getComputedStyle(el).fontSize, getComputedStyle(el).color]);
+    expect(await look("[data-coverage-line]"), `${width} px`).toEqual(await look("[data-source]"));
   }
 });
 
@@ -1843,6 +1916,50 @@ test("below 20 comparables the sentence that holds back is zone 1's finding, the
   await expect(page.locator("[data-chart-drawing] :is([data-band], [data-middle], [data-in10])")).toHaveCount(0);
   await expect(section(page).getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   await expect(section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody tr, li")).toHaveCount(7);
+});
+
+// How far apart, in pixels, the tops of a phrase's characters sit inside an element, with a no-break space read as a
+// space: 0 when the phrase keeps to one line, a line's height or more when it breaks.
+const phraseSpread = (element: Locator, phrase: string) =>
+  element.evaluate((el, phrase) => {
+    const chars: { node: Text; at: number; ch: string }[] = [];
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+      for (let at = 0; at < node.data.length; at++) chars.push({ node, at, ch: node.data[at] });
+    }
+    const start = chars.map((c) => (c.ch === "\u00a0" ? " " : c.ch)).join("").indexOf(phrase);
+    if (start < 0) return -1;
+    const tops = chars.slice(start, start + phrase.length).filter((c) => c.ch.trim() !== "").map((c) => {
+      const range = document.createRange();
+      range.setStart(c.node, c.at);
+      range.setEnd(c.node, c.at + 1);
+      return range.getBoundingClientRect().top;
+    });
+    return Math.round(Math.max(...tops) - Math.min(...tops));
+  }, phrase);
+
+// Block 9 of the redesign's DESIGN.md text: a number and its "months" never break apart, a share of 10 stays whole, and
+// no line starts with the full stop after a number you can press (ticket 101's design review and critique, round 1).
+test("a number keeps its months, a share of 10 keeps its words, and a full stop stays with the number before it", async ({ page }) => {
+  for (const width of [1440, 1280, 1024, 390]) {
+    await openPackage(page, { width });
+    await ready(page);
+    const finding = section(page).locator("[data-finding]");
+    const summary = section(page).locator("[data-summary]");
+    expect(await phraseSpread(finding, "1 in 10,"), `${width} px`).toBeLessThan(8);
+    expect(await phraseSpread(finding, "1.5 months."), `${width} px`).toBeLessThan(8);
+    expect(await phraseSpread(summary, "4.4."), `${width} px`).toBeLessThan(8);
+    expect(await phraseSpread(summary, "9.1 months."), `${width} px`).toBeLessThan(8);
+  }
+  for (const width of [1440, 1024, 390]) {
+    await openPackage(page, {
+      width,
+      comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
+      estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
+    });
+    await ready(page);
+    expect(await phraseSpread(section(page).locator("[data-few-count]"), "1.5 months."), `${width} px`).toBeLessThan(8);
+  }
 });
 
 test("when the past range fails, zone 1 shows the error alert under its header and Advertised again still shows", async ({ page }) => {
@@ -1890,6 +2007,8 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     await ready(page);
     const zones = page.locator("[data-zones]");
     const before = (await zones.boundingBox())!;
+    const zone1 = section(page);
+    const zone1Height = (await zone1.boundingBox())!.height;
     await expect(page.getByRole("region", { name: "From the plan row" })).toBeVisible();
     const dot = page.locator('[data-dot-target][aria-label^="KE-MOWI-47509-CW-RFB,"]');
     await dot.scrollIntoViewIfNeeded();
@@ -1901,6 +2020,10 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     await expect(page.getByRole("region", { name: "From the plan row" })).toBeHidden();
     const after = (await zones.boundingBox())!;
     expect([after.x, after.width], `${width} px`).toEqual([before.x, before.width]);
+    // Nothing in zone 1 moves either (principle 5): the summary keeps its place under the chart, so the dot you
+    // clicked stays where it was, beside its records (ticket 101's critique, round 1).
+    expect(Math.round((await dot.boundingBox())!.y), `${width} px`).toBe(Math.round(spot.y));
+    expect((await zone1.boundingBox())!.height, `${width} px`).toBeCloseTo(zone1Height, 0);
     // The drawer sits where the side panel was, beside the zones.
     expect((await drawer.boundingBox())!.x).toBeGreaterThan(after.x + after.width);
     // The opened dot keeps its 2 px info-icon ring while the drawer shows it.

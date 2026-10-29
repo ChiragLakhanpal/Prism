@@ -766,8 +766,10 @@ export function EvidenceDrawerView({
                 {planRowCaption(evidence)}
               </p>
             )}
-            {/* A comparable package opened from the range chart or its table (ticket 101). */}
-            {evidence?.kind === "package" && (
+            {/* A comparable package opened from the range chart or its table (ticket 101). A canceled one, which
+                "Advertised again" opens too, is left out of the past range, so it gets no caption: the tool's own
+                rule (_is_canceled) already returns false when canceled_as_still_open keeps it in the range. */}
+            {evidence?.kind === "package" && !evidence.row.canceled && (
               <p data-drawer-caption className="mt-1 text-caption text-ink-muted">
                 {copy.evidence.package.caption}
               </p>

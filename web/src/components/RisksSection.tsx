@@ -45,6 +45,7 @@ import {
   type RisksResult,
 } from "../lib/risks";
 import { useStore } from "../lib/store";
+import { useFocusWithin } from "../lib/useFocusWithin";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
@@ -263,10 +264,11 @@ function Ready({
         from={from}
       />
       <RiskList rows={rows} m={m} findingId={findingId} selected={selected} onToggle={onToggle} preview={preview} opened={opened} handlers={handlers} packageKey={packageKey} from={from} />
-      {/* "Suggest {n} PPSD risk rows", the page's one primary action for staff, in the flow after the risks it drafts
-          from (ticket 101; DESIGN.md section 5, Task zone: an action other than Show or Hide follows its sentence). */}
-      {action && <div className="mt-4">{action}</div>}
       <Checks result={result} />
+      {/* "Suggest {n} PPSD risk rows", the page's one primary action for staff, in the flow after the risks it drafts
+          from and their check line, which touches what it checks, so the zone ends on its action (ticket 101; DESIGN.md
+          section 5, Task zone: an action other than Show or Hide follows its sentence). */}
+      {action && <div className="mt-4">{action}</div>}
     </>
   );
 }
@@ -379,7 +381,7 @@ function RiskColumns() {
 
 function Pills({ row, opened, onPill }: { row: RiskRow; opened: Opened; onPill: (source: RiskSource, element: HTMLElement) => void }) {
   return (
-    <ul aria-label={words.pillsLabel} className="flex flex-col items-start gap-2 @max-[40rem]/risks:flex-row @max-[40rem]/risks:flex-wrap">
+    <ul aria-label={words.pillsLabel} className="flex flex-col items-start gap-2 @max-[49rem]/risks:flex-row @max-[49rem]/risks:flex-wrap">
       {pillsOf(row.sources).map(({ source, withProject }) => (
         <li key={source.evidence_id} className="max-w-full">
           <SourcePill
@@ -415,11 +417,12 @@ type TableProps = {
   from: ReactNode;
 };
 
-// At 640 px of card content and wider. table-layout: fixed, so nothing shifts when values change or a row is
-// selected: Select 48 px, then Risk, How often, What helped and Sources share the rest.
+// At 49rem of card content and wider, as a Table with cardsBelow="fit" (ticket 101). table-layout: fixed, so nothing
+// shifts when values change or a row is selected: Select 48 px, then Risk, How often, What helped and Sources share
+// the rest.
 function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, opened, handlers, from }: TableProps) {
   return (
-    <div data-risk-view="table" className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
+    <div data-risk-view="table" className="mt-3 hidden rounded-md border border-line @min-[49rem]/risks:block">
       <table aria-labelledby={findingId} aria-describedby={countId} className="w-full table-fixed border-collapse text-small">
         <RiskColumns />
         <tbody>
@@ -450,10 +453,10 @@ function RiskTable({ rows, m, findingId, countId, selected, onToggle, preview, o
   );
 }
 
-// Below 640 px of card content: an ordered list, each risk's name the checkbox's label.
+// Below 49rem of card content: an ordered list, each risk's name the checkbox's label.
 function RiskList({ rows, m, findingId, selected, onToggle, preview, opened, handlers, from }: TableProps) {
   return (
-    <ol aria-labelledby={findingId} data-risk-view="list" className="mt-3 border-t border-line @min-[40rem]/risks:hidden">
+    <ol aria-labelledby={findingId} data-risk-view="list" className="mt-3 border-t border-line @min-[49rem]/risks:hidden">
       {rows.map((row) => (
         <li key={row.risk_key} data-risk-row={row.risk_key} data-open={rowIsOpen(row, opened) || undefined} className={cx("border-b border-line py-4", rowIsOpen(row, opened) && "-mx-2 rounded-md bg-tint px-2")}>
           <Checkbox checked={selected.includes(row.risk_key)} onChange={(checked) => onToggle(row.risk_key, checked)} name={words.checkbox(row.risk_label)} readOnly={preview}>
@@ -644,7 +647,7 @@ export function RisksSkeleton() {
     <div aria-hidden="true" data-risks-skeleton>
       <SkeletonText className="mt-6 max-w-prose text-h2" widths={["w-[90%]", "w-1/2"]} />
       <SkeletonLine className="mt-2 text-caption" width="w-2/5" />
-      <div className="mt-3 hidden rounded-md border border-line @min-[40rem]/risks:block">
+      <div className="mt-3 hidden rounded-md border border-line @min-[49rem]/risks:block">
         <table className="w-full table-fixed border-collapse text-small">
           <RiskColumns />
           <tbody>
@@ -671,7 +674,7 @@ export function RisksSkeleton() {
           </tbody>
         </table>
       </div>
-      <ol className="mt-3 border-t border-line @min-[40rem]/risks:hidden">
+      <ol className="mt-3 border-t border-line @min-[49rem]/risks:hidden">
         {[0, 1, 2].map((n) => (
           <li key={n} className="flex h-42 gap-4 border-b border-line py-4">
             <Skeleton className="size-5 shrink-0" />
@@ -756,18 +759,11 @@ export function RisksSection({
   const [attempt, setAttempt] = useState(0);
   const pending = useRef<Record<string, boolean>>({});
   const heading = useRef<HTMLHeadingElement>(null);
-  const focusInside = useRef(false);
   const last = useRef<RisksResult | null>(null);
   // The zone is the section its heading names (ticket 101), with no element of the page's around it, so the zones
   // keep their spacing; whether focus is inside it is tracked from the document.
   const root = () => heading.current?.closest<HTMLElement>("section") ?? null;
-  useEffect(() => {
-    const track = (event: FocusEvent) => {
-      focusInside.current = Boolean(root()?.contains(event.target as Node | null));
-    };
-    document.addEventListener("focusin", track);
-    return () => document.removeEventListener("focusin", track);
-  }, []);
+  const focusInside = useFocusWithin(root);
 
   useEffect(() => {
     const controller = new AbortController();

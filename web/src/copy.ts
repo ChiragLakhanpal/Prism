@@ -3771,14 +3771,15 @@ export const copy = {
     loading: "Loading the comparable packages.",
     error: "I couldn't load the comparable packages for this section.",
     permission: "Your account can't read Strata's tables, so I can't show the comparable packages.",
-    // The finding, at the plan row's own months.
+    // The finding, at the plan row's own months. A number keeps its "months" and a share of 10 its words, with no-break
+    // spaces, and Fill keeps a pressed number with the full stop after it (ticket 101's design review).
     title: {
-      about: "{within} of {total} comparable packages, about {in10} in 10, were signed within the plan's {plan} months.",
-      none: "None of the {total} comparable packages were signed within the plan's {plan} months.",
-      all: "All {total} comparable packages were signed within the plan's {plan} months.",
-      fewerThanOne: "{within} of {total} comparable packages, fewer than 1 in 10, were signed within the plan's {plan} months.",
-      moreThanNine: "{within} of {total} comparable packages, more than 9 in 10, were signed within the plan's {plan} months.",
-      noPlan: "The middle half of the {total} comparable packages took {q25} to {q75} months from notice to signature.",
+      about: "{within} of {total} comparable packages, about {in10}\u00a0in\u00a010, were signed within the plan's {plan}\u00a0months.",
+      none: "None of the {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      all: "All {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      fewerThanOne: "{within} of {total} comparable packages, fewer than 1\u00a0in\u00a010, were signed within the plan's {plan}\u00a0months.",
+      moreThanNine: "{within} of {total} comparable packages, more than 9\u00a0in\u00a010, were signed within the plan's {plan}\u00a0months.",
+      noPlan: "The middle half of the {total} comparable packages took {q25} to {q75}\u00a0months from notice to signature.",
       noPlanNoRange: "I found {total} comparable packages, but so many are still open that I can't place their middle half.",
       abstain: "I'm not giving a range: only {n} comparable packages. Here are all {n}.",
       abstainOne: "I'm not giving a range: only one comparable package. Here it is.",
@@ -3786,11 +3787,11 @@ export const copy = {
     // Below 20 comparable packages the sentence that holds back is the finding, and the count follows it in body, with
     // no share of 10 (DESIGN.md section 7, rule 15). {total} is in words up to nine.
     fewCount: {
-      none: "None of the {total} comparable packages were signed within the plan's {plan} months.",
-      some: "{within} of the {total} comparable packages were signed within the plan's {plan} months.",
-      all: "All {total} comparable packages were signed within the plan's {plan} months.",
-      noneOne: "The one comparable package was not signed within the plan's {plan} months.",
-      allOne: "The one comparable package was signed within the plan's {plan} months.",
+      none: "None of the {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      some: "{within} of the {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      all: "All {total} comparable packages were signed within the plan's {plan}\u00a0months.",
+      noneOne: "The one comparable package was not signed within the plan's {plan}\u00a0months.",
+      allOne: "The one comparable package was signed within the plan's {plan}\u00a0months.",
     },
     // What a click on each number in the finding and the summary does: it opens the table filtered to the rows the
     // number counts (ticket 101), as its tooltip's action line says.
@@ -3798,7 +3799,8 @@ export const copy = {
       within: (count: number, words: string) => (count === 1 ? "Select to see the package." : `Select to see the ${words} packages.`),
       middle: "Select to see the packages in the middle half.",
       median: "Select to see the middle package.",
-      in10: "Select to see the packages signed within it.",
+      // With the tool's own number, so a tooltip read alone leaves nothing open (ticket 101's design review).
+      in10: (q80: string) => `Select to see the packages signed within ${q80}\u00a0months.`,
     },
     subtitle: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
     subtitleDots:
@@ -3806,8 +3808,8 @@ export const copy = {
     summary: {
       middle: "The middle half of these packages took {q25} to {q75} months, and the middle one took {q50}.",
       // With no plan dates the title already gives the middle half, so the summary starts here.
-      middleOnly: "The middle one took {q50} months.",
-      in10: "8 in 10 were signed within {q80} months.",
+      middleOnly: "The middle one took {q50}\u00a0months.",
+      in10: "8\u00a0in\u00a010 were signed within {q80}\u00a0months.",
       noIn10: "Fewer than 8 in 10 of these packages have been signed so far, so I can't say when 8 in 10 were signed.",
       noUpper: "So many of these packages are still open that I can't place the upper edge of the middle half.",
       openMany: "{open} of the {total} are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was.",
@@ -3985,7 +3987,7 @@ export const copy = {
         monthsNote: "From notice to signature, or so far if still open",
         // Cards have no column heads, so the Months definition ends the count line's row once.
         monthsCards: "Months run from notice to signature, or so far if still open.",
-        within: (months: string) => `Signed within ${months} months`,
+        within: (months: string) => `Signed within ${months}\u00a0months`,
       },
       stillOpen: "Still open",
       yes: "Yes",

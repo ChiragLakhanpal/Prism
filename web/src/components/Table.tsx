@@ -99,6 +99,9 @@ const n = (value: number) => formatNumber(value, { compact: false });
 // (web/src/components/PlanCheck.tsx) use the same grid and fields.
 export const CARD_FIELDS = "grid grid-cols-[repeat(auto-fit,minmax(7.5rem,1fr))] gap-x-4 gap-y-2";
 export const CARD_FIELD = "flex min-w-0 flex-col justify-end";
+// A card as a row of the panel around it (cardRows): a 1 px line over each card after the first, and 12 px sides that
+// reach into the panel's body, so a selected row's tint keeps its text off its edges.
+const CARD_ROW = "-mx-3 border-t border-line px-3 py-4 first:border-t-0 first:pt-2";
 const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
 const cardField = (column: Column, shared: boolean) => cx(CARD_FIELD, !(sharesGrid(column) && shared) && "col-span-full");
 
@@ -125,6 +128,7 @@ export function Table({
   countLead = false,
   selected,
   inPanel = false,
+  cardRows = false,
   countRef,
   countAction,
 }: {
@@ -161,6 +165,9 @@ export function Table({
   // those edges, and its cards are rows divided by a line (app.css, "A table in a panel"). The zone names it
   // (labelledBy), and the panel's foot strip holds its source.
   inPanel?: boolean;
+  // A table inside a panel's body, as the past range's in zone 1 (ticket 101): the panel frames its cards, so they are
+  // rows divided by a 1 px line, not boxes; the table keeps its own frame and title.
+  cardRows?: boolean;
   // The count line, which a caller moves focus to, as the past range does when a pressed number lands on the rows it
   // counts (ticket 101): the line then takes focus without a tab stop.
   countRef?: Ref<HTMLParagraphElement>;
@@ -254,7 +261,8 @@ export function Table({
                   data-numbers
                   data-page-lead={countLead || undefined}
                   tabIndex={countLead || countRef ? -1 : undefined}
-                  className="focus:outline-none"
+                  // A keyboard press that lands here shows the focus ring; a pointer's shows none (ticket 101's design review).
+                  className="[&:not(:focus-visible)]:outline-none"
                 >
                   {busy ?? countText(count)}
                 </p>
@@ -345,10 +353,10 @@ export function Table({
         aria-labelledby={loading ? undefined : titleId}
         aria-hidden={loading || undefined}
         data-table-view="cards"
-        className={cx("flex flex-col", !inPanel && "gap-3", SHOW[cardsBelow].cards)}
+        className={cx("flex flex-col", !inPanel && !cardRows && "gap-3", SHOW[cardsBelow].cards)}
       >
         {skeletonRows.map((index) => (
-          <li key={index} className={inPanel ? "border-t border-line py-4" : "rounded-md border border-line bg-surface p-4"}>
+          <li key={index} className={inPanel ? "border-t border-line py-4" : cardRows ? CARD_ROW : "rounded-md border border-line bg-surface p-4"}>
             {skeletonHeader ? <div className="text-small">{skeletonHeader}</div> : <SkeletonLine className="text-small" width="w-3/5" />}
             <dl className={cx("mt-2", CARD_FIELDS)}>
               {fields.map((column) => (
@@ -366,7 +374,10 @@ export function Table({
           <li
             key={row.id}
             data-selected={row.id === selected || undefined}
-            className={cx(inPanel ? "border-t border-line py-4" : "rounded-md border border-line p-4", row.id === selected ? "bg-tint" : "bg-surface")}
+            className={cx(
+              inPanel ? "border-t border-line py-4" : cardRows ? CARD_ROW : "rounded-md border border-line p-4",
+              row.id === selected ? "bg-tint" : "bg-surface",
+            )}
           >
             {createElement(cardHeading, { className: "text-small font-semibold wrap-break-word text-ink-heading" }, row.cells[rowHeader])}
             <dl className={cx("mt-2", CARD_FIELDS)} data-numbers>
