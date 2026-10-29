@@ -44,6 +44,7 @@ import { ReasonGroup } from "./ReasonsList";
 import { Skeleton, SkeletonLine } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge } from "./StatusBadge";
+import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 
 const words = copy.rebid;
@@ -128,13 +129,23 @@ export function RebiddingView({
         <h3 ref={headingRef} id={headingId} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
           {words.heading}
         </h3>
-        <StatusBadge kind="experimental" />
+        {/* The Experimental badge's window says why the count needs care and, when my model gives no estimate, why
+            not (ticket 126; DESIGN.md section 7, rule 32): the badge already says the count is experimental. */}
+        <DefinitionWindow
+          openOnHover
+          inText={false}
+          label={<StatusBadge kind="experimental" />}
+          title={copy.badge.experimental}
+          triggerClassName="no-underline"
+        >
+          <p data-rebid-why>{words.why}</p>
+          {result && !(result.model.shown && result.model.track_record) && (
+            <p className="mt-2" data-rebid-model-off={result.model.not_shown_reason ?? "no_results"}>
+              <ModelOff model={result.model} />
+            </p>
+          )}
+        </DefinitionWindow>
       </div>
-      {state.status !== "error" && (
-        <p className="mt-2 max-w-prose text-caption text-ink-muted" data-rebid-why>
-          {words.why}
-        </p>
-      )}
       {loading && <RebidSkeleton />}
       {updating && (
         <div className={cx(lastHeight !== null && "overflow-hidden")} style={{ height: lastHeight ?? undefined }} data-rebid-updating>
@@ -227,15 +238,28 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, op
   // plan's rows, in Documents & Reports) and, when any was advertised again, opens the list below (ticket 96).
   const records = recordsFrom(result.sources, result.records_through, result.sources.map((source) => source.key));
   // A count standing alone is one to nine in words; "{n} of the {m}" keeps its numerals (DESIGN.md section 7, rule 12).
-  const count = (value: number, tooltip: string, act: string, alone = false) => {
+  // A count of a different whole than the past range's says why in its tooltip (ticket 126): "I counted 51 packages
+  // here and 48 in the past range, because ...", which was a caption under the count until then.
+  const why = different ? (
+    <Fill
+      template={words.denominator}
+      slots={{
+        m: <Num value={m} options={{ compact: false }} />,
+        total: <Num value={result.past_range_total} options={{ compact: false }} />,
+        reason: words.denominatorReasons[result.denominator_reason!] ?? result.denominator_reason!,
+      }}
+    />
+  ) : null;
+  const withWhy = (tip: string): ReactNode => (why ? <>{tip} {why}</> : tip);
+  const count = (value: number, tooltip: ReactNode, act: string, alone = false) => {
     const base = { tooltip, from: records ? <FromLine words={records} /> : undefined };
     const check = n > 0 ? { ...base, act, opens: "rows" as const, onOpen: toRows } : base;
     return alone ? <Num count={value} check={check} /> : <Num value={value} options={{ compact: false }} check={check} />;
   };
   const nNum = count(n, words.tips.n, words.tips.nAct);
-  const mNum = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct);
+  const mNum = count(m, different ? withWhy(words.tips.mOther) : words.tips.m, words.tips.mAct);
   // With none advertised again, {m} says what it counted and opens nothing, since there is nothing to see (ticket 58).
-  const mAlone = count(m, n === 0 ? words.tips.mNone : different ? words.tips.mOther : words.tips.m, words.tips.mAct, true);
+  const mAlone = count(m, withWhy(n === 0 ? words.tips.mNone : different ? words.tips.mOther : words.tips.m), words.tips.mAct, true);
   const sentence =
     n === 0 ? (
       <Fill template={words.countNone} slots={{ m: mAlone }} />
@@ -252,19 +276,6 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, op
       <p className="mt-3 max-w-prose text-body text-pretty text-ink" data-rebid-count>
         {sentence}
       </p>
-      {different && (
-        <p className="mt-1 max-w-prose text-caption text-ink-muted" data-rebid-denominator>
-          <Fill
-            template={words.denominator}
-            slots={{
-              m: <Num value={m} options={{ compact: false }} />,
-              total: <Num value={result.past_range_total} options={{ compact: false }} />,
-              reason: words.denominatorReasons[result.denominator_reason!] ?? result.denominator_reason!,
-            }}
-          />
-        </p>
-      )}
-      {comparing && <p className="mt-1 max-w-prose text-caption text-ink-muted" data-rebid-compare>{words.compareNote}</p>}
       <ModelLines model={result.model} />
       {n > 0 ? (
         <div className="mt-4">
@@ -281,9 +292,10 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, op
           </Button>
         </div>
       ) : (
+        // The coverage line under the block says what is missing, so no sentence says a missing notice hides a package
+        // (ticket 126); the link to the notices' readiness stays.
         <div className="mt-4" data-rebid-next>
-          <p className="max-w-prose text-small text-ink">{words.noneNext}</p>
-          <p className="mt-1">
+          <p>
             <TextLink href={dataReadinessHref(result.notice_source_keys, "rebidding_risk")} className="text-small">
               {words.noneLink}
             </TextLink>
@@ -339,22 +351,26 @@ function ModelLines({ model }: { model: RebidModel }) {
       </>
     );
   }
+  // Why I give no estimate is in the Experimental badge's window since ticket 126 (ModelOff), so nothing shows here.
+  return null;
+}
+
+// "I'm not giving an estimate, because ...": the first-person sentence the Experimental badge's window holds (ticket
+// 126; DESIGN.md section 7, rules 16 and 32). Its numbers stay numbers; inside the window they open nothing more.
+function ModelOff({ model }: { model: RebidModel }) {
+  const track = model.track_record;
+  const baseline = track ? (words.baselines[track.baseline_code] ?? words.baselines.comparables_rate) : words.baselines.comparables_rate;
   const reason = model.not_shown_reason ?? "no_results";
-  const tip = track ? { tooltip: words.tips.track, from: <FromLine words={testsFrom(track.run_date)} /> } : null;
-  // The smallest count the model gives an estimate from is one of my settings, as the scored run used it.
-  const setting = model.score_date ? <FromLine words={settingsFrom(model.score_date)} /> : undefined;
   return (
-    <p className="mt-2 max-w-prose text-body text-pretty text-ink" data-rebid-model-off={reason}>
-      <Fill
-        template={words.off[reason] ?? words.off.no_results}
-        slots={{
-          min: <Num value={model.min_comparables} options={{ compact: false }} check={{ tooltip: words.tips.min, from: setting }} />,
-          n: track && tip ? <Num value={track.n_test} options={{ compact: false }} check={tip} /> : "",
-          year: track ? <Num year={track.test_year} /> : "",
-          baseline,
-        }}
-      />
-    </p>
+    <Fill
+      template={words.off[reason] ?? words.off.no_results}
+      slots={{
+        min: <Num value={model.min_comparables} options={{ compact: false }} />,
+        n: track ? <Num value={track.n_test} options={{ compact: false }} /> : "",
+        year: track ? <Num year={track.test_year} /> : "",
+        baseline,
+      }}
+    />
   );
 }
 
@@ -446,16 +462,13 @@ function CaseRow({ row, through, numbers, openId, visited, handlers }: {
 
 function RebidSkeleton() {
   return (
-    <div aria-hidden="true" className="mt-3 flex flex-col gap-2" data-rebid-skeleton>
+    <div aria-hidden="true" className="mt-3 flex flex-col" data-rebid-skeleton>
+      {/* The count sentence alone since ticket 126: why it needs care, and why my model gives no estimate, are in the
+          Experimental badge's window, and the denominator's reason in its count's tooltip. It takes a second line below
+          a page area of 28rem (measured on the fixture's demo package at 320 to 1440 px), then the list's button. */}
       <SkeletonLine className="text-body" width="w-[70%]" />
-      <SkeletonLine className="text-body" width="w-[90%]" />
-      {/* The sentences take a line more below a page area of 34rem, and another below 22.5rem (ticket 59, measured on
-          the fixture's demo package at 320 to 1440 px). */}
-      <SkeletonLine className="hidden text-body @max-[34rem]/page:flex" width="w-4/5" />
-      <SkeletonLine className="hidden text-body @max-[22.5rem]/page:flex" width="w-3/5" />
-      <SkeletonLine className="text-caption" width="w-4/5" />
-      <Skeleton className="mt-2 h-11 w-60" radius="rounded-sm" />
-      <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
+      <SkeletonLine className="hidden text-body @max-[28rem]/page:flex" width="w-2/5" />
+      <Skeleton className="mt-4 h-11 w-60" radius="rounded-sm" />
     </div>
   );
 }

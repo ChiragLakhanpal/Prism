@@ -48,6 +48,7 @@ test("the box list and the answer panel keep a STEP reference whole, and the che
   await page.keyboard.press("Enter");
   const panel = page.getByRole("region", { name: "Answer" });
   await expect(panel.locator("[data-answer]:not([data-answer=streaming])")).toBeVisible();
+  // The question you typed names no package, so the Asked line names it (ticket 126 keeps the line then).
   await expect(panel.locator("[data-asked]")).toContainText(`Asked within ${PACKAGE}`);
   await atEachWidth(page, async (width) => {
     const asked = await brokenReferences(page, "[data-answer-panel] [data-asked]");
@@ -58,10 +59,12 @@ test("the box list and the answer panel keep a STEP reference whole, and the che
     const answer = await brokenReferences(page, "[data-answer-panel]");
     expect(answer.found, `${width} px: the references in the panel`).toBeGreaterThanOrEqual(3);
     expect(answer.broken, `${width} px`).toEqual([]);
-    const label = await brokenInside(page, "[data-answer-panel] [data-check-line]", WHOLE.notChecked);
-    expect(label.found, `${width} px: the check line's label`).toBe(1);
-    expect(label.broken, `${width} px`).toEqual([]);
   });
+  // Not checked: is in "How was that checked?" since ticket 126, and keeps its label whole there.
+  await panel.getByRole("button", { name: "How was that checked?" }).click();
+  const label = await brokenInside(page, "[role=dialog] [data-how-not-checked]", WHOLE.notChecked);
+  expect(label.found, "320 px: the window's label").toBe(1);
+  expect(label.broken, "320 px").toEqual([]);
 });
 
 // The verifier of round 2: the advice answer names the same two still-open packages in its sentences.
@@ -79,8 +82,9 @@ test("the answer panel keeps each STEP reference whole in the advice answer's se
   await askFromTheBox(page, "What should I watch for");
   await landed(page);
   await atEachWidth(page, async (width) => {
+    // The two still-open packages its sentences name; the Asked line that named the third went in ticket 126.
     const { found, broken } = await brokenReferences(page, "[data-answer-panel]");
-    expect(found, `${width} px: the references in the panel`).toBeGreaterThanOrEqual(3);
+    expect(found, `${width} px: the references in the panel`).toBeGreaterThanOrEqual(2);
     expect(broken, `${width} px`).toEqual([]);
   });
 });

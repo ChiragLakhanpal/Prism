@@ -10,6 +10,7 @@
 // other cells as a definition list. Both are in the page, and the container query shows one.
 import { useState, type ReactNode } from "react";
 import { copy } from "../copy";
+import { Abbr } from "./Abbreviations";
 import type { EvidenceEvent } from "../lib/answer";
 import type { BriefRecord, DraftNote } from "../lib/drafts";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
@@ -161,7 +162,22 @@ function historyOf(note: DraftNote): Table | null {
   };
 }
 
-function TableView({ title, data, folded }: { title: ReactNode; data: Table; folded: boolean }) {
+type Abbreviated = { short: string; spelled: string };
+
+// A column head with its abbreviation as a window, such as "Progress towards achievement of PDO".
+function headWords(name: string, abbr?: Abbreviated): ReactNode {
+  if (!abbr || !name.includes(abbr.short)) return name;
+  const [before, ...after] = name.split(abbr.short);
+  return (
+    <>
+      {before}
+      <Abbr short={abbr.short} spelled={abbr.spelled} />
+      {after.join(abbr.short)}
+    </>
+  );
+}
+
+function TableView({ title, data, folded, abbr }: { title: ReactNode; data: Table; folded: boolean; abbr?: Abbreviated }) {
   const rows = folded ? data.rows.slice(0, AWARDS_SHOWN) : data.rows;
   return (
     <>
@@ -172,7 +188,7 @@ function TableView({ title, data, folded }: { title: ReactNode; data: Table; fol
             <tr>
               {data.head.map((name, index) => (
                 <th key={name} scope="col" className={cx("px-3 py-3 align-bottom font-bold text-ink-heading", data.rows[0]?.cells[index]?.numeric && "text-right")}>
-                  {name}
+                  {headWords(name, abbr)}
                 </th>
               ))}
             </tr>
@@ -221,7 +237,7 @@ function TableView({ title, data, folded }: { title: ReactNode; data: Table; fol
             <dl className="mt-1 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-x-4 gap-y-1 text-small">
               {row.cells.slice(1).map((cell, index) => (
                 <div key={index} className="contents">
-                  <dt className="min-w-0 text-caption text-ink-muted [overflow-wrap:anywhere]">{data.head[index + 1]}</dt>
+                  <dt className="min-w-0 text-caption text-ink-muted [overflow-wrap:anywhere]">{headWords(data.head[index + 1], abbr)}</dt>
                   <dd className={cx("min-w-0 text-ink [overflow-wrap:anywhere]", cell.numeric && "text-right tabular-nums")}>{cell.text}</dd>
                 </div>
               ))}
@@ -233,15 +249,16 @@ function TableView({ title, data, folded }: { title: ReactNode; data: Table; fol
   );
 }
 
-function PartTable({ title, data, caption, foldable = false }: { title: ReactNode; data: Table; caption?: string; foldable?: boolean }) {
+// abbr: an abbreviation in the column heads, such as PDO, written short with the window that spells it out (ticket 126,
+// pattern 4), where a caption under the title spelled it out until then.
+function PartTable({ title, data, abbr, foldable = false }: { title: ReactNode; data: Table; abbr?: Abbreviated; foldable?: boolean }) {
   const [all, setAll] = useState(false);
   const folds = foldable && data.rows.length > AWARDS_SHOWN;
   return (
     <div className="mt-4">
       <p className="text-small font-bold text-ink-heading">{title}</p>
-      {caption && <p className="mt-1 text-caption text-ink-muted">{caption}</p>}
       <div className="mt-2">
-        <TableView title={title} data={data} folded={folds && !all} />
+        <TableView title={title} data={data} folded={folds && !all} abbr={abbr} />
       </div>
       {folds && (
         <Button className="mt-2" variant="ghost" flush onPage aria-expanded={all} onClick={() => setAll(!all)}>
@@ -294,7 +311,7 @@ export function MissionBriefParts({ notes, evidence, numbers, opened, open, subj
                 <p className="max-w-[72ch] text-body text-ink-muted">{words.allRemoved}</p>
               )}
             </div>
-            {data && <PartTable title={tableTitle} data={data} caption={note.key === "ratings" ? words.pdo : undefined} foldable={note.key === "awards"} />}
+            {data && <PartTable title={tableTitle} data={data} abbr={note.key === "ratings" ? { short: words.pdoShort, spelled: words.pdo } : undefined} foldable={note.key === "awards"} />}
             {/* The tool's flag, worded as the Summary's Money table words it: the browser compares no amounts. */}
             {data && note.key === "disbursement" && note.totals?.amounts_exceed_commitment && (
               <p className="mt-2 max-w-[72ch] text-caption text-ink-muted" data-exceeds>

@@ -16,9 +16,11 @@ import { useEffect, useId, useMemo, useState, type ReactNode } from "react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
+import { Disclosure } from "../components/Disclosure";
 import { EightColumns } from "../components/EightColumns";
 import { Fill } from "../components/Fill";
 import { LoadError } from "../components/LoadError";
+import { MadeBy } from "../components/MadeBy";
 import { Num } from "../components/Num";
 import { PageHeader } from "../components/PageHeader";
 import { ProjectIdText } from "../components/ProjectId";
@@ -77,18 +79,18 @@ export function FollowingPage({ search }: { search: string }) {
     if (data) for (const event of data.evidence) remember(event);
   }, [data]);
 
-  // A viewer who cannot follow (a preview, or not World Bank staff) gets All projects' purpose, not Following's. Following
-  // and All projects are the sidebar's items under Projects (ticket 99), so the page has no row of its own to switch.
-  const header = (purpose: string = copy.pages.following.purpose) => (
+  // Following and All projects are the sidebar's items under Projects (ticket 99), so the page has no row of its own to
+  // switch. Its title has no purpose under it (ticket 126).
+  const header = (
     <div className="col-span-12">
-      <PageHeader title={copy.pages.following.title} purpose={purpose} />
+      <PageHeader title={copy.pages.following.title} />
     </div>
   );
 
   if (view !== "staff") {
     return (
       <div className="layout-grid" data-following-page="preview">
-        {header(copy.pages.projects.purpose)}
+        {header}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState
             title={view === "piu" ? words.previewPiuTitle : words.previewPublicTitle}
@@ -101,7 +103,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (load.status === "error" && load.error?.status === 403 && load.error.body.code === "not_staff") {
     return (
       <div className="layout-grid" data-following-page="not-staff">
-        {header(copy.pages.projects.purpose)}
+        {header}
         <EightColumns className="col-span-12 mt-8">
           <EmptyState title={words.notStaffTitle} body={words.notStaffBody} link={{ href: "/projects", text: words.notStaffLink }} />
         </EightColumns>
@@ -111,7 +113,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (load.status === "error") {
     return (
       <div className="layout-grid" data-following-page="error">
-        {header()}
+        {header}
         <EightColumns className="col-span-12 mt-8">
           <h2 className="sr-only">{words.heading}</h2>
           <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
@@ -122,7 +124,7 @@ export function FollowingPage({ search }: { search: string }) {
   if (!data) {
     return (
       <div className="layout-grid" data-following-page="loading" aria-busy="true">
-        {header()}
+        {header}
         <div className="col-span-12 mt-8">
           <p role="status" className="sr-only">
             {words.loading}
@@ -134,7 +136,7 @@ export function FollowingPage({ search }: { search: string }) {
   }
   return (
     <div className="layout-grid" data-following-page="ready">
-      {header()}
+      {header}
       {said && (
         <div className="col-span-12 mt-6 @md/page:col-span-8">
           <Alert state="info" live="status">
@@ -148,7 +150,7 @@ export function FollowingPage({ search }: { search: string }) {
             <EightColumns>
               <EmptyState title={words.emptyTitle} body={words.emptyBody} link={{ href: "/projects", text: words.emptyLink }} />
             </EightColumns>
-            <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{copy.checkPlan.notVisible}</p>
+            <p className="mt-6 max-w-[72ch] text-caption text-ink-muted">{copy.checkPlan.notVisible}</p>
           </>
         ) : (
           <FollowingBody data={data} />
@@ -199,10 +201,14 @@ export function FollowingBody({ data }: { data: Following }) {
   return (
     <>
       <section aria-labelledby={findingId}>
-        <h2 id={findingId} data-lead tabIndex={-1} className="max-w-[72ch] text-h2 text-pretty text-ink-heading focus:outline-none">
-          {finding(counts, statusOfOne)}
-        </h2>
-        <p className="mt-2 max-w-[72ch] text-caption text-ink-muted">{madeBy}</p>
+        {/* How I made the list, with the check date and the data date, is in the made-by window beside its heading
+            (ticket 126), not a caption under it. */}
+        <div className="flex max-w-[72ch] items-start gap-1">
+          <h2 id={findingId} data-lead tabIndex={-1} className="text-h2 text-pretty text-ink-heading focus:outline-none">
+            {finding(counts, statusOfOne)}
+          </h2>
+          <MadeBy name={words.madeByName}>{madeBy}</MadeBy>
+        </div>
         {counts.partly > 0 && (
           <p data-coverage-line className="mt-6 max-w-[72ch] text-small text-ink">
             {/* Numerals beside "of" (the 37 brief, section 9); when no project had every check, a sentence that says so. */}
@@ -231,12 +237,14 @@ export function FollowingBody({ data }: { data: Following }) {
             section 5, Tables; the 58 design review, B1). */}
         {/* While every row is folded, an empty line holds the count line's place, so "Show them" stays under the
             pointer as the fold opens (the 58 design review, round 2, follow-up 1). */}
-        {shownCount > 0 ? (
+        {/* Since ticket 126 the line counts only while the fold hides rows; with every row shown, the empty line keeps
+            its place, so "Hide them" stays under the pointer as the fold opens. */}
+        {shownCount > 0 && shownCount < counts.total ? (
           <p className="mt-4 text-caption text-ink-muted @xl/page:mt-6" data-count-line>
             {countLineOf(shownCount, counts.total, words.countNoun)}
           </p>
         ) : (
-          <div aria-hidden="true" className="mt-4 h-5 @xl/page:mt-6" data-count-place />
+          <div aria-hidden="true" className={cx("mt-4 @xl/page:mt-6", folded.length > 0 && "h-5")} data-count-place />
         )}
 
         {/* The table, from a page area of 1,200 px. */}
@@ -245,7 +253,7 @@ export function FollowingBody({ data }: { data: Following }) {
             <caption className="sr-only">{words.tableCaption}</caption>
             <thead className="bg-surface-2">
               <tr>
-                <HeaderCell className="w-[13rem]" label={<StatusTerm thresholds={data.thresholds} track={data.track_record} checks={data.checks} />} def={statusDef(data.thresholds)} />
+                <HeaderCell className="w-[13rem]" label={<StatusTerm thresholds={data.thresholds} track={data.track_record} checks={data.checks} />} />
                 <HeaderCell className="w-[16rem]" label={words.cols.project.label} def={words.cols.project.def} />
                 <HeaderCell label={words.cols.signals.label} def={words.cols.signals.def} />
                 <HeaderCell className="w-[15rem]" label={words.cols.next.label} def={data.past ? words.cols.next.defAsOf : words.cols.next.def} defId={nextDefId} />
@@ -297,7 +305,8 @@ export function FollowingBody({ data }: { data: Following }) {
         <Source className="mt-2">
           {data.data_through ? <Fill template={words.source} slots={{ date: formatDate(data.data_through) }} /> : words.sourceUndated}
         </Source>
-        <p className="mt-6 max-w-[72ch] text-small text-ink-muted" data-not-visible>
+        {/* What Strata can't see sits beside the source line, as the plan check's foot strip has it (ticket 126). */}
+        <p className="mt-1 max-w-[72ch] text-caption text-ink-muted" data-not-visible>
           {copy.checkPlan.notVisible}
         </p>
       </section>
@@ -306,14 +315,26 @@ export function FollowingBody({ data }: { data: Following }) {
   );
 }
 
-function HeaderCell({ label, def, className, defId }: { label: ReactNode; def: string; className?: string; defId?: string }) {
+// A column head whose definition lives in its window, never as a second line under the head (ticket 126, the tuck-away
+// inventory's pattern 3). Status's head is already its window (StatusTerm), whose rules say what the short definition
+// said. defId: the cells a definition describes still name it, from a hidden copy.
+function HeaderCell({ label, def, className, defId }: { label: string | ReactNode; def?: string; className?: string; defId?: string }) {
   return (
     <th scope="col" className={cx("px-4 py-3 align-top", className)}>
-      <span className="block text-small font-bold text-ink-heading">{label}</span>
-      <span className="sr-only">{words.headerJoin}</span>
-      <span id={defId} className="block text-caption font-normal text-ink-muted">
-        {def}
+      <span className="block text-small font-bold text-ink-heading">
+        {def && typeof label === "string" ? (
+          <DefinitionWindow label={label} title={label} inText={false} triggerClassName="inline-flex min-h-6 items-center">
+            {def}
+          </DefinitionWindow>
+        ) : (
+          label
+        )}
       </span>
+      {defId && (
+        <span id={defId} hidden>
+          {def}
+        </span>
+      )}
     </th>
   );
 }
@@ -620,31 +641,40 @@ function TrackRecordSection({ data }: { data: Following }) {
       <h2 id={TRACK_ID} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
         {copy.track.heading}
       </h2>
+      {/* When a replay gave a track record, its counts and "These counts say what happened next, not why." stay on first
+          sight (DESIGN.md section 7, rule 33). How the checks work, what the replay covered, or that no replay ran yet,
+          is method a reader opens once, behind "How these checks work" (ticket 126). */}
       <div className="max-w-[72ch]">
-        <p className="mt-2 text-body text-ink">{copy.track.method.replace("{checks}", checks)}</p>
-        {track ? (
+        {track && (
           <>
-            <p className="mt-4 text-body text-ink" data-track-status>
+            <p className="mt-2 text-body text-ink" data-track-status>
               <StatusLead track={track} />
               {track.status.needs_a_look.few && <> {copy.track.fewLook.replace("{n}", formatNumber(track.status.needs_a_look.n ?? 0))}</>}
               {track.status.watch.few && <> {copy.track.fewWatch.replace("{n}", formatNumber(track.status.watch.n ?? 0))}</>}
             </p>
             <p className="mt-2 text-body text-ink">{copy.track.why}</p>
+            <Source className="mt-2">
+              <Fill template={copy.track.source} slots={{ date: formatDate(track.ran_on) }} />
+            </Source>
+          </>
+        )}
+        <Disclosure label={copy.track.how} onPage className="mt-4">
+          <p className="text-body text-ink" data-track-method>
+            {copy.track.method.replace("{checks}", checks)}
+          </p>
+          {track ? (
             <p className="mt-2 text-caption text-ink-muted">
               <Fill template={copy.track.scope} slots={{
                 dates: joinAnd(track.dates.map((date) => formatDate(date))),
                 window: formatCount(track.window_months),
               }} />
             </p>
-            <Source className="mt-2">
-              <Fill template={copy.track.source} slots={{ date: formatDate(track.ran_on) }} />
-            </Source>
-          </>
-        ) : (
-          <p className="mt-4 text-body text-ink" data-track-status>
-            {copy.track.none}
-          </p>
-        )}
+          ) : (
+            <p className="mt-2 text-body text-ink" data-track-status>
+              {copy.track.none}
+            </p>
+          )}
+        </Disclosure>
       </div>
       <div className="mt-4">
         <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={checksId} onClick={() => setOpen(!open)}>

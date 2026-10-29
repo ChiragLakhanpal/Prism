@@ -577,6 +577,19 @@ def test_a_daily_source_two_days_old_is_one_day_late_and_one_day_old_is_on_time(
         "the contract awards since fiscal 2020, last fetched October 21, one day behind their daily update")
 
 
+def test_a_late_source_says_so_once_in_its_fresh_cell_and_what_holds_a_kind_back_lists_no_more_line(written):
+    """Ticket 126 (the tuck-away inventory, R20 and R21): the Sources table's Fresh column gives a source's lateness
+    once, so the kinds' What holds it back never repeats it while another gap holds the kind back, and never ends on
+    "I list N more gaps under Sources.", since the Sources table is the next block."""
+    path = written(*awards(linked=(500, 603), fetched=DAY - dt.timedelta(days=6), when=at(DAY)))
+    result = call_on(path, sources="awards")
+
+    assert cell(result, "awards", "fresh")["late_days"] == 5
+    held = [registry_text(sentence) for kind in result["kinds"] for sentence in kind["holds_back"]]
+    assert held and not any("behind their" in sentence for sentence in held)
+    assert not any("under Sources" in sentence for sentence in held)
+
+
 def test_a_source_with_no_measures_leaves_the_headline_out_and_says_how_many(written):
     result = call_on(written(*awards()))
 

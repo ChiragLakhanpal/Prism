@@ -706,18 +706,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           <h2 id={ledeId} tabIndex={-1} className="max-w-[22.5em] text-finding text-pretty text-ink-heading focus:outline-none" data-lede data-finding>
             {lede}
           </h2>
-          <p className="mt-2 text-body text-ink">
-            {brief ? (
-              <Fill template={copy.mission.method} slots={{ date: formatDate(subject.data_through ?? subject.as_of ?? created) }} />
-            ) : paper || dates ? (
-              kind.method
-            ) : (
-              <Fill
-                template={kind.method}
-                slots={{ check: <TextLink href={ppsd ? `${packageHref(subject)}#risks` : planHref}>{kind.methodLink}</TextLink> }}
-              />
-            )}
-          </p>
+          {/* How I wrote the draft is one caption at the end of the document column, before its sources (ticket 126). */}
           {/* The language the writer wrote it in, when it is not English or not your choice now (the 42 brief, 3.6). */}
           {(writtenIn !== ENGLISH || writtenIn !== current) && (
             <p className="mt-2 text-caption text-ink-muted" data-draft-language>
@@ -813,13 +802,27 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             />
           </div>
         )}
+        {/* Provenance at the column's end, before the Sources list (ticket 126): how I wrote the draft, with its link to
+            the check it came from (rule 2). */}
+        <p className="mt-8 max-w-[72ch] text-caption text-ink-muted" data-draft-method>
+          {brief ? (
+            <Fill template={copy.mission.method} slots={{ date: formatDate(subject.data_through ?? subject.as_of ?? created) }} />
+          ) : paper || dates ? (
+            kind.method
+          ) : (
+            <Fill
+              template={kind.method}
+              slots={{ check: <TextLink href={ppsd ? `${packageHref(subject)}#risks` : planHref}>{kind.methodLink}</TextLink> }}
+            />
+          )}
+        </p>
         {d.layout.sources_list && ppsd && (
-          <div className="mt-8">
+          <div className="mt-4">
             <PpsdSources draft={d} opened={opened} openedCount={openedCount} open={open} />
           </div>
         )}
         {d.layout.sources_list && !ppsd && (
-          <div className="mt-8">
+          <div className="mt-4">
             <SourcesList
               sources={d.sources}
               evidence={d.evidence}
@@ -832,7 +835,9 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             />
           </div>
         )}
-        <p className="mt-6 max-w-[72ch] text-small text-ink-muted" data-not-visible>
+        {/* What Strata can't see sits at the column's foot, beside the sources, as the plan check's foot strip has it
+            (ticket 126). */}
+        <p className="mt-2 max-w-[72ch] text-caption text-ink-muted" data-not-visible>
           {copy.checkPlan.notVisible}
         </p>
         {end}
@@ -904,21 +909,14 @@ function DraftSkeleton() {
             <span className="block h-6 @[20rem]/doc:hidden" />
           </span>
         </div>
-        {/* The lede: the finding takes two lines, three below 32rem and four below 20rem; the sentence under it two,
-            three below 37rem, four below 25rem and five below 20rem. */}
+        {/* The lede: the finding takes two lines, three below 32rem and four below 20rem. The method sentence moved to
+            the column's end in ticket 126, so nothing holds its place here. */}
         <div className="mt-6 max-w-[72ch]">
           <span className="flex max-w-[22.5em] flex-col text-finding">
             <SkeletonLine width="w-full" />
             <SkeletonLine width="w-2/5" />
             <SkeletonLine width="w-1/2" className="@[32rem]/doc:hidden" />
             <SkeletonLine width="w-1/3" className="@[20rem]/doc:hidden" />
-          </span>
-          <span className="mt-2 flex flex-col text-body">
-            <SkeletonLine width="w-full" />
-            <SkeletonLine width="w-4/5" />
-            <SkeletonLine width="w-3/5" className="@[37rem]/doc:hidden" />
-            <SkeletonLine width="w-1/2" className="@[25rem]/doc:hidden" />
-            <SkeletonLine width="w-2/5" className="@[20rem]/doc:hidden" />
           </span>
         </div>
         <div className="mt-4 max-w-prose">
@@ -986,13 +984,13 @@ function DraftSkeleton() {
             ))}
           </div>
         </div>
-        <p className="mt-6 max-w-[72ch] text-small text-ink-muted">{copy.checkPlan.notVisible}</p>
+        <p className="mt-2 max-w-[72ch] text-caption text-ink-muted">{copy.checkPlan.notVisible}</p>
         <SkeletonLine className="mt-2 text-caption" width="w-64 max-w-full" />
         <section aria-label={words.bar.label} className={cx("z-10 border-t border-line bg-surface px-4 pt-3 foot-safe md:px-6", BAR_ROOM, STICKY)}>
           <p className="max-w-[80ch] text-small text-ink">
-            {/* The kind's lead sentence before the consequence, and the opened count and hold line after it,
-                each in two parts, so they wrap over as many lines as the words will. */}
-            <Skeleton inline className="w-[36ch]" /> <Skeleton inline className="w-[20ch]" /> <Consequence />{" "}
+            {/* The consequence opens the bar (ticket 126), then the opened count and hold line, each in two parts, so
+                they wrap over as many lines as the words will. */}
+            <Consequence />{" "}
             <Skeleton inline className="w-[24ch]" /> <Skeleton inline className="w-[30ch]" />
           </p>
           <div className={BAR_BUTTONS}>

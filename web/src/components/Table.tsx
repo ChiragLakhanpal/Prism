@@ -107,20 +107,31 @@ const CARD_ROW =
 const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
 const cardField = (column: Column, shared: boolean) => cx(CARD_FIELD, !(sharesGrid(column) && shared) && "col-span-full");
 
-// A count line from a table's shown and total rows and its noun, by DESIGN.md's one rule: "Showing 2 of 14 sources.",
-// "Showing all 14 sources.", "Showing both sources." or "Showing the one source." The numbers are the route's or the
-// tool's; this only writes them (the 58 review, round 3, follow-up 1).
-export function countLineOf(shown: number, total: number, noun: { one: string; many: string }): string {
+// A count line from a table's shown and total rows and its noun, by DESIGN.md's one rule: "Showing 2 of 14 sources."
+// The numbers are the route's or the tool's; this only writes them (the 58 review, round 3, follow-up 1). Since ticket
+// 126 (the tuck-away inventory's pattern 2) a list writes its count line only when rows are hidden: with every row
+// shown, "Showing all 14 sources." said what the rows show, so it returns null. A filter that hides rows, a page of
+// more and a fold keep theirs (DESIGN.md section 7, rule 42).
+export function countLineOf(shown: number, total: number, noun: { one: string; many: string }): string | null {
+  if (shown >= total) return null;
   const whole = (value: number) => formatNumber(value, { compact: false });
   return copy.table.showingOf(shown, total, whole(shown), whole(total), formatCount(total), noun);
 }
 
-export function countText({ noun, one, total, from, to, text }: Count): string {
+// A table's count line: a page of more rows ("Showing 1 to 20 of 99 sources."), or the screen's own words (text). With
+// every row on one page it returns null, as countLineOf does (ticket 126).
+export function countText(count: Count): string | null {
+  const { noun, total, from, to, text } = count;
   if (text) return text;
+  return from !== undefined && to !== undefined && (from > 1 || to < total) ? copy.table.showing(n(from), n(to), n(total), noun) : null;
+}
+
+// The count in words even when every row shows ("Showing all three projects."), for a status that tells a screen
+// reader what a search found, where nothing else on screen says it.
+export function countSaid(count: Count): string {
+  const { noun, one, total } = count;
   if (total === 1 && one) return copy.table.showingOne(one);
-  return from !== undefined && to !== undefined && (from > 1 || to < total)
-    ? copy.table.showing(n(from), n(to), n(total), noun)
-    : copy.table.showingAll(total, formatCount(total), noun);
+  return countText(count) ?? copy.table.showingAll(total, formatCount(total), noun);
 }
 
 export function Table({
@@ -228,6 +239,10 @@ export function Table({
   const fields = columns.filter((column) => column.key !== rowHeader);
   // Numbers and short values share the card's grid only when there are two or more of them.
   const shared = fields.filter(sharesGrid).length > 1;
+  // The count line's words, or null when every row shows (ticket 126); its row stays for a search's busy sentence, a
+  // flush button after the count, or the cards' note.
+  const countWords = count ? (busy ?? countText(count)) : null;
+  const countRow = Boolean(countWords || countAction || cardsNote);
 
   return (
     // The named, focusable scroll region below is the table's one landmark, so this section
@@ -251,7 +266,8 @@ export function Table({
               </div>
             </>
           )}
-          {count && (
+          {/* A paged list's count line, which the rows will keep, holds its place; a list that shows every row has none. */}
+          {count && (count.text || (count.from !== undefined && count.to !== undefined)) && (
             <div data-count-row>
               <SkeletonLine className="text-caption" width="w-1/5" />
             </div>
@@ -260,22 +276,24 @@ export function Table({
       ) : (
         <>
           {!labelledBy && createElement(`h${level}`, { id: titleId, className: "text-h2 text-ink-heading" }, title)}
-          {count && (
+          {countRow && count && (
             // The count, and the cards' note as its own element at the row's end, which wraps to a line
             // of its own when the two don't fit (DESIGN.md section 5, the Plan check table).
             <div data-count-row className="flex flex-wrap items-baseline justify-between gap-x-4 text-caption text-ink-muted">
               <div className="flex flex-wrap items-baseline gap-x-3">
-                <p
-                  ref={countRef}
-                  id={countId}
-                  data-numbers
-                  data-page-lead={countLead || undefined}
-                  tabIndex={countLead || countRef ? -1 : undefined}
-                  // A keyboard press that lands here shows the focus ring; a pointer's shows none (ticket 101's design review).
-                  className="[&:not(:focus-visible)]:outline-none"
-                >
-                  {busy ?? countText(count)}
-                </p>
+                {countWords && (
+                  <p
+                    ref={countRef}
+                    id={countId}
+                    data-numbers
+                    data-page-lead={countLead || undefined}
+                    tabIndex={countLead || countRef ? -1 : undefined}
+                    // A keyboard press that lands here shows the focus ring; a pointer's shows none (ticket 101's design review).
+                    className="[&:not(:focus-visible)]:outline-none"
+                  >
+                    {countWords}
+                  </p>
+                )}
                 {countAction}
               </div>
               {cardsNote && (
@@ -301,7 +319,7 @@ export function Table({
       >
         <table
           aria-labelledby={loading ? undefined : titleId}
-          aria-describedby={count && !loading ? countId : undefined}
+          aria-describedby={countWords && !loading ? countId : undefined}
           // A narrow table shows only from a 30rem frame, and a list's from a 34rem page area, so each keeps no wider
           // minimum that would scroll sideways.
           className={cx("w-full table-fixed border-collapse text-small", cardsBelow === "narrow" || cardsBelow === "list" ? "min-w-[30rem]" : "min-w-[40rem]")}

@@ -146,11 +146,10 @@ export function Packages({ pid, none }: { pid: string; none: boolean }) {
         <h2 id={headingId} className="text-h2 text-ink-heading">
           {words.title}
         </h2>
-        <p className="mt-2 text-body text-ink">{words.purpose}</p>
       </EightColumns>
       {!none && (load.status !== "ready" || load.data.total > 0 || load.data.query) && (
         <div className="layout-grid mt-6">
-          <ListSearch className="col-span-12 @md/page:col-span-6" label={words.searchLabel} hint={words.searchHint} value={list.query} onSearch={list.search} />
+          <ListSearch className="col-span-12 @md/page:col-span-6" label={words.searchLabel} value={list.query} onSearch={list.search} />
         </div>
       )}
       <div className="mt-4">{body}</div>

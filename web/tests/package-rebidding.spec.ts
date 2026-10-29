@@ -58,6 +58,14 @@ const block = (page: Page) => page.locator("[data-rebidding]");
 const ready = async (page: Page) => expect(page.locator("[data-rebidding=found], [data-rebidding=none]")).toBeVisible();
 const text = async (page: Page, selector: string) => ((await block(page).locator(selector).innerText()) ?? "").replace(/\s+/g, " ").trim();
 const disclosure = (page: Page) => block(page).locator("[data-rebid-disclosure]");
+// Why the count needs care, and why my model gives no estimate, are in the Experimental badge's window since ticket 126
+// (T17; DESIGN.md section 7, rule 32). A click pins it open; its text, spaces folded.
+const badgeWindow = async (page: Page) => {
+  await block(page).getByRole("button", { name: "Experimental" }).click();
+  return page.getByRole("dialog", { name: "Experimental" });
+};
+const inBadgeWindow = async (page: Page, selector: string) =>
+  ((await (await badgeWindow(page)).locator(selector).innerText()) ?? "").replace(/\s+/g, " ").trim();
 
 async function axe(page: Page) {
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
@@ -83,14 +91,19 @@ test("the block ends section 1's card after a divider, labeled experimental with
   expect(await block(page).evaluate((element) => getComputedStyle(element).borderTopWidth)).toBe("1px");
   await expect(block(page).getByRole("heading", { level: 3 })).toHaveText("Advertised again");
   await expect(block(page).locator("[data-badge=experimental]")).toHaveText("Experimental");
-  await expect(block(page).locator("[data-rebid-why]")).toHaveText(WHY);
   expect(await text(page, "[data-rebid-count]")).toBe("3 of the 52 comparable packages were advertised again.");
-  expect(await text(page, "[data-rebid-denominator]")).toBe(
+  // Why 52 and not the past range's 49 is in the 52's tooltip since ticket 126 (T18; rule 15 keeps it one step away).
+  await block(page).locator("[data-rebid-count] [data-num]").nth(1).focus();
+  await expect(page.getByRole("tooltip")).toContainText(
     "I counted 52 packages here and 49 in the past range, because the past range leaves out canceled packages, and a canceled package counts here.",
   );
-  // No model results on the fixture: only the counts, and one sentence that says why.
-  expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate, because my model has no test results yet.");
+  await page.keyboard.press("Escape");
   expect(await block(page).innerText()).not.toMatch(/%|percent| in 10/);
+  // No model results on the fixture: only the counts, and the badge's window says why, after why the count needs care.
+  const why = await badgeWindow(page);
+  await expect(why.locator("[data-rebid-why]")).toHaveText(WHY);
+  await expect(why.locator("[data-rebid-model-off]")).toHaveText("I'm not giving an estimate, because my model has no test results yet.");
+  await page.keyboard.press("Escape");
   await expect(disclosure(page)).toHaveAttribute("aria-expanded", "false");
   await expect(block(page).locator("[data-rebid-list]")).toBeHidden();
 });
@@ -191,7 +204,7 @@ test("a package planned from a sentence says my model scores only packages liste
   await openPackage(page, { answer: { body: JSON.stringify(planned) } });
   await ready(page);
 
-  expect(await text(page, "[data-rebid-model-off]")).toBe(
+  expect(await inBadgeWindow(page, "[data-rebid-model-off]")).toBe(
     "I'm not giving an estimate. My model scores only packages listed in a Procurement Plan, and this one is not in a plan yet.",
   );
 });
@@ -206,7 +219,7 @@ test("with fewer than 20 comparable packages and none advertised again, only the
   await seven.focus();
   await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The comparable packages I checked for this count.");
   await expect(page.getByRole("tooltip")).not.toContainText("Select to see");
-  expect(await text(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate, because I give one only from 20 or more comparable packages.");
+  expect(await inBadgeWindow(page, "[data-rebid-model-off]")).toBe("I'm not giving an estimate, because I give one only from 20 or more comparable packages.");
   expect(await block(page).innerText()).not.toMatch(/%|percent| in 10/);
   await expect(disclosure(page)).toHaveCount(0);
   await expect(block(page).getByRole("link", { name: "See how complete the notices are" })).toHaveAttribute("href", "/data?sources=notices&from=rebidding_risk");
@@ -252,7 +265,7 @@ test("a model that did no better than its baseline gives no estimate, and says s
   await openPackage(page, { rebidding: "rebidding-mock-not-better.json" });
   await ready(page);
 
-  expect(await text(page, "[data-rebid-model-off]")).toBe(
+  expect(await inBadgeWindow(page, "[data-rebid-model-off]")).toBe(
     "I'm not giving an estimate. In tests on 44 packages from 2025 that my model had not seen, it did no better than the rate among their comparable packages.",
   );
   expect(await block(page).innerText()).not.toMatch(/ in 10/);

@@ -64,15 +64,16 @@ for (const width of [1440, 1024, 390]) {
     await openData(page, { file: "data-readiness.json" }, { width });
     await expect(shelf(page)).toBeVisible();
 
-    // A region named by its title, between the Sources table and the fixes: a closed row with its one sentence, which
-    // opens in place to the rows in the slice file's order (ticket 104).
+    // A region named by its title, between the Sources table and the fixes: a closed row with its name only (ticket
+    // 126, C3), which opens in place to its sentence and the rows in the slice file's order (ticket 104).
     await expect(page.getByRole("region", { name: TITLE }).getByRole("heading", { level: 2 })).toHaveText(TITLE);
+    await expect(shelf(page).locator("[data-section-summary]")).toHaveCount(0);
+    await openShelf(page);
     // With the plans' row in view, its sentence also says how the layout parser did with the plans (ticket 58).
-    await expect(shelf(page).locator("[data-section-summary]")).toHaveText(
+    await expect(shelf(page).locator("[data-shelf-summary]")).toHaveText(
       "I use these documents as a stress test for my reading. The layout parser read every Procurement Plan page it tried.",
     );
-    await openShelf(page);
-    await expect(shelf(page).locator("[data-table-lines]")).toHaveText(
+    await expect(shelf(page).locator("[data-table-lines]")).toContainText(
       "Each row says what makes the document hard, what I recovered, and the page where you can compare the two.",
     );
     const top = async (selector: string) => (await page.locator(selector).boundingBox())!.y;
@@ -255,12 +256,12 @@ test("a filtered view shows only the rows on its sources, and leaves the section
   await expect(row(page, 1440, "long_plan").locator("th")).toContainText("Procurement Plan");
 });
 
-test("while the measures load, the section shows its title and sentence, and opened, one skeleton row for each document the slice file names", async ({ page }) => {
+test("while the measures load, the section shows its title, and opened, its sentence and one skeleton row for each document the slice file names", async ({ page }) => {
   await openData(page, { pending: true });
 
   await expect(page.getByRole("heading", { level: 2, name: TITLE })).toBeVisible();
-  await expect(shelf(page).locator("[data-section-summary]")).toHaveText("I use these documents as a stress test for my reading.");
   await openShelf(page);
+  await expect(shelf(page).locator("[data-shelf-summary]")).toHaveText("I use these documents as a stress test for my reading.");
   await expect(shelf(page).locator("[data-table-view=table] tbody tr[aria-hidden=true]")).toHaveCount(5);
   await expect(page.locator("[data-readiness=loading]")).toHaveAttribute("aria-busy", "true");
 });
@@ -448,7 +449,6 @@ const KINDS = [
     file: "evidence-pad-p130164-scanned.json",
     heading: "PAD, Rajasthan Road Sector Modernization, paragraph 23",
     // By the report's type, so an appraisal is never called an evaluation (the 58 design review, B2).
-    caption: "The appraisal document, written before the project began",
     note: "The whole paragraph, as the layout parser read it from a scanned page. The PDF page has the exact words.",
     link: /^Open at page 20$/,
   },
@@ -458,7 +458,6 @@ const KINDS = [
     file: "evidence-pad-p130164-risk-row.json",
     // The report's short name first, as a paragraph's title has it (the 58 critique, follow-up 16).
     heading: "PAD, Rajasthan Road Sector Modernization, Annex 4 - Operational Risk Assessment Framework (ORAF)",
-    caption: "The appraisal document, written before the project began",
     note: "This row as the layout parser read it from the table. The PDF page has the original.",
     link: /^Open at page 65$/,
   },
@@ -467,7 +466,6 @@ const KINDS = [
     id: "strata.gold.passage:18381488/v1/table65",
     file: "evidence-pad-p130164-risk-summary.json",
     heading: "PAD, Rajasthan Road Sector Modernization, summary of Annex 4 - Operational Risk Assessment Framework (ORAF)",
-    caption: "The appraisal document, written before the project began",
     // The meta line and the summary's first words give the table's pages, so the note does not (ticket 58).
     note: "I wrote this summary of the table. It is not the document's own words, and I never use it to back a number.",
     link: /^Open at page 65$/,
@@ -477,8 +475,6 @@ const KINDS = [
     id: "strata.gold.passage:OP00118817/v1/s5",
     file: "evidence-notice-op00118817-qualifications.json",
     heading: "Notice OP00118817",
-    // The drawer shows the notice without its contacts, so the caption claims no more (the 58 review, P3).
-    caption: "A procurement notice the World Bank published",
     note: "The whole section, word for word, without contact details.",
     link: /^Open this notice on the World Bank's site/,
   },
@@ -490,7 +486,7 @@ for (const kind of KINDS) {
       await openAnswerPage(page, { path: `/projects/P130164?evidence=${encodeURIComponent(kind.id)}`, evidence: kind.file, width });
 
       await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(kind.heading);
-      await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText(kind.caption);
+      await expect(drawer(page).locator("[data-drawer-caption]")).toHaveCount(0); // the title names it (ticket 126, R29)
       await expect(drawer(page)).toContainText(kind.note);
       // A notice with no heading names no section, so its meta line never repeats the text's first sentence (ticket 58;
       // the notice reader names a section only by a heading since 6f5ccf0a).
@@ -541,10 +537,9 @@ test("a notice's text shows where contact details were removed and never the raw
 
   await expect(drawer(page).locator("[data-passage]")).toContainText("Telephone: (contact details removed), Email address: (contact details removed)");
   await expect(drawer(page)).not.toContainText("[contact removed]");
-  // The drawer's head is the notice's title, with no eyebrow above it (ticket 94), and one caption under it that says
-  // what kind of source it is, with no middle dot (ticket 58).
-  await expect(drawer(page).locator("[data-drawer-header] p:not([data-drawer-caption])")).toHaveCount(0);
-  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("A procurement notice the World Bank published");
+  // The drawer's head is the notice's title, with no eyebrow above it (ticket 94) and, since ticket 126, no caption
+  // under it: the title names the notice.
+  await expect(drawer(page).locator("[data-drawer-header] p")).toHaveCount(0);
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(
     /^Request for Expression of Interest\s·\sWater and Sanitation Development\s\(P156634\)\s·\sFebruary 26, 2021\s·\sAddress referred above$/,
   );

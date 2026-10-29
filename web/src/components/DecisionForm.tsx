@@ -19,6 +19,7 @@ import type { Item, Refusal, ReviewItem, Saved } from "../lib/lessons";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
+import { InfoWindow } from "./MadeBy";
 import { fillText } from "./LessonParts";
 import { Num } from "./Num";
 
@@ -434,11 +435,12 @@ export function DecisionForm({ item, onDone, onGaveWay, initial }: {
           </Alert>
         )}
         {crossCheck && item.decided && (
+          // How cross-checks work, which the reviewer reads once, is in the window after the sentence (ticket 126).
           <p className="max-w-prose text-body text-ink">
-            <Fill
-              template={words.crossCheckIntro}
-              slots={{ region: item.decided.region, date: item.decided.on ? <Num date={item.decided.on} /> : "", percent: <Num value={item.limits.sample_percent} /> }}
-            />
+            <Fill template={words.crossCheckIntro} slots={{ region: item.decided.region, date: item.decided.on ? <Num date={item.decided.on} /> : "" }} />
+            <InfoWindow name={words.crossCheckName} kind="note">
+              <Fill template={words.crossCheckWhy} slots={{ percent: <Num value={item.limits.sample_percent} /> }} />
+            </InfoWindow>
           </p>
         )}
         {needsChoice && (

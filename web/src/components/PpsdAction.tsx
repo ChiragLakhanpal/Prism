@@ -12,6 +12,7 @@ import { officerAgency } from "../lib/uploads";
 import { formatNumber } from "../lib/format";
 import { navigate } from "../lib/router";
 import { Button } from "./Button";
+import { Feedforward } from "./Feedforward";
 import { useId } from "react";
 import { previewReason } from "../lib/view";
 
@@ -52,29 +53,26 @@ export function PpsdAction({
   };
   return (
     <div className="flex flex-col items-start gap-2" data-ppsd-action={held ? "held" : "live"} data-placement="zone">
-      <Button
-        variant="primary"
-        held={held}
-        aria-describedby={held ? reasonId : [describedId, feedforwardId].join(" ")}
-        onClick={start}
-        className="w-full min-[30rem]:w-auto"
-      >
-        {held ? (officer ? words.agencyHeldLabel : words.heldLabel)
-          : (officer ? words.agencyButton : words.button)(selection.chosen, formatNumber(selection.chosen, { compact: false }))}
-      </Button>
+      {held ? (
+        <Button variant="primary" held aria-describedby={reasonId} onClick={start} className="w-full min-[30rem]:w-auto">
+          {officer ? words.agencyHeldLabel : words.heldLabel}
+        </Button>
+      ) : (
+        // The feedforward is the button's tooltip and description (ticket 126, pattern 5).
+        <Feedforward sentence={words.feedforward}>
+          <Button variant="primary" aria-describedby={describedId} onClick={start} className="w-full min-[30rem]:w-auto">
+            {(officer ? words.agencyButton : words.button)(selection.chosen, formatNumber(selection.chosen, { compact: false }))}
+          </Button>
+        </Feedforward>
+      )}
       {held ? (
         <p id={reasonId} className="max-w-[320px] text-caption text-ink-muted" data-ppsd-held>
           {reason}
         </p>
       ) : (
-        <>
-          <p id={describedId} className="sr-only">
-            {officer ? words.agencyDescription : words.description}
-          </p>
-          <p id={feedforwardId} className="max-w-[320px] text-caption text-ink-muted">
-            {words.feedforward}
-          </p>
-        </>
+        <p id={describedId} className="sr-only">
+          {officer ? words.agencyDescription : words.description}
+        </p>
       )}
     </div>
   );

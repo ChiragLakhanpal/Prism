@@ -25,7 +25,7 @@ import { Pagination } from "../components/Pagination";
 import { ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Source } from "../components/Source";
-import { countText, Table, type Column, type Count, type Row } from "../components/Table";
+import { countSaid, Table, type Column, type Count, type Row } from "../components/Table";
 import { TaskZone } from "../components/TaskZone";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -84,11 +84,11 @@ export function ProjectsPage() {
   useEffect(() => {
     if (load.status !== "ready") return;
     const key = `${load.data.query}|${load.data.page}`;
-    if (settled.current !== null && settled.current !== key) setSaid(load.data.total === 0 ? words.noMatchTitle : countText(count(load.data)));
+    if (settled.current !== null && settled.current !== key) setSaid(load.data.total === 0 ? words.noMatchTitle : countSaid(count(load.data)));
     settled.current = key;
   }, [load]);
 
-  const search = <ListSearch className="@md/page:w-1/2" label={words.search.label} hint={words.search.hint} value={query} onSearch={list.search} />;
+  const search = <ListSearch className="@md/page:w-1/2" label={words.search.label} value={query} onSearch={list.search} />;
   const source = (through: string | null) => (
     <FootStrip>
       <Source>{through ? <Fill template={words.source} slots={{ date: formatDate(through) }} /> : words.sourceUndated}</Source>
@@ -131,7 +131,9 @@ export function ProjectsPage() {
           title={words.tableTitle}
           labelledBy={headingId}
           level={2}
-          count={{ noun: words.noun, total: 0 }}
+          // All projects is a paged list, so its first page's count line holds its place while it loads (ticket 126:
+          // a list that shows every row has none).
+          count={{ noun: words.noun, total: 0, from: 1, to: 1 }}
           columns={columns}
           rowHeader="project"
           cardsBelow="list"
@@ -213,7 +215,7 @@ export function ProjectsPage() {
     <div className="layout-grid">
       <div className="col-span-12">
         <div className="@md/page:w-2/3">
-          <PageHeader title={copy.pages.projects.title} purpose={copy.pages.projects.purpose} />
+          <PageHeader title={copy.pages.projects.title} />
         </div>
       </div>
       {/* Your agency's projects, in the implementing agency view (ticket 40): an officer's own, and the staff preview's. */}

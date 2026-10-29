@@ -678,16 +678,15 @@ def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | No
             status = "gap"
         else:
             status = "partial" if mine else "ready"
-        held = [found.holds for found in mine[:2]]
+        # The Sources table's Fresh column gives a source's lateness once, so a kind names it only when nothing else
+        # holds it back, and it never ends on how many more gaps the Sources table lists: that table is the next block
+        # (ticket 126).
+        named = [found for found in mine if found.type != "late"] or mine
+        held = [found.holds for found in named[:2]]
         # A hard document whose part I couldn't read: after the top two, outside their ranking.
         gapped = [entry for row in kind.draws_on for entry in (shelf_gaps or {}).get(row, [])]
         if gapped:
             held.append(_shelf_sentence(gapped))
-        more = len(mine) - len(mine[:2])
-        if more == 1:
-            held.append([{"text": words()["moreOne"]}])
-        elif more > 1:
-            held.append(fill(words()["more"], {"n": number(more)}))
         if not mine:
             held.append([{"text": words()["nothingHolds"]}])
         out.append({"kind": kind.kind, "tool": tool.name, "status": status, "ready_for": ready_for,

@@ -351,16 +351,22 @@ function sourceLine(result: Readiness): ReactNode {
 // most readers skip it, and a link to #hardest-documents opens it.
 export type ShelfToggle = { open: boolean; onToggle: () => void };
 
-const closedRow = ({ open, onToggle }: ShelfToggle, more?: ReactNode) => ({
-  summary: more ? (
-    <>
-      {words.summary} {more}
-    </>
-  ) : (
-    words.summary
-  ),
+// Since ticket 126 the closed row shows its name only, since a specialist rarely opens it: its sentence, and the plan
+// pages' sentence after it, open with the table, above its caption.
+const closedRow = ({ open, onToggle }: ShelfToggle) => ({
+  summary: null,
   toggle: { open, onToggle, show: words.show, hide: words.hide },
 });
+
+const opening = (more?: ReactNode) => (
+  <>
+    <span className="block text-body text-ink" data-shelf-summary>
+      {words.summary}
+      {more && <> {more}</>}
+    </span>
+    <span className="mt-2 block">{words.caption}</span>
+  </>
+);
 
 // The hardest documents and the plan pages the layout parser couldn't read are one section (ticket 58; the 16 and 18
 // critiques found two sections about the parser back to back): the row's sentence says how the parser did with the
@@ -373,13 +379,13 @@ export function HardestDocuments({ result, failures, ...toggle }: { result: Read
       headingId={SHELF_ID}
       skeletonRows="shelf"
       title={words.title}
-      lines={words.caption}
+      lines={opening(failures?.sentence)}
       head={SHELF_HEAD}
       columns={SHELF_COLUMNS}
       state={{ status: "ready", rows: shelfRows(result) }}
       source={sourceLine(result)}
       spanName={words.spanName}
-      closed={closedRow(toggle, failures?.sentence)}
+      closed={closedRow(toggle)}
       after={failures?.list}
     />
   );
@@ -396,11 +402,11 @@ export function HardestDocumentsLoading({ rows, failures = false, ...toggle }: {
       headingId={SHELF_ID}
       skeletonRows="shelf"
       title={words.title}
-      lines={words.caption}
+      lines={opening(failures ? <Skeleton className="inline-block h-[1em] w-[55ch] max-w-full align-[-0.125em]" /> : undefined)}
       head={SHELF_HEAD}
       columns={SHELF_COLUMNS}
       state={{ status: "loading", rows }}
-      closed={closedRow(toggle, failures ? <Skeleton className="inline-block h-[1em] w-[55ch] max-w-full align-[-0.125em]" /> : undefined)}
+      closed={closedRow(toggle)}
     />
   );
 }

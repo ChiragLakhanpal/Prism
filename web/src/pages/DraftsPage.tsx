@@ -284,7 +284,7 @@ export function DraftsPage({ search }: { search: string }) {
   return (
     <div className="layout-grid">
       <div className="col-span-12 min-w-0" data-drafts-page>
-        <PageHeader title={page.title} purpose={page.purpose} />
+        <PageHeader title={page.title} />
         <div className="mt-6 @lg/page:mt-8">
           {view === "piu" ? (
             <EmptyState title={PREVIEW.previewPiuTitle} body={PREVIEW.previewPiuBody} />

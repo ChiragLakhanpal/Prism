@@ -420,7 +420,12 @@ test("the library lists lesson cards newest first, naming roles and never people
   await expect(cards).toHaveCount(2);
   await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing both current lessons, newest first.");
   const first = cards.first();
-  await expect(first).toContainText("A lead procurement specialist decided version 2 on October 29, 2026, after an accredited procurement specialist recommended it.");
+  // Who decided, by role, is in the version's window beside the badges since ticket 126 (T30).
+  await first.getByRole("button", { name: "Version 2" }).click();
+  await expect(page.getByRole("dialog", { name: "Version 2" })).toContainText(
+    "A lead procurement specialist decided version 2 on October 29, 2026, after an accredited procurement specialist recommended it.",
+  );
+  await page.keyboard.press("Escape");
   await expect(first).toContainText("Its projects followed the World Bank's Procurement Guidelines of January 2011.");
   await expect(page.locator("main")).not.toContainText("Asha Raman");
   await expect(page.locator("main")).not.toContainText("Omar Haddad");

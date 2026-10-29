@@ -73,9 +73,10 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   for (const [index, line] of LINES.entries()) await expect(lines.nth(index)).toContainText(line);
   await expect(row.locator("[data-meta]")).toHaveText("Kenya, P156634. It closes on Oct 31, 2026.");
   await expect(row.getByRole("link", { name: "Water and Sanitation Development Project" })).toHaveAttribute("href", "/projects/P156634");
-  expect(await table.locator("thead th").first().evaluate((cell) => cell.textContent)).toBe(STATUS_HEADER);
+  // Since ticket 126 the head holds the name alone; its rules are in its window (pattern 3).
+  expect(await table.locator("thead th").first().evaluate((cell) => cell.textContent)).toBe("Status");
   // "Status" opens the rules, one status a line.
-  await table.locator("thead [data-term]").click();
+  await table.locator("thead").getByRole("button", { name: "Status", exact: true }).click();
   await expect(page.locator("[data-status-rules] dt")).toHaveText(["Needs a look: ", "Watch: ", "No signals: ", "Not checked: "]);
   await expect(page.locator("[data-status-rules] dd").first()).toHaveText("Three or more signals, or one strong signal.");
   await page.keyboard.press("Escape");
@@ -89,9 +90,13 @@ test("P156634's row needs a look with the four signals of the Following wirefram
   await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing 1 of 2 projects you follow.");
   await table.getByRole("button", { name: "Show it" }).click();
   await expect(table.locator("[data-project-row=P130164]")).toContainText("Closed");
-  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing both projects you follow.");
-  // Never replayed yet on the fixture: the track record says so, and types no number.
-  await expect(page.locator("[data-track-record=none]")).toContainText("I haven't replayed these checks on past dates yet");
+  // Every project shows now, so there is no count line (ticket 126).
+  await expect(page.locator("[data-count-line]:visible")).toHaveCount(0);
+  // Never replayed yet on the fixture: the track record says so in "How these checks work", and types no number.
+  const track = page.locator("[data-track-record=none]");
+  await expect(track.getByText("I haven't replayed these checks on past dates yet")).toBeHidden();
+  await track.getByRole("button", { name: "How these checks work" }).click();
+  await expect(track.getByText("I haven't replayed these checks on past dates yet")).toBeVisible();
 });
 
 test("a signal's marker opens the plan row behind it in the evidence drawer", async ({ page }) => {
@@ -197,7 +202,12 @@ test("Following refuses a viewer without the World Bank staff role, and a previe
 test("as of a past date, the page says the date its checks ran as of, and the shell never says it shows today's data", async ({ page }) => {
   await openFollowing(page, { file: "following-asof-2024-06-30.json", path: `${FOLLOWING}?asof=2024-06-30` });
 
-  await expect(page.getByText("I ran these seven checks as they would have run on June 30, 2024")).toBeVisible();
+  // The date the checks ran as of is in the made-by window since ticket 126 (T2).
+  await page.locator("[data-made-by]").getByRole("button", { name: "How I made this list" }).click();
+  await expect(page.getByRole("dialog", { name: "How I made this list" })).toContainText(
+    "I ran these seven checks as they would have run on June 30, 2024",
+  );
+  await page.keyboard.press("Escape");
   await expect(page.getByText("so it shows today's data")).toHaveCount(0);
   await expect(page.locator("[data-coverage-line]")).toContainText(
     "I couldn't run every check on any project I checked. Each row says which records I lacked.");
@@ -392,29 +402,31 @@ test("when every project you follow is quiet, the finding counts them in words",
 
   await expect(page.getByRole("heading", { level: 2, name: "You follow three projects, and none has a signal." })).toBeVisible();
   // No row shows until the fold opens, so no count line shows either (DESIGN.md section 5, Tables; the 58 design
-  // review, B1). Opened, it shows every project, in words.
+  // review, B1). Opened, it shows every project, so it has none then either (ticket 126).
   await expect(page.locator("[data-count-line]")).toHaveCount(0);
   await page.locator("[data-following-view]:visible [data-fold]").first().click();
-  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing all three projects you follow.");
+  await expect(page.locator("[data-following-view]:visible [data-project-row]")).toHaveCount(3);
+  await expect(page.locator("[data-count-line]")).toHaveCount(0);
 });
 
-// The count line's place is held while every row is folded, so "Show them" stays under the pointer when the count
-// line appears, and a second press lands on it (the 58 design review, round 2, follow-up 1).
+// The count line's place is held while the fold hides rows, so "Show them" stays under the pointer as the fold opens,
+// and a second press lands on it (the 58 design review, round 2, follow-up 1).
 test("when every project is quiet, the fold button stays where it was as the fold opens", async ({ page }) => {
   for (const width of [1440, 390]) {
     await openFollowing(page, { file: "following-made-up-all-quiet.json", width });
     const fold = page.locator("[data-following-view]:visible [data-fold]").first();
     const before = (await fold.boundingBox())!.y;
     await fold.click();
-    await expect(page.locator("[data-count-line]:visible")).toBeVisible();
+    await expect(fold).toHaveAttribute("aria-expanded", "true");
     expect(Math.round((await fold.boundingBox())!.y), `at ${width} px`).toBe(Math.round(before));
   }
 });
 
-test("one project you follow is counted as the one, never as 1 of 1", async ({ page }) => {
+test("one project you follow shows with no count line, never as 1 of 1", async ({ page }) => {
   await openFollowing(page, { file: "following-made-up-one.json" });
 
-  await expect(page.locator("[data-count-line]:visible")).toHaveText("Showing the one project you follow.");
+  await expect(page.locator("[data-following-view]:visible [data-project-row]")).toHaveCount(1);
+  await expect(page.locator("[data-count-line]")).toHaveCount(0);
 });
 
 test("a part the writer refused says so, and never says I removed sentences", async ({ page }) => {

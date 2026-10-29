@@ -422,7 +422,7 @@ test("when no step can be dated, as on the fixture's demo package, the section o
   await disclosure(page).click();
 
   await expect(section(page).locator("[data-step-intro]")).toHaveText(
-    "These are the steps STEP uses for goods, works and non-consulting services. I date a step only when 20 or more comparable packages recorded it.",
+    "I date a step only when 20 or more comparable packages recorded it.",
   );
   await expect(section(page).locator("[data-choice]")).toHaveCount(0);
   // The caption says what the table holds, since the intro above names the steps and the summary says none could be

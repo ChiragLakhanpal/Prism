@@ -346,7 +346,7 @@ test("the draft's notes cite their plan rows, and the bar says what exporting do
   await expect(bar(page).locator("[data-bar-lead]")).toHaveText(
     `${sentence} You opened 0 of 4 sources. Mark the notes as checked before you export them.`,
   );
-  await expect(page.locator("[data-sources-caption]")).toHaveText("You opened 0 of 4. In the Word file, each of the 7 citations becomes a footnote.");
+  await expect(page.locator("[data-sources-caption]")).toHaveText("You opened 0 of 4."); // the Word file shows its footnotes (ticket 126, R48)
   await expect(page).toHaveTitle("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Strata");
 });
 
@@ -843,7 +843,7 @@ test("Export downloads the Word file, ends on a success that names it and its fo
   await expect(heading).toBeFocused();
   await expect(page.locator("[data-export-success]")).toContainText(
     "The evidence pack lists all 4 sources and whether you opened each one. Your browser downloaded the Word file, and the " +
-      "evidence pack's files are below. I keep all three with this draft for your team. I sent nothing to anyone.",
+      "evidence pack's files are below.",
   );
   await expect(page.getByRole("link", { name: `${WORD}, Word file, 7 footnotes` })).toHaveAttribute("download", WORD);
   await expect(page.getByRole("link", { name: /evidence-pack\.pdf, Evidence pack, PDF$/ })).toBeVisible();
@@ -1019,9 +1019,8 @@ test("a refused act shows its failure in the bar and keeps the state; a change m
 test("a teammate reads the draft, with the author's name in the bar and the stepper, and cannot act on it", async ({ page }) => {
   await openDraft(page, { file: "drafts-review-notes-teammate.json", answers: { "/api/me": { body: await recorded("drafts-me-teammate.json") } } });
 
-  await expect(bar(page).locator("[data-bar-lead]")).toContainText(
-    `A working draft of Ana Example's review notes on the borrower's Procurement Plan. ${CONSEQUENCE}`,
-  );
+  // The bar opens on its fixed sentence (ticket 126); the read-only line and the stepper name the author.
+  await expect(bar(page).locator("[data-bar-lead]")).toContainText(CONSEQUENCE);
   await expect(bar(page).locator("[data-read-only]")).toHaveText("Only Ana Example can mark these notes as checked or export them.");
   await expect(bar(page).getByRole("button")).toHaveCount(0);
   await expect(page.getByText("I drafted these notes for Ana Example on October 23, 2026.")).toBeVisible();

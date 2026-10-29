@@ -24,7 +24,6 @@ import { Num } from "../../components/Num";
 import { ProjectIdText } from "../../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
-import { countLineOf } from "../../components/Table";
 import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
 import { cx } from "../../lib/cx";
@@ -395,7 +394,9 @@ function MoreRows({ data, side }: { data: Neighbourhood; side: "packages" | "doc
         <li key={row.kind} className="text-small text-ink-muted">
           <TextLink href={row.kind === "packages" ? `/projects/${pid}/procurement` : `/projects/${pid}/documents`} className="inline-flex min-h-6 items-center">
             {words.more[row.kind](row.count, formatCount(row.count))}
-            {row.unread > 0 && (row.unread === row.count ? words.moreAllUnread : words.moreSomeUnread(row.unread, formatCount(row.unread)))}
+            {/* When I read none of them, the row says so; how many of the rest I read is the Documents tab's Pages read
+                column (ticket 126). */}
+            {row.unread > 0 && row.unread === row.count && words.moreAllUnread}
           </TextLink>
         </li>
       ))}
@@ -491,19 +492,20 @@ export function ConnectionsTab({ pid }: { pid: string }) {
               <h2 id="connections-finding" className="text-h2 text-ink-heading">
                 <Finding data={data} />
               </h2>
-              {/* The legend speaks of lines only where lines are drawn; the list says what its items mean instead. */}
-              <p className="mt-2 max-w-prose text-body text-ink">
-                {!linked ? (
-                  words.legendNone
-                ) : list ? (
-                  words.legendList
-                ) : (
-                  <>
-                    <span className="hidden @md/page:inline">{words.legend}</span>
-                    <span className="@md/page:hidden">{words.legendList}</span>
-                  </>
-                )}
-              </p>
+              {/* The legend speaks of dashed lines only where they are drawn; the list says what its items mean instead.
+                  With no link there is no dashed line to explain (ticket 126). */}
+              {linked && (
+                <p className="mt-2 max-w-prose text-body text-ink">
+                  {list ? (
+                    words.legendList
+                  ) : (
+                    <>
+                      <span className="hidden @md/page:inline">{words.legend}</span>
+                      <span className="@md/page:hidden">{words.legendList}</span>
+                    </>
+                  )}
+                </p>
+              )}
               {!linked && (
                 <p className="mt-2 max-w-prose text-body text-ink">
                   <Fill template={words.noneDetail} slots={{ threshold: data.threshold }} />{" "}
@@ -513,11 +515,8 @@ export function ConnectionsTab({ pid }: { pid: string }) {
                 </p>
               )}
             </div>
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-              <p className="text-caption text-ink-muted">
-                {/* One rule for every count line: "all" when every item shows (the 58 design review, round 2, 6). */}
-                {countLineOf(data.shown, data.total, words.countNoun)}
-              </p>
+            {/* No count line: the "and 265 more packages" links under the diagram say what it leaves out (ticket 126). */}
+            <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
               {/* Offered only where the diagram can show: below a 768 px page area it is always the list. */}
               <span className="hidden @md/page:block">
                 {/* The label says what a press does; the polite status says which view shows (design review F13). */}
@@ -526,7 +525,6 @@ export function ConnectionsTab({ pid }: { pid: string }) {
                 </Button>
               </span>
             </div>
-            {data.lines_hint && !list && <p className="mt-1 hidden text-caption text-ink-muted @md/page:block">{words.linesHint}</p>}
             <div className="mt-4">
               <NeighbourhoodDiagram data={data} list={list} />
             </div>

@@ -77,9 +77,8 @@ test("the sidebar lists Data readiness and Sources and licenses under Data, and 
   await open(page);
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Data");
-  await expect(page.locator("main h1 + p")).toHaveText(
-    "See how far each source can support an answer and where each dataset comes from.",
-  );
+  // No purpose under the title (ticket 126): a specialist knows what the tab is for.
+  await expect(page.locator("main h1 + p")).toHaveCount(0);
   await expect(page).toHaveTitle("Data readiness | Strata");
   await expect(page.getByRole("navigation", { name: "Data pages" })).toHaveCount(0);
   await expect(page.locator("main nav")).toHaveCount(0);
@@ -126,9 +125,8 @@ test("every number in the Sources table is the measure the server returned for i
   // counts from the recorded award files: 632 rows; 528 of 603 contracts.
   await expect(cell(page, "awards:coverage").locator("[data-num]").first()).toHaveText("632");
   await expect(cell(page, "awards:linked").locator("[data-num]").first()).toHaveText("528 of 603, 88%");
-  // With no filter the table shows every source and says "all" (the 58 review and design review, round 2).
-  const total = await sourceRows("data-readiness.json");
-  await expect(countLine(page, "sources")).toHaveText(`Showing all ${total} sources.`);
+  // With no filter the table shows every source, so it has no count line (ticket 126; it said "all" until then).
+  await expect(countLine(page, "sources")).toHaveCount(0);
 
   for (const row of answer.sources.filter((entry: { type: string }) => entry.type === "measured")) {
     for (const column of ["coverage", "linked", "read_well"]) {
@@ -162,13 +160,16 @@ function share(measure: { share_percent: number | null; share_bound: string | nu
   return "";
 }
 
-test("the headline is the server's sentence, and its caption says the measures' date and that no model wrote it", async ({ page }) => {
+test("the headline is the server's sentence, and its made-by window says the measures' date and that no model wrote it", async ({ page }) => {
   const answer = await json("data-readiness.json");
   await mockData(page, FULL);
   await open(page);
 
   await expect(page.locator("[data-headline]")).toHaveText(answer.headline.text);
-  await expect(page.locator("[data-lead] [data-headline] + p")).toHaveText(
+  // Ticket 126: the made-by line is in the window at the headline's end, not a caption under it.
+  await expect(page.locator("[data-lead] [data-headline] + p")).toHaveCount(0);
+  await page.locator("[data-headline] [data-made-by]").getByRole("button", { name: "How I built this headline" }).click();
+  await expect(page.getByRole("dialog", { name: "How I built this headline" })).toContainText(
     "I built this from the measures below, taken October 23, 2026. No model wrote it.",
   );
 });
@@ -218,10 +219,8 @@ test("What you can ask and Sources are panels, and the last three sections are c
   // Ticket 58: the plan pages the layout parser couldn't read are part of the hardest documents' section, not a second
   // section about the parser right after it. The fixture's run read every plan page, so its sentence says so.
   await expect(rows.getByRole("heading", { level: 2 })).toHaveText(["The hardest documents I read", "Fixes that would unlock the most"]);
-  await expect(rows.locator("[data-section-summary]")).toHaveText([
-    "I use these documents as a stress test for my reading. The layout parser read every Procurement Plan page it tried.",
-    "I rank each fix by how many projects it would add evidence to.",
-  ]);
+  // Closed, the two rows show their names only since ticket 126 (C3 and C4); their sentences open with them.
+  await expect(rows.locator("[data-section-summary]")).toHaveCount(0);
   await expect(zone("failures")).toHaveCount(0);
   await expect(page.locator("[data-readiness-table=shelf] [data-table-view], [data-fixes] li")).toHaveCount(0);
 
@@ -370,18 +369,13 @@ test("at 390 px each table's source line keeps its date on one line", async ({ p
   expect(await dates.evaluateAll((all) => all.map((date) => date.getClientRects().length))).toEqual([1, 1, 1]);
 });
 
-test("each column head holds its definition, and its label opens the full definition", async ({ page }) => {
+test("each column head's label opens its definition, with no second line under the head", async ({ page }) => {
   await mockData(page, FULL);
   await open(page);
 
+  // Ticket 126 (pattern 3): a column's definition lives in its head's window, never as a line under the head.
   const heads = table(page, "sources").locator("thead th");
-  await expect(heads).toHaveText([
-    "Sourcewhere",
-    "Coveragerows and fiscal years",
-    "Linkedto projects and other records",
-    "Read wellread without errors",
-    "Freshlatest data, how often",
-  ].map((text) => text.replace("Sourcewhere", "Source")));
+  await expect(heads).toHaveText(["Source", "Coverage", "Linked", "Read well", "Fresh"]);
   await heads.nth(2).getByRole("button", { name: "Linked" }).click();
   const definition = page.getByRole("dialog", { name: "Linked" });
   await expect(definition).toContainText(
@@ -703,8 +697,10 @@ test("the fixes end the page, ranked by the projects each would add evidence to"
 
   const zones = page.locator("[data-readiness] [data-zone]");
   await expect(zones.last()).toHaveAttribute("data-fixes", "");
-  await expect(page.locator("[data-fixes] [data-section-summary]")).toHaveText("I rank each fix by how many projects it would add evidence to.");
+  // How I rank the fixes opens with them since ticket 126 (C4).
+  await expect(page.locator("[data-fixes] [data-section-summary]")).toHaveCount(0);
   await openRows(page);
+  await expect(page.locator("[data-fixes] [data-fixes-summary]")).toHaveText("I rank each fix by how many projects it would add evidence to.");
   const fixes = page.locator("[data-fixes] li");
   await expect(fixes).toHaveCount(answer.fixes.length);
   await expect(fixes.first()).toContainText("Would add evidence to three projects.");
@@ -943,18 +939,10 @@ test("below 768 px each table becomes cards, each with the source's name as a he
   await expect(table(page, "sources")).toBeHidden();
   const cards = page.locator("[data-readiness-table=sources] [data-table-view=cards] > li");
   await expect(cards.first().getByRole("heading", { level: 3 })).toHaveText("Contract awards");
-  await expect(cards.first().locator("dt").first()).toHaveText("Coveragerows and fiscal years");
+  await expect(cards.first().locator("dt").first()).toHaveText("Coverage");
   await expect(cards.first().locator("dd").nth(1)).toContainText("528 of 603, 88%");
-  // Each column's short definition shows once over the cards, not in every card (DESIGN.md section 5, Tables; ticket
-  // 104); a screen reader still hears it with each label.
-  const note = page.locator("[data-readiness-table=sources] [data-cards-note]");
-  await expect(note.locator("dt")).toHaveText(["Coverage", "Linked", "Read well", "Fresh"]);
-  await expect(note.locator("dd").first()).toHaveText("rows and fiscal years");
-  expect(await cards.first().getByText("rows and fiscal years").evaluate((about) => about.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await expect(note).toBeHidden();
-  await page.setViewportSize({ width: 390, height: 900 });
-  // Each label opens its full definition on a phone too.
+  // Since ticket 126 no short definitions show over the cards: each label opens its full definition, on a phone too.
+  await expect(page.locator("[data-readiness-table=sources] [data-cards-note]")).toHaveCount(0);
   await cards.first().locator("dt").nth(1).getByRole("button", { name: "Linked" }).click();
   await expect(page.getByRole("dialog", { name: "Linked" })).toContainText("a sector or a borrower country");
   await page.keyboard.press("Escape");
