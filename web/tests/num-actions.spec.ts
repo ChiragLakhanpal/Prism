@@ -186,7 +186,7 @@ test("on the package workspace every number and every dot opens what its action 
   for (const show of await page.locator("main [data-zone] button[aria-expanded=false]").all()) {
     if (await show.isVisible()) await show.click();
   }
-  await expect(page.locator("section#planned-dates [data-step-caption]").first()).toBeVisible();
+  await expect(page.locator("section#planned-dates [data-step-caption]:visible")).toBeVisible();
 
   const seen = await checkPage(page);
   expect(seen.filter((one) => one.act).map((one) => one.label)).toEqual(expect.arrayContaining(["2", "49", "3.3", "7.9", "4.4", "9.1", "3", "52"]));

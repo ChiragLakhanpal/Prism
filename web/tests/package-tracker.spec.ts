@@ -109,6 +109,12 @@ test("on the fixture's showcase package the signing is done on the contract awar
   await expect(tracker(page).locator("[data-source]")).toHaveText(
     "Source: The Procurement Plan of October 9, 2026 and World Bank contract awards data. I count days late to October 28, 2026.",
   );
+  // The source line ends the card in its foot strip, across the card inside its 1 px edge, as each block of evidence
+  // ends (ticket 101's critique, round 2).
+  await expect(tracker(page).locator("[data-foot-strip] [data-source]")).toHaveCount(1);
+  const [card, strip] = [(await tracker(page).boundingBox())!, (await tracker(page).locator("[data-foot-strip]").boundingBox())!];
+  expect([Math.round(strip.x - card.x), Math.round(card.x + card.width - strip.x - strip.width)]).toEqual([1, 1]);
+  expect(Math.round(card.y + card.height - strip.y - strip.height)).toBe(1);
   await expect(tracker(page).locator("[data-tracker-status]")).toHaveCount(0);
   // At 1024 px the page area still holds the six steps in a row, and no step's words reach into the next.
   await page.setViewportSize({ width: 1024, height: 768 });

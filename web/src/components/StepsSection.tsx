@@ -498,7 +498,7 @@ function Comparables({ row, onOpen, side }: { row: Row; onOpen: Opener; side?: "
   );
 }
 
-// The step's label: from a 768 px page area a DefinitionWindow with STEP's full name that opens on hover, keyboard
+// The step's label: in a zone of 49rem or wider a DefinitionWindow with STEP's full name that opens on hover, keyboard
 // focus or a click (criterion 4), which a screen reader hears with the label (aria-describedby); below it the name is
 // printed (the list's own rendering).
 function StepLabel({ row }: { row: Row }) {
@@ -914,7 +914,7 @@ export function StepsView({
   const controls = dates !== null && !dates.abstain_all && !dates.none_dated;
   const body =
     state.status === "loading" ? (
-      <div className="mt-6">
+      <div className="mt-6 @container/steps">
         <StepsSkeleton kind={kind} />
       </div>
     ) : dates && family && result ? (
@@ -947,8 +947,10 @@ export function StepsView({
             <ChoiceControl dates={dates} choice={choice} onChoose={onChoose} preview={preview} saveFailed={saveFailed} />
           </div>
         )}
-        <div className="mt-6" aria-busy={start.committing || undefined}>
-          <div className="hidden @md/page:block">
+        {/* The table or the list by the zone's own width, as zone 3's risks switch (ticket 101's critique, round 2): beside
+            the side panel the work column is under 49rem, where four columns put one sentence on five lines. */}
+        <div className="mt-6 @container/steps" aria-busy={start.committing || undefined}>
+          <div className="hidden @min-[49rem]/steps:block">
             <StepTable
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={`${captionId}-wide`}
@@ -956,7 +958,7 @@ export function StepsView({
               from={from}
             />
           </div>
-          <div className="@md/page:hidden">
+          <div className="@min-[49rem]/steps:hidden">
             <StepList
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={captionId}
@@ -1003,7 +1005,7 @@ export function StepsView({
   );
 }
 
-// Opened before the answer came: the intro as two bars, then the table's real header from a 768 px page area, and six
+// Opened before the answer came: the intro as two bars, then the table's real header from a 49rem zone, and six
 // 48 px rows, since the family, and so its count of steps, comes with the answer (the 27 brief, section 7.5). Static.
 function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
   const plan = kind === "step";
@@ -1015,7 +1017,7 @@ function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
         <span className="block h-4 w-9/10 rounded-xs bg-surface-2" />
         <span className="block h-4 w-9/20 rounded-xs bg-surface-2" />
       </span>
-      <table className="hidden w-full table-fixed border-collapse @md/page:table">
+      <table className="hidden w-full table-fixed border-collapse @min-[49rem]/steps:table">
         <colgroup>
           {(plan ? ["32%", "24%", "26%", "18%"] : ["40%", "36%", "24%"]).map((width, index) => (
             <col key={index} style={{ width }} />
@@ -1037,7 +1039,7 @@ function StepsSkeleton({ kind }: { kind: "step" | "planned" }) {
           ))}
         </tbody>
       </table>
-      <span className="flex flex-col @md/page:hidden">
+      <span className="flex flex-col @min-[49rem]/steps:hidden">
         {rows.map((index) => (
           <span key={index} className="block h-12 border-t border-line" />
         ))}

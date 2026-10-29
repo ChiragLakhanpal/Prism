@@ -408,9 +408,9 @@ test("the step tracker marks no step of a canceled activity late and says why in
 // Ticket 115, the design review's R2-B1: a consulting firm has nine steps, too many for one row, so the tracker lists
 // them; five or six share a row. Either way no step's words reach into the next step. The nine steps are the server's
 // answer for KE-CWSB-224323-CS-QCBS on the fixture (tests/ground_truth/values.toml, [step_tracker]).
-// At 1440 px the gallery's column is as wide as the package page's (53.5rem), so six steps share a row there; at 1024
-// and 390 px its column is under 768 px, so they stack, as on a phone. The package page's own row at 1024 px is
-// checked in package-tracker.spec.ts.
+// The tracker reads its own width (ticket 101's critique, round 2): from a 36rem card six steps share a row, as in the
+// gallery's column at 1440 and 1024 px; at 390 px they stack, as on a phone. The package page's own row at 1024 px is
+// checked in package-tracker.spec.ts, and beside the drawer at 1280 px in package.spec.ts.
 test("the step tracker keeps each step's words inside its step, with six steps in a row and nine in a list", async ({ page }) => {
   await page.goto("/gallery/steps");
   for (const width of [1440, 1024, 390]) {
@@ -436,8 +436,9 @@ test("the step tracker keeps each step's words inside its step, with six steps i
       );
       expect(spills, `${sample} at ${width} px`).toEqual([]);
       const lefts = await steps.evaluateAll((items) => items.map((item) => Math.round(item.getBoundingClientRect().left)));
-      // Nine steps share one left edge, a list, at every width; at 1440 px five or six each start further right, a row.
-      if (sample === "tracker-firms" || width < 1440) expect(new Set(lefts).size, `${sample} at ${width} px`).toBe(1);
+      // Nine steps share one left edge, a list, at every width; at 1440 and 1024 px five or six each start further right,
+      // a row.
+      if (sample === "tracker-firms" || width === 390) expect(new Set(lefts).size, `${sample} at ${width} px`).toBe(1);
       else expect(new Set(lefts).size, `${sample} at ${width} px`).toBe(lefts.length);
     }
   }

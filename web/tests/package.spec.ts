@@ -2068,6 +2068,9 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     const before = (await zones.boundingBox())!;
     const zone1 = section(page);
     const zone1Height = (await zone1.boundingBox())!.height;
+    const tracker = page.locator("[data-step-tracker]");
+    await expect(tracker.locator("[data-step-state]").first()).toBeVisible();
+    const trackerHeight = (await tracker.boundingBox())!.height;
     await expect(page.getByRole("region", { name: "From the plan row" })).toBeVisible();
     const dot = page.locator('[data-dot-target][aria-label^="KE-MOWI-47509-CW-RFB,"]');
     await dot.scrollIntoViewIfNeeded();
@@ -2083,6 +2086,8 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     // clicked stays where it was, beside its records (ticket 101's critique, round 1).
     expect(Math.round((await dot.boundingBox())!.y), `${width} px`).toBe(Math.round(spot.y));
     expect((await zone1.boundingBox())!.height, `${width} px`).toBeCloseTo(zone1Height, 0);
+    // The step tracker reads its own width, so it keeps its row of six too (ticket 101's critique, round 2).
+    expect((await tracker.boundingBox())!.height, `${width} px`).toBeCloseTo(trackerHeight, 0);
     // The drawer sits where the side panel was, beside the zones.
     expect((await drawer.boundingBox())!.x).toBeGreaterThan(after.x + after.width);
     // The opened dot keeps its 2 px info-icon ring while the drawer shows it.

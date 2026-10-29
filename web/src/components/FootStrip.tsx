@@ -5,9 +5,11 @@
 // such as the coverage line's "49 of 65", is 24 px tall (app.css, "Task zones").
 import type { ReactNode } from "react";
 
-export function FootStrip({ children }: { children: ReactNode }) {
+// part: the strip ends one part inside an opened zone's single body, as zone 5's rejected bids and cost estimate
+// (ticket 101's critique, round 2), and runs out from the body to the panel's edges (app.css, "Task zones").
+export function FootStrip({ children, part = false }: { children: ReactNode; part?: boolean }) {
   return (
-    <div data-foot-strip className="text-caption text-ink-muted [&>*]:max-w-prose">
+    <div data-foot-strip={part ? "part" : ""} className="text-caption text-ink-muted [&>*]:max-w-prose">
       {children}
     </div>
   );
