@@ -210,6 +210,10 @@ test("the chart draws each comparable as a dot on a month axis, hollow if still 
       `3.3 to 7.9 months, the middle one took 4.4, and 8 in 10 were signed within 9.1. ${OUTSIDE_TRAINING} A line marks 1.5 months, ` +
       "and 2 of 49 were signed within it. I left out the three canceled packages, because a canceled package was never signed and is not still open.",
   );
+  // The lane's key writes its counts as the alt text does, one to nine in words (ticket 58).
+  await expect(chart).toContainText("45 signed");
+  await expect(chart).toContainText("four still open");
+  await expect(chart).not.toContainText("4 still open");
 });
 
 test("dragging the plan line, pressing arrow keys on it or typing months updates the readout from the returned rows, and the table agrees", async ({ page }) => {
@@ -882,7 +886,9 @@ test("above 60 comparables the lane draws 20 quantile dots, and the table still 
   await expect(page.getByRole("group", { name: /^20 dots, each 1 in 20 of the 103 comparable packages$/ })).toBeVisible();
   // Open packages are not drawn one by one here, so the key states their count in words, with no hollow glyph.
   const chart = page.locator("[data-chart-drawing]");
-  await expect(chart).toContainText("Each dot is 1 in 20 of the 103 packages.");
+  // The subtitle says what a dot is, once: the key under the lane does not repeat it (ticket 58).
+  await expect(section(page)).toContainText("Each dot is 1 in 20 of the 103 packages, placed by the months");
+  await expect(chart).not.toContainText("Each dot is 1 in 20");
   await expect(chart).toContainText("Eight still open.");
   await expect(chart.locator(":scope > circle")).toHaveCount(0);
   await section(page).getByRole("button", { name: "Show the table" }).click();
@@ -979,7 +985,7 @@ test("when packages matched but none could be measured, the reasons say how many
     "Of the six, two lacked the STEP reference that links notice to contract and four had no specific procurement notice in the records I hold.",
   );
   await expect(section(page)).not.toContainText("Based on");
-  await expect(section(page).getByRole("link", { name: /^See data readiness/ })).toBeVisible();
+  await expect(section(page).getByRole("link", { name: /^See Data readiness/ })).toBeVisible();
   // The count of matching packages can be checked; the counts of what they lacked are plain words, since the sentence
   // says what each one counts and a shared tooltip would say the same of all three (ticket 96).
   const line = section(page).locator("[data-coverage-line]");
@@ -1012,6 +1018,20 @@ test("when the whole page fails, the reference is the heading and is not repeate
   await expect(page.locator("[data-page-head] [data-head-alert]").getByRole("button", { name: "Try again" })).toBeVisible();
 });
 
+// Ticket 58 (the 12 critique, round 11): the no-match state's link and the coverage line's name Data readiness the same
+// way, so one screen never calls the page two names. No recording matches nothing, so the past range's answer is
+// emptied in memory.
+test("with no comparable package the link names Data readiness as the coverage line does", async ({ page }) => {
+  const none = JSON.parse(await recorded("comparables-ke-nwwda-541055.json"));
+  none.rows = [];
+  none.abstention = { reason: "no_comparables" };
+  await openPackage(page, { comparables: { body: JSON.stringify(none) } });
+
+  await expect(section(page)).toContainText("No past package matched this one, so I have nothing to compare it with.");
+  await expect(section(page).getByRole("link", { name: "See Data readiness for these sources" })).toBeVisible();
+  await expect(section(page)).not.toContainText("Open Data readiness");
+});
+
 test("a reference no plan lists stays whole in the not-found sentence at phone width", async ({ page }) => {
   await openPackage(page, { width: 390, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
   const reference = page.locator("main p", { hasText: "No package in Strata has the reference" }).locator(".font-mono");
@@ -1019,6 +1039,10 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
   await expect(reference).toHaveText(REF);
   // The lines its text sits on: one.
   expect(await lineCount(reference)).toBe(1);
+  // The next step is the box, which opens a project by its ID or name (ticket 58).
+  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" })).toContainText(
+    "Check the reference in STEP, or find its project in the box at the bottom of the page.",
+  );
 });
 
 test("a reference too long for the line breaks after a hyphen, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {

@@ -220,8 +220,8 @@ test("each Num reference row shows the value the tool sent beside what Num shows
 test("the coverage line ends its first sentence with the gap, or with a period when nothing was missing", async ({ page }) => {
   await page.goto("/gallery/citations");
   await expect(page.locator("[data-coverage-line]")).toHaveText([
-    "Based on 37 of 52 matching packages; 15 lacked the STEP reference that links notice to contract. See data readiness for these sources",
-    "Based on 52 of 52 matching packages. See data readiness for these sources",
+    "Based on 37 of 52 matching packages; 15 lacked the STEP reference that links notice to contract. See Data readiness for these sources",
+    "Based on 52 of 52 matching packages. See Data readiness for these sources",
   ]);
 });
 

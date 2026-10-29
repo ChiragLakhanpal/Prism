@@ -23,6 +23,11 @@ const LESSONS_PURPOSE =
   "package's page where they apply.";
 const PACKAGES_PURPOSE = "Check a published Procurement Plan or plan a new package, and find the ones you worked on here.";
 const DATA_PURPOSE = "See how far each source can support an answer and where each dataset comes from.";
+// A planned package's purpose, true in every state, whether or not I could read the sentence (ticket 58; ticket 06's
+// rule for a purpose): the route's and the workspace's.
+const PLANNED_PURPOSE =
+  "I turn your sentence into criteria you can change, and compare them with past packages. A package gets its " +
+  "reference when the implementing agency enters it in Systematic Tracking of Exchanges in Procurement (STEP).";
 
 // The requests I turn down every time (ticket 24; the 24 brief, section 5.6), keyed by the refusal keys in
 // src/strata/agent/refusals.py. The agent answers such a request with its key and never with words of its
@@ -218,7 +223,7 @@ export const copy = {
     },
     plannedPackage: {
       title: "Package",
-      purpose: "I read your sentence as the criteria below and compared them with past packages.",
+      purpose: PLANNED_PURPOSE,
     },
     // All projects, the project page and Check a plan have their own words below (the 10 brief):
     // these titles name the browser tab, and the purposes are the pages' own.
@@ -554,6 +559,8 @@ export const copy = {
     // The two modes the Packages tab's buttons put the box in.
     mode: {
       planPlaceholder: "Describe the package in one sentence",
+      // Below 768 px, so it is never cut (ticket 58), as the default placeholder's short form.
+      planPlaceholderShort: "Describe the package",
       planHelp: "Say what is being bought, where, and about how much. For example: rural roads, Kenya, about US$15 million.",
       checkPlaceholder: "Type a project ID, such as P156634",
     },
@@ -603,7 +610,9 @@ export const copy = {
   },
   stamp: {
     loading: "Reading the data date",
-    ready: (date: string) => `Data through ${date}`,
+    // The day the stalest daily source was last loaded: "updated", so it never reads as the newest record's date that a
+    // source line gives ("Records run through October 13, 2026"; ticket 58, the 12 critique, round 11).
+    ready: (date: string) => `Data updated ${date}`,
     empty: "No data loaded yet",
     error: "I can't read the data date.",
     // The stamp's link description. It names where the link goes and promises nothing the Data
@@ -747,7 +756,8 @@ export const copy = {
     basedOn: "Based on",
     join: "; ",
     end: ".",
-    link: "See data readiness for these sources",
+    // The page's own name, written as it is everywhere (ticket 58: one name for Data readiness on one screen).
+    link: "See Data readiness for these sources",
   },
 
   // The removed box: open under "In short", never behind a link.
@@ -1417,9 +1427,11 @@ export const copy = {
       // A still-open package's months run to the page's as-of date ({counted}), which can be later than the
       // records' last date ({through}), so the sentence names both (design review round 2, F2).
       findingOpen:
-        "I count this package as still open after {months} months, from its notice on {notice} to {counted}. The records I hold run through {through} and show no signed contract.",
+        "I count this package as still open after {months} months. I counted from its notice on {notice} to {counted}. The records I hold run through {through}, and they show no signed contract.",
       findingCanceled: "This package was canceled before a contract was signed, so I left it out of the comparables.",
       whyHeading: "Why I compared it",
+      // A canceled package was left out of the comparables, so its heading says how it matches instead (ticket 58).
+      whyHeadingCanceled: "How it matches your criteria",
       why: {
         method: "Method",
         category: "Procurement Category",
@@ -1666,6 +1678,13 @@ export const copy = {
     showingAll: (total: number, totalText: string, noun: string) =>
       total === 2 ? `Showing both ${noun}.` : `Showing all ${totalText} ${noun}.`,
     showingOne: (noun: string) => `Showing one ${noun}.`,
+  },
+
+  // A clock time, "9:14 a.m.", in the reader's own time zone (ticket 58). The period's dots are the Associated Press's.
+  time: {
+    clock: (hour: string, minute: string, period: string) => `${hour}:${minute}\u00a0${period}`,
+    am: "a.m.",
+    pm: "p.m.",
   },
 
   // A list in a sentence: "A", "A and B", or "A, B and C", with no serial comma.
@@ -3852,7 +3871,9 @@ export const copy = {
     permission: "Your account can't read Strata's tables, so I can't show this package.",
     notFoundTitle: "I can't find a package with this reference",
     // {ref} carries its own full stop, so the two move to a new line together.
-    notFoundBody: "No package in Strata has the reference {ref} Check the reference in STEP, or find its project in All projects.",
+    // The box opens a project by its ID or name, so the next step is the box, at the bottom of every page since ticket
+    // 113 (ticket 58; the 12 brief's "search for its project in the box").
+    notFoundBody: "No package in Strata has the reference {ref} Check the reference in STEP, or find its project in the box at the bottom of the page.",
     notFoundLink: "All projects",
     // The package's facts beside its zones, from a frame of 75rem (DESIGN.md section 5, Side panel; ticket 101).
     factsTitle: "From the plan row",
@@ -3969,7 +3990,7 @@ export const copy = {
       helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
       // A package planned from a sentence (ticket 15): the line is the person's plan, the same value as its plan chip.
       // True whether What I understood is folded or open (ticket 101's design review, round 2).
-      helperPlanned: "The line shows your plan. Moving the line changes it.",
+      helperPlanned: 'The line shows your plan, the same months as "Your plan" in the How group. Moving the line changes your plan.',
       helperPlannedNone: "Type your plan's months, or add your plan in the How group, to see it as a line.",
       invalid: (max: string) => `Type months from 0.5 to ${max}.`,
       reset: (plan: string) => `Use the plan's ${plan} months`,
@@ -3977,9 +3998,9 @@ export const copy = {
     // The range chart's words. Numbers arrive written by web/src/lib/format.ts.
     chart: {
       lane: "What happened",
+      // {count} is a word from one to nine, then numerals (ticket 58).
       keySigned: (count: string) => `${count} signed`,
       keyOpen: (count: string) => `${count} still open`,
-      keyDots: (total: string) => `Each dot is 1 in 20 of the ${total} packages.`,
       // Open packages are not drawn one by one among quantile dots, so their count is words alone.
       keyOpenDots: (count: string) => `${count} still open.`,
       plan: "Plan",
@@ -4123,7 +4144,8 @@ export const copy = {
       noneRegion: "be in {region}",
       nonePeriod: "have notices from {from} to {to}",
       noneEnd: "Data readiness shows which records I hold for this region and period.",
-      noneLink: "Open Data readiness",
+      // The coverage line's words, so one screen never names the page two ways (ticket 58).
+      noneLink: "See Data readiness for these sources",
       unmeasuredTitle: (matched: number) =>
         matched === 1
           ? "{matched} past package matched this one, but I can't measure how long it took."
@@ -4482,9 +4504,7 @@ export const copy = {
     documentTitle: (title: string) => `${title} · Packages`,
     breadcrumbPackages: "Packages",
     referenceNone: "No STEP reference yet",
-    purpose:
-      "I read your sentence as the criteria below and compared them with past packages. A package gets its reference " +
-      "when the implementing agency enters it in Systematic Tracking of Exchanges in Procurement (STEP).",
+    purpose: PLANNED_PURPOSE,
     stamp: {
       notSaved: "Not saved yet",
       saving: "Saving",
@@ -4535,16 +4555,23 @@ export const copy = {
       changed: (field: string, from: string, to: string, cause: string) =>
         `${field} changed from ${from} to ${to} because the ${cause} changed.`,
       intro: "I computed review type and market approach from the thresholds.",
+      // When the thresholds give only one of the two (ticket 58).
+      introReview: "I computed review type from the thresholds.",
+      introMarket: "I computed market approach from the thresholds.",
       // {threshold} is written with its "US$", so the two never split across lines.
       review: "{category} of {threshold} or more go to prior review.",
       market: "In {country}, plans send {category} of {threshold} or more to international bidding.",
       threshold: (amount: string) => `US$${amount}`,
       // A computed value the thresholds no longer give, after the change named.
-      emptied: (field: string, cause: string) => `${field} is now empty, because the thresholds give no value for the new ${cause}.`,
+      emptied: (field: string, cause: string) => `${field} is now empty. The thresholds have no value for this ${cause}, so choose one yourself.`,
       assumed: (rating: string) => `I assumed the implementing agency's procurement risk is ${rating}, because I don't know it yet.`,
       youSet: (field: string, value: string, computed: string) => `You set ${field} to ${value}. The thresholds give ${computed}.`,
       // The value you set is the one the thresholds give, so the note names it once.
-      youSetSame: (field: string, value: string) => `You set ${field} to ${value}, the same as the thresholds give.`,
+      youSetSame: (field: string, value: string) => `You set ${field} to ${value}, the value the thresholds give.`,
+      // A value an old method name set, such as ICB's market approach (ticket 58): it names what you chose.
+      youChose: (input: string, field: string, value: string, computed: string) =>
+        `You chose ${input}, so ${field} is ${value}. The thresholds give ${computed}.`,
+      youChoseSame: (input: string, field: string, value: string) => `You chose ${input}, so ${field} is ${value}, the value the thresholds give.`,
       source: "{source}, as of {date}.",
       // A source the owner has not yet checked against a dated table.
       sourceUndated: "{source}.",
@@ -4607,6 +4634,9 @@ export const copy = {
       doesNotPick: "This doesn't change which packages I compare with.",
       amountReadBack: (amount: string) => `I read this as US$${amount}.`,
       oldName: (input: string) => `I read "${input}" as this, the name the Procurement Regulations use now.`,
+      // When the old name also gives a market approach, the caption says so (ticket 58).
+      oldNameSets: (input: string, approach: string) =>
+        `I read "${input}" as this, the name the Procurement Regulations use now. This also sets market approach to ${approach}.`,
       use: "Use this",
       keep: (value: string) => `Keep ${value}`,
       setYourself: "Set it yourself",
@@ -4630,7 +4660,7 @@ export const copy = {
       set: (label: string, value: string) => `${label} set to ${value}.`,
       removed: (label: string) => `${label} removed.`,
       recomputed: (field: string, from: string, to: string) => `${field} changed from ${from} to ${to}, computed from the thresholds.`,
-      emptied: (field: string, cause: string) => `${field} is now empty, because the thresholds give no value for the new ${cause}.`,
+      emptied: (field: string, cause: string) => `${field} is now empty. The thresholds have no value for this ${cause}, so choose one yourself.`,
       kept: (label: string, value: string) => `${label} kept as ${value}.`,
       // After a rerun, with section 1's title as it reads now: the finding, or the sentence that says why
       // there is no range.
@@ -5524,6 +5554,9 @@ export const copy = {
       // Its definition, in a window from the column head (ticket 100).
       lastWorkedDefinition: "When you last saved the package or opened the plan check.",
     },
+    // A row worked on today gives its time, so two packages planned from one sentence on one day tell apart (ticket 58;
+    // the 15 critique, round 3, follow-up 10). {time} is the reader's own clock time, such as "9:14 a.m.".
+    lastToday: (time: string) => `Today, ${time}`,
     noReference: "No STEP reference yet.",
     planName: (agency: string, date: string) => `${agency}, plan of ${date}`,
     activities: (count: number, words: string) => (count === 1 ? "One activity checked." : `${words} activities checked.`),

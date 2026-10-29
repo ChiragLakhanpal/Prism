@@ -91,6 +91,7 @@ export function OneBox({
   shortcut = true,
   focusedHint,
   modePlaceholder,
+  modePlaceholderShort,
   modeHelp,
   suggestions = null,
   suggestionActive = -1,
@@ -100,6 +101,8 @@ export function OneBox({
   // A mode the Packages tab put the box in (ticket 15): its own placeholder, and a help line that describes
   // the box and takes the hint's place.
   modePlaceholder?: string;
+  // The mode's placeholder below 768 px, so it is never cut (ticket 58).
+  modePlaceholderShort?: string;
   modeHelp?: string;
   // Ticket 112: focused and empty, a group of questions for the page under the hint, named by the page, in the list's
   // own option rows. None is chosen until Down or Up moves to one.
@@ -277,7 +280,17 @@ export function OneBox({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 hidden items-center truncate text-body text-ink-muted peer-placeholder-shown:flex"
             >
-              {placeholder ? (
+              {placeholder && modePlaceholder && modePlaceholderShort ? (
+                // A mode's placeholder has a short form below 768 px too (ticket 58).
+                <>
+                  <span className="truncate md:hidden" data-placeholder>
+                    {modePlaceholderShort}
+                  </span>
+                  <span className="hidden truncate md:inline" data-placeholder>
+                    {placeholder}
+                  </span>
+                </>
+              ) : placeholder ? (
                 <span className="truncate" data-placeholder>
                   {placeholder}
                 </span>

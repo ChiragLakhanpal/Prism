@@ -69,6 +69,14 @@ test("the copy lint checks the words the source registry puts on the Data readin
   expect(passed.code).toBe(0);
 });
 
+// Ticket 58: the thresholds file's source line reaches the computed note on the package page, so its words are linted.
+test("the copy lint checks the thresholds file's source line, which the computed note shows", () => {
+  const failed = lint({ registry: `[review]\nsource = "Starting values the Bank cleared"\n` });
+  expect(failed.code, failed.output).toBe(1);
+  expect(failed.output).toMatch(/sources\.toml:2: "Starting values the Bank cleared"/);
+  expect(lint({ registry: `[review]\nsource = "Starting values I have not yet checked against the World Bank's prior review thresholds"\n` }).code).toBe(0);
+});
+
 // Ticket 22: a link between a contract and a paragraph is "appeared together", never a cause, so the blocks that
 // write about links refuse causal words, "because" included, and only those blocks.
 test("the copy lint refuses causal wording on the contract trail, the Connections tab and Why this source, and only there", () => {

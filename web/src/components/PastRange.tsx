@@ -1005,8 +1005,10 @@ function Populated({
             keyLead={Boolean(quantile)}
             labels={{
               lane: c.lane,
-              keySigned: quantile ? c.keyDots(whole(total)) : c.keySigned(whole(counts.signed)),
-              keyHollow: open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(whole(open))) : null,
+              // The subtitle says what a quantile dot is, so the key does not say it again (ticket 58); a count in the key
+              // is in words from one to nine, as the alt text and the summary write it (ticket 58; rule 12).
+              keySigned: quantile ? null : c.keySigned(formatCount(counts.signed)),
+              keyHollow: open > 0 ? (quantile ? c.keyOpenDots(formatCount(open, { capital: true })) : c.keyOpen(formatCount(open))) : null,
               plan: c.plan,
               middle:
                 range?.q25 != null && range.q75 != null && range.q50 != null

@@ -412,6 +412,7 @@ export function IntentBox({
       suggestionActive={suggestion}
       onChooseSuggestion={chooseSuggestion}
       modePlaceholder={mode === "plan" ? copy.box.mode.planPlaceholder : mode === "check" ? copy.box.mode.checkPlaceholder : undefined}
+      modePlaceholderShort={mode === "plan" ? copy.box.mode.planPlaceholderShort : undefined}
       modeHelp={mode === "plan" ? copy.box.mode.planHelp : undefined}
     >
       <p role="status" className="sr-only">

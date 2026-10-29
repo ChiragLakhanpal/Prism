@@ -101,6 +101,18 @@ export function formatYear(year: number): string {
   return String(year);
 }
 
+// A moment's clock time in the reader's own time zone, "2:26 p.m." (ticket 58), and whether it falls on the reader's
+// today. Dates elsewhere are UTC days; a time is read on the reader's clock, so it is the reader's.
+export function formatTime(iso: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).formatToParts(new Date(iso));
+  const part = (type: string) => parts.find((one) => one.type === type)?.value ?? "";
+  return copy.time.clock(part("hour"), part("minute"), part("dayPeriod").toUpperCase() === "AM" ? copy.time.am : copy.time.pm);
+}
+
+export function isToday(iso: string, now: Date = new Date()): boolean {
+  return new Date(iso).toDateString() === now.toDateString();
+}
+
 // Section 7, rule 12: one to nine in words, numerals from 10. A word that starts a sentence takes
 // a capital ("One needs a look").
 export function formatCount(count: number, options: { capital?: boolean } = {}): string {

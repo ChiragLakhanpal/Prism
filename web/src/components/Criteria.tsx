@@ -237,7 +237,8 @@ export function ComputedNote({ pkg, form, inStrip = false }: { pkg: PlannedPacka
       ))}
       {review || market ? (
         <p data-numbers>
-          {n.intro}{" "}
+          {/* Says only what I computed: both, or the one the thresholds give (ticket 58). */}
+          {review && market ? n.intro : review ? n.introReview : n.introMarket}{" "}
           {review && (
             <>
               <Fill
@@ -264,13 +265,21 @@ export function ComputedNote({ pkg, form, inStrip = false }: { pkg: PlannedPacka
         <p>{n.noRule}</p>
       )}
       {review?.risk_rating && <p>{n.assumed(review.risk_rating)}</p>}
-      {yours.map((value) => (
-        <p key={value.key} data-set-by-you>
-          {value.value === value.computed
-            ? n.youSetSame(lower(field(value.key)?.label ?? value.key), text(value.key, value.value))
-            : n.youSet(lower(field(value.key)?.label ?? value.key), text(value.key, value.value), text(value.key, value.computed))}
-        </p>
-      ))}
+      {yours.map((value) => {
+        const name = lower(field(value.key)?.label ?? value.key);
+        // A value an old method name set, such as ICB's market approach, names what you chose (ticket 58).
+        return (
+          <p key={value.key} data-set-by-you>
+            {value.via
+              ? value.value === value.computed
+                ? n.youChoseSame(value.via, name, text(value.key, value.value))
+                : n.youChose(value.via, name, text(value.key, value.value), text(value.key, value.computed))
+              : value.value === value.computed
+                ? n.youSetSame(name, text(value.key, value.value))
+                : n.youSet(name, text(value.key, value.value), text(value.key, value.computed))}
+          </p>
+        );
+      })}
       {sources.length > 0 && (
         <Source className="mt-1">
           {sources.map((rule, index) => (

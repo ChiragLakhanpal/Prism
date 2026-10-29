@@ -222,7 +222,7 @@ test("the stamp is read once per page load and kept across route changes", async
     await route.fulfill({ status: 200, contentType: "application/json", body: '{"data_through": "2026-10-21"}' });
   });
   await page.goto("/");
-  await expect(page.locator("[data-stamp]")).toContainText("Data through");
+  await expect(page.locator("[data-stamp]")).toContainText("Data updated");
 
   for (const tab of ["Packages", "Projects", "Data"]) {
     await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: tab, exact: true }).click();
@@ -243,7 +243,7 @@ test("below 768 px the Menu sheet holds the items; an item opens its page, close
   // Every item, and the stamp under Data (ticket 93), shows in full in the sheet's first screen, above the view lines
   // at its foot.
   for (const link of await nav.getByRole("link").all()) await expect(link).toBeInViewport({ ratio: 1 });
-  await expect(nav.locator("[data-stamp]").getByRole("link")).toHaveText(/^Data through /);
+  await expect(nav.locator("[data-stamp]").getByRole("link")).toHaveText(/^Data updated /);
   await nav.getByRole("link", { name: "Drafts" }).click();
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Drafts");

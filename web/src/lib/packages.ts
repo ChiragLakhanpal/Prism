@@ -55,6 +55,8 @@ export type FieldValue = {
   computed: string | null;
   // The sentence's own words for a value the form does not list; only an unlisted value has them.
   read_as?: string | null;
+  // The old method name, as typed, that set this value, such as ICB's market approach (ticket 58).
+  via?: string | null;
 };
 
 // A rule's source, and the date of the table it was checked against, which is null until the owner checks it.

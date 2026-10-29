@@ -17,7 +17,7 @@ import { TaskZone } from "../components/TaskZone";
 import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
-import { formatCount, formatDate } from "../lib/format";
+import { formatCount, formatDate, formatTime, isToday } from "../lib/format";
 import { useLoad, type Load } from "../lib/load";
 import { enterBoxMode, type PlannedList, type PlannedRow } from "../lib/packages";
 import { PublicView } from "./PlannedPackagePage";
@@ -106,10 +106,11 @@ function rowOf(row: PlannedRow): Row {
 }
 
 // A row's "Last worked on" date, which never breaks inside (plan 7.10), however narrow the column is beside the sidebar.
+// A row worked on today gives its time instead, so two rows from one sentence on one day differ (ticket 58).
 function LastDate({ on }: { on: string }) {
   return (
-    <span className="whitespace-nowrap">
-      <Num date={on.slice(0, 10)} style="table" />
+    <span className="whitespace-nowrap" data-last-worked>
+      {on.length > 10 && isToday(on) ? words.lastToday(formatTime(on)) : <Num date={on.slice(0, 10)} style="table" />}
     </span>
   );
 }

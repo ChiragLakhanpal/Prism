@@ -336,7 +336,7 @@ test("the stamp sits at the sidebar's foot under Data, shows the day the server 
   await page.goto("/");
 
   const stamp = page.locator("[data-stamp]").getByRole("link");
-  await expect(stamp).toHaveText("Data through Oct 23");
+  await expect(stamp).toHaveText("Data updated Oct 23");
   await expect(stamp).toHaveAttribute("href", "/data");
   await expect(stamp).toHaveAccessibleDescription("Open the Data page.");
   await expect(page.locator("[data-stamp]")).not.toHaveAttribute("aria-busy");
@@ -364,8 +364,8 @@ test("as a rail, the sidebar hides the stamp, and the Data item's tooltip and de
   await expect(page.locator("[data-stamp]")).toBeHidden();
   const data = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Data", exact: true });
   await data.focus();
-  await expect(page.locator("[data-rail-tip]")).toHaveText("DataData through Oct 23");
-  await expect(data).toHaveAccessibleDescription("Data through Oct 23");
+  await expect(page.locator("[data-rail-tip]")).toHaveText("DataData updated Oct 23");
+  await expect(data).toHaveAccessibleDescription("Data updated Oct 23");
   await page.locator("[data-sidebar-toggle]").click();
   await expect(data).not.toHaveAttribute("aria-describedby");
   await expect(page.locator("[data-stamp]").getByRole("link")).toBeVisible();
@@ -378,7 +378,7 @@ test("a data date from another year shows its year", async ({ page }) => {
   await openSidebar(page);
   await page.goto("/");
 
-  await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("Data through Dec 30, 2025");
+  await expect(page.locator("[data-stamp]").getByRole("link")).toHaveText("Data updated Dec 30, 2025");
 });
 
 test("before any daily source has loaded, the stamp says no data are loaded and still links to the Data page", async ({ page }) => {
@@ -408,7 +408,7 @@ test("while it loads, the stamp holds a static bar for the first second and then
   await expect(stamp.locator("[data-skeleton]")).toHaveCount(1);
   await expect(stamp).toHaveText("Reading the data date", { timeout: 3000 });
   answer();
-  await expect(stamp.getByRole("link")).toHaveText(/^Data through /);
+  await expect(stamp.getByRole("link")).toHaveText(/^Data updated /);
 });
 
 test("when the server fails, the stamp says it can't read the date, and tries again on a later page at most once a minute", async ({ page }) => {
@@ -436,7 +436,7 @@ test("when the server fails, the stamp says it can't read the date, and tries ag
 
   await page.clock.fastForward("01:01");
   await tabs.getByRole("link", { name: "Projects" }).click();
-  await expect(stamp.getByRole("link")).toHaveText("Data through Oct 23");
+  await expect(stamp.getByRole("link")).toHaveText("Data updated Oct 23");
   expect(reads).toBe(2);
 });
 

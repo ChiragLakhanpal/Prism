@@ -54,7 +54,8 @@
         "group": "how",
         "value": "Open - International",
         "provenance": "you",
-        "computed": "Open - International"
+        "computed": "Open - International",
+        "via": "ICB"
       },
       {
         "key": "procurement_process",

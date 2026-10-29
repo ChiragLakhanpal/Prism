@@ -117,7 +117,7 @@ test("the box floats centered at the page column's foot, the stamp sits at the s
   expect(Object.values((await box.boundingBox())!)).toEqual([224 + (1440 - 224 - 640) / 2, 900 - 16 - 40, 640, 40]);
   expect(await box.evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).borderRadius])).toEqual(["rgb(255, 255, 255)", "4px"]);
   await expect(page.locator("[data-box-slot] [data-stamp]")).toHaveCount(0);
-  await expect(page.locator("[data-sidebar] [data-stamp] a")).toHaveText("Data through Oct 21");
+  await expect(page.locator("[data-sidebar] [data-stamp] a")).toHaveText("Data updated Oct 21");
 
   await page.locator("h1").click();
   await page.keyboard.press("/");
@@ -171,7 +171,7 @@ test("below 1024 px the Menu button opens the Menu sheet, a modal dialog; Escape
   // Focus moves to the current page's item. The stamp sits under Data; the view lines join the sheet's foot only below
   // 768 px, where the view switch leaves the bar (ticket 93).
   await expect(main.getByRole("link", { name: "Projects" })).toBeFocused();
-  await expect(main.locator("[data-stamp] a")).toHaveText("Data through Oct 21");
+  await expect(main.locator("[data-stamp] a")).toHaveText("Data updated Oct 21");
   await expect(sheet.locator("[data-menu-panel]")).toBeHidden();
   expect(await page.evaluate(() => ["header", "[data-page-column]"].map((part) => document.querySelector<HTMLElement>(part)!.inert))).toEqual([true, true]);
   // It slides in from the left edge, 320 px wide and the window's height.
