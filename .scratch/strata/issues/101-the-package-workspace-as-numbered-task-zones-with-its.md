@@ -72,3 +72,4 @@ Read first: the prototype's package page at 1440, 1280, 1024 and 390 px, with th
   - Unblocks: none. No ticket lists 101 as a blocker.
 
 ---
+- October 28, 2026, orchestrator (22:48 PDT): the App redeploy ran from a8c6b8c6 (the catch-up block "Tickets 101, the App redeploy ran"); the page's check by eye is the owner's.
