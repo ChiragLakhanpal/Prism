@@ -43,3 +43,4 @@ Read first: docs/PLAN.md section 5 (Suppliers); the blueprint's "Suppliers resol
     6. Offline, a stand-in decides the middle and its rows say `decided_by` `model`, with the stand-in's name in the `model` column. On the fixture it merges CHINA RAILWAY NO. 10 ENGINEERING GROUP with supplier 426408.
     7. On a night the model fails, keep its earlier judgements and leave only the new pairs to a person (review r3, with follow-up 2). Simplest, and it keeps gold's supplier keys steady.
   - **What this unblocks.** Nothing yet. Ticket 22 also waits on ticket 21, which is still ready-for-agent behind ticket 18.
+- October 28, 2026, orchestrator (22:00 PDT): step 5 holds on October 29 (the same block): the nightly's propose_lessons task asked the batch role's deployment, gpt-5.4-mini-batch, and its answers came back.

@@ -74,3 +74,4 @@ The agent's and the tools' instructions
 
   - None. The verifier deferred nothing; no criterion has a visual part, and no capture or gallery state was needed to prove them.
 - October 28, 2026, orchestrator (01:21 PDT): steps 1 and 2 ran on October 28 (the catch-up blocks "Ticket 63, step 3 of 5 and ticket 61, step 1 of 3 ran" and "Ticket 61, step 2 of 3 ran"): the orchestrator is at version 11 and the review notes writer at version 3, both matching the repo; the live judge answered with no advising sentence in the answer; step 3 waits for the owner signed in as a reviewer.
+- October 28, 2026, orchestrator (22:00 PDT): step 3 is now possible (the same block): 9 lesson items wait for review on the App; the owner presses Try again on one.
