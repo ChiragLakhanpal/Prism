@@ -232,7 +232,9 @@ function eventSentence(event: HistoryEvent): ReactNode {
   }
 }
 
-export function HistoryList({ events, lists, headingId }: { events: HistoryEvent[]; lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[] }; headingId: string }) {
+// stacked: each date over its event at every width, as in a review page's side panel (ticket 102), whose column is too
+// narrow for the date beside it.
+export function HistoryList({ events, lists, headingId, stacked = false }: { events: HistoryEvent[]; lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[] }; headingId: string; stacked?: boolean }) {
   const h = words.review.history;
   return (
     <ol aria-labelledby={headingId} data-history className="flex flex-col gap-3">
@@ -240,8 +242,8 @@ export function HistoryList({ events, lists, headingId }: { events: HistoryEvent
         const withReason = event.reason && !["recheck_edition"].includes(event.event);
         const wordingChanged = event.event === "decided" && event.outcome === "add" && (event.changes ?? []).length > 0;
         return (
-          <li key={index} className="flex flex-col gap-1 text-small text-ink @md/page:flex-row @md/page:gap-4">
-            <time dateTime={event.on ?? undefined} className="shrink-0 font-semibold tabular-nums @md/page:w-30">
+          <li key={index} className={cx("flex flex-col gap-1 text-small text-ink", !stacked && "@md/page:flex-row @md/page:gap-4")}>
+            <time dateTime={event.on ?? undefined} className={cx("shrink-0 font-semibold tabular-nums", !stacked && "@md/page:w-30")}>
               {event.on ? <Num date={event.on} style="table" /> : null}
             </time>
             <div className="min-w-0 flex-1">

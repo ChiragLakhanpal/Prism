@@ -348,7 +348,7 @@ function UseBlock({ notice, use, actions }: { notice: NoticeBody; use: DraftUse;
       ) : (
         <>
           <div className="flex flex-col gap-1">
-            <p className="text-small text-ink">
+            <p className="max-w-prose text-small text-ink">
               <Fill template={n.usedIn} slots={{ title: <TextLink href={draftHref(use.draft_id)}>{title}</TextLink>, a: <Num value={use.cites} /> }} />
             </p>
             {label && <p className="text-caption text-ink-muted">{label}</p>}

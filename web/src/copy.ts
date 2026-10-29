@@ -255,34 +255,35 @@ export const copy = {
     lessons: {
       title: "Lessons",
       purpose: LESSONS_PURPOSE,
-      // The empty library's card says whose lessons these are, who decides, what happens to the proposed ones and
-      // where the lessons show up anyway (ticket 114). The page's caption above it spells out IEG.
-      emptyTitle: "No lesson has entered the library yet.",
+      // The empty library's row says who decides, what happens to the proposed lessons and where the lessons show up
+      // anyway (ticket 114). The purpose above it says whose lessons they are, and the page's caption spells out IEG.
       emptyBody:
-        "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of " +
-        "them. I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed " +
+        "I propose each lesson, and a lead procurement specialist decides whether it enters the library. Proposed " +
         "lessons wait for that decision, and only lesson reviewers can read them.",
       emptyMore:
-        "You don't need to search here for each package. On a package's page, section 3, Procurement risks and what " +
-        "helped, I show the lessons from the completion reports of projects with comparable packages.",
+        "On a package's page, in section 3, Procurement risks and what helped, I show the lessons from projects with " +
+        "comparable packages.",
       // Where section 3's own empty state links (routes.ts, RISKS_READINESS_HREF).
       link: "See which completion reports I have read",
     },
-    // Lessons > Waiting for review and one item's review page (ticket 29): the frame keeps the Lessons h1.
+    // Lessons > Waiting for review and one item's review page (ticket 29). The reviewer pages are sidebar items under
+    // Lessons (ticket 102), so each names itself in its h1, and its own purpose, which names its limits and regions
+    // from the server, opens its body.
     lessonsQueue: {
-      title: "Lessons",
+      title: "Waiting for review",
       documentTitle: "Waiting for review, Lessons",
       purpose: LESSONS_PURPOSE,
     },
     lessonReview: {
-      title: "Waiting for review",
+      // The h1 when the item cannot load names one item, since the breadcrumb above it already ends at the queue.
+      title: "A lesson waiting for review",
       documentTitle: "Waiting for review, Lessons",
       purpose: "One lesson waiting for review, with its evidence, its history and your part in deciding it.",
     },
-    // Lessons > Passage reports and Lessons > Judging (ticket 32): the frame keeps the Lessons h1, and one group's
-    // page and one query's page name themselves once they load.
+    // Lessons > Passage reports and Lessons > Judging (ticket 32): each names itself in its h1 (ticket 102), and one
+    // group's page and one query's page name themselves once they load.
     lessonsReports: {
-      title: "Lessons",
+      title: "Passage reports",
       documentTitle: "Passage reports, Lessons",
       purpose: LESSONS_PURPOSE,
     },
@@ -292,7 +293,7 @@ export const copy = {
       purpose: "One passage's reports, with the paragraph, what people reported and your decision.",
     },
     lessonsJudging: {
-      title: "Lessons",
+      title: "Judging",
       documentTitle: "Judging, Lessons",
       purpose: LESSONS_PURPOSE,
     },
@@ -435,13 +436,24 @@ export const copy = {
       data: "Data",
     },
     // A section's own pages, under its item while it is current (DESIGN.md section 5, Sidebar), by page key: Following
-    // and All projects under Projects for World Bank staff (ticket 99), and Data readiness and Sources and licenses
-    // under Data (ticket 104). The labels carry no count, so they never grow while a list loads.
+    // and All projects under Projects for World Bank staff (ticket 99), the reviewer pages under Lessons for the roles
+    // that have them (ticket 102), and Data readiness and Sources and licenses under Data (ticket 104). The labels
+    // carry no count, so they never grow while a list loads.
     sub: {
       following: "Following",
       projects: "All projects",
+      lessonsQueue: "Waiting for review",
+      lessonsReports: "Passage reports",
+      lessonsJudging: "Judging",
       data: "Data readiness",
       dataSources: "Sources and licenses",
+    },
+    // A reviewer page's count sits in a small badge after its label, hidden at zero (ticket 102). The badge shows the
+    // number alone, so the link's name says what it counts instead: the label, then the number, then what it counts.
+    subCount: {
+      lessonsQueue: (count: string) => `Waiting for review, ${count} ${count === "1" ? "lesson" : "lessons"}`,
+      lessonsReports: (count: string) => `Passage reports, ${count} ${count === "1" ? "passage" : "passages"}`,
+      lessonsJudging: (count: string) => `Judging, ${count} ${count === "1" ? "query" : "queries"} left`,
     },
     // One button that turns the sidebar into the rail of icons and back.
     collapse: "Collapse the sidebar",
@@ -6174,17 +6186,10 @@ export const copy = {
     sourcesNote:
       "Lessons come from Implementation Completion and Results Reports (ICRs), and from ICR Reviews and Project " +
       "Performance Assessment Reports (PPARs) by the Independent Evaluation Group (IEG).",
+    // The breadcrumb's first link on a review page. The reviewer pages are the sidebar's items under Lessons
+    // (ticket 102; copy.nav.sub), not sub-tabs.
     tabs: {
-      label: "Lesson pages",
       library: "Lessons",
-      queue: "Waiting for review ({waiting})",
-      // Ticket 32's reviewer pages, each shown only to its role.
-      reports: "Passage reports ({waiting})",
-      judging: "Judging ({left})",
-      showingLibrary: "Showing Lessons.",
-      showingQueue: "Showing Waiting for review.",
-      showingReports: "Showing Passage reports.",
-      showingJudging: "Showing Judging.",
     },
     queueTitle: "Waiting for review",
     // The kinds, stages and risk factors come from config/lessons.toml with the server's answers.
@@ -6672,7 +6677,10 @@ export const copy = {
     firstCaption: "From your next visit, I start this page with what came in since this one.",
     previewNote:
       "This is a preview, so I leave out what is about you: the drafts you wrote, your reports and the proposed lessons.",
-    asOfNote: "You are seeing the library as of {date}, with each lesson at the version that was current then.",
+    // As of a past date, under the alert that names the date (ticket 102, round 2): what the library held then.
+    // asOfNoteEmpty is for the server's count of current lessons at 0 with no filter set.
+    asOfNote: "I show the library as it was on {date}, with each lesson at the version that was current then.",
+    asOfNoteEmpty: "The library held no current lessons on {date}.",
     // A count word opens the items it counts, in a window named by its heading.
     popovers: {
       reports: "Reports I read since {date}",
@@ -6710,6 +6718,12 @@ export const copy = {
     rests: "Rests on {quotes} quotes from {reports} reports.",
     changedTitle: "Changed where you used it",
     changedCaption: "Your drafts still cite the versions you used. Nothing in a draft changes until you choose.",
+    // The same zone on a visit with nothing new, when the digest above says no lesson changed (ticket 102). It says why
+    // a change can still show, never when this one came: no tool says that, and a re-check decided during this visit
+    // would make "before your last visit" false (review round 2).
+    changedEarlierCaption:
+      "I keep each change here until you choose what to do, so a change from before your last visit can still show. " +
+      "Your drafts still cite the versions you used, and nothing in a draft changes until then.",
     newTitle: "New",
     newCaption: "Lessons a lead procurement specialist added to the library since your last visit, newest first.",
     reportsTitle: "Your reports",

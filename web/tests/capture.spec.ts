@@ -2,7 +2,7 @@
 // keyboard-focus shots, so design reviews are repeatable (criterion 10 of ticket 02). The
 // whole command is not a gate step; these tests check its list of shots and run one of them.
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, statSync } from "node:fs";
+import { mkdtempSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -46,6 +46,41 @@ test("the capture list photographs Data readiness at 1440, 1024 and 390 px, with
   expect(shot("rows-open")?.full).toBe(true);
   expect(shot("beside-drawer")?.widths).toEqual([1024]);
   expect(shot("beside-drawer")?.path).toContain("?evidence=");
+});
+
+// Ticket 102: Lessons (populated, a first visit and a failed read), a review page, Passage reports and Judging at the
+// three widths. Every shot of the Lessons page answers who is viewing and the page's one read, so only the error shot
+// shows a load error (ticket 60's note: the shell's shots on /lessons showed one).
+test("the capture list photographs Lessons, a review page, Passage reports and Judging at 1440, 1024 and 390 px, and no Lessons shot fails by mistake", () => {
+  for (const name of ["lessons--page", "lessons--page-first-visit", "lessons--library-error", "lessons--review--recommend", "retrieval--reports", "retrieval--judging", "retrieval--query"]) {
+    const shot = SHOTS.find((candidate) => candidate.name === name);
+    expect(shot?.server, name).toBe("app");
+    expect(shot?.widths ?? WIDTHS, name).toEqual(WIDTHS);
+  }
+  const library = SHOTS.filter((shot) => shot.server === "app" && /^\/lessons(\?|$)/.test(shot.path));
+  expect(library.map((shot) => shot.name)).toEqual(expect.arrayContaining(["app--lessons", "app--view-piu", "app--asof", "app--menu-open"]));
+  for (const shot of library) {
+    expect(shot.api?.["/api/lessons/me"], shot.name).toBeDefined();
+    const read = shot.api?.["/api/lessons/page"];
+    if (shot.name === "lessons--library-error") expect(read?.status, shot.name).toBe(503);
+    else expect(Boolean(read && (read.status ?? 200) === 200 && (read.recorded || read.body)), shot.name).toBe(true);
+  }
+});
+
+// Round 1 of ticket 102: a Lessons shot as of a past date shows the page the server sends for that date, recorded by
+// tests/record_lessons_page_api.py, and never today's page with only its date changed (an answer as of a date never
+// cites a document made public after it).
+test("a Lessons shot as of a past date answers with the server's recording for that date", () => {
+  const dated = SHOTS.filter((shot) => shot.server === "app" && /^\/lessons\?(.*&)?asof=\d{4}-\d{2}-\d{2}/.test(shot.path));
+  expect(dated.map((shot) => shot.name)).toContain("app--asof");
+  for (const shot of dated) {
+    const asof = new URL(shot.path, "http://strata.test").searchParams.get("asof");
+    const read = shot.api?.["/api/lessons/page"];
+    expect(read?.body, shot.name).toBeUndefined();
+    expect(read?.recorded, shot.name).toBeDefined();
+    const page = JSON.parse(readFileSync(new URL(`../../tests/fixtures/api/${read!.recorded}`, import.meta.url), "utf8"));
+    expect(page.as_of, shot.name).toBe(asof);
+  }
 });
 
 // Ticket 103: the Drafts list grouped, empty and in error, and a draft just marked as checked, at three widths.

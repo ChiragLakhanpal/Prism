@@ -33,13 +33,13 @@ export const ROUTES: Route[] = [
     // Ticket 110: one sentence that says what the tab is for.
     purpose:
       "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a package's page where they apply.",
-    // Ticket 114: the card says whose lessons these are and who decides, and links where a package page's section 3
-    // links when no completion report was read.
+    // Ticket 114: the card says who decides, and links where a package page's section 3 links when no completion
+    // report was read. Ticket 102: it is the library's zone, as a row named "The library", since the digest above it
+    // already says the library has no lessons yet, and the purpose says whose lessons they are.
     empty: {
-      title: "No lesson has entered the library yet.",
+      title: "The library",
       body:
-        "These are the World Bank's own lessons, quoted word for word from completion reports and IEG's reviews of them. " +
-        "I propose each one, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
+        "I propose each lesson, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
         "wait for that decision, and only lesson reviewers can read them.",
       link: ["See which completion reports I have read", "/data?sources=notices,awards,documents,projects&from=package_risks"],
     },

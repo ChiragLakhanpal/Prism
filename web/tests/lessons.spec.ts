@@ -4,7 +4,7 @@
 // and the 29 design brief's, copied here so the test checks the copy file against an independent source.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
-import { expect, recorded, test, windowBeside } from "./mocked";
+import { expect, openSidebar, recorded, test, windowBeside } from "./mocked";
 
 const REBIDDING = "new-e903b07ad1";
 const PERMITS = "new-64ec0401e3";
@@ -57,12 +57,16 @@ async function axe(page: Page) {
   return results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`);
 }
 
+// Ticket 102: the reviewer pages are the sidebar's items under Lessons (DESIGN.md section 5, Sidebar), so the page has
+// no sub-tab row. The sub-items show in the open sidebar; the rail hides them.
 const subTabs = (page: Page) => page.getByRole("navigation", { name: "Lesson pages" });
+const lessonsItems = (page: Page) => page.getByRole("navigation", { name: "Main" }).locator("[data-sub-items=lessons] a");
 
 // ── Who sees the queue ───────────────────────────────────────────────────
 
-test("someone who is not a lesson reviewer sees no sub-tab row, and the queue's address shows the no-access card", async ({ page }) => {
+test("someone who is not a lesson reviewer sees no reviewer page under Lessons, and the queue's address shows the no-access card", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  await openSidebar(page);
   await viewer(page, {
     // Ticket 39's page answers in one request (tests/record_lessons_page_api.py): here, Ana's first visit to an
     // empty library.
@@ -70,30 +74,65 @@ test("someone who is not a lesson reviewer sees no sub-tab row, and the queue's 
     "/api/lessons/review": await file("lessons-queue-no-access.json"),
   });
   await page.goto("/lessons");
-  await expect(page.locator("[data-library], [data-empty-state]").first()).toBeVisible();
+  await expect(page.locator("[data-library=empty]")).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lessons");
   await expect(subTabs(page)).toHaveCount(0);
+  await expect(lessonsItems(page)).toHaveCount(0);
   await expect(page.getByRole("link", { name: /Waiting for review/ })).toHaveCount(0);
-  // The empty library's card for anyone who is not a reviewer (ticket 114's words).
-  await expect(page.locator("[data-empty-state] h2")).toHaveText("No lesson has entered the library yet.");
+  // The empty library's row for anyone who is not a reviewer links where section 3's empty state does (ticket 114).
+  await expect(page.locator("[data-library=empty]").getByRole("link")).toHaveText("See which completion reports I have read");
 
   await page.goto("/lessons/review");
   const card = page.locator("[data-empty-state]");
   await expect(card.getByRole("heading")).toHaveText("I show this page only to lesson reviewers.");
   await expect(card.getByRole("link", { name: "Go to Lessons" })).toHaveAttribute("href", "/lessons");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lessons");
   await expect(subTabs(page)).toHaveCount(0);
+  await expect(lessonsItems(page)).toHaveCount(0);
   await expect(page).toHaveTitle("Lessons | Strata");
 });
 
-test("a lesson reviewer sees the Lessons sub-tabs with the count waiting in their region, and the queue grouped for them", async ({ page }) => {
+test("a lesson reviewer finds Waiting for review under Lessons in the sidebar with its count in a badge, and the queue grouped for them", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await reviewer(page, { "/api/lessons/review": await file("lessons-queue.json") });
-  await page.goto("/lessons/review");
-  await expect(page.locator("[data-queue=ready]")).toBeVisible();
+  await openSidebar(page);
+  await reviewer(page, {
+    "/api/lessons/page": await file("lessons-page-reviewer.json"),
+    "/api/lessons/review": await file("lessons-queue.json"),
+    [`/api/lessons/review/${REBIDDING}`]: await file("lessons-item-recommend.json"),
+  });
+  await page.goto("/lessons");
+  await expect(page.locator("[data-lessons-page=ready]")).toBeVisible();
+  const nav = page.getByRole("navigation", { name: "Main" });
+  const lessons = nav.locator("[data-nav-item=lessons]");
+  const queue = lessonsItems(page);
+  // One page for this role, Waiting for review, with the count waiting in the reviewer's region in its badge.
+  await expect(queue).toHaveCount(1);
+  await expect(queue).toHaveAttribute("href", "/lessons/review");
+  await expect(queue).toHaveAccessibleName("Waiting for review, 3 lessons");
+  await expect(queue.locator("[data-sub-count]")).toHaveText("3");
+  await expect(lessons).toHaveAttribute("aria-current", "page");
+  // No sub-tab row on the page.
+  await expect(subTabs(page)).toHaveCount(0);
+  await expect(page.locator("main nav")).toHaveCount(0);
 
-  await expect(subTabs(page).getByRole("link")).toHaveText(["Lessons", "Waiting for review (3)"]);
-  await expect(subTabs(page).getByRole("link", { name: "Waiting for review (3)" })).toHaveAttribute("aria-current", "page");
+  // A sub-item is a route link: the page names itself in its h1, which takes focus, and the mark moves to it.
+  await queue.click();
+  await expect(page).toHaveURL(/\/lessons\/review$/);
+  await expect(page.locator("[data-queue=ready]")).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Waiting for review");
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  await expect(queue).toHaveAttribute("aria-current", "page");
+  await expect(lessons).toHaveAttribute("aria-current", "true");
+  // As the current item, in its heavier weight, the label and its badge still keep to one line, so the sidebar stays put.
+  expect((await queue.boundingBox())!.height).toBeLessThanOrEqual(32);
+  await expect(subTabs(page)).toHaveCount(0);
   await expect(page).toHaveTitle("Waiting for review, Lessons | Strata");
+
+  // An item's review page sits inside Waiting for review, so its item keeps the mark.
+  await page.locator(`[data-queue-row=${REBIDDING}] h3 a`).click();
+  await expect(page.locator(`[data-review-page=${REBIDDING}]`)).toBeVisible();
+  await expect(queue).toHaveAttribute("aria-current", "true");
+  await page.goBack();
   await expect(page.locator("[data-queue-lead]")).toHaveText(
     "Three lessons are waiting for you. The oldest has used three of its 10 business days.",
   );
@@ -114,6 +153,15 @@ test("a lesson reviewer sees the Lessons sub-tabs with the count waiting in thei
   await expect(row).toContainText("From the ICR for Rajasthan Road Sector Modernization Project (P130164), paragraph 54, page 23. South Asia.");
   await expect(row.locator("[data-badge=restated]")).toHaveText("Restated by IEG");
   await expect(row).toContainText("Day 3 of 10 business days, due November 5, 2026.");
+
+  // Three digits keep the current item on one line too (design round 2, item A), so Drafts below it stays put.
+  const me = JSON.parse(await recorded("lessons-me-reviewer.json"));
+  await page.route("**/api/lessons/me", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ...me, waiting: 100 }) }));
+  await page.reload();
+  await expect(queue.locator("[data-sub-count]")).toHaveText("100");
+  await expect(queue).toHaveAccessibleName("Waiting for review, 100 lessons");
+  await expect(queue).toHaveAttribute("aria-current", "page");
+  expect((await queue.boundingBox())!.height).toBeLessThanOrEqual(32);
 });
 
 test("while the queue loads, its purpose is already in place and names every one of the reviewer's regions", async ({ page }) => {
@@ -180,11 +228,58 @@ test("the quote is the one highlighted thing on the review page, checked on its 
     "Checked: I found this quote word for word on page 23. Not checked: whether the lesson follows from it.",
   );
   await expect(cards.nth(1)).toContainText("IEG's review of this ICR restated the lesson.");
-  // The page reads top to bottom: evidence, tags, summary, history, then the form.
+  // The work reads top to bottom: evidence, tags, summary, then the form; the history is the side panel, which
+  // follows the work in one column (ticket 102).
   const order = await page.locator("main h2").allTextContents();
-  expect(order).toEqual(["The evidence", "How I tagged it", "My summary of the evidence", "What has happened so far", "Your recommendation"]);
+  expect(order).toEqual(["The evidence", "How I tagged it", "My summary of the evidence", "Your recommendation", "What has happened so far"]);
   // The writer's summary passed the verifier; the sentence it removed is shown with its reason.
   await expect(page.locator("[data-summary=ready] [data-removed-box]")).toContainText("I removed one sentence.");
+});
+
+// Ticket 102 (DESIGN.md section 4, Page layouts, Workspace): from a frame of 75rem the work takes columns 1 to 7 and the
+// history is the side panel in columns 9 to 12; below it the page is one column and the history follows the work. The
+// widths are windows beside the rail, which the sidebar rests as.
+test("a review page is a workspace at 1440 and 1280 px, with its history in the side panel, and one column at 1024 and 390 px", async ({ page }) => {
+  await reviewer(page, { [`/api/lessons/review/${REBIDDING}`]: await file("lessons-item-recommend.json") });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(`/lessons/review/${REBIDDING}`);
+  const work = page.locator("[data-review-page] [data-workspace-work][data-zones]");
+  const side = page.locator("[data-review-page] [data-side-slot]");
+  await expect(side.getByRole("heading", { level: 2 })).toHaveText("What has happened so far");
+  await expect(side.locator("[data-history] li").first()).toBeVisible();
+  for (const width of [1440, 1280, 1024, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.evaluate(() => document.fonts.ready);
+    const [w, s, column] = [(await work.boundingBox())!, (await side.boundingBox())!, (await page.locator("[data-page-column]").boundingBox())!];
+    if (width >= 1280) {
+      // Beside the work, to its right, and the work a little more than half the page column.
+      expect(s.x, `${width} px`).toBeGreaterThan(w.x + w.width);
+      expect(s.y, `${width} px`).toBeLessThan(w.y + w.height);
+      expect(w.width / column.width, `${width} px`).toBeLessThan(0.65);
+    } else {
+      // One column: the history after the work, as wide as it.
+      expect(s.y, `${width} px`).toBeGreaterThanOrEqual(w.y + w.height);
+      expect(Math.abs(s.width - w.width), `${width} px`).toBeLessThan(2);
+    }
+  }
+
+  // The decision form keeps its focus rules in the workspace: a recommendation with no reason sends focus to the field.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const form = page.locator("[data-decision-form]");
+  await form.getByRole("button", { name: "Recommend adding it" }).click();
+  await expect(form.getByRole("textbox", { name: "Your reason" })).toBeFocused();
+});
+
+// Round 1 of ticket 102: a review page whose one read fails puts its alert in the alert slot, and its h1 names one item
+// under the breadcrumb that ends at the queue, so the page never reads as the queue itself.
+test("when a review page's one read fails, its alert is in the alert slot and its h1 names one lesson, not the queue", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await reviewer(page, { [`/api/lessons/review/${REBIDDING}`]: { status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
+  await page.goto(`/lessons/review/${REBIDDING}`);
+  await expect(page.locator("[data-alert-slot] [role=alert]")).toBeVisible();
+  await expect(page.locator("main nav[aria-label] a").last()).toHaveText("Waiting for review");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("A lesson waiting for review");
+  await expect(page).toHaveTitle("Waiting for review, Lessons | Strata");
 });
 
 test("a recommendation needs a reason, sends the stage the reviewer saw, and ends on the outcome panel", async ({ page }) => {
@@ -333,18 +428,31 @@ test("an evidence card's marker opens the drawer at its source, and focus comes 
   // could be taken while the text was still in the fallback font, and the swap made the column 34 px taller.
   await expect(marker).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
-  const column = await page.locator("[data-document-column]").boundingBox();
+  // The workspace's work (ticket 102): the side panel hides while the drawer is open, and the work stays put.
+  const work = page.locator("[data-review-page] [data-workspace-work][data-zones]");
+  const column = await work.boundingBox();
   await marker.click();
   const drawer = page.getByRole("dialog");
   await expect(drawer).toBeVisible();
   await expect(page).toHaveURL(/evidence=strata\.gold\.passage%3A31525018%2Fv1%2F54|evidence=strata.gold.passage:31525018\/v1\/54/);
   // The quote the card showed is highlighted in the whole paragraph.
   await expect(drawer.locator("mark")).toHaveText("Highlight starts. 108 of 328 cases had to go through rebidding. Highlight ends.");
-  // The column keeps its place and width while the drawer is open.
-  expect(await page.locator("[data-document-column]").boundingBox()).toEqual(column);
+  // The column keeps its place and width while the drawer is open, and the history's side panel steps aside for it.
+  expect(await work.boundingBox()).toEqual(column);
+  await expect(page.locator("[data-review-page] [data-side-slot]")).toBeHidden();
   await page.keyboard.press("Escape");
   await expect(drawer).toHaveCount(0);
   await expect(marker).toBeFocused();
+
+  // At 1280 px too, where the drawer leaves the page area narrower than the work's own breakpoints: the work lays out by
+  // its own column, so the marker you pressed does not move when the drawer opens.
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.evaluate(() => document.fonts.ready);
+  const before = await marker.boundingBox();
+  await marker.click();
+  await expect(drawer).toBeVisible();
+  await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
+  expect(await marker.boundingBox()).toEqual(before);
 });
 
 test("a likely repeat's citation of a library lesson opens the drawer at the lesson, named by its statement", async ({ page }) => {

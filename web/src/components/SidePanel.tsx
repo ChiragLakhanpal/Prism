@@ -18,6 +18,7 @@ export function SidePanel({
   source,
   sentence,
   loading = false,
+  headingId: namedId,
   before,
   children,
 }: {
@@ -28,12 +29,15 @@ export function SidePanel({
   // All the panel holds: it is then a row, not a panel.
   sentence?: ReactNode;
   loading?: boolean;
+  // The h2's id when a part inside the panel is named by it too, such as a review page's history list (ticket 102).
+  headingId?: string;
   // What the panel holds before its facts, such as a draft's state stepper (ticket 103).
   before?: ReactNode;
   // What the panel holds when it is not a list of facts, such as Waiting for you's drafts (ticket 98).
   children?: ReactNode;
 }) {
-  const headingId = useId();
+  const ownId = useId();
+  const headingId = namedId ?? ownId;
   if (sentence != null && !facts && children == null) {
     return (
       <section aria-labelledby={headingId} data-side-panel="row" className="border-y border-line py-4">

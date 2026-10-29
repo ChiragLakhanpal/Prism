@@ -79,6 +79,9 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, prebuilt: tuple[tuple[P
     found["lessons-page-nothing.json"] = text(story.page())
     # Ben's first visit.
     found["lessons-page-first.json"] = text(story.page(story_of.ppsd_story.BEN))
+    # Ana's page as of a past date (ticket 102's as-of shot): only what was disclosed by then, so no lesson, notice or
+    # report yet, and nothing about her. Each call moves the story's clock, so it comes after the answers above.
+    found["lessons-page-asof.json"] = text(story.page(asof="2016-08-26"))
 
     # A lesson retired as wrong holds the export.
     story = fresh("retired")
