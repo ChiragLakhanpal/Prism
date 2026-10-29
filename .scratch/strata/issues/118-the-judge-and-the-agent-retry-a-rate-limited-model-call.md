@@ -14,7 +14,7 @@ Read first: `src/strata/agent/judge.py`, `src/strata/agent/answer_check.py`, `sr
 - [ ] The judge retries a 429 or 503 up to `azure.retries` times with the wait the header names or the config default, bounded by `azure.max_retry_seconds` and the answer route's timeout, with a fake clock in the tests; four refusals give `judge_unavailable` as today, and a 403 gives up at once.
 - [ ] The agent's Foundry calls retry the same way before `agent_unavailable`, with the same tests through Foundry's fake.
 - [ ] The tries and the waits live in `config/thresholds.toml` under `[azure]` and nowhere else; each wait is logged with its try count; the recorded ask streams and the benchmark still pass; the gate adds at most one second.
-- [ ] On the paid workspace, after the merge and the App redeploy, the demo-ready command's smoke question passes three times in a row (recorded in the catch-up file under this ticket).
+- [x] On the paid workspace, after the merge and the App redeploy, the demo-ready command's smoke question passes three times in a row (recorded in the catch-up file under this ticket).
 
 ## Comments
 
@@ -31,3 +31,4 @@ Read first: `src/strata/agent/judge.py`, `src/strata/agent/answer_check.py`, `sr
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1 and 03-projects-b9), so I sent no index-busy or index-free message.
   - Unblocks: none. No ticket names 118 on its `Blocked by` line.
 - October 28, 2026, orchestrator (13:40 PDT): step 1 ran (the catch-up block "Ticket 118, step 1 of 1 ran"): The App redeploy with `--keep-secrets` exited 0 at 20:30 UTC with the running line, and the watchdog holds e66f4e56. Then the demo-ready command three times from the snapshot: run 1 (20:30 UTC) failed the smoke question, the verifier removing one sentence as not_supported (the judge's verdict on sub.
+- October 28, 2026, orchestrator (19:16 PDT): criterion 4 holds: the smoke question passed three runs in a row (20:33, 20:35 and 23:24 UTC on October 28), with a 429 retried and the answer kept in the second of them (the catch-up block "Ticket 49, step 1 of 3 ran in full again").

@@ -4292,3 +4292,7 @@ It worked if:
 - The three closed rows show: "Show the documents", the parser row's sentence, and "Show the fixes".
 
 Record the exit code, the App's address and what `/data` showed here under ticket 104. If step 3 of the deploy names a secret the scope lacks, record its name for the user, who writes it.
+
+## Ticket 49, step 1 of 3 ran in full again, and ticket 118's three passes in a row: the App's secret renewed
+
+**Ran on October 28, 2026 (orchestrator), 23:24 to 23:28 UTC, from a snapshot of 7f42374f (the App's commit).** The Home step's failure of 20:30 to 20:37 UTC was the App service principal's OAuth secret: the principal (app-1vvvna strata, id 145252624286955) had one active secret, made at 17:06 UTC that day, and the environment file still held an older one, so the token request answered 401 invalid_client. The owner generated a new secret in the workspace's Identity and access page and put it in the environment file; a client-credentials token request then answered 200 (checked with a probe that prints only the status). The demo-ready command then exited 0: the App (health in 1 second), Genie (16 seconds once warm), the smoke question (six checks, citing strata.gold.passage:31525018/v1/54), the P156634 recheck, Home (the examples seeded, the window checked) and the workspace listing all passed: "Strata is ready for the demo." With the passes of 20:33 and 20:35 UTC (the block "Ticket 118, step 1 of 1 ran"), the smoke question has passed three runs in a row, so ticket 118's criterion 4 holds.
