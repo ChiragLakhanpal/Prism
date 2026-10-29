@@ -1096,7 +1096,7 @@ export const galleryCopy = {
       },
     },
     runId: "run-0001",
-    abstention: "I'm not giving a range: only 12 comparable packages. Here are all 12.",
+    abstention: "I'm not giving a range from only 12 comparable packages. Here are all 12.",
     abstentionTitle: "The 12 comparable packages",
     abstentionNoun: "comparable packages",
     abstentionHeaders: ["Activity Reference No.", "Method", "Months from notice to contract"],

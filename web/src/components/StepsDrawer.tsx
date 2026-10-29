@@ -82,7 +82,32 @@ export function StepComparablesView({ evidence, focusEntry = null, onOpen }: { e
   const { middle, cautious } = row.step;
   const phrase = step?.phrase ?? "";
   let finding;
-  if (!row.abstain_all && middle?.days != null && cautious?.days != null && row.step.abstain_reason !== "few_comparables") {
+  if (row.step.abstain_reason === "not_reached" && row.records_through) {
+    // Most comparable packages had not reached the step, so they never "recorded" it (ticket 58).
+    const reached = row.step.reached_n ?? 0;
+    finding = (
+      <Fill
+        template={reached === 0 ? words.findingNotReachedNone : words.findingNotReached}
+        slots={{ reached: number(reached), n: number(n), step: phrase, date: <Num date={row.records_through} /> }}
+      />
+    );
+  } else if (!row.abstain_all && middle?.days != null && cautious?.days != null && (cautious.longer ?? 0) === 0 && row.step.abstain_reason !== "few_comparables") {
+    // None ran later than the cautious days, so no "0 of 25, about 0 in 10" (ticket 58).
+    finding = (
+      <>
+        <Fill
+          template={row.basis === "delay" ? words.findingNoneLaterDelay : words.findingNoneLater}
+          slots={{ n: number(n), step: phrase, days_c: number(cautious.days), previous: previous?.phrase ?? "" }}
+        />
+        {(middle.longer ?? 0) > 0 && (
+          <>
+            {" "}
+            <Fill template={words.findingMiddle} slots={{ longer_m: number(middle.longer ?? 0), about_m: about(middle.in10), days_m: number(middle.days), n: number(n) }} />
+          </>
+        )}
+      </>
+    );
+  } else if (!row.abstain_all && middle?.days != null && cautious?.days != null && row.step.abstain_reason !== "few_comparables") {
     finding = (
       <Fill
         template={row.basis === "delay" ? words.findingDelay : words.findingDuration}

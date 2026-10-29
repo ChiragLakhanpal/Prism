@@ -351,16 +351,22 @@ export function dateCheck(point: StepPoint, row: Row, family: StepFamily, onOpen
     previous: row.previous?.phrase ?? "",
     first: family.steps[0].phrase,
   };
+  // None ran later than the date's days, so the tooltip never says "0 of 25, about 0 in 10" (ticket 58).
+  const noneLater = (point.longer ?? 0) === 0 && n > 0;
   const tip =
     row.step.abstain_reason === "needs_earlier_step"
       ? words.tips.daysNeedsEarlier
       : !point.planned_date
         ? words.tips.dateUndated
         : point.days_relation === "after_previous"
-          ? words.tips.dateDuration
+          ? noneLater
+            ? words.tips.dateNoneLater
+            : words.tips.dateDuration
           : point.days_relation === "before_plan"
             ? words.tips.dateBefore
-            : words.tips.dateDelay;
+            : noneLater
+              ? words.tips.dateNoneLaterDelay
+              : words.tips.dateDelay;
   return {
     tooltip: <Fill template={tip} slots={slots} />,
     from: row.from,
@@ -572,8 +578,17 @@ function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOp
           )}
           {dating && (
             <th scope="col" className={head} data-choice-header={choice}>
-              {choice === "cautious" ? words.columns.cautious : words.columns.middle}
-              <span className={note}>{choice === "cautious" ? words.columns.cautiousNote(String(dates.cautious_in10)) : words.columns.middleNote}</span>
+              {/* No step dated: the column says what dating takes, not how often packages ran later (ticket 58). */}
+              {dates.none_dated ? words.columns.planned : choice === "cautious" ? words.columns.cautious : words.columns.middle}
+              <span className={note}>
+                {dates.none_dated ? (
+                  <Fill template={words.columns.noneNote} slots={{ min: number(dates.min_comparables) }} />
+                ) : choice === "cautious" ? (
+                  words.columns.cautiousNote(String(dates.cautious_in10))
+                ) : (
+                  words.columns.middleNote
+                )}
+              </span>
             </th>
           )}
           <th scope="col" className={cx(head, "text-right")}>
@@ -669,7 +684,7 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
             {dating && (
               <>
                 <dt className={cx(label, row.step.abstain_reason && "col-span-2")}>
-                  {choice === "cautious" ? words.columns.cautious : words.columns.middle}
+                  {dates.none_dated ? words.columns.planned : choice === "cautious" ? words.columns.cautious : words.columns.middle}
                 </dt>
                 {/* A sentence takes the item's full width under its label, so the labels keep their column. */}
                 <dd className={row.step.abstain_reason ? "col-span-2" : "flex min-w-0 justify-end text-right"}>
@@ -703,8 +718,10 @@ type CaptionPick =
 function pickCaption(dates: StepDates, family: StepFamily, rows: Row[], choice: Choice): CaptionPick {
   // A package from a sentence whose only date is your start date says no later step is dated.
   const none = (): CaptionPick => (dates.basis === "duration" && dates.start_date ? { kind: "noneAfter" } : { kind: "none" });
+  // No step dated: the caption names the steps, and the summary above says why (ticket 58), unless a package from a
+  // sentence has its start date, whose caption says no later step is dated.
   if (dates.abstain_all) return { kind: "abstain" };
-  if (dates.none_dated) return none();
+  if (dates.none_dated) return dates.basis === "duration" && dates.start_date ? none() : { kind: "abstain" };
   if (dates.needs_start_date) return { kind: "undated" };
   const signed = rows.find((row) => row.step.step_key === family.longest_through);
   const point = signed?.step[choice];
@@ -912,6 +929,9 @@ export function StepsView({
   // No step has a date or days in either choice: the choice and the start date would change nothing, so the section
   // offers neither and says why no step is dated.
   const controls = dates !== null && !dates.abstain_all && !dates.none_dated;
+  // A row's "had reached this step by" names the date the source line names (ticket 58): the page's as-of date, or the
+  // records' own.
+  const recordsDate = result ? (asOf ?? result.records_through ?? result.as_of) : "";
   const body =
     state.status === "loading" ? (
       <div className="mt-6 @container/steps">
@@ -927,6 +947,9 @@ export function StepsView({
             <Fill template={words.introNoneDated(family.family_name)} slots={{ min: number(dates.min_comparables) }} />
           ) : dates.basis === "delay" ? (
             words.introDelay(family.family_name)
+          ) : dates.needs_start_date && !dates.start_date ? (
+            // No step is dated before the start date, so the intro says how I date them, in the present (ticket 58).
+            words.introDurationUndated(family.family_name)
           ) : (
             words.introDuration(family.family_name)
           )}
@@ -954,7 +977,7 @@ export function StepsView({
             <StepTable
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={`${captionId}-wide`}
-              recordsDate={result.as_of}
+              recordsDate={recordsDate}
               from={from}
             />
           </div>
@@ -962,7 +985,7 @@ export function StepsView({
             <StepList
               dates={dates} family={family} rows={rows} choice={choice} kind={kind} packageKey={packageKey} openId={openId} onOpen={onOpen} slow={start.slow}
               caption={<Caption dates={dates} family={family} rows={rows} choice={choice} onOpen={onOpen} />} captionId={captionId}
-              recordsDate={result.as_of}
+              recordsDate={recordsDate}
               from={from}
             />
           </div>

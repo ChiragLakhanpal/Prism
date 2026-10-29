@@ -26,7 +26,8 @@ score_packages() is the nightly job's score task: the champion's chance for ever
 lists, as planned today, written to strata.ops.rebidding_scores. natural_frequency(), in strata.estimates.rebidding
 so the app's server never imports numpy or XGBoost, is what rebidding_risk returns: the champion's "about k in
 10 packages like this one", shown only from past_range.min_comparables comparables and a champion that beat its baseline in its latest test year. Otherwise it says why not, by code:
-too_few, no_results (no champion registered yet), not_better, or not_scored (no score for this package: the
+too_few, no_results (no champion registered yet), not_better, not_in_plan (a package planned from a sentence, which no
+plan lists, ticket 58), or not_scored (no score for this package: the
 nightly job scores the activities in Procurement Plans, and a package planned from a sentence has none).
 """
 

@@ -943,7 +943,7 @@ test("section 1's finding opens with Strata's byline, its abstention with Strata
     estimate: { body: await recorded("estimate-ke-nwwda-541055-prior.json") },
   });
   await ready(page);
-  await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range: only seven comparable packages. Here are all seven.");
+  await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range from only seven comparable packages. Here are all seven.");
   await expect(bylines).toHaveText(["Strata held back"]);
 });
 
@@ -956,7 +956,7 @@ test("below 20 comparables there is no range and no share: the copy file's sente
 
   // The finding: the first-person sentence that holds back (ticket 101).
   await expect(section(page).locator("[data-finding]")).toHaveText(
-    "I'm not giving a range: only seven comparable packages. Here are all seven.",
+    "I'm not giving a range from only seven comparable packages. Here are all seven.",
   );
   await expect(page.locator("[data-chart-drawing] [data-dot]")).toHaveCount(7);
   await expect(page.locator("[data-chart-drawing] :is([data-band], [data-middle], [data-in10])")).toHaveCount(0);
@@ -1992,7 +1992,7 @@ test("below 20 comparables the sentence that holds back is zone 1's finding, the
   });
   await ready(page);
   const finding = section(page).locator("[data-finding]");
-  await expect(finding).toHaveText("I'm not giving a range: only seven comparable packages. Here are all seven.");
+  await expect(finding).toHaveText("I'm not giving a range from only seven comparable packages. Here are all seven.");
   expect(await finding.evaluate((el) => [getComputedStyle(el).fontWeight, getComputedStyle(el).fontSize])).toEqual(["300", "28px"]);
   const count = section(page).locator("[data-few-count]");
   await expect(count).toHaveText("None of the seven comparable packages were signed within the plan's 1.5 months.");

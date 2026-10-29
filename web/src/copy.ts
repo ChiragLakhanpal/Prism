@@ -3913,8 +3913,9 @@ export const copy = {
       moreThanNine: "{within} of {total} comparable packages, more than 9\u00a0in\u00a010, were signed within the plan's {plan}\u00a0months.",
       noPlan: "The middle half of the {total} comparable packages took {q25} to {q75}\u00a0months from notice to signature.",
       noPlanNoRange: "I found {total} comparable packages, but so many are still open that I can't place their middle half.",
-      abstain: "I'm not giving a range: only {n} comparable packages. Here are all {n}.",
-      abstainOne: "I'm not giving a range: only one comparable package. Here it is.",
+      // No colon joins two sentences (ticket 58; DESIGN.md section 7, rule 16).
+      abstain: "I'm not giving a range from only {n} comparable packages. Here are all {n}.",
+      abstainOne: "I'm not giving a range from only one comparable package. Here it is.",
     },
     // Below 20 comparable packages the sentence that holds back is the finding, and the count follows it in body, with
     // no share of 10 (DESIGN.md section 7, rule 15). {total} is in words up to nine.
@@ -4887,6 +4888,9 @@ export const copy = {
       `These are the steps STEP uses for ${family}. I dated each step by how far comparable packages ran past their planned dates. I measured from the dates as first published, because later plans can move them.`,
     introDuration: (family: string) =>
       `These are the steps STEP uses for ${family}. I dated each step from how long it took in comparable packages, using the dates in their published Procurement Plans.`,
+    // Before a start date is given, no step is dated yet, so the intro says how I date them (ticket 58).
+    introDurationUndated: (family: string) =>
+      `These are the steps STEP uses for ${family}. I date each step from how long it took in comparable packages, using the dates in their published Procurement Plans.`,
     // No step has a date or days in either choice, as on the fixture, so no choice of dates is offered. {min} is
     // the tool's min_comparables.
     introNoneDated: (family: string) =>
@@ -4933,6 +4937,9 @@ export const copy = {
       cautiousNote: (in10: string) => `My suggestion. ${in10} in 10 comparable packages ran later.`,
       middle: "Planned date, middle",
       middleNote: "My suggestion. Half of comparable packages ran later.",
+      // When no step can be dated, the column says what dating takes, not how often packages ran later (ticket 58).
+      planned: "Planned date",
+      noneNote: "I date a step from {min} comparable packages.",
       comparables: "Comparable packages",
       comparablesNote: "That recorded this step",
     },
@@ -5002,6 +5009,11 @@ export const copy = {
         "For {longer} of {n} comparable packages, {about}, {step} came less than {days} days ahead of the date first planned for it. I counted {days} days back from the plan's date.",
       dateDuration:
         "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I added {days} days to the date of {previous}.",
+      // When none ran later than the date's days (ticket 58).
+      dateNoneLater:
+        "In all {n} comparable packages, {step} came no more than {days} days after {previous}. I added {days} days to the date of {previous}.",
+      dateNoneLaterDelay:
+        "In all {n} comparable packages, {step} came no more than {days} days after the date first planned for it. I added {days} days to the plan's date.",
       dateUndated:
         "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. Add the date of {first} above, and I'll date this step.",
       // The days of a step that needs an earlier step's date.
@@ -5032,6 +5044,13 @@ export const copy = {
       findingAbstain: "Only {n} comparable packages recorded {step}, too few for me to date it. Here are all {n}.",
       findingAbstainOne: "Only one comparable package recorded {step}, too few for me to date it. Here it is.",
       findingCounts: "{n} comparable packages recorded {step}. Here are all {n}.",
+      // When no comparable package ran later than the shown days (ticket 58): no "0 of 25, about 0 in 10".
+      findingNoneLater: "In all {n} packages, {step} came no more than {days_c} days after {previous}.",
+      findingNoneLaterDelay: "In all {n} packages, {step} came no more than {days_c} days after the date first planned for it.",
+      findingMiddle: "For {longer_m} of {n}, {about_m}, it came more than {days_m} days after.",
+      // A step most comparable packages had not reached by the records' date (ticket 58): never "recorded" it.
+      findingNotReached: "{reached} of {n} comparable packages had reached {step} by {date}. Here are all {n}.",
+      findingNotReachedNone: "None of the {n} comparable packages had reached {step} by {date}. Here are all {n}.",
       note: "Shortest first. Still-open packages had not recorded this step by {date}.",
       // On the delay basis each entry is days against its own first planned date, early ones first.
       noteDelay: "Earliest first. Still-open packages had not recorded this step by {date}.",
@@ -5105,15 +5124,19 @@ export const copy = {
     model: "My model estimates that about {k} in 10 packages like this one are advertised again.",
     modelBelow1: "My model estimates that fewer than 1 in 10 packages like this one are advertised again.",
     modelAbove9: "My model estimates that more than 9 in 10 packages like this one are advertised again.",
-    track: "Track record: in tests on {n} packages from {year} that it had not seen, my model matched what happened better than {baseline}.",
+    // A test, then how it did, in two sentences (ticket 58; the 28 design review, F8).
+    track: "Track record: I tested my model on {n} packages from {year} that it had not seen. It matched what happened better than {baseline} did.",
     // Each baseline the backtest compares against, by its code.
     baselines: { comparables_rate: "the rate among their comparable packages" } as Record<string, string>,
     // Why the model is held back, by the tool's not_shown_reason.
     off: {
-      too_few: "I'm not giving an estimate: I give one only from {min} or more comparable packages.",
-      not_better: "I'm not giving an estimate: in tests on {n} packages from {year} that my model had not seen, it did no better than {baseline}.",
-      no_results: "I'm not giving an estimate: my model has no test results yet.",
-      not_scored: "I'm not giving an estimate: my model scores the packages in Procurement Plans each night, and it has no score for this one yet.",
+      // No colon joins two sentences (ticket 58; the 28 design review, F8), as section 1's "I'm not giving a range".
+      too_few: "I'm not giving an estimate, because I give one only from {min} or more comparable packages.",
+      not_better: "I'm not giving an estimate. In tests on {n} packages from {year} that my model had not seen, it did no better than {baseline}.",
+      no_results: "I'm not giving an estimate, because my model has no test results yet.",
+      not_scored: "I'm not giving an estimate. My model scores the packages in Procurement Plans each night, and it has no score for this one yet.",
+      // A package planned from a sentence, which no plan lists, so the nightly job never scores it (ticket 58).
+      not_in_plan: "I'm not giving an estimate. My model scores only packages listed in a Procurement Plan, and this one is not in a plan yet.",
     } as Record<string, string>,
     compareNote: "The comparison above doesn't change this count. It is for this package's own criteria.",
     denominator: "I counted {m} packages here and {total} in the past range, because {reason}.",
@@ -5156,13 +5179,14 @@ export const copy = {
     markers: {
       notice: (id: string, date: string) => `Notice ${id}, ${date}`,
       award_notice: (id: string, date: string) => `Award notice ${id}, ${date}`,
-      plan_row: (ref: string, date: string) => `Procurement Plan row ${ref}, ${date}`,
+      // An activity, as the drawer it opens heads it (ticket 58; the 28 design review, F2).
+      plan_row: (ref: string, date: string) => `Activity ${ref}, ${date}`,
     } as Record<string, (reference: string, date: string) => string>,
     // The drawer's tab for each record of a row with two or more (the 28 brief, section 8.3).
     tabs: {
       notice: (id: string) => `Notice ${id}`,
       award_notice: (id: string) => `Award notice ${id}`,
-      plan_row: (ref: string) => `Procurement Plan row ${ref}`,
+      plan_row: (ref: string) => `Activity ${ref}`,
     } as Record<string, (reference: string) => string>,
     openRecords: (ref: string) => `Open the records for ${ref}`,
     noneNext: "If a notice is missing from the records, I can't see that its package was advertised again.",
@@ -5177,6 +5201,8 @@ export const copy = {
       n: "Comparable packages advertised again, canceled packages included.",
       m: "The comparable packages in the past range above.",
       mOther: "The comparable packages I counted for this.",
+      // When none was advertised again, selecting opens nothing (ticket 58; the 28 design review, F4).
+      mNone: "The comparable packages I checked for this count.",
       // What a click on either count opens: the list below, by reason (ticket 96).
       nAct: "Select to see each one and its reason.",
       mAct: "Select to see the ones advertised again.",
@@ -5436,8 +5462,8 @@ export const copy = {
       "The middle half of these {m} packages were signed between {q25} and {q75} their cost estimates. The middle package was signed {q50} its cost estimate.",
     at: "{at} were signed at exactly their cost estimates.",
     atOne: "One was signed at exactly its cost estimate.",
-    abstain: "I'm not giving a range: only {m} comparable packages had both a cost estimate and a signed contract. Here are all {m}.",
-    abstainOne: "I'm not giving a range: only one comparable package had both a cost estimate and a signed contract. Here it is.",
+    abstain: "I'm not giving a range, because only {m} comparable packages had both a cost estimate and a signed contract. Here are all {m}.",
+    abstainOne: "I'm not giving a range, because only one comparable package had both a cost estimate and a signed contract. Here it is.",
     none:
       "I can't compare the cost estimate, because none of the comparable packages had both a cost estimate in its Procurement Plan and a signed contract.",
     coverage: "Based on {m} of {total} comparable packages; {gaps}.",

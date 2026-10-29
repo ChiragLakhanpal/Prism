@@ -336,8 +336,9 @@ def test_the_screen_s_copy_file_has_a_phrase_for_every_reason_and_the_abstention
     phrases = top_level_keys(block(past_range, "reasons"))
 
     assert set(config.load_tools()["find_comparables"].result.reasons) - phrases == set()
-    # The spec's sentence for fewer than 20 comparables, with N filled from the rows on screen.
-    assert "I'm not giving a range: only {n} comparable packages. Here are all {n}." in past_range
+    # The spec's sentence for fewer than 20 comparables, with N filled from the rows on screen, without the colon since
+    # ticket 58 (DESIGN.md section 7, rule 16).
+    assert "I'm not giving a range from only {n} comparable packages. Here are all {n}." in past_range
 
 
 def test_the_screen_s_floor_for_about_n_in_10_is_the_thresholds_file_s():

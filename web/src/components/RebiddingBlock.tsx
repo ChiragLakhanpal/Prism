@@ -204,7 +204,8 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, in
   };
   const nNum = count(n, words.tips.n, words.tips.nAct);
   const mNum = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct);
-  const mAlone = count(m, different ? words.tips.mOther : words.tips.m, words.tips.mAct, true);
+  // With none advertised again, {m} says what it counted and opens nothing, since there is nothing to see (ticket 58).
+  const mAlone = count(m, n === 0 ? words.tips.mNone : different ? words.tips.mOther : words.tips.m, words.tips.mAct, true);
   const sentence =
     n === 0 ? (
       <Fill template={words.countNone} slots={{ m: mAlone }} />
