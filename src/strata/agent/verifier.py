@@ -51,7 +51,8 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    A summary that cites nothing goes with the turn's abstentions as its only sources (each named
    "<tool>:abstention", as the agent read it, with no date after the as-of date), so it follows only when it
    says no more than what a tool could not answer. A sentence the judge says does not follow is removed
-   (not_supported, or no_source when it cites nothing). When the judge does not respond, every sentence it
+   (not_supported, or beyond_abstention when it cites nothing, so the screen tells it apart from check 2's
+   no_source, ticket 58). When the judge does not respond, every sentence it
    had to judge is removed (judge_unavailable), so none is shown unchecked.
 5. A sentence of kind advice cites at least one lesson or comparable package: evidence from a tool whose
    registry entry says its rows back advice (config/tools.toml, backs_advice).
@@ -99,8 +100,10 @@ NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUM
     "quote_not_in_sentence", "number_only_in_table_summary")
 NOT_SUPPORTED, JUDGE_UNAVAILABLE, ADVICE_UNBACKED, DISAGREEMENTS_UNAVAILABLE = (
     "not_supported", "judge_unavailable", "advice_without_lesson_or_comparable", "disagreements_unavailable")
+# Check 4's removal of a sentence that cites nothing and says more than what a tool could not answer (ticket 58).
+BEYOND_ABSTENTION = "beyond_abstention"
 REASONS = (NUMBER, DATE, NOT_RETURNED, NO_SOURCE, NOT_ON_PAGE, NOT_IN_SENTENCE, ONLY_IN_SUMMARY, NOT_SUPPORTED,
-           JUDGE_UNAVAILABLE, ADVICE_UNBACKED, DISAGREEMENTS_UNAVAILABLE)
+           JUDGE_UNAVAILABLE, ADVICE_UNBACKED, DISAGREEMENTS_UNAVAILABLE, BEYOND_ABSTENTION)
 MUST_CITE = ("record", "quote", "advice")
 
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
@@ -700,7 +703,13 @@ class Verdict:
     def counts(self) -> dict:
         """The counts behind the check line and the steps' six-check list. numbers, dates, quotes and sources
         are over everything the agent wrote, removed sentences included, as the step log and the run log
-        give them; shown is over the sentences on screen, as the check line gives them (the 24 brief)."""
+        give them; shown is over the sentences on screen, as the check line gives them (the 24 brief).
+
+        Ticket 58 adds three counts, each only when it is above 0, so an answer that cites a source in every
+        sentence sends what it always sent (as cross_language does): sources.uncited, the sentences check 2 removed
+        for citing nothing; shown.sources, when a sentence on screen cites nothing, with the sources the sentences
+        on screen cite (total) and how many cite none (uncited); and judge.on_abstention, the sentences a model
+        judged against what a tool could not answer, because they cite nothing."""
         numbers = [found for sentence in self.sentences for _, found in sentence.numbers]
         dates = [found for sentence in self.sentences for _, found in sentence.dates]
         quotes = [sentence for sentence in self.sentences if sentence.quoted]
@@ -713,7 +722,9 @@ class Verdict:
             "numbers": {"total": len(numbers), "matched": sum(found is not None for found in numbers)},
             "dates": {"total": len(dates), "matched": sum(found is not None for found in dates)},
             "quotes": {"total": len(quotes), "found": sum(sentence.quote_found for sentence in quotes)},
-            "sources": {"total": len(cited), "returned": len(set(cited) - not_back)},
+            "sources": {"total": len(cited), "returned": len(set(cited) - not_back),
+                        **_when_some("uncited", sum(any(reason.code == NO_SOURCE for reason in sentence.reasons)
+                                                    for sentence in self.sentences))},
         }
         if 4 not in self.checks_run:
             return counts
@@ -729,6 +740,9 @@ class Verdict:
                                                            for reason in sentence.reasons)]
         disputed = {sentence.index for sentence in kept for found in self.attached
                     if _rests_on(sentence, found.row)}
+        uncited = [sentence for sentence in kept if not sentence.claim.evidence_ids]
+        shown_sources = {"total": len({evidence for sentence in kept for evidence in sentence.claim.evidence_ids}),
+                         "uncited": len(uncited)}
         return {**counts,
                 "shown": {"numbers": {"total": len(shown_numbers), "matched": sum(f is not None for f in shown_numbers)},
                           "dates": {"total": len(shown_dates), "matched": sum(f is not None for f in shown_dates)},
@@ -737,10 +751,12 @@ class Verdict:
                           "judged": sum(sentence.judged for sentence in kept),
                           "proven": sum(sentence.proven for sentence in kept),
                           # Only when some do, so an answer in one language sends what it always sent (ticket 42).
-                          **({"cross_language": self.cross_language_judged} if self.cross_language_judged else {})},
+                          **({"cross_language": self.cross_language_judged} if self.cross_language_judged else {}),
+                          **({"sources": shown_sources} if uncited else {})},
                 "judge": {"called": self.judge_called, "responded": self.judge_responded, "judged": len(judged),
                           "followed": sum(sentence.kept for sentence in judged), "unjudged": len(unjudged),
-                          "proven": sum(sentence.proven for sentence in self.sentences)},
+                          "proven": sum(sentence.proven for sentence in self.sentences),
+                          **_when_some("on_abstention", sum(not sentence.claim.evidence_ids for sentence in judged))},
                 "advice": {"total": self.advice[0], "cited": self.advice[1]},
                 "disagreements": {"disputed": len(disputed), "shown": len(self.attached),
                                   "attached": sum(found.by_verifier for found in self.attached),
@@ -750,6 +766,11 @@ class Verdict:
                                   # the sentences a warning card follows, which the screen announces
                                   "warned": len({found.after for found in self.attached if found.changes_answer})},
                 "cited_tools": list(self.cited_tools)}
+
+
+def _when_some(name: str, count: int) -> dict:
+    """A count the check line needs only when it is above 0, so answers without it keep their recorded shape."""
+    return {name: count} if count else {}
 
 
 def _is_passage(row: Mapping | None) -> bool:
@@ -1133,7 +1154,8 @@ class AnswerCheck:
 
     def judged(self, questions: list[Question], judgements: list[Judgement] | None) -> None:
         """The judge's answers to the questions, or None when it did not respond. A sentence that cites nothing
-        and does not follow from what the tools could not answer is removed because it cited no source; the
+        and does not follow from what the tools could not answer is removed because it cited no source and said
+        more than that (beyond_abstention); the
         judge's reason is kept with it for the run log. A sentence the judge says advises, though the agent gave it
         another kind, is held to check 5 as advice is (ticket 24's verify round 3, O1)."""
         self.judge_called, self.judge_responded = True, judgements is not None
@@ -1154,7 +1176,7 @@ class AnswerCheck:
                     self._fail(question.index, Reason(5, ADVICE_UNBACKED))
             if not judgement.follows:
                 uncited = not sentence.claim.evidence_ids
-                self._fail(question.index, Reason(4, NO_SOURCE if uncited else NOT_SUPPORTED, judgement.reason))
+                self._fail(question.index, Reason(4, BEYOND_ABSTENTION if uncited else NOT_SUPPORTED, judgement.reason))
         self.advice = (total, cited)
 
     def verdict(self) -> Verdict:

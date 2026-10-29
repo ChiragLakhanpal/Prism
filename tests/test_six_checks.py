@@ -70,6 +70,11 @@ def test_a_summary_that_cites_nothing_where_no_tool_abstained_is_removed_with_no
     assert asked.judge.calls == []
     judge = asked.of("checks")[0]["judge"]
     assert (judge["called"], judge["judged"], judge["proven"]) == (False, 0, 3)
+    # Check 2's step counts the sentence it removed for citing nothing (ticket 58), beside the two sources that came
+    # back (the ICR's paragraphs 54 and 55); the kept sentences all cite one, so nothing on screen is uncited.
+    checks = asked.of("checks")[0]
+    assert checks["sources"] == {"total": 2, "returned": 2, "uncited": 1}
+    assert "sources" not in checks["shown"] and "on_abstention" not in judge
 
 
 NOT_PUBLIC = "That version of the plan was not yet public on the date you chose, so I did not check it."
@@ -97,6 +102,27 @@ def test_a_summary_that_cites_nothing_is_judged_once_against_the_abstention_a_to
     assert asked.of("removed") == []
     judge = asked.of("checks")[0]["judge"]
     assert (judge["called"], judge["judged"], judge["followed"], judge["proven"]) == (True, 1, 1, 0)
+    # Ticket 58: the screen says no kept sentence cites a source, and that a model judged it against what a tool could
+    # not answer, so the counts say how many did (only when any did, so other answers send what they always sent).
+    checks = asked.of("checks")[0]
+    assert checks["shown"]["sources"] == {"total": 0, "uncited": 1}
+    assert judge["on_abstention"] == 1
+    assert checks["sources"] == {"total": 0, "returned": 0}
+
+
+def test_the_check_line_of_an_answer_whose_sentence_cites_nothing_says_there_was_nothing_to_match(fixture_db):
+    """Ticket 58: the evidence pack writes the check line as the page does (src/strata/drafts/files.py), so an answer
+    whose one kept sentence says only what check_plan could not answer reads true: nothing to match, and a model's
+    judgment against what my tools reported, not "every source I cite came back from this search"."""
+    from strata.config import load_draft_kinds
+    from strata.drafts import files
+
+    checks = ask(fixture_db, "p156634-plan-not-yet-public").of("checks")[0]
+    assert files.check_line(checks, load_draft_kinds().kinds["review_notes"]) == (
+        "Checked: the sentence I kept cites no source, so there was nothing to match. "
+        "Judged by a model: 1 of 1 sentence says no more than my tools reported. "
+        "Not checked: whether the plan's published records are complete, "
+        "or whether these notes are what you would tell the borrower.")
 
 
 def test_a_summary_that_cites_nothing_and_says_more_than_the_abstention_is_removed_in_the_same_call(fixture_db):
@@ -105,12 +131,20 @@ def test_a_summary_that_cites_nothing_and_says_more_than_the_abstention_is_remov
     assert len(asked.judge.calls) == 1
     assert [question.sentence for question in asked.judge.calls[0]] == [
         NOT_PUBLIC, "The agency was late in publishing its plan."]
-    # It cites nothing, so its reason says so; the judge's own sentence is kept with it for the run log.
+    # It cites nothing and says more than the abstention, so its reason says both, apart from check 2's no_source
+    # (ticket 58); the judge's own sentence is kept with it for the run log.
     [removed] = asked.of("removed")
     assert (removed["sentence"], removed["reason"], removed["reasons"][0]["check"]) == (
-        "The agency was late in publishing its plan.", "no_source", 4)
+        "The agency was late in publishing its plan.", "beyond_abstention", 4)
     assert "says nothing about the agency being late" in removed["reasons"][0]["text"]
+    assert copy_reason("beyond_abstention") == {
+        "item": "It cited no source, and it said more than my tools reported.",
+        "joined": "it cited no source and said more than my tools reported"}
     assert [item["text"] for item in asked.of("sentence")] == [NOT_PUBLIC]
+    checks = asked.of("checks")[0]
+    assert checks["judge"]["on_abstention"] == 2 and checks["shown"]["sources"] == {"total": 0, "uncited": 1}
+    # Check 2 removed nothing here, so its step has no uncited count.
+    assert "uncited" not in checks["sources"]
 
 
 def test_a_quote_of_only_a_number_and_an_ordinal_go_to_the_judge_which_removes_them(fixture_db):

@@ -24,7 +24,7 @@ import { createContext, useContext, useId, useRef, useState, type ReactNode } fr
 import * as RadixPopover from "@radix-ui/react-popover";
 import { Check, CircleDashed } from "lucide-react";
 import { copy } from "../copy";
-import type { ChecksEvent } from "../lib/answer";
+import type { ChecksEvent, ShownSources } from "../lib/answer";
 import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
 import { Button } from "./Button";
@@ -83,6 +83,7 @@ export function CheckLine({
   reveal = false,
   how,
   removed,
+  sources,
 }: {
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
@@ -104,6 +105,10 @@ export function CheckLine({
   how?: ReactNode;
   // The removed box under the line, in the same block after a 1 px line (ticket 105).
   removed?: ReactNode;
+  // The checks event's shown.sources, sent only when a sentence on screen cites nothing (ticket 58): with no source
+  // cited and nothing matched, "Checked" says there was nothing to match, and when every judged sentence cites nothing,
+  // the model's part says it said no more than my tools reported. A mixed answer keeps the usual words.
+  sources?: ShownSources;
 }) {
   const words = copy.checkLine;
   const clauses = [
@@ -113,7 +118,9 @@ export function CheckLine({
   ].filter((clause): clause is string => Boolean(clause));
   // What was not checked: the clauses for the gaps, then a part of a page's own (ticket 31).
   const unchecked = [...notChecked.map((clause) => words.notCheckedClauses[clause]), ...notCheckedText];
-  const checked = (clauses.length ? clauses : [words.sourcesOnly]).join(words.clauseJoin);
+  const nothing = sources && sources.total === 0 ? (sources.uncited === 1 ? words.noneCited.one : words.noneCited.many) : words.sourcesOnly;
+  const checked = (clauses.length ? clauses : [nothing]).join(words.clauseJoin);
+  const judgedWords = judged && sources && sources.uncited === judged.judged ? words.judgedUncited : words.judgedSentences;
   return (
     // The surface-2 block starts on the text edge of the panel it sits in, with no indent and 12 px padding (DESIGN.md
     // section 5, Check line; ticket 100 settles ticket 59's indent item). The line, "How was that checked?" and the
@@ -124,13 +131,13 @@ export function CheckLine({
         {/* The tick (ticket 111): 16 px in ink-muted before "Checked", on the text edge. The line's words say
             "Checked", so a screen reader skips it, and the line stays neutral, never green. */}
         <Check aria-hidden="true" data-check-tick className={cx("mr-1 inline-block size-4 align-[-3px] text-ink-muted", reveal && "animate-tick-in")} />
-        <strong className="font-semibold">{words.checked}</strong> {checked}
+        <strong className="font-semibold whitespace-nowrap">{words.checked}</strong> {checked}
         {words.end}
       </span>{" "}
       {judged && judged.judged > 0 && (
         <>
           <span data-check-part="judged" className="block">
-            <strong className="font-semibold">{words.judged}</strong> {ratio(words.judgedSentences, judged.judged, judged.judged)}
+            <strong className="font-semibold whitespace-nowrap">{words.judged}</strong> {ratio(judgedWords, judged.judged, judged.judged)}
             {words.end}
             {judged.proven > 0 && (
               <>
@@ -153,7 +160,8 @@ export function CheckLine({
         </>
       )}
       <span data-check-part="not-checked" className="block">
-        <strong className="font-semibold">{words.notChecked}</strong> {unchecked.length ? joinClauses(unchecked) : words.notCheckedFallback}
+        {/* The label never breaks between its two words, so it never reads as two bold words (ticket 58). */}
+        <strong data-check-label className="font-semibold whitespace-nowrap">{words.notChecked}</strong> {unchecked.length ? joinClauses(unchecked) : words.notCheckedFallback}
         {words.end}
       </span>
     </p>
@@ -181,8 +189,18 @@ export function sixChecks(checks: ChecksEvent, { draft = false }: { draft?: bool
     : judge.called && judge.responded === false
       ? [six.judgeSilent(judge.unjudged, formatCount(judge.unjudged))]
       : judge.called
-        ? [six.judged(judge.judged, formatCount(judge.judged), judge.followed), ...(judge.proven > 0 ? [six.proven(judge.proven, formatCount(judge.proven))] : [])]
+        ? [
+            // Every judged sentence cites nothing, so a model judged it against what a tool could not answer (ticket 58).
+            (judge.on_abstention === judge.judged ? six.judgedOnAbstention : six.judged)(judge.judged, formatCount(judge.judged), judge.followed),
+            ...(judge.proven > 0 ? [six.proven(judge.proven, formatCount(judge.proven))] : []),
+          ]
         : [six.notJudged(judge.proven, formatCount(judge.proven))];
+  // Step 2's sentence, then the sentences it removed for citing nothing, when it removed any (ticket 58).
+  const uncited = checks.sources.uncited ?? 0;
+  const second = [
+    (draft ? six.sourcesDraft : six.sources)(checks.sources.returned, checks.sources.total),
+    ...(uncited > 0 ? [six.uncited(uncited, formatCount(uncited, { capital: true }))] : []),
+  ];
   const disputed = checks.disagreements?.disputed ?? 0;
   const sixth =
     disputed === 0
@@ -192,7 +210,7 @@ export function sixChecks(checks: ChecksEvent, { draft = false }: { draft?: bool
         : six.disputedBoth(disputed, formatCount(disputed, { capital: true }));
   return [
     six.numbers(checks.checked?.matched ?? 0, checks.checked?.total ?? 0),
-    (draft ? six.sourcesDraft : six.sources)(checks.sources.returned, checks.sources.total),
+    second.join(" "),
     six.quotes(checks.quotes.found, checks.quotes.total),
     fourth.join(" "),
     six.advice(checks.advice?.cited ?? 0, checks.advice?.total ?? 0),

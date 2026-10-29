@@ -422,7 +422,7 @@ test("a draft's How was that checked? says it counts the two sentences I removed
     "8 of 10 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this draft.",
     "None of the sentences quoted a source.",
-    "The four sentences I kept needed no model, because everything they stated matched a record or a page.",
+    "The four sentences I kept needed no model, because every number, date and quote in them matched a record or a page.",
     "None of the sentences gave advice.",
     "No sentence rested on a report that another report disagrees with.",
   ]);

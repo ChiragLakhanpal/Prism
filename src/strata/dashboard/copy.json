@@ -563,7 +563,8 @@
         "not_supported": "Its sources don't say this",
         "judge_unavailable": "The judging model didn't respond",
         "advice_without_lesson_or_comparable": "Advice without a lesson or comparable package",
-        "disagreements_unavailable": "Rests on a disputed report"
+        "disagreements_unavailable": "Rests on a disputed report",
+        "beyond_abstention": "Said more than my tools reported"
       },
       "held": {
         "too_few_comparables": "Too few comparable packages for a range",

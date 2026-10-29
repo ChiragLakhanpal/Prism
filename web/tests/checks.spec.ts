@@ -5,7 +5,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { askFromTheBox, landed, open, panel } from "./answer-page";
-import { expect, test, windowBeside } from "./mocked";
+import { expect, recorded, test, windowBeside } from "./mocked";
 import { animationsDone } from "./settled";
 
 async function answered(page: Page, stream: string, width = 1440) {
@@ -13,6 +13,26 @@ async function answered(page: Page, stream: string, width = 1440) {
   await askFromTheBox(page);
   await landed(page);
   return seen;
+}
+
+// A state no recording holds, made from a recorded stream changed in memory only: each event's data, as JSON, goes
+// through edit, and the panel plays the result.
+async function answeredWith(page: Page, stream: string, edit: (event: string, data: Record<string, unknown>) => void, width = 1440) {
+  await open(page, { stream, width });
+  const lines = (await recorded(stream)).split("\n");
+  let event = "";
+  const body = lines
+    .map((line) => {
+      if (line.startsWith("event: ")) event = line.slice(7);
+      if (!line.startsWith("data: ")) return line;
+      const data = JSON.parse(line.slice(6));
+      edit(event, data);
+      return `data: ${JSON.stringify(data)}`;
+    })
+    .join("\n");
+  await page.route("**/api/ask", (route) => route.fulfill({ status: 200, contentType: "application/json", body }));
+  await askFromTheBox(page);
+  await landed(page);
 }
 
 async function axe(page: Page) {
@@ -28,7 +48,7 @@ test("the check line reads the verifier's counts in the ticket's form, in the ne
   // The two sentences that quote only a STEP reference went to the judge (ticket 61); the past range's needed no model.
   const line = panel(page).locator("[data-check-line]");
   await expect(line).toHaveText(
-    "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages. Judged by a model: 2 of 2 sentences follow from their sources. The other one needed no model, because everything it stated matched a record or a page. Not checked: whether these are the right comparables.",
+    "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages. Judged by a model: 2 of 2 sentences follow from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page. Not checked: whether these are the right comparables.",
   );
   await expect(line.locator("[data-check-part=judged]")).toHaveCount(1);
   // The line sits in its surface-2 block, neutral and never green (ticket 105 puts the removed box in the same block).
@@ -61,7 +81,7 @@ test("How was that checked? opens How I checked this answer with the six checks 
     "5 of 5 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this question.",
     "2 of 2 quotes were word for word on their pages.",
-    "A model judged two sentences, and 2 of 2 followed from their sources. The other one needed no model, because everything it stated matched a record or a page.",
+    "A model judged two sentences, and 2 of 2 followed from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
     "None of the sentences gave advice.",
     "No sentence rested on a report that another report disagrees with.",
   ]);
@@ -107,7 +127,7 @@ test("a judged sentence adds the model's part, and the steps list all six checks
   await answered(page, "ask-ke-nwwda-541055-advice.sse");
 
   await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 3 of 3 sentences follow from their sources. The other one needed no model, because everything it stated matched a record or a page.",
+    "Judged by a model: 3 of 3 sentences follow from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
   );
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
@@ -117,10 +137,143 @@ test("a judged sentence adds the model's part, and the steps list all six checks
     "6 of 6 numbers and dates matched a record or a quote.",
     "3 of 3 sources I cited came back for this question.",
     "2 of 2 quotes were word for word on their pages.",
-    "A model judged three sentences, and 3 of 3 followed from their sources. The other one needed no model, because everything it stated matched a record or a page.",
+    "A model judged three sentences, and 3 of 3 followed from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
     "1 of 1 sentence that gave advice cited a lesson or a comparable package.",
     "No sentence rested on a report that another report disagrees with.",
   ]);
+});
+
+// Ticket 58: an answer whose one kept sentence cites nothing, because it says only what check_plan could not answer
+// (the recorded p156634-plan-not-yet-public case), gets a check line, steps and a judged line written for it.
+test("an answer whose kept sentence cites nothing says there was nothing to match and what the model judged it against", async ({ page }) => {
+  await answered(page, "ask-p156634-plan-not-yet-public.sse");
+
+  await expect(panel(page).locator("[data-check-line]")).toHaveText(
+    "Checked: the sentence I kept cites no source, so there was nothing to match. Judged by a model: 1 of 1 sentence says no more than my tools reported. Not checked: whether the plan's published records are complete.",
+  );
+  await expect(panel(page).locator("[data-check-line]")).not.toContainText("came back from this search");
+  await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
+  // check_plan abstained, so its step says why instead of "I checked 0 activities in the plan."
+  await expect(panel(page).locator("[data-steps]")).toContainText(
+    "I couldn't check the plan, because that version was not yet public on the date you chose.",
+  );
+  await expect(panel(page).locator("[data-steps]")).not.toContainText("0 activities");
+  const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
+  await expect(verifier.locator("[data-step-items] li")).toHaveText([
+    "None of the sentences stated a number or a date.",
+    "None of the sentences cited a source.",
+    "None of the sentences quoted a source.",
+    "A model judged one sentence against what a tool told me it could not answer, and 1 of 1 said no more than that.",
+    "None of the sentences gave advice.",
+    "No sentence rested on a report that another report disagrees with.",
+  ]);
+  expect(await axe(page)).toEqual([]);
+});
+
+test("a sentence that cites nothing and says more than a tool reported is removed with its own reason", async ({ page }) => {
+  await answered(page, "ask-p156634-uncited-blame.sse");
+
+  await expect(panel(page).locator("[data-removed-box]")).toHaveText(
+    "I removed one sentence. It said the agency was late in publishing its plan, and it cited no source and said more than my tools reported.",
+  );
+  await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
+  const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
+  await expect(verifier.locator("[data-step-items] li").nth(3)).toHaveText(
+    "A model judged two sentences against what a tool told me it could not answer, and 1 of 2 said no more than that.",
+  );
+});
+
+test("check 2's step counts the sentences it removed for citing no source", async ({ page }) => {
+  await answered(page, "ask-p130164-uncited-summary.sse");
+
+  await expect(panel(page).locator("[data-removed-box]")).toContainText("and it cited no source.");
+  await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
+  const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
+  await expect(verifier.locator("[data-step-items] li").nth(1)).toHaveText(
+    "2 of 2 sources I cited came back for this question. One sentence cited no source.",
+  );
+});
+
+// A mixed answer, in which some judged sentences cite a source and one does not, keeps today's words (ticket 58). No
+// recording holds one, so the advice answer's counts say one of its three judged sentences cites nothing.
+test("a mixed answer keeps the usual check line and judged step", async ({ page }) => {
+  await answeredWith(page, "ask-ke-nwwda-541055-advice.sse", (event, data) => {
+    if (event !== "checks") return;
+    (data.shown as Record<string, unknown>).sources = { total: 3, uncited: 1 };
+    (data.judge as Record<string, unknown>).on_abstention = 1;
+  });
+
+  await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
+    "Judged by a model: 3 of 3 sentences follow from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
+  );
+  await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
+  const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
+  await expect(verifier.locator("[data-step-items] li").nth(3)).toHaveText(
+    "A model judged three sentences, and 3 of 3 followed from their sources. The other one needed no model, because every number, date and quote in it matched a record or a page.",
+  );
+});
+
+// Ticket 58: the bold "Not checked:" never breaks between its words, so it never reads as two bold words. Each part
+// starts its own line, and the labels never wrap, whatever the line around them does.
+for (const width of [1440, 390]) {
+  test(`at ${width} px each label of the check line stays on one line`, async ({ page }) => {
+    await answered(page, "ask-ke-nwwda-541055-advice.sse", width);
+    const labels = panel(page).locator("[data-check-line] strong");
+    await expect(labels).toHaveText(["Checked:", "Judged by a model:", "Not checked:"]);
+    expect(await labels.evaluateAll((all) => all.map((label) => [label.getClientRects().length, getComputedStyle(label).whiteSpace]))).toEqual([
+      [1, "nowrap"],
+      [1, "nowrap"],
+      [1, "nowrap"],
+    ]);
+  });
+}
+
+// Ticket 58: when the lead's sentence is the only one a service did not let me check, the lead already says so, and
+// "Try again" follows it with no note; when another sentence is that one, the note says how many.
+test("a check 6 outage in the lead is said once, and Try again follows the lead", async ({ page }) => {
+  const outage = (index: number) => (event: string, data: Record<string, unknown>) => {
+    if (event === "removed" && data.index === index) {
+      data.reason = "disagreements_unavailable";
+      data.reasons = [{ check: 6, code: "disagreements_unavailable", text: "P130164" }];
+    }
+    if (event === "checks") (data.disagreements as Record<string, unknown>).unasked = 1;
+  };
+  await answeredWith(page, "ask-p130164-several-removed.sse", outage(3));
+  const box = panel(page).locator("[data-removed-box]");
+  await expect(box.locator("p").first()).toHaveText(
+    "I removed three sentences. The first said bids were usually opened within 45 days, and I couldn't find out whether another report disagrees with its sources.",
+  );
+  await expect(box.locator("[data-unjudged]")).toHaveCount(0);
+  await expect(box.getByRole("button", { name: "Try again" })).toBeVisible();
+  // The button comes right after the lead, before "The others:".
+  const order = await box.evaluate((element) => [...element.querySelectorAll("p, button")].map((node) => node.textContent));
+  expect(order.slice(0, 3)).toEqual([order[0], "Try again", "The others:"]);
+
+  await answeredWith(page, "ask-p130164-several-removed.sse", outage(5));
+  await expect(box.locator("[data-unjudged]")).toHaveText("I couldn't find out whether other reports disagree, so I couldn't check one of them.");
+});
+
+// Ticket 58: the alert for both outages is two sentences, one for each cause.
+test("when both services did not answer, the alert says it in two sentences", async ({ page }) => {
+  const both = (removed: number) => (event: string, data: Record<string, unknown>) => {
+    if (event === "removed" && data.index === 1) {
+      data.reason = "disagreements_unavailable";
+      data.reasons = [{ check: 6, code: "disagreements_unavailable", text: "P130164" }];
+    }
+    if (event !== "checks") return;
+    (data.judge as Record<string, unknown>).unjudged = 1;
+    (data.disagreements as Record<string, unknown>).unasked = 1;
+    (data.sentences as Record<string, unknown>).removed = removed;
+  };
+  await answeredWith(page, "ask-p130164-judge-no-response-none-kept.sse", both(2));
+  await expect(panel(page).getByRole("alert")).toContainText(
+    "I couldn't check my answer. The model that judges sentences did not respond, and I couldn't find out whether other reports disagree with its sources.",
+  );
+  // A third sentence that failed a check of its own makes it "all of my answer".
+  await answeredWith(page, "ask-p130164-judge-no-response-none-kept.sse", both(3));
+  await expect(panel(page).getByRole("alert")).toContainText(
+    "I couldn't check all of my answer. The model that judges sentences did not respond, and I couldn't find out whether other reports disagree with its sources.",
+  );
 });
 
 test("a sentence its passage does not support is removed with check 4's reason from the copy file", async ({ page }) => {

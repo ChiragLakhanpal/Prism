@@ -657,16 +657,23 @@ export const copy = {
       one: "{part} of {whole} sentence follows from its sources",
       many: "{part} of {whole} sentences follow from their sources",
     },
+    // Ticket 58: when every judged sentence on screen cites nothing, a model judged it against what a tool told me it
+    // could not answer, so the part says that instead. A mixed answer keeps judgedSentences.
+    judgedUncited: {
+      one: "{part} of {whole} sentence says no more than my tools reported",
+      many: "{part} of {whole} sentences say no more than my tools reported",
+    },
     // Judged sentences that cite a source written in another language (ticket 42; the 42 brief, section 5.5).
     crossLanguage: {
       one: "It cites a source written in another language.",
       all: "All of them cite a source written in another language.",
       some: (count: string) => `${count.charAt(0).toUpperCase()}${count.slice(1)} of them cite a source written in another language.`,
     },
-    // {count} is a word from one to nine, then numerals.
+    // {count} is a word from one to nine, then numerals. Checks 1 to 3 test a sentence's numbers, dates and quotes,
+    // never the rest of it, so the words say only that (ticket 58).
     provenOthers: {
-      one: "The other one needed no model, because everything it stated matched a record or a page.",
-      many: "The other {count} needed no model, because everything they stated matched a record or a page.",
+      one: "The other one needed no model, because every number, date and quote in it matched a record or a page.",
+      many: "The other {count} needed no model, because every number, date and quote in them matched a record or a page.",
     },
     // When no clause below applies.
     notCheckedFallback: "whether the sources themselves are right",
@@ -674,6 +681,12 @@ export const copy = {
     quotes: { one: "{part} of {whole} quote is on its page", many: "{part} of {whole} quotes are on their pages" },
     dates: { one: "{part} of {whole} date matches records", many: "{part} of {whole} dates match records" },
     sourcesOnly: "every source I cite came back from this search",
+    // Ticket 58: in place of sourcesOnly when no sentence on screen cites a source, such as a sentence that says only
+    // what a tool could not answer.
+    noneCited: {
+      one: "the sentence I kept cites no source, so there was nothing to match",
+      many: "none of the sentences I kept cite a source, so there was nothing to match",
+    },
     // Two clauses take ", or " ("A, or B"); three or more take commas, with ", or " before the last
     // ("A, B, or C"), as the 24 brief joins them.
     notCheckedJoin: ", or ",
@@ -786,6 +799,12 @@ export const copy = {
         item: "It cited no source.",
         joined: "it cited no source",
       },
+      // Check 4 (ticket 58): a sentence that cites nothing, judged against what a tool could not answer, said more
+      // than that. Check 2's no_source above stays for a sentence that cites nothing when no tool held back.
+      beyond_abstention: {
+        item: "It cited no source, and it said more than my tools reported.",
+        joined: "it cited no source and said more than my tools reported",
+      },
       quote_not_on_page: {
         item: "The quote is not on the page it cites.",
         joined: "the quote is not on the page it cited",
@@ -845,7 +864,19 @@ export const copy = {
       },
       check_plan: {
         running: () => "I'm checking the plan.",
-        done: (count: number, countText: string) => `I checked ${countText} ${count === 1 ? "activity" : "activities"} in the plan.`,
+        done: (count: number, countText: string) =>
+          `I checked ${count === 0 ? "no" : countText} ${count === 1 ? "activity" : "activities"} in the plan.`,
+        // Ticket 58: when the call abstained, the step says why, keyed by check_plan's abstention codes
+        // (config/tools.toml); a test fails when a code lacks its sentence.
+        abstained: {
+          unknown_project: "I couldn't check the plan, because I don't know that project.",
+          no_plan_from_agency: "I couldn't check the plan, because I have no Procurement Plan from that agency.",
+          no_plan_as_of: "I couldn't check the plan, because no plan from that agency was public on the date you chose.",
+          version_not_found: "I couldn't check the plan, because I have no version of it with that date.",
+          version_not_public: "I couldn't check the plan, because that version was not yet public on the date you chose.",
+          no_activities: "I found no activities in the plan.",
+          unknown_upload: "I couldn't check the plan, because I can't find that upload.",
+        } as Record<string, string>,
         // Under the running step while the plan check page waits for its one request (ticket 111): the page's own
         // method sentence, in the present tense.
         how: "I'm comparing each activity with its own dates, its estimate and the project's closing date.",
@@ -906,14 +937,22 @@ export const copy = {
               ? `${matched} of 1 number or date matched a record or a quote.`
               : `${matched} of ${total} numbers and dates matched a record or a quote.`,
         sources: (returned: number, total: number) =>
-          total === 1
-            ? `${returned} of 1 source I cited came back for this question.`
-            : `${returned} of ${total} sources I cited came back for this question.`,
+          total === 0
+            ? "None of the sentences cited a source."
+            : total === 1
+              ? `${returned} of 1 source I cited came back for this question.`
+              : `${returned} of ${total} sources I cited came back for this question.`,
         // A draft's step 2: its sources came back for the draft, not for a question (ticket 105).
         sourcesDraft: (returned: number, total: number) =>
-          total === 1
-            ? `${returned} of 1 source I cited came back for this draft.`
-            : `${returned} of ${total} sources I cited came back for this draft.`,
+          total === 0
+            ? "None of the sentences cited a source."
+            : total === 1
+              ? `${returned} of 1 source I cited came back for this draft.`
+              : `${returned} of ${total} sources I cited came back for this draft.`,
+        // After step 2's sentence, the sentences check 2 removed for citing nothing (ticket 58). {Count} starts the
+        // sentence, so it is a capitalized word from one to nine.
+        uncited: (count: number, countText: string) =>
+          count === 1 ? "One sentence cited no source." : `${countText} sentences cited no source.`,
         quotes: (found: number, total: number) =>
           total === 0
             ? "None of the sentences quoted a source."
@@ -924,18 +963,23 @@ export const copy = {
           judged === 1
             ? `A model judged one sentence, and ${followed} of 1 followed from its sources.`
             : `A model judged ${judgedText} sentences, and ${followed} of ${judged} followed from their sources.`,
+        // Ticket 58: when every judged sentence cites nothing, a model judged it against what a tool could not answer.
+        judgedOnAbstention: (judged: number, judgedText: string, followed: number) =>
+          judged === 1
+            ? `A model judged one sentence against what a tool told me it could not answer, and ${followed} of 1 said no more than that.`
+            : `A model judged ${judgedText} sentences against what a tool told me it could not answer, and ${followed} of ${judged} said no more than that.`,
         proven: (count: number, countText: string) =>
           count === 1
-            ? "The other one needed no model, because everything it stated matched a record or a page."
-            : `The other ${countText} needed no model, because everything they stated matched a record or a page.`,
+            ? "The other one needed no model, because every number, date and quote in it matched a record or a page."
+            : `The other ${countText} needed no model, because every number, date and quote in them matched a record or a page.`,
         // When no model was asked: every sentence I kept was proven by checks 1 to 3, since each other sentence
         // that stood went to the judge, and a sentence the earlier checks removed is never counted here.
         notJudged: (kept: number, keptText: string) =>
           kept === 0
             ? "No sentence was left for a model to judge."
             : kept === 1
-              ? "The sentence I kept needed no model, because everything it stated matched a record or a page."
-              : `The ${keptText} sentences I kept needed no model, because everything they stated matched a record or a page.`,
+              ? "The sentence I kept needed no model, because every number, date and quote in it matched a record or a page."
+              : `The ${keptText} sentences I kept needed no model, because every number, date and quote in them matched a record or a page.`,
         judgeSilent: (count: number, countText: string) =>
           count === 1
             ? "The model that judges sentences did not respond, so I removed the one sentence it had to judge."
@@ -996,13 +1040,14 @@ export const copy = {
     failed: {
       judge: "I couldn't check my answer, because the model that judges sentences did not respond.",
       disagreements: "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources.",
-      both: "I couldn't check my answer, because the model that judges sentences did not respond and I couldn't find out whether other reports disagree with its sources.",
+      // Two causes, so two sentences (ticket 58).
+      both: "I couldn't check my answer. The model that judges sentences did not respond, and I couldn't find out whether other reports disagree with its sources.",
     },
     // The same, when another sentence was checked and failed: the removed box gives each sentence its reason.
     failedSome: {
       judge: "I couldn't check all of my answer, because the model that judges sentences did not respond.",
       disagreements: "I couldn't check all of my answer, because I couldn't find out whether other reports disagree with its sources.",
-      both: "I couldn't check all of my answer, because the model that judges sentences did not respond and I couldn't find out whether other reports disagree with its sources.",
+      both: "I couldn't check all of my answer. The model that judges sentences did not respond, and I couldn't find out whether other reports disagree with its sources.",
     },
     tryAgain: "Try again",
     // The answer panel's header (the 14 brief, section 5.3). {id} shows in Roboto Mono.
@@ -8476,6 +8521,8 @@ export const copy = {
         judge_unavailable: "The judging model didn't respond",
         advice_without_lesson_or_comparable: "Advice without a lesson or comparable package",
         disagreements_unavailable: "Rests on a disputed report",
+        // Ticket 58: check 4's removal of a sentence that cites nothing and says more than a tool's abstention.
+        beyond_abstention: "Said more than my tools reported",
       } as Record<string, string>,
       // A held-back answer's label, by the tool's abstention code (config/tools.toml). These codes are the ones
       // config/kpis.toml counts as holding back.

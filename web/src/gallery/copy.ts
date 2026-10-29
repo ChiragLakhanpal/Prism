@@ -279,6 +279,9 @@ export const galleryCopy = {
       bothSides: "A disagreement the draft showed, which changes nothing",
       judgeSilent: "The model that judges sentences did not respond, and some sentences survived",
       judgeSilentNoneKept: "The model that judges sentences did not respond, and nothing survived",
+      planNotYetPublic: "The one sentence kept cites nothing and says only what a tool could not answer",
+      uncitedBlame: "A sentence that cites nothing removed by check 4 for saying more than a tool reported",
+      uncitedSummary: "A sentence that cites nothing removed by check 2",
       refusals: "Every refusal",
       partial: "A partial refusal",
     },
@@ -301,6 +304,7 @@ export const galleryCopy = {
       summaries: "In a few words, what went wrong with the works contracts in P130164?",
       isr7: "How did the status reports rate P130164's progress towards its development objective in 2016?",
       bothSides: "Did the reports agree on how P130164 was progressing towards its development objective?",
+      planNotYetPublic: "Check the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for P156634.",
     },
     refusalQuestions: {
       supplier_scores: "Which suppliers did the best work on P156634? Rank them for me.",

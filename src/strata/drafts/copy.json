@@ -361,13 +361,17 @@
       "one": "{part} of {whole} sentence follows from its sources",
       "many": "{part} of {whole} sentences follow from their sources"
     },
+    "judgedUncited": {
+      "one": "{part} of {whole} sentence says no more than my tools reported",
+      "many": "{part} of {whole} sentences say no more than my tools reported"
+    },
     "crossLanguage": {
       "one": "It cites a source written in another language.",
       "all": "All of them cite a source written in another language."
     },
     "provenOthers": {
-      "one": "The other one needed no model, because everything it stated matched a record or a page.",
-      "many": "The other {count} needed no model, because everything they stated matched a record or a page."
+      "one": "The other one needed no model, because every number, date and quote in it matched a record or a page.",
+      "many": "The other {count} needed no model, because every number, date and quote in them matched a record or a page."
     },
     "notCheckedFallback": "whether the sources themselves are right",
     "numbers": {
@@ -383,6 +387,10 @@
       "many": "{part} of {whole} dates match records"
     },
     "sourcesOnly": "every source I cite came back from this search",
+    "noneCited": {
+      "one": "the sentence I kept cites no source, so there was nothing to match",
+      "many": "none of the sentences I kept cite a source, so there was nothing to match"
+    },
     "notCheckedJoin": ", or ",
     "notCheckedComma": ", ",
     "clauseJoin": "; ",
@@ -428,6 +436,10 @@
       "no_source": {
         "item": "It cited no source.",
         "joined": "it cited no source"
+      },
+      "beyond_abstention": {
+        "item": "It cited no source, and it said more than my tools reported.",
+        "joined": "it cited no source and said more than my tools reported"
       },
       "quote_not_on_page": {
         "item": "The quote is not on the page it cites.",

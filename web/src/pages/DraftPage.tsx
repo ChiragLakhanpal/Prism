@@ -733,6 +733,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             dates={(d.checks.shown ?? d.checks).dates}
             quotes={(d.checks.shown ?? d.checks).quotes}
             judged={d.checks.shown ? { judged: d.checks.shown.judged, proven: d.checks.shown.proven } : undefined}
+            sources={d.checks.shown?.sources}
             notChecked={notCheckedFor(d.checks, d.layout.not_checked)}
             how={d.checks.judge && <HowChecked checks={d.checks} id={{ draft: d.draft_id, run: d.writer?.run_id ?? null }} />}
             removed={showRemoved && <RemovedBox removed={removed} />}

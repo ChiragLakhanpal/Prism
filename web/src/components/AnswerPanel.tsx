@@ -65,7 +65,9 @@ function toolLines(step: StepEvent): { running: string; done: string } {
     return { running: copy.steps.otherTool.running(name), done: copy.steps.otherTool.done(name) };
   }
   const scope = step.project_id ?? null;
-  return { running: words.running(scope), done: words.done(count, formatCount(count), scope) };
+  // A call that abstained says why, when its tool has a sentence for the code (ticket 58).
+  const abstained = step.abstention ? (words as { abstained?: Record<string, string> }).abstained?.[step.abstention] : undefined;
+  return { running: words.running(scope), done: abstained ?? words.done(count, formatCount(count), scope) };
 }
 
 function stepLines(step: StepEvent, checks: ChecksEvent | null, refused = false): { running: string; done: string } {
@@ -560,10 +562,16 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     };
   }
   // "Try again" when a service did not let me check some sentences, with a note on how many when other
-  // sentences were removed for other reasons, since then the lead does not say why.
+  // sentences were removed for other reasons, since then the lead does not say why. When the lead's sentence is that
+  // service's only one, the lead already says it, so its note is left out and "Try again" follows the lead (ticket 58).
+  const lead = run.removed[0]?.reason;
   const notes = [
-    outage.judge > 0 && copy.removed.unjudged(outage.judge, formatCount(outage.judge)),
-    outage.unasked > 0 && copy.removed.unasked(outage.unasked, formatCount(outage.unasked)),
+    outage.judge > 0 &&
+      !(outage.judge === 1 && lead === "judge_unavailable") &&
+      copy.removed.unjudged(outage.judge, formatCount(outage.judge)),
+    outage.unasked > 0 &&
+      !(outage.unasked === 1 && lead === "disagreements_unavailable") &&
+      copy.removed.unasked(outage.unasked, formatCount(outage.unasked)),
   ].filter((note): note is string => Boolean(note));
   const mixed = new Set(run.removed.map((item) => item.reason)).size > 1;
   // The check line counts the sentences on screen; an answer from before ticket 24 has only the counts
@@ -583,10 +591,14 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       judged: checks.shown
         ? { judged: checks.shown.judged, proven: checks.shown.proven, crossLanguage: checks.shown.cross_language }
         : undefined,
+      sources: checks.shown?.sources,
       notChecked: notCheckedFor(checks),
       removed: removedItems(run),
       names: names(run),
-      retry: notes.length ? { onRetry: askAgain, note: mixed ? notes.join(" ") : undefined } : undefined,
+      retry:
+        outage.judge + outage.unasked > 0
+          ? { onRetry: askAgain, note: mixed && notes.length ? notes.join(" ") : undefined }
+          : undefined,
       // The window counts every sentence written, by the run that wrote this answer (ticket 105).
       how: runId && checks.judge ? <HowChecked checks={checks} id={{ answer: runId }} /> : undefined,
     },

@@ -23,6 +23,8 @@ export type StepEvent = {
   status: "running" | "done";
   count?: number;
   removed?: number;
+  // A tool call that abstained gives its code (config/tools.toml, abstentions), which its done line may say (ticket 58).
+  abstention?: string | null;
 };
 export type Mention = { text: string; evidence_id: string | null };
 export type SentenceEvent = {
@@ -81,13 +83,15 @@ export type EvidenceEvent = {
 // The verifier's counts. numbers, dates, quotes and sources are over every sentence the agent wrote, as the
 // steps' six-check list gives them; shown is over the sentences on screen, as the check line gives them. The
 // rest come with checks 4 to 6 (ticket 24), so an answer that ran only checks 1 to 3 lacks them.
+export type ShownSources = { total: number; uncited: number };
 export type ChecksEvent = {
   checks_run: number[];
   sentences: { written: number; kept: number; removed: number };
   numbers: { total: number; matched: number };
   dates: { total: number; matched: number };
   quotes: { total: number; found: number };
-  sources: { total: number; returned: number };
+  // uncited: the sentences check 2 removed for citing nothing, when any were (ticket 58).
+  sources: { total: number; returned: number; uncited?: number };
   tools: string[];
   shown?: {
     numbers: { total: number; matched: number };
@@ -97,10 +101,22 @@ export type ChecksEvent = {
     proven: number;
     // The judged sentences that cite a source in another language than theirs, when any do (ticket 42).
     cross_language?: number;
+    // When a sentence on screen cites nothing (ticket 58): the sources the sentences on screen cite, and how many
+    // sentences cite none, each of which a model judged against what a tool could not answer.
+    sources?: ShownSources;
   };
   // Numbers and dates together, over every sentence written, for check 1's item in the steps.
   checked?: { total: number; matched: number };
-  judge?: { called: boolean; responded: boolean | null; judged: number; followed: number; unjudged: number; proven: number };
+  // on_abstention: the judged sentences that cite nothing, judged against what a tool could not answer (ticket 58).
+  judge?: {
+    called: boolean;
+    responded: boolean | null;
+    judged: number;
+    followed: number;
+    unjudged: number;
+    proven: number;
+    on_abstention?: number;
+  };
   advice?: { total: number; cited: number };
   // warned: the sentences a warning card follows, which the status line announces.
   // unasked: the sentences removed because I couldn't ask which reports disagree (absent before ticket 24's round 3).

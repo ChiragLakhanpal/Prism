@@ -23,6 +23,9 @@ import bothSides from "../../../tests/fixtures/api/ask-p130164-both-sides.sse?ra
 import judgeSilent from "../../../tests/fixtures/api/ask-p130164-judge-no-response.sse?raw";
 import judgeSilentNoneKept from "../../../tests/fixtures/api/ask-p130164-judge-no-response-none-kept.sse?raw";
 import refusesPart from "../../../tests/fixtures/api/ask-refuses-part-supplier-scores.sse?raw";
+import planNotYetPublic from "../../../tests/fixtures/api/ask-p156634-plan-not-yet-public.sse?raw";
+import uncitedBlame from "../../../tests/fixtures/api/ask-p156634-uncited-blame.sse?raw";
+import uncitedSummary from "../../../tests/fixtures/api/ask-p130164-uncited-summary.sse?raw";
 import refusesSupplierScores from "../../../tests/fixtures/api/ask-refuses-supplier-scores.sse?raw";
 import refusesFraudAndRedactions from "../../../tests/fixtures/api/ask-refuses-fraud-and-redactions.sse?raw";
 import refusesLiveTenders from "../../../tests/fixtures/api/ask-refuses-live-tenders.sse?raw";
@@ -124,6 +127,11 @@ export const CHECK_RUNS = {
   bothSides: played(bothSides, asked(checked.bothSides, "P130164")),
   judgeSilent: played(judgeSilent, showcase),
   judgeSilentNoneKept: played(judgeSilentNoneKept, asked(checked.summaries, "P130164")),
+  // Ticket 58: a kept sentence that cites nothing, judged against check_plan's abstention; the same with a second
+  // sentence the judge removed for saying more; and check 2's removal of a sentence that cites nothing.
+  planNotYetPublic: played(planNotYetPublic, asked(checked.planNotYetPublic, "P156634", { asOf: "2026-10-01" })),
+  uncitedBlame: played(uncitedBlame, asked(checked.planNotYetPublic, "P156634", { asOf: "2026-10-01" })),
+  uncitedSummary: played(uncitedSummary, showcase),
   partial: played(refusesPart, asked(refusalQuestions.partial, "P130164")),
 };
 export const REFUSAL_RUNS = {

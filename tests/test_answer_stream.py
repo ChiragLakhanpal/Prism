@@ -1282,6 +1282,19 @@ def test_every_reason_the_verifier_gives_has_its_sentence_in_the_copy_file():
             or not sentences[code].get("joined")] == []
 
 
+def test_every_check_plan_abstention_has_the_sentence_its_done_step_says_in_the_copy_file():
+    """Ticket 58: when check_plan abstains, its step says why (web/src/copy.ts, steps.tools.check_plan.abstained),
+    never "I checked 0 activities in the plan.", so each abstention code in config/tools.toml has its sentence."""
+    from strata.config import load_tools
+
+    text = (Path(__file__).resolve().parents[1] / "web" / "src" / "copy.ts").read_text()
+    block = re.search(r"\n      check_plan: \{.*?abstained: \{(.*?)\n        \}", text, re.S).group(1)
+    sentences = dict(re.findall(r'(\w+): "([^"]*)"', block))
+    assert [code for code in load_tools()["check_plan"].result.abstentions if not sentences.get(code)] == []
+    assert sentences["version_not_public"] == (
+        "I couldn't check the plan, because that version was not yet public on the date you chose.")
+
+
 def test_every_error_the_answer_stream_can_send_has_its_sentence_in_the_copy_file():
     from strata.harness.turn import ERROR_CODES
 
