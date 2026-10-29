@@ -365,6 +365,7 @@ test("the evidence drawer enters with opacity and 12 px from the right over 160 
   await drawer(page).getByRole("button", { name: "Close the source" }).click();
   await expect(drawer(page)).toHaveCount(0);
   expect(await moves()).toEqual([]);
+  await expect(opener).toBeFocused();
 
   // "How was that checked?" opens its window over 160 ms, as every window does (DESIGN.md section 4, Motion), and it
   // closes at once (ticket 105).
