@@ -166,6 +166,18 @@ usage_flush_seconds = 10
 page_size = 20
 versions_shown = 5
 documents_shown = 5
+# The pages the App keeps in its memory (ticket 125; src/strata/server/page_cache.py): a project's header, Summary,
+# Timeline and Packages, and a package's header, each by its as-of day and the viewer's role. A page is kept for
+# page_cache_seconds, and the browser is told to keep it as long, so its second view reads nothing; the App keeps at
+# most page_cache_entries pages (each is tens of kilobytes) and lets the oldest read go first. The demo's cases
+# (config/demo.toml) are read into it when the App starts and every warm_every_seconds after, as the App itself; 0
+# turns that off. The data change only when the nightly job runs, and each warm clears every kept page once the
+# nightly has finished since the last one. page_cache_seconds is longer than warm_every_seconds, so a warmed page is
+# never let go before the next warm reads it again. Each warm wakes the SQL warehouse, which then stays up for its
+# auto-stop time (ten minutes on the paid workspace). Source: the owner's report of October 29, 2026 (the ticket).
+page_cache_seconds = 7200
+page_cache_entries = 300
+warm_every_seconds = 3600
 
 # The SQL warehouse's statements API (ticket 125; src/strata/lakehouse/engine.py, WarehouseEngine and its run_many).
 # On October 29, 2026 the App's statements took 1.7 to 3.4 seconds each (p50 2.2 s), and a page that ran six one after

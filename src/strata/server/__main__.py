@@ -34,7 +34,7 @@ def main() -> None:
     listener.bind((host, port))
     shown = f"[{host}]" if family == socket.AF_INET6 else host  # an IPv6 address needs brackets in a URL
     print(f"Strata's server is listening at http://{shown}:{listener.getsockname()[1]}", flush=True)
-    config = uvicorn.Config("strata.server.settings:app_from_env", factory=True, log_level="warning")
+    config = uvicorn.Config("strata.server.settings:server_app", factory=True, log_level="warning")
     uvicorn.Server(config).run(sockets=[listener])
 
 

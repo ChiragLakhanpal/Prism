@@ -13,6 +13,11 @@ The SQL names tables in three parts (strata.<schema>.<table>) and takes values o
 parameters (`:name`), which every engine binds from Python values. No engine builds SQL from
 values. Each call runs one statement, because a SQL task divides a file into statements at every
 semicolon (docs/PLAN.md section 12).
+
+A page's reads go as one batch (ticket 125): run_many(engine, statements) posts them to the warehouse at once and
+waits once (each statement cost the statements API about two seconds, so a page that ran six one after another took
+twelve), and read_together(engine, statements) gives a page an engine that answers each of its reads from that batch.
+How the warehouse engine waits is config/thresholds.toml's [warehouse].
 """
 
 from __future__ import annotations
@@ -132,10 +137,18 @@ class ReadTogether:
 
     def __init__(self, engine, statements: Sequence[Statement]):
         self.engine = engine
-        unique = list({_key(sql, params): (sql, params) for sql, params in statements}.items())
-        results = run_many(engine, [statement for _, statement in unique])
-        self.held = {key: result for (key, _), result in zip(unique, results, strict=True)}
+        self.held: dict[tuple, Result] = {}
         self.missed: list[str] = []
+        self.add(statements)
+
+    def add(self, statements: Sequence[Statement]) -> None:
+        """Send one more batch, of the statements this one does not hold yet: for a page whose later reads depend
+        on what its first batch found."""
+        unique = list({key: (sql, params) for sql, params in statements
+                       if (key := _key(sql, params)) not in self.held}.items())
+        if unique:
+            results = run_many(self.engine, [statement for _, statement in unique])
+            self.held.update({key: result for (key, _), result in zip(unique, results, strict=True)})
 
     def run(self, sql: str, params: Params = None) -> Result:
         found = self.held.get(_key(sql, params))
@@ -151,6 +164,13 @@ class ReadTogether:
 def read_together(engine, statements: Sequence[Statement]) -> ReadTogether:
     """An engine whose answers to these statements come from one batch, sent now."""
     return ReadTogether(engine, statements)
+
+
+def read_ahead(engine, statements: Sequence[Statement]) -> None:
+    """Send these statements as one more batch when the engine reads a page's statements together; any other engine
+    runs each one when it is asked for, as before."""
+    if isinstance(engine, ReadTogether):
+        engine.add(statements)
 
 
 TABLE_NAME = re.compile(r"strata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
