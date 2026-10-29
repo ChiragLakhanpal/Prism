@@ -7,7 +7,7 @@ import { askFromTheBox, landed, open as openAnswer } from "./answer-page";
 import { hubApi } from "./hub-api";
 import { expect, mockApi, mockShell, recorded, test } from "./mocked";
 import { fontsLoaded } from "./settled";
-import { brokenInside, WHOLE } from "./unbroken";
+import { brokenInside, brokenReferences, WHOLE } from "./unbroken";
 
 const WIDTHS = [320, 390, 1024, 1440];
 const PACKAGE = "KE-NWWDA-541055-CW-RFB";
@@ -40,7 +40,7 @@ test("the box list and the answer panel keep a STEP reference whole, and the che
   const list = page.getByRole("listbox", { name: "What Enter will do" });
   await expect(list.getByRole("option").first()).toContainText(PACKAGE);
   await atEachWidth(page, async (width) => {
-    const { found, broken } = await brokenInside(page, "[data-box-popup] [role=option]", WHOLE.reference);
+    const { found, broken } = await brokenReferences(page, "[data-box-popup] [role=option]");
     expect(found, `${width} px: the references in the list`).toBeGreaterThan(0);
     expect(broken, `${width} px`).toEqual([]);
   });
@@ -50,12 +50,38 @@ test("the box list and the answer panel keep a STEP reference whole, and the che
   await expect(panel.locator("[data-answer]:not([data-answer=streaming])")).toBeVisible();
   await expect(panel.locator("[data-asked]")).toContainText(`Asked within ${PACKAGE}`);
   await atEachWidth(page, async (width) => {
-    const asked = await brokenInside(page, "[data-answer-panel] [data-asked]", WHOLE.reference);
+    const asked = await brokenReferences(page, "[data-answer-panel] [data-asked]");
     expect(asked.found, `${width} px: the Asked line`).toBe(1);
     expect(asked.broken, `${width} px`).toEqual([]);
+    // The verifier of round 2: the answer's own sentences name KE-MIGORI COUNTY-532367-CW-RFB and KE-ICTA-571738-CW-RFB,
+    // which broke inside themselves. A reference with a county's name may break at its space, and only there.
+    const answer = await brokenReferences(page, "[data-answer-panel]");
+    expect(answer.found, `${width} px: the references in the panel`).toBeGreaterThanOrEqual(3);
+    expect(answer.broken, `${width} px`).toEqual([]);
     const label = await brokenInside(page, "[data-answer-panel] [data-check-line]", WHOLE.notChecked);
     expect(label.found, `${width} px: the check line's label`).toBe(1);
     expect(label.broken, `${width} px`).toEqual([]);
+  });
+});
+
+// The verifier of round 2: the advice answer names the same two still-open packages in its sentences.
+test("the answer panel keeps each STEP reference whole in the advice answer's sentences", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [`/api/packages/${PACKAGE}`]: { body: await recorded("package-ke-nwwda-541055.json") },
+    [`/api/packages/${PACKAGE}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+    "/api/ask": { body: await recorded("ask-ke-nwwda-541055-advice.sse") },
+  });
+  await page.goto(`/packages/${PACKAGE}`);
+  await expect(page.locator("main h1")).toBeVisible();
+  await askFromTheBox(page, "What should I watch for");
+  await landed(page);
+  await atEachWidth(page, async (width) => {
+    const { found, broken } = await brokenReferences(page, "[data-answer-panel]");
+    expect(found, `${width} px: the references in the panel`).toBeGreaterThanOrEqual(3);
+    expect(broken, `${width} px`).toEqual([]);
   });
 });
 

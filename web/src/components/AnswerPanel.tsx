@@ -39,7 +39,7 @@ import { DisagreementCard, SideSaid, type CardSide } from "./DisagreementCard";
 import { changesLine, ruleSentence, sideFull, sideInSentence, sideMeta, sideOpen, sideShort, subjectOf, whatChanges, type SideData } from "../lib/disagreement";
 import { EvidenceCard } from "./EvidenceCard";
 import { Fill } from "./Fill";
-import { MonoWords } from "./MonoWords";
+import { inSentence, MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { evidenceFrom, FromLine } from "./NumFrom";
 import { RETURNING } from "./Popover";
@@ -226,18 +226,19 @@ export function sentenceText(
   const quoteLang = sentence.quote ? (evidence[sentence.quote.evidence_id]?.row?.language as string | undefined) : undefined;
   const quoteStart = sentence.quote && quoteLang && quoteLang !== around ? sentence.text.indexOf(sentence.quote.text) : -1;
   const quoteEnd = quoteStart < 0 ? -1 : quoteStart + sentence.quote!.text.length;
-  // Plain text from start to end of the sentence, with the part inside the quote marked as the source's language.
+  // Plain text from start to end of the sentence, with the part inside the quote marked as the source's language. A STEP
+  // reference in it stays whole (inSentence; ticket 59's verifier saw "KE-ICTA-571738-" end a line).
   const plain = (start: number, end: number): ReactNode[] => {
-    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return [sentence.text.slice(start, end)];
+    if (quoteStart < 0 || end <= quoteStart || start >= quoteEnd) return inSentence(sentence.text.slice(start, end), start);
     const from = Math.max(start, quoteStart);
     const to = Math.min(end, quoteEnd);
     return [
-      sentence.text.slice(start, from),
+      ...inSentence(sentence.text.slice(start, from), start),
       <Lang key={`quote-${from}`} code={quoteLang}>
-        {sentence.text.slice(from, to)}
+        {inSentence(sentence.text.slice(from, to), from)}
       </Lang>,
-      sentence.text.slice(to, end),
-    ].filter((piece) => piece !== "");
+      ...inSentence(sentence.text.slice(to, end), to),
+    ];
   };
   const found: { start: number; end: number; text: string; id: string; date: boolean }[] = [];
   // Numbers and dates each come in the order the sentence writes them, but a date may come before

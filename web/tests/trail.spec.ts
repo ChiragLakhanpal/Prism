@@ -100,8 +100,8 @@ test("Why this source keeps its STEP reference and its dates whole in the drawer
   for (const width of [1440, 1024, 390, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
-    // WHOLE.reference names five or six digits, and this older reference has four, so it is matched as written.
-    for (const [kind, pattern, count] of [["reference", "IN-RRSMP-7431-CW-RFB", 1], ["date", WHOLE.date, 2]] as const) {
+    // This older reference has four digits and no space, so it may not break anywhere.
+    for (const [kind, pattern, count] of [["reference", WHOLE.reference, 1], ["date", WHOLE.date, 2]] as const) {
       const { found, broken } = await brokenInside(page, "[data-why-sentence]", pattern);
       expect(found, `${width} px: the ${kind}s`).toBe(count);
       expect(broken, `${width} px`).toEqual([]);
