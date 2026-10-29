@@ -57,3 +57,4 @@ Read first: the prototype's Lessons at 1440, 1024 and 390 px, with the Data swit
   - Unblocks: none. No ticket lists 102 as a blocker.
 
 ---
+- October 28, 2026, orchestrator (01:50 PDT): the App redeploy ran from d4ac8473 (the catch-up block "Tickets 102, 103 and 105, the App redeploy ran"); the page's check by eye is the owner's.
