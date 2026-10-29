@@ -40,7 +40,7 @@ const reportLabel = (row: Record<string, any>) => {
   return row.replaced_by ? copy.timeline.replaced.replace("{label}", base) : row.reissued ? copy.timeline.reissued.replace("{label}", base) : base;
 };
 
-// The heading each view shows: "ISR 7, August 26, 2016", "ISRs 1–9, rated Satisfactory", "Contracts signed in 2019",
+// The heading each view shows: "ISR 7, August 26, 2016", "ISRs 1 to 9, rated Satisfactory", "Contracts signed in 2019",
 // "ISR 7 and ICR paragraph 78".
 export function timelineTitle(evidence: EvidenceEvent): ReactNode {
   const row = evidence.row;

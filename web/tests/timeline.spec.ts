@@ -158,7 +158,8 @@ test("P130164's timeline places each report, event and record at its date, names
   );
   expect(xs).toEqual([...xs].sort((a, b) => a - b));
   // The bands name their ratings in text, and the Note spells out each code.
-  await expect(chart(page).locator("[data-band-label]").first()).toHaveText("Satisfactory, ISRs 1–9");
+  // A range is written with "to", never a dash (DESIGN.md, Tables; the 58 review, round 3, follow-up 2).
+  await expect(chart(page).locator("[data-band-label]").first()).toHaveText("Satisfactory, ISRs 1 to 9");
   await expect(page.locator("[data-timeline-note]")).toContainText("MS is Moderately Satisfactory. MU is Moderately Unsatisfactory.");
   // It spells out only the codes a band shows: the first band names Satisfactory in full.
   await expect(page.locator("[data-timeline-note]")).not.toContainText("S is Satisfactory.");
@@ -277,6 +278,9 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await expect(second).toContainText('If you keep the ICR instead, I treat "efficiency rating" as');
   await expect(second).toContainText("You can keep the ICR instead from an answer or draft that rests on these two reports.");
   await expect(second).not.toContainText("keep ICR paragraph");
+  // The ICR Review's side spells IEG out, since the sheet at 390 px hides the page note that does (the 58 critique,
+  // round 3, "Seen outside this ticket's code").
+  await expect(second).toContainText("Written by the Independent Evaluation Group (IEG) after the project closed.");
   // An ICR Review numbers its sections, so its side is "section 5" in the heading, the tab and the open link, as the
   // drawer it opens names it, never "paragraph 5" or "¶5" (the 58 critique, follow-up 2).
   await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ICR paragraph 44 and ICR Review section 5");
@@ -295,7 +299,7 @@ test("in a 1100 px page area the chart redraws beside the drawer at 536 px and k
 
   await item(page, "ratings:P130164:pdo_progress:1-9").click();
   const dialog = drawer(page);
-  await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ISRs 1–9, rated Satisfactory");
+  await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ISRs 1 to 9, rated Satisfactory");
   // Its one caption says what kind of source is open (ticket 58).
   await expect(dialog.locator("[data-drawer-caption]")).toHaveText("Ratings from the project's status reports");
   await expect(dialog).toContainText("I show them as a trajectory, not a disagreement.");
@@ -386,7 +390,7 @@ test("as of a date after the ICR Review's re-issue, no dashed line or chip cover
     // The 2024 tick falls on the as-of date, at the chart's right edge, and stays whole there.
     expect(await ticksOutside(page)).toEqual([]);
     await item(page, "ratings:P130164:pdo_progress:1-9").click();
-    await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("ISRs 1–9, rated Satisfactory");
+    await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("ISRs 1 to 9, rated Satisfactory");
     expect(await overAsOf(page)).toEqual([]);
     expect(await ticksOutside(page)).toEqual([]);
   }

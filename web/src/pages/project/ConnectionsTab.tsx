@@ -24,11 +24,12 @@ import { Num } from "../../components/Num";
 import { ProjectIdText } from "../../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
+import { countLineOf } from "../../components/Table";
 import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
 import { cx } from "../../lib/cx";
 import { evidenceHref, evidenceIn, openEvidence, visited } from "../../lib/evidence";
-import { formatCount, formatDate, formatNumber } from "../../lib/format";
+import { formatCount, formatDate } from "../../lib/format";
 import { useLoad } from "../../lib/load";
 import { address } from "../../lib/router";
 import { useStore } from "../../lib/store";
@@ -515,7 +516,7 @@ export function ConnectionsTab({ pid }: { pid: string }) {
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <p className="text-caption text-ink-muted">
                 {/* One rule for every count line: "all" when every item shows (the 58 design review, round 2, 6). */}
-                {copy.table.showingOf(data.shown, data.total, formatNumber(data.shown, { compact: false }), formatNumber(data.total, { compact: false }), formatCount(data.total), words.countNoun)}
+                {countLineOf(data.shown, data.total, words.countNoun)}
               </p>
               {/* Offered only where the diagram can show: below a 768 px page area it is always the list. */}
               <span className="hidden @md/page:block">

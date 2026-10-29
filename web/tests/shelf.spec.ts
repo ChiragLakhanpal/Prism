@@ -281,8 +281,10 @@ test("an outcome's number says what it counts and opens a window with what it ch
   );
   await expect(window).not.toContainText("Counted against");
   // The offline parser's plain name, not the command that recorded its words (ticket 58), and not its registry name
-  // either (the 58 critique, round 2, follow-up 8).
-  await expect(window).toContainText("Layout parserAn offline copy of the parser's results");
+  // either (the 58 critique, round 2, follow-up 8). It is a substitute that reads each PDF page's own words, not a copy
+  // of the live parser's results (the 58 review and design review, round 3, B1).
+  await expect(window).toContainText("Layout parserMy offline substitute");
+  await expect(window).not.toContainText("copy of the parser");
   await expect(window.locator(".font-mono")).toHaveText(["strata.ops.stress_shelf"]);
   await page.keyboard.press("Escape");
   await expect(number).toBeFocused();

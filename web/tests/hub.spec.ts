@@ -757,6 +757,20 @@ test("a source page's table, or a plan's STEP rows, is a table in a frame a keyb
       await expect(frame.locator("tbody tr").first().locator("td")).toContainText(["Prior"]);
       await expect(frame.locator("tbody tr td:last-child")).toHaveText(Array(rows).fill("No status in the plan"));
       await expect(frame).not.toContainText("Not in the plan");
+      // The last crumb names the plan by its agency, as the Documents tab does (the 58 critique, round 3, 5b).
+      await expect(page.getByRole("navigation", { name: "Breadcrumb" }).locator("[aria-current=page]")).toHaveText(
+        "Kenya National Highways Authority, plan of Sep 24, 2026",
+      );
+      // Each Activity Reference No. sits whole on one line, and the table takes the column's width rather than a
+      // reading measure (the 58 critique, rounds 2 and 3, follow-up 5a).
+      const references = frame.locator("tbody th .font-mono");
+      expect(await references.evaluateAll((all) => all.map((one) => one.getClientRects().length))).toEqual(Array(rows).fill(1));
+      const widths = await frame.evaluate((one) => {
+        const passages = one.closest("[data-passages]")!;
+        return { frame: Math.round(one.getBoundingClientRect().width), column: Math.round(passages.getBoundingClientRect().width), measure: getComputedStyle(passages).maxWidth };
+      });
+      expect(widths.measure).toBe("none");
+      expect(widths.frame).toBe(widths.column);
     }
     for (const width of [390, 320]) {
       await page.setViewportSize({ width, height: 900 });

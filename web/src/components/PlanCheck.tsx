@@ -45,7 +45,7 @@ import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
 import { Steps, type Step } from "./Steps";
-import { CARD_FIELD, CARD_FIELDS } from "./Table";
+import { CARD_FIELD, CARD_FIELDS, countLineOf } from "./Table";
 import { TaskZone } from "./TaskZone";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
@@ -827,7 +827,7 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
 
   // One to nine in words, "both" for two and a full stop, as every count line (ticket 58).
   const shownRows = open || unmarked === 0 ? activities : marked;
-  const countLine = copy.table.showingOf(shownRows, activities, whole(shownRows), whole(activities), formatCount(activities), words.countNoun);
+  const countLine = countLineOf(shownRows, activities, words.countNoun);
 
   return (
     <section aria-labelledby={findingId} data-plan-check>

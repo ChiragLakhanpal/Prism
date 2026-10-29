@@ -25,6 +25,7 @@ import { Num, numText } from "../../components/Num";
 import { ReadinessTable, type ReadinessColumn, type ReadinessRow } from "../../components/ReadinessTable";
 import { SkeletonLine, SkeletonText } from "../../components/Skeleton";
 import { StatusBadge } from "../../components/StatusBadge";
+import { countLineOf } from "../../components/Table";
 import { Template } from "../../components/Template";
 import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
@@ -41,7 +42,6 @@ import {
   type ReadinessState,
   type SourceRow,
 } from "../../lib/dataPages";
-import { formatCount, formatNumber } from "../../lib/format";
 import { useStore } from "../../lib/store";
 import { DATA_HREF } from "../../routes";
 import { HardestDocuments, HardestDocumentsLoading, SHELF_ID } from "./HardestDocuments";
@@ -49,7 +49,6 @@ import { MeasureValue, OpenSection, Sentence, type Measures, type Noun } from ".
 
 const words = copy.dataReadiness;
 const SLOW_MS = 3000;
-const whole = (value: number) => formatNumber(value, { compact: false });
 // Until the registry answers, the skeleton holds this many rows in each table and fixes in the card.
 const ROWS_BEFORE_REGISTRY = 3;
 // The headline is the page's finding (ticket 104): 28 / 36 light, 24 / 32 below a 48rem window, at most 22.5em wide,
@@ -622,7 +621,7 @@ function Tables({ result, zones }: { result: Readiness; zones: Zones }) {
         id="sources"
         skeletonRows="sources"
         title={words.sources.title}
-        lines={copy.table.showingOf(result.filter.shown, result.filter.total, whole(result.filter.shown), whole(result.filter.total), formatCount(result.filter.total), words.sources.noun)}
+        lines={countLineOf(result.filter.shown, result.filter.total, words.sources.noun)}
         head={{ label: words.sources.source, width: "w-[28%]" }}
         columns={COLUMNS.map(columnHead)}
         state={{ status: "ready", rows: sourceRows(result, measures) }}

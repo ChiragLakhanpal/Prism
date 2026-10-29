@@ -107,6 +107,14 @@ const CARD_ROW =
 const sharesGrid = (column: Column) => Boolean(column.numeric || column.short);
 const cardField = (column: Column, shared: boolean) => cx(CARD_FIELD, !(sharesGrid(column) && shared) && "col-span-full");
 
+// A count line from a table's shown and total rows and its noun, by DESIGN.md's one rule: "Showing 2 of 14 sources.",
+// "Showing all 14 sources.", "Showing both sources." or "Showing the one source." The numbers are the route's or the
+// tool's; this only writes them (the 58 review, round 3, follow-up 1).
+export function countLineOf(shown: number, total: number, noun: { one: string; many: string }): string {
+  const whole = (value: number) => formatNumber(value, { compact: false });
+  return copy.table.showingOf(shown, total, whole(shown), whole(total), formatCount(total), noun);
+}
+
 export function countText({ noun, one, total, from, to, text }: Count): string {
   if (text) return text;
   if (total === 1 && one) return copy.table.showingOne(one);

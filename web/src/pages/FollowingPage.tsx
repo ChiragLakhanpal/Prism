@@ -27,6 +27,7 @@ import { SignalLine } from "../components/SignalLine";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Source } from "../components/Source";
 import { StatusBadge, type BadgeKind } from "../components/StatusBadge";
+import { countLineOf } from "../components/Table";
 import { DefinitionWindow } from "../components/Term";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -232,7 +233,7 @@ export function FollowingBody({ data }: { data: Following }) {
             pointer as the fold opens (the 58 design review, round 2, follow-up 1). */}
         {shownCount > 0 ? (
           <p className="mt-4 text-caption text-ink-muted @xl/page:mt-6" data-count-line>
-            {copy.table.showingOf(shownCount, counts.total, formatNumber(shownCount, { compact: false }), formatNumber(counts.total, { compact: false }), formatCount(counts.total), words.countNoun)}
+            {countLineOf(shownCount, counts.total, words.countNoun)}
           </p>
         ) : (
           <div aria-hidden="true" className="mt-4 h-5 @xl/page:mt-6" data-count-place />

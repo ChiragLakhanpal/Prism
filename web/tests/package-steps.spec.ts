@@ -267,7 +267,13 @@ test("a step comparable packages had not reached names the source line's date, a
   await expect(section(page).locator("[data-step-notes]")).toContainText("Records run through August 3, 2020.");
   const completion = section(page).locator("[data-step-row='contract_completed'], [data-step-item='contract_completed']").filter({ visible: true });
   await expect(completion).toContainText("None of the 25 comparable packages had reached this step by August 3, 2020, so I can't date it yet.");
-  await completion.getByRole("button", { name: /comparable packages for/ }).click();
+  // The count's tooltip says the packages were checked for the step, never that they recorded it (the 58 design
+  // review, round 3, follow-up 1).
+  const count = completion.getByRole("button", { name: /comparable packages for/ });
+  await count.focus();
+  await expect(page.getByRole("tooltip")).toContainText("The comparable packages I checked for the contract's completion.");
+  await expect(page.getByRole("tooltip")).not.toContainText("recorded");
+  await count.click();
   await expect(page.getByRole("dialog")).toContainText("None of the 25 comparable packages had reached the contract's completion by August 3, 2020. Here are all 25.");
   await expect(page.getByRole("dialog")).not.toContainText("recorded the contract's completion");
 });

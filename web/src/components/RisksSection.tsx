@@ -583,7 +583,7 @@ function Coverage({ result, from }: { result: RisksResult; from: ReactNode }) {
 function SourceLine({ result }: { result: RisksResult }) {
   const date = recordsDate(result);
   const asOf = Boolean(result.as_of && result.data_through && result.as_of < result.data_through);
-  const names = <Joined items={result.source_names} />;
+  const names = <Joined items={[...result.source_names, words.lessonLibrary]} />;
   return (
     <Source>
       <Fill template={asOf ? words.sourceLineAsOf : words.sourceLine} slots={{ names, date: date ? <Num date={date} /> : "" }} />

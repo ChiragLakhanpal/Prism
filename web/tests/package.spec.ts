@@ -135,7 +135,10 @@ test("the workspace names the package, lists its facts in STEP's field names, an
   await expect(page).toHaveTitle(`Package ${REF} | Strata`);
   const crumbs = main.getByRole("navigation", { name: "Breadcrumb" });
   await expect(crumbs.getByRole("link", { name: "Packages" })).toHaveAttribute("href", "/packages");
-  await expect(crumbs.getByRole("link", { name: "Water and Sanitation Development Project (P156634)" })).toHaveAttribute("href", "/projects/P156634");
+  // The crumb names the project as Check a plan's crumb and the project's header do, by the server's display_name (the
+  // 58 critique, rounds 1 to 3, "one project name").
+  await expect(crumbs.getByRole("link", { name: "Water and Sanitation Development (P156634)" })).toHaveAttribute("href", "/projects/P156634");
+  await expect(crumbs).not.toContainText("Development Project");
   const facts = main.locator("[data-package-facts]");
   for (const [label, value] of [
     ["Method", "Request for Bids"],

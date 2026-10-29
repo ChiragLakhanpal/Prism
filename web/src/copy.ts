@@ -12,6 +12,9 @@ const plural = (count: number, one: string, many: string) => (count === 1 ? one 
 // A sentence's last words with its period, unless they already end with one, as STEP's "Activity Reference No." does
 // (ticket 58): a sentence never ends in two.
 const stop = (text: string) => (text.endsWith(".") ? text : `${text}.`);
+// An empty check's sentence by how many sentences I wrote: "The sentence", "Neither sentence" for two, as a count line
+// says "both", or "None of the sentences" (the 58 critique, round 3, follow-up 6).
+const noneOf = (written: number, one: string, two: string, many: string) => (written === 1 ? one : written === 2 ? two : many);
 // STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
 const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
@@ -949,22 +952,23 @@ export const copy = {
       disagreement: "I'm getting the other side of a disagreement.",
       // The six checks, in order. "N of M" pairs use numerals; a count alone is a word from one to nine.
       six: {
-        numbers: (matched: number, total: number) =>
+        // {written} is how many sentences I wrote, which an empty check names.
+        numbers: (matched: number, total: number, written: number) =>
           total === 0
-            ? "None of the sentences stated a number or a date."
+            ? noneOf(written, "The sentence stated no number or date.", "Neither sentence stated a number or a date.", "None of the sentences stated a number or a date.")
             : total === 1
               ? `${matched} of 1 number or date matched a record or a quote.`
               : `${matched} of ${total} numbers and dates matched a record or a quote.`,
-        sources: (returned: number, total: number) =>
+        sources: (returned: number, total: number, written: number) =>
           total === 0
-            ? "None of the sentences cited a source."
+            ? noneOf(written, "The sentence cited no source.", "Neither sentence cited a source.", "None of the sentences cited a source.")
             : total === 1
               ? `${returned} of 1 source I cited came back for this question.`
               : `${returned} of ${total} sources I cited came back for this question.`,
         // A draft's step 2: its sources came back for the draft, not for a question (ticket 105).
-        sourcesDraft: (returned: number, total: number) =>
+        sourcesDraft: (returned: number, total: number, written: number) =>
           total === 0
-            ? "None of the sentences cited a source."
+            ? noneOf(written, "The sentence cited no source.", "Neither sentence cited a source.", "None of the sentences cited a source.")
             : total === 1
               ? `${returned} of 1 source I cited came back for this draft.`
               : `${returned} of ${total} sources I cited came back for this draft.`,
@@ -972,9 +976,9 @@ export const copy = {
         // sentence, so it is a capitalized word from one to nine.
         uncited: (count: number, countText: string) =>
           count === 1 ? "One sentence cited no source." : `${countText} sentences cited no source.`,
-        quotes: (found: number, total: number) =>
+        quotes: (found: number, total: number, written: number) =>
           total === 0
-            ? "None of the sentences quoted a source."
+            ? noneOf(written, "The sentence quoted no source.", "Neither sentence quoted a source.", "None of the sentences quoted a source.")
             : total === 1
               ? `${found} of 1 quote was word for word on its page.`
               : `${found} of ${total} quotes were word for word on their pages.`,
@@ -1003,9 +1007,9 @@ export const copy = {
           count === 1
             ? "The model that judges sentences did not respond, so I removed the one sentence it had to judge."
             : `The model that judges sentences did not respond, so I removed the ${countText} sentences it had to judge.`,
-        advice: (cited: number, total: number) =>
+        advice: (cited: number, total: number, written: number) =>
           total === 0
-            ? "None of the sentences gave advice."
+            ? noneOf(written, "The sentence gave no advice.", "Neither sentence gave advice.", "None of the sentences gave advice.")
             : total === 1
               ? `${cited} of 1 sentence that gave advice cited a lesson or a comparable package.`
               : `${cited} of ${total} sentences that gave advice cited a lesson or a comparable package.`,
@@ -1018,7 +1022,13 @@ export const copy = {
           count === 1
             ? "One sentence rested on a report that another report disagrees with. My draft left out the other side, so I added it."
             : `${countText} sentences rested on a report that another report disagrees with. My draft left out the other side, so I added it.`,
-        disputedNone: "No sentence rested on a report that another report disagrees with.",
+        disputedNone: (written: number) =>
+          noneOf(
+            written,
+            "The sentence did not rest on a report that another report disagrees with.",
+            "Neither sentence rested on a report that another report disagrees with.",
+            "No sentence rested on a report that another report disagrees with.",
+          ),
       },
     },
   },
@@ -1234,7 +1244,7 @@ export const copy = {
         "Implementation Completion and Results Report": "The completion report, written after the project closed",
         // IEG spelled out, then its short form, with no possessive in brackets (the 58 design review, round 2, 4).
         "Implementation Completion Report Review": "A review of the completion report by the Independent Evaluation Group (IEG)",
-        "Project Performance Assessment Report": "An assessment of the project by the Independent Evaluation Group (IEG), written after it closed",
+        "Project Performance Assessment Report": "An assessment by the Independent Evaluation Group (IEG), written after the project closed",
       } as Record<string, string>,
       // For a source with no report type of its own, by its stratum, in GLOSSARY.md's words.
       stratum: {
@@ -1630,7 +1640,8 @@ export const copy = {
       pad: "Written at appraisal",
       isr: "Written during the project",
       icr: "Written after the project closed",
-      ieg: "Written by IEG after the project closed",
+      // IEG spelled out, since the sheet below 768 px hides the page note that spells it (the 58 critique, round 3).
+      ieg: "Written by the Independent Evaluation Group (IEG) after the project closed",
       record: "Recorded on this date",
     },
     // The card's full look and its keep action (ticket 23; the 23 brief, sections 5 and 7.5).
@@ -1947,7 +1958,7 @@ export const copy = {
     emptyBody: "Open a project and choose Follow this project. I check the projects you follow every night and list them here with their signals.",
     emptyLink: "Go to All projects",
     error: "I couldn't load the projects you follow because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show the projects you follow. Ask your workspace admin for read access to the strata catalog.",
+    permission: "Your account can't read Strata's tables, so I can't show the projects you follow.",
     notStaffTitle: "I show Following only to World Bank staff.",
     notStaffBody: "Your account is not in the World Bank staff group, so I can't show signals on projects. You can still find any project in All projects.",
     notStaffLink: "Go to All projects",
@@ -2588,6 +2599,8 @@ export const copy = {
       other: "Document",
     } as Record<string, string>,
     crumb: "{doc} of {date}",
+    // A plan by its agency when the documents API names it, as the Documents tab does (the 58 critique, round 3).
+    crumbPlan: "{agency}, plan of {date}",
     documentsCrumb: "Documents",
     meta: { project: "Project", dated: "Dated", disclosed: "Disclosed", pages: "Pages", language: "Language" },
     projectValue: "{name} ({pid})",
@@ -4902,8 +4915,10 @@ export const copy = {
       // The package page names Data readiness one way (the 58 critique, round 2, follow-up 4).
       link: "See Data readiness for these sources",
     },
-    sourceLine: "{names} and Strata's lesson library. Records run through {date}.",
-    sourceLineAsOf: "{names} and Strata's lesson library. Records as of {date}.",
+    // {names} lists the records' sources and the lesson library last, with one "and" (the 58 critique, round 3).
+    sourceLine: "{names}. Records run through {date}.",
+    sourceLineAsOf: "{names}. Records as of {date}.",
+    lessonLibrary: "Strata's lesson library",
     empty: {
       missing: "Add {list} above, and I'll look for the risks that came up for comparable packages.",
       noComparables: "I found no comparable packages, so I have no completion reports to look in.",
@@ -5124,6 +5139,9 @@ export const copy = {
       daysNeedsEarlier:
         "For {longer} of {n} comparable packages, {about}, {step} came more than {days} days after {previous}. I have no date for {previous} to count from.",
       count: (phrase: string) => `Comparable packages whose published plans recorded ${phrase}.`,
+      // A step most comparable packages had not reached: they were checked for it, and never "recorded" it (the 58
+      // design review, round 3, follow-up 1), as the drawer's findingNotReached says.
+      countChecked: (phrase: string) => `The comparable packages I checked for ${phrase}.`,
       longest: "Of the {m} comparable packages whose plans recorded every step up to the signed contract, {stage} ran longest in {n}.",
       // What a click on a date or a count opens: the comparable packages behind it, in the drawer (ticket 96).
       act: "Select to see the {n} packages.",
@@ -5986,7 +6004,9 @@ export const copy = {
       windowRows: { from: "Counted against", parser: "Layout parser" },
       // A parser's name a reader can follow, by its registry name (src/strata/reader/layout.py, PARSERS). A parser not
       // named here shows its registry name in mono, as the live ai_parse_document does (the 58 critique, round 2, 8).
-      parserNames: { "recorded words": "An offline copy of the parser's results" } as Record<string, string>,
+      // The offline parser is a substitute for ai_parse_document: Strata's own code rebuilds each page's tables from
+      // the words recorded from the PDF's text layer. It is not a copy of the live parser's results (58 round 3, B1).
+      parserNames: { "recorded words": "My offline substitute" } as Record<string, string>,
       noHandCount: "I have no count of the annex's risks to check this against.",
       noDocumentOver: "No document I read has more than {limit} pages, so none needed dividing. The longest has {maxPages} pages.",
       noDocument: "I found no {description} among the documents I read.",
@@ -6492,9 +6512,7 @@ export const copy = {
       outOfRangeBodyOne: "The library has one page.",
       firstPage: "Go to the first page",
       error: "I couldn't load the library because the data service didn't answer.",
-      permission:
-        "Your account can't read Strata's tables, so I can't show the library. Ask your workspace admin for read " +
-        "access to the strata catalog.",
+      permission: "Your account can't read Strata's tables, so I can't show the library.",
       list: "Lessons in the library",
     },
     card: {
@@ -6556,9 +6574,7 @@ export const copy = {
         "and a decision.",
       emptyLink: "Go to Lessons",
       error: "I couldn't load the review queue because the data service didn't answer.",
-      permission:
-        "Your account can't read Strata's tables, so I can't show the review queue. Ask your workspace admin for " +
-        "read access to the strata catalog.",
+      permission: "Your account can't read Strata's tables, so I can't show the review queue.",
       noAccessTitle: "I show this page only to lesson reviewers.",
       noAccessBody:
         "Lesson reviewers are the accredited and lead procurement specialists named for each region. Your account " +
@@ -6642,9 +6658,7 @@ export const copy = {
       notFoundBody: "Check the link, or find the lesson in Waiting for review.",
       notFoundLink: "Go to Waiting for review",
       error: "I couldn't load this lesson because the data service didn't answer.",
-      permission:
-        "Your account can't read Strata's tables, so I can't show this lesson. Ask your workspace admin for read " +
-        "access to the strata catalog.",
+      permission: "Your account can't read Strata's tables, so I can't show this lesson.",
       pageTitle: "{statement}, Waiting for review",
       clockRegion: "{clock} {region}.",
       decidedOn: "Decided on {date}, {days} days after the report became public.",
@@ -6947,9 +6961,7 @@ export const copy = {
   lessonsPage: {
     loading: "Loading the lessons.",
     error: "I couldn't load the lessons because the data service didn't answer.",
-    permission:
-      "Your account can't read Strata's tables, so I can't show the lessons. Ask your workspace admin for read " +
-      "access to the strata catalog.",
+    permission: "Your account can't read Strata's tables, so I can't show the lessons.",
     firstCaption: "From your next visit, I start this page with what came in since this one.",
     previewNote:
       "This is a preview, so I leave out what is about you: the drafts you wrote, your reports and the proposed lessons.",
@@ -7613,9 +7625,7 @@ export const copy = {
     emptyBody: "When someone marks a passage as wrong or not useful in the evidence drawer, the report appears here for review.",
     loading: "Loading the passage reports.",
     error: "I couldn't load the passage reports because the data service didn't answer.",
-    permission:
-      "Your account can't read Strata's tables, so I can't show the passage reports. Ask your workspace admin for read " +
-      "access to the strata catalog.",
+    permission: "Your account can't read Strata's tables, so I can't show the passage reports.",
     noAccessTitle: "I show this page only to passage reviewers.",
     noAccessBody:
       "Passage reviewers are named in Strata's roles file. Your account isn't one of them, so the reports stay hidden " +
@@ -7753,9 +7763,9 @@ export const copy = {
     noQueriesBody: "They appear here once the search owner loads the queries written from award notices.",
     loading: "Loading the queries.",
     error: "I couldn't load the queries because the data service didn't answer.",
-    permission:
-      "Your account can't read Strata's tables, so I can't show the queries. Ask your workspace admin for read access to " +
-      "the strata catalog.",
+    // LoadError says what to ask for under the alert (copy.service.permissionBody), so the alert does not (the 58
+    // critique, round 3).
+    permission: "Your account can't read Strata's tables, so I can't show the queries.",
     noAccessTitle: "I show this page only to query judges.",
     noAccessBody:
       "Query judges are named in Strata's roles file. Your account isn't one of them, so the queries stay hidden from you.",
@@ -7901,19 +7911,20 @@ export const copy = {
       other: "Report",
     } as Record<string, string>,
     // A band's label, the first form that fits: the rating with its ISRs, the rating, the code with its ISRs, the code.
+    // A range is written with "to", never a dash (DESIGN.md, Tables; the 58 review, round 3, follow-up 2).
     band: {
-      full: "{rating}, ISRs {first}–{last}",
+      full: "{rating}, ISRs {first} to {last}",
       fullOne: "{rating}, ISR {first}",
       rating: "{rating}",
-      code: "{code}, ISRs {first}–{last}",
+      code: "{code}, ISRs {first} to {last}",
       codeOne: "{code}, ISR {first}",
     },
-    bandItem: "ISRs {first}–{last}",
+    bandItem: "ISRs {first} to {last}",
     bandItemOne: "ISR {first}",
-    bandLine: "ISRs {first}–{last} rated progress {rating}",
+    bandLine: "ISRs {first} to {last} rated progress {rating}",
     bandLineOne: "ISR {first} rated progress {rating}",
     range: "{start} to {end}",
-    tableRange: "{start} – {end}",
+    tableRange: "{start} to {end}",
     // The disagreement line's label. The ticket fixes the numeral.
     chip: "2 reports disagree",
     // A tooltip's third line.
@@ -8017,7 +8028,7 @@ export const copy = {
       claimLine: "{side1} and {side2} disagree about this.",
       showBoth: "Show both reports",
       ratings: {
-        heading: "ISRs {first}–{last}, rated {rating}",
+        heading: "ISRs {first} to {last}, rated {rating}",
         headingOne: "ISR {first}, rated {rating}",
         trajectory:
           "Ratings that change from one ISR to the next describe different periods. I show them as a trajectory, not a disagreement.",
@@ -9078,9 +9089,7 @@ export const copy = {
     loading: "Loading your briefing.",
     error: "I couldn't load your briefing because the data service didn't answer.",
     errorReference: (reference: string) => `If it fails again, send the data team this reference: ${reference}.`,
-    permission:
-      "Your account can't read Strata's tables, so I can't show your briefing. Ask your workspace admin for read " +
-      "access to the strata catalog.",
+    permission: "Your account can't read Strata's tables, so I can't show your briefing.",
     tryAgain: "Try again",
     // The Start here strip (5.5) and what follows Remove (5.6). The caption and button keep the ticket's words.
     start: {

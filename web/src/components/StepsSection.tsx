@@ -492,7 +492,7 @@ function Comparables({ row, onOpen, side }: { row: Row; onOpen: Opener; side?: "
       options={{ compact: false }}
       className="-mx-3 px-3 text-small"
       check={{
-        tooltip: words.tips.count(entry.phrase),
+        tooltip: step.abstain_reason === "not_reached" ? words.tips.countChecked(entry.phrase) : words.tips.count(entry.phrase),
         from: row.from,
         act: words.tips.listAct,
         opens: "record",

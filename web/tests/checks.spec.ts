@@ -164,14 +164,16 @@ test("an answer whose kept sentence cites nothing says there was nothing to matc
   );
   await expect(panel(page).locator("[data-steps]")).not.toContainText("0 activities");
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
+  // I wrote one sentence, so each empty check names it, never "None of the sentences" (the 58 critique, round 3,
+  // follow-up 6).
   await expect(verifier.locator("[data-step-items] li")).toHaveText([
-    "None of the sentences stated a number or a date.",
-    "None of the sentences cited a source.",
-    "None of the sentences quoted a source.",
+    "The sentence stated no number or date.",
+    "The sentence cited no source.",
+    "The sentence quoted no source.",
     // The check line's own words, in one clause (the 58 design review, follow-up 14).
     "A model judged one sentence, and 1 of 1 said no more than my tools reported.",
-    "None of the sentences gave advice.",
-    "No sentence rested on a report that another report disagrees with.",
+    "The sentence gave no advice.",
+    "The sentence did not rest on a report that another report disagrees with.",
   ]);
   expect(await axe(page)).toEqual([]);
   // No sentence stated a number, so the window says nothing about how a number passes (the 58 critique, follow-up 8).
@@ -192,6 +194,10 @@ test("a sentence that cites nothing and says more than a tool reported is remove
   await expect(verifier.locator("[data-step-items] li").nth(3)).toHaveText(
     "A model judged two sentences, and 1 of 2 said no more than my tools reported.",
   );
+  // I wrote two sentences, so an empty check says "Neither sentence", as a count line says "both" for two.
+  await expect(verifier.locator("[data-step-items] li").first()).toHaveText("Neither sentence stated a number or a date.");
+  await expect(verifier.locator("[data-step-items] li").nth(2)).toHaveText("Neither sentence quoted a source.");
+  await expect(verifier.locator("[data-step-items] li").nth(4)).toHaveText("Neither sentence gave advice.");
 });
 
 test("check 2's step counts the sentences it removed for citing no source", async ({ page }) => {

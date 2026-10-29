@@ -191,6 +191,8 @@ const InCheckBlock = createContext(false);
 export function sixChecks(checks: ChecksEvent, { draft = false }: { draft?: boolean } = {}): string[] {
   const six = copy.steps.check.six;
   const judge = checks.judge;
+  // How many sentences I wrote, which an empty check names: "The sentence", "Neither sentence" or "None of them".
+  const written = checks.sentences.written;
   const fourth = !judge
     ? []
     : judge.called && judge.responded === false
@@ -206,22 +208,22 @@ export function sixChecks(checks: ChecksEvent, { draft = false }: { draft?: bool
   const uncited = checks.sources.uncited ?? 0;
   // When no sentence cited a source and some cited none, the count of those says it alone (the 58 review, P9).
   const second = [
-    ...(checks.sources.total === 0 && uncited > 0 ? [] : [(draft ? six.sourcesDraft : six.sources)(checks.sources.returned, checks.sources.total)]),
+    ...(checks.sources.total === 0 && uncited > 0 ? [] : [(draft ? six.sourcesDraft : six.sources)(checks.sources.returned, checks.sources.total, written)]),
     ...(uncited > 0 ? [six.uncited(uncited, formatCount(uncited, { capital: true }))] : []),
   ];
   const disputed = checks.disagreements?.disputed ?? 0;
   const sixth =
     disputed === 0
-      ? six.disputedNone
+      ? six.disputedNone(written)
       : (checks.disagreements?.attached ?? 0) > 0
         ? six.disputedAdded(disputed, formatCount(disputed, { capital: true }))
         : six.disputedBoth(disputed, formatCount(disputed, { capital: true }));
   return [
-    six.numbers(checks.checked?.matched ?? 0, checks.checked?.total ?? 0),
+    six.numbers(checks.checked?.matched ?? 0, checks.checked?.total ?? 0, written),
     second.join(" "),
-    six.quotes(checks.quotes.found, checks.quotes.total),
+    six.quotes(checks.quotes.found, checks.quotes.total, written),
     fourth.join(" "),
-    six.advice(checks.advice?.cited ?? 0, checks.advice?.total ?? 0),
+    six.advice(checks.advice?.cited ?? 0, checks.advice?.total ?? 0, written),
     sixth,
   ].filter(Boolean);
 }

@@ -1450,7 +1450,7 @@ export const galleryCopy = {
     stages: { planning: "Planning", tender: "Tender design" },
     took: {
       name: "How long it took",
-      finding: "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.",
+      finding: "2 of 49 comparable packages, fewer than 1 in 10, were signed within the plan's 1.5 months.",
       body: "Each dot is one package, placed by the months from its specific procurement notice to its signed contract.",
       noteLabel: "Note:",
       note: "I compared packages with the same Method (Request for Bids) and Category (Works). They were in Kenya and had notices from July 1, 2019 to October 9, 2026.",

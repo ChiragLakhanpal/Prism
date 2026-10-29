@@ -109,8 +109,8 @@ Word = tuple[float, float, float, float, str]  # x0, y0, x1, y1, text, in points
 class RecordedLayout:
     """The layout parser's offline stand-in, which reads each page from its document's recorded words."""
 
-    # The name every shelf window shows beside the live parser's ai_parse_document: plain words, not the command that
-    # recorded them (pdftotext -bbox), which read as jargon and broke before "-bbox" (ticket 58).
+    # The registry name every shelf window looks up in web/src/copy.ts's dataReadiness.shelf.parserNames, which gives
+    # it plain words ("My offline substitute"); rename both together, or the window falls back to this name in mono.
     name = "recorded words"
 
     def __init__(self, manifest, rejoin_split_words: bool | None = None):

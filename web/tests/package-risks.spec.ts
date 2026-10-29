@@ -128,6 +128,10 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   );
   await expect(section(page).locator("[data-check-line]")).not.toContainText("on their pages");
   await expect(section(page).locator("[data-removed-box]")).toHaveText("I removed no risks.");
+  // The source line lists its sources with one "and", the lesson library last (the 58 critique, round 3).
+  await expect(section(page).locator("[data-source]").last()).toContainText(
+    "Documents & Reports: Documents API, World Bank Projects & Operations and Strata's lesson library. Records",
+  );
 });
 
 // Ticket 58 (the 30 design review, F7 d): a section of rows says whether each row follows from its sources. The risks
