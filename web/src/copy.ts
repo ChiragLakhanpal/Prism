@@ -1225,7 +1225,7 @@ export const copy = {
       notice: "A procurement notice, as the World Bank published it",
       document: "A report on this project's timeline",
       ratings: "Ratings from the project's status reports",
-      contracts: "Contract records from the World Bank's awards data",
+      contracts: "Contract records from the World Bank's contract awards data",
       disagreement: "Two reports that say different things",
       criteriaPublic: "From the comparable packages' procurement notices",
       criteriaItem: "From the comparable packages' procurement notices",

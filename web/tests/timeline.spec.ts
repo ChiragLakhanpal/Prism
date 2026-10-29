@@ -289,6 +289,8 @@ test("in a 1100 px page area the chart redraws beside the drawer at 536 px and k
   await item(page, "ratings:P130164:pdo_progress:1-9").click();
   const dialog = drawer(page);
   await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ISRs 1–9, rated Satisfactory");
+  // Its one caption says what kind of source is open (ticket 58).
+  await expect(dialog.locator("[data-drawer-caption]")).toHaveText("Ratings from the project's status reports");
   await expect(dialog).toContainText("I show them as a trajectory, not a disagreement.");
   await expect(dialog.locator("tbody tr")).toHaveCount(9);
   // The 466 px drawer is too narrow for the three columns, so each ISR is a card.
