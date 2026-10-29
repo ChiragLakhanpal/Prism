@@ -482,7 +482,7 @@ function projectCount(fix: Fix, measures: Measures): ReactNode {
 
 function Fixes({ fixes, measures, shortfalls, shown }: { fixes: Fix[]; measures: Measures; shortfalls: boolean; shown: number }) {
   return (
-    <section aria-labelledby="data-fixes" data-fixes className="rounded-md border border-line bg-surface p-4 md:p-6">
+    <section aria-labelledby="data-fixes" data-fixes className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <h2 id="data-fixes" className="text-h2 text-ink-heading">
         {words.fixes.title}
       </h2>
@@ -583,7 +583,7 @@ function Tables({ result }: { result: Readiness }) {
 
 function Lead({ children, lead, busy }: { children: ReactNode; lead?: RefObject<HTMLDivElement | null>; busy?: boolean }) {
   return (
-    <div ref={lead} tabIndex={-1} data-lead aria-busy={busy || undefined} className="outline-none md:max-w-[66%]">
+    <div ref={lead} tabIndex={-1} data-lead aria-busy={busy || undefined} className="outline-none @md/page:max-w-[66%]">
       {children}
     </div>
   );
@@ -666,7 +666,7 @@ export function ReadinessView({
   return (
     <div data-readiness={view.name} aria-busy={view.name === "loading" || undefined}>
       {view.notice && (
-        <div ref={alert} tabIndex={-1} className="mb-6 outline-none md:max-w-[66%]">
+        <div ref={alert} tabIndex={-1} className="mb-6 outline-none @md/page:max-w-[66%]">
           {view.notice}
         </div>
       )}
@@ -697,11 +697,11 @@ function render(
       lead: (
         <>
           <span className="clip-visually">{copy.loading}</span>
-          <SkeletonText className="hidden text-lead xl:flex" widths={HEADLINE_LINES.widest} />
-          <SkeletonText className="hidden text-lead md:flex xl:hidden" widths={HEADLINE_LINES.wide} />
-          <SkeletonText className="text-lead md:hidden" widths={HEADLINE_LINES.narrow} />
+          <SkeletonText className="hidden text-lead @xl/page:flex" widths={HEADLINE_LINES.widest} />
+          <SkeletonText className="hidden text-lead @md/page:flex @xl/page:hidden" widths={HEADLINE_LINES.wide} />
+          <SkeletonText className="text-lead @md/page:hidden" widths={HEADLINE_LINES.narrow} />
           {/* As tall as the caption it stands for: two lines below 768 px, one above. */}
-          <div role="status" className="mt-2 min-h-[2lh] text-caption text-ink-muted md:min-h-lh">
+          <div role="status" className="mt-2 min-h-[2lh] text-caption text-ink-muted @md/page:min-h-lh">
             {slow ? words.loading.slow : null}
           </div>
         </>
@@ -740,19 +740,19 @@ function render(
               <h2 id="data-failures-loading" className="text-h2 text-ink-heading">
                 {words.failures.title}
               </h2>
-              <SkeletonLine className="mt-3 hidden text-body md:flex" width="w-2/3" />
-              <SkeletonText className="mt-3 text-body md:hidden" widths={["w-full", "w-1/2"]} />
+              <SkeletonLine className="mt-3 hidden text-body @md/page:flex" width="w-2/3" />
+              <SkeletonText className="mt-3 text-body @md/page:hidden" widths={["w-full", "w-1/2"]} />
             </section>
           )}
-          <div className="mt-12 rounded-md border border-line bg-surface p-4 md:p-6" aria-hidden="true">
+          <div className="mt-12 rounded-md border border-line bg-surface p-4 @md/page:p-6" aria-hidden="true">
             <h2 className="text-h2 text-ink-heading">{words.fixes.title}</h2>
             <SkeletonLine className="mt-1 text-caption" width="w-2/5" />
             <ol className="mt-3 flex flex-col gap-3">
               {Array.from({ length: fixes }, (_, index) => (
                 <li key={index}>
                   {/* A fix runs one line from 768 px and about four below, as on the fixture's page. */}
-                  <SkeletonLine className="hidden text-body md:flex" width="w-4/5" />
-                  <SkeletonText className="text-body md:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
+                  <SkeletonLine className="hidden text-body @md/page:flex" width="w-4/5" />
+                  <SkeletonText className="text-body @md/page:hidden" widths={["w-full", "w-full", "w-full", "w-3/5"]} />
                   <SkeletonLine className="text-small" width="w-1/3" />
                 </li>
               ))}

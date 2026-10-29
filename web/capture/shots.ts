@@ -2047,7 +2047,7 @@ export const SHOTS: Shot[] = [
 
   // The Data tab (ticket 16): every state of Data readiness and Sources and licenses, and its focus
   // and hover states. The loading states are the gallery's readiness page. How Strata works left the
-  // tab in ticket 97.
+  // tab in ticket 97, and its two pages became the sidebar's items under Data in ticket 104.
   data("readiness", "/data"),
   data("filtered", FILTERED, { recorded: "data-readiness-filtered.json" }),
   data("filtered-plan-check", "/data?sources=documents,projects&from=check_plan", { recorded: "data-readiness-plan-check.json" }),
@@ -2061,8 +2061,6 @@ export const SHOTS: Shot[] = [
   data("error", "/data", { status: 502, recorded: "data-readiness-error.json" }),
   data("sources", "/data/sources"),
   data("sources-empty", "/data/sources", undefined, {}, { body: '{"datasets":[],"collections":[],"readiness_rows":0,"known_gaps":0,"kinds":0,"fixes":0}' }),
-  data("focus-subtab", "/data", undefined, { act: focus("[aria-label='Data pages'] a[href='/data/sources']") }),
-  data("hover-subtab", "/data", undefined, { widths: WIDE, act: hover("[aria-label='Data pages'] a[href='/data/sources']") }),
   data("focus-show-all", FILTERED, { recorded: "data-readiness-filtered.json" }, { act: focus("main [data-alert=info] a") }),
   data("term-open", "/data", undefined, { widths: WIDE, act: click("[data-readiness-table=sources] thead [data-term] >> nth=1") }),
   data("focus-num", "/data", undefined, { act: focus("[data-headline] [data-num] >> nth=2") }),

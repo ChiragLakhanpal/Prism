@@ -8,7 +8,7 @@ import { scan } from "./axe";
 import type { Page, Route } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { dataReadinessHref } from "../src/routes";
-import { expect, mockShell, recorded, test, windowBeside } from "./mocked";
+import { expect, mockShell, openSidebar, recorded, test, windowBeside } from "./mocked";
 import { placements } from "./registries";
 import { fontsLoaded } from "./settled";
 
@@ -59,8 +59,11 @@ async function violations(page: Page) {
 
 // ── Data readiness ───────────────────────────────────────────────────────
 
-test("the Data tab has one header, and its two sub-tabs are links in a nav that change the address", async ({ page }) => {
+// Ticket 104: Data readiness and Sources and licenses are the sidebar's items under Data, as Following and All projects
+// are under Projects (ticket 99), so the page has no sub-tab row of its own.
+test("the sidebar lists Data readiness and Sources and licenses under Data, and the page has no sub-tab row", async ({ page }) => {
   await mockData(page, FULL);
+  await openSidebar(page);
   await open(page);
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Data");
@@ -68,17 +71,25 @@ test("the Data tab has one header, and its two sub-tabs are links in a nav that 
     "See how far each source can support an answer and where each dataset comes from.",
   );
   await expect(page).toHaveTitle("Data readiness | Strata");
-  const tabs = page.getByRole("navigation", { name: "Data pages" }).getByRole("link");
-  await expect(tabs).toHaveText(["Data readiness", "Sources and licenses"]);
-  await expect(tabs.first()).toHaveAttribute("aria-current", "page");
-  expect(await tabs.evaluateAll((links) => links.map((link) => Math.round(link.getBoundingClientRect().height)))).toEqual([44, 44]);
+  await expect(page.getByRole("navigation", { name: "Data pages" })).toHaveCount(0);
+  await expect(page.locator("main nav")).toHaveCount(0);
+  const sidebar = page.getByRole("navigation", { name: "Main" });
+  const items = sidebar.locator("[data-sub-items=data] a");
+  await expect(items).toHaveText(["Data readiness", "Sources and licenses"]);
+  await expect(items.first()).toHaveAttribute("aria-current", "page");
+  await expect(sidebar.getByRole("link", { name: "Data", exact: true })).toHaveAttribute("aria-current", "true");
+  // No other section shows its pages while Data is current.
+  await expect(sidebar.locator("[data-sub-items]")).toHaveCount(1);
 
-  await tabs.nth(1).click();
+  await items.nth(1).click();
   await expect(page).toHaveURL(/\/data\/sources$/);
   await expect(page).toHaveTitle("Sources and licenses | Strata");
+  await expect(items.nth(1)).toHaveAttribute("aria-current", "page");
+  await expect(items.first()).not.toHaveAttribute("aria-current");
   await expect(page.locator("main [data-lead]")).toBeFocused();
-  await tabs.first().click();
+  await items.first().click();
   await expect(page).toHaveTitle("Data readiness | Strata");
+  await expect(page.locator("main [data-lead]")).toBeFocused();
 });
 
 // Ticket 97: How Strata works is no longer a page (the deck at /present shows its figures). An old link to it lands on
@@ -91,7 +102,7 @@ test("the old How Strata works address opens Data readiness and replaces the add
   await expect(page).toHaveURL(/\/data$/);
   await expect(page).toHaveTitle("Data readiness | Strata");
   await expect(page.locator("[data-readiness=ready]")).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Data pages" }).getByRole("link", { name: "Data readiness" })).toHaveAttribute("aria-current", "page");
+  await expect(page.locator("[data-sub-items=data] [data-sub-item=data]")).toHaveAttribute("aria-current", "page");
   await page.goBack();
   await expect(page).toHaveURL(/\/data\/sources$/);
 });
@@ -816,6 +827,56 @@ test("below 768 px each table becomes cards, each with the source's name as a he
   expect(Math.round(value!.width)).toBe(Math.round(card!.width));
   await page.setViewportSize({ width: 320, height: 900 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+});
+
+// ── Laid out by the page area (ticket 104) ───────────────────────────────
+
+// DESIGN.md section 4, Breakpoints: under the bar a page lays out by the page area (@md/page: and the rest), because the
+// evidence drawer narrows it. A window variant (md:, xl:) in these files would lay a table out for a window the page
+// does not have.
+test("Data readiness and its tables use no window breakpoint, only the page area's", async () => {
+  const files = ["../src/pages/data/DataReadiness.tsx", "../src/components/ReadinessTable.tsx", "../src/pages/data/HardestDocuments.tsx"];
+  for (const file of files) {
+    const text = await readFile(new URL(file, import.meta.url), "utf8");
+    const found = text.match(/(?<=^|[\s"'`{(])(?:max-)?(?:sm|md|lg|xl|2xl):[\w[-]/gm) ?? [];
+    expect(found, file).toEqual([]);
+  }
+});
+
+// What each Data readiness table shows: its table or its cards, and how many columns a card's measures take.
+const tableLayout = (page: Page) =>
+  page.locator("[data-readiness-table]").evaluateAll((tables) =>
+    tables.map((table) => {
+      const shown = Array.from(table.querySelectorAll<HTMLElement>("[data-table-view]")).filter((view) => getComputedStyle(view).display !== "none");
+      const card = table.querySelector("[data-table-view=cards] > li dl");
+      return {
+        id: table.getAttribute("data-readiness-table"),
+        views: shown.map((view) => view.dataset.tableView),
+        cardColumns: card ? getComputedStyle(card).gridTemplateColumns.split(" ").length : 0,
+      };
+    }),
+  );
+
+// At 1024 px the rail takes 64 px and the drawer 410 px, which leaves a 550 px page area (ticket 94): the tables read
+// it as cards, as they would in a 550 px window, and nothing scrolls sideways.
+test("beside the evidence drawer at 1024 px, the tables are laid out as in a 550 px page area", async ({ page }) => {
+  const ICR_54 = "strata.gold.passage:31525018/v1/54";
+  await mockData(page, FULL);
+  await page.route("**/api/evidence*", async (route) =>
+    route.fulfill({ contentType: "application/json", body: await recorded("evidence-icr-p130164-54.json") }),
+  );
+  await page.route("**/api/evidence/opened*", (route) => route.fulfill({ contentType: "application/json", body: '{"opened":[],"recorded":true}' }));
+  await open(page, "/data", 550);
+  await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  const narrow = await tableLayout(page);
+  expect(narrow.map((table) => table.views)).toEqual(narrow.map(() => ["cards"]));
+
+  await open(page, `/data?evidence=${encodeURIComponent(ICR_54)}`, 1024);
+  await expect(page.locator("[data-readiness=ready]")).toBeVisible();
+  await expect(page.locator("[data-evidence-drawer]")).toBeVisible();
+  expect(Math.round((await page.locator("[data-page-column]").boundingBox())!.width)).toBe(550);
+  expect(await tableLayout(page)).toEqual(narrow);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1024);
 });
 
 // ── Sources and licenses ─────────────────────────────────────────────────

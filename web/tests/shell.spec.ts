@@ -197,8 +197,11 @@ test("the current item says page on the section's own page and true on a page in
   ]) {
     await page.goto(path);
     await expect(main.getByRole("link", { name: item, exact: true }), path).toHaveAttribute("aria-current", current);
-    await expect(main.locator("[aria-current]"), path).toHaveCount(1);
+    // In the rail the section's own pages hide (ticket 99's sub-items; Data's since ticket 104), so one mark shows.
+    await expect(main.locator("[aria-current]:visible"), path).toHaveCount(1);
   }
+  // Under Data its two pages are sub-items, and the page's own carries "page" (ticket 104).
+  await expect(main.locator("[data-sub-items=data] [aria-current=page]")).toHaveText("Sources and licenses");
 });
 
 // "Collapse the sidebar" and "Expand the sidebar" are one button (DESIGN.md section 5, Sidebar). The width changes at

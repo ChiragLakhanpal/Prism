@@ -205,9 +205,11 @@ test("every sidebar item opens its page and focuses its h1, in the open sidebar 
       await expect(title, `${item} at ${width} px`).toHaveText(h1);
       await expect(title, `${item} at ${width} px`).toBeFocused();
       expect(new URL(page.url()).pathname).toBe(path);
-      // All projects is Projects' own page, the sub-item under it that carries the mark (ticket 99); Projects is "true".
-      await expect(main.locator("[aria-current=page]")).toHaveText(item === "Projects" ? "All projects" : item);
-      if (item === "Projects") await expect(main.locator("[data-nav-item=projects]")).toHaveAttribute("aria-current", "true");
+      // All projects is Projects' own page, the sub-item under it that carries the mark (ticket 99), and Data readiness
+      // is Data's (ticket 104); the section is "true".
+      const sub: Record<string, string> = { Projects: "All projects", Data: "Data readiness" };
+      await expect(main.locator("[aria-current=page]")).toHaveText(sub[item] ?? item);
+      if (item in sub) await expect(main.locator(`[data-nav-item=${item.toLowerCase()}]`)).toHaveAttribute("aria-current", "true");
     }
   }
 });

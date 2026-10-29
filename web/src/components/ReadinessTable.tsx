@@ -65,7 +65,7 @@ export type ReadinessTableState = { status: "ready"; rows: ReadinessRow[] } | { 
 // 13 px shorter than their skeleton at 1440, 14 px at 1024, and its four cards 12 px at 390. Once the numbers in what
 // holds each kind back kept inside their lines too (ticket 96's second round), the four rows stood 8 px shorter at
 // 1024 and the four cards 20 px at 390.
-const ROW_HEIGHT = { kinds: "h-[7.956rem] xl:h-[7.297rem]", sources: "h-[8.1958rem] xl:h-[7.3125rem]", shelf: "h-[8.5580rem] xl:h-[7.6707rem]" } as const;
+const ROW_HEIGHT = { kinds: "h-[7.956rem] @xl/page:h-[7.297rem]", sources: "h-[8.1958rem] @xl/page:h-[7.3125rem]", shelf: "h-[8.5580rem] @xl/page:h-[7.6707rem]" } as const;
 const CARD_HEIGHT = { kinds: "h-[16.6855rem]", sources: "h-[16.084rem]", shelf: "h-[21.925rem]" } as const;
 
 // Heads sit at the top, so their labels share one line however their short definitions wrap.
@@ -142,7 +142,7 @@ export function ReadinessTable({
         loading && <SkeletonLine width="w-1/4" className="mt-1 text-caption" />
       )}
 
-      <div data-table-view="table" className="mt-3 hidden rounded-md border border-line bg-surface md:block">
+      <div data-table-view="table" className="mt-3 hidden rounded-md border border-line bg-surface @md/page:block">
         <table className="w-full table-fixed border-collapse text-small">
           <caption className="clip-visually">{title}</caption>
           <thead className="bg-surface-2">
@@ -199,7 +199,7 @@ export function ReadinessTable({
         </table>
       </div>
 
-      <ul aria-labelledby={titleId} data-table-view="cards" className="mt-3 flex flex-col gap-4 md:hidden">
+      <ul aria-labelledby={titleId} data-table-view="cards" className="mt-3 flex flex-col gap-4 @md/page:hidden">
         {placeholders.map((index) => (
           <li key={index} aria-hidden="true" className="rounded-md border border-line bg-surface p-4">
             <SkeletonLine width="w-3/5" className="text-h2" />

@@ -433,11 +433,13 @@ export const copy = {
       data: "Data",
     },
     // A section's own pages, under its item while it is current (DESIGN.md section 5, Sidebar), by page key: Following
-    // and All projects under Projects for World Bank staff (ticket 99). The labels carry no count, so they never grow
-    // while a list loads.
+    // and All projects under Projects for World Bank staff (ticket 99), and Data readiness and Sources and licenses
+    // under Data (ticket 104). The labels carry no count, so they never grow while a list loads.
     sub: {
       following: "Following",
       projects: "All projects",
+      data: "Data readiness",
+      dataSources: "Sources and licenses",
     },
     // One button that turns the sidebar into the rail of icons and back.
     collapse: "Collapse the sidebar",
@@ -5375,11 +5377,6 @@ export const copy = {
   // The Data readiness page (the 16 design brief). Every number on it comes from the
   // data_readiness_for tool, and the page computes none.
   dataReadiness: {
-    tabs: {
-      label: "Data pages",
-      readiness: "Data readiness",
-      sources: "Sources and licenses",
-    },
     // The info alert above the headline when a coverage line opened the page. The noun comes from
     // server.fromNouns, by the tool the link names, never from the link's own words.
     // Templates whose {slots} the page fills with Num, so each number keeps its form and its check.

@@ -50,7 +50,7 @@ const head = (label: string, definition?: string): ReactNode =>
 
 // The column widths: 22, 30, 14, 18 and 16 percent from 1280 px, and 24, 26, 14, 18 and 18 below.
 export const SHELF_COLUMNS: ReadinessColumn[] = [
-  { key: "hard", name: words.columns.hard.label, label: words.columns.hard.label, about: words.columns.hard.about, width: "w-[26%] xl:w-[30%]" },
+  { key: "hard", name: words.columns.hard.label, label: words.columns.hard.label, about: words.columns.hard.about, width: "w-[26%] @xl/page:w-[30%]" },
   {
     key: "parser",
     name: words.columns.parser.label,
@@ -68,9 +68,9 @@ export const SHELF_COLUMNS: ReadinessColumn[] = [
     width: "w-[18%]",
   },
   // In a card the link stands on its own line, so the Page label is left to screen readers (design review r2 P6).
-  { key: "page", name: words.columns.page.label, label: words.columns.page.label, about: words.columns.page.about, width: "w-[18%] xl:w-[16%]", cardLabel: "hidden" },
+  { key: "page", name: words.columns.page.label, label: words.columns.page.label, about: words.columns.page.about, width: "w-[18%] @xl/page:w-[16%]", cardLabel: "hidden" },
 ];
-export const SHELF_HEAD = { label: words.columns.document.label, width: "w-[24%] xl:w-[22%]" };
+export const SHELF_HEAD = { label: words.columns.document.label, width: "w-[24%] @xl/page:w-[22%]" };
 
 function Stack({ children }: { children: ReactNode }) {
   return <div className="flex flex-col items-start gap-0.5">{children}</div>;
