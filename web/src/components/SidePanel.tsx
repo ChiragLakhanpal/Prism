@@ -18,6 +18,7 @@ export function SidePanel({
   source,
   sentence,
   loading = false,
+  before,
   children,
 }: {
   title: ReactNode;
@@ -27,6 +28,8 @@ export function SidePanel({
   // All the panel holds: it is then a row, not a panel.
   sentence?: ReactNode;
   loading?: boolean;
+  // What the panel holds before its facts, such as a draft's state stepper (ticket 103).
+  before?: ReactNode;
   // What the panel holds when it is not a list of facts, such as Waiting for you's drafts (ticket 98).
   children?: ReactNode;
 }) {
@@ -51,6 +54,7 @@ export function SidePanel({
       <h2 id={headingId} className="text-h2 text-ink-heading">
         {title}
       </h2>
+      {before}
       {facts && (
         <dl className="mt-4 grid grid-cols-1 gap-4 @facts/side:grid-cols-2">
           {facts.map((fact, index) => (

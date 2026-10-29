@@ -200,7 +200,7 @@ test("with a row left out because both its cells failed, the lede and the count 
 });
 
 test("setting an owner counts it at once, and once checked, export waits for the last owner and the bar says so", async ({ page }) => {
-  await openDraft(page, "drafts-ppsd-draft.json", {
+  const asked = await openDraft(page, "drafts-ppsd-draft.json", {
     answers: {
       [`PUT /api${DRAFT}/fields`]: { body: await recorded("drafts-ppsd-some-owners.json") },
       [`POST /api${DRAFT}/check`]: { body: await recorded("drafts-ppsd-checked-owners-left.json") },
@@ -218,6 +218,14 @@ test("setting an owner counts it at once, and once checked, export waits for the
   await expect(exportButton).toHaveAttribute("aria-disabled", "true");
   await expect(exportButton).toHaveAttribute("data-button", "primary");
   await expect(holdLine(page)).toHaveText("Before you export them, set one more risk owner.");
+  // Ticket 103: the bar says who checked the rows and when, by role, while the hold that is left still names itself;
+  // the stepper moves on, and Export to Word, held, sends nothing.
+  await expect(bar(page).locator("[data-decided-line]")).toHaveText("Checked by you on October 28, 2026.");
+  await expect(page.locator("[aria-current=step]:visible")).toHaveText("Checked by you");
+  await exportButton.focus();
+  await page.keyboard.press("Enter");
+  await expect(exportButton).toHaveAttribute("aria-disabled", "true");
+  expect(asked.map((one) => one.call).filter((call) => call.startsWith("POST") && call.includes("/export"))).toEqual([]);
   // The clause links to the empty owner chip.
   await holdLine(page).getByRole("link").click();
   await expect(page.getByRole("button", { name: `Set the owner for ${PERMITS}` })).toBeFocused();
