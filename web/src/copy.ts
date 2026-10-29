@@ -714,6 +714,8 @@ export const copy = {
     // sentence on screen cites a lesson (config/tools.toml, not_checked_when = "cited").
     notCheckedClauses: {
       sentences: "whether each sentence follows from its sources",
+      // The same gap in a section of rows, such as the risks table (ticket 58).
+      rows: "whether each row follows from its sources",
       find_comparables: "whether these are the right comparables",
       search_passages: "whether I found every passage that matters",
       get_lessons: "whether these lessons apply here",
@@ -4700,21 +4702,22 @@ export const copy = {
     // Hidden from screen readers, so the heading reads "Procurement risks and what helped".
     number: "3",
     heading: "Procurement risks and what helped",
+    // True above the rows, the empty states, the error and the loading state alike (ticket 58; the 30 design review, F8).
     intro:
-      "These risks came up again and again in the completion reports of projects with comparable packages. Each one has a lesson on what helped and the reports that say so.",
+      "This section lists the procurement risks that came up again and again in the completion reports of projects with comparable packages. Each one has a lesson on what helped and the reports that say so.",
     // Where PPSD is spelled out on this screen (DESIGN.md section 7, rule 10).
     instruction:
       "Select the risks that belong in section 3 of the borrower's Project Procurement Strategy for Development (PPSD). I save your choice with this package.",
     // The finding, the table's title: Fill templates whose {k} and {m} are Num values.
-    finding: '"{risk}" came up most often, in {k} of the {m} completion reports for projects with comparable packages.',
+    finding: '"{risk}" came up most often, in {k} of {m} completion reports for projects with comparable packages.',
     // The check line's quotes clause for this section: each row's sentences restate the risk's name and the lesson's
     // words from their records, which are not quotes from a page (ticket 30's review F3).
     quotesInRecords: {
       one: "{part} of {whole} name or lesson matches its record",
       many: "{part} of {whole} names and lessons match their records",
     },
-    findingTwo: '"{a}" and "{b}" came up most often, each in {k} of the {m} completion reports for projects with comparable packages.',
-    findingMany: "{tied} of these risks came up most often, each in {k} of the {m} completion reports for projects with comparable packages.",
+    findingTwo: '"{a}" and "{b}" came up most often, each in {k} of {m} completion reports for projects with comparable packages.',
+    findingMany: "{tied} of these risks came up most often, each in {k} of {m} completion reports for projects with comparable packages.",
     countOne: "Showing one risk.",
     countBoth: "Showing both risks, in the order I ranked them.",
     count: (shown: string) => `Showing ${shown} risks, in the order I ranked them.`,
@@ -4758,6 +4761,8 @@ export const copy = {
     numTips: {
       k: "Completion reports for projects with comparable packages that raised this risk.",
       kAct: (k: string) => `Select to see the ${k}.`,
+      // One report, never "Select to see the 1." (ticket 58).
+      kActOne: "Select to see the report.",
       tie: (k: string) => `Each of these risks came up in ${k} completion reports.`,
       m: "Completion reports of projects with comparable packages that I read.",
       mAct: (m: string) => `Select to see all ${m}.`,
@@ -4836,13 +4841,18 @@ export const copy = {
       version: "Lesson version {version}, decided on {date}.",
       iegRestates: "IEG's review restates this lesson",
       iegWrote: 'IEG wrote in its {doc}: "{quote}"',
+      // In section 5's view F, which can stand alone as a full-screen sheet, IEG is spelled out (ticket 58; rule 22).
+      iegWroteSpelled: 'The Independent Evaluation Group (IEG) wrote in its {doc}: "{quote}"',
+      // A lesson IEG wrote itself (ticket 58; the 30 design review, F11).
+      iegLesson: "IEG wrote this lesson in its ICR Review.",
+      iegLessonSpelled: "The Independent Evaluation Group (IEG) wrote this lesson in its ICR Review.",
       awaiting: "This lesson rests on the completion report alone. IEG has not reviewed this project's completion report yet.",
       notRestated: "This lesson rests on the completion report alone. IEG's ICR Review did not restate it.",
       switcher: "Sources for this risk",
       tab: "{doc} {locator}",
       reportsEyebrow: "Why · evaluation",
       reportsTitle: "Completion reports that raised this risk",
-      reportsFinding: '{k} of the {m} completion reports for projects with comparable packages raised "{risk}".',
+      reportsFinding: '{k} of {m} completion reports for projects with comparable packages raised "{risk}".',
       reportsNote: "Newest first.",
       reportEntry: "{doc}, {date}, paragraph {para}",
       allTitle: "Completion reports I counted",
@@ -5229,9 +5239,11 @@ export const copy = {
     summaryOne:
       "This check is optional. Paste your qualification criteria to compare them with one package whose criteria are public.",
     summaryCompared:
-      "This check is optional. On {date}, you compared {count} items in your qualification criteria with {n} packages whose criteria are public.",
+      "This check is optional. {date} you compared {count} items in your qualification criteria with {n} packages whose criteria are public.",
     summaryComparedOne:
-      "This check is optional. On {date}, you compared one item in your qualification criteria with {n} packages whose criteria are public.",
+      "This check is optional. {date} you compared one item in your qualification criteria with {n} packages whose criteria are public.",
+    // The date's own words, set as one unit that never breaks, so "On" never ends a line alone (ticket 58).
+    summaryOn: "On {date},",
     summaryNonePublic:
       "This check is optional. None of the {total} comparable packages published their qualification criteria, so I can't compare yours yet.",
     summaryAlso: "It also covers rejected bids, cost estimates and lessons from comparable packages.",
@@ -5256,7 +5268,8 @@ export const copy = {
     introNonePublicLink: "See how complete the notices are",
     field: {
       label: "Your qualification criteria",
-      hint: "Paste them as the bidding document writes them. When you compare them, I save the text with this package, and only you can see it.",
+      // "I save" is held together, so "I" never ends a line alone (ticket 58).
+      hint: "Paste them as the bidding document writes them. When you compare them, I\u00a0save the text with this package, and only you can see it.",
       count: "{used} of {max} characters",
     },
     compare: "Compare the criteria",
@@ -5296,6 +5309,14 @@ export const copy = {
     quoteNotInSource: { item: "The quote is not in the record it cites.", joined: "the quote is not in the record it cited" },
     // A reading of your words that check 4's judge said does not follow from them: its source is your text.
     readingNotSupported: { item: "Your words do not say this.", joined: "your words do not say that" },
+    // Every reason a removed reading can have, about your words, never a record (ticket 58; the 31 review, round 3, F3).
+    readingReasons: {
+      number_not_in_records: { item: "Your words do not state this number.", joined: "your words do not state that number" },
+      date_not_in_records: { item: "Your words do not state this date.", joined: "your words do not state that date" },
+      not_supported: { item: "Your words do not say this.", joined: "your words do not say that" },
+    } as Record<string, { item: string; joined: string }>,
+    // The numbers' clause when the section holds a comparison, whose numbers may match your own words (ticket 58).
+    numberWords: { one: "{part} of {whole} number matches records or your words", many: "{part} of {whole} numbers match records or your words" },
     // Why a run could not finish, by its code (src/strata/criteria/workflow.py, COMPARE_ERRORS).
     // unsaved: the request never reached the server, so the text was not saved either.
     errors: {
@@ -5322,7 +5343,8 @@ export const copy = {
         words: "Your words",
         wordsDefinition: "From your text, and how I read them",
         asked: "Asked for it",
-        askedDefinition: "Of the {n} whose criteria are public",
+        // Its noun stays (ticket 58; the 31 review, round 3, F7).
+        askedDefinition: "Of {n} notices with public criteria",
         sameOrLess: "Asked for the same or less",
         sameOrLessDefinition: "Of the notices I could compare with yours",
       },
@@ -5345,8 +5367,10 @@ export const copy = {
       hideThem: "Hide them",
       showIt: "Show it",
       hideIt: "Hide it",
+      // Three sentences, each rule exact (ticket 58; src/strata/criteria/reading.py counts "more" when no part is lower
+      // or left out and at least one is higher).
       order:
-        "I count a notice as asking for less than you when none of its parts is higher than yours and at least one is lower or left out, and as asking for more the other way round. A notice that asked for more contracts but a smaller amount for each, for example, set it in other terms.",
+        "I count a notice as asking for less than you when none of its parts is higher than yours and at least one is lower or left out. I count it as asking for more when none of its parts is lower or left out and at least one is higher. A notice that asked for more contracts but a smaller amount for each set it in other terms.",
       // The coverage line: one idea a sentence, each count a Num with a capital where it starts the sentence.
       coverage: "Based on {n} of {total} comparable packages.",
       coverageMissing: "{missing} of them published no qualification criteria.",

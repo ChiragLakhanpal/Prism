@@ -41,6 +41,40 @@ test("the status badge shows Needs a look, Watch and No signals, each with its o
   expect(new Set(Object.values(shapes)).size).toBe(3);
 });
 
+// Ticket 58 (the 31 design review, round 3, P7): "On {date}," is one unit, so "On" never ends a line alone at 390 px,
+// and the field's hint holds "I save" together.
+test("a compared summary's date holds its On, and the paste field's hint holds I save", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/gallery/check-criteria");
+  const summary = page.locator("[data-state-section=collapsed] [data-section-summary]").filter({ hasText: "you compared" }).first();
+  const unit = summary.locator(".whitespace-nowrap").filter({ hasText: /^On [A-Z][a-z]+ \d{1,2}, \d{4},$/ });
+  await expect(unit).toHaveCount(1);
+  // Its boxes all sit on one line (an inline box holding a number's button reports a box per part).
+  expect(await unit.evaluate((element) => new Set([...element.getClientRects()].map((box) => Math.round(box.bottom))).size)).toBe(1);
+  const hint = page.locator("[data-state-section=open]").getByText(/When you compare them, I.save the text/).first();
+  expect(await hint.textContent()).toContain("I\u00a0save the text");
+});
+
+// Ticket 58 (the 31 critique, round 3, follow-up 7): the cost intro's amounts never break between "US$14" and "million".
+test("the cost intro keeps each amount on one line", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/gallery/check-criteria");
+  const intro = page.locator("[data-cost-intro]").first();
+  await expect(intro).toBeVisible();
+  const amounts = intro.locator(".whitespace-nowrap").filter({ hasText: /^US\$/ });
+  expect(await amounts.count()).toBeGreaterThan(0);
+  for (const bottoms of await amounts.evaluateAll((all) => all.map((one) => new Set([...one.getClientRects()].map((box) => Math.round(box.bottom))).size))) {
+    expect(bottoms).toBe(1);
+  }
+});
+
+// Ticket 58 (the 30 design review, F11): a lesson IEG wrote itself says so in the risk drawer, rather than no line.
+test("the risk drawer's IEG line says when IEG wrote the lesson itself", async ({ page }) => {
+  await page.goto("/gallery/risks");
+  const section = page.locator("[data-state-section=ieg-lesson]");
+  await expect(section.locator("[data-ieg-line=ieg_lesson]")).toHaveText("IEG wrote this lesson in its ICR Review.");
+});
+
 test("Partial uses the warning state with triangle-alert, and Gap the neutral state with circle-dashed and a dashed border", async ({
   page,
 }) => {

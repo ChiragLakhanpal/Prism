@@ -212,6 +212,16 @@ export function risksPage(): GalleryPage {
           </DrawerPart>
         ),
       },
+      // Ticket 58: a lesson IEG wrote itself says so.
+      {
+        id: "ieg-lesson",
+        title: t.iegLesson,
+        body: (
+          <DrawerPart>
+            <RowClaim row={withIeg(COST, "ieg_lesson")} />
+          </DrawerPart>
+        ),
+      },
       {
         id: "reports",
         title: t.reports,

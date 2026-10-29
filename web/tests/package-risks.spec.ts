@@ -22,7 +22,10 @@ const LESSON = "Base works estimates on market rates to avoid rebidding";
 
 type Answer = { status?: number; body: string };
 
-async function openPackage(page: Page, { width = 1440, risks = "risks-ke-nwwda-541055-india.json", save, evidence }: { width?: number; risks?: string; save?: Answer; evidence?: string } = {}) {
+async function openPackage(
+  page: Page,
+  { width = 1440, risks = "risks-ke-nwwda-541055-india.json", save, evidence, risksBody }: { width?: number; risks?: string; save?: Answer; evidence?: string; risksBody?: string } = {},
+) {
   await page.setViewportSize({ width, height: 900 });
   const puts: Request[] = [];
   const answers: Record<string, Answer> = {
@@ -30,7 +33,7 @@ async function openPackage(page: Page, { width = 1440, risks = "risks-ke-nwwda-5
     "/api/freshness": { body: await recorded("freshness.json") },
     [API]: { body: await recorded("package-ke-nwwda-541055.json") },
     [`${API}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
-    [`${API}/risks`]: { body: await recorded(risks) },
+    [`${API}/risks`]: { body: risksBody ?? (await recorded(risks)) },
     [`${API}/steps`]: { body: await recorded("steps-ke-nwwda-541055.json") },
     [`${API}/risk-selection`]: save ?? { body: await recorded("risks-selection-saved.json") },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
@@ -98,12 +101,31 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   const all = await text(section(page));
   expect(all).not.toMatch(/%|percent| in 10/);
   await expect(section(page).locator("[data-check-line]")).toContainText("Not checked:");
+  // Ticket 58: the intro is true in every state, and the finding reads "in 1 of 1", never "in 1 of the 1".
+  await expect(section(page)).toContainText(
+    "This section lists the procurement risks that came up again and again in the completion reports of projects with comparable packages.",
+  );
+  await expect(section(page)).not.toContainText("of the 1 completion");
+  // The count opens one report, so its tooltip says "the report", never "the 1".
+  await cost.locator("[data-count] button").focus();
+  await expect(page.getByRole("tooltip")).toContainText("Select to see the report.");
   // The rows restate their records' names and lessons, which are not quotes from a page (ticket 30's review F3).
   await expect(section(page).locator("[data-check-line] [data-check-part=checked]")).toHaveText(
     "Checked: 4 of 4 numbers match records; 4 of 4 names and lessons match their records.",
   );
   await expect(section(page).locator("[data-check-line]")).not.toContainText("on their pages");
   await expect(section(page).locator("[data-removed-box]")).toHaveText("I removed no risks.");
+});
+
+// Ticket 58 (the 30 design review, F7 d): a section of rows says whether each row follows from its sources. The risks
+// table runs all six checks since ticket 61, so the gap shows only for a result that ran checks 1 to 3, set in memory.
+test("a risks result that ran checks 1 to 3 says it did not check whether each row follows from its sources", async ({ page }) => {
+  const answer = JSON.parse(await recorded("risks-ke-nwwda-541055-india.json"));
+  answer.verifier.counts.checks_run = [1, 2, 3];
+  await openPackage(page, { risksBody: JSON.stringify(answer) });
+
+  await expect(section(page).locator("[data-check-part=not-checked]")).toContainText("whether each row follows from its sources");
+  await expect(section(page).locator("[data-check-line]")).not.toContainText("whether each sentence follows");
 });
 
 test("a source click opens the drawer at its paragraph with the row's claim, the switcher and IEG's badge", async ({ page }) => {
@@ -149,7 +171,8 @@ test("a row's count opens the completion reports that raised its risk, and each 
   await row(page, "cost_estimates").locator("[data-count] button").click();
 
   await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText("Completion reports that raised this risk");
-  await expect(drawer(page)).toContainText(`1 of the 1 completion reports for projects with comparable packages raised "${RISK}".`);
+  // No "the" before the one report's count (ticket 58).
+  await expect(drawer(page)).toContainText(`1 of 1 completion reports for projects with comparable packages raised "${RISK}".`);
   await drawer(page).locator(`[data-report-entry='${ICR_54}']`).click();
   await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph 54$/);
   await drawer(page).getByRole("button", { name: "Back to the report" }).click();

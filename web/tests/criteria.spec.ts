@@ -122,6 +122,13 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
   await expect(row.getByRole("rowheader")).toContainText("Similar experience");
   await expect(row.locator("[data-same-or-less]")).toContainText(`${similar.same_or_less} of ${similar.compared}`);
   await expect(row).toContainText(`${similar.stated} of ${result.coverage.n}`);
+  // The method's rules, each its own exact sentence (ticket 58; the 31 design review, round 3, P8).
+  await expect(section(page)).toContainText(
+    "I count it as asking for more when none of its parts is lower or left out and at least one is higher.",
+  );
+  await expect(section(page)).not.toContainText("the other way round");
+  // The column's definition keeps its noun (ticket 58; the 31 review, round 3, F7).
+  await expect(section(page).locator("table thead")).toContainText(`Of ${result.coverage.n} notices with public criteria`);
   await expect(row).toContainText(`"${similar.your_excerpt.text}"`);
   await expect(row).toContainText(similar.reading);
   await expect(section(page).locator("table [data-item=turnover]")).toContainText(copy.criteria.items.noneToCompare);
@@ -133,6 +140,10 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
     copy.checkLine.judgedSentences.many.replace("{part}", judged).replace("{whole}", judged),
   );
   await expect(line).not.toContainText(copy.checkLine.notCheckedClauses.sentences);
+  // Ticket 58: with a comparison some numbers match your own words, and the lesson cards below leave their gap too
+  // (the 31 review, round 3, F3; the 31 design review, round 3, P1).
+  await expect(line.locator("[data-check-part=checked]")).toContainText("numbers match records or your words");
+  if (result.lessons?.groups?.length) await expect(line.locator("[data-check-part=not-checked]")).toContainText("whether these lessons apply here");
   // The part's h3 is its only heading: the table's title sentence under it is body text, not a second title.
   const part = section(page).locator("[data-criteria-part=items]");
   const sizes = await part.evaluate((element) => {
@@ -173,16 +184,15 @@ test("a reading the judge said does not follow from your words is removed in its
   await section(page).getByLabel(copy.criteria.field.label).fill(PASTED);
   await section(page).getByRole("button", { name: copy.criteria.compare }).click();
 
-  // A comparison rests on how I read your words, so it goes with the reading; the reason is in the box above.
+  // A comparison rests on how I read your words, so it goes with the reading; the reason is in the box above. The row
+  // says so once, in its count cells, not again under your words (ticket 58; the 31 design review, round 3, P3).
   const row = section(page).locator("table [data-item=similar_experience]");
-  await expect(row).toContainText(copy.criteria.removedInPlace);
-  await expect(row).toContainText(copy.criteria.items.removed);
+  await expect(row).not.toContainText(copy.criteria.removedInPlace);
+  await expect(row).toContainText("I removed this comparison. The reason is in the box above.");
   await expect(row).not.toContainText(similar.reading);
   await expect(row.locator("[data-same-or-less]")).toHaveCount(0);
-  // The box reports the reading as Strata wrote it, "I" kept a capital, with the judge's reason.
-  await expect(section(page).locator("[data-section-checks]")).toContainText(
-    `It said ${similar.reading.replace(/\.$/, "")}, and ${copy.criteria.readingNotSupported.joined}.`,
-  );
+  // The box quotes the reading whole, so "I" is plainly Strata's, then the reason about your words (ticket 58).
+  await expect(section(page).locator("[data-section-checks]")).toContainText(`It said "${similar.reading}" Your words do not say this.`);
   await expect(section(page).locator("table [data-item=turnover]")).not.toContainText(copy.criteria.removedInPlace);
 });
 
@@ -388,7 +398,8 @@ test("lessons on cost estimates appear with their citations, including ICR P1301
   const drawer = page.getByRole("dialog");
   await expect(drawer.locator("mark").first()).toContainText("108 of 328 cases had to go through rebidding");
   await expect(drawer.locator("[data-lesson-claim]")).toContainText(await card.getByRole("heading", { level: 4 }).innerText());
-  await expect(drawer.locator("[data-ieg-line=restated]")).toContainText("IEG wrote in its ICR Review");
+  // View F can stand alone as a full-screen sheet, so IEG is spelled out there (ticket 58; DESIGN.md section 7, rule 22).
+  await expect(drawer.locator("[data-ieg-line=restated]")).toContainText("The Independent Evaluation Group (IEG) wrote in its ICR Review");
 });
 
 test("every lesson factor in the thresholds file has its group's name in the copy file", async () => {

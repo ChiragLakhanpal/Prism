@@ -545,6 +545,7 @@ export const galleryCopy = {
     claim: "The drawer's claim, when IEG's review restates the lesson",
     awaiting: "The IEG line, when IEG has not reviewed the project yet",
     notRestated: "The IEG line, when IEG's review did not restate the lesson",
+    iegLesson: "The IEG line, when IEG wrote the lesson itself",
     reports: "The reports behind a row's count",
     allReports: "Every report counted",
   },

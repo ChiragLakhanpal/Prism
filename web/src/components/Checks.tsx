@@ -79,6 +79,7 @@ export function CheckLine({
   judged,
   notChecked,
   quoteWords,
+  numberWords,
   notCheckedText = [],
   reveal = false,
   how,
@@ -95,6 +96,9 @@ export function CheckLine({
   // The quotes' clause in other words, such as "quotes are in their sources" where some quotes come from a notice,
   // which has no pages (ticket 31; the 31 brief, section 6.4).
   quoteWords?: { one: string; many: string };
+  // The numbers' clause in other words, such as "numbers match records or your words" where a comparison's numbers may
+  // match the person's own text (ticket 58).
+  numberWords?: { one: string; many: string };
   // Clauses a part of a page adds to what was not checked, already in words, such as section 5's "whether I found
   // every item in your qualification criteria".
   notCheckedText?: string[];
@@ -112,7 +116,7 @@ export function CheckLine({
 }) {
   const words = copy.checkLine;
   const clauses = [
-    numbers && numbers.total > 0 && ratio(words.numbers, numbers.matched, numbers.total),
+    numbers && numbers.total > 0 && ratio(numberWords ?? words.numbers, numbers.matched, numbers.total),
     dates && dates.total > 0 && ratio(words.dates, dates.matched, dates.total),
     quotes && quotes.total > 0 && ratio(quoteWords ?? words.quotes, quotes.found, quotes.total),
   ].filter((clause): clause is string => Boolean(clause));

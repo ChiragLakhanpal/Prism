@@ -6,7 +6,7 @@
 //   put when you switch tabs, then the switcher over the row's sources. The IEG line is the info badge "IEG's
 //   review restates this lesson" with IEG's own words under it, or one sentence that the lesson rests on the
 //   completion report alone, because IEG's review is still to come or did not restate it. A lesson IEG wrote
-//   itself has no line here: the 30 brief gives none (a gap the report names).
+//   itself says so in one sentence (ticket 58).
 // - The completion reports behind a row's count, newest first, each a button that opens its paragraph with a
 //   way back to the list; and every report counted, each a link to its document in the source view (ticket 21),
 //   since ticket 23's document view in the drawer has not landed.
@@ -44,18 +44,21 @@ export function RowClaim({ row }: { row: RiskRow }) {
   );
 }
 
-// A lesson's IEG line, from its ieg_status and IEG's restating words: here and in section 5's view F (ticket 31).
-export function IegLine({ status, quote }: { status: string; quote: RiskRow["lesson"]["ieg_quote"] }) {
+// A lesson's IEG line, from its ieg_status and IEG's restating words: here and in section 5's view F (ticket 31). In view
+// F, which can stand alone as a full-screen sheet, IEG is spelled out (spelled; ticket 58).
+export function IegLine({ status, quote, spelled = false }: { status: string; quote: RiskRow["lesson"]["ieg_quote"]; spelled?: boolean }) {
   if (status === "restated" && quote) {
     return (
       <div data-ieg-line="restated" className="flex flex-col items-start gap-1">
         <StatusBadge kind="ieg-restates" />
         <p className="text-caption text-ink-muted">
-          <Fill template={words.iegWrote} slots={{ doc: quote.doc_short, quote: <span lang={quote.lang ?? undefined}>{quote.text}</span> }} />
+          <Fill template={spelled ? words.iegWroteSpelled : words.iegWrote} slots={{ doc: quote.doc_short, quote: <span lang={quote.lang ?? undefined}>{quote.text}</span> }} />
         </p>
       </div>
     );
   }
+  // A lesson IEG wrote itself says so, rather than no line at all (ticket 58).
+  if (status === "ieg_lesson") return <p data-ieg-line="ieg_lesson" className="text-caption text-ink-muted">{spelled ? words.iegLessonSpelled : words.iegLesson}</p>;
   if (status === "awaiting") return <p data-ieg-line="awaiting" className="text-caption text-ink-muted">{words.awaiting}</p>;
   if (status === "not_restated") return <p data-ieg-line="not_restated" className="text-caption text-ink-muted">{words.notRestated}</p>;
   return null;

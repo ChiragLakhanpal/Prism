@@ -331,7 +331,14 @@ function RiskCount({ row, m, onCount, from, stacked }: { row: RiskRow; m: number
           part={row.k}
           whole={m}
           show="count"
-          check={{ tooltip: words.numTips.k, from, act: words.numTips.kAct(k), opens: "record", name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label), onOpen: (element) => onCount(row, element) }}
+          check={{
+            tooltip: words.numTips.k,
+            from,
+            act: row.k === 1 ? words.numTips.kActOne : words.numTips.kAct(k),
+            opens: "record",
+            name: words.countName(k, formatNumber(m, { compact: false }), row.risk_label),
+            onOpen: (element) => onCount(row, element),
+          }}
         />
       </span>
       {!stacked && " "}
@@ -505,7 +512,8 @@ function Checks({ result }: { result: RisksResult }) {
         dates={counts.dates}
         quotes={counts.quotes}
         quoteWords={words.quotesInRecords}
-        notChecked={notCheckedFor({ checks_run: counts.checks_run, tools: checks.tools })}
+        // A section of rows: its gap is whether each row follows, not each sentence (ticket 58).
+        notChecked={notCheckedFor({ checks_run: counts.checks_run, tools: checks.tools }).map((clause) => (clause === "sentences" ? "rows" : clause))}
         removed={<RemovedBox removed={removedOf(checks.removed, result.m ?? 0)} lead={words.removed} item={words.removed.item} />}
       />
     </div>
@@ -619,7 +627,7 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
       );
     case "no_lessons":
       return (
-        <EmptyCard title={result.m === 1 ? e.noLessonsOne : <Fill template={e.noLessons} slots={{ m: <Num value={result.m ?? 0} options={{ compact: false }} /> }} />}>
+        <EmptyCard title={result.m === 1 ? e.noLessonsOne : <Fill template={e.noLessons} slots={{ m: <Num count={result.m ?? 0} /> }} />}>
           <p className="mt-2 max-w-prose text-body text-ink">{e.noLessonsBody}</p>
         </EmptyCard>
       );

@@ -132,7 +132,12 @@ function Summary({ summary, compared }: { summary: CriteriaSummary; compared: Co
     );
   }
   if (compared && compared.item_count > 0) {
-    const date = <Num date={compared.compared_at.slice(0, 10)} />;
+    // "On October 28, 2026," as one unit, so "On" never ends a line alone (ticket 58).
+    const date = (
+      <span className="whitespace-nowrap">
+        <Fill template={words.summaryOn} slots={{ date: <Num date={compared.compared_at.slice(0, 10)} /> }} />
+      </span>
+    );
     return (
       <p>
         {compared.item_count === 1 ? (
@@ -176,13 +181,19 @@ function toRemoved(entries: RemovedEntry[]): Removed[] {
   const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
   return entries.map((entry) => {
     const onRecord = entry.reason === "quote_not_on_page" && entry.source === "record_quote";
-    const reading = entry.reason === "not_supported" && entry.source === "reading";
-    const reason = onRecord ? words.quoteNotInSource : reading ? words.readingNotSupported : (reasons[entry.reason] ?? copy.removed.unknownReason);
-    return { sentence: entry.sentence, reason: reason.item, reasonJoined: reason.joined };
+    // A reading is about your own words, whatever check removed it (ticket 58), and it is quoted whole, so the box
+    // never reads "It said I read this as ...".
+    const reading = entry.source === "reading";
+    const reason = onRecord
+      ? words.quoteNotInSource
+      : reading
+        ? (words.readingReasons[entry.reason] ?? words.readingNotSupported)
+        : (reasons[entry.reason] ?? copy.removed.unknownReason);
+    return { sentence: entry.sentence, reason: reason.item, reasonJoined: reason.joined, quoted: reading };
   });
 }
 
-function SectionChecks({ checks, removed, compared }: { checks: Checks | null; removed: RemovedEntry[]; compared: boolean }) {
+function SectionChecks({ checks, removed, compared, lessons }: { checks: Checks | null; removed: RemovedEntry[]; compared: boolean; lessons: boolean }) {
   if (!checks) return null;
   const noPages = checks.quotes_without_pages > 0;
   // The line counts what is on screen, as the answer panel's does (ticket 24), with check 4's judged part.
@@ -196,7 +207,10 @@ function SectionChecks({ checks, removed, compared }: { checks: Checks | null; r
         quotes={shown.quotes}
         judged={checks.shown ? { judged: checks.shown.judged, proven: checks.shown.proven } : undefined}
         quoteWords={noPages ? words.quotesInSources : undefined}
-        notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables"]}
+        // With a comparison, some numbers match your own words (ticket 58).
+        numberWords={compared ? words.numberWords : undefined}
+        // A lesson card below leaves its gap too (ticket 58; config/tools.toml, get_lessons' not_checked_when).
+        notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables", ...(lessons ? (["get_lessons"] as const) : [])]}
         notCheckedText={compared ? [words.notCheckedItems] : []}
         removed={removed.length > 0 && <RemovedBox removed={toRemoved(removed)} />}
       />
@@ -402,7 +416,7 @@ export function CheckCriteriaView(props: ViewProps) {
           edited={props.edited} comparing={comparison.status === "running"} preview={preview} saveFailed={props.saveFailed} />
       )}
       {run.status === "running" && <Skeleton className="mt-6 h-9 w-full" />}
-      <SectionChecks checks={props.checks} removed={removed} compared={Boolean(compared && compared.items.length)} />
+      <SectionChecks checks={props.checks} removed={removed} compared={Boolean(compared && compared.items.length)} lessons={Boolean(result?.lessons.groups.length)} />
       {runSteps}
       <PartOne comparison={comparison} readinessHref={readiness("compare_criteria", compared?.sources.map((source) => source.key) ?? publicKeys)}
         steps={compareSteps} onRetry={props.onCompare} asOf={props.asOf ?? null} />
