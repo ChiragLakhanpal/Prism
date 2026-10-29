@@ -677,7 +677,8 @@ test("a section's closing ID never breaks from its name in the card's source lin
   expect(await text(page.locator("[data-evidence-card] [data-source]"))).toContain("Annex\u00a01.A,");
   await annex.click();
   await expect(drawer(page).getByRole("tab").nth(1)).toHaveAttribute("aria-selected", "true");
-  expect(await text(drawer(page).getByRole("heading", { level: 2 }))).toContain("section Annex\u00a01.A");
+  // "section" keeps its ID too (the 58 critique, follow-up 10).
+  expect(await text(drawer(page).getByRole("heading", { level: 2 }))).toContain("section\u00a0Annex\u00a01.A");
   expect(await text(drawer(page).getByRole("tab").nth(1))).toBe("ICR, Annex\u00a01.A");
   expect(await text(drawer(page).getByRole("tab").first())).toBe("ISR, Project Development Objective Indicators");
 });

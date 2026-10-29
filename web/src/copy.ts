@@ -1183,10 +1183,12 @@ export const copy = {
     // The heading names the source, not the claim, so a drawer opened from a link still reads. It starts with the
     // document's short name, so it says which report is open (ticket 58); the forms without one are for a document
     // whose type has no short name.
-    title: "{doc}, {project}, paragraph {para}",
-    titleSection: "{doc}, {project}, section {section}",
-    titleNoDoc: "{project}, paragraph {para}",
-    titleSectionNoDoc: "{project}, section {section}",
+    // A no-break space keeps "paragraph" with its number, so a narrow head never leaves "78" alone on a line (the 58
+    // critique, follow-up 10).
+    title: "{doc}, {project}, paragraph\u00a0{para}",
+    titleSection: "{doc}, {project}, section\u00a0{section}",
+    titleNoDoc: "{project}, paragraph\u00a0{para}",
+    titleSectionNoDoc: "{project}, section\u00a0{section}",
     // A section with a name, not a number, is named alone: "ISR, Rajasthan Road Sector Modernization, Project
     // Development Objective Indicators" (the 58 design review, follow-up 7).
     titleNamedSection: "{doc}, {project}, {section}",

@@ -139,7 +139,7 @@ test("a source click opens the drawer at its paragraph with the row's claim, the
   await pill.click();
 
   await expect(page).toHaveURL(new RegExp(`evidence=${encodeURIComponent(ICR_54).replace(/\./g, "\\.")}`));
-  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph 54$/);
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph\u00a054$/);
   await expect(drawer(page).locator("[data-row-claim]")).toContainText(`From this page${RISK}What helped: ${LESSON}`);
   await expect(drawer(page).locator("[data-badge='ieg-restates']")).toHaveText("IEG's review restates this lesson");
   const tabs = drawer(page).getByRole("tablist", { name: "Sources for this risk" }).getByRole("tab");
@@ -178,7 +178,7 @@ test("a row's count opens the completion reports that raised its risk, and each 
   // One report read, so no "1 of 1 completion reports" (the 58 design review, follow-up 5).
   await expect(drawer(page)).toContainText(`The one completion report I read for projects with comparable packages raised "${RISK}".`);
   await drawer(page).locator(`[data-report-entry='${ICR_54}']`).click();
-  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph 54$/);
+  await expect(drawer(page).getByRole("heading", { level: 2 })).toHaveText(/, paragraph\u00a054$/);
   await drawer(page).getByRole("button", { name: "Back to the report" }).click();
   await expect(drawer(page).locator(`[data-report-entry='${ICR_54}']`)).toBeFocused();
   // The list lands on the report you came back from, marked with tint (ticket 105).
