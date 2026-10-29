@@ -28,7 +28,8 @@ import re
 import time
 import urllib.error
 import urllib.request
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -97,6 +98,59 @@ class Engine(Protocol):
 
     def table_bytes(self, table: str) -> int:
         """How many bytes a table's stored data takes."""
+
+
+# ── A page's reads, run together (ticket 125) ────────────────────────────
+
+Statement = tuple[str, Params]  # one statement's SQL and its named parameters
+
+
+def run_many(engine, statements: Sequence[Statement]) -> list[Result]:
+    """The statements' results in order: in one batch on an engine that sends a batch at once (the SQL warehouse's
+    WarehouseEngine.run_many), and one after another on any other."""
+    statements = list(statements)
+    many = getattr(engine, "run_many", None)
+    return many(statements) if callable(many) else [engine.run(sql, params) for sql, params in statements]
+
+
+def _key(sql: str, params: Params) -> tuple:
+    """A statement as a batch finds it again: its text and its parameters, by name."""
+    def held(value):
+        try:
+            hash(value)
+        except TypeError:
+            return repr(value)
+        return value
+    return sql, tuple(sorted((name, held(value)) for name, value in (params or {}).items()))
+
+
+class ReadTogether:
+    """An engine that answers a page's reads from one batch it sent first (ticket 125). A page names every statement
+    it will run, read_together sends them at once, and the page's own code then runs each as before and gets its
+    result from the batch. A statement the batch does not hold runs alone, as it did before, and is listed in missed,
+    so a test can show that a page needs one round trip."""
+
+    def __init__(self, engine, statements: Sequence[Statement]):
+        self.engine = engine
+        unique = list({_key(sql, params): (sql, params) for sql, params in statements}.items())
+        results = run_many(engine, [statement for _, statement in unique])
+        self.held = {key: result for (key, _), result in zip(unique, results, strict=True)}
+        self.missed: list[str] = []
+
+    def run(self, sql: str, params: Params = None) -> Result:
+        found = self.held.get(_key(sql, params))
+        if found is not None:
+            return found
+        self.missed.append(sql)
+        return self.engine.run(sql, params)
+
+    def __getattr__(self, name: str):
+        return getattr(self.engine, name)
+
+
+def read_together(engine, statements: Sequence[Statement]) -> ReadTogether:
+    """An engine whose answers to these statements come from one batch, sent now."""
+    return ReadTogether(engine, statements)
 
 
 TABLE_NAME = re.compile(r"strata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
@@ -211,6 +265,10 @@ class DuckDBEngine:
         if cursor.description is None:
             return Result((), ())
         return Result(tuple(column[0] for column in cursor.description), tuple(cursor.fetchall()))
+
+    def run_many(self, statements: Sequence[Statement]) -> list[Result]:
+        """One batch, as the warehouse takes it, run here one statement after another on the one connection."""
+        return [self.run(sql, params) for sql, params in statements]
 
     def insert_rows(self, table: str, columns: tuple[str, ...], rows: list[tuple], chunk: int = 500) -> int:
         check_names(table, columns)
@@ -367,24 +425,59 @@ def _parts(rows: list[tuple], chunk: int, chunk_characters: int):
     if part:
         yield part
 
+@dataclass(frozen=True)
+class Waits:
+    """How the warehouse engine waits on the statements API: config/thresholds.toml's [warehouse], the one place they
+    are tuned (ticket 125). wait_seconds is how long the API holds a statement's POST for its answer, poll_seconds the
+    first wait before asking about a statement still running after that, each later wait twice the one before up to
+    poll_max_seconds, and statements_at_once the most statements of one batch posted at once."""
+
+    wait_seconds: float
+    poll_seconds: float
+    poll_max_seconds: float
+    statements_at_once: int
+
+    @classmethod
+    @functools.cache
+    def from_thresholds(cls) -> Waits:
+        from strata.config import load_thresholds
+
+        value = load_thresholds().value
+        return cls(value("warehouse.wait_seconds"), value("warehouse.poll_seconds"),
+                   value("warehouse.poll_max_seconds"), int(value("warehouse.statements_at_once")))
+
+
 class WarehouseEngine:
     """The workspace's SQL warehouse, run as whoever owns the token."""
 
     name = "databricks"
 
-    def __init__(self, warehouse_id: str, transport: Transport, poll_seconds: float = 2,
-                 timeout_seconds: float = 600, sleep=time.sleep):
+    def __init__(self, warehouse_id: str, transport: Transport, timeout_seconds: float = 600, sleep=time.sleep,
+                 waits: Waits | None = None):
         self.warehouse_id, self.transport = warehouse_id, transport
-        self.poll_seconds, self.timeout_seconds, self.sleep = poll_seconds, timeout_seconds, sleep
+        self.timeout_seconds, self.sleep = timeout_seconds, sleep
+        self.waits = waits or Waits.from_thresholds()
 
     @classmethod
     def connect(cls, host: str, token: str, warehouse_id: str) -> WarehouseEngine:
         return cls(warehouse_id, http_transport(host, token))
 
+    def run_many(self, statements: Sequence[tuple[str, Params]]) -> list[Result]:
+        """A page's statements posted at once, each on its own thread, with one wait for them all (ticket 125): on the
+        workspace a statement costs the statements API about two seconds, so six run one after another took twelve.
+        The results come back in the statements' order; the first statement that failed raises its error."""
+        statements = list(statements)
+        if len(statements) < 2:
+            return [self.run(sql, params) for sql, params in statements]
+        at_once = max(1, min(len(statements), self.waits.statements_at_once))
+        with ThreadPoolExecutor(max_workers=at_once, thread_name_prefix="strata-statement") as pool:
+            running = [pool.submit(self.run, sql, params) for sql, params in statements]
+            return [future.result() for future in running]
+
     def run(self, sql: str, params: Params = None) -> Result:
-        # The warehouse holds the first answer at most this long: within 5 to 50 seconds, and never
-        # longer than this engine waits in all, unless that is under the API's 5 second floor.
-        wait = max(5, min(50, int(self.timeout_seconds)))
+        # The warehouse holds the first answer at most this long: the thresholds' wait, within the API's 5 to 50
+        # seconds, and never longer than this engine waits in all, unless that is under the API's 5 second floor.
+        wait = max(5, min(50, int(self.waits.wait_seconds), int(self.timeout_seconds)))
         reply = self.transport("POST", STATEMENTS, {
             "statement": sql,
             "warehouse_id": self.warehouse_id,
@@ -395,13 +488,15 @@ class WarehouseEngine:
             "disposition": "INLINE",
         })
         waited = float(wait)  # a reply that is still running means the warehouse held the call this long
+        poll = self.waits.poll_seconds  # soon at first, then twice as long each time, up to the longest
         while reply.get("status", {}).get("state") in WAITING:
             if waited >= self.timeout_seconds:
                 self._cancel(reply.get("statement_id"))
                 raise EngineError(f"The warehouse took longer than {waited:.0f} seconds, "
                                   f"so I stopped waiting for statement {reply.get('statement_id')}.")
-            self.sleep(self.poll_seconds)
-            waited += self.poll_seconds
+            self.sleep(poll)
+            waited += poll
+            poll = min(poll * 2, self.waits.poll_max_seconds)
             reply = self.transport("GET", f"{STATEMENTS}{reply['statement_id']}", None)
 
         status = reply.get("status", {})

@@ -40,6 +40,7 @@ from strata.config import load_project_page
 from strata.lakehouse.engine import Engine
 from strata.server.projects import display_name
 from strata.tools.check_plan import implementing_agencies, record_date, record_is_current
+from strata.tools.search_passages import TABLE as PASSAGES_TABLE, passages_query
 
 SQL = Path(__file__).resolve().parent / "sql" / "summary"
 MILLION, TENTH = Decimal(1_000_000), Decimal("0.1")
@@ -67,6 +68,46 @@ def _query(name: str) -> str:
 def _rows(engine: Engine, name: str, **params) -> list[dict]:
     result = engine.run(_query(name), params)
     return [dict(zip(result.columns, row)) for row in result.rows]
+
+
+# The passages the Summary cites, read in the page's one batch (ticket 125): search_passages' passages.sql, whose ids
+# are the passage isr_ratings.sql chooses for each ISR's ratings and the passage icr_rating.sql's outcome rating rests
+# on, so each of those choices stays written once, in its own file.
+PASSAGE = f"{PASSAGES_TABLE}:"
+BY_ID = "array_contains(split(:ids, ','), p.passage_id)"
+
+
+@cache
+def cited_query() -> str:
+    """The one statement that reads every passage the Summary may cite, as of the date."""
+    passages = passages_query()
+    if BY_ID not in passages:  # passages.sql changed how it finds a passage by id
+        raise RuntimeError(f"search_passages' passages.sql no longer reads passages by {BY_ID}, so the Summary's "
+                           "cited_query cannot read them in its batch. Change the two together.")
+    cited = ("p.passage_id IN ("
+             f"SELECT isr.passage_id FROM ({_query('isr_ratings')}\n) AS isr "  # sql-lint: names only, the queries' text
+             "UNION ALL "
+             f"SELECT substr(icr.evidence_id, length(:passage) + 1) FROM ({_query('icr_rating')}\n) AS icr "
+             "WHERE left(icr.evidence_id, length(:passage)) = :passage)")
+    return passages.replace(BY_ID, cited)  # sql-lint: names only, a query's text in place of another's
+
+
+def reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
+    """Every statement summary() runs, for the route that sends them as one batch (ticket 125)."""
+    each = {"project_id": project_id, "as_of": as_of}
+    return [*[(_query(name), each) for name in ("project", "loans", "history", "isr_ratings", "api_ratings", "ieg",
+                                                 "sectors", "environment")],
+            (_query("icr_rating"), {**each, **ICR_OUTCOME}),
+            (cited_query(), {**each, **ICR_OUTCOME, "passage": PASSAGE})]
+
+
+def _cited(engine: Engine, project_id: str, as_of: dt.date) -> dict[str, dict]:
+    """The passages the Summary may cite, by evidence id, each as the evidence drawer shows it."""
+    from strata.server import evidence as evidence_routes  # the drawer's events; it reads this module's records
+
+    result = engine.run(cited_query(), {"project_id": project_id, "as_of": as_of, **ICR_OUTCOME, "passage": PASSAGE})
+    events = (evidence_routes.passage_event(dict(zip(result.columns, row))) for row in result.rows)
+    return {event["id"]: event for event in events}
 
 
 def _day(value) -> dt.date | None:
@@ -242,8 +283,9 @@ def _fact(key: str, value, source: dict, **more) -> dict:
 
 
 def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
-    """The project's Summary as of the date, or None when there is no such project then."""
-    from strata.server import evidence as evidence_routes  # the drawer's reader for a passage; it reads these records
+    """The project's Summary as of the date, or None when there is no such project then. reads() names every
+    statement it runs, so a route can send them as one batch first."""
+    from strata.server import evidence as evidence_routes  # the drawer's reader for a source; it reads these records
 
     found = _rows(engine, "project", project_id=project_id, as_of=as_of)
     if not found:
@@ -258,6 +300,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
     sectors = _rows(engine, "sectors", project_id=project_id, as_of=as_of)
     environment = _rows(engine, "environment", project_id=project_id, as_of=as_of)
     icr = _rows(engine, "icr_rating", project_id=project_id, as_of=as_of, **ICR_OUTCOME)
+    cited = _cited(engine, project_id, as_of)
 
     sources = _Sources()
     project_event = _project_record(record, as_of, environment, sectors)
@@ -314,8 +357,7 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
         key = ISR_RATINGS.get(row["rating_name"])
         if not key:
             continue
-        event = (evidence_routes.read(engine, f"strata.gold.passage:{row['passage_id']}", as_of, why=False)
-                 if row["passage_id"] else _isr_rating_record(project_id, row))
+        event = cited.get(f"{PASSAGE}{row['passage_id']}") if row["passage_id"] else _isr_rating_record(project_id, row)
         ratings.append(_fact(key, row["current_rating"], sources.cite(
             event, kind="isr", date=iso_day(row["isr_date"]), sequence=row["sequence"])))
     ratings.sort(key=lambda fact: list(ISR_RATINGS.values()).index(fact["key"]))
@@ -324,7 +366,9 @@ def summary(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
             ratings.append(_fact("procurement", row["value"], sources.cite(
                 _api_rating_record(project_id, row), kind="projects_api_ratings", date=iso_day(row["isr_date"]))))
     if icr:
-        event = evidence_routes.read(engine, icr[0]["evidence_id"], as_of, why=False)
+        evidence_id = icr[0]["evidence_id"]
+        event = (cited.get(evidence_id) if evidence_id.startswith(PASSAGE)
+                 else evidence_routes.read(engine, evidence_id, as_of, why=False))
         ratings.append(_fact("icr_outcome", icr[0]["value"], sources.cite(
             event, kind="icr", date=iso_day(icr[0]["made_at"]))))
     review = next((row for row in ieg if row["evaluation_type"] == ICR_REVIEW), None)

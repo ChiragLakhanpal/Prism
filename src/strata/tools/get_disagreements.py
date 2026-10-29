@@ -50,6 +50,7 @@ from strata.knowledge.assertions import (CONTRACT_SIGNING, PASSAGES, REPORT_PERI
 from strata.tools.registry import Call
 from strata.tools.search_passages import SOURCE_COLUMNS, passage_source
 from strata.tools.withheld import WITHHELD, withheld
+from strata.tools.withheld import reads as withheld_reads
 
 TABLE = "strata.gold.disagreement"
 NOT_A_MOMENT = (REPORT_PERIOD, WHOLE_PROJECT, CONTRACT_SIGNING)  # periods that name no single moment
@@ -205,6 +206,17 @@ def trajectories(held: list[Assertion]) -> list[dict]:
             "runs": runs,
         })
     return found
+
+
+def reads(project_id: str, as_of: dt.date, view: str) -> list[tuple[str, dict]]:
+    """The statements get_disagreements runs for a project, named as Strata holds it, as of the date and in the view,
+    for a page that sends its reads as one batch (the Timeline, ticket 125)."""
+    common = {"subject_id": project_id, "package": "package"}
+    return [(_sql("subject.sql"), {"project": "project", **common}),
+            (_sql("assertions.sql"), {"as_of": as_of, "passages": f"{PASSAGES}:", **common}),
+            (_sql("rejections.sql"), {"project_id": project_id, "as_of": as_of}),
+            (_sql("disagreements.sql"), {"as_of": as_of, **common}),
+            *withheld_reads(view, "disagreements_on_active_projects", project_id, as_of)]
 
 
 def get_disagreements(call: Call, subject_id: str, attribute: str | None = None) -> dict:

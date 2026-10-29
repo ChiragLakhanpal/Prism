@@ -156,6 +156,12 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
     return list(agencies.values())
 
 
+def packages_reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
+    """The statements packages() runs, for the route that sends them as one batch (ticket 125)."""
+    return [(_query("packages"), {"project_id": project_id, "as_of": as_of}),
+            (_query("documents_through"), {"project_id": project_id})]
+
+
 def packages(engine: Engine, project_id: str, as_of: dt.date, query: str = "", page: int = 1, size: int = 20) -> dict:
     """Every activity in each agency's latest read plan, a page at a time, found by part of its STEP
     reference or its description. A description keeps each place the PDF cell wrapped as a space

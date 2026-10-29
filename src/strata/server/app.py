@@ -145,7 +145,7 @@ from strata.knowledge.lessons.visits import LessonVisits, Visit
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
-from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
+from strata.lakehouse.engine import Engine, EngineError, PermissionDenied, read_together
 from strata.config import PackageForm, load_package_form
 from strata.packages.store import PackageStore
 from strata.knowledge.retrieval.judging import Judging
@@ -178,7 +178,7 @@ from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
 from strata.tools.data_readiness_for import registry_page
-from strata.tools.find_comparables import read_package
+from strata.tools.find_comparables import package_reads, read_package
 
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
@@ -612,8 +612,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     @app.get("/api/projects/{project_id}/summary")
     def project_summary(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
+        as_of = as_of_for(asof)
+
         def read(engine: Engine):
-            found = summary.summary(engine, project_id, as_of_for(asof))
+            found = summary.summary(read_together(engine, summary.reads(project_id, as_of)), project_id, as_of)
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"the summary of {project_id}", viewer, read)
 
@@ -624,7 +626,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             # The page's as-of date, never later than today, by the clock create_app was given (today), so a
             # recording of the plain page holds still. The date the tab names is the one it read as of.
             as_of = as_of_for(asof)
-            found = timeline.timeline(engine, viewer, project_id, as_of, view, as_of if asof else None)
+            found = timeline.timeline(read_together(engine, timeline.reads(project_id, as_of, view)), viewer, project_id,
+                                      as_of, view, as_of if asof else None)
             return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
         return read_for(f"the timeline of {project_id}", viewer, read)
 
@@ -633,8 +636,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.get("/api/projects/{project_id}/packages")
     def project_packages(project_id: str, asof: dt.date | None = None, q: str = Query("", max_length=200),
                          page: int = Query(1, ge=1), viewer: Viewer = Depends(current_viewer)):
-        return read_for(f"the packages of {project_id}", viewer,
-                        lambda engine: projects.packages(engine, project_id, as_of_for(asof), q.strip(), page, page_size))
+        as_of = as_of_for(asof)
+        return read_for(f"the packages of {project_id}", viewer, lambda engine: projects.packages(
+            read_together(engine, projects.packages_reads(project_id, as_of)), project_id, as_of, q.strip(), page,
+            page_size))
 
     @app.get("/api/projects/{project_id}/packages/{step_reference}")
     def activity(project_id: str, step_reference: str, asof: dt.date | None = None,
@@ -932,7 +937,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         as_of = as_of_for(asof)
 
         def read(engine: Engine):
-            found = read_package(engine, step_reference, as_of)
+            found = read_package(read_together(engine, package_reads(step_reference, as_of)), step_reference, as_of)
             if found is None:
                 return JSONResponse({"code": "unknown_package"}, status_code=404)
             # The project's name as its page header gives it, by the server's one rule, so the crumb reads as Check
