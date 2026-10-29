@@ -56,3 +56,4 @@ Read first: the prototype's Packages and plan check at 1440, 1024 and 390 px, wi
   - Unblocks: ticket 101 (The package workspace as numbered task zones), whose other blocker, 96, is done. It stays `ready` for the orchestrator to dispatch, since it is not one of this wave's tickets.
 
 ---
+- October 28, 2026, orchestrator (20:38 PDT): the App redeploy ran from 2c901133 (the catch-up block "Tickets 100, 62 and 104, the App redeploy ran"); the page's check by eye is the owner's.
