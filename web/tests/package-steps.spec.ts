@@ -280,6 +280,10 @@ test("on a page as of a date, a step not reached and its drawer name the same da
   await expect(completion).toContainText("had reached this step by January 15, 2021");
   await completion.getByRole("button", { name: /comparable packages for/ }).click();
   await expect(page.getByRole("dialog")).toContainText("had reached the contract's completion by January 15, 2021.");
+  // The source line keeps the records' own date apart from the page's: it reads "as of" the page's date, as the
+  // section's line does, and never says the records run through a date no tool returned (the 58 review, round 2, B1).
+  await expect(page.getByRole("dialog").locator("[data-source]")).toHaveText(/Records as of January 15, 2021\.$/);
+  await expect(page.getByRole("dialog")).not.toContainText("Records run through January 15, 2021");
 });
 
 // Every list item's labels and values, as text boxes: none of a label's boxes may touch its value's.
