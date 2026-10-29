@@ -6,6 +6,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
+import { cx } from "../lib/cx";
 import type { DotEntry } from "../lib/packages";
 import type { LongestListRow, StepComparable, StepListRow } from "../lib/steps";
 import { familyStep, stepFamily } from "../steps";
@@ -52,8 +53,13 @@ function Entry({ reference, evidenceId, focus, onOpen, children }: { reference: 
         ref={ref}
         type="button"
         data-step-entry={reference}
+        // The list lands on the package you came back from, marked with tint (ticket 105).
+        data-landed={focus ? "" : undefined}
         onClick={() => onOpen?.(asEntry(reference, evidenceId))}
-        className="flex min-h-11 w-full cursor-pointer flex-wrap items-baseline justify-between gap-x-4 px-2 py-2 text-left hover:bg-tint-hover"
+        className={cx(
+          "flex min-h-11 w-full cursor-pointer flex-wrap items-baseline justify-between gap-x-4 px-2 py-2 text-left",
+          focus ? "bg-tint" : "hover:bg-tint-hover",
+        )}
       >
         {/* Its name says what it opens, then its words on screen, so the name holds them (WCAG 2.5.3). */}
         <span className="min-w-0 font-mono text-small wrap-anywhere text-primary underline decoration-1 underline-offset-3">

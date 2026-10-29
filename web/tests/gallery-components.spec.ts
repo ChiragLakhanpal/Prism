@@ -182,7 +182,8 @@ test("the check line uses the neutral state, never success green", async ({ page
     "Checked: 23 of 23 numbers match records; 14 of 14 quotes are on their pages. Not checked: whether these are the right comparables.",
   );
   for (const line of await lines.all()) {
-    const style = await line.evaluate((el) => ({ background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
+    // The fill is the line's block's, which also holds the removed box under it (ticket 105).
+    const style = await line.evaluate((el) => ({ background: getComputedStyle(el.closest("[data-check-block]")!).backgroundColor, color: getComputedStyle(el).color }));
     expect(style).toEqual({ background: "rgb(231, 237, 243)", color: "rgb(61, 76, 92)" });
     // Ticket 111: the line's one icon is the tick beside "Checked", in ink-muted, never success green.
     const ticks = await line.locator("svg").evaluateAll((icons) => icons.map((icon) => [icon.hasAttribute("data-check-tick"), getComputedStyle(icon).color]));

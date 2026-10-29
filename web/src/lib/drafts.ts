@@ -227,6 +227,8 @@ export type Draft = {
   checks: ChecksEvent;
   // How many checks the verifier ran on this draft.
   checks_count: number;
+  // The writer and the run that wrote the draft, which How I checked this draft names (ticket 105).
+  writer?: { agent: string | null; version: string | null; run_id: string | null };
   removed: (RemovedEvent & { key: string })[];
   sources: DraftSource[];
   citations: number;

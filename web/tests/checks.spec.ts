@@ -31,7 +31,8 @@ test("the check line reads the verifier's counts in the ticket's form, in the ne
     "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages. Judged by a model: 2 of 2 sentences follow from their sources. The other one needed no model, because everything it stated matched a record or a page. Not checked: whether these are the right comparables.",
   );
   await expect(line.locator("[data-check-part=judged]")).toHaveCount(1);
-  expect(await line.evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).color])).toEqual([
+  // The line sits in its surface-2 block, neutral and never green (ticket 105 puts the removed box in the same block).
+  expect(await line.evaluate((el) => [getComputedStyle(el.closest("[data-check-block]")!).backgroundColor, getComputedStyle(el).color])).toEqual([
     "rgb(231, 237, 243)",
     "rgb(61, 76, 92)",
   ]);
@@ -40,23 +41,65 @@ test("the check line reads the verifier's counts in the ticket's form, in the ne
   expect(tops[1]).toBeGreaterThan(tops[0]);
 });
 
-// Ticket 100 (settling ticket 59's indent item; DESIGN.md section 5, Check line): the check line starts on the text
-// edge of the panel it sits in, the edge "In short" starts on, with no indent; its words sit 12 px in, on its
-// surface-2 block's padding, and the removed box under it shares the block's edges (ticket 100's design review, item 3).
+// Ticket 105 (the redesign's plan, section 9.1, pattern 3; DESIGN.md section 5, Check line): "How was that checked?"
+// after the check line opens a window on what the verifier compared, in the six checks' own words from the steps
+// (the 24 brief, section 5.1), counted over every sentence I wrote. Nothing was removed from this answer, so the
+// window does not open on the sentence that says which sentences it counts. The words are the ticket's.
+test("How was that checked? opens How I checked this answer with the six checks and the Answer ID, and Escape gives focus back", async ({ page }) => {
+  await answered(page, "ask-ke-nwwda-541055-past-range.sse");
+
+  const how = panel(page).getByRole("button", { name: "How was that checked?" });
+  await expect(how).toHaveAttribute("aria-haspopup", "dialog");
+  await expect(how).toHaveAttribute("aria-expanded", "false");
+  await how.click();
+  const window = page.getByRole("dialog", { name: "How I checked this answer" });
+  await expect(window.getByRole("heading", { name: "How I checked this answer" })).toBeFocused();
+  await expect(how).toHaveAttribute("aria-expanded", "true");
+  await expect(window).not.toContainText("These counts include");
+  await expect(window.locator("[data-how-done]")).toHaveText("I ran six checks on the three sentences I wrote and removed none.");
+  await expect(window.getByRole("list").getByRole("listitem")).toHaveText([
+    "5 of 5 numbers and dates matched a record or a quote.",
+    "3 of 3 sources I cited came back for this question.",
+    "2 of 2 quotes were word for word on their pages.",
+    "A model judged two sentences, and 2 of 2 followed from their sources. The other one needed no model, because everything it stated matched a record or a page.",
+    "None of the sentences gave advice.",
+    "No sentence rested on a report that another report disagrees with.",
+  ]);
+  expect(await window.getByRole("list").evaluate((list) => list.tagName)).toBe("OL");
+  await expect(window.locator("[data-how-rounding]")).toHaveText("A number passes only when a record holds it at the same rounding.");
+  // The ID is in mono and may break anywhere, so a long run ID never breaks only after "run-".
+  const id = window.locator("[data-how-id]");
+  await expect(id).toHaveText("Answer ID run-0001");
+  expect(await id.locator(".font-mono").evaluate((mono) => [mono.textContent, getComputedStyle(mono).wordBreak])).toEqual(["run-0001", "break-all"]);
+  // The window is the last thing under the check line; the line itself keeps its words.
+  await expect(panel(page).locator("[data-check-line]")).not.toContainText("How was that checked?");
+
+  await page.keyboard.press("Escape");
+  await expect(window).toHaveCount(0);
+  await expect(how).toBeFocused();
+});
+
+// Ticket 100 (settling ticket 59's indent item; DESIGN.md section 5, Check line): the check line's surface-2 block
+// starts on the text edge of the panel it sits in, the edge "In short" starts on, with no indent; its words sit 12 px
+// in, on the block's padding. Ticket 105 puts "How was that checked?" and the removed box in the same block, on the
+// same text edge, the removed box after a 1 px line.
 for (const width of [1440, 390]) {
-  test(`at ${width} px the check line starts on its panel's text edge`, async ({ page }) => {
+  test(`at ${width} px the check line starts on its panel's text edge, with the removed box in its block`, async ({ page }) => {
     await answered(page, "ask-ke-nwwda-541055-past-range.sse", width);
     const box = (selector: string) => panel(page).locator(selector).first().evaluate((element) => {
-      const { left, right } = element.getBoundingClientRect();
-      return { left, right };
+      const { left, right, top, bottom } = element.getBoundingClientRect();
+      return { left, right, top, bottom };
     });
     const edge = (await box("[data-in-short]")).left;
-    const line = await box("[data-check-line]");
-    expect(Math.abs(line.left - edge)).toBeLessThanOrEqual(0.5);
-    expect(Math.round((await box("[data-check-part=checked]")).left - edge)).toBe(12);
+    const block = await box("[data-check-block]");
+    expect(Math.abs(block.left - edge)).toBeLessThanOrEqual(0.5);
+    const text = (await box("[data-check-part=checked]")).left;
+    expect(Math.round(text - edge)).toBe(12);
+    expect(Math.abs((await box("[data-how-checked]")).left - text)).toBeLessThanOrEqual(0.5);
     const under = await box("[data-removed-box]");
-    expect(Math.abs(under.left - line.left)).toBeLessThanOrEqual(0.5);
-    expect(Math.abs(under.right - line.right)).toBeLessThanOrEqual(0.5);
+    expect(Math.abs(under.left - text)).toBeLessThanOrEqual(0.5);
+    expect(under.bottom).toBeLessThanOrEqual(block.bottom);
+    expect(await panel(page).locator("[data-removed-box]").evaluate((element) => getComputedStyle(element.parentElement!).borderTopWidth)).toBe("1px");
   });
 }
 

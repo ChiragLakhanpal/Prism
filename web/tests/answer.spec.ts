@@ -317,7 +317,8 @@ test("a streamed answer's Strata, in short block enters over 200 ms and the chec
   const tick = line.locator("[data-check-tick]");
   await expect(tick).toHaveAttribute("aria-hidden", "true");
   await expect(line).toHaveText(/^Checked: /);
-  const [edge, mark, checked] = [(await line.boundingBox())!, (await tick.boundingBox())!, (await line.locator("[data-check-part=checked]").boundingBox())!];
+  const block = panel(page).locator("[data-check-block]");
+  const [edge, mark, checked] = [(await block.boundingBox())!, (await tick.boundingBox())!, (await line.locator("[data-check-part=checked]").boundingBox())!];
   expect([Math.round(mark.x - edge.x), Math.round(mark.width)]).toEqual([12, 16]);
   expect(mark.y).toBeGreaterThanOrEqual(checked.y);
   expect(mark.y + mark.height).toBeLessThanOrEqual(checked.y + 20);
@@ -343,13 +344,17 @@ test("the evidence drawer enters with opacity and 12 px from the right over 160 
   await forgetTransitions(page);
   const moves = async () => (await page.evaluate(() => (window as unknown as { moved: Moved[] }).moved)).filter((entry) => ["opacity", "translate", "transform"].includes(entry.property));
 
-  await panel(page).locator("[data-sentence-text='3'] [data-citation='4']").click();
+  const opener = panel(page).locator("[data-sentence-text='3'] [data-citation='4']");
+  await opener.click();
   await expect(drawer(page)).toBeVisible();
   // It arrives from its own edge without pushing the page sideways.
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1440);
   await animationsDone(page);
   expect(await transitionsOn(page, "evidenceDrawer")).toEqual([{ property: "opacity", from: "0", duration: 160, delay: 0 }]);
   expect(await transitionsOn(page, "drawerPanel")).toEqual([{ property: "translate", from: "12px", duration: 160, delay: 0 }]);
+  // The marker that opened it keeps the current mark, a tint, while the drawer shows its source (ticket 105).
+  await expect(opener).toHaveAttribute("aria-expanded", "true");
+  expect(await opener.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgb(233, 247, 253)");
 
   await forgetTransitions(page);
   await drawer(page).getByRole("tab").first().click();
@@ -360,18 +365,33 @@ test("the evidence drawer enters with opacity and 12 px from the right over 160 
   await drawer(page).getByRole("button", { name: "Close the source" }).click();
   await expect(drawer(page)).toHaveCount(0);
   expect(await moves()).toEqual([]);
+
+  // "How was that checked?" opens its window over 160 ms, as every window does (DESIGN.md section 4, Motion), and it
+  // closes at once (ticket 105).
+  await forgetTransitions(page);
+  await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+  await expect(page.getByRole("dialog", { name: "How I checked this answer" })).toBeVisible();
+  await animationsDone(page);
+  expect(await transitionsOn(page, "howWindow")).toEqual([{ property: "opacity", from: "0", duration: 160, delay: 0 }]);
+  await forgetTransitions(page);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  expect(await moves()).toEqual([]);
 });
 
-test("under reduced motion the answer's block, the check line's tick and the evidence drawer arrive with no transition", async ({ page }) => {
+test("under reduced motion the answer's block, the check line's tick, the check window and the evidence drawer arrive with no transition", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await recordTransitions(page);
   await open(page, { stream: "ask-ke-nwwda-541055-past-range.sse" });
   await askFromTheBox(page);
   await landed(page);
+  await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+  await expect(page.getByRole("dialog", { name: "How I checked this answer" })).toBeVisible();
+  await page.keyboard.press("Escape");
   await marker(page, 1).click();
   await expect(drawer(page)).toBeVisible();
 
-  for (const part of ["inShortBlock", "checkTick", "evidenceDrawer", "drawerPanel"]) expect(await transitionsOn(page, part), part).toEqual([]);
+  for (const part of ["inShortBlock", "checkTick", "howWindow", "evidenceDrawer", "drawerPanel"]) expect(await transitionsOn(page, part), part).toEqual([]);
 });
 
 test("below 768 px the drawer is a full-screen sheet, and the page behind it is inert", async ({ page }) => {
@@ -874,7 +894,8 @@ test("the check line never uses the success state", async ({ page }) => {
   await landed(page);
 
   const line = panel(page).locator("[data-check-line]");
-  const look = await line.evaluate((el) => ({ background: getComputedStyle(el).backgroundColor, color: getComputedStyle(el).color }));
+  // The line's block holds its surface-2 fill (ticket 105).
+  const look = await line.evaluate((el) => ({ background: getComputedStyle(el.closest("[data-check-block]")!).backgroundColor, color: getComputedStyle(el).color }));
   expect(look).toEqual({ background: "rgb(231, 237, 243)", color: "rgb(61, 76, 92)" });
   // Ticket 111: its one icon is the tick beside "Checked", in ink-muted, never success green.
   await expect(line.locator("svg")).toHaveCount(1);

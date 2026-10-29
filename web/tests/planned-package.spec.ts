@@ -768,7 +768,15 @@ test("a quantile dot opens the drawer at the packages it stands for, each opens 
 
   await drawer(page).getByRole("button", { name: "Back to the five packages" }).click();
   await expect(list).toBeVisible();
-  await expect(list.getByRole("button", { name: `${MOWI} 17.7 months` })).toBeFocused();
+  const clicked = list.getByRole("button", { name: `${MOWI} 17.7 months` });
+  await expect(clicked).toBeFocused();
+  // Ticket 105 (DESIGN.md section 5, Evidence drawer: placement, head and motion): the list lands on the row that was
+  // clicked, marked with tint and in view under the drawer's head; no other row is marked.
+  await expect(list.locator("[data-landed]")).toHaveCount(1);
+  await expect(clicked).toHaveAttribute("data-landed", "");
+  expect(await clicked.evaluate((element) => getComputedStyle(element).backgroundColor)).toBe("rgb(233, 247, 253)");
+  const [head, landedRow] = [(await list.locator("[data-drawer-header]").boundingBox())!, (await clicked.boundingBox())!];
+  expect(landedRow.y).toBeGreaterThanOrEqual(head.y + head.height);
   await page.keyboard.press("Escape");
   await expect(list).toHaveCount(0);
   await expect(last).toBeFocused();

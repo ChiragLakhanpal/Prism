@@ -498,15 +498,16 @@ function Checks({ result }: { result: RisksResult }) {
   if (!checks) return null;
   const counts = checks.counts;
   return (
-    <div className="mt-4 flex flex-col gap-2" data-risk-checks>
+    // The check line and the removed box in one block (ticket 105).
+    <div className="mt-4" data-risk-checks>
       <CheckLine
         numbers={counts.numbers}
         dates={counts.dates}
         quotes={counts.quotes}
         quoteWords={words.quotesInRecords}
         notChecked={notCheckedFor({ checks_run: counts.checks_run, tools: checks.tools })}
+        removed={<RemovedBox removed={removedOf(checks.removed, result.m ?? 0)} lead={words.removed} item={words.removed.item} />}
       />
-      <RemovedBox removed={removedOf(checks.removed, result.m ?? 0)} lead={words.removed} item={words.removed.item} />
     </div>
   );
 }

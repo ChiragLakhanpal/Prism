@@ -396,6 +396,43 @@ test("a draft keeps its stepper, origin and date in the side panel at 1440 and 1
   expect((await page.locator("[data-lede]").boundingBox())!.y).toBeLessThan(844);
 });
 
+// Ticket 105 (the redesign's plan, section 9.1, pattern 3): a draft's "How was that checked?" opens How I checked this
+// draft. The verifier removed two of the six sentences, so the window counts every sentence written (checks.checked:
+// 8 of 10 numbers and dates) and the line only those on screen (checks.shown: 5 of 5 numbers, 3 of 3 dates), and the
+// window opens on the sentence that says so. The counts are the recorded draft's, which tests/test_drafts.py checks the
+// server still gives; the ticket's "9 of 11" and "4 of 4 dates" were the prototype's, not the draft's.
+test("a draft's How was that checked? says it counts the two sentences I removed, came back for this draft, and the draft and run IDs", async ({ page }) => {
+  await openDraft(page, { file: "drafts-review-notes-partial.json", path: "/drafts/draft-0002" });
+
+  await expect(page.locator("[data-check-line] [data-check-part=checked]")).toHaveText("Checked: 5 of 5 numbers match records; 3 of 3 dates match records.");
+  const how = page.getByRole("button", { name: "How was that checked?" });
+  await how.click();
+  const window = page.getByRole("dialog", { name: "How I checked this draft" });
+  await expect(window.getByRole("heading", { name: "How I checked this draft" })).toBeFocused();
+  await expect(window.locator("[data-how-scope]")).toHaveText(
+    "These counts include the two sentences I removed. The check line counts only the sentences I kept.",
+  );
+  // The scope sentence comes first, before the verifier's done line.
+  const order = await window.locator("[data-how-scope], [data-how-done], ol, [data-how-rounding], [data-how-id]").evaluateAll((all) =>
+    all.map((element) => element.getAttributeNames().find((name) => name.startsWith("data-how")) ?? element.tagName),
+  );
+  expect(order).toEqual(["data-how-scope", "data-how-done", "OL", "data-how-rounding", "data-how-id"]);
+  await expect(window.locator("[data-how-done]")).toHaveText("I ran six checks on the six sentences I wrote and removed two.");
+  await expect(window.getByRole("listitem")).toHaveText([
+    "8 of 10 numbers and dates matched a record or a quote.",
+    "3 of 3 sources I cited came back for this draft.",
+    "None of the sentences quoted a source.",
+    "The four sentences I kept needed no model, because everything they stated matched a record or a page.",
+    "None of the sentences gave advice.",
+    "No sentence rested on a report that another report disagrees with.",
+  ]);
+  await expect(window.locator("[data-how-id]")).toHaveText("Draft ID draft-0002, run run-0002");
+  await expect(window.locator("[data-how-id] .font-mono")).toHaveText(["draft-0002", "run-0002"]);
+  await page.keyboard.press("Escape");
+  await expect(window).toHaveCount(0);
+  await expect(how).toBeFocused();
+});
+
 test("a draft that fails to load is the error alert in the alert slot, with Drafts as the h1 and no scope chip", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, { [`GET /api${DRAFT}`]: { status: 503, body: '{"code":"data_service"}' } });
