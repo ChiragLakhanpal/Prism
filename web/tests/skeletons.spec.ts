@@ -117,6 +117,36 @@ for (const [part, section] of [
   });
 }
 
+// The review of round 3, F1: on a package whose time estimate is given, the estimate's Compare with row, its sentences
+// and its track record arrive with it, so the chart and the card's end move when it lands (DESIGN.md, Skeleton words:
+// the page grows only when an estimate exists). Measured on KE-NWWDA-229129-CW-RFB from 768 px: the chart +36 and the
+// card's end +137 to +180. These ceilings keep that trade-off from growing unseen until the design pass weighs it.
+const GIVEN = "/api/packages/KE-NWWDA-229129-CW-RFB";
+for (const [part, section, limit] of [
+  ["the chart", { from: "[data-chart-figure]", to: "[data-chart-figure]" }, { top: 40, end: 40 }],
+  ["the card's end", { from: "[data-section=took]", to: "[data-section=took]" }, { top: 24, end: 200 }],
+] as const) {
+  test(`on a package with a given time estimate, ${part} moves no more than it did when the estimate arrives`, async ({ page }) => {
+    await mockApi(page, {
+      ...(await shell()),
+      [GIVEN]: { body: await recorded("package-ke-nwwda-229129.json") },
+      [`${GIVEN}/comparables`]: { body: await recorded("comparables-ke-nwwda-229129.json") },
+      [`${GIVEN}/risks`]: { body: await recorded("risks-ke-nwwda-229129.json") },
+    });
+    const shifts = await skeletonShift(page, {
+      path: "/packages/KE-NWWDA-229129-CW-RFB",
+      hold: `**${GIVEN}/estimate*`,
+      answer: { body: await recorded("estimate-ke-nwwda-229129.json") },
+      skeleton: section,
+      drawn: section,
+      loaded: "[data-past-range][data-lane2=ready]",
+      prepare: (page) => expect(page.locator("[data-lane2-message=loading]")).toBeVisible(),
+      widths: [768, 1024, 1440],
+    });
+    expect(jumps(shifts, limit)).toEqual([]);
+  });
+}
+
 // The critique of round 2, follow-up 2: the steps tracker's skeleton had no foot strip, so "Where the steps stand" grew
 // 57 px when the steps arrived, and sections 2 to 5 dropped with it.
 test("the steps tracker's skeleton holds the tracker's place, its foot strip too", async ({ page }) => {
