@@ -24,6 +24,11 @@ for, and the fixture build runs it after the passage reader (gates/build_fixture
 is rebuilt for each project of the run. The run sends every project's reports to the batch model in one call,
 so the live run waits for one batch. A request a finished batch did not answer, or a batch that can no longer
 be read, is asked again (ask()).
+
+Every read of the run that grows with the workspace (each family of rows, the reports' passages, the answers bronze
+holds and the rows the tables hold) goes through strata.lakehouse.engine.read_in_parts, so on the SQL warehouse no
+statement's result passes its limit (config/thresholds.toml, warehouse.statement_result_bytes; ticket 135).
+ops/assertions/batch_live.py --projects runs the pass for the projects it names.
 """
 
 from __future__ import annotations
@@ -42,7 +47,7 @@ from strata.agent.verifier import find_quote  # ticket 13's word-for-word quote 
 from strata.config import SIDES, Ladder, Thresholds, load_ladder, load_sources, load_thresholds
 from strata.knowledge.batch import Answer, BatchError, BatchModel, BatchPending, RecordedBatch, Request
 from strata.lakehouse import rewrites
-from strata.lakehouse.engine import Engine
+from strata.lakehouse.engine import Engine, read_in_parts
 from strata.reader.passages import TABLE_SUMMARY
 from strata.tools.check_plan import PENDING_STATUSES
 
@@ -89,22 +94,45 @@ WHERE (:every_project OR array_contains(split(:projects, ','), project_id))
 """
 
 
+def _named(keys: list[str]) -> str:
+    """Keys as one bound parameter, joined by commas, which no project id, document id or request hash contains."""
+    return ",".join(keys) or "-"
+
+
+def _project_part(projects: list[str]) -> dict:
+    """The parameters that limit a family's query to these projects, by name."""
+    return {"every_project": False, "projects": _named(projects)}
+
+
+def _as_dicts(result) -> list[dict]:
+    return [dict(zip(result.columns, row)) for row in result.rows]
+
+
 class ProjectRows:
     """Each family of rows the run's assertions come from, read with one query for all the run's projects and kept
     by project (ticket 43): the ISRs' ratings, the records of each package's signing, the IEG ratings, the projects'
-    dates, the ISRs' key dates and the reports. On October 24, 2026 the run read each project with about seven
-    queries of its own, which for the workspace's 15,933 projects was about eleven hours against the nightly job's
-    150-minute stop; this way the queries are the same few whatever the number of projects."""
+    dates, the ISRs' key dates, the reports and their passages. On October 24, 2026 the run read each project with
+    about seven queries of its own, which for the workspace's 15,933 projects was about eleven hours against the
+    nightly job's 150-minute stop; this way the queries are the same few whatever the number of projects.
+
+    Each family is read through read_in_parts (strata.lakehouse.engine, ticket 135): on the SQL warehouse it measures
+    the family first and, when the rows pass the warehouse's limit on one statement's result, reads them in parts of
+    as many projects (or, for the passages, reports) as fit. On October 29, 2026 the pass read every project's records
+    in one statement, and the warehouse refused it. A project whose own rows pass the limit is left out of the run
+    (left_out), so it keeps the assertions the tables hold for it."""
 
     def __init__(self, engine: Engine, projects: list[str], ladder: Ladder, contracts: tuple[str, ...] | None = None):
         self.projects = list(dict.fromkeys(projects))
         wanted = set(self.projects)
         every = len(wanted) > NAMED_MAX
-        scope = {"every_project": every, "projects": "" if every else ",".join(self.projects) or "-"}
+        scope = {"every_project": every, "projects": "" if every else _named(self.projects)}
+        self.left_out: set[str] = set()
 
         def kept(sql: str, **params) -> dict[str, list[dict]]:
+            read = read_in_parts(engine, sql, {**scope, **params}, "project_id", _project_part, self.projects)
+            self.left_out |= set(read.left_out)
             found: dict[str, list[dict]] = {}
-            for row in _rows(engine, sql, **scope, **params):
+            for row in _as_dicts(read.result):
                 if row["project_id"] in wanted:
                     found.setdefault(row["project_id"], []).append(row)
             return found
@@ -121,6 +149,15 @@ class ProjectRows:
         self.dates = kept(PROJECT_DATES)
         self.key_dates = kept(_sql("key_dates.sql"), document_type=ISR, label="Review Date")
         self.reports = kept(_sql("reports.sql"), document_types=",".join(types))
+        self.passages: dict[str, list[dict]] = {}
+        documents = {str(row["document_id"]): project_id for project_id, found in self.reports.items() for row in found}
+        if documents:
+            read = read_in_parts(engine, _sql("report_passages.sql"),
+                                 {"documents": _named(list(documents)), "table_summary": TABLE_SUMMARY}, "document_id",
+                                 lambda part: {"documents": _named(part)}, list(documents))
+            self.left_out |= {documents[document_id] for document_id in read.left_out}
+            for row in _as_dicts(read.result):
+                self.passages.setdefault(str(row["document_id"]), []).append(row)
 
 
 def _of(engine: Engine, rows: ProjectRows | None, project_id: str, ladder: Ladder) -> ProjectRows:
@@ -410,9 +447,9 @@ class Report:
 
 def reports(engine: Engine, project_id: str, ladder: Ladder, rows: ProjectRows | None = None) -> list[Report]:
     found = []
-    for row in _of(engine, rows, project_id, ladder).reports.get(project_id, []):
-        passages = {passage["passage_id"]: passage for passage in _rows(
-            engine, _sql("report_passages.sql"), document_id=str(row["document_id"]), table_summary=TABLE_SUMMARY)}
+    held = _of(engine, rows, project_id, ladder)
+    for row in held.reports.get(project_id, []):
+        passages = {passage["passage_id"]: passage for passage in held.passages.get(str(row["document_id"]), [])}
         if passages:
             found.append(Report(str(row["document_id"]), project_id, row["document_type"], row["report_number"],
                                 _int(row["version"]), _date(row["document_date"]), _date(row["replaced_on"]),
@@ -481,20 +518,38 @@ def _keep(engine: Engine, model: BatchModel, answers: list[Answer], hashes: dict
                          public[answer.custom_id]) for answer in answers])
 
 
+@dataclass(frozen=True)
+class Asked:
+    """The model's answers to a run's requests, by custom id, and how each request was answered: from what bronze
+    held, by the batch model in this run (sent new, or waited for in a batch an earlier run sent), or not yet,
+    because its batch was still running when the run stopped waiting."""
+
+    answers: dict[str, Answer]
+    held: frozenset[str] = frozenset()
+    sent: frozenset[str] = frozenset()
+    waiting: frozenset[str] = frozenset()
+
+
 def ask(engine: Engine, model: BatchModel, asked: list[tuple[Report, Request]], clock: Callable[[], dt.datetime]
-        ) -> tuple[dict[str, Answer], int]:
+        ) -> Asked:
     """The model's answer to each request: one held in bronze for the same request from the same reader, or a
-    new one, which is kept there; and how many requests wait on a batch still running. Only requests with no
-    answer held go to the model, and an error is no answer, so its request is asked again. A request held as
-    pending in a batch an earlier run sent is waited for in that batch rather than asked again."""
+    new one, which is kept there; and which requests went to the model and which wait on a batch still running.
+    Only requests with no answer held go to the model, and an error is no answer, so its request is asked again. A
+    request held as pending in a batch an earlier run sent is waited for in that batch rather than asked again."""
     hashes = {request.custom_id: request.digest(model.deployment) for _, request in asked}
-    joined = ",".join(hashes.values()) or "-"
+
+    def of_requests(sql: str) -> list[dict]:
+        """The rows bronze holds for the run's requests, read by request hash within the warehouse's limit."""
+        wanted = list(dict.fromkeys(hashes.values()))
+        return _as_dicts(read_in_parts(engine, sql, {"read_by": model.name, "hashes": _named(wanted)}, "request_hash",
+                                       lambda part: {"hashes": _named(part)}, wanted).result)
+
     held: dict[str, Answer] = {}
-    for row in _rows(engine, _sql("answers_held.sql"), read_by=model.name, hashes=joined):
+    for row in of_requests(_sql("answers_held.sql")):
         held.setdefault(row["request_hash"], Answer(row["custom_id"], row["content"], row["error"]))
     answers = {custom_id: held[digest] for custom_id, digest in hashes.items() if digest in held}
     latest: dict[str, str] = {}  # each request's newest row with no answer: an error, or pending in a batch
-    for row in _rows(engine, _sql("answers_pending.sql"), read_by=model.name, hashes=joined):
+    for row in of_requests(_sql("answers_pending.sql")):
         latest.setdefault(row["request_hash"], row["error"] or "")
     batches: dict[str | None, list[tuple[Report, Request]]] = {}
     for report, request in asked:
@@ -502,10 +557,13 @@ def ask(engine: Engine, model: BatchModel, asked: list[tuple[Report, Request]], 
             error = latest.get(hashes[request.custom_id], "")
             batches.setdefault(error.removeprefix(PENDING) if error.startswith(PENDING) else None, []).append(
                 (report, request))
-    pending = 0
+    held_ids = frozenset(answers)
+    sent: set[str] = set()
+    still_running: set[str] = set()
     for resume, waiting in batches.items():
         public = {request.custom_id: report.public_from for report, request in waiting}
         requests = [request for _, request in waiting]
+        sent |= set(public)
         try:
             try:
                 given = model.answer(requests, resume=resume)
@@ -517,7 +575,7 @@ def ask(engine: Engine, model: BatchModel, asked: list[tuple[Report, Request]], 
                 given = model.answer(requests, resume=None)
             new = [answer for answer in given if answer.custom_id in public]
         except BatchPending as running:
-            pending += len(waiting)
+            still_running |= set(public)
             if running.batch_id and running.batch_id != resume:
                 _keep(engine, model, [Answer(custom_id, None, f"{PENDING}{running.batch_id}") for custom_id in public],
                       hashes, public, clock())
@@ -530,7 +588,7 @@ def ask(engine: Engine, model: BatchModel, asked: list[tuple[Report, Request]], 
                     if custom_id not in answered]
         _keep(engine, model, new, hashes, public, clock())
         answers |= {answer.custom_id: answer for answer in new}
-    return answers, pending
+    return Asked(answers, held_ids, frozenset(sent), frozenset(still_running))
 
 
 def _page_of(passage: dict, page) -> bool:
@@ -759,6 +817,42 @@ def detect(assertions: list[Assertion], ladder: Ladder, thresholds: Thresholds |
 
 # ── The run ──────────────────────────────────────────────────────────────
 
+# Where an assertion came from, by what read it (its read_by): an ISR's ratings table, a record, the IEG ratings
+# dataset, or, for any other reader, a report the batch model read.
+ISR_RATINGS, RECORDS, IEG_RATINGS, FROM_REPORTS = "isr_ratings", "records", "ieg_ratings", "from_reports"
+SOURCES = {ISR_READER: ISR_RATINGS, IEG_READER: IEG_RATINGS, **{table: RECORDS for table in RECORD_TABLES.values()}}
+
+
+@dataclass(frozen=True)
+class ProjectReport:
+    """What the run made for one project: its assertions by where they came from, the assertions read from text that
+    the check rejected, and its reports the batch model reads, by how each was answered (Asked)."""
+
+    project_id: str
+    isr_ratings: int = 0
+    records: int = 0
+    ieg_ratings: int = 0
+    from_reports: int = 0
+    rejected: int = 0
+    reports: int = 0  # the reports whose passages the batch model is given
+    answered_before: int = 0  # answered from what bronze held
+    sent: int = 0  # went to the batch model in this run
+    waiting: int = 0  # still in a batch that was running when the run stopped waiting
+
+    @property
+    def assertions(self) -> int:
+        return self.isr_ratings + self.records + self.ieg_ratings + self.from_reports
+
+
+def project_report(project_id: str, made: list[Assertion], rejected: list[Rejection],
+                   asked: list[tuple[Report, Request]], answered: Asked) -> ProjectReport:
+    counted = Counter(SOURCES.get(assertion.read_by, FROM_REPORTS) for assertion in made)
+    ids = {question.custom_id for _, question in asked}
+    return ProjectReport(project_id, counted[ISR_RATINGS], counted[RECORDS], counted[IEG_RATINGS],
+                         counted[FROM_REPORTS], len(rejected), len(ids), len(ids & answered.held),
+                         len(ids & answered.sent), len(ids & answered.waiting))
+
+
 @dataclass(frozen=True)
 class RunReport:
     assertions: int
@@ -766,6 +860,8 @@ class RunReport:
     disagreements: int
     pending: int = 0  # reports whose answers wait on a batch still running, which a later run waits for
     changed: int = 0  # assertions and disagreements the run added or removed
+    left_out: tuple[str, ...] = ()  # projects whose own rows pass the warehouse's limit, which keep what the tables hold
+    projects: tuple[ProjectReport, ...] = ()  # what the run made for each project it rebuilt, in the run's order
 
 
 REJECTION_STAMPS = tuple(REJECTION_COLUMNS.index(column) for column in ("run_id", "rejected_at", "public_from"))
@@ -779,7 +875,10 @@ def write(engine: Engine, projects: list[str], assertions: list[Assertion], reje
     projects whose rows differ from what the tables hold (leaving out a rejection's run and time,
     strata.lakehouse.rewrites), so a night with nothing new changes no row. It sends one DELETE a table for all
     those projects together, not one a project: for the workspace's 15,933 projects, three a project would be
-    hours of statements (ticket 43, review B2). Returns the assertions and disagreements it added or removed."""
+    hours of statements (ticket 43, review B2). It reads what the tables hold for those projects within the
+    warehouse's limit on one statement's result (read_in_parts, ticket 135); a project whose held rows alone pass
+    that limit is written again, as one whose rows differ. Returns the assertions and disagreements it added or
+    removed."""
     where = "array_contains(split(:projects, ','), project_id)"
     new = {"strata.gold.assertion": [astuple(row) for row in assertions],
            "strata.gold.disagreement": [astuple(row) for row in disagreements],
@@ -787,8 +886,10 @@ def write(engine: Engine, projects: list[str], assertions: list[Assertion], reje
     differing, counted = set(), {}
     for table, columns, stamps in WRITTEN:
         at = columns.index("project_id")
-        before = rewrites.by_key(rewrites.held(engine, table, columns, where, {"projects": ",".join(projects)}),
-                                 at, stamps)
+        query = f"SELECT {', '.join(columns)} FROM {table} WHERE {where}"  # sql-lint: names only, from WRITTEN
+        held = read_in_parts(engine, query, {"projects": _named(projects)}, "project_id",
+                             lambda part: {"projects": _named(part)}, projects)
+        before = rewrites.by_key(held.result.rows, at, stamps)
         after = rewrites.by_key(new[table], at, stamps)
         changes = {project: rewrites.differing(before.get(project, Counter()), after.get(project, Counter()))
                    for project in set(before) | set(after)}
@@ -809,27 +910,36 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladde
         ) -> RunReport:
     """Every assertion of the run's projects, rebuilt, with the rejected ones counted and the disagreements
     between the rest decided by the ladder. A run with no live model passes HeldAnswers, so the assertions
-    read from text come from the answers bronze holds."""
+    read from text come from the answers bronze holds.
+
+    It reads within the SQL warehouse's limit on one statement's result (ProjectRows, ticket 135). A project whose own
+    rows pass that limit is left out: it keeps what the tables hold, and the report names it."""
     ladder = ladder or load_ladder()
     made, rejected = [], []
     rows = ProjectRows(engine, projects, ladder)  # each family read once for every project of the run
+    rebuilt = [project_id for project_id in rows.projects if project_id not in rows.left_out]
     # Every project's requests go to the model in one call, so the live run waits for one batch, not one a project
     # (ticket 20's review, F6).
     asked = {project_id: [(report, request(report, ladder)) for report in reports(engine, project_id, ladder, rows)]
-             for project_id in projects}
-    answers, pending = ask(engine, model, [pair for pairs in asked.values() for pair in pairs], clock)
+             for project_id in rebuilt}
+    answered = ask(engine, model, [pair for pairs in asked.values() for pair in pairs], clock)
     when = clock()
-    for project_id in projects:
+    each = []
+    for project_id in rebuilt:
         dates = periods(engine, project_id, rows, ladder)
-        made += isr_assertions(engine, project_id, ladder, rows) + record_assertions(engine, project_id, ladder, rows)
-        made += status_assertions(engine, project_id, ladder, rows)
-        made += ieg_assertions(engine, project_id, ladder, dates, rows)
-        more, less = read_answers(asked[project_id], answers, ladder, dates, model, run_id, when)
-        made += more
+        of_project = isr_assertions(engine, project_id, ladder, rows) + record_assertions(engine, project_id, ladder,
+                                                                                         rows)
+        of_project += status_assertions(engine, project_id, ladder, rows)
+        of_project += ieg_assertions(engine, project_id, ladder, dates, rows)
+        more, less = read_answers(asked[project_id], answered.answers, ladder, dates, model, run_id, when)
+        of_project += more
+        made += of_project
         rejected += less
+        each.append(project_report(project_id, of_project, less, asked[project_id], answered))
     found = detect(made, ladder, thresholds)
-    changed = write(engine, projects, made, rejected, found)
-    return RunReport(len(made), len(rejected), len(found), pending, changed)
+    changed = write(engine, rebuilt, made, rejected, found)
+    return RunReport(len(made), len(rejected), len(found), len(answered.waiting), changed,
+                     tuple(project_id for project_id in rows.projects if project_id in rows.left_out), tuple(each))
 
 
 def redetect(engine: Engine, projects: list[str], ladder: Ladder, thresholds: Thresholds | None = None) -> int:

@@ -14,7 +14,7 @@ For one project, a run:
    series per implementing agency, and every Activity Reference No. its text lists. These become
    silver.plan_versions and silver.plan_listings. It asks bronze for the texts of the versions it reads alone, by
    document id, in statements whose results fit the SQL warehouse's inline limit (config/thresholds.toml,
-   ingestion.inline_result_bytes): one statement when they fit together, one version a statement when they do not
+   warehouse.statement_result_bytes): one statement when they fit together, one version a statement when they do not
    (ticket 123). The rewrite (rewrite) reads through the same place.
 3. Decides each activity's first listing, the earliest version read that lists it, which holds its
    first published planned dates. The first listing is confirmed only when every plan the list
@@ -60,7 +60,7 @@ from importlib import resources
 from strata.config import ConfigError, Thresholds, load_sources, load_thresholds
 from strata.lakehouse import clean, contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
-from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
+from strata.lakehouse.engine import ESCAPED, Engine, RowTooLarge, WarehouseEngine, json_bytes
 from strata.reader import repair, step
 from strata.reader.documents import Documents, NotFetched, StopReading, list_url
 from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, https, tables_from_json, tables_to_json
@@ -441,9 +441,6 @@ def _published_order(version: Version) -> tuple:
 # What a row of a read holds beside its long text, in bytes: its document id, page number, hash and dates, and the
 # quotes and commas the warehouse's JSON_ARRAY result writes around them.
 ROW_BYTES = 256
-# The characters JSON writes with a backslash: the control characters, the quote mark and the backslash itself. Each
-# takes two to six bytes in the warehouse's result where the text holds one.
-ESCAPED = "".join(chr(code) for code in range(1, 32)) + '"\\'
 
 
 @dataclass(frozen=True)
@@ -470,8 +467,9 @@ PARSED_PAGES = TextRead("strata.bronze.layout_pages",
 
 
 def inline_result_bytes(thresholds: Thresholds) -> int:
-    """The most bytes one statement's result may hold (config/thresholds.toml, ingestion.inline_result_bytes)."""
-    return int(thresholds.value("ingestion.inline_result_bytes"))
+    """The most bytes one statement's result may hold (config/thresholds.toml, warehouse.statement_result_bytes), the
+    limit the SQL warehouse keeps and every read within it shares (strata.lakehouse.engine.read_in_parts)."""
+    return int(thresholds.value("warehouse.statement_result_bytes"))
 
 
 def _document_marks(document_ids: list[str]) -> tuple[str, dict[str, str]]:
@@ -499,8 +497,7 @@ def read_plans(engine: Engine, read: TextRead, project_id: str, document_ids: li
     warehouse refused it."""
     text = read.text
     sizes = {str(document_id): int(size) for document_id, size in engine.run(
-        f"SELECT document_id, sum(5 * octet_length(encode({text}, 'UTF-8')) - 4 * length({text}) "  # sql-lint: names only
-        f"+ 5 * (length({text}) - length(translate({text}, :escaped, ''))) + :row_bytes) AS bytes FROM {read.table} "
+        f"SELECT document_id, sum({json_bytes(text)} + :row_bytes) AS bytes FROM {read.table} "  # sql-lint: names only
         "WHERE project_id = :project_id GROUP BY document_id",
         {"project_id": project_id, "escaped": ESCAPED, "row_bytes": ROW_BYTES}).rows}
     held = [document_id for document_id in dict.fromkeys(document_ids) if document_id in sizes]
@@ -508,7 +505,7 @@ def read_plans(engine: Engine, read: TextRead, project_id: str, document_ids: li
     for document_id in too_large:
         log.warning("I left document %s of %s out of my read of %s: its rows can take up to %s bytes, and the SQL "
                     "warehouse returns at most %s in one statement (config/thresholds.toml, "
-                    "ingestion.inline_result_bytes). %s", document_id, project_id, read.table,
+                    "warehouse.statement_result_bytes). %s", document_id, project_id, read.table,
                     f"{sizes[document_id]:,}", f"{limit:,}", read.left_out)
     wanted = [document_id for document_id in held if document_id not in too_large]
     parts = [wanted] if sum(sizes[document_id] for document_id in wanted) <= limit else [[one] for one in wanted]
