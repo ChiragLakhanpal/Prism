@@ -524,6 +524,7 @@ function BoxSample({
   scopeKind = "project",
   lookups = LOOKUPS,
   narrow = false,
+  work = false,
 }: {
   text: string;
   hint?: boolean;
@@ -532,11 +533,13 @@ function BoxSample({
   lookups?: Record<string, Lookup>;
   // A box about as narrow as the band's at 390 px, at every width of the gallery.
   narrow?: boolean;
+  // A box as wide as the work's columns at 1440 px, 743 px, where the box sits on a workspace page (ticket 127).
+  work?: boolean;
 }) {
   const [value, setValue] = useState(text);
   const { options, notes } = boxList(value, scope, lookups);
   return (
-    <div className={cx("min-h-[15rem]", narrow ? "max-w-[20rem]" : "max-w-prose")}>
+    <div className={cx("min-h-[15rem]", narrow ? "max-w-[20rem]" : work ? "max-w-[46.5rem]" : "max-w-prose")}>
       <OneBox value={value} onChange={setValue} options={options} notes={notes} open active={0} scope={scope} scopeKind={scopeKind} focusedHint={hint} shortcut={false} />
     </div>
   );
@@ -1207,6 +1210,8 @@ export const PAGES: GalleryPage[] = [
     // the same intent rules and the lookups the server recorded.
     slug: "box",
     sections: [
+      // Ticket 127: the box at rest, as a package page's ask bar draws it at 1440 px.
+      { id: "rest", title: s.rest, body: <BoxSample text="" scope={STEP_REF} scopeKind="package" work /> },
       { id: "hint", title: s.hint, body: <BoxSample text="" hint /> },
       { id: "project", title: s.project, body: <BoxSample text={sample.boxProject} /> },
       { id: "loan", title: s.loan, body: <BoxSample text={sample.boxLoan} /> },

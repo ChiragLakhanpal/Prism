@@ -6,6 +6,7 @@ import type { Page, Request } from "@playwright/test";
 import { scan } from "./axe";
 import { expect, mockApi, recorded, test } from "./mocked";
 import { tabUnderStickyParts } from "./sticky";
+import { shapeRow } from "./design-md";
 
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency";
 
@@ -165,7 +166,8 @@ for (const width of [1440, 390, 320]) {
 
 // Ticket 94: the frame's one hook keeps the scroll padding at the bar plus the plan check's sticky head, plus 8 px,
 // so Tab down the page and Shift+Tab back up never leave the focused element under either. Ticket 113: and at the box
-// that floats at the window's foot, 40 px tall and 16 px above the edge, plus 8 px, so nothing lands under it.
+// that floats at the window's foot, 56 px tall (ticket 127) and 16 px above the edge, plus 8 px, so nothing lands
+// under it.
 test("tabbing through the plan check never leaves the focused element under the bar, its sticky head or the box", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await open(page, PLAN);
@@ -175,7 +177,7 @@ test("tabbing through the plan check never leaves the focused element under the 
   expect(await page.evaluate(() => document.documentElement.style.scrollPaddingTop)).toBe(`${56 + height + 8}px`);
   // The bottom padding counts the box only while focus is in main (round 1's design review), as it is from the h1 on.
   await page.locator("main h1").first().focus();
-  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingBottom)).toBe(`${16 + 40 + 8}px`);
+  expect(await page.evaluate(() => document.documentElement.style.scrollPaddingBottom)).toBe(`${16 + 56 + 8}px`);
   const { checked, covered } = await tabUnderStickyParts(page, 30);
   expect(checked).toBeGreaterThan(40);
   expect(covered).toEqual([]);
@@ -283,9 +285,11 @@ test("focused and empty, the box gives its hint; Escape closes the list, then em
 test("on a project page the box carries a removable scope chip, and Backspace in the empty box removes it", async ({ page }) => {
   await open(page, "/projects/P130164");
 
-  await expect(box(page)).toHaveAccessibleName("Open a project or package, or ask a question");
-  await expect(box(page)).toHaveAccessibleDescription(/Questions you ask here cover P130164 only\./);
-  await expect(page.locator("[data-box-slot]").getByText("Ask about this project")).toBeVisible();
+  // Ticket 127: the field's name is "Ask Strata", not printed, and the sentence that was its name describes it; the
+  // placeholder says the word.
+  await expect(box(page)).toHaveAccessibleName("Ask Strata");
+  await expect(box(page)).toHaveAccessibleDescription("Questions you ask here cover P130164 only. Open a project or package, or ask a question");
+  await expect(page.locator("[data-box-slot]").getByText("Ask Strata about this project")).toBeVisible();
   const remove = page.getByRole("button", { name: "Remove the scope P130164" });
   await expect(remove).toBeVisible();
 
@@ -350,15 +354,15 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
       expect(inner.x, `${width} px: the chip's left edge`).toBeGreaterThanOrEqual(outer.x);
       expect(inner.x + inner.width, `${width} px: the chip's right edge`).toBeLessThanOrEqual(outer.x + outer.width);
       // Below 1024 px, room for about ten characters of a question, and for the whole placeholder on a package page.
-      // From 1024 px one row of 40 px, the chip's reference on one line, and room for about six characters; the
-      // placeholder of a reference this long gives way there (gallery-frame.spec.ts proves the real one's is whole).
+      // From 1024 px one row of 56 px (ticket 127), the chip's reference on one line, and room for about six characters;
+      // the placeholder of a reference this long gives way there (gallery-frame.spec.ts proves the real one's is whole).
       const field = await rect(page, "[data-box-slot] input");
-      const cut = await page.locator("[data-box-slot] [data-placeholder]").evaluate((el) => el.scrollWidth > el.clientWidth);
+      const cut = await page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true }).evaluate((el) => el.scrollWidth > el.clientWidth);
       if (width < 1024) {
         expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(96);
         expect(cut, `${width} px: the placeholder is cut`).toBe(false);
       } else {
-        expect(outer.height, `${width} px: one row`).toBe(40);
+        expect(outer.height, `${width} px: one row`).toBe(56);
         expect(inner.height, `${width} px: the reference on one line`).toBe(32);
         expect(field.width, `${width} px: the text field`).toBeGreaterThanOrEqual(64);
         if (ref.length === 22) expect(cut, `${width} px: the placeholder is cut`).toBe(false);
@@ -372,6 +376,20 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
     }
   });
 }
+
+// Ticket 127: from 768 px the package page's placeholder says "Strata", so the text field shares the chip's row only
+// while the whole "Ask Strata about this package" and the "/" hint fit beside it. References of 31 to 36 characters
+// leave between 210 and 254 px there, the room the shorter placeholder needed and the room this one needs.
+test("at 768 px the text field shares the chip's row only while the whole placeholder and the / hint fit", async ({ page }) => {
+  for (const length of [31, 33, 35, 36]) {
+    const ref = LONG_REF.slice(0, length);
+    await openPackage(page, ref, 768);
+    const shown = await PLACEHOLDER(page);
+    expect(shown.text, ref).toBe("Ask Strata about this package");
+    const cut = await page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true }).evaluate((el) => el.scrollWidth > el.clientWidth);
+    expect(cut, `${ref}: the placeholder is cut`).toBe(false);
+  }
+});
 
 test("a reference wider than its row breaks after a hyphen inside the chip, and one that fits a line moves there whole", async ({ page }) => {
   for (const [width, wider] of [[320, true], [390, true], [768, false]] as const) {
@@ -436,22 +454,95 @@ test("a press on the box's / hint or its search icon puts the cursor in the text
   expect(await page.locator("[data-box-slot] [data-scope-chip]").evaluate((el) => getComputedStyle(el).cursor)).toBe("auto");
 });
 
-test("a P-code's chip on a phone and a STEP reference's chip on a wide screen sit on one row with the text, in a 40 px box", async ({ page }) => {
+// Ticket 127: one row is 48 px on a phone and 56 px from 1024 px, where the chip sits 12 px before the text.
+test("a P-code's chip on a phone and a STEP reference's chip on a wide screen sit on one row with the text, in a 48 and a 56 px box", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await open(page, "/projects/P130164");
-  const single = async (label: string) => {
+  const single = async (label: string, height: number, gap: number) => {
     const outer = await rect(page, "[data-box-slot] form > [data-focus-ring]");
     const chip = await rect(page, "[data-box-slot] [data-scope-chip]");
     const field = await rect(page, "[data-box-slot] input");
-    expect(Math.round(outer.height), label).toBe(40);
+    expect(Math.round(outer.height), label).toBe(height);
     expect(Math.round(chip.height), label).toBe(32);
     expect(Math.round(chip.y + chip.height / 2), label).toBe(Math.round(field.y + field.height / 2));
-    expect(Math.round(field.x - (chip.x + chip.width)), `${label}: the gap after the chip`).toBe(8);
+    expect(Math.round(field.x - (chip.x + chip.width)), `${label}: the gap after the chip`).toBe(gap);
   };
-  await single("P130164 at 390 px");
+  await single("P130164 at 390 px", 48, 8);
 
   await openPackage(page, "KE-NWWDA-541055-CW-RFB", 1440);
-  await single("KE-NWWDA-541055-CW-RFB at 1440 px");
+  await single("KE-NWWDA-541055-CW-RFB at 1440 px", 56, 12);
+});
+
+// Ticket 127 (the design lead's Option A, refined after the Mobbin pass of October 29, 2026): the box has presence.
+// From 1024 px it is one row of 56 px, the navy bar's height; below 768 px a STEP reference's chip takes a row of its
+// own over a 40 px text row, 96 px in all. The field's name is "Ask Strata", never printed in the row (the owner's call
+// of October 29, 2026): the placeholder carries the word instead, "Ask Strata about this package" from 768 px and
+// today's short "Ask about this package" below it. A 1 px primary edge is drawn inside it, and DESIGN.md's shadow-float
+// sits under it. At rest the "/" hint holds the row's end; once the box holds text, an outlined 40 px Enter button
+// takes that place, named for the option Enter will choose.
+const PRIMARY_EDGE = "rgb(0, 67, 112) 0px 0px 0px 1px inset";
+test("the box is 56 px tall from 1024 px, named Ask Strata without printing it, with a primary edge and the float shadow, and typing swaps the / hint for an Enter button named for what Enter does", async ({ page }) => {
+  const float = /`--shadow-float: ([^`]+)`/.exec(await shapeRow("Elevation"));
+  expect(float, "DESIGN.md's Elevation row names shadow-float").not.toBeNull();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await open(page, "/packages/KE-NWWDA-541055-CW-RFB", {
+    "/api/packages/KE-NWWDA-541055-CW-RFB": { body: await recorded("package-ke-nwwda-541055.json") },
+    "/api/packages/KE-NWWDA-541055-CW-RFB/comparables": { body: await recorded("comparables-ke-nwwda-541055.json") },
+  });
+  // The shadow DESIGN.md writes, as the browser computes it.
+  const shadow = await page.evaluate((value) => {
+    const probe = document.createElement("div");
+    probe.style.boxShadow = value;
+    document.body.append(probe);
+    const computed = getComputedStyle(probe).boxShadow;
+    probe.remove();
+    return computed;
+  }, float![1]);
+  const outer = page.locator("[data-box-slot] form > [data-focus-ring]");
+  const slash = page.locator("[data-box-slot] kbd", { hasText: "/" });
+  const enter = page.locator("[data-box-slot] [data-enter-button]");
+  for (const [width, height, rowHeight] of [[1440, 900, 56], [1280, 800, 56], [1024, 768, 56], [390, 844, 96]] as const) {
+    await page.setViewportSize({ width, height });
+    await page.locator("main h1").focus();
+    expect((await outer.boundingBox())!.height, `${width} px: the box's height`).toBe(rowHeight);
+    expect(
+      await outer.evaluate((el) => getComputedStyle(el).boxShadow.split(/,\s*(?![^()]*\))/).filter((part) => !part.startsWith("rgba(0, 0, 0, 0)")).join(", ")),
+      `${width} px: the primary edge and shadow-float`,
+    ).toBe(`${PRIMARY_EDGE}, ${shadow}`);
+    await expect(box(page)).toHaveAccessibleName("Ask Strata");
+    // The name is the field's own, never a label printed in the row; the placeholder says it.
+    await expect(page.locator("[data-box-slot] label")).toHaveCount(0);
+    const shown = (await PLACEHOLDER(page)).text;
+    expect(shown, `${width} px: the placeholder`).toBe(width >= 768 ? "Ask Strata about this package" : "Ask about this package");
+    await expect(outer.getByText("Ask Strata", { exact: true }), `${width} px: no printed name`).toHaveCount(0);
+    await expect(slash, `${width} px: the / hint at rest`).toBeVisible({ visible: width >= 768 });
+    await expect(enter).toHaveCount(0);
+
+    await typeInBox(page, "P130164");
+    await expect(enter).toHaveAccessibleName("Open P130164");
+    const button = (await enter.boundingBox())!;
+    expect([button.width, button.height], `${width} px: the Enter button`).toEqual([40, 40]);
+    const field = (await page.locator("[data-box-slot] input").boundingBox())!;
+    expect(Math.round(button.y + button.height / 2), `${width} px: on the text's row`).toBe(Math.round(field.y + field.height / 2));
+    await expect(slash).toBeHidden();
+    expect((await scan(page, "[data-box-slot]")).violations, `${width} px`).toEqual([]);
+    await page.keyboard.press("Escape");
+    await page.keyboard.press("Escape");
+    await expect(box(page)).toHaveValue("");
+  }
+
+  // Its name follows the option Enter will choose, and a press on it does what Enter does.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await typeInBox(page, "How long did works contracts take?");
+  await expect(enter).toHaveAccessibleName("Ask this");
+  await page.keyboard.press("ArrowDown");
+  await expect(enter).toHaveAccessibleName("Plan a package from this sentence");
+  await page.keyboard.press("Escape");
+  await page.keyboard.press("Escape");
+  await page.keyboard.type("P130164");
+  await expect(enter).toHaveAccessibleName("Open P130164");
+  await enter.click();
+  await expect(page).toHaveURL(/\/projects\/P130164$/);
 });
 
 // Ticket 93 (DESIGN.md section 5, Top bar): below 1024 px the box takes a row of its own under the Menu button, the
@@ -477,7 +568,9 @@ for (const width of [390, 320]) {
     const home = await PLACEHOLDER(page);
     expect(home.text).toBe("Open a project or package, or ask");
     expect(home.width, `Home at ${width} px`).toBeLessThan(home.field);
-    await expect(box(page)).toHaveAccessibleName("Open a project or package, or ask a question");
+    // Ticket 127: the field's name is "Ask Strata", out of sight here, and the whole sentence describes it.
+    await expect(box(page)).toHaveAccessibleName("Ask Strata");
+    await expect(box(page)).toHaveAccessibleDescription("Open a project or package, or ask a question");
 
     await openPackage(page, "KE-NWWDA-541055-CW-RFB", width);
     const onPackage = await PLACEHOLDER(page);
@@ -487,7 +580,10 @@ for (const width of [390, 320]) {
 }
 
 // Ticket 59 (the 93 design review, follow-up 1): from 1024 px a reference that holds a space drops "Within", so the
-// package's placeholder beside its chip is never cut; a reference with no space keeps it.
+// package's placeholder beside its chip is never cut; a reference with no space keeps it, in a box of 35rem or more:
+// the work's 743 px at 1440 px, its 649 px at 1280 px and the 640 px box at 1024 px (ticket 127, once the box's name
+// left the row), beside "Ask Strata about this package". Beside a reference with a space, in a box under 42rem, the
+// placeholder takes its short form, "Ask about this package", so it stays whole there too.
 test("from 1024 px a chip whose reference holds a space drops Within, so the placeholder stays whole", async ({ page }) => {
   for (const [ref, within] of [["KE-UASIN GISHU COUNTY-571338-CW-RFB", false], ["KE-NWWDA-541055-CW-RFB", true]] as const) {
     for (const width of [1440, 1280, 1024]) {
@@ -495,11 +591,12 @@ test("from 1024 px a chip whose reference holds a space drops Within, so the pla
       const chip = page.locator("[data-box-slot] [data-scope-chip]");
       await expect(chip).toContainText(ref);
       await expect(chip.getByText("Within", { exact: true }), `${ref} at ${width} px`).toBeVisible({ visible: within });
-      const cut = await page.evaluate(() => {
+      const shown = await page.evaluate(() => {
         const shown = [...document.querySelectorAll<HTMLElement>("[data-box-slot] [data-placeholder]")].find((el) => el.getClientRects().length > 0)!;
-        return shown.scrollWidth > shown.clientWidth;
+        return { text: shown.textContent, cut: shown.scrollWidth > shown.clientWidth, need: shown.scrollWidth, has: shown.clientWidth };
       });
-      expect(cut, `${ref} at ${width} px: the placeholder is cut`).toBe(false);
+      expect(shown.text, `${ref} at ${width} px`).toBe(within || width === 1440 ? "Ask Strata about this package" : "Ask about this package");
+      expect(shown.cut, `${ref} at ${width} px: the placeholder is cut (${shown.need} in ${shown.has})`).toBe(false);
     }
   }
 });
@@ -610,6 +707,15 @@ test("Down then Enter asks the first package suggestion within the package, a cl
   const suggestions = group(page, "Ask about this package").getByRole("option");
   await expect(suggestions).toHaveCount(3);
   await listAboveTheBox(page);
+  // Ticket 127: while open the list is the bar's upper half, so it shares the box's shadow-float, and its foot strip
+  // names the keys in Key hints, hidden from a screen reader since the combobox names its keys.
+  const shadowOf = (selector: string) => page.locator(selector).evaluate((el) => getComputedStyle(el).boxShadow.split(/,\s*(?![^()]*\))/).filter((part) => !/inset|^rgba\(0, 0, 0, 0\)/.test(part)));
+  expect(await shadowOf("[data-box-popup]")).toEqual(await shadowOf("[data-box-slot] form > [data-focus-ring]"));
+  const foot = page.locator("[data-box-popup] [data-box-keys]");
+  await expect(foot).toBeVisible();
+  await expect(foot).toHaveAttribute("aria-hidden", "true");
+  await expect(foot.locator("> *")).toHaveText(["Enter Select", "Up Down Move", "Esc Close"]);
+  await expect(foot.locator("[data-key-hint]")).toHaveText(["Enter", "Up", "Down", "Esc"]);
   expect((await scan(page)).violations).toEqual([]);
   await page.keyboard.press("ArrowDown");
   await expect(suggestions.first()).toHaveAttribute("aria-selected", "true");
@@ -644,6 +750,8 @@ test("at 390 px the package's suggestions open above the box with no WCAG 2.2 AA
   await page.keyboard.press("/");
   await expect(group(page, "Ask about this package").getByRole("option")).toHaveCount(3);
   await listAboveTheBox(page);
+  // Key hints show from 768 px, so the list's foot strip does too (ticket 127).
+  await expect(page.locator("[data-box-popup] [data-box-keys]")).toBeHidden();
   expect((await scan(page)).violations).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
 

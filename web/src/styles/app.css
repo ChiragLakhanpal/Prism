@@ -105,6 +105,9 @@
   --container-facts: 18rem;
   --container-prose: 65ch;
   --shadow-popover: 0 5px 25px rgba(160,158,143,.25);
+  /* The Ask bar's box and its One box list while open (DESIGN.md section 4, Elevation; ticket 127): tinted from brand
+     navy and heavier than a popover's, kept for the one part that floats over the work. */
+  --shadow-float: 0 1px 2px rgba(0,34,68,.12), 0 8px 24px rgba(0,34,68,.16);
 
   /* DESIGN.md section 4, Motion: two curves and seven times, all 120 to 200 ms, and nothing moves under
      reduced motion. ease-out is for what enters and for a press; ease-drawer for a sheet that slides in;
@@ -274,7 +277,8 @@
 }
 /* The ask bar (DESIGN.md section 5, Ask bar; ticket 113): the page column's last part before the footer, sticking at the
    window's foot, so the box floats centered in the page column, at most 640 px wide and the window's margin from each
-   side below that, and at the end of a page sits above the footer instead of over it. Its bottom is 16 px above the
+   side below that, and at the end of a page sits above the footer instead of over it. From a frame of 75rem the box
+   sits on the grid instead ("The ask bar on the grid" below; ticket 127). Its bottom is 16 px above the
    window's bottom edge and the phone's safe area; where a page's own bar sticks at the foot, such as the draft bar or
    the grade bar, it floats 16 px above that bar, and rides up with it where the bar lets go at its column's end: the
    frame's hook writes how far the bar reaches up from the window's foot as --sticky-foot (lib/sticky.ts).
@@ -440,6 +444,45 @@
      frame, hides. */
   [data-workspace]:has([data-side-slot][data-fold="head"]) [data-facts-line] {
     display: none;
+  }
+}
+
+/* The ask bar on the grid (DESIGN.md section 5, Ask bar; ticket 127, the design lead's Option A of October 29, 2026).
+   From a frame of 75rem the box spans columns of the page grid instead of centering at 640 px, so its edges meet the
+   content's: on a workspace page (Workspace.tsx's work, a draft's document column) the work's columns 1 to 7, from the
+   frame's --work-inline, so it keeps its place when the evidence drawer opens; on a wide page columns 3 to 10 of the page
+   area while that area is at least 64rem, which the drawer may narrow it below, and the box then centers as below this
+   frame. While a page's own foot bar sticks (the draft bar, the grade bar), the frame's hook writes that bar's insets from
+   the ask bar's edges as --ask-inset-start and --ask-inset-end (lib/sticky.ts), so the box spans the bar's columns, 16 px
+   above it. Each place is two insets from the page column's edges, --ask-start and --ask-end. Below that frame nothing
+   changes. */
+@container frame (width >= 75rem) {
+  @container page (width >= 64rem) {
+    [data-box-slot] {
+      --ask-column: calc((min(100cqw - 2 * var(--layout-margin), var(--layout-max)) - 11 * var(--layout-gutter)) / 12);
+      --ask-start: calc(var(--layout-margin) + 2 * (var(--ask-column) + var(--layout-gutter)));
+      --ask-end: calc(100cqw - var(--ask-start) - 8 * var(--ask-column) - 7 * var(--layout-gutter));
+    }
+  }
+  [data-page-column]:has([data-workspace], [data-document-column]) [data-box-slot] {
+    --ask-start: var(--layout-margin);
+    --ask-end: calc(100cqw - var(--layout-margin) - var(--work-inline));
+  }
+  @container page (width >= 64rem) {
+    [data-box-slot] {
+      padding-left: var(--ask-inset-start, var(--ask-start));
+      padding-right: var(--ask-inset-end, var(--ask-end));
+      & > * {
+        max-width: none;
+      }
+    }
+  }
+  [data-page-column]:has([data-workspace], [data-document-column]) [data-box-slot] {
+    padding-left: var(--ask-inset-start, var(--ask-start));
+    padding-right: var(--ask-inset-end, var(--ask-end));
+    & > * {
+      max-width: none;
+    }
   }
 }
 
@@ -701,6 +744,11 @@
    indicator. The safe area is 0 on a screen without one. */
 @utility foot-safe {
   padding-bottom: calc(var(--spacing) * 3 + env(safe-area-inset-bottom, 0px));
+}
+/* The room above the draft bar where it sticks, so the ask bar's box, which rides 16 px above the bar, never sits on the
+   draft's last line for good: the box's 56 px (--bar-height; ticket 127), its 16 px and 8 px more. */
+@utility ask-room {
+  margin-top: calc(var(--bar-height) + var(--spacing) * 6);
 }
 
 /* The plan check's marked rows (DESIGN.md section 5, Plan check table and Evidence drawer; ticket 100): the rows a
