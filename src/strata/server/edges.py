@@ -24,6 +24,7 @@ from pathlib import Path
 
 from strata.config import Thresholds, load_thresholds
 from strata.lakehouse.engine import Engine
+from strata.server import contracts as project_contracts
 from strata.server import documents
 from strata.server.trail import activity_href, document_labels, paragraph_key, topics
 from strata.server.viewer_sql import data_through
@@ -302,6 +303,9 @@ def neighbourhood(engine: Engine, project_id: str, as_of: dt.date, limits: Thres
                                              "short_name": document_labels(row["document_type"])["short_name"],
                                              "document_date": _iso(row["document_date"])}
                                             for row in all_links if row["document_id"] == key) for key in documents_linked]},
+        # The project's contracts, as the Timeline tab counts them too (ticket 138): the finding names how many of
+        # them appeared together with a paragraph.
+        "contracts": project_contracts.held(project_contracts.of_project(engine, pid, as_of)),
         # The count line counts packages and documents; the cap, connections.max_nodes, holds the project too.
         "shown": len(shown_packages) + len(shown_documents), "total": total,
         "threshold": _points(limits.value("links.threshold")),

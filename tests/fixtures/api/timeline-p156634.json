@@ -4830,6 +4830,74 @@
     "how": 3,
     "what": 244
   },
+  "contracts": {
+    "count": 262,
+    "sources": [
+      {
+        "source": "awards",
+        "count": 256
+      },
+      {
+        "source": "notices",
+        "count": 6
+      }
+    ],
+    "left_out": {
+      "count": 8,
+      "no_step_reference": [
+        {
+          "source": "awards",
+          "count": 6
+        },
+        {
+          "source": "notices",
+          "count": 2
+        }
+      ],
+      "no_signing_date": []
+    }
+  },
+  "records_note": [
+    {
+      "text": "I hold "
+    },
+    {
+      "number": 262
+    },
+    {
+      "text": " contracts for this project."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "The Records lane finds each contract's package by its STEP reference, so it leaves out "
+    },
+    {
+      "number": 6
+    },
+    {
+      "text": " from "
+    },
+    {
+      "text": "the contract awards since fiscal 2020"
+    },
+    {
+      "text": " and "
+    },
+    {
+      "number": 2
+    },
+    {
+      "text": " from "
+    },
+    {
+      "text": "award notices"
+    },
+    {
+      "text": ", which have none."
+    }
+  ],
   "finding": [
     {
       "text": "ISR ratings of progress fell from "
