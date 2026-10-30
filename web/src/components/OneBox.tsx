@@ -1,20 +1,23 @@
 // The one box (DESIGN.md section 5, Ask bar), which "/" focuses from anywhere outside a text field, and the
-// data-freshness stamp. The box floats at the bottom center of the page column (Frame.tsx's ask bar; ticket 113, which
-// moved it out of the navy bar): white with a 1 px line-strong edge, 4 px corners and the popover shadow, up to 640 px
-// wide. The stamp sits at the sidebar's foot, under Data (Sidebar.tsx).
+// data-freshness stamp. The box floats at the foot of the page column (Frame.tsx's ask bar; ticket 113, which moved it
+// out of the navy bar), on the grid from a frame of 75rem (ticket 127). It has presence (ticket 127, the design lead's
+// Option A after the Mobbin pass): white, a 1 px primary edge drawn inside it, 4 px corners and shadow-float; one row of
+// 56 px from 1024 px, led by the search icon in primary and its visible name, "Ask Strata". The stamp sits at the
+// sidebar's foot, under Data (Sidebar.tsx).
 //
 // The box is a combobox (WAI-ARIA's list autocomplete with automatic selection): as you type, a
 // list above it says what Enter will do, laid over the page so the ask bar never grows. Its options
 // come from the intent rules (web/src/lib/intents.ts, through IntentBox.tsx); this file draws them.
 // On a project or package page the box holds a removable scope chip.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type ReactNode, type RefObject } from "react";
-import { CircleX, Search, X, type LucideIcon } from "lucide-react";
+import { CircleX, CornerDownLeft, Search, X, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { Fill } from "./Fill";
 import { MonoWords } from "./MonoWords";
 import { DOTTED_UNDERLINE } from "./Popover";
 import { Skeleton } from "./Skeleton";
+import { KeyHint } from "./ToggleButton";
 
 export function typingInAField(target: EventTarget | null): boolean {
   if (!(target instanceof HTMLElement)) return false;
@@ -33,6 +36,8 @@ export type BoxOption = {
   key: string;
   icon: LucideIcon;
   label: ReactNode;
+  // The label as plain words, which name the Enter button while this is the option Enter will choose (ticket 127).
+  name?: string;
   line?: ReactNode;
   // An option the view holds, listed so it stays discoverable, with its reason as its line (ticket 15's plan
   // option in a preview). Choosing it does nothing.
@@ -40,7 +45,8 @@ export type BoxOption = {
 };
 
 // The scope chip inside the box, on a project or package page: "Within P130164" with a 24 px remove
-// button. It shows the ID only below 768 px, and whenever the box is narrower than 35rem. From 1024 px the box keeps
+// button. It shows the ID only below 768 px, and whenever the box is narrower than 42rem, since the box's name takes
+// about 100 px of its row (ticket 127; it was 35rem). From 1024 px the box keeps
 // one row. Below 1024 px a STEP reference is far longer than a P-code, so when the chip and a text field you can type
 // in do not fit on one line, the chip takes a row of its own above the text (OneBox wraps). A reference wider than
 // that row stays whole and readable as one ID (MonoWords): each part between spaces moves to the next line whole when
@@ -53,12 +59,14 @@ function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void })
   return (
     <span
       data-scope-chip
-      className="flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3"
+      // 4 px above and below it, so with a row of its own it keeps 8 px from the box's edge and from the text's row; from
+      // 1024 px 12 px before the text field (ticket 127).
+      className="my-1 flex min-h-8 max-w-full min-w-0 cursor-auto items-center gap-2 rounded-lg border border-line-strong bg-surface pr-1 pl-3 lg:mr-1"
     >
       <span className="min-w-0 py-1 text-small">
         {/* A reference that holds a space, such as KE-UASIN GISHU COUNTY-571338-CW-RFB, is long enough without "Within",
             which would cut the placeholder beside it (ticket 59; DESIGN.md section 5, Scope chip). */}
-        <span className={cx("mr-2 hidden text-ink-muted", !scope.includes(" ") && "md:@min-[35rem]/box:inline")}>{copy.box.chipWithin}</span>
+        <span className={cx("mr-2 hidden text-ink-muted", !scope.includes(" ") && "md:@min-[42rem]/box:inline")}>{copy.box.chipWithin}</span>
         <MonoWords text={scope} className="align-top text-ink" />
       </span>
       {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}
@@ -98,8 +106,15 @@ export function OneBox({
   suggestions = null,
   suggestionActive = -1,
   onChooseSuggestion,
+  enterName,
+  onEnter,
   children,
 }: {
+  // Ticket 127: the Enter button's name, the option Enter will choose (IntentBox); without one, the option at active, or
+  // "Ask this".
+  enterName?: string;
+  // What a press on the Enter button does: what Enter does.
+  onEnter?: () => void;
   // A mode the Packages tab put the box in (ticket 15): its own placeholder, and a help line that describes
   // the box and takes the hint's place.
   modePlaceholder?: string;
@@ -143,6 +158,7 @@ export function OneBox({
   const hintId = useId();
   const scopedId = useId();
   const notesId = useId();
+  const sentenceId = useId();
   const inputId = useId();
   const [focused, setFocused] = useState(false);
 
@@ -166,8 +182,15 @@ export function OneBox({
   const showList = open && value.trim().length > 0 && options.length > 0;
   const showNotes = open && value.trim().length > 0 && notes.length > 0;
   const showSuggestions = Boolean(showHint && suggestions && suggestions.options.length > 0);
-  const described =
-    [(showHint || modeHelp) && hintId, scope && scopedId, showNotes && notesId].filter(Boolean).join(" ") || undefined;
+  // The field's name is its visible label, "Ask Strata" (ticket 127). The sentence that was its name describes it
+  // wherever the hint or a mode's help line does not, last.
+  const described = [(showHint || modeHelp) && hintId, scope && scopedId, showNotes && notesId, !(showHint || modeHelp) && sentenceId]
+    .filter(Boolean)
+    .join(" ");
+  // Ticket 127: once the box holds text, the Enter button takes the "/" hint's place, named for the option Enter will
+  // choose.
+  const typed = value.trim().length > 0;
+  const enter = enterName ?? options[active]?.name ?? copy.box.option.ask;
   const optionId = (index: number) => `${listId}-${index}`;
   const suggestionId = (index: number) => `${listId}-s${index}`;
   const activeId = showList ? optionId(active) : showSuggestions && suggestionActive >= 0 ? suggestionId(suggestionActive) : undefined;
@@ -213,21 +236,24 @@ export function OneBox({
         event.preventDefault();
       }}
     >
-      <label htmlFor={inputId} className="sr-only">
+      {/* The sentence that was the field's name, now its description (ticket 127). */}
+      <span id={sentenceId} hidden>
         {copy.box.label}
-      </label>
+      </span>
       {scope && (
         <span id={scopedId} hidden>
           {copy.box.scoped(scope)}
         </span>
       )}
-      {/* One row is 40 px: 4 px around a 32 px field and chip, 12 px before the first of them, with a control's 4 px
-          corners. Its 1 px line-strong edge, a control's border, is drawn inside it with the popover shadow, so the
-          edge moves nothing in it (ticket 113). In the ask bar from 1024 px it keeps one row (app.css). Otherwise,
-          when a long scope chip pushes the text field to a second row, the chip and the text share one left edge.
-          While anything inside it has focus, its focus ring shows around it. The box shows the text cursor, so a press
-          anywhere in it outside the field, a button or the chip, such as the rest of the chip's row, the search icon
-          or the "/" hint, acts as a press on the field. */}
+      {/* One row is 56 px from 1024 px, the navy bar's height: 8 px around a 40 px row, 12 px before the icon and 8 px
+          after the Enter button. Below 1024 px one row is 48 px, 4 px around the 40 px row; when a long scope chip
+          pushes the text field to a second row, the chip takes the first with 4 px above and below it, 8 px over the
+          text's row, so the box is 96 px, and the chip and the text share one left edge (ticket 127). A control's 4 px
+          corners. Its 1 px primary edge is drawn inside it, so the edge moves nothing in it, with shadow-float under it
+          (ticket 127). In the ask bar from 1024 px it keeps one row (app.css). While anything inside it has focus, its
+          focus ring shows around it. The box shows the text cursor, so a press anywhere in it outside the field, a
+          button or the chip, such as the rest of the chip's row, the search icon, the name or the "/" hint, acts as a
+          press on the field. */}
       <div
         data-focus-ring
         onPointerDown={(event) => {
@@ -237,20 +263,34 @@ export function OneBox({
           onPointerDown?.();
         }}
         className={cx(
-          "flex min-h-10 w-full cursor-text flex-wrap items-center gap-x-2 gap-y-1 rounded-sm bg-surface py-1 pr-1 pl-3",
-          "shadow-popover inset-ring inset-ring-line-strong",
+          "flex min-h-12 w-full cursor-text flex-wrap items-center gap-x-2 gap-y-2 rounded-sm bg-surface py-1 pr-1 pl-3 lg:min-h-14 lg:py-2 lg:pr-2",
+          "shadow-float inset-ring inset-ring-primary",
           "focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus focus-within:outline-solid",
         )}
       >
-        {/* With a chip below 1024 px the icon hides, so the chip and the text share one left edge; below 360 px it
-            always hides, for the field's room. */}
-        <Search aria-hidden="true" className={cx("size-4 shrink-0 text-ink-muted", scope ? "max-lg:hidden" : "max-xs:hidden")} />
+        {/* The 20 px search icon in primary. With a chip below 1024 px the icon hides, so the chip and the text share one
+            left edge; below 360 px it always hides, for the field's room. */}
+        <Search aria-hidden="true" className={cx("size-5 shrink-0 text-primary", scope ? "max-lg:hidden" : "max-xs:hidden")} />
+        {/* The box's name, its field's visible label (WCAG 3.3.2), 12 px before what follows (ticket 127). It leaves the
+            row where the icon does with a chip, and below 768 px, and stays the field's name there. A reference that
+            holds a space, such as KE-UASIN GISHU COUNTY-571338-CW-RFB, makes the chip so long that in a box under 42rem
+            the name leaves the row too, so the placeholder is never cut, as "Within" does for the same chip. */}
+        <label
+          htmlFor={inputId}
+          className={cx(
+            "mr-1 shrink-0 text-button whitespace-nowrap text-ink-heading",
+            scope ? "max-lg:sr-only" : "max-md:sr-only",
+            scope?.includes(" ") && "@max-[42rem]/box:sr-only",
+          )}
+        >
+          {copy.box.name}
+        </label>
         {scope && <ScopeChip scope={scope} onRemove={() => onRemoveScope?.()} />}
         {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. Below 1024 px the
             field goes under the chip when less than 176 px is left beside it, the width of a package page's whole
             placeholder, so "Ask about this package" is never cut; from 768 px, where the "/" hint shows after the
             field, less than 210 px, the placeholder and the hint (ticket 113, since the box is at most 640 px wide). */}
-        <div className="flex min-w-0 flex-[1_1_176px] items-center gap-2 md:flex-[1_1_210px]">
+        <div className="flex min-h-10 min-w-0 flex-[1_1_176px] items-center gap-2 md:flex-[1_1_210px]">
           <div className="relative min-w-0 flex-1">
             <input
               ref={input}
@@ -311,16 +351,34 @@ export function OneBox({
               )}
             </span>
           </div>
-          {/* The "/" hint, from 768 px where a pointer can hover. */}
-          <kbd
-            aria-hidden="true"
-            className={cx(
-              "mr-2 hidden shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted [@media(hover:none)]:hidden",
-              !focused && value.length === 0 && "md:inline",
-            )}
-          >
-            /
-          </kbd>
+          {/* The control at the row's end keeps its place and changes with the text (ticket 127). At rest, the "/" hint,
+              from 768 px where a pointer can hover, 12 px from the box's edge. Once the box holds text, the Enter
+              button: 40 by 40, outlined in primary and never filled, since a page keeps one solid button, named for the
+              option Enter will choose, which it shows as its tooltip. A press on it does what Enter does and keeps
+              focus in the field. */}
+          {typed ? (
+            <button
+              type="button"
+              data-enter-button
+              aria-label={enter}
+              title={enter}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onEnter?.()}
+              className="flex size-10 shrink-0 items-center justify-center rounded-sm text-primary inset-ring inset-ring-primary transition-paint duration-150 hover:bg-tint"
+            >
+              <CornerDownLeft aria-hidden="true" className="size-4" />
+            </button>
+          ) : (
+            <kbd
+              aria-hidden="true"
+              className={cx(
+                "mr-2 hidden shrink-0 rounded-sm border border-line-strong px-1 font-mono text-caption text-ink-muted lg:mr-1 [@media(hover:none)]:hidden",
+                !focused && value.length === 0 && "md:inline",
+              )}
+            >
+              /
+            </kbd>
+          )}
         </div>
       </div>
       {/* A mode's help line describes the box whether or not the list shows. */}
@@ -334,7 +392,8 @@ export function OneBox({
       {(showHint || showList || showNotes) && (
         <div
           data-box-popup
-          className="absolute inset-x-0 bottom-full z-40 mb-1 max-h-[calc(100dvh-var(--bar-height)-96px)] overflow-y-auto overscroll-contain rounded-md border border-line bg-surface py-1 shadow-popover"
+          // While open it is the bar's upper half, 8 px above it, so it shares the bar's shadow-float (ticket 127).
+          className="absolute inset-x-0 bottom-full z-40 mb-2 max-h-[calc(100dvh-var(--bar-height)-96px)] overflow-y-auto overscroll-contain rounded-md border border-line bg-surface pt-1 pb-1 shadow-float md:can-hover:pb-0"
           // A click on an option keeps focus in the box, so the list stays a list of what Enter will do.
           onMouseDown={(event) => event.preventDefault()}
         >
@@ -369,6 +428,24 @@ export function OneBox({
               ))}
             </div>
           )}
+          {/* The foot strip names the keys in Key hints, so the list teaches itself (ticket 127, from incident.io's
+              palette): on page with a 1 px line over it, held to the list's foot as it scrolls. It shows where Key hints
+              show, from 768 px on a device that can hover, and is aria-hidden, since the combobox names its keys. */}
+          <div
+            data-box-keys
+            aria-hidden="true"
+            className="sticky bottom-0 mt-1 hidden flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-page px-3 py-2 text-caption text-ink-muted md:can-hover:flex"
+          >
+            <span>
+              <Fill template={copy.box.keys.choose} slots={{ enter: <KeyHint>{copy.box.enter}</KeyHint> }} />
+            </span>
+            <span>
+              <Fill template={copy.box.keys.move} slots={{ up: <KeyHint>{copy.box.keys.up}</KeyHint>, down: <KeyHint>{copy.box.keys.down}</KeyHint> }} />
+            </span>
+            <span>
+              <Fill template={copy.box.keys.close} slots={{ escape: <KeyHint>{copy.box.keys.escape}</KeyHint> }} />
+            </span>
+          </div>
         </div>
       )}
       {children}

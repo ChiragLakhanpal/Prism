@@ -3,10 +3,11 @@
 // of the window (ticket 93). main holds at least the window's height less that bar, so a short page never pulls the
 // footer into the first screen (ticket 94).
 //
-// The ask bar (ticket 113, the user's request of October 27, 2026): the one box floats at the bottom center of the page
-// column, the column's last part before the footer, sticking at the window's foot. So it centers in the page column,
-// narrows with it when the evidence drawer opens and never covers the drawer, and at the end of a page it sits above
-// the footer's disclaimer instead of over it. It comes after the page's content in the Tab order, and its form is its
+// The ask bar (ticket 113, the user's request of October 27, 2026): the one box floats at the bottom of the page column,
+// the column's last part before the footer, sticking at the window's foot. So it never covers the evidence drawer, and
+// at the end of a page it sits above the footer's disclaimer instead of over it. From a frame of 75rem its edges sit on
+// the grid, the work's columns on a workspace page and columns 3 to 10 on a wide page (app.css; ticket 127); below
+// that it centers in the page column. It comes after the page's content in the Tab order, and its form is its
 // own search landmark. It is marked as a part that sticks at the foot, so the frame's one hook counts it in the page's
 // bottom scroll padding, and it floats above a page's own foot bar, such as the draft bar (lib/sticky.ts).
 //

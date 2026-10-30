@@ -513,6 +513,10 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
       view: "staff",
     },
   ]);
+  // The scan checks the card's targets where they rest, not where a click left the page scrolled: the taller box of
+  // ticket 127 grew the bottom scroll padding, so the last click left the card's first link partly under the sticky
+  // navy bar, which axe counts against its target size.
+  await card.evaluate((element) => element.scrollIntoView({ block: "center" }));
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
 
   // Going back to Strata's choice that fails to save keeps the choice and says so to a screen reader too.

@@ -106,22 +106,24 @@ test("below 360 px the Menu button hides its word from sight and keeps its name,
   expect(await menu.locator("span").evaluate((el) => el.getBoundingClientRect().width)).toBeLessThanOrEqual(1);
 });
 
-// Ticket 113: the box floats at the page column's foot, centered in it, 640 px wide and 16 px above the window's bottom
-// edge, on surface with 4 px corners; the stamp sits at the sidebar's foot. The gallery draws the sidebar open here, so
-// the page column is the window less 224 px. Off the navy bar, its focus ring is focus.
-test("the box floats centered at the page column's foot, the stamp sits at the sidebar's foot, and / focuses the box", async ({ page }) => {
+// Ticket 113: the box floats at the page column's foot, 16 px above the window's bottom edge, on surface with 4 px
+// corners; the stamp sits at the sidebar's foot. The gallery draws the sidebar open here, so the page column is the
+// window less 224 px: 1,216 px, with 1,136 px of content in 12 columns of 65.33 px and gutters of 32 px. The gallery's
+// page is a wide page, so the box spans columns 3 to 10 (ticket 127). Off the navy bar, its focus ring is focus.
+test("the box floats on columns 3 to 10 at the page column's foot, the stamp sits at the sidebar's foot, and / focuses the box", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/navigation?sidebar=open");
 
   const box = page.locator("[data-box-slot] form > [data-focus-ring]");
-  expect(Object.values((await box.boundingBox())!)).toEqual([224 + (1440 - 224 - 640) / 2, 900 - 16 - 40, 640, 40]);
+  const at = (await box.boundingBox())!;
+  expect([Math.round(at.x), Math.round(at.x + at.width), Math.round(at.y + at.height)]).toEqual([459, 1205, 900 - 16]);
   expect(await box.evaluate((el) => [getComputedStyle(el).backgroundColor, getComputedStyle(el).borderRadius])).toEqual(["rgb(255, 255, 255)", "4px"]);
   await expect(page.locator("[data-box-slot] [data-stamp]")).toHaveCount(0);
   await expect(page.locator("[data-sidebar] [data-stamp] a")).toHaveText("Data updated Oct 21");
 
   await page.locator("h1").click();
   await page.keyboard.press("/");
-  await expect(page.locator("[data-box-slot]").getByRole("combobox", { name: /Open a project/ })).toBeFocused();
+  await expect(page.locator("[data-box-slot]").getByRole("combobox", { name: "Ask Strata" })).toBeFocused();
   // While anything in it has focus, the box shows the focus ring around it.
   expect(await box.evaluate((el) => [getComputedStyle(el).outlineStyle, getComputedStyle(el).outlineColor])).toEqual(["solid", "rgb(182, 73, 12)"]);
 });
@@ -139,7 +141,8 @@ test("on a package page the box keeps one row from 1024 px, with the chip's refe
   await expect(page.locator("main h1")).toBeVisible();
   for (const width of [1440, 1280, 1024]) {
     await page.setViewportSize({ width, height: 900 });
-    expect((await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!.height, `${width} px`).toBe(40);
+    // One row of 56 px, the navy bar's height (ticket 127).
+    expect((await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!.height, `${width} px`).toBe(56);
     const chip = page.locator("[data-box-slot] [data-scope-chip]");
     await expect(chip, `${width} px`).toContainText(PACKAGE);
     expect((await chip.boundingBox())!.height, `${width} px: the reference on one line`).toBe(32);
@@ -224,7 +227,7 @@ test("at 1024 px the whole bar fits on one row with every view label, and a pack
       const at = (await pill.boundingBox())!;
       const box = (await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!;
       expect(Math.round(1024 - (at.x + at.width)), named).toBe(24);
-      expect(box.height, `${named}: the box keeps one row`).toBe(40);
+      expect(box.height, `${named}: the box keeps one row`).toBe(56);
       expect(await page.locator("[data-bar-row]").evaluate((el) => el.scrollWidth <= el.clientWidth), named).toBe(true);
       expect((await page.locator("[data-nav-bar]").boundingBox())!.height, named).toBe(56);
       expect(await page.evaluate(() => document.documentElement.scrollWidth), named).toBeLessThanOrEqual(1024);

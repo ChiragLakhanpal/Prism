@@ -81,12 +81,12 @@ test("one banner holds the view switch and no box, section link or stamp; the bo
 
 // Ticket 113 (DESIGN.md section 5, Top bar and Ask bar): the bar is one 56 px navy row at every width, the Menu button
 // below 1024 px, the logo, the wordmark and the view switch from 768 px, 24 px from the right edge from 1024 px, with no
-// box. The box floats centered in the page column, at most 640 px wide and the window's margin from each side below
-// that, its bottom 16 px above the window's bottom edge, on surface with a 1 px line-strong edge, 4 px corners and the
-// popover shadow. From 1024 px the bar sticks; below, it scrolls away, and the box stays at the window's foot.
-const LINE_STRONG_EDGE = "rgb(88, 110, 132) 0px 0px 0px 1px inset";
-const POPOVER_SHADOW = "rgba(160, 158, 143, 0.25) 0px 5px 25px 0px";
-test("the bar is one 56 px navy row with no box at every width, and the box floats centered at the page column's foot", async ({ page }) => {
+// box. The box floats at the page column's foot, its bottom 16 px above the window's bottom edge, on surface with
+// 4 px corners; ticket 127 gave it a 1 px primary edge and shadow-float, the two navy-tinted shadows DESIGN.md's
+// Elevation row writes. From 1024 px the bar sticks; below, it scrolls away, and the box stays at the window's foot.
+const PRIMARY_EDGE = "rgb(0, 67, 112) 0px 0px 0px 1px inset";
+const FLOAT_SHADOW = ["rgba(0, 34, 68, 0.12) 0px 1px 2px 0px", "rgba(0, 34, 68, 0.16) 0px 8px 24px 0px"];
+test("the bar is one 56 px navy row with no box at every width, and the box floats at the page column's foot", async ({ page }) => {
   await mockShell(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/");
@@ -108,10 +108,8 @@ test("the bar is one 56 px navy row with no box at every width, and the box floa
     await expect(pill, `${width} px`).toBeVisible({ visible: width >= 768 });
     if (width >= 1024) expect(Math.round(width - ((await pill.boundingBox())!.x + (await pill.boundingBox())!.width)), `${width} px`).toBe(24);
 
+    // Where the box sits across the page is ticket 127's, tested on the grid below.
     const box = await at("[data-box-slot] form > [data-focus-ring]");
-    const column = await at("[data-page-column]");
-    expect(Math.round(box.width), `${width} px: the box's width`).toBe(width >= 1024 ? 640 : width - 32);
-    expect(Math.abs(box.x + box.width / 2 - (column.x + column.width / 2)), `${width} px: centered in the page column`).toBeLessThanOrEqual(0.5);
     expect(Math.round(height - (box.y + box.height)), `${width} px: 16 px above the window's bottom edge`).toBe(16);
     expect(
       await page.locator("[data-box-slot] form > [data-focus-ring]").evaluate((el) => {
@@ -121,7 +119,7 @@ test("the bar is one 56 px navy row with no box at every width, and the box floa
         return [style.backgroundColor, style.borderRadius, shadows];
       }),
       `${width} px`,
-    ).toEqual(["rgb(255, 255, 255)", "4px", [LINE_STRONG_EDGE, POPOVER_SHADOW]]);
+    ).toEqual(["rgb(255, 255, 255)", "4px", [PRIMARY_EDGE, ...FLOAT_SHADOW]]);
   }
 
   // From 1024 px the bar sticks: scrolled down, it stays at the top of the window, and the box at its foot.
@@ -130,13 +128,47 @@ test("the bar is one 56 px navy row with no box at every width, and the box floa
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
   expect((await at("[data-nav-bar]")).y).toBe(0);
-  expect(Math.round(900 - ((await at("[data-box-slot] form")).y + 40))).toBe(16);
-  // Below 1024 px the bar scrolls away with the page, so a phone keeps its screen for the page.
+  expect(Math.round(900 - ((await at("[data-box-slot] form")).y + 56))).toBe(16);
+  // Below 1024 px the bar scrolls away with the page, so a phone keeps its screen for the page. Home's box is one 48 px
+  // row there (ticket 127).
   await page.setViewportSize({ width: 800, height: 900 });
   await page.evaluate(() => window.scrollTo(0, 600));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(600);
   expect((await at("[data-nav-bar]")).y).toBeLessThan(0);
-  expect(Math.round(900 - ((await at("[data-box-slot] form")).y + 40))).toBe(16);
+  expect(Math.round(900 - ((await at("[data-box-slot] form")).y + 48))).toBe(16);
+});
+
+// Ticket 127 (the design lead's Option A of October 29, 2026, refined after the Mobbin pass): from a frame of 75rem the
+// box sits on the grid. On a workspace page it spans the work's columns 1 to 7, so it centers over the work and the draft
+// bar; on a wide page it spans columns 3 to 10. At 1024 px and below it keeps its place: 640 px centered, or the window
+// less its margins. The edges are the lead's measures of the work and the grid (x 104 to 847 and x 325 to 1,179 at
+// 1440 px, x 104 to 753 at 1280 px, x 224 to 864 at 1024 px); 1280 px's wide columns follow from the same grid: 1,136 px
+// of content, 12 columns of 65.33 px and gutters of 32 px.
+const PACKAGE_127 = "KE-NWWDA-541055-CW-RFB";
+const GRID_EDGES: Record<"work" | "wide", Record<number, [number, number]>> = {
+  work: { 1440: [104, 847], 1280: [104, 753], 1024: [224, 864], 390: [16, 374] },
+  wide: { 1440: [325, 1179], 1280: [299, 1045], 1024: [224, 864], 390: [16, 374] },
+};
+test("the box's edges sit on the work's columns on a workspace page and on columns 3 to 10 on a wide page, and keep their place at 1024 and 390 px", async ({ page }) => {
+  await mockApi(page, {
+    ...(await hubApi()),
+    [`/api/packages/${PACKAGE_127}`]: { body: await recorded("package-ke-nwwda-541055.json") },
+    [`/api/packages/${PACKAGE_127}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
+  });
+  for (const [kind, path] of [["work", `/packages/${PACKAGE_127}`], ["wide", "/projects/P130164"]] as const) {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(path);
+    await expect(page.locator("main h1")).toBeVisible();
+    for (const [width, height] of [[1440, 900], [1280, 800], [1024, 768], [390, 844]] as const) {
+      await page.setViewportSize({ width, height });
+      const box = (await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!;
+      expect([Math.round(box.x), Math.round(box.x + box.width)], `${kind} page at ${width} px`).toEqual(GRID_EDGES[kind][width]);
+      if (kind === "work" && width >= 1280) {
+        const work = (await page.locator("[data-workspace-work]").first().boundingBox())!;
+        expect(Math.abs(box.x - work.x) + Math.abs(box.width - work.width), `${width} px: the box on the work's edges`).toBeLessThanOrEqual(0.5);
+      }
+    }
+  }
 });
 
 // Ticket 93 (DESIGN.md section 10): the focused skip link shows below the bar, over the page, so it covers neither the
@@ -889,13 +921,19 @@ for (const width of [1440, 1024]) {
       await expect(drawer).toBeVisible();
       await expect(h1).toBeVisible();
       const beside = (await h1.boundingBox())!.x;
-      // Ticket 113: the box centers in the page column the drawer narrowed, and covers no part of the drawer.
+      // Ticket 113: the box covers no part of the drawer. On a wide page it centers in the page column the drawer
+      // narrowed; on a draft, a workspace page, it keeps the work's columns, as the work does (ticket 127).
       if (width === 1440) {
         const box = (await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!;
         const column = (await page.locator("[data-page-column]").boundingBox())!;
         const pane = (await drawer.boundingBox())!;
         expect(column.width, `${name}: the narrowed page column`).toBeLessThan(1440 - 64);
-        expect(Math.abs(box.x + box.width / 2 - (column.x + column.width / 2)), `${name}: the box centered`).toBeLessThanOrEqual(0.5);
+        if (name === "a draft") {
+          const work = (await page.locator("[data-document-column]").boundingBox())!;
+          expect(Math.abs(box.x - work.x) + Math.abs(box.width - work.width), `${name}: the box on the work's columns`).toBeLessThanOrEqual(0.5);
+        } else {
+          expect(Math.abs(box.x + box.width / 2 - (column.x + column.width / 2)), `${name}: the box centered`).toBeLessThanOrEqual(0.5);
+        }
         expect(box.x + box.width, `${name}: the box clear of the drawer`).toBeLessThanOrEqual(pane.x);
       }
       await drawer.getByRole("button", { name: /^Close/ }).click();
