@@ -42,3 +42,4 @@ Read first: `src/strata/server/timeline.py` (the records lane, `CONTRACT_SOURCES
   - Decisions parked for the user: the builder, the reviewer and the verifier parked none, and no builder report reached me with any. The task named `docs/agents/areas/server.md` as the area brief, but no such file exists; the reviewer used CLAUDE.md, DESIGN.md, GLOSSARY.md, `docs/agents/areas/app.md` and the unslop rules.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. The main checkout was clean before the merge, and no other merge ran in it while mine was in progress.
   - Unblocks: none. No ticket lists 138 under "Blocked by".
+- October 30, 2026, orchestrator (00:31 PDT): the App redeploy ran from de8e6a06 (the catch-up block "Tickets 127, 138, 133, 136 and 134, the App redeploy ran"); the page's check by eye is the owner's.
