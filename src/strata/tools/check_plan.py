@@ -60,6 +60,7 @@ from functools import cache
 from importlib import resources
 
 from strata.config import load_views
+from strata.lakehouse.clean import Agencies, agency_id
 from strata.reader.repair import AS_READ as REFERENCE_AS_READ
 from strata.tools.registry import Call
 
@@ -73,11 +74,6 @@ CENTS, WHOLE = Decimal("0.01"), Decimal("1")
 
 def _sql(name: str) -> str:
     return (resources.files("strata.tools") / "sql" / "check_plan" / name).read_text()
-
-
-def agency_id(name: str) -> str:
-    """An implementing agency's id in links: its name in lower case, with hyphens between words."""
-    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
 def implementing_agencies(text: str | None) -> list[str]:
@@ -204,27 +200,35 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
     # By date, so the latest is last even when an agency's name is spelled two ways.
     versions.sort(key=lambda version: (version["plan_date"], version["public_from"], version["document_id"]))
     public = [version for version in versions if version["public_from"] <= call.as_of]
-    wanted = asked.strip().lower()
-    mine = [v for v in versions if v["implementing_agency"].lower() == wanted or agency_id(v["implementing_agency"]) == wanted]
+    # The project's agencies by the one pairing rule (strata.lakehouse.clean; ticket 133), from its plans, newest
+    # public plan first, and then the agencies its record names, so a plan and the record that write one agency two
+    # ways are one agency, whose id is its newest public plan's spelling.
+    later = [version for version in reversed(versions) if version["public_from"] > call.as_of]
+    agencies = Agencies([version["implementing_agency"] for version in [*reversed(public), *later]] + record_agencies)
+    found = agencies.find(asked)
+    mine = [version for version in versions if found and found.holds(version["implementing_agency"])]
     if not mine:
-        # The latest public version of each agency, by its id, so an agency whose name is spelled two ways is listed
-        # once, as its latest plan spells it.
-        agencies = {agency_id(version["implementing_agency"]): version for version in public}
-        record = [name for name in record_agencies if name.lower() == wanted or agency_id(name) == wanted]
+        # The latest public version of each agency, so an agency whose name is written two ways is listed once, as
+        # its latest plan spells it.
+        listed = {}
+        for agency in agencies:
+            its = [version for version in public if agency.holds(version["implementing_agency"])]
+            if its:
+                listed[agency.agency_id] = its[-1]
         return None, {"reason": "no_plan_from_agency", "implementing_agency": asked,
-                      "agency_name": record[0] if record else None,
+                      "agency_name": found.name if found else None,
                       "agencies": [{"implementing_agency": version["implementing_agency"], "agency_id": key,
                                     "latest_plan_date": _iso(version["plan_date"])}
-                                   for key, version in sorted(agencies.items())]}
+                                   for key, version in sorted(listed.items())]}
     mine_public = [version for version in mine if version["public_from"] <= call.as_of]
     latest = mine_public[-1] if mine_public else None
     name = (latest or mine[-1])["implementing_agency"]  # as its latest plan spells it
-    agency = {"implementing_agency": name, "agency_id": agency_id(name),
+    agency = {"implementing_agency": name, "agency_id": found.agency_id,
               "latest_plan_date": _iso(latest["plan_date"]) if latest else None}
     if plan_date is None:
         if latest is None:
             return None, {"reason": "no_plan_as_of", **agency}
-        return {**latest, "is_latest": True}, None
+        return {**latest, "is_latest": True, "agency_id": found.agency_id}, None
     named = [version for version in mine if version["plan_date"] == plan_date]
     if not named:
         return None, {"reason": "version_not_found", "plan_date": _iso(plan_date), **agency}
@@ -234,17 +238,18 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
     if not named_public:
         return None, {"reason": "version_not_public", "plan_date": _iso(plan_date),
                       "public_from": _iso(named[0]["public_from"]), **agency}
-    return {**named_public[-1], "is_latest": named_public[-1] is latest}, None
+    return {**named_public[-1], "is_latest": named_public[-1] is latest, "agency_id": found.agency_id}, None
 
 
 def _plan(version: dict, project_id: str) -> dict:
+    """The plan a result names. Its agency_id is the agency's, which _choose gives with the version."""
     return {
         "evidence_id": f"strata.silver.plan_versions:{version['document_id']}",
         "public_from": _iso(version["public_from"]),
         "document_id": version["document_id"],
         "project_id": project_id,
         "implementing_agency": version["implementing_agency"],
-        "agency_id": agency_id(version["implementing_agency"]),
+        "agency_id": version["agency_id"],
         "plan_date": _iso(version["plan_date"]),
         "disclosed_on": _iso(version["disclosed_on"]),
         "is_latest": version["is_latest"],
@@ -595,9 +600,8 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
         # The same answer for an upload that does not exist, belongs to another team, or is of another project or
         # agency, so a call reveals nothing about another team's uploads.
         upload = call.uploads(upload_id) if call.uploads is not None else None
-        wanted = implementing_agency.strip().lower()
         if (upload is None or project is None or upload["project_id"] != project_id
-                or wanted not in (upload["implementing_agency"].lower(), agency_id(upload["implementing_agency"]))):
+                or Agencies([upload["implementing_agency"]]).find(implementing_agency) is None):
             return {**empty, "project": None, "abstention": {"reason": "unknown_upload"}}
         return check_upload(call, upload, project, limits)
     if project is None:

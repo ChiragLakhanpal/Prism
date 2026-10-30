@@ -2201,6 +2201,9 @@ export const copy = {
     source: "World Bank documents and reports API, Procurement Plans listed for this project, through {date}.",
     sourceUndated: "World Bank documents and reports API, Procurement Plans listed for this project.",
     agencyEmpty: "I don't have a Procurement Plan from this agency yet.",
+    // An agency the project's plans and record write more than one way (ticket 133): its heading shows the longest
+    // name and opens a window with the others.
+    alsoWrittenAs: (names: string) => `Also written as ${names}.`,
     // Two or more agencies with no plan share one block after the agencies with plans.
     otherAgencies: "Other implementing agencies",
     othersEmpty: "I don't have a Procurement Plan from these agencies yet:",

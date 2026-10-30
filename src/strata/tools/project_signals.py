@@ -46,6 +46,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
 from strata.config import load_project_page
+from strata.lakehouse.clean import agency_id
 from strata.tools import check_plan as plan_check
 from strata.tools.registry import Call
 from strata.tools.withheld import WITHHELD, status_as_of, withheld
@@ -216,7 +217,7 @@ def _plan_checks(call: Call, project: dict, limits: Limits) -> tuple[dict[str, l
         return None, NOT_RUN["plans"], []
     since = months_before(call.as_of, limits.plan_months)
     recent = [row for row in latest if _date(row["plan_date"]) >= since]
-    plans = [{"implementing_agency": row["implementing_agency"], "agency_id": plan_check.agency_id(row["implementing_agency"]),
+    plans = [{"implementing_agency": row["implementing_agency"], "agency_id": agency_id(row["implementing_agency"]),
               "document_id": row["document_id"], "plan_date": _iso(row["plan_date"]),
               "in_scope": _date(row["plan_date"]) >= since} for row in latest]
     if not recent:

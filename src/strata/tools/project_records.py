@@ -34,6 +34,7 @@ from decimal import ROUND_DOWN, Decimal
 from importlib import resources
 
 from strata.config import load_project_page, load_sources
+from strata.lakehouse.clean import agency_id
 from strata.tools import check_plan as plan_check
 from strata.tools import project_signals as signals
 from strata.tools.registry import Call
@@ -104,7 +105,7 @@ def _plans(call: Call, project: dict, record_agencies: list[str]) -> tuple[list[
                             plan["plan_date"], plan["implementing_agency"],
                             [("implementing_agency", plan["implementing_agency"], "text"),
                              # The agency's id in links, for the page's link to this version's plan check.
-                             ("agency_id", plan_check.agency_id(plan["implementing_agency"]), "key"),
+                             ("agency_id", agency_id(plan["implementing_agency"]), "key"),
                              ("plan_date", plan["plan_date"], "date"), ("activities", counts["activities"], "count"),
                              ("needs_a_look", counts["needs_a_look"], "count"), ("watch", counts["watch"], "count"),
                              ("counts_missing", True if missing else None, "flag")]))

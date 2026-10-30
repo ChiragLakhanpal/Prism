@@ -45,7 +45,8 @@ from strata.server import projects
 from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
 from strata.tools import registry
-from strata.tools.check_plan import agency_id, implementing_agencies
+from strata.lakehouse.clean import agency_id
+from strata.tools.check_plan import implementing_agencies
 from strata.uploads.store import NewUpload, Saved, UploadStore
 from strata.uploads.store import _sql as upload_sql
 

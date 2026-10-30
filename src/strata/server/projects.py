@@ -36,7 +36,8 @@ from pathlib import Path
 
 from strata.lakehouse.engine import Engine, read_ahead
 from strata.server import changes
-from strata.tools.check_plan import agency_id, implementing_agencies, read_baseline, record_is_current
+from strata.lakehouse.clean import Agencies
+from strata.tools.check_plan import implementing_agencies, read_baseline, record_is_current
 from strata.tools.check_plan import baseline_reads as read_baseline_reads
 
 SQL = Path(__file__).resolve().parent / "sql" / "projects"
@@ -127,14 +128,23 @@ def _changes(engine: Engine, all_versions: list[dict], document_id: str, as_of: 
 
 def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list[str], as_of: dt.date, view: str,
               shown: int) -> list[dict]:
-    """Each agency's versions, newest first, then the agencies the record names with no plan."""
+    """Each agency's versions, newest first, then the agencies the record names with no plan. A plan and the record
+    that write one agency two ways are one agency (strata.lakehouse.clean's rule; ticket 133), headed by its longest
+    name, with its other names in also_written_as for the heading's window. Its id is its latest plan's spelling."""
+    # Newest first, so each agency's first name, and so its id, is its latest plan's spelling.
+    grouped = Agencies([row["implementing_agency"] for row in versions] + named)
+
+    def heading(name: str) -> dict:
+        found = grouped.find(name)
+        return {"implementing_agency": found.name, "agency_id": found.agency_id,
+                "also_written_as": list(found.also_written_as)}
+
     agencies: dict[str, dict] = {}
-    for row in versions:  # newest first, so the first spelling of a name is its latest plan's
+    for row in versions:
         if not row["implementing_agency"]:
             continue
-        key = agency_id(row["implementing_agency"])
-        agency = agencies.setdefault(key, {"implementing_agency": row["implementing_agency"], "agency_id": key,
-                                           "versions": []})
+        head = heading(row["implementing_agency"])
+        agency = agencies.setdefault(head["agency_id"], {**head, "versions": []})
         read = row["parse_reason"] is not None
         agency["versions"].append({
             "document_id": row["document_id"], "plan_date": _iso(row["plan_date"]),
@@ -155,8 +165,8 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
             version["shown"] = index < shown or version["is_baseline"]
         agency["changes"] = _changes(engine, all_versions, agency["versions"][0]["document_id"], as_of)
     for name in named:
-        agencies.setdefault(agency_id(name), {"implementing_agency": name, "agency_id": agency_id(name), "versions": [],
-                                              "baseline": None, "changes": None})
+        head = heading(name)
+        agencies.setdefault(head["agency_id"], {**head, "versions": [], "baseline": None, "changes": None})
     for agency in agencies.values():
         agency["version_count"] = len(agency["versions"])
         agency["shown_count"] = sum(1 for version in agency["versions"] if version["shown"])
@@ -172,13 +182,21 @@ def packages_reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
 def packages(engine: Engine, project_id: str, as_of: dt.date, query: str = "", page: int = 1, size: int = 20) -> dict:
     """Every activity in each agency's latest read plan, a page at a time, found by part of its STEP
     reference or its description. A description keeps each place the PDF cell wrapped as a space
-    ("Exploratory Bo reholes"), so the search compares both with every space taken out."""
+    ("Exploratory Bo reholes"), so the search compares both with every space taken out. An agency whose plans write
+    its name two ways lists only its latest plan's rows, under the id the Procurement tab gives it."""
+    found = _rows(engine, "packages", project_id=project_id, as_of=as_of)  # the newest plan first
+    grouped = Agencies(row["implementing_agency"] for row in found)
+    latest: dict[str, tuple] = {}
     rows = []
-    for row in _rows(engine, "packages", project_id=project_id, as_of=as_of):
+    for row in found:
+        agency = grouped.find(row["implementing_agency"])
+        plan = (row["implementing_agency"], row["plan_date"])
+        if latest.setdefault(agency.agency_id, plan) != plan:
+            continue  # an earlier plan that wrote the agency's name another way
         amount = row["estimated_amount_usd"]
         rows.append({"activity_reference_no": row["activity_reference_no"], "description": row["description"],
                      "implementing_agency": row["implementing_agency"],
-                     "agency_id": agency_id(row["implementing_agency"]), "plan_date": _iso(row["plan_date"]),
+                     "agency_id": agency.agency_id, "plan_date": _iso(row["plan_date"]),
                      "method": row["method"], "market_approach": row["market_approach"],
                      "estimated_amount_usd": None if amount is None else str(Decimal(str(amount)).quantize(CENTS)),
                      "process_status": row["process_status"]})

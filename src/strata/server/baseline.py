@@ -25,7 +25,8 @@ from pathlib import Path
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
 from strata.server.summary import iso_day, record_event
-from strata.tools.check_plan import agency_id, read_baseline
+from strata.lakehouse.clean import Agencies
+from strata.tools.check_plan import read_baseline
 
 SQL = Path(__file__).resolve().parent / "sql" / "baseline"
 TABLE = "strata.ops.plan_baselines"  # before the colon in a baseline's evidence id
@@ -52,8 +53,10 @@ def save(engine: Engine, project_id: str, agency: str, plan_date: dt.date, viewe
     """Save the agency's version of this date as the baseline, in place of any other, and return the
     baseline as check_plan gives it; or None when the agency has no read version of that date."""
     today = now.astimezone(dt.UTC).date()
-    found = [row for row in _rows(engine, "version", project_id=project_id, plan_date=plan_date, today=today)
-             if row["implementing_agency"] and agency_id(row["implementing_agency"]) == agency and row["activities"]]
+    dated = _rows(engine, "version", project_id=project_id, plan_date=plan_date, today=today)
+    # The agency by the one pairing rule (strata.lakehouse.clean; ticket 133), so the id of any of its names finds it.
+    asked = Agencies(row["implementing_agency"] for row in dated).find(agency)
+    found = [row for row in dated if asked and asked.holds(row["implementing_agency"]) and row["activities"]]
     if not found:
         return None
     version = found[-1]

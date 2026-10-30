@@ -1,0 +1,101 @@
+{
+  "as_of": "2026-10-23",
+  "query": "",
+  "total": 8,
+  "page": 1,
+  "pages": 1,
+  "page_size": 20,
+  "first": 1,
+  "last": 8,
+  "rows": [
+    {
+      "activity_reference_no": "KE-CWSB-232660-CW-RFB",
+      "description": "Construction of 30km Second Baricho Kakuyuni Pipeline",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "10000000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-233052-CW-RFB",
+      "description": "Construction of Baricho Emergency Protection Works",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "14000000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-506334-CW-DIR",
+      "description": "Baricho Plant Solarization",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Direct Selection",
+      "market_approach": "Direct - National",
+      "estimated_amount_usd": "4900000.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-567630-CW-DIR",
+      "description": "Solar System for the Ukunda Water Supply",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Direct Selection",
+      "market_approach": "Direct - National",
+      "estimated_amount_usd": "2600000.00",
+      "process_status": "Pending Implementation"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-565568-GO-RFQ",
+      "description": "Supply and installation of Additional Pumps at Baricho",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "116000.00",
+      "process_status": "Under Implementation"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-224323-CS-QCBS",
+      "description": "Consultancy Services for Detailed ESIA & RAP Studies for the Mwache Transmission Pipelines",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "500000.00",
+      "process_status": "Completed"
+    },
+    {
+      "activity_reference_no": "KE-MOWI-30792-CS-QCBS",
+      "description": "Construction Supervision for Program for the Improvement of Water Services in Mombasa West and North (Nyali) Mainland",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "875500.00",
+      "process_status": "Signed"
+    },
+    {
+      "activity_reference_no": "KE-CWSB-466875-CS-INDV",
+      "description": "Project Communication Specialist",
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "method": "Individual Consultant Selection",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "70000.00",
+      "process_status": "Signed"
+    }
+  ],
+  "read_through": "2026-10-23"
+}

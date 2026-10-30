@@ -31,7 +31,7 @@ from functools import cache
 from pathlib import Path
 
 from strata.lakehouse.engine import Engine
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import Agencies, agency_id
 
 SQL = Path(__file__).resolve().parent / "sql" / "changes"
 KINDS = ("added", "dropped", "redated", "reestimated")
@@ -73,9 +73,19 @@ def versions(engine: Engine, project_id: str) -> list[dict]:
             for row in _rows(engine, "versions", project_id=project_id)]
 
 
-def _version(row: dict) -> dict:
+def agencies(all_versions: list[dict], as_of: dt.date) -> Agencies:
+    """The project's agencies by the one pairing rule (strata.lakehouse.clean; ticket 133), newest public plan first
+    and then the plans public only later, as check_plan orders them, so each agency has check_plan's id."""
+    public = [row for row in all_versions if row["public_from"] <= as_of]
+    later = [row for row in all_versions if row["public_from"] > as_of]
+    return Agencies(row["implementing_agency"] for row in [*reversed(public), *reversed(later)])
+
+
+def _version(row: dict, grouped: Agencies) -> dict:
+    found = grouped.find(row["implementing_agency"] or "")
     return {"document_id": row["document_id"], "plan_date": _iso(row["plan_date"]),
-            "implementing_agency": row["implementing_agency"], "agency_id": agency_id(row["implementing_agency"])}
+            "implementing_agency": row["implementing_agency"],
+            "agency_id": found.agency_id if found else agency_id(row["implementing_agency"] or "")}
 
 
 def _activity(row: dict) -> dict:
@@ -133,10 +143,11 @@ def compare(engine: Engine, all_versions: list[dict], version: dict, as_of: dt.d
     counts, as the Procurement tab's sentence needs."""
     by_id = {row["document_id"]: row for row in all_versions}
     before = by_id.get(version["previous_document_id"] or "")
-    answer = {"plan": _version(version), "previous": None, "counts": None, **{kind: [] for kind in KINDS}}
+    grouped = agencies(all_versions, as_of)
+    answer = {"plan": _version(version, grouped), "previous": None, "counts": None, **{kind: [] for kind in KINDS}}
     if before is None or before["public_from"] > as_of:
         return {"state": "earliest", **answer}
-    answer["previous"] = _version(before)
+    answer["previous"] = _version(before, grouped)
     if not before["activities"]:
         return {"state": "previous_not_read", **answer}
 
@@ -166,7 +177,8 @@ def compare(engine: Engine, all_versions: list[dict], version: dict, as_of: dt.d
 def plan_changes(engine: Engine, project_id: str, agency: str, plan_date: dt.date, as_of: dt.date) -> dict | None:
     """What changed in one agency's dated version, or None when it has no such version public by then."""
     all_versions = versions(engine, project_id)
-    mine = [row for row in all_versions if row["implementing_agency"] and agency_id(row["implementing_agency"]) == agency
+    found = agencies(all_versions, as_of).find(agency)
+    mine = [row for row in all_versions if found and found.holds(row["implementing_agency"])
             and row["plan_date"] == plan_date and row["public_from"] <= as_of]
     if not mine:
         return None
