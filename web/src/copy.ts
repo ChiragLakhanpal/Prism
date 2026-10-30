@@ -2761,6 +2761,36 @@ export const copy = {
       show: "Show the changes",
       hide: "Hide the changes",
     },
+    // "How I checked" (ticket 130, the design lead's Option W2): beside the finding from a 75rem page area, after the
+    // activities below it. Three facts, each ending with its source line: the method in one sentence, the comparison
+    // with the version before (copy.changes and the change line's sentences above), and the baseline.
+    howChecked: {
+      title: "How I checked",
+      method: "Method",
+      compared: "Compared with",
+      baseline: "Baseline",
+      methodSentence: "I checked every activity against {checks}, and I measure delay from the first published planned date.",
+      methodSentenceBaseline:
+        "I checked every activity against {checks}, and I measure delay from the first published planned date and from the baseline.",
+      // Short, so the panel beside the finding leaves the first marked row in a 1440 by 900 window's first screen.
+      methodSource: "The plan of {date} and the projects API record of {record}.",
+      methodSourcePlan: "The plan of {date}.",
+      // The version before, then copy.changes.lead's sentence and "See what changed", which opens that zone in place.
+      previous: "The plan of {prev_date}.",
+      seeChanges: "See what changed",
+      comparedSource: "The two plans, compared row by row on their STEP references.",
+      // The earliest plan, or a version before it I haven't read: the versions I have are the source.
+      versionsSource: "The plans of this agency that I have read, as of {date}.",
+      none: "No plan is saved as the baseline yet.",
+      thisPlan: "This plan, saved by {saved_by} on {saved_date}.",
+      another: "The plan of {baseline_date}, saved by {saved_by} on {saved_date}.",
+      // The implementing agency's view reads the baseline without its saver (ticket 40).
+      anotherUnnamed: "The plan of {baseline_date}, saved on {saved_date}.",
+      thisPlanUnnamed: "This plan, saved on {saved_date}.",
+      // The baseline row at the page's end holds its save and change controls (Baseline for delay).
+      baselineLink: "Go to Baseline for delay",
+      baselineSource: "Strata's saved baselines, as of {date}.",
+    },
     // The panel that holds the activities' table (ticket 100; DESIGN.md section 5, Plan check table).
     activitiesTitle: "Activities in this plan",
     // The count line's noun (copy.table.showingOf): "Showing 6 of 9 activities.", "Showing all nine activities.".

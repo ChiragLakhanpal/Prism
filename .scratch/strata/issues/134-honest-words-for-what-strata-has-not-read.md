@@ -33,3 +33,4 @@ Read first: `web/src/copy.ts` (the three keys), the Procurement tab's route in `
   **Decisions parked for the user**
 
   - None from the builder, the reviewer or the verifier.
+- October 30, 2026, orchestrator (00:31 PDT): the App redeploy ran from de8e6a06 (the catch-up block "Tickets 127, 138, 133, 136 and 134, the App redeploy ran"); the page's check by eye is the owner's.

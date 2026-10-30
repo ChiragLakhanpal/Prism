@@ -13,6 +13,7 @@ import summary from "../../../tests/fixtures/api/summary-p130164.json";
 import { useRef, useState, type ReactNode } from "react";
 import { BaselinePanel } from "../components/BaselinePanel";
 import { ChangeTables } from "../components/ChangeTables";
+import { ChangeLineError } from "../components/HowIChecked";
 import { ListSearch } from "../components/ListSearch";
 import { Pagination } from "../components/Pagination";
 import { AgencyLine, ProjectHeaderLine } from "../components/ProjectHeader";
@@ -21,7 +22,7 @@ import { copy } from "../copy";
 import { ApiError, type Baseline, type CheckPlanResult, type DocumentList, type PlanChanges, type ProjectPage, type SourcePageAnswer, type Summary } from "../lib/api";
 import { DocumentsList, DocumentsSkeleton } from "../pages/project/DocumentsTab";
 import { SummaryFacts, SummarySkeleton } from "../pages/project/SummaryTab";
-import { ChangeLineError, ChangesError } from "../pages/CheckPlanPage";
+import { ChangesError } from "../pages/CheckPlanPage";
 import { PageBar, Passages } from "../pages/SourcePage";
 import { galleryCopy } from "./copy";
 import type { GalleryPage } from "./pages";
@@ -252,7 +253,7 @@ export function hubPage(): GalleryPage {
         title: t.changesError,
         body: (
           <div className="flex flex-col gap-6">
-            <ChangeLineError />
+            <ChangeLineError className="mt-2 text-body text-ink" />
             <ChangesError error={CHANGES_DOWN} onRetry={() => undefined} attempt={0} />
           </div>
         ),

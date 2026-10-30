@@ -23,7 +23,7 @@ import { LoadError } from "../components/LoadError";
 import { PageAlert } from "../components/PageAlert";
 import { BaselinePanel, useBaselineView } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
-import { Num } from "../components/Num";
+import { HowIChecked } from "../components/HowIChecked";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonWords } from "../components/Skeleton";
@@ -117,20 +117,6 @@ function usePlanChanges(pid: string, agencyId: string, planDate: string | null, 
   };
 }
 
-// The change line when only the comparison failed: it says so and links the section below, which holds
-// the alert and Try again.
-export function ChangeLineError() {
-  const line = words.changes;
-  return (
-    <p className="mt-2 text-body text-ink" data-change-line>
-      {line.error}{" "}
-      <TextLink href="#changes" className="whitespace-nowrap">
-        {line.errorLink}
-      </TextLink>
-    </p>
-  );
-}
-
 // The change section when only the comparison failed: the error takes the zone body's place under its heading (the
 // 21 brief, section 5.4; DESIGN.md section 5, Task zone's error state), with the request's reference when the server
 // gave one.
@@ -154,24 +140,6 @@ export function ChangesError({
       error={<LoadError error={error} message={copy.changes.error} permission={copy.changes.error} onRetry={onRetry} retrying={false} attempt={attempt} />}
       marks={{ "data-changes": "error" }}
     />
-  );
-}
-
-// The change line under the finding, only when there is no change list to say it: the earliest plan, a version before
-// it that I haven't read, or a version with nothing changed. A version that changed has none, because the zone "What
-// changed since the plan of March 5, 2026" says it with its table and each changed row says so (ticket 126).
-function ChangeLine({ changes }: { changes: PlanChanges }) {
-  const line = words.changes;
-  const prev = changes.previous ? <Num date={changes.previous.plan_date} /> : null;
-  let text: ReactNode;
-  if (changes.state === "earliest") text = line.earliest;
-  else if (changes.state === "previous_not_read") text = <Fill template={line.prevUnread} slots={{ prev_date: prev }} />;
-  else if (!changed(changes.counts)) text = <Fill template={line.same} slots={{ prev_date: prev }} />;
-  else return null;
-  return (
-    <p className="mt-2 text-body text-ink" data-change-line>
-      {text}
-    </p>
   );
 }
 
@@ -327,8 +295,8 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
         />
         <PlanCheckSkeleton
           slow={load.status === "loading" && load.slow}
-          // A plan that changed has no change line (ticket 126), so the line holds no place while it loads.
-          afterNarration={changes ? <ChangeLine changes={changes} /> : planChanges.failed ? <ChangeLineError /> : null}
+          // The comparison is in "How I checked" since ticket 130, so no change line holds a place under the narration.
+          howChecked
         />
       </>
     );
@@ -372,7 +340,17 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           findingRef={finding}
           reveal={reveal}
           changed={changedRows(changes)}
-          afterMethod={changes ? <ChangeLine changes={changes} /> : planChanges.failed && <ChangeLineError />}
+          // Ticket 130: the method, the comparison with the version before and the baseline, each with its source,
+          // beside the finding; the change line that sat under the finding is its comparison now.
+          howChecked={
+            <HowIChecked
+              result={checked}
+              comparison={{ changes, failed: planChanges.failed }}
+              baselineView={baselineView}
+              baselineRow={baselineView !== "public" && !(asOf !== null && !checked.baseline)}
+              onSeeChanges={seeChanges}
+            />
+          }
           // After the activities: "What changed" as a closed row, then the baseline as a row with its action, which the
           // public view does not show (ticket 100; the shell redesign plan, 8.4).
           after={

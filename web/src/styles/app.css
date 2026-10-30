@@ -445,6 +445,13 @@
   [data-workspace]:has([data-side-slot][data-fold="head"]) [data-facts-line] {
     display: none;
   }
+  /* The part the side column holds under its panel (Workspace.tsx's sideSticky; ticket 130) sticks 24 px under the bar
+     for the rest of the page only while the window shows all of it, which Workspace.tsx measures and marks as
+     data-fits, so its foot and Source line are never held out of view; otherwise it scrolls with the page. */
+  [data-side-sticky][data-fits] {
+    position: sticky;
+    top: calc(var(--frame-top) + 1.5rem);
+  }
 }
 
 /* The ask bar on the grid (DESIGN.md section 5, Ask bar; ticket 127, the design lead's Option A of October 29, 2026).
