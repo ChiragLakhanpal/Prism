@@ -2,6 +2,7 @@
 // and Lessons > Judging. Every value comes from the server (src/strata/server/feedback.py); the browser counts,
 // rounds and decides nothing, and formats dates and joins words from the copy file only.
 import { ApiError, getJson, postJson } from "./api";
+import type { Actor } from "./lessons";
 import { createStore } from "./store";
 
 // ── The feedback row ─────────────────────────────────────────────────────
@@ -160,7 +161,8 @@ export type ReportGroup = {
   audit: { decided_on: string; agreeing: number | null } | null;
   reports: SentReport[];
   can: { decide: boolean; reopen: boolean; reason_code: string | null };
-  outcome: { outcome: DecidedReport["outcome"]; decided_on: string; reviewer_name: string | null; reason: string | null; agreeing: number | null } | null;
+  // actor: who decided, by the Lessons pages' one rule (ticket 140); none for a passage ranked lower by agreement.
+  outcome: { outcome: DecidedReport["outcome"]; decided_on: string; actor: Actor | null; reason: string | null; agreeing: number | null } | null;
   limits: { reason_max_chars: number };
 };
 

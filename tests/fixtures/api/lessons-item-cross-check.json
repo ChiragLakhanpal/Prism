@@ -170,9 +170,11 @@
     {
       "event": "recommended",
       "on": "2026-10-27",
-      "name": "Asha Raman",
-      "role": "accredited procurement specialist",
-      "region": "South Asia",
+      "actor": {
+        "who": "role",
+        "role": "accredited procurement specialist",
+        "region": "South Asia"
+      },
       "outcome": "add",
       "reason": "IEG wrote this lesson itself, in its review of the ICR.",
       "changes": []
@@ -180,9 +182,11 @@
     {
       "event": "decided",
       "on": "2026-10-27",
-      "name": "Omar Haddad",
-      "role": "lead procurement specialist",
-      "region": "South Asia",
+      "actor": {
+        "who": "role",
+        "role": "lead procurement specialist",
+        "region": "South Asia"
+      },
       "outcome": "add",
       "reason": "It is IEG's own lesson, and the ICR's paragraph 55 says the same.",
       "changes": [],

@@ -14,7 +14,7 @@ import { Fragment, type ReactNode } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { evidenceHref, openEvidence } from "../lib/evidence";
-import type { IegStatus, LessonEvidence, Segment } from "../lib/lessons";
+import type { Actor, IegStatus, LessonEvidence, Segment } from "../lib/lessons";
 import { Num } from "./Num";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
 
@@ -47,6 +47,19 @@ export function chipText(evidence: LessonEvidence): string {
 
 export function fillText(template: string, slots: Record<string, string | number>): string {
   return template.replace(/\{(\w+)\}/g, (slot, name: string) => (name in slots ? String(slots[name]) : slot));
+}
+
+// Who made an act, as the server's one rule names them (ticket 140): "You", "A lead procurement specialist for South
+// Asia", "An accredited procurement specialist for South Asia" or "A reviewer" to start a sentence, and "you", "a ...",
+// "an ..." or "a reviewer" inside one (inside). Every page under /lessons names an actor only through this.
+export function actorText(actor: Actor | null | undefined, inside = false): string {
+  const a = words.actor;
+  if (!actor || actor.who === "reviewer") return inside ? a.reviewerInside : a.reviewer;
+  if (actor.who === "you") return inside ? a.youInside : a.you;
+  const an = /^[aeiou]/i.test(actor.role);
+  const template = an ? (inside ? a.roleAnInside : a.roleAn) : inside ? a.roleInside : a.role;
+  const who = fillText(template, { role: actor.role });
+  return actor.region ? fillText(a.region, { who, region: actor.region }) : who;
 }
 
 export function SourceChip({ evidence, active = false, visited = false }: { evidence: LessonEvidence; active?: boolean; visited?: boolean }) {

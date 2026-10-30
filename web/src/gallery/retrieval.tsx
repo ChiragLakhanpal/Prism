@@ -32,6 +32,7 @@ import { SegmentedControl } from "../components/SegmentedControl";
 import { ToggleButton } from "../components/ToggleButton";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
+import type { Actor } from "../lib/lessons";
 import type { Feedback, JudgingList, JudgingQuery, MyReport, ReportGroup, ReportsQueue } from "../lib/retrieval";
 import { JudgingBody, JudgingDesk, JudgingQuerySkeleton, JudgingSkeleton } from "../pages/JudgingPages";
 import { ReportGroupSkeleton, ReportGroupView, ReportsBody, ReportsSkeleton } from "../pages/PassageReportsPages";
@@ -179,7 +180,7 @@ export function retrievalPage(): GalleryPage {
 
 const QUEUE = reportsQueue as unknown as ReportsQueue;
 const group = (body: unknown) => body as unknown as ReportGroup;
-const refused = (body: unknown) => (body as { body: { values: { name: string; time: string }; item: ReportGroup } }).body;
+const refused = (body: unknown) => (body as { body: { values: { actor: Actor | null; time: string }; item: ReportGroup } }).body;
 const LIST = judgingList as unknown as JudgingList;
 const QUERY = judgingQuery as unknown as JudgingQuery;
 const LOCKED = judgingLocked as unknown as JudgingQuery;
@@ -257,7 +258,7 @@ export function judgingPage(): GalleryPage {
               <ReportGroupView sample group={(reportSaved as unknown as { item: ReportGroup }).item} initial={{ saved: reportSaved as never }} />
             </Labeled>
             <Labeled label={s.reportStale}>
-              <ReportGroupView sample group={stale.item} initial={{ gaveWay: { kind: "stale", name: stale.values.name, time: stale.values.time, reason: s.staleReason } }} />
+              <ReportGroupView sample group={stale.item} initial={{ gaveWay: { kind: "stale", actor: stale.values.actor, time: stale.values.time, reason: s.staleReason } }} />
             </Labeled>
             <Labeled label={s.reportLoading}>
               <ReportGroupSkeleton />

@@ -1640,6 +1640,24 @@ class Roles:
         wanted = email.strip().lower()
         return next((person for person in self.people if person.email.lower() == wanted), None)
 
+    def actor(self, email: str | None, viewer: str | None, page: str, region: str | None = None) -> dict:
+        """How a reviewer page names the person who made an act (ticket 140), the one rule every reviewer page reads.
+        To that person it is {"who": "you"}. To anyone else it is the role of their group that opens the page and may
+        do the most, with the region they acted for, when the roles file lists them in such a group: {"who": "role",
+        "role": ..., "region": ...}. The region is the one the caller names when it is theirs, else their first, and
+        none when the caller names none, as on pages nobody reviews by region. Anyone else is {"who": "reviewer"}.
+        It never holds a name or an email."""
+        if email and viewer and email.strip().lower() == viewer.strip().lower():
+            return {"who": "you"}
+        person = self.person(email)
+        groups = [self.groups[key] for key in person.groups if page in self.groups[key].pages] if person else []
+        if not groups:
+            return {"who": "reviewer"}
+        where = None
+        if region:
+            where = region if region in person.regions else person.regions[0] if person.regions else None
+        return {"who": "role", "role": max(groups, key=lambda group: len(group.acts)).role, "region": where}
+
 
 def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
     """The roles file's teams, in the file's order, each with at least one workspace group, then its reviewer
