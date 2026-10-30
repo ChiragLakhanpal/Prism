@@ -90,8 +90,11 @@ const KINDS: Record<BadgeKind, Kind> = {
   "designed-not-built": { state: "neutral", Icon: DraftingCompass, dashed: false, text: copy.badge.designedNotBuilt, quiet: true },
 };
 
-export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {
-  const { state, Icon, dashed, text, quiet = false } = KINDS[kind];
+// text: a badge whose words carry a count from the payload, such as a disagreement's "14 reports disagree" (ticket
+// 136), in place of its kind's own words.
+export function StatusBadge({ kind, className, describedBy, text: words }: { kind: BadgeKind; className?: string; describedBy?: string; text?: string }) {
+  const { state, Icon, dashed, text: own, quiet = false } = KINDS[kind];
+  const text = words ?? own;
   const look = STATES[state];
   return (
     <span

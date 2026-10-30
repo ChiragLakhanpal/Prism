@@ -3966,7 +3966,8 @@
   },
   "disagreements": {
     "status": "ok",
-    "count": 0
+    "count": 0,
+    "pairs": 0
   },
   "records_disagree": [
     {
