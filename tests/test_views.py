@@ -270,8 +270,9 @@ def test_your_agencys_projects_lists_each_disclosed_plan_with_its_check(fixture_
 
     assert preview == officer
     assert preview["agency"]["name"] == "Northern Water Works Development Agency"
-    assert [(item["project_id"], item["plan"]["plan_date"], item["counts"]["needs_a_look"], item["counts"]["watch"])
-            for item in preview["projects"]] == [("P156634", "2026-10-09", 1, 2)]
+    # Ticket 132: one worth watching; the two the contract awards say were signed have moved on since the plan.
+    assert [(item["project_id"], item["plan"]["plan_date"], item["counts"]["needs_a_look"], item["counts"]["watch"],
+             item["counts"]["moved_on"]) for item in preview["projects"]] == [("P156634", "2026-10-09", 0, 1, 2)]
     assert (before["state"], before["projects"]) == ("none", [])
     assert (staff.status_code, public.status_code) == (404, 404)
 

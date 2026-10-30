@@ -297,11 +297,16 @@ export type SourcePageAnswer = {
 
 // GET /api/projects/{pid}/procurement/{agencyId}[/{version}]: check_plan's result
 // (config/tools.toml, [tools.check_plan]). Every number the screen states is in it.
-export type Mark = "needs_a_look" | "watch" | "data_note";
+// moved_on (ticket 132): the plan still says pending, and a contract record or an award notice says the contract was
+// signed. It is not a signal.
+export type Mark = "needs_a_look" | "watch" | "moved_on" | "data_note";
 export type Reason = {
   code: string;
   mark: Mark;
   evidence_ids: string[];
+  // moved_on_since_plan: which record says the contract was signed, and the disagreement between it and the plan row.
+  record?: "contract_awards" | "award_notice" | null;
+  disagreement_id?: string | null;
   planned_completion_on?: string | null;
   planned_completion_plan_date?: string | null;
   closing_date?: string | null;
@@ -393,6 +398,8 @@ export type CheckPlanResult = {
     not_fully_checked: number;
     needs_a_look: number;
     watch: number;
+    // Ticket 132: counted apart from the activities still pending. A check recorded before it may lack it.
+    moved_on?: number;
     data_note: number;
     // The activities with a signal (needs a look or watch): the rows a draft of review notes covers.
     signal: number;

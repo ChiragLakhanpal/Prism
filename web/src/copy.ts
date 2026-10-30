@@ -635,6 +635,10 @@ export const copy = {
     // Following (ticket 37): a project on which no check could run, an abstention in the first person.
     notChecked: "Not checked",
     dataNote: "Data note",
+    // Ticket 132: the plan still says pending, and a later record says the contract was signed. The badge keeps to one
+    // short word pair, as Watch does, so the What Strata found column fits beside the drawer; the finding and the reason
+    // say "since the plan".
+    movedOn: "Moved on",
     partial: "Partial",
     gap: "Gap",
     // A disagreement card (ticket 24; DESIGN.md section 5): warning when keeping the other side would change
@@ -2725,6 +2729,9 @@ export const copy = {
       lookOnly: (look: number) => `{look} ${look === 1 ? "activity needs" : "activities need"} a look`,
       watchOnly: (watch: number) => `No activity needs a look, but {watch} ${watch === 1 ? "is" : "are"} worth watching`,
       none: "No activity needs a look or is worth watching",
+      // Ticket 132: the activities the records have moved past, counted apart from the ones still pending.
+      movedOn: (moved: number) =>
+        moved === 1 ? "; {moved} has moved on since the plan" : "; {moved} have moved on since the plan",
       notes: (notes: number) => (notes === 1 ? "; {notes} has a data note" : "; {notes} have data notes"),
       end: ".",
       // The public view of a project still under way (the 10 brief, section 6; ticket 40): data notes only.
@@ -2813,7 +2820,9 @@ export const copy = {
     noSignals: "No signals.",
     foundDefinition:
       "Needs a look and Watch are signals. A signal is a fixed check on public records. It gives a reason to look, " +
-      "never a finding. {lookRule} {watchRule} A data note means the record is missing a value or contradicts itself.",
+      "never a finding. {lookRule} {watchRule} A data note means the record is missing a value or contradicts itself. " +
+      "Moved on since the plan means the plan still says pending, but the contract awards or an award notice say the " +
+      "contract was signed.",
     // {amount} is the threshold in rule 11's text form ("1 million"), since no one looks it up in STEP.
     lookRule:
       "An activity needs a look when its planned completion passed with no signed contract. I mark it only when its " +
@@ -2875,6 +2884,10 @@ export const copy = {
       countedBy: {
         needs_a_look: { one: "The activity that needs a look: {refs}", many: "The activities that need a look: {refs}" },
         watch: { one: "The activity worth watching: {refs}", many: "The activities worth watching: {refs}" },
+        moved_on: {
+          one: "The activity the records have moved past since the plan: {refs}",
+          many: "The activities the records have moved past since the plan: {refs}",
+        },
         data_note: { one: "The activity with a data note: {refs}", many: "The activities with data notes: {refs}" },
       },
       countedEnd: ".",
@@ -2923,7 +2936,18 @@ export const copy = {
       unread_amount: 'I couldn\'t read the amount in "{column}": "{value}".',
       no_method: "The row gives no Method, so I couldn't choose its steps.",
       duplicate_ref: "Another row in your file has the same reference, {ref}. I checked both.",
+      // Ticket 132: the plan row still says pending, and a later record says the contract was signed, by the record
+      // that says so (check_plan's record value).
+      moved_on_since_plan: {
+        contract_awards: "The plan still says pending, but the contract awards say the contract was signed on {date}.",
+        award_notice: "The plan still says pending, but an award notice says the contract was signed on {date}.",
+      } as Record<string, string>,
     },
+    // The citation after a moved-on reason, which opens the disagreement between the plan row and that record.
+    movedOnSource: {
+      contract_awards: "Where the records disagree: this plan row and the contract awards",
+      award_notice: "Where the records disagree: this plan row and the award notice",
+    } as Record<string, string>,
     // The states a plan check can end in, other than its rows (the 10 brief, section 6).
     noPlanTitle: (agency: string) => `I don't have a Procurement Plan from ${agency} yet.`,
     noPlanTitleUnnamed: "I don't have a Procurement Plan from this agency yet.",
@@ -8007,6 +8031,34 @@ export const copy = {
     noRatings: "I have no ISR ratings for this project.",
     // The band row's caption when get_disagreements did not answer, in place of noRatings.
     ratingsFailed: "I couldn't read this project's ISR ratings just now.",
+    // Where a package's records disagree (ticket 132), under the chart: a plan row, the contract awards or an award
+    // notice, which no dashed line joins. The newest first; listUpTo show before "Show all".
+    records: {
+      title: "Where the records disagree",
+      lede: "Each pair is two records about the same package that say different things. I keep both and say which one I lean on.",
+      count: (n: number) => (n === 1 ? "One package record disagrees with another." : "{n} pairs of package records disagree."),
+      listUpTo: 5,
+      showAll: "Show all {n}",
+      showFewer: "Show the newest {n}",
+      // What each side's record is, in a sentence: the plan of a date, the contract awards, an award notice of a date.
+      name: {
+        plan: "the plan of {date}",
+        contract_awards: "the contract awards",
+        award_notice: "the award notice of {date}",
+      } as Record<string, string>,
+      // The record Strata leans on, with no date.
+      leanName: { plan: "the plan", contract_awards: "the contract awards", award_notice: "the award notice" } as Record<string, string>,
+      // The plan still says the contract is not signed, and a record says it was: the plan check's moved-on row.
+      status: {
+        contract_awards: "The plan of {plan} still says pending, but the contract awards say the contract was signed on {date}.",
+        award_notice: "The plan of {plan} still says pending, but an award notice says the contract was signed on {date}.",
+      } as Record<string, string>,
+      signed_on: "Two records give different signing dates: {first} says {value1}, and {second} says {value2}.",
+      signed_amount_usd: "Two records give different signed amounts: {first} says US${value1}, and {second} says US${value2}.",
+      lean: "I lean on {lean}.",
+      open: "Open both records",
+      openLabel: (ref: string) => `Open both records for ${ref}`,
+    },
     emptyTitle: "I don't have dated reports or records for this project yet.",
     emptyBody:
       "I add a project's reports and records to its timeline once I have read them. Data readiness shows which sources and years I have read.",

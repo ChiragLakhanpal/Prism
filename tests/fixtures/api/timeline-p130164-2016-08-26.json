@@ -216,6 +216,7 @@
     "status": "ok",
     "count": 0
   },
+  "records_disagree": [],
   "disagreement_line_state": "info",
   "rejected": {
     "count": 0

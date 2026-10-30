@@ -1,0 +1,484 @@
+{
+  "tool": "check_plan",
+  "as_of": "2026-10-22",
+  "view": "staff",
+  "rows": [
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-229129-CW-RFB",
+      "section": "WORKS",
+      "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+      "review_type": "Post",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "300000.00",
+      "estimated_millions": "0.3",
+      "actual_amount_usd": "1245092.76",
+      "process_status": "Signed",
+      "signed_on": "2022-01-03",
+      "planned_signing_on": "2021-07-01",
+      "planned_signing_plan_date": "2021-04-21",
+      "days_late": 186,
+      "planned_completion_on": "2021-10-15",
+      "planned_completion_plan_date": "2021-04-21",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": "4.15",
+      "marks": [
+        {
+          "mark": "watch",
+          "reasons": [
+            {
+              "code": "signed_late_over_estimate",
+              "mark": "watch",
+              "signed_on": "2022-01-03",
+              "actual_amount_usd": "1245092.76",
+              "estimated_amount_usd": "300000.00",
+              "ratio": 4,
+              "ratio_exact": "4.15",
+              "days_late": 186,
+              "planned_signing_on": "2021-07-01",
+              "planned_signing_plan_date": "2021-04-21",
+              "evidence_ids": [
+                "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
+                "strata.silver.plan_rows:33014836/KE-NWWDA-229129-CW-RFB"
+              ]
+            }
+          ]
+        }
+      ],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-503455-CW-RFQ",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-503455-CW-RFQ",
+      "section": "WORKS",
+      "description": "Drilling 4 No. New Explorato ry Boreholes in Arbajahan an d Sarman in Wajir County",
+      "review_type": "Post",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "220000.00",
+      "estimated_millions": "0.22",
+      "actual_amount_usd": "0.00",
+      "process_status": "Signed",
+      "signed_on": "2025-08-13",
+      "planned_signing_on": "2025-08-06",
+      "planned_signing_plan_date": "2025-07-21",
+      "days_late": 7,
+      "planned_completion_on": "2025-09-15",
+      "planned_completion_plan_date": "2025-07-21",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "data_note",
+          "reasons": [
+            {
+              "code": "actual_amount_zero",
+              "mark": "data_note",
+              "process_status": "Signed",
+              "actual_amount_usd": "0.00",
+              "evidence_ids": [
+                "strata.silver.plan_rows:40132287/KE-NWWDA-503455-CW-RFQ"
+              ]
+            }
+          ]
+        }
+      ],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
+      "section": "WORKS",
+      "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+      "review_type": "Post",
+      "method": "Request for Bids",
+      "market_approach": "Open - National",
+      "estimated_amount_usd": "1230000.00",
+      "estimated_millions": "1.23",
+      "actual_amount_usd": "0.00",
+      "process_status": "Pending Implementation",
+      "signed_on": null,
+      "planned_signing_on": "2026-04-24",
+      "planned_signing_plan_date": "2026-03-05",
+      "days_late": null,
+      "planned_completion_on": "2026-07-31",
+      "planned_completion_plan_date": "2026-03-05",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "needs_a_look",
+          "reasons": [
+            {
+              "code": "completion_passed_no_contract",
+              "mark": "needs_a_look",
+              "planned_completion_on": "2026-07-31",
+              "planned_completion_plan_date": "2026-03-05",
+              "closing_date": "2026-10-31",
+              "days_to_close": 9,
+              "evidence_ids": [
+                "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+                "strata.silver.plan_rows:40090127/KE-NWWDA-541055-CW-RFB",
+                "strata.gold.project:P156634"
+              ]
+            }
+          ]
+        }
+      ],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541061-CW-RFQ",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-541061-CW-RFQ",
+      "section": "WORKS",
+      "description": "Equipping of Exploratory Bo reholes Project - Lot 2- Nurgo ws Water Supply",
+      "review_type": "Post",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "290000.00",
+      "estimated_millions": "0.29",
+      "actual_amount_usd": "0.00",
+      "process_status": "Completed",
+      "signed_on": "2026-05-11",
+      "planned_signing_on": "2026-03-31",
+      "planned_signing_plan_date": "2026-03-05",
+      "days_late": 41,
+      "planned_completion_on": "2026-06-30",
+      "planned_completion_plan_date": "2026-03-05",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "data_note",
+          "reasons": [
+            {
+              "code": "actual_amount_zero",
+              "mark": "data_note",
+              "process_status": "Completed",
+              "actual_amount_usd": "0.00",
+              "evidence_ids": [
+                "strata.silver.plan_rows:40132287/KE-NWWDA-541061-CW-RFQ"
+              ]
+            }
+          ]
+        }
+      ],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-541062-CW-RFQ",
+      "section": "WORKS",
+      "description": "Equipping of Exploratory Bo reholes project- Lot 3- Qaras Water Supply",
+      "review_type": "Post",
+      "method": "Request for Quotations",
+      "market_approach": "Limited - National",
+      "estimated_amount_usd": "295000.00",
+      "estimated_millions": "0.3",
+      "actual_amount_usd": "0.00",
+      "process_status": "Pending Implementation",
+      "signed_on": null,
+      "planned_signing_on": "2026-03-31",
+      "planned_signing_plan_date": "2026-03-05",
+      "days_late": null,
+      "planned_completion_on": "2026-06-30",
+      "planned_completion_plan_date": "2026-03-05",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": null,
+      "marks": [
+        {
+          "mark": "watch",
+          "reasons": [
+            {
+              "code": "pending_near_closing",
+              "mark": "watch",
+              "closing_date": "2026-10-31",
+              "days_to_close": 9,
+              "evidence_ids": [
+                "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
+                "strata.gold.project:P156634"
+              ]
+            }
+          ]
+        }
+      ],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-199461-GO-RFB",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-199461-GO-RFB",
+      "section": "GOODS",
+      "description": "Supply and Delivery 1 No. 4 x 4 Wheel drive, manual tran smission of engine capacity 4,100 - 4,200 cc",
+      "review_type": "Post",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "95000.00",
+      "estimated_millions": "0.1",
+      "actual_amount_usd": "103996.17",
+      "process_status": "Completed",
+      "signed_on": "2021-07-19",
+      "planned_signing_on": "2021-02-06",
+      "planned_signing_plan_date": "2020-12-07",
+      "days_late": 163,
+      "planned_completion_on": "2021-05-07",
+      "planned_completion_plan_date": "2020-12-07",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": "1.09",
+      "marks": [
+        {
+          "mark": "data_note",
+          "reasons": [
+            {
+              "code": "method_differs_from_reference",
+              "mark": "data_note",
+              "reference_method_code": "RFB",
+              "reference_method": "Request for Bids",
+              "method": "Request for Quotations",
+              "evidence_ids": [
+                "strata.silver.plan_rows:40132287/KE-NWWDA-199461-GO-RFB"
+              ]
+            }
+          ]
+        }
+      ],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-199471-GO-RFQ",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-199471-GO-RFQ",
+      "section": "GOODS",
+      "description": "supply and delivery of Lapt ops, desktops and photocopi er.",
+      "review_type": "Post",
+      "method": "Request for Quotations",
+      "market_approach": "Limited",
+      "estimated_amount_usd": "15000.00",
+      "estimated_millions": "0.02",
+      "actual_amount_usd": "14856.89",
+      "process_status": "Completed",
+      "signed_on": "2021-03-19",
+      "planned_signing_on": "2021-02-06",
+      "planned_signing_plan_date": "2020-12-07",
+      "days_late": 41,
+      "planned_completion_on": "2021-05-07",
+      "planned_completion_plan_date": "2020-12-07",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": "0.99",
+      "marks": [],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/NWWDA-WSDP-03-2019-2020",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "NWWDA-WSDP-03-2019-2020",
+      "section": "CONSULTING FIRMS",
+      "description": "Consultancy Services for Comparison of Water Supply Options, Preparation of Detail ed Designs, Tender Documen ts, Safeguards Documents an d Construction Supervision of Wajir Water Supply",
+      "review_type": "Prior",
+      "method": "Quality And Cost-Based Selection",
+      "market_approach": "Open - International",
+      "estimated_amount_usd": "2000000.00",
+      "estimated_millions": "2",
+      "actual_amount_usd": "1021300.12",
+      "process_status": "Signed",
+      "signed_on": "2021-09-24",
+      "planned_signing_on": "2020-05-16",
+      "planned_signing_plan_date": "2019-11-08",
+      "days_late": 496,
+      "planned_completion_on": "2021-05-16",
+      "planned_completion_plan_date": "2019-11-08",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": "0.51",
+      "marks": [],
+      "position": null,
+      "listed": null
+    },
+    {
+      "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-207796-CS-INDV",
+      "public_from": "2026-10-09",
+      "source": {
+        "document_type": "Procurement Plan",
+        "project_id": "P156634",
+        "implementing_agency": "Northern Water Works Development Agency",
+        "plan_date": "2026-10-09",
+        "document_id": "40132287",
+        "pdf_page": 3
+      },
+      "activity_reference_no": "KE-NWWDA-207796-CS-INDV",
+      "section": "INDIVIDUAL CONSULTANTS",
+      "description": "consultancy services for e nvironmental safeguards exp ert",
+      "review_type": "Post",
+      "method": "Individual Consultant Selection",
+      "market_approach": "Open",
+      "estimated_amount_usd": "60000.00",
+      "estimated_millions": "0.06",
+      "actual_amount_usd": "71200.35",
+      "process_status": "Completed",
+      "signed_on": "2021-07-06",
+      "planned_signing_on": "2021-03-29",
+      "planned_signing_plan_date": "2020-12-07",
+      "days_late": 99,
+      "planned_completion_on": "2022-06-22",
+      "planned_completion_plan_date": "2020-12-07",
+      "first_listing_confirmed": false,
+      "actual_to_estimate": "1.19",
+      "marks": [],
+      "position": null,
+      "listed": null
+    }
+  ],
+  "coverage": {
+    "matched": 9,
+    "used": 9,
+    "not_used": []
+  },
+  "abstention": null,
+  "plan": {
+    "evidence_id": "strata.silver.plan_versions:40132287",
+    "public_from": "2026-10-09",
+    "document_id": "40132287",
+    "project_id": "P156634",
+    "implementing_agency": "Northern Water Works Development Agency",
+    "agency_id": "northern-water-works-development-agency",
+    "plan_date": "2026-10-09",
+    "disclosed_on": "2026-10-09",
+    "is_latest": true,
+    "pdf_url": "https://documents.worldbank.org/curated/en/099100926083038869/pdf/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.pdf",
+    "text_url": "https://documents.worldbank.org/curated/en/099100926083038869/text/P156634-ab2fe0d9-ef1e-43cc-bbf4-43068cef2cc8.txt"
+  },
+  "project": {
+    "evidence_id": "strata.gold.project:P156634",
+    "public_from": "2024-04-24",
+    "project_id": "P156634",
+    "project_name": "Water and Sanitation Development Project",
+    "status": "Active",
+    "closing_date": "2026-10-31",
+    "record_date": "2024-04-24",
+    "days_to_close": 9,
+    "display_name": "Water and Sanitation Development"
+  },
+  "checks_run": [
+    "own_dates",
+    "estimate",
+    "closing_date"
+  ],
+  "thresholds": {
+    "completion_passed_min_estimated_usd": "1000000.00",
+    "days_before_closing": 90,
+    "actual_to_estimate_ratio": "2.0"
+  },
+  "baseline": null,
+  "withheld": null,
+  "counts": {
+    "activities": 9,
+    "checked": 9,
+    "not_fully_checked": 0,
+    "needs_a_look": 1,
+    "watch": 2,
+    "moved_on": 0,
+    "data_note": 3,
+    "signal": 3,
+    "marked": 6,
+    "unmarked": 3
+  },
+  "summary": {
+    "evidence_id": "strata.tools.check_plan:P156634/northern-water-works-development-agency@2026-10-22?plan_date=2026-10-09",
+    "public_from": "2026-10-22",
+    "source": {
+      "tool": "check_plan",
+      "sources": [
+        "documents",
+        "projects"
+      ]
+    },
+    "counts": {
+      "activities": 9,
+      "checked": 9,
+      "not_fully_checked": 0,
+      "needs_a_look": 1,
+      "watch": 2,
+      "moved_on": 0,
+      "data_note": 3,
+      "signal": 3,
+      "marked": 6,
+      "unmarked": 3
+    }
+  }
+}

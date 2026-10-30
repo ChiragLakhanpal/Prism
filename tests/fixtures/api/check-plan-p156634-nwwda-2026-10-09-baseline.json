@@ -144,27 +144,20 @@
       "actual_to_estimate": null,
       "marks": [
         {
-          "mark": "needs_a_look",
+          "mark": "moved_on",
           "reasons": [
             {
-              "code": "completion_passed_no_contract",
-              "mark": "needs_a_look",
-              "planned_completion_on": "2026-07-31",
-              "planned_completion_plan_date": "2026-03-05",
-              "closing_date": "2026-10-31",
-              "days_to_close": 8,
+              "code": "moved_on_since_plan",
+              "mark": "moved_on",
+              "process_status": "Pending Implementation",
+              "signed_on": "2026-06-22",
+              "record": "contract_awards",
+              "disagreement_id": "a29dcd3a40952830",
               "evidence_ids": [
                 "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-                "strata.silver.plan_rows:40090127/KE-NWWDA-541055-CW-RFB",
-                "strata.gold.project:P156634",
-                "strata.ops.plan_baselines:P156634/northern-water-works-development-agency"
-              ],
-              "baseline": {
-                "state": "not_in_baseline",
-                "planned_on": null,
-                "days": null,
-                "plan_date": "2025-07-21"
-              }
+                "strata.gold.disagreement:a29dcd3a40952830",
+                "strata.gold.contract:1903781"
+              ]
             }
           ]
         }
@@ -251,16 +244,19 @@
       "actual_to_estimate": null,
       "marks": [
         {
-          "mark": "watch",
+          "mark": "moved_on",
           "reasons": [
             {
-              "code": "pending_near_closing",
-              "mark": "watch",
-              "closing_date": "2026-10-31",
-              "days_to_close": 8,
+              "code": "moved_on_since_plan",
+              "mark": "moved_on",
+              "process_status": "Pending Implementation",
+              "signed_on": "2026-05-11",
+              "record": "contract_awards",
+              "disagreement_id": "b38b4a815e8525ea",
               "evidence_ids": [
                 "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
-                "strata.gold.project:P156634"
+                "strata.gold.disagreement:b38b4a815e8525ea",
+                "strata.gold.contract:1903551"
               ]
             }
           ]
@@ -471,10 +467,11 @@
     "activities": 9,
     "checked": 9,
     "not_fully_checked": 0,
-    "needs_a_look": 1,
-    "watch": 2,
+    "needs_a_look": 0,
+    "watch": 1,
+    "moved_on": 2,
     "data_note": 3,
-    "signal": 3,
+    "signal": 1,
     "marked": 6,
     "unmarked": 3
   },
@@ -492,10 +489,11 @@
       "activities": 9,
       "checked": 9,
       "not_fully_checked": 0,
-      "needs_a_look": 1,
-      "watch": 2,
+      "needs_a_look": 0,
+      "watch": 1,
+      "moved_on": 2,
       "data_note": 3,
-      "signal": 3,
+      "signal": 1,
       "marked": 6,
       "unmarked": 3
     }

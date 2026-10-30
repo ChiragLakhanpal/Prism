@@ -4,7 +4,10 @@
 // copied here so the test checks the copy file against an independent source.
 //
 // The plan lists nine activities. The wireframe draws eight and leaves out KE-NWWDA-207796-CS-INDV,
-// which has no signals, so the screen shows six marked activities and folds three.
+// which has no signals, so the screen shows six marked activities and folds three. Ticket 132: the wireframe's Needs a
+// look (KE-NWWDA-541055-CW-RFB) and one of its two Watch rows (KE-NWWDA-541062-CW-RFQ) are moved on since the plan,
+// since the contract awards say both contracts were signed before the plan's date (values.toml, award-541055-signed
+// and award-541062-signed). Marked rows come by their strongest mark: Watch, then Moved on, then Data note.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, mockApi, openSidebar, recorded, test, viewAnswers, windowBeside } from "./mocked";
@@ -14,15 +17,15 @@ import { animationsDone } from "./settled";
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const API = `/api${PLAN}`;
 const MARKED = [
-  "KE-NWWDA-541055-CW-RFB",
   "KE-NWWDA-229129-CW-RFB",
+  "KE-NWWDA-541055-CW-RFB",
   "KE-NWWDA-541062-CW-RFQ",
   "KE-NWWDA-503455-CW-RFQ",
   "KE-NWWDA-541061-CW-RFQ",
   "KE-NWWDA-199461-GO-RFB",
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
-const FINDING = "One activity needs a look and two are worth watching; three have data notes.";
+const FINDING = "No activity needs a look, but one is worth watching; two have moved on since the plan; three have data notes.";
 // Ticket 111's narration, word for word: the step, how I check, and why it can take longer.
 const NARRATION = {
   running: "I'm checking the plan.",
@@ -97,8 +100,9 @@ test("the plan check finds every activity, states the finding, and folds the act
 
   // The visible badges of each kind equal the counts in the finding.
   const table = view(page, "table");
-  await expect(table.locator("[data-badge=needs-a-look]:visible")).toHaveCount(1);
-  await expect(table.locator("[data-badge=watch]:visible")).toHaveCount(2);
+  await expect(table.locator("[data-badge=needs-a-look]:visible")).toHaveCount(0);
+  await expect(table.locator("[data-badge=watch]:visible")).toHaveCount(1);
+  await expect(table.locator("[data-badge=moved-on]:visible")).toHaveCount(2);
   await expect(table.locator("[data-badge=data-note]:visible")).toHaveCount(3);
   // The crumb names the project as its page header does, by the server's rule (the 21 critique, round 3).
   await expect(page.getByRole("link", { name: "Water and Sanitation Development (P156634)" }).first()).toHaveAttribute(
@@ -215,16 +219,22 @@ test("each reason is built from the copy file's sentence and the tool's values, 
   await openPlan(page);
   const row = (ref: string) => view(page, "table").locator(`tr[id="${ref}"]`);
 
+  // Ticket 132: the plan still says pending, and the record says what happened, with the record cited.
   await expect(row("KE-NWWDA-541055-CW-RFB")).toContainText(
-    "Planned completion July 31, 2026 passed with no signed contract. The project closes October 31, 2026.",
+    "The plan still says pending, but the contract awards say the contract was signed on June 22, 2026.",
   );
+  await expect(row("KE-NWWDA-541055-CW-RFB")).not.toContainText("passed with no signed contract");
+  await expect(row("KE-NWWDA-541055-CW-RFB").getByRole("link", { name: /Where the records disagree: this plan row and the contract awards/ })).toHaveCount(1);
   // A date in a sentence never breaks across lines.
-  const date = row("KE-NWWDA-541055-CW-RFB").locator("[data-num]").filter({ hasText: "October 31, 2026" });
+  const date = row("KE-NWWDA-541055-CW-RFB").locator("[data-num]").filter({ hasText: "June 22, 2026" });
   expect(await date.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
   await expect(row("KE-NWWDA-229129-CW-RFB")).toContainText(
     "Signed January 3, 2022, 186 days after its planned date, at US$1,245,092.76, about 4 times its estimate.",
   );
-  await expect(row("KE-NWWDA-541062-CW-RFQ")).toContainText("Still pending, 9 days before the project closes.");
+  await expect(row("KE-NWWDA-541062-CW-RFQ")).toContainText(
+    "The plan still says pending, but the contract awards say the contract was signed on May 11, 2026.",
+  );
+  await expect(row("KE-NWWDA-541062-CW-RFQ")).not.toContainText("Still pending");
   await expect(row("KE-NWWDA-199461-GO-RFB")).toContainText(
     "The reference ends in RFB (Request for Bids), but the Method column says Request for Quotations. I use the Method column.",
   );
@@ -292,7 +302,7 @@ test("marks are status badges with an icon and their name; Data note is neutral 
 
   for (const badge of await badges.all()) {
     await expect(badge.locator("svg[aria-hidden=true]")).toHaveCount(1);
-    await expect(badge).toHaveText(/^(Needs a look|Watch|Data note)$/);
+    await expect(badge).toHaveText(/^(Needs a look|Watch|Moved on|Data note)$/);
   }
   const note = view(page, "table").locator("[data-badge=data-note]").first();
   expect(await note.evaluate((el) => [getComputedStyle(el).borderStyle, getComputedStyle(el).backgroundColor])).toEqual([
@@ -346,11 +356,12 @@ test("tabbing onto a number opens its tooltip, which stays open while it has foc
   await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Water and Sanitation Development (P156634)" }).focus();
 
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("button", { name: "Draft review notes (3 rows)" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Draft review notes (1 row)" })).toBeFocused();
   await page.keyboard.press("Tab");
 
-  await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();
-  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activity that needs a look: KE-NWWDA-541055-CW-RFB.");
+  // No activity needs a look (ticket 132), so the first count word is the one activity worth watching.
+  await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "one", exact: true })).toBeFocused();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activity worth watching: KE-NWWDA-229129-CW-RFB.");
 });
 
 test("a link whose hash names a folded activity opens the fold and focuses that activity", async ({ page }) => {
@@ -404,7 +415,7 @@ test("below a table frame of 34rem the activities are cards, each headed by its 
     await expect(view(page, "table")).toBeHidden();
     expect(await refsIn(page, "cards"), `${width} px`).toEqual(MARKED);
   }
-  await expect(page.getByRole("heading", { level: 3, name: "Needs a look KE-NWWDA-541055-CW-RFB" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 3, name: "Moved on KE-NWWDA-541055-CW-RFB" })).toBeVisible();
   await view(page, "cards").getByRole("button", { name: "Show them" }).click();
   expect(await refsIn(page, "cards")).toEqual([...MARKED, ...FOLDED]);
   // Below 768 px the breadcrumb shows only its parent, the project (ticket 100).
@@ -642,20 +653,26 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
   await expect(row).not.toHaveAttribute("data-row-mark", /./);
   await expect(view(page, "table").locator("thead th:visible")).toHaveCount(6);
 
-  // "two" in the finding marks the two Watch rows and moves focus to the first one's reference.
+  // "two" in the finding marks the two rows moved on since the plan (ticket 132) and moves focus to the first one's
+  // reference.
   const two = page.locator("[data-finding]").getByRole("button", { name: "two" });
   await two.focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
+    "The activities the records have moved past since the plan: KE-NWWDA-541055-CW-RFB and KE-NWWDA-541062-CW-RFQ.",
+  );
   await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to mark them below.");
   await page.keyboard.press("Enter");
-  await expect(reference).toBeFocused();
+  const first = view(page, "table").getByRole("button", { name: "KE-NWWDA-541055-CW-RFB", exact: true });
+  await expect(first).toBeFocused();
   await expect(view(page, "table").locator("tbody tr[data-row-mark=counted]")).toHaveCount(2);
   expect(await view(page, "table").locator("tbody tr[data-row-mark=counted]").evaluateAll((rows) => rows.map((row) => row.id))).toEqual([
-    "KE-NWWDA-229129-CW-RFB",
+    "KE-NWWDA-541055-CW-RFB",
     "KE-NWWDA-541062-CW-RFQ",
   ]);
   // A counted row takes tint alone; only the row whose records are open keeps the bar, so the two never look alike.
-  await expect(row).toHaveCSS("background-color", "rgb(233, 247, 253)");
-  await expect(row.locator("th")).toHaveCSS("box-shadow", "none");
+  const counted = view(page, "table").locator('tr[id="KE-NWWDA-541055-CW-RFB"]');
+  await expect(counted).toHaveCSS("background-color", "rgb(233, 247, 253)");
+  await expect(counted.locator("th")).toHaveCSS("box-shadow", "none");
 });
 
 // Ticket 100 (ticket 59's landing item, with the bar's offset): a link that lands on any row brings it into view with
@@ -730,7 +747,7 @@ test("the head keeps the check pill and Draft review notes on one row, their cen
   for (const width of [1440, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const pill = page.locator("[data-plan-header] [data-check-pill]");
-    const action = page.getByRole("button", { name: "Draft review notes (3 rows)" });
+    const action = page.getByRole("button", { name: "Draft review notes (1 row)" });
     expect(Math.abs((await centre(pill)) - (await centre(action))), `${width} px`).toBeLessThanOrEqual(2);
   }
 });

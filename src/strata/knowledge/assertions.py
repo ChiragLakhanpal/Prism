@@ -11,6 +11,9 @@ made, its public date, its source document and passage, and its evidence tier. T
 - the records of a package's signing: the awards datasets' contracts, Contract Award notices and each
   version of a Procurement Plan, each giving the signing date and, where it gives one, the signed amount
   in US dollars. The subject is the package, by its STEP reference.
+- each version's plan row that says the package's contract is not signed yet: its Process Status before
+  signing, which stands until the agency's next plan version replaces it (ticket 132). A record that dates the
+  signing before then disagrees with it, and the plan check names that row as moved on since the plan.
 - the IEG ratings dataset, which repeats IEG's ratings of a closed project, each for the whole project.
 - the ICRs, ICR Reviews, PPARs and PADs, read by the batch model (strata.knowledge.batch). An assertion
   read from text is kept only when its quote is word for word in the passage it cites, on the page it
@@ -41,6 +44,7 @@ from strata.knowledge.batch import Answer, BatchError, BatchModel, BatchPending,
 from strata.lakehouse import rewrites
 from strata.lakehouse.engine import Engine
 from strata.reader.passages import TABLE_SUMMARY
+from strata.tools.check_plan import PENDING_STATUSES
 
 PASSAGES = "strata.gold.passage"  # the table a passage's evidence id names, as search_passages returns it
 ISR = "Implementation Status and Results Report"
@@ -111,6 +115,8 @@ class ProjectRows:
                             award_notice=AWARD_NOTICE, contract_record=CONTRACT_RECORD,
                             award_notice_form=AWARD_NOTICE_FORM, notices_source="notices", plan_row=PLAN_ROW,
                             documents_source="documents", plan_type=PLAN_TYPE, signed_step=SIGNED_STEP)
+        self.statuses = kept(_sql("plan_statuses.sql"), contract_sources=",".join(contracts or contract_sources()),
+                             award_notice=AWARD_NOTICE, signed_step=SIGNED_STEP, pending=",".join(PENDING_STATUSES))
         self.ieg = kept(_sql("ieg_ratings.sql"))
         self.dates = kept(PROJECT_DATES)
         self.key_dates = kept(_sql("key_dates.sql"), document_type=ISR, label="Review Date")
@@ -212,6 +218,9 @@ def isr_assertions(engine: Engine, project_id: str, ladder: Ladder, rows: Projec
 
 AWARD_NOTICE, SIGNED_STEP, PLAN_TYPE = "Contract Award", "Signed Contract", "Procurement Plan"
 CONTRACT_RECORD, AWARD_NOTICE_FORM, PLAN_ROW = "contract_record", "award_notice", "plan_row"
+# A plan row's Process Status before signing (ticket 132): the plan's own field name, and the value form of an
+# assertion that gives a state rather than a date or an amount.
+PROCESS_STATUS, STATUS = "Process Status", "status"
 
 # Each record's own name for the signing date and the signed amount, word for word: the awards datasets'
 # field, the award notice's label, and the Procurement Plan's step and column. The awards datasets give an
@@ -269,6 +278,32 @@ def record_assertions(engine: Engine, project_id: str, ladder: Ladder, rows: Pro
                 passage_id=key, evidence_id=evidence, pdf_page=_int(row["pdf_page"]), quote=None,
                 read_by=RECORD_TABLES[row["form"]], public_from=_date(row["public_from"])))
     return made
+
+
+def status_assertions(engine: Engine, project_id: str, ladder: Ladder, rows: ProjectRows | None = None
+                      ) -> list[Assertion]:
+    """Each plan row that says its package's contract is not signed yet (ticket 132): its Process Status, word for
+    word, as an assertion about the signing, made on the plan's date and standing until the agency's next version
+    replaces it. A record that dates the signing before that day disagrees with it (cannot_both_be_true): the plan
+    still said pending when the contract had been signed. The row is the one check_plan checks, by the same evidence
+    id, so the plan check reads the disagreement rather than working it out again (CLAUDE.md rule 4)."""
+    attribute = ladder.attribute("signed_on")
+    made: dict[str, Assertion] = {}
+    for row in _of(engine, rows, project_id, ladder).statuses.get(project_id, []):
+        key = f"{row['document_id']}/{row['step_reference']}"
+        evidence = f"{RECORD_TABLES[PLAN_ROW]}:{key}"
+        planned = _date(row["plan_date"])
+        found = Assertion(
+            assertion_id=assertion_id(evidence, row["step_reference"], attribute.key), subject_kind="package",
+            subject_id=row["step_reference"], project_id=project_id, attribute=attribute.key,
+            attribute_kind=attribute.kind, field_name=PROCESS_STATUS, value=row["process_status"], value_form=STATUS,
+            judgment=None, period_event=CONTRACT_SIGNING, period_start=planned, period_end=planned, made_at=planned,
+            replaced_on=_date(row["replaced_on"]), evidence_tier="record", form=PLAN_ROW, source_key="documents",
+            document_id=str(row["document_id"]), document_type=PLAN_TYPE, report_number=None, version=None,
+            sequence=None, passage_id=key, evidence_id=evidence, pdf_page=_int(row["pdf_page"]), quote=None,
+            read_by=RECORD_TABLES[PLAN_ROW], public_from=_date(row["public_from"]))
+        made.setdefault(found.assertion_id, found)  # a reference a version lists twice keeps its first row
+    return list(made.values())
 
 
 # ── The IEG ratings dataset ──────────────────────────────────────────────
@@ -627,8 +662,14 @@ def overlap(a: Assertion, b: Assertion) -> tuple[str, dt.date, dt.date] | None:
 
 def cannot_both_be_true(a: Assertion, b: Assertion, amount_tolerance: Decimal = Decimal(0)) -> bool:
     """Two ratings of one scale that differ, a rating and an account (or two accounts) on different sides of
-    the line, two different dates, or two amounts that differ by more than the tolerance share of the larger
-    one (config/thresholds.toml, disagreements.amount_tolerance_share)."""
+    the line, two different dates, two amounts that differ by more than the tolerance share of the larger
+    one (config/thresholds.toml, disagreements.amount_tolerance_share), or a plan row that says the contract is not
+    signed yet and a record that dates its signing before the agency's next plan replaced that row (ticket 132)."""
+    if STATUS in (a.value_form, b.value_form):
+        status, other = (a, b) if a.value_form == STATUS else (b, a)
+        if other.value_form != "date":
+            return False
+        return status.replaced_on is None or dt.date.fromisoformat(other.value) < status.replaced_on
     if "judgment" in (a.value_form, b.value_form):
         return a.judgment is not None and b.judgment is not None and a.judgment != b.judgment
     if a.value_form == "amount":
@@ -766,6 +807,7 @@ def run(engine: Engine, projects: list[str], *, model: BatchModel, ladder: Ladde
     for project_id in projects:
         dates = periods(engine, project_id, rows, ladder)
         made += isr_assertions(engine, project_id, ladder, rows) + record_assertions(engine, project_id, ladder, rows)
+        made += status_assertions(engine, project_id, ladder, rows)
         made += ieg_assertions(engine, project_id, ladder, dates, rows)
         more, less = read_answers(asked[project_id], answers, ladder, dates, model, run_id, when)
         made += more

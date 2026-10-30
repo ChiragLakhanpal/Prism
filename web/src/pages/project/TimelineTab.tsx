@@ -44,8 +44,11 @@ import {
   shortName,
   type Item,
   type Lane,
+  type RecordDisagreement,
+  type RecordSide,
   type Timeline,
 } from "../../lib/timeline";
+import { MonoWords } from "../../components/MonoWords";
 import { withReadParams } from "../../lib/view";
 
 const words = copy.timeline;
@@ -455,6 +458,75 @@ export function TimelineCard({
   );
 }
 
+// Where a package's records disagree (ticket 132): the pairs of records no dashed line joins, such as a plan row that
+// still says pending and the contract awards that say the contract was signed, the newest first. Each line says what
+// the two records say and which one I lean on, and opens both in the evidence drawer. The plan check cites the same
+// disagreement on its moved-on row.
+function RecordLine({ one, onOpen }: { one: RecordDisagreement; onOpen: (one: RecordDisagreement, element: HTMLElement) => void }) {
+  const r = words.records;
+  const status = one.sides.find((side) => side.value_form === "status");
+  const other = one.sides.find((side) => side !== status);
+  const leaned = one.sides.find((side) => side.leaned);
+  const name = (side: RecordSide) => <Fill template={r.name[side.record] ?? r.name.plan} slots={{ date: <Num date={side.made_at} /> }} />;
+  const value = (side: RecordSide) =>
+    side.value_form === "date" ? <Num date={side.value} /> : side.value_form === "amount" ? <Num value={Number(side.value)} options={{ decimals: 2, compact: false }} /> : side.value;
+  const [first, second] = one.sides;
+  const sentence =
+    status && other ? (
+      <Fill template={r.status[other.record] ?? r.status.contract_awards} slots={{ plan: <Num date={status.made_at} />, date: <Num date={other.value} /> }} />
+    ) : (
+      <Fill
+        template={one.attribute === "signed_amount_usd" ? r.signed_amount_usd : r.signed_on}
+        slots={{ first: name(first), value1: value(first), second: name(second), value2: value(second) }}
+      />
+    );
+  return (
+    <li data-record-disagreement={one.disagreement_id} data-activity={one.step_reference} className="flex flex-col items-start gap-1 border-l border-line pl-3">
+      <MonoWords text={one.step_reference} medium />
+      <p className="max-w-prose text-small text-ink">
+        {sentence}
+        {leaned && (
+          <>
+            {" "}
+            <Fill template={r.lean} slots={{ lean: r.leanName[leaned.record] ?? r.leanName.plan }} />
+          </>
+        )}
+      </p>
+      <Button variant="ghost" flush aria-label={r.openLabel(one.step_reference)} onClick={(event) => onOpen(one, event.currentTarget)}>
+        {r.open}
+      </Button>
+    </li>
+  );
+}
+
+function RecordsDisagree({ found, onOpen }: { found: RecordDisagreement[]; onOpen: (one: RecordDisagreement, element: HTMLElement) => void }) {
+  const r = words.records;
+  const titleId = useId();
+  const [all, setAll] = useState(false);
+  const shown = all ? found : found.slice(0, r.listUpTo);
+  return (
+    <section aria-labelledby={titleId} data-records-disagree className="mt-6 flex flex-col gap-3">
+      <h3 id={titleId} className="text-h3 text-ink-heading">
+        {r.title}
+      </h3>
+      <p className="max-w-prose text-small text-ink-muted">{r.lede}</p>
+      <p data-records-disagree-count className="text-small text-ink">
+        <Fill template={r.count(found.length)} slots={{ n: <Num count={found.length} capital /> }} />
+      </p>
+      <ul className="flex flex-col gap-4">
+        {shown.map((one) => (
+          <RecordLine key={one.id} one={one} onOpen={onOpen} />
+        ))}
+      </ul>
+      {found.length > r.listUpTo && (
+        <Button variant="ghost" flush aria-expanded={all} onClick={() => setAll((open) => !open)}>
+          <Fill template={all ? r.showFewer : r.showAll} slots={{ n: formatCount(all ? r.listUpTo : found.length) }} />
+        </Button>
+      )}
+    </section>
+  );
+}
+
 export function TimelineTab({ pid }: { pid: string }) {
   const here = useStore(address);
   const [load, retry] = useLoad<Timeline>(withReadParams(`/api/projects/${encodeURIComponent(pid)}/timeline`, here.search));
@@ -498,7 +570,18 @@ export function TimelineTab({ pid }: { pid: string }) {
   } else if (load.data.items.length === 0) {
     body = <EmptyState level={3} title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data", text: words.emptyLink }} />;
   } else {
-    body = <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retryCard} />;
+    const records = load.data.records_disagree ?? [];
+    body = (
+      <>
+        <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retryCard} />
+        {records.length > 0 && (
+          <RecordsDisagree
+            found={records}
+            onOpen={(one, element) => openEvidence(one.evidence_id, { serial: null, sentence: null, marker: element, runId: null, fallback: heading.current })}
+          />
+        )}
+      </>
+    );
   }
   // The purpose asks you to select a mark only where there is one to select.
   const selectable = load.status === "loading" || (load.status === "ready" && load.data.items.length > 0);

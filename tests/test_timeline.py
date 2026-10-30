@@ -227,7 +227,37 @@ def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement(serv
     assert body["project"]["status"] == "Active"
     assert body["disagreements"]["status"] == "hidden"
     assert placed(body, kind="disagreement") == []
+    assert body["records_disagree"] == []
     assert not any("disagree" in segment.get("text", "") for segment in body["finding"] + body["alt"])
+
+
+def test_the_plan_check_and_the_timeline_name_the_same_disagreement_about_ke_nwwda_541055(server):
+    """Ticket 132, criterion 2: the plan check's row for KE-NWWDA-541055-CW-RFB is moved on since the plan, and the
+    disagreement its reason cites is the one the Timeline tab lists where the records disagree: the plan of October
+    9, 2026 still says Pending Implementation, and the contract awards say the contract was signed on June 22, 2026.
+    One definition (CLAUDE.md rule 4): neither route works the finding out for itself."""
+    check = get(server, f"/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09?{DAY}")
+    timeline = get(server, f"/api/projects/P156634/timeline?{DAY}")
+    assert check.status_code == timeline.status_code == 200
+
+    [row] = [row for row in check.json()["rows"] if row["activity_reference_no"] == "KE-NWWDA-541055-CW-RFB"]
+    [mark] = row["marks"]
+    [reason] = mark["reasons"]
+    assert (mark["mark"], reason["code"]) == ("moved_on", "moved_on_since_plan")
+    listed = [found for found in timeline.json()["records_disagree"]
+              if found["disagreement_id"] == reason["disagreement_id"]]
+    assert len(listed) == 1
+    [found] = listed
+    assert found["step_reference"] == "KE-NWWDA-541055-CW-RFB"
+    assert found["evidence_id"] == f"disagreement:{reason['disagreement_id']}"
+    plan, award = sorted(found["sides"], key=lambda side: side["record"] != "plan")
+    assert (plan["record"], plan["field_name"], plan["value"], plan["made_at"]) == (
+        "plan", "Process Status", truth("plan-541055-status"), "2026-10-09")
+    assert (award["record"], award["value"], award["evidence_id"]) == (
+        "contract_awards", truth("award-541055-signed"), "strata.gold.contract:1903781")
+    assert award["leaned"] and not plan["leaned"]
+    # The drawer opens it from the list, as from any other link.
+    assert get(server, f"/api/evidence?id={found['evidence_id']}&{DAY}").status_code == 200
 
 
 def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement_from_a_drawer_link_either(server, fixture_db):

@@ -730,6 +730,7 @@
     "status": "ok",
     "count": 2
   },
+  "records_disagree": [],
   "disagreement_line_state": "info",
   "rejected": {
     "count": 1

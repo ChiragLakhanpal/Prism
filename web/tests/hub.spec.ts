@@ -1138,6 +1138,19 @@ test("a write that fails reads the check again, so the panel says what the basel
   await expect(panel.getByRole("status")).toContainText("The baseline is the plan of July 21, 2025");
 });
 
+test("a reason whose activity the baseline did not list says it measures delay only from the first published date", async ({ page }) => {
+  // Made up from the recorded baseline check: KE-NWWDA-229129-CW-RFB's signing reason as a baseline that did not list
+  // the activity gives it, as tests/test_project_hub.py's baseline of December 7, 2020 does on the server.
+  const check = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09-baseline.json"));
+  const row = check.rows.find((found: { activity_reference_no: string }) => found.activity_reference_no === "KE-NWWDA-229129-CW-RFB");
+  row.marks[0].reasons[0].baseline = { state: "not_in_baseline", planned_on: null, days: null, plan_date: "2025-07-21" };
+  await open(page, `${NWWDA}/2026-10-09`, 1440, { ...(await p156634()), [`/api${NWWDA}/2026-10-09`]: { body: JSON.stringify(check) } });
+
+  await expect(page.locator("#KE-NWWDA-229129-CW-RFB [data-baseline-delay=not_in_baseline]")).toHaveText(
+    "It was not in the baseline plan, so I measure its delay only from its first published planned date.",
+  );
+});
+
 test("a later plan's check names the saved baseline and who saved it, gives both delays, and asks in place before replacing it", async ({ page }) => {
   await open(page, `${NWWDA}/2026-10-09`, 1440, {
     ...(await p156634()),
@@ -1149,9 +1162,10 @@ test("a later plan's check names the saved baseline and who saved it, gives both
   );
   await expect(panel.getByRole("link", { name: "Plan of Jul 21, 2025" })).toHaveAttribute("href", `${NWWDA}/2025-07-21`);
   await expect(page.locator("#KE-NWWDA-229129-CW-RFB [data-baseline-delay=late]")).toHaveText("That was 186 days after its baseline date of July 1, 2021.");
-  await expect(page.locator("#KE-NWWDA-541055-CW-RFB [data-baseline-delay=not_in_baseline]")).toHaveText(
-    "It was not in the baseline plan, so I measure its delay only from its first published planned date.",
-  );
+  // KE-NWWDA-541055-CW-RFB, which the baseline did not list, has moved on since the plan (ticket 132), so no reason
+  // measures its delay; tests/test_project_hub.py checks a reason the baseline did not list on KE-NWWDA-229129-CW-RFB.
+  await expect(page.locator("#KE-NWWDA-541055-CW-RFB [data-baseline-delay]")).toHaveCount(0);
+  await expect(page.locator("#KE-NWWDA-541055-CW-RFB [data-badge=moved-on]")).toHaveCount(1);
   // The baseline's days explain themselves, as the first delay's do.
   await page.locator("#KE-NWWDA-229129-CW-RFB [data-baseline-delay] button[data-num]").focus();
   await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(

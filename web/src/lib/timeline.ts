@@ -56,6 +56,30 @@ export type Item = MarkItem | BandItem | DisagreementItem;
 
 export type Segment = { text: string } | { number: number; capital?: boolean } | { year: number } | { date: string };
 
+export type RecordSide = {
+  record: "plan" | "contract_awards" | "award_notice";
+  form: string;
+  field_name: string;
+  value: string;
+  value_form: string;
+  made_at: string;
+  public_from: string;
+  evidence_id: string;
+  leaned: boolean;
+};
+
+export type RecordDisagreement = {
+  id: string;
+  evidence_id: string;
+  disagreement_id: string;
+  step_reference: string;
+  attribute: string;
+  rule_id: string | null;
+  date: string;
+  public_from: string;
+  sides: RecordSide[];
+};
+
 export type Timeline = {
   project: { project_id: string; project_name: string; display_name: string; status: string | null };
   as_of: string;
@@ -65,6 +89,9 @@ export type Timeline = {
   table: Item[];
   ratings: { attribute: string; field_name: string; first_rating: string; last_rating: string; direction: string; isr_count: number } | null;
   disagreements: { status: "ok" | "hidden" | "failed"; count: number };
+  // Ticket 132: where a package's records disagree (a plan row, the contract awards, an award notice), which no dashed
+  // line joins, the newest first. A recording made before the ticket may lack it.
+  records_disagree?: RecordDisagreement[];
   // The state a dashed line takes when no answer or draft open on the page depends on it: config/project_page.toml's
   // [timeline] disagreement_line_state (the 23 brief, section 10), "info" unless it is switched back to "warning".
   disagreement_line_state: "info" | "warning";

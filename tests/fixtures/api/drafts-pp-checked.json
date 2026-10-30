@@ -277,10 +277,11 @@
           "activities": 9,
           "checked": 9,
           "not_fully_checked": 0,
-          "needs_a_look": 1,
-          "watch": 2,
+          "needs_a_look": 0,
+          "watch": 1,
+          "moved_on": 2,
           "data_note": 3,
-          "signal": 3,
+          "signal": 1,
           "marked": 6,
           "unmarked": 3
         }
@@ -294,8 +295,9 @@
       "stratum": "What",
       "short_name": null,
       "row": {
+        "assertion_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB#KE-NWWDA-541055-CW-RFB/signed_on",
         "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-        "public_from": "2026-10-09",
+        "project_id": "P156634",
         "source": {
           "document_type": "Procurement Plan",
           "project_id": "P156634",
@@ -304,6 +306,35 @@
           "document_id": "40132287",
           "pdf_page": 3
         },
+        "evidence_tier": "record",
+        "form": "plan_row",
+        "source_key": "documents",
+        "document_id": "40132287",
+        "document_type": "Procurement Plan",
+        "report_number": null,
+        "version": null,
+        "sequence": null,
+        "passage_id": "40132287/KE-NWWDA-541055-CW-RFB",
+        "pdf_page": 3,
+        "paragraph": null,
+        "paragraph_numbered": null,
+        "printed_page": null,
+        "doc_key": null,
+        "section_path": null,
+        "language": null,
+        "kind": null,
+        "text": null,
+        "text_left_out": null,
+        "field_name": "Process Status",
+        "value": "Pending Implementation",
+        "value_form": "status",
+        "judgment": null,
+        "quote": null,
+        "period_start": "2026-10-09",
+        "period_end": "2026-10-09",
+        "made_at": "2026-10-09",
+        "public_from": "2026-10-09",
+        "months_after_event": null,
         "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
         "section": "WORKS",
         "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
@@ -324,19 +355,19 @@
         "actual_to_estimate": null,
         "marks": [
           {
-            "mark": "needs_a_look",
+            "mark": "moved_on",
             "reasons": [
               {
-                "code": "completion_passed_no_contract",
-                "mark": "needs_a_look",
-                "planned_completion_on": "2026-07-31",
-                "planned_completion_plan_date": "2026-03-05",
-                "closing_date": "2026-10-31",
-                "days_to_close": 3,
+                "code": "moved_on_since_plan",
+                "mark": "moved_on",
+                "process_status": "Pending Implementation",
+                "signed_on": "2026-06-22",
+                "record": "contract_awards",
+                "disagreement_id": "a29dcd3a40952830",
                 "evidence_ids": [
                   "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-                  "strata.silver.plan_rows:40090127/KE-NWWDA-541055-CW-RFB",
-                  "strata.gold.project:P156634"
+                  "strata.gold.disagreement:a29dcd3a40952830",
+                  "strata.gold.contract:1903781"
                 ]
               }
             ]
@@ -350,7 +381,44 @@
         "delay_days": null,
         "state": "open_past_date",
         "awards_signed_on": "2026-06-22",
-        "awards_evidence_id": "strata.gold.contract:1903781"
+        "awards_evidence_id": "strata.gold.contract:1903781",
+        "also": [
+          {
+            "assertion_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB#KE-NWWDA-541055-CW-RFB/signed_on",
+            "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+            "project_id": "P156634",
+            "source": null,
+            "evidence_tier": "record",
+            "form": "plan_row",
+            "source_key": "documents",
+            "document_id": "40132287",
+            "document_type": "Procurement Plan",
+            "report_number": null,
+            "version": null,
+            "sequence": null,
+            "passage_id": "40132287/KE-NWWDA-541055-CW-RFB",
+            "pdf_page": 3,
+            "paragraph": null,
+            "paragraph_numbered": null,
+            "printed_page": null,
+            "doc_key": null,
+            "section_path": null,
+            "language": null,
+            "kind": null,
+            "text": null,
+            "text_left_out": null,
+            "field_name": "Process Status",
+            "value": "Pending Implementation",
+            "value_form": "status",
+            "judgment": null,
+            "quote": null,
+            "period_start": "2026-10-09",
+            "period_end": "2026-10-09",
+            "made_at": "2026-10-09",
+            "public_from": "2026-10-09",
+            "months_after_event": null
+          }
+        ]
       },
       "highlights": []
     },
@@ -393,8 +461,9 @@
       "stratum": "What",
       "short_name": null,
       "row": {
+        "assertion_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ#KE-NWWDA-541062-CW-RFQ/signed_on",
         "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
-        "public_from": "2026-10-09",
+        "project_id": "P156634",
         "source": {
           "document_type": "Procurement Plan",
           "project_id": "P156634",
@@ -403,6 +472,35 @@
           "document_id": "40132287",
           "pdf_page": 3
         },
+        "evidence_tier": "record",
+        "form": "plan_row",
+        "source_key": "documents",
+        "document_id": "40132287",
+        "document_type": "Procurement Plan",
+        "report_number": null,
+        "version": null,
+        "sequence": null,
+        "passage_id": "40132287/KE-NWWDA-541062-CW-RFQ",
+        "pdf_page": 3,
+        "paragraph": null,
+        "paragraph_numbered": null,
+        "printed_page": null,
+        "doc_key": null,
+        "section_path": null,
+        "language": null,
+        "kind": null,
+        "text": null,
+        "text_left_out": null,
+        "field_name": "Process Status",
+        "value": "Pending Implementation",
+        "value_form": "status",
+        "judgment": null,
+        "quote": null,
+        "period_start": "2026-10-09",
+        "period_end": "2026-10-09",
+        "made_at": "2026-10-09",
+        "public_from": "2026-10-09",
+        "months_after_event": null,
         "activity_reference_no": "KE-NWWDA-541062-CW-RFQ",
         "section": "WORKS",
         "description": "Equipping of Exploratory Bo reholes project- Lot 3- Qaras Water Supply",
@@ -423,16 +521,19 @@
         "actual_to_estimate": null,
         "marks": [
           {
-            "mark": "watch",
+            "mark": "moved_on",
             "reasons": [
               {
-                "code": "pending_near_closing",
-                "mark": "watch",
-                "closing_date": "2026-10-31",
-                "days_to_close": 3,
+                "code": "moved_on_since_plan",
+                "mark": "moved_on",
+                "process_status": "Pending Implementation",
+                "signed_on": "2026-05-11",
+                "record": "contract_awards",
+                "disagreement_id": "b38b4a815e8525ea",
                 "evidence_ids": [
                   "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
-                  "strata.gold.project:P156634"
+                  "strata.gold.disagreement:b38b4a815e8525ea",
+                  "strata.gold.contract:1903551"
                 ]
               }
             ]
@@ -446,7 +547,44 @@
         "delay_days": null,
         "state": "open_past_date",
         "awards_signed_on": "2026-05-11",
-        "awards_evidence_id": "strata.gold.contract:1903551"
+        "awards_evidence_id": "strata.gold.contract:1903551",
+        "also": [
+          {
+            "assertion_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ#KE-NWWDA-541062-CW-RFQ/signed_on",
+            "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
+            "project_id": "P156634",
+            "source": null,
+            "evidence_tier": "record",
+            "form": "plan_row",
+            "source_key": "documents",
+            "document_id": "40132287",
+            "document_type": "Procurement Plan",
+            "report_number": null,
+            "version": null,
+            "sequence": null,
+            "passage_id": "40132287/KE-NWWDA-541062-CW-RFQ",
+            "pdf_page": 3,
+            "paragraph": null,
+            "paragraph_numbered": null,
+            "printed_page": null,
+            "doc_key": null,
+            "section_path": null,
+            "language": null,
+            "kind": null,
+            "text": null,
+            "text_left_out": null,
+            "field_name": "Process Status",
+            "value": "Pending Implementation",
+            "value_form": "status",
+            "judgment": null,
+            "quote": null,
+            "period_start": "2026-10-09",
+            "period_end": "2026-10-09",
+            "made_at": "2026-10-09",
+            "public_from": "2026-10-09",
+            "months_after_event": null
+          }
+        ]
       },
       "highlights": []
     },
