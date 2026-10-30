@@ -37,6 +37,12 @@ def data_through(engine: Engine) -> dt.date | None:
     return _day(rows[0][0]) if rows else None
 
 
+def nightly_finished(engine: Engine) -> str | None:
+    """When the nightly job last finished a task, as text, or None before any run (ticket 125's warm)."""
+    rows = engine.run(query("nightly_finished")).rows
+    return None if not rows or rows[0][0] is None else str(rows[0][0])
+
+
 def warehouse_user(engine: Engine) -> str | None:
     """The user the warehouse says ran the query."""
     rows = engine.run(query("warehouse_user")).rows

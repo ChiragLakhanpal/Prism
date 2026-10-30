@@ -149,6 +149,21 @@ def recordable(evidence_id: str) -> bool:
             or table in _catalog_tables())
 
 
+def event_of(evidence_id: str, found: dict) -> dict:
+    """A source as the drawer and the answer stream's evidence event carry it, from what its reader found. A reader
+    may name the stratum itself, as the timeline's views do, since their rows are no passage."""
+    named = {key: found[key] for key in ("stratum", "short_name") if key in found}
+    return {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), **named,
+            "row": found["row"], "highlights": []}
+
+
+def passage_event(row: dict) -> dict:
+    """A passage as read() gives it with no why, from its row as search_passages' passages.sql reads it, for a page
+    that read its passages in its own batch (the Summary, ticket 125)."""
+    passage = search_passages.passage_row(row)
+    return event_of(passage["evidence_id"], {"kind": "passage", "row": passage})
+
+
 def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None = None, why: bool = True,
          view: str = "staff", extra_versions: dict[str, list[dict]] | None = None) -> dict | None:
     """The source this evidence id names, as the viewer could see it on the as-of date and in the page's view, or
@@ -167,10 +182,7 @@ def read(engine: Engine, evidence_id: str, as_of: dt.date, step_ref: str | None 
     found = None if found is None else timeline.in_view(engine, found, view, as_of)
     if found is None:
         return None
-    # A reader may name the stratum itself, as the timeline's views do, since their rows are no passage.
-    named = {key: found[key] for key in ("stratum", "short_name") if key in found}
-    event = {"id": evidence_id, "kind": found["kind"], "tool": None, **labels(found["row"]), **named,
-             "row": found["row"], "highlights": []}
+    event = event_of(evidence_id, found)
     if found["kind"] == "passage" and why:
         event["why"] = edges.why(engine, found["row"], step_ref, as_of)
     if found["kind"] == "record" and step_ref:

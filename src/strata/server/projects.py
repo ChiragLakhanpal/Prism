@@ -34,9 +34,10 @@ from decimal import Decimal
 from functools import cache
 from pathlib import Path
 
-from strata.lakehouse.engine import Engine
+from strata.lakehouse.engine import Engine, read_ahead
 from strata.server import changes
 from strata.tools.check_plan import agency_id, implementing_agencies, read_baseline, record_is_current
+from strata.tools.check_plan import baseline_reads as read_baseline_reads
 
 SQL = Path(__file__).resolve().parent / "sql" / "projects"
 PROJECTS_SOURCE = "projects"  # the source registry's key for the projects API (config/sources.toml)
@@ -140,6 +141,12 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
             "disclosed_on": _iso(row["disclosed_on"]), "is_latest": not agency["versions"],
             "read": read, "activities": row["activities"] if read else None})
     all_versions = changes.versions(engine, project_id) if agencies else []
+    # Each agency's baseline and what changed in its latest version, as one more batch (ticket 125).
+    latest = {row["document_id"]: row for row in all_versions}
+    read_ahead(engine, [statement for agency in agencies.values() for statement in (
+        *read_baseline_reads(project_id, agency["agency_id"], as_of, view),
+        *(changes.compare_reads(all_versions, latest[agency["versions"][0]["document_id"]])
+          if agency["versions"][0]["document_id"] in latest else ()))])
     for agency in agencies.values():
         saved = read_baseline(engine, project_id, agency["agency_id"], as_of, view)
         agency["baseline"] = saved.record if saved else None
@@ -154,6 +161,12 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
         agency["version_count"] = len(agency["versions"])
         agency["shown_count"] = sum(1 for version in agency["versions"] if version["shown"])
     return list(agencies.values())
+
+
+def packages_reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
+    """The statements packages() runs, for the route that sends them as one batch (ticket 125)."""
+    return [(_query("packages"), {"project_id": project_id, "as_of": as_of}),
+            (_query("documents_through"), {"project_id": project_id})]
 
 
 def packages(engine: Engine, project_id: str, as_of: dt.date, query: str = "", page: int = 1, size: int = 20) -> dict:
@@ -175,6 +188,15 @@ def packages(engine: Engine, project_id: str, as_of: dt.date, query: str = "", p
                 .replace(" ", "")]
     return {"as_of": as_of.isoformat(), "query": query, **page_of(rows, page, size),
             "read_through": _through(engine, "documents_through", as_of, project_id=project_id)}
+
+
+def project_page_reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
+    """The statements project_page() runs before it knows the project's agencies, for the route that sends them as
+    one batch (ticket 125). Each agency's baseline and changes follow in a second batch (_agencies)."""
+    return [(_query("project"), {"project_id": project_id, "as_of": as_of}),
+            (_query("plan_versions"), {"project_id": project_id, "as_of": as_of}),
+            *changes.versions_reads(project_id),
+            (_query("documents_through"), {"project_id": project_id})]
 
 
 def project_page(engine: Engine, project_id: str, as_of: dt.date, view: str = "staff",

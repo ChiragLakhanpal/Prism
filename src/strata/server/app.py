@@ -105,7 +105,10 @@ internal and a reference, and its details stay in the server log. An /api span i
 route, such as GET /api/projects/{project_id}/..., and an error's reference is the request's trace
 id.
 
-Each request builds its own Viewer, Turn and engine; create_app keeps only settings, never a viewer.
+Each request builds its own Viewer, Turn and engine; create_app keeps only settings, never a viewer. The pages in
+PAGES (a project's header, Summary, Timeline and Packages, and a package's header) send their warehouse reads as one
+batch, and the App keeps each answer for its as-of day and the viewer's role, never the person (ticket 125;
+src/strata/server/page_cache.py), so the second view of a page reads nothing.
 """
 
 import asyncio
@@ -145,7 +148,7 @@ from strata.knowledge.lessons.visits import LessonVisits, Visit
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
-from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
+from strata.lakehouse.engine import Engine, EngineError, PermissionDenied, read_together
 from strata.config import PackageForm, load_package_form
 from strata.packages.store import PackageStore
 from strata.knowledge.retrieval.judging import Judging
@@ -172,13 +175,15 @@ from strata.server.viewer_settings import SettingsStore, working_language
 from strata.estimates import signals_track
 from strata.server.access import Access, NoGroups, is_author
 from strata.server.choices import REASON_LIMIT, ChoiceLog
+from strata.server.page_cache import PageCache, PageKey
+from strata.server.warm import Warm
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
 from strata.server.usage import UsageEvent, UsageLog
 from strata.server.viewer_sql import data_through, warehouse_user
 from strata.tools import registry
 from strata.tools.data_readiness_for import registry_page
-from strata.tools.find_comparables import read_package
+from strata.tools.find_comparables import package_reads, read_package
 
 log = logging.getLogger("strata.server")
 KEEP_ALIVE = ": keep-alive\n\n"
@@ -330,7 +335,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                settings: SettingsStore | None = None, exposures: ExposureLog | None = None,
                visits: LessonVisits | None = None, views: Views | None = None,
                environ: Mapping[str, str] | None = None, home: HomeStore | None = None,
-               thresholds: Thresholds | None = None) -> FastAPI:
+               thresholds: Thresholds | None = None, page_cache: PageCache | None = None,
+               warm: Warm | None = None) -> FastAPI:
     """The app.
 
     environ is the settings every tool the app runs itself reads its services' addresses and keys from
@@ -396,6 +402,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     store.py), with each person's pasted text readable only by them, written as the app's own service principal;
     without it, comparing criteria says there is no data service and no run is kept. criteria_reader gives the
     criteria reader agent, or None when none is connected; new_check_id the ids its runs get (ticket 31).
+
+    page_cache keeps each page in PAGES (a project's header, Summary, Timeline and Packages, and a package's header) for
+    its as-of day and the viewer's role (src/strata/server/page_cache.py, ticket 125), so its second view reads nothing;
+    without it, every view reads the warehouse. warm reads the demo's pages into it when the App starts and every hour
+    after, as the App itself (src/strata/server/warm.py); without it, nothing is read ahead.
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
@@ -419,9 +430,13 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     async def lifespan(_app: FastAPI):
         if usage is not None:
             usage.start()
+        if warm is not None:  # the demo's pages, read ahead on a thread of the warm's own (ticket 125)
+            warm.start()
         try:
             yield
         finally:
+            if warm is not None:
+                await asyncio.to_thread(warm.stop)
             if usage is not None:
                 await asyncio.to_thread(usage.stop)
 
@@ -503,19 +518,45 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return refused(502, "unreadable")
         return JSONResponse(answer(value), headers={"Cache-Control": "no-store"})
 
-    def read_for(what: str, viewer: Viewer, read: Callable[[Engine], object]):
+    def day_left(key: PageKey) -> float | None:
+        """For a page read as of today, the seconds until the day ends, after which the browser must ask again. A
+        project's header is never kept by the browser, since saving or removing a baseline changes it and the page
+        reads it again at once; the App lets its own copy go then."""
+        if key.page == "project":
+            return 0
+        if key.as_of < today():
+            return None
+        moment = now()
+        return (dt.datetime.combine(moment.date() + dt.timedelta(days=1), dt.time(), moment.tzinfo) - moment).total_seconds()
+
+    def read_for(what: str, viewer: Viewer, read: Callable[[Engine], object], page: PageKey | None = None,
+                 refresh: bool = False):
         """One read as the viewer, or the error a page can show: permission, or the data service,
-        which keeps its details in the server log and gives the page a reference to it."""
+        which keeps its details in the server log and gives the page a reference to it.
+
+        A page in PAGES is kept for its as-of day and the viewer's role (ticket 125): a viewer with a forwarded token
+        gets it from the App's memory while its window lasts, and the browser keeps it as long. refresh reads it again
+        and keeps the new answer, as the warm does. A page reads through one batch (read_together), and a page read
+        past a failed read, such as the Timeline with its disagreements failed, is sent but not kept."""
         if engine_for is None:
             return JSONResponse({"code": "no_data_service"}, status_code=503)
+        kept_here = page is not None and page_cache is not None and bool(viewer.token)
+        if kept_here and not refresh and (kept := page_cache.get(page)) is not None:
+            return page_cache.response(kept, day_left(page))
+        batch, generation = None, page_cache.generation if kept_here else None
         try:
             with engine_for(viewer) as engine:
-                return read(engine)
+                batch = read_together(engine, ()) if page is not None else None
+                found = read(engine if batch is None else batch)
         except PermissionDenied as error:
             log.warning("The warehouse refused %s on %s: %s", viewer.email or viewer.user_id, what, error)
             return JSONResponse({"code": "permission"}, status_code=403)
         except EngineError:
             return with_reference(503, "data_service", "The data service failed on %s, reference %s.", what)
+        if kept_here and not isinstance(found, Response) and not batch.errors and (
+                kept := page_cache.keep(page, found, generation)) is not None:
+            return page_cache.response(kept, day_left(page))
+        return found
 
     def run_tool(name: str, arguments: dict, viewer: Viewer, view: str, as_of: dt.date | None):
         """One tool call as the viewer, or the error a page can show: a bad request, permission, a tool
@@ -600,41 +641,94 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     versions_shown = int(thresholds.value("app.versions_shown"))
 
+    # ── The pages the App keeps (ticket 125) ───────────────────────────────
+    # Each page in PAGES reads its answer from its key alone (src/strata/server/page_cache.py): its name, the viewer's
+    # role (the view the request is bound to), its as-of day and its own arguments. A route asks page_for for it, and so
+    # does the warm, as the App itself, for the demo's cases (src/strata/server/warm.py). So a page in PAGES reads no
+    # table with a row filter or a masked column (src/strata/lakehouse/masks.py): the App reads past both, and a kept
+    # page goes to everyone in the role (tests/test_page_speed.py checks the statements each page sends).
+
+    def unknown(found, code: str):
+        return found if found is not None else JSONResponse({"code": code}, status_code=404)
+
+    def project_page(key: PageKey, viewer: Viewer):
+        (project_id,) = key.args
+        return f"project {project_id}", lambda engine: unknown(projects.project_page(
+            read_together(engine, projects.project_page_reads(project_id, key.as_of)), project_id, key.as_of, key.role,
+            versions_shown), "unknown_project")
+
+    def summary_page(key: PageKey, viewer: Viewer):
+        (project_id,) = key.args
+        return f"the summary of {project_id}", lambda engine: unknown(summary.summary(
+            read_together(engine, summary.reads(project_id, key.as_of)), project_id, key.as_of), "unknown_project")
+
+    def timeline_page(key: PageKey, viewer: Viewer):
+        # The date the tab names is the one the page asked for (asked), or none for the plain page, so a recording of
+        # the plain page holds still.
+        project_id, asked = key.args
+        return f"the timeline of {project_id}", lambda engine: unknown(timeline.timeline(
+            read_together(engine, timeline.reads(project_id, key.as_of, key.role)), viewer, project_id, key.as_of,
+            key.role, asked), "unknown_project")
+
+    def packages_page(key: PageKey, viewer: Viewer):
+        project_id, query, page = key.args
+        return f"the packages of {project_id}", lambda engine: projects.packages(
+            read_together(engine, projects.packages_reads(project_id, key.as_of)), project_id, key.as_of, query, page,
+            page_size)
+
+    def package_page(key: PageKey, viewer: Viewer):
+        (step_reference,) = key.args
+
+        def read(engine: Engine):
+            found = read_package(read_together(engine, package_reads(step_reference, key.as_of)), step_reference,
+                                 key.as_of)
+            if found is None:
+                return JSONResponse({"code": "unknown_package"}, status_code=404)
+            # The project's name as its page header gives it, by the server's one rule, so the crumb reads as Check
+            # a plan's does (the 58 critique, "one project name"); the tool's own project_name is kept.
+            found["display_name"] = projects.display_name(found.get("project_name"))
+            return {"as_of": key.as_of.isoformat(), "package": found}
+        return f"package {step_reference}", read
+
+    PAGES = {"project": project_page, "summary": summary_page, "timeline": timeline_page,  # noqa: N806 - the registry
+             "packages": packages_page, "package": package_page}
+
+    def page_for(key: PageKey, viewer: Viewer, refresh: bool = False):
+        """A page in PAGES, kept or read as the viewer."""
+        what, read = PAGES[key.page](key, viewer)
+        return read_for(what, viewer, read, page=key, refresh=refresh)
+
+    if warm is not None and page_cache is not None and engine_for is not None:
+        warm.bind(lambda key, viewer: page_for(key, viewer, refresh=True), read_as, page_cache, today)
+    app.state.page_cache, app.state.warm = page_cache, warm
+
     @app.get("/api/projects/{project_id}")
     def open_project(project_id: str, asof: dt.date | None = None, view: str = "staff",
                      viewer: Viewer = Depends(current_viewer)):
-        as_of = as_of_for(asof)
-
-        def read(engine: Engine):
-            found = projects.project_page(engine, project_id, as_of, view, versions_shown)
-            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
-        return read_for(f"project {project_id}", viewer, read)
+        return page_for(PageKey("project", view, as_of_for(asof), (project_id,)), viewer)
 
     @app.get("/api/projects/{project_id}/summary")
-    def project_summary(project_id: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
-        def read(engine: Engine):
-            found = summary.summary(engine, project_id, as_of_for(asof))
-            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
-        return read_for(f"the summary of {project_id}", viewer, read)
+    def project_summary(project_id: str, asof: dt.date | None = None, view: str = "staff",
+                        viewer: Viewer = Depends(current_viewer)):
+        return page_for(PageKey("summary", view, as_of_for(asof), (project_id,)), viewer)
 
     @app.get("/api/projects/{project_id}/timeline")
     def project_timeline(project_id: str, asof: dt.date | None = None, view: Literal["staff", "piu", "public"] = "staff",
                          viewer: Viewer = Depends(current_viewer)):
-        def read(engine: Engine):
-            # The page's as-of date, never later than today, by the clock create_app was given (today), so a
-            # recording of the plain page holds still. The date the tab names is the one it read as of.
-            as_of = as_of_for(asof)
-            found = timeline.timeline(engine, viewer, project_id, as_of, view, as_of if asof else None)
-            return found if found is not None else JSONResponse({"code": "unknown_project"}, status_code=404)
-        return read_for(f"the timeline of {project_id}", viewer, read)
+        # The page's as-of date, never later than today, by the clock create_app was given (today).
+        as_of = as_of_for(asof)
+        return page_for(PageKey("timeline", view, as_of, (project_id, as_of if asof else None)), viewer)
 
     documents_shown = int(thresholds.value("app.documents_shown"))
 
     @app.get("/api/projects/{project_id}/packages")
     def project_packages(project_id: str, asof: dt.date | None = None, q: str = Query("", max_length=200),
-                         page: int = Query(1, ge=1), viewer: Viewer = Depends(current_viewer)):
-        return read_for(f"the packages of {project_id}", viewer,
-                        lambda engine: projects.packages(engine, project_id, as_of_for(asof), q.strip(), page, page_size))
+                         page: int = Query(1, ge=1), view: str = "staff", viewer: Viewer = Depends(current_viewer)):
+        key = PageKey("packages", view, as_of_for(asof), (project_id, q.strip(), page))
+        if key.args[1]:  # a search is read but not kept, so searches cannot push the demo's pages out of the App's memory
+            what, read = PAGES["packages"](key, viewer)
+            return read_for(what, viewer, read)
+        return page_for(key, viewer)
 
     @app.get("/api/projects/{project_id}/packages/{step_reference}")
     def activity(project_id: str, step_reference: str, asof: dt.date | None = None,
@@ -719,7 +813,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         preview never reaches here: the view switch's guard refuses it (ticket 40)."""
         if not viewer.user_id:
             return refused(401, "no_identity")
-        return read_for(what, viewer, write)
+        try:
+            return read_for(what, viewer, write)
+        finally:  # a project's header shows the baseline, so no header kept before the write may answer after it
+            if page_cache is not None:
+                page_cache.drop(lambda key: key.page == "project")
 
     @app.put("/api/projects/{project_id}/procurement/{agency_id}/baseline")
     def save_baseline(project_id: str, agency_id: str, body: BaselineRequest, viewer: Viewer = Depends(current_viewer)):
@@ -928,18 +1026,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                                reference=request_reference, exposures=exposures)
 
     @app.get("/api/packages/{step_reference}")
-    def open_package(step_reference: str, asof: dt.date | None = None, viewer: Viewer = Depends(current_viewer)):
-        as_of = as_of_for(asof)
-
-        def read(engine: Engine):
-            found = read_package(engine, step_reference, as_of)
-            if found is None:
-                return JSONResponse({"code": "unknown_package"}, status_code=404)
-            # The project's name as its page header gives it, by the server's one rule, so the crumb reads as Check
-            # a plan's does (the 58 critique, "one project name"); the tool's own project_name is kept.
-            found["display_name"] = projects.display_name(found.get("project_name"))
-            return {"as_of": as_of.isoformat(), "package": found}
-        return read_for(f"package {step_reference}", viewer, read)
+    def open_package(step_reference: str, asof: dt.date | None = None, view: str = "staff",
+                     viewer: Viewer = Depends(current_viewer)):
+        return page_for(PageKey("package", view, as_of_for(asof), (step_reference,)), viewer)
 
     def saved_choice(viewer: Viewer, step_reference: str) -> str | None:
         """The viewer's plan-date choice for a package, the option an exposure records (ticket 44), or None."""

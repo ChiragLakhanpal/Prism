@@ -126,6 +126,11 @@ class Limits:
 
 # ── The package ──────────────────────────────────────────────────────────
 
+def package_reads(step_reference: str, as_of: dt.date) -> list[tuple[str, dict]]:
+    """The statement read_package runs, for a page that sends its reads as one batch (ticket 125)."""
+    return [(_sql("package.sql"), {"step_reference": step_reference.strip(), "as_of": as_of})]
+
+
 def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
     """The package as its newest plan version public on the as-of date gives it, or None when no
     such version lists it. The package page's header shows the same facts."""

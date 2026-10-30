@@ -3,62 +3,30 @@ tests/test_app_secret_fallback.py's tests.
 
 Its token endpoint (/oidc/v1/token) hands the App's client id and secret a token, or refuses them the way the workspace
 does once the platform has restarted the App and made its service principal a new secret: 401 with OAuth's
-invalid_client. Its SQL warehouse (the Statement Execution API's POST /api/2.0/sql/statements/) runs each statement on
-a DuckDB database, a copy of the fixture database when a test gives one, and answers in the API's JSON_ARRAY form with
-a manifest of types, which WarehouseEngine reads back (ticket 128). Without a database, every statement succeeds with
-no rows. Each call is kept with the token it carried, so a test can see whose token wrote each row.
+invalid_client. Its SQL warehouse (the Statement Execution API's POST /api/2.0/sql/statements/) is
+tests/warehouse_over_fixture.py's (ticket 128), on a copy of the fixture database that a test gives and the statements
+may write to. Without a database, every statement succeeds with no rows. Each call is kept with the token it carried,
+so a test can see whose token wrote each row.
 """
 
 from __future__ import annotations
 
-import datetime as dt
-import decimal
 import json
 import threading
 from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from strata.lakehouse.engine import STATEMENTS, DuckDBEngine, typed
+from warehouse_over_fixture import WarehouseOverFixture
+
+from strata.lakehouse.engine import STATEMENTS, DuckDBEngine
 
 TOKEN_PATH = "/oidc/v1/token"
 APP_TOKEN = "not-a-real-key"
 # What the workspace answered on October 28 and 29, 2026, once the platform had replaced the App's secret.
 REFUSED = {"error": "invalid_client", "error_description": "Client authentication failed"}
-
-
-def _kind(values) -> str:
-    """The type the warehouse's manifest would name for a column holding these Python values."""
-    for value in values:
-        if value is None:
-            continue
-        if isinstance(value, bool):
-            return "BOOLEAN"
-        if isinstance(value, int):
-            return "LONG"
-        if isinstance(value, float):
-            return "DOUBLE"
-        if isinstance(value, decimal.Decimal):
-            return "DECIMAL"
-        if isinstance(value, dt.datetime):
-            return "TIMESTAMP" if value.tzinfo else "TIMESTAMP_NTZ"
-        if isinstance(value, dt.date):
-            return "DATE"
-        return "STRING"
-    return "STRING"
-
-
-def _text(value):
-    """One value as the warehouse writes it in JSON_ARRAY: text, or null."""
-    if value is None:
-        return None
-    if isinstance(value, bool):
-        return "true" if value else "false"
-    if isinstance(value, dt.date):
-        return value.isoformat()
-    if isinstance(value, (list, dict)):
-        return json.dumps(value, default=str)
-    return str(value)
+NO_ROWS = {"statement_id": "s-0", "status": {"state": "SUCCEEDED"}, "manifest": {"schema": {"columns": []}},
+           "result": {"data_array": []}}
 
 
 @contextmanager
@@ -67,24 +35,8 @@ def workspace(database: Path | None = None, token_status: int = 200):
     ("statement", authorization, sql) for each statement. token_status 401 refuses the App's client id and secret;
     another status that is not 200 is the endpoint failing for some other reason."""
     calls: list[tuple] = []
-    lock = threading.Lock()
+    warehouse = WarehouseOverFixture(database) if database else None
     engine = DuckDBEngine.open(database) if database else None
-
-    def run(statement: dict) -> dict:
-        if engine is None:
-            return {"statement_id": "s-0", "status": {"state": "SUCCEEDED"},
-                    "manifest": {"schema": {"columns": []}}, "result": {"data_array": []}}
-        params = {given["name"]: typed(given.get("value"), given.get("type"))
-                  for given in statement.get("parameters") or []}
-        with lock:
-            try:
-                result = engine.run(statement["statement"], params)
-            except Exception as error:  # noqa: BLE001 - the warehouse says why a statement failed
-                return {"statement_id": "s-1", "status": {"state": "FAILED", "error": {"message": str(error)}}}
-        columns = [{"name": name, "position": at, "type_name": _kind(row[at] for row in result.rows)}
-                   for at, name in enumerate(result.columns)]
-        return {"statement_id": "s-1", "status": {"state": "SUCCEEDED"}, "manifest": {"schema": {"columns": columns}},
-                "result": {"data_array": [[_text(value) for value in row] for row in result.rows]}}
 
     class Workspace(BaseHTTPRequestHandler):
         def do_POST(self):
@@ -99,7 +51,7 @@ def workspace(database: Path | None = None, token_status: int = 200):
             if self.path == STATEMENTS:
                 statement = json.loads(body)
                 calls.append(("statement", self.headers["Authorization"], statement["statement"]))
-                return self.answer(run(statement))
+                return self.answer(warehouse.answer(engine, "POST", STATEMENTS, statement) if warehouse else NO_ROWS)
             return self.answer({"error_code": "NOT_FOUND"}, status=404)
 
         def answer(self, reply: dict, status: int = 200):
