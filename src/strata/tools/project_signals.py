@@ -8,7 +8,8 @@ rule 9): [signals], and [plan_check] for the two checks the plan check already m
 The checks, in the order the screens list them (CHECKS):
 
 - completion_passed: an activity in an implementing agency's latest Procurement Plan passed its
-  planned completion with no signed contract: check_plan's completion_passed_no_contract reason.
+  planned completion with no signed contract: check_plan's completion_passed_no_contract reason, which an activity
+  a contract record or an award notice says was signed never gets (moved on since the plan, ticket 132).
 - above_estimate: a contract was signed far above its estimate: check_plan's signed_over_estimate or
   signed_late_over_estimate reason, at [plan_check].actual_to_estimate_ratio.
 - late_direct: a direct-selection activity of late_direct_min_usd or more first appears in a plan

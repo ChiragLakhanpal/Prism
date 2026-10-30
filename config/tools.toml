@@ -71,12 +71,16 @@ contract, it checks whether the planned completion date has passed. It skips a p
 in the result's thresholds, and checks one that has no estimate. \
 A signed amount is compared with its estimate, and the result says how late the contract was signed, measured \
 from the first published planned date. A package still pending close to the project's closing date is marked. \
-Weak records get data notes. It returns one row per activity in STEP's columns, with its marks (needs_a_look, \
-watch, data_note) and the values behind each reason. How many activities the plan lists and how many carry each \
+Weak records get data notes. A package the plan still shows as not signed, while the contract awards or an award \
+notice say its contract was signed before a later plan of the agency replaced this one (at any time, for the \
+agency's latest plan), is marked moved_on instead of pending: \
+the records have moved past the plan, and the reason cites the disagreement between them. \
+It returns one row per activity in STEP's columns, with its marks (needs_a_look, \
+watch, moved_on, data_note) and the values behind each reason. How many activities the plan lists and how many carry each \
 mark come back in the result's summary, which you cite for them. When World Bank staff saved one of the agency's versions \
 as the baseline, the plan agreed at negotiations, the result names it, and each reason that states a delay also \
 gives the delay from the baseline's planned date; the marks still come from the first published planned date. \
-It reads only the plan's own record. It cannot see the \
+It reads the plan's own record and the disagreements between its rows and the signing records. It cannot see the \
 prior-review queue, complaints, contract amendments or contract management reports. An implementing agency's \
 private upload is checked only on its own team's pages, which pass upload_id; leave upload_id out."""
 adapter = "strata.tools.check_plan:check_plan"
@@ -139,10 +143,12 @@ fields = ["plan", "project", "checks_run", "thresholds", "counts", "baseline", "
 # project lists them (listed); a published plan's rows give neither. method_unknown is the plan reader's note on a
 # Method cell the method-name registry does not list (ticket 42). The last four reasons are an upload's data notes: a
 # date or an amount the reader could not read, a row with no Method, and a reference two rows share.
+# moved_on_since_plan (ticket 132) is the one reason of the moved_on mark: the plan still says pending while a contract
+# record or an award notice says the contract was signed.
 reasons = ["completion_passed_no_contract", "pending_near_closing", "pending_on_closing_day", "pending_after_closing",
            "signed_late_over_estimate", "signed_over_estimate", "method_differs_from_reference", "actual_amount_zero",
            "method_unknown", "no_planned_date", "no_estimate", "unread_date", "unread_amount", "no_method",
-           "duplicate_ref"]
+           "duplicate_ref", "moved_on_since_plan"]
 abstentions = ["unknown_project", "no_plan_from_agency", "no_plan_as_of", "version_not_found", "version_not_public",
                "no_activities", "unknown_upload"]
 # The plan's counts (how many activities, how many need a look, are worth watching or carry a data note) are
@@ -154,7 +160,8 @@ summary_fields = ["counts"]
 [tools.project_signals]
 description = """Runs Strata's seven fixed checks on one active project's public records and says which found \
 a reason to look. A signal is a reason to look, never a finding. The checks: an activity in an implementing \
-agency's latest Procurement Plan passed its planned completion with no signed contract; a contract was signed \
+agency's latest Procurement Plan passed its planned completion with no signed contract, leaving out an activity \
+a contract record or an award notice says was signed (moved on since the plan); a contract was signed \
 at {plan_check.actual_to_estimate_ratio} times its estimate or more; a Direct Selection activity of \
 US${signals.late_direct_min_usd} or more first appears in a plan published {signals.late_direct_months} months \
 or less before the closing date, when the agency's previous plan does not list it; the loan history shows the \

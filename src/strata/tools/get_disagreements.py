@@ -219,6 +219,24 @@ def reads(project_id: str, as_of: dt.date, view: str) -> list[tuple[str, dict]]:
             *withheld_reads(view, "disagreements_on_active_projects", project_id, as_of)]
 
 
+def replaced(call: Call, project_id: str, disagreement_id: str) -> dict | None:
+    """One disagreement about the project, by its id, that a later version replaced on or before the as-of date, built
+    as a current row is, with replaced_on saying when. Current answers leave it out, but a check of the replaced plan
+    still cites it (ticket 132's review round 1, B1), so the drawer opens it with both sides. None when no such
+    disagreement was public on the date (both sides, ADR 0002) or no later version had replaced it by then."""
+    common = {"subject_id": project_id, "package": "package"}
+    found = next((row for row in _rows(call, "disagreements.sql", as_of=call.as_of, **common)
+                  if row["disagreement_id"] == disagreement_id), None)
+    day = typed("replaced_on", found["replaced_on"]) if found else None
+    if day is None or day > call.as_of:
+        return None
+    held = _rows(call, "assertions.sql", as_of=call.as_of, passages=f"{PASSAGES}:", **common)
+    by_id = {row["assertion_id"]: from_row(row) for row in held}
+    passages = {row["assertion_id"]: _passage(row) for row in held}
+    sides = (by_id[found["first_assertion_id"]], by_id[found["second_assertion_id"]])
+    return {**_row(found, sides, passages), "replaced_on": _iso(day)}
+
+
 def get_disagreements(call: Call, subject_id: str, attribute: str | None = None) -> dict:
     """The disagreements and trajectories about the subject, as of call.as_of."""
     subject_id = subject_id.strip()

@@ -6,13 +6,16 @@ database first, then run:
 
     uv run --frozen python tests/record_drafts_api.py
 
-One story makes them all, on the fixture database as of October 23, 2026, with the scripted writer's cases
+One story makes them all, on the fixture database as the writer's recordings saw it (tests/writer_world.py: before
+ticket 132 named two of the plan's three marked activities moved on since the plan, which re-recording the writer
+needs the live model to follow), as of October 23, 2026, with the scripted writer's cases
 (tests/fixtures/agent/writers.toml), a fixed clock and fixed ids: Ana, on the Kenya water team, drafts
 review notes on the NWWDA plan of October 9, 2026, Ben (her teammate) opens them and finds them from the
 plan check, as Ana does, Ana checks and exports
 them after opening one source, and drafts three more (one with an activity whose sentences all failed,
 one with a refused activity, and one she discards). The writing streams of a draft no sentence of which
-passed, and of a writer that did not answer, are recorded too.
+passed, and of a writer that did not answer, are recorded too. So is the plan check the story drafts from
+(drafts-check-plan.json), which the draft screens' tests serve for the plan check page they start on.
 """
 
 import asyncio
@@ -60,8 +63,12 @@ class Unavailable:
         raise AgentError("agent_unavailable", "A recorded stream for the screen tests.")
 
 
-def answers(folder: Path) -> dict[str, str]:
-    """Every recorded answer, by its file name, as the text the file holds."""
+def answers(folder: Path, database: Path | None = None) -> dict[str, str]:
+    """Every recorded answer, by its file name, as the text the file holds. database is the writer world's copy of
+    the fixture, made in folder when not given."""
+    from writer_world import copy_without_moved_on
+
+    database = database or copy_without_moved_on(FIXTURE_DB, folder / "writer-world")
     state_db = folder / "state.duckdb"
     with DuckDBEngine.open(state_db) as engine:
         catalog.build(engine)
@@ -73,7 +80,7 @@ def answers(folder: Path) -> dict[str, str]:
 
     @contextmanager
     def reading(viewer):
-        with DuckDBEngine.open(FIXTURE_DB, read_only=True) as engine:
+        with DuckDBEngine.open(database, read_only=True) as engine:
             yield engine
 
     def state():
@@ -108,6 +115,8 @@ def answers(folder: Path) -> dict[str, str]:
                                            json={"expected_state": expected})
                 return json.dumps(answer.json(), indent=2, ensure_ascii=False) + "\n"
 
+            found["drafts-check-plan.json"] = await get(
+                "/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09", asof="2026-10-22")
             found["drafts-write-review-notes.sse"] = await write("review-notes-nwwda-2026-10-09", "key-1")
             found["drafts-review-notes-draft.json"] = await get("/api/drafts/draft-0001")
             # The check line the evidence pack writes for this draft, which the page must write word for word

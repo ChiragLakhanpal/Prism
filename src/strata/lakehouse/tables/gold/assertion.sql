@@ -11,7 +11,8 @@
 -- field_name      the source's own name for it, word for word, such as Progress towards achievement of PDO
 -- value           the value as the source gives it: a rating word for word, a judgment's side
 --                 (satisfactory or unsatisfactory), a date in ISO form, an amount in US dollars
--- value_form      rating, judgment (a narrative account that gives only a side), date or amount
+-- value_form      rating, judgment (a narrative account that gives only a side), date, amount, or status (a plan
+--                 row's Process Status before signing, ticket 132)
 -- judgment        the side of the line a rating or an account falls on: satisfactory or unsatisfactory;
 --                 empty for a date, an amount, or a rating on a scale with no sides, such as risk
 -- period_event    the period it describes: report_period (an ISR's own period), whole_project,

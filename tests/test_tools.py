@@ -325,30 +325,79 @@ def test_adding_a_tool_is_one_entry_and_the_agents_tool_list_grows_with_it(tmp_p
 
 # ── check_plan on the NWWDA plan of October 9, 2026 ──────────────────────
 
+# Ticket 132: the wireframe marks the plan's two Pending Implementation activities as if no contract were signed, but
+# the contract awards say each was signed before the plan's date (values.toml, award-541055-signed and
+# award-541062-signed). The records have moved past the plan, so each is moved on since the plan instead.
+MOVED_ON = {"KE-NWWDA-541055-CW-RFB": "award-541055-signed", "KE-NWWDA-541062-CW-RFQ": "award-541062-signed"}
+
+
 def test_check_plan_marks_each_activity_of_the_october_9_plan_as_the_wireframe_does(engine):
     result = check_plan(engine, plan_date="2026-10-09", as_of="2026-10-22")
 
     expected = {row["reference"]: WIREFRAME_MARKS[row["wireframe_mark"]] for row in TRUTH["plan_row"]}
     # The plan lists a ninth activity the wireframe leaves out. The tool checks every activity.
     expected |= {reference: [] for reference in TRUTH["plan"]["also_lists"]}
+    expected |= {reference: ["moved_on"] for reference in MOVED_ON}
     assert marks(result) == expected
     # The screen shows the marked rows and folds the rest, so the counts say how many of each there are.
     # "signal" counts the activities that need a look or are worth watching, the rows "Draft review
-    # notes (3 rows)" drafts a note on (ticket 35): one Needs a look and two Watch in the wireframe.
-    assert result["counts"] == {"activities": 9, "checked": 9, "not_fully_checked": 0, "needs_a_look": 1, "watch": 2,
-                                "data_note": 3, "signal": 3, "marked": 6, "unmarked": 3}
+    # notes (1 row)" drafts a note on (ticket 35). The two moved on since the plan are counted apart.
+    assert result["counts"] == {"activities": 9, "checked": 9, "not_fully_checked": 0, "needs_a_look": 0, "watch": 1,
+                                "moved_on": 2, "data_note": 3, "signal": 1, "marked": 6, "unmarked": 3}
     assert result["plan"]["plan_date"] == "2026-10-09"
     assert result["abstention"] is None
 
 
-def test_ke_nwwda_541055_needs_a_look_because_its_planned_completion_passed_with_no_signed_contract(engine):
+def test_ke_nwwda_541055_moved_on_since_the_plan_because_the_contract_awards_say_it_was_signed(engine):
+    """Ticket 132, criterion 1: the plan still says Pending Implementation, and the contract awards say the contract
+    was signed on June 22, 2026. The row is moved on since the plan, not still pending, and its reason cites the
+    plan row, the disagreement between the two records and the contract record."""
+    from strata.tools import get_disagreements
+
     result = check_plan(engine, plan_date="2026-10-09", as_of="2026-10-22")
 
-    reason = reasons(result, "KE-NWWDA-541055-CW-RFB")["completion_passed_no_contract"]
-    assert reason["mark"] == "needs_a_look"
-    assert reason["planned_completion_on"] == value("plan-541055-planned-completion").isoformat()
-    assert reason["closing_date"] == value("closing-date-p156634").isoformat()
-    assert reason["days_to_close"] == 9
+    found = reasons(result, "KE-NWWDA-541055-CW-RFB")
+    assert set(found) == {"moved_on_since_plan"}  # no longer "passed with no signed contract"
+    reason = found["moved_on_since_plan"]
+    assert reason["mark"] == "moved_on"
+    assert reason["process_status"] == value("plan-541055-status")
+    assert (reason["signed_on"], reason["record"]) == (value("award-541055-signed").isoformat(), "contract_awards")
+    held = registry.call("get_disagreements", {"subject_id": "KE-NWWDA-541055-CW-RFB", "as_of": "2026-10-22"},
+                         registry.Context(engine=engine, viewer=ANA))
+    [disagreement] = [row for row in held["rows"]
+                      if "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB" in row["source"]["evidence_ids"]]
+    assert reason["disagreement_id"] == disagreement["disagreement_id"]
+    assert reason["evidence_ids"] == ["strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+                                      f"{get_disagreements.TABLE}:{disagreement['disagreement_id']}",
+                                      "strata.gold.contract:1903781"]
+
+
+def test_a_pending_activity_with_no_later_step_done_from_another_record_stays_still_pending(engine):
+    """Ticket 132, criterion 1: in the plan of March 5, 2026, KE-NWWDA-541061-CW-RFQ is Pending Implementation, and
+    no contract record or award notice says it was signed (only the agency's later plan does), so as of October 22,
+    2026 it is still pending 9 days before the project closes. In the same plan, the two activities the contract
+    awards say were signed before the agency's next plan replaced it are moved on since the plan, counted apart."""
+    result = check_plan(engine, plan_date="2026-03-05", as_of="2026-10-22")
+
+    pending = reasons(result, "KE-NWWDA-541061-CW-RFQ")
+    assert set(pending) == {"pending_near_closing"}
+    assert (pending["pending_near_closing"]["mark"], pending["pending_near_closing"]["days_to_close"]) == ("watch", 9)
+    assert {reference: marks(result)[reference] for reference in MOVED_ON} == {
+        reference: ["moved_on"] for reference in MOVED_ON}
+    for reference, signed in MOVED_ON.items():
+        assert reasons(result, reference)["moved_on_since_plan"]["signed_on"] == value(signed).isoformat()
+    # Worth watching: KE-NWWDA-541061-CW-RFQ, still pending, and KE-NWWDA-229129-CW-RFB, signed over its estimate.
+    assert (result["counts"]["watch"], result["counts"]["moved_on"]) == (2, 2)
+
+
+def test_before_the_award_was_public_the_plan_check_does_not_know_the_activity_moved_on(engine):
+    """ADR 0002: the contract awards made KE-NWWDA-541055-CW-RFB's signing public on June 22, 2026, so a check of
+    the plan of March 5, 2026 as of June 1 cannot know it; KE-NWWDA-541062-CW-RFQ's signing of May 11 it can."""
+    result = check_plan(engine, plan_date="2026-03-05", as_of="2026-06-01")
+
+    assert "moved_on" not in marks(result)["KE-NWWDA-541055-CW-RFB"]
+    assert marks(result)["KE-NWWDA-541062-CW-RFQ"] == ["moved_on"]
+    assert result["counts"]["moved_on"] == 1
 
 
 def test_ke_nwwda_229129_is_worth_watching_signed_186_days_late_at_about_4_times_its_estimate(engine):
@@ -362,14 +411,6 @@ def test_ke_nwwda_229129_is_worth_watching_signed_186_days_late_at_about_4_times
     assert reason["actual_amount_usd"] == "1245092.76"
     assert reason["estimated_amount_usd"] == "300000.00"
     assert (reason["ratio"], reason["ratio_exact"]) == (4, "4.15")  # 1,245,092.76 / 300,000.00 = 4.1503
-
-
-def test_ke_nwwda_541062_is_worth_watching_still_pending_9_days_before_the_project_closes(engine):
-    result = check_plan(engine, plan_date="2026-10-09", as_of="2026-10-22")
-
-    reason = reasons(result, "KE-NWWDA-541062-CW-RFQ")["pending_near_closing"]
-    assert reason["mark"] == "watch"
-    assert (reason["days_to_close"], reason["closing_date"]) == (9, value("closing-date-p156634").isoformat())
 
 
 def test_the_three_data_notes_say_what_is_weak_in_each_record(engine):
@@ -465,27 +506,32 @@ def test_the_registry_refuses_a_result_that_breaks_the_tool_contract(engine, tmp
                       context, tools=config.load_tools(path))
 
 
-def test_changing_days_before_closing_in_the_thresholds_file_changes_ke_nwwda_541062s_mark(engine, tmp_path):
+def test_changing_days_before_closing_in_the_thresholds_file_changes_ke_nwwda_541061s_mark(engine, tmp_path):
+    """KE-NWWDA-541061-CW-RFQ is still pending in the plan of March 5, 2026 (ticket 132 moved the October 9 plan's
+    pending activities on, so this check uses the plan before it)."""
     path = tmp_path / "thresholds.toml"
     text = (ROOT / "config" / "thresholds.toml").read_text()
     [line] = [line for line in text.splitlines() if line.startswith("days_before_closing = ")]
     path.write_text(text.replace(line, "days_before_closing = 5"))  # 9 days are left on October 22
 
-    result = check_plan(engine, thresholds=config.load_thresholds(path), plan_date="2026-10-09", as_of="2026-10-22")
+    result = check_plan(engine, thresholds=config.load_thresholds(path), plan_date="2026-03-05", as_of="2026-10-22")
 
     assert result["thresholds"]["days_before_closing"] == 5
-    assert marks(result)["KE-NWWDA-541062-CW-RFQ"] == []
-    assert marks(result)["KE-NWWDA-541055-CW-RFB"] == ["needs_a_look"]
+    assert marks(result)["KE-NWWDA-541061-CW-RFQ"] == []
+    assert marks(result)["KE-NWWDA-541055-CW-RFB"] == ["moved_on"]
     assert result["counts"]["watch"] == 1
 
 
-@pytest.mark.parametrize("key, setting, reference, marked", [
+@pytest.mark.parametrize("key, setting, plan_date, reference, marked", [
     # KE-NWWDA-229129-CW-RFB was signed at US$1,245,092.76 against US$300,000.00, about 4.15 times its estimate.
-    ("actual_to_estimate_ratio", "5", "KE-NWWDA-229129-CW-RFB", []),
-    # KE-NWWDA-541055-CW-RFB is estimated at US$1,230,000.00; below the amount it is still pending 9 days before closing.
-    ("completion_passed_min_estimated_usd", "2_000_000", "KE-NWWDA-541055-CW-RFB", ["watch"]),
+    ("actual_to_estimate_ratio", "5", "2026-10-09", "KE-NWWDA-229129-CW-RFB", []),
+    # NWWDA-WSDP-03-2019-2020 is estimated at US$2,000,000.00 and still Under Implementation in the agency's plan of
+    # April 21, 2021, whose planned completion passed; below the amount it is still pending 9 days before closing.
+    # (Ticket 132 moved on the October 9, 2026 plan's KE-NWWDA-541055-CW-RFB, which this case once used.)
+    ("completion_passed_min_estimated_usd", "3_000_000", "2021-04-21", "NWWDA-WSDP-03-2019-2020", ["watch"]),
 ], ids=["ratio", "amount"])
-def test_each_plan_check_threshold_comes_from_the_thresholds_file(engine, tmp_path, key, setting, reference, marked):
+def test_each_plan_check_threshold_comes_from_the_thresholds_file(engine, tmp_path, key, setting, plan_date, reference,
+                                                                  marked):
     """Ticket 09's verification round 2, V3: each of [plan_check]'s three values moves a mark when the file changes,
     so none is held in code (CLAUDE.md rule 9). days_before_closing is the test above."""
     path = tmp_path / "thresholds.toml"
@@ -493,8 +539,8 @@ def test_each_plan_check_threshold_comes_from_the_thresholds_file(engine, tmp_pa
     [line] = [line for line in text.splitlines() if line.startswith(f"{key} = ")]
     path.write_text(text.replace(line, f"{key} = {setting}"))
 
-    before = check_plan(engine, plan_date="2026-10-09", as_of="2026-10-22")
-    after = check_plan(engine, thresholds=config.load_thresholds(path), plan_date="2026-10-09", as_of="2026-10-22")
+    before = check_plan(engine, plan_date=plan_date, as_of="2026-10-22")
+    after = check_plan(engine, thresholds=config.load_thresholds(path), plan_date=plan_date, as_of="2026-10-22")
 
     assert marks(before)[reference] != marked
     assert marks(after)[reference] == marked
@@ -718,10 +764,10 @@ def test_an_as_of_date_after_today_is_read_as_today(engine, monkeypatch):
     keep to its own today (tests/test_app_clock.py)."""
     monkeypatch.setattr(registry, "today", lambda: dt.date(2026, 10, 22))
 
-    result = check_plan(engine, plan_date="2026-10-09", as_of="2030-01-01")
+    result = check_plan(engine, plan_date="2026-03-05", as_of="2030-01-01")
 
     assert result["as_of"] == "2026-10-22"
-    assert reasons(result, "KE-NWWDA-541062-CW-RFQ")["pending_near_closing"]["days_to_close"] == 9
+    assert reasons(result, "KE-NWWDA-541061-CW-RFQ")["pending_near_closing"]["days_to_close"] == 9
     assert result["project"]["days_to_close"] == 9
 
 

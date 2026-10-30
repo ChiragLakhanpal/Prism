@@ -35,6 +35,15 @@ def fixture_db(tmp_path_factory):
     return FIXTURE_DB
 
 
+@pytest.fixture(scope="session")
+def writers_fixture_db(fixture_db, tmp_path_factory):
+    """The fixture database as the review notes and mission brief writers' recordings saw it, before ticket 132's
+    moved-on disagreements (tests/writer_world.py), made once per worker. Open it read-only."""
+    from writer_world import copy_without_moved_on
+
+    return copy_without_moved_on(fixture_db, tmp_path_factory.mktemp("writer-world"))
+
+
 @pytest.fixture(autouse=True)
 def no_real_retry_waits(monkeypatch):
     """A model call Azure refuses as busy waits on a fake clock in a test (ticket 118), never on time.sleep: a test
