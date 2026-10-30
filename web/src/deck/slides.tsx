@@ -49,6 +49,12 @@ export type Slide = {
   // A demo's recorded answer, which a press on the slide swaps in on the canvas (ticket 116; Recorded.tsx).
   recorded?: Recording;
   notes: ReactNode;
+  // What the presenter does on the slide, and the questions a technical panel may ask about it, each with an answer
+  // to give as written (deckCopy.speaker, by the slide's id).
+  cue?: ReactNode;
+  // An extra line to say at each press, under the words that press brings onto the screen.
+  adds?: (string | null)[];
+  asked?: { q: string; a: string }[];
 };
 
 // Each slide's title has this id, so a chart and a table region can be named by it.
@@ -59,12 +65,6 @@ const s = deckCopy.slides;
 const day = (iso: string | undefined | null) => (iso ? formatDate(iso) : "");
 const whole = (value: number) => formatNumber(value, { compact: false });
 const mono = (text: string) => <span className="font-mono">{text}</span>;
-// A sentence from the data with each project ID in it set in Roboto Mono, as the source lines set them.
-function MonoIds({ text }: { text: string }) {
-  const parts = text.split(/\b(P\d{6})\b/);
-  return <>{parts.map((part, index) => (index % 2 === 1 ? <span key={index} className="font-mono">{part}</span> : part))}</>;
-}
-
 function ratio(result: DeckResult, name: string) {
   return <ResultNum result={result} resultKey={name} value={{ part: result.n ?? 0, whole: result.d ?? 0, show: "count" }} />;
 }
@@ -93,6 +93,8 @@ export function buildSlides(data: DeckData): Slide[] {
   const links = demo.links ?? {};
   // The package demo's backup, the comparable packages recorded for the demo plan's package (ticket 116).
   const recording = recordingOf(demo.comparables, demo.step_reference);
+  // The talk's one case, end to end: the package the plan check flags is the one the next two demos open.
+  const packageHref = `/packages/${encodeURIComponent(demo.step_reference)}`;
 
   // A figure slide: the drawing's steps, then `extra` items of the slide's own.
   const figure = (id: FigureId, extra = 0, wide = true) => {
@@ -229,9 +231,9 @@ export function buildSlides(data: DeckData): Slide[] {
       steps: s.demoPackage.lines.length,
       body: (at, mode) => (
         <Demo
-          box={demo.sentence ?? ""}
+          box={<Fill template={s.demoPackage.box} slots={{ step: mono(demo.step_reference) }} />}
           action={s.demoPackage.action}
-          href={links.planPackage ?? "/packages"}
+          href={packageHref}
           recorded={recording}
           lines={s.demoPackage.lines}
           at={at}
@@ -240,14 +242,8 @@ export function buildSlides(data: DeckData): Slide[] {
       ),
       recorded: recording,
       source: { lead: deckCopy.noteLead, text: s.demoPackage.note },
-      notes: recording ? (
-        <>
-          {s.demoPackage.notes}{" "}
-          <Fill template={s.demoPackage.notesRecorded} slots={{ step: recording.step, date: day(recording.result.as_of) }} />
-        </>
-      ) : (
-        s.demoPackage.notes
-      ),
+      notes: s.demoPackage.notes,
+      cue: recording ? <Fill template={s.demoPackage.cueRecorded} slots={{ step: recording.step, date: day(recording.result.as_of) }} /> : undefined,
     },
     {
       id: "demo-answer",
@@ -258,16 +254,16 @@ export function buildSlides(data: DeckData): Slide[] {
       steps: s.demoAnswer.lines.length,
       body: (at, mode) => (
         <Demo
-          box={<MonoIds text={demo.question ?? ""} />}
-          question={demo.question}
-          action={<Fill template={s.demoAnswer.action} slots={{ project: mono(showcase) }} />}
-          href={`/projects/${showcase}`}
+          box={s.demoAnswer.question}
+          question={s.demoAnswer.question}
+          action={s.demoAnswer.action}
+          href={packageHref}
           lines={s.demoAnswer.lines}
           at={at}
           mode={mode}
         />
       ),
-      source: { lead: deckCopy.sourceLead, text: <Fill template={s.demoAnswer.source} slots={{ project: mono(showcase) }} /> },
+      source: { lead: deckCopy.noteLead, text: s.demoAnswer.note },
       notes: s.demoAnswer.notes,
     },
 
@@ -691,7 +687,13 @@ export function buildSlides(data: DeckData): Slide[] {
   // the close's notes say that everything shown is built.
   return drafts
     .filter((draft) => draft.id !== "limits" || data.designed_not_built.length > 0)
-    .map((draft, index) => ({ ...draft, n: index + 1 }));
+    .map((draft, index) => ({
+      ...draft,
+      n: index + 1,
+      cue: draft.cue ?? deckCopy.speaker[draft.id]?.cue,
+      adds: deckCopy.speaker[draft.id]?.adds,
+      asked: deckCopy.speaker[draft.id]?.asked,
+    }));
 }
 
 // The rubric's dimensions, a press each: its points, where Strata earns them, and what a reviewer can open.

@@ -56,6 +56,14 @@ export function moveFor(event: KeyboardEvent): Move | null {
   return null;
 }
 
+// F, with no modifier and outside a field, toggles full screen.
+export function fullScreenKey(event: KeyboardEvent): boolean {
+  if (event.altKey || event.ctrlKey || event.metaKey) return false;
+  const target = event.target as HTMLElement | null;
+  if (target?.closest?.("input, textarea, select, [contenteditable=true], [role=dialog]")) return false;
+  return event.key === "f" || event.key === "F";
+}
+
 export function moved(at: Place, move: Move, stops: Stop[]): Place {
   if (move === "forward") return forward(at, stops);
   if (move === "back") return back(at, stops);

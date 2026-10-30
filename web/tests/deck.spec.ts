@@ -263,9 +263,10 @@ test("the speaker notes open in their own window, follow the deck press by press
   await present(page, 1);
   const layers = await numberOf(page, "layers");
   await openAt(page, layers);
-  const notesLink = page.getByRole("link", { name: deckCopy.bar.notesName });
+  // The presenter opens the notes at their own address in a second window; the control bar has no link to them.
   await context.route("**/deck/data.json", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("deck-data.json") }));
-  const [notes] = await Promise.all([context.waitForEvent("page"), notesLink.click()]);
+  const notes = await context.newPage();
+  await notes.goto("/present/notes");
   await expect(notes.locator("[data-deck=notes]")).toBeVisible();
   await expect(notes.locator(`[data-notes-view='${layers}']`)).toBeVisible();
   await page.bringToFront();
@@ -275,11 +276,13 @@ test("the speaker notes open in their own window, follow the deck press by press
   await expect(notes.locator("[data-notes-press]")).toHaveText(deckCopy.pressOf("1", String(figureCopy.pipeline.steps.length)));
   await expect(notes.locator("[data-notes-step]")).toHaveText(figureCopy.pipeline.steps[0]);
   expect((await scan(notes)).violations.map((found) => found.id)).toEqual([]);
-  // The notes' forward press moves the deck, and its outline jumps to a slide.
+  // The notes' forward press moves the deck, and the preview beside the notes shows the slide on screen at that press.
   await notes.getByRole("button", { name: deckCopy.notesView.nextButton }).click();
   await expect(slideById(page, "pipeline")).toHaveAttribute("data-step-current", "2");
-  await notes.locator("[data-notes-outline] button").first().click();
-  await expect(page.locator("section[data-slide='1']")).toBeVisible();
+  const pipeline = await numberOf(page, "pipeline");
+  await expect(notes.locator("[data-notes-preview]").first()).toHaveAttribute("data-notes-preview", String(pipeline));
+  await expect(notes.locator(`[data-notes-preview='${pipeline}'] section[data-slide]`)).toHaveAttribute("data-step-current", "2");
+  await expect(notes.locator("[data-notes-preview]").nth(1)).toHaveAttribute("data-notes-preview", String(pipeline + 1));
 });
 
 // Every slide whole, its reading view and its notes, as /present/page and presentation mode draw them.
@@ -389,11 +392,12 @@ test("the award gap chart sits whole inside its card, clear of the points beside
   for (const year of named) expect(drawn.some((one) => one % 100 === year % 100), `FY${year}`).toBe(true);
 });
 
-test("the demo slides open Strata's own screens from the examples registry in a new tab, and the answer demo copies its question", async ({ page, context }) => {
+test("the demo slides follow one case: the plan check, then the package it flags, opened twice in a new tab, and the answer demo copies its question", async ({ page, context }) => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
   await present(page, 1);
-  const links = { "demo-plan": data.demo.links!.checkPlan!, "demo-package": data.demo.links!.planPackage!, "demo-answer": `/projects/${data.showcase.project_id}` };
+  const packageHref = `/packages/${encodeURIComponent(data.demo.step_reference)}`;
+  const links = { "demo-plan": data.demo.links!.checkPlan!, "demo-package": packageHref, "demo-answer": packageHref };
   for (const [id, href] of Object.entries(links)) {
     await page.goto(`/present/${await numberOf(page, id)}`);
     const link = slideById(page, id).locator("[data-demo-link]");
@@ -409,11 +413,12 @@ test("the demo slides open Strata's own screens from the examples registry in a 
     expect(link.target, link.href ?? "").toBe("_blank");
     expect(link.text, link.href ?? "").toContain(deckCopy.demo.opens);
   }
-  await expect(slideById(page, "demo-package").locator("[data-demo-box]")).toContainText(data.demo.sentence!);
+  await expect(slideById(page, "demo-package").locator("[data-demo-box]")).toContainText(data.demo.step_reference);
   const answer = slideById(page, "demo-answer");
+  await expect(answer.locator("[data-demo-box]")).toContainText(deckCopy.slides.demoAnswer.question);
   await answer.locator("[data-copy-question]").click();
   await expect(answer.locator("[data-copy-question]")).toHaveText(deckCopy.demo.copied);
-  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(data.demo.question);
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(deckCopy.slides.demoAnswer.question);
 });
 
 test("the package demo's recorded answer: no button without a recording; with one, a press draws the app's range chart from it with its date, coverage line and source line, passes the number check and axe, and the next press moves on", async ({ page }) => {
@@ -533,44 +538,6 @@ test("the ladder slide's showcase is the ground truth's: ISR 7's date and rating
   expect(text).toContain(`Report 7, P130164, ${formatDate(facts["isr-7-date"].value)};`);
   expect(text).toContain(`rated progress toward the objective ${facts["isr-7-rating"].value} in August 2016`);
   expect(text).toContain(`Report, P130164, ${formatDate(facts["icr-date"].value)}, paragraph ${facts["icr-para-78"].paragraph}, page ${facts["icr-para-78"].pdf_page}.`);
-});
-
-// The recorded answer to the answer demo's question (the smoke question), as the agent streamed it: its sentences, the
-// evidence they cite and the verifier's counts.
-async function recordedAnswer() {
-  const events = (await recorded("ask-p130164-rebidding.sse"))
-    .split("\n\n")
-    .map((block) => ({ event: /^event: (.*)$/m.exec(block)?.[1], data: /^data: (.*)$/m.exec(block)?.[1] }))
-    .filter((found) => found.event && found.data)
-    .map((found) => ({ event: found.event!, data: JSON.parse(found.data!) }));
-  const of = (name: string) => events.filter((found) => found.event === name).map((found) => found.data);
-  type Source = { document_type: string; paragraph: string; pdf_page: number; document_date: string };
-  return {
-    evidence: of("evidence").map((found) => found.row.source as Source),
-    checks: of("checks")[0] as { sentences: { removed: number }; quotes: { total: number; found: number } },
-  };
-}
-
-test("the answer demo claims only what the recorded answer shows: the paragraph it cites, on its page, and quotes the verifier found; its source line is the ground truth's", async ({ page }) => {
-  const facts = groundTruth();
-  const answer = await recordedAnswer();
-  await present(page, 1);
-  await page.goto(`/present/${await numberOf(page, "demo-answer")}`);
-  const slide = slideById(page, "demo-answer");
-  const text = (await slide.innerText()).replace(/\s+/g, " ");
-  // The source line: the completion report's date, and paragraph 54 on its PDF page, as values.toml records them.
-  const para = facts["icr-para-54"];
-  expect(text).toContain(`Report, P130164, ${formatDate(facts["icr-date"].value)}, paragraph ${para.paragraph}, page ${para.pdf_page}.`);
-  // The paragraph the slide says one click opens is the one the recorded answer cites first, on the same page.
-  expect(answer.evidence[0]).toMatchObject({ paragraph: String(para.paragraph), pdf_page: para.pdf_page });
-  expect(text).toContain(`paragraph ${answer.evidence[0].paragraph}, on page ${answer.evidence[0].pdf_page}`);
-  // The verifier found every quote on its page and removed no sentence, which the slide's last line says.
-  expect(answer.checks.quotes.total).toBeGreaterThan(0);
-  expect(answer.checks.quotes.found).toBe(answer.checks.quotes.total);
-  expect(answer.checks.sentences.removed).toBe(0);
-  // The slide names no document the recorded answer does not cite: every source it cites is the completion report.
-  expect(new Set(answer.evidence.map((source) => source.document_type))).toEqual(new Set(["Implementation Completion and Results Report"]));
-  expect(text).not.toContain("Independent Evaluation Group");
 });
 
 test("a deck that cannot load says so on the stage with a way to try again", async ({ page }) => {
