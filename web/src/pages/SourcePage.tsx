@@ -660,7 +660,6 @@ export function SourcePage({ pid, doc, search }: { pid: string; doc: string; sea
       <>
         {h1(heading(doc_))}
         <Meta document={doc_} answer={found} />
-        <p className="mt-3 max-w-prose text-caption text-ink-muted">{words.ownWords}</p>
         {(shownNotice || reissue) && (
           <div className="mt-4 flex max-w-[72ch] flex-col gap-2">
             {shownNotice && (
@@ -695,6 +694,11 @@ export function SourcePage({ pid, doc, search }: { pid: string; doc: string; sea
           </p>
         )}
         <div className="mt-6">{content}</div>
+        {/* That the page shows the document's own words, unchanged, is provenance: one caption at the page's foot, after
+            the page controls (ticket 126; rule 2). */}
+        <p className="mt-6 max-w-prose text-caption text-ink-muted" data-own-words>
+          {words.ownWords}
+        </p>
       </>
     );
   }

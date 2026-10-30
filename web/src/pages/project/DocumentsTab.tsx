@@ -24,7 +24,6 @@ import { Num } from "../../components/Num";
 import { LoadingLabel, Skeleton, SkeletonLine } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
 import { StatusBadge } from "../../components/StatusBadge";
-import { countLineOf } from "../../components/Table";
 import { DefinitionWindow } from "../../components/Term";
 import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
@@ -159,6 +158,8 @@ function DisclosedCell({ document }: { document: ListedDocument }) {
 
 // Pages read: right-aligned in the table, and at the card's left edge below 768 px, where every value
 // starts at one edge (DESIGN.md section 5, Tables).
+const unread = (document: ListedDocument) => !document.read || document.pages_read === null || document.pdf_pages === null;
+
 function PagesCell({ document, align = "end" }: { document: ListedDocument; align?: "end" | "start" }) {
   if (!document.read || document.pages_read === null || document.pdf_pages === null) {
     return <span className="text-ink-muted">{words.notRead}</span>;
@@ -257,7 +258,7 @@ function GroupRows({ group, pid, open, onToggle, bodyId }: { group: Group; pid: 
 function GroupCards({ group, pid, open, onToggle, listId }: { group: Group; pid: string; open: boolean; onToggle: () => void; listId: string }) {
   const shown = group.documents.filter((document) => open || document.shown);
   const folds = group.shown_count < group.count;
-  const field = (label: string, value: ReactNode) => (
+  const field = (label: ReactNode, value: ReactNode) => (
     <div className="flex min-w-0 flex-col">
       <dt className="text-caption text-ink-muted">{label}</dt>
       <dd className="text-caption text-ink">{value}</dd>
@@ -276,7 +277,9 @@ function GroupCards({ group, pid, open, onToggle, listId }: { group: Group; pid:
             <dl className="mt-2 grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-x-4 gap-y-2">
               {field(words.col.dated, <DatedCell document={document} />)}
               {field(words.col.disclosed, <DisclosedCell document={document} />)}
-              {field(words.col.pages, <PagesCell document={document} align="start" />)}
+              {/* A card that says "Not read" opens the Pages read window from its label, which says what that means
+                  (ticket 126): the cards have no column heads to open it from. */}
+              {field(unread(document) ? head(words.col.pages, words.def.pages) : words.col.pages, <PagesCell document={document} align="start" />)}
             </dl>
             <div className="mt-2">
               <PdfCell document={document} />
@@ -298,8 +301,7 @@ function GroupCards({ group, pid, open, onToggle, listId }: { group: Group; pid:
 export function DocumentsSkeleton() {
   return (
     <div aria-hidden="true" data-documents-skeleton>
-      <SkeletonLine className="text-caption" width="w-40" />
-      <div className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @md/page:block">
+      <div className="hidden overflow-hidden rounded-md border border-line bg-surface @md/page:block">
         <table className="w-full table-fixed border-collapse text-small">
           <thead className="bg-surface-2">
             <tr>
@@ -352,16 +354,12 @@ export function DocumentsList({ data, pid }: { data: DocumentList; pid: string }
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const id = useId();
   const toggle = (type: string) => setOpen((now) => ({ ...now, [type]: !now[type] }));
-  // The rows the list shows: each group's folded rows, or all of them once it is open.
-  const shownRows = data.groups.reduce((sum, group) => sum + (open[group.type] ? group.count : group.shown_count), 0);
   const name = data.project.display_name ?? pid;
-  const unread = data.groups.some((group) => group.documents.some((document) => !document.read));
+  // No count line: each group's count and its "Show all N" say what is folded, and a page total such as "Showing 21 of
+  // 351 documents." read as an error (ticket 126).
   return (
     <>
-      <p className="text-caption text-ink-muted tabular-nums" data-documents-count>
-        {countLineOf(shownRows, data.total, words.countNoun)}
-      </p>
-      <div className="mt-2 hidden overflow-hidden rounded-md border border-line bg-surface @md/page:block" data-view="table">
+      <div className="hidden overflow-hidden rounded-md border border-line bg-surface @md/page:block" data-view="table">
         <table className="w-full table-fixed border-collapse text-small">
           <caption className="sr-only">{words.caption(name)}</caption>
           <thead className="bg-surface-2">
@@ -378,16 +376,12 @@ export function DocumentsList({ data, pid }: { data: DocumentList; pid: string }
           ))}
         </table>
       </div>
-      <div className="mt-2 flex flex-col gap-8 @md/page:hidden" data-view="cards">
+      <div className="flex flex-col gap-8 @md/page:hidden" data-view="cards">
         {data.groups.map((group) => (
           <GroupCards key={group.type} group={group} pid={pid} open={Boolean(open[group.type])} onToggle={() => toggle(group.type)} listId={`${id}-cards-${group.type}`} />
         ))}
       </div>
-      {unread && (
-        <p className="mt-2 max-w-prose text-caption text-ink-muted">
-          <Fill template={words.notReadNote} slots={{ link: <TextLink href="/data?sources=documents">{words.notReadLink}</TextLink> }} />
-        </p>
-      )}
+      {/* "Not read" is said in the Pages read window, where a reader looks for what a cell value means (ticket 126). */}
       <Source className="mt-2">{data.documents_through ? <Fill template={words.source} slots={{ date: formatDate(data.documents_through) }} /> : words.sourceUndated}</Source>
     </>
   );
@@ -424,8 +418,8 @@ export function DocumentsTab({ pid }: { pid: string }) {
     <div className="layout-grid" data-documents={load.status}>
       <div className="col-span-12 @xl/page:col-span-7">
         <h2 className="sr-only">{words.heading}</h2>
-        <p className="max-w-prose text-body text-ink-muted">{words.purpose}</p>
-        <div className="mt-6">{body}</div>
+        {/* The grouped table needs no purpose over it (ticket 126). */}
+        <div>{body}</div>
       </div>
     </div>
   );

@@ -280,7 +280,8 @@ test("a draft's skeleton holds its head, its lede, its check line and its first 
   expect(jumps(shifts)).toEqual([]);
 });
 
-test("the Packages list's skeleton holds its title, its count line and a first row with its caption", async ({ page }) => {
+// The list shows every row, so it has no count line since ticket 126, and its skeleton holds none.
+test("the Packages list's skeleton holds its title and a first row with its caption", async ({ page }) => {
   await mockApi(page, { ...(await shell()), "/api/uploads": { body: await recorded("uploads-list-nwwda.json") } });
   const firstRow = (zone: string) => ({ from: zone, to: `${zone} [data-table-view] tbody tr, ${zone} [data-table-view] > li` });
   const shifts = await skeletonShift(page, {
@@ -288,7 +289,7 @@ test("the Packages list's skeleton holds its title, its count line and a first r
     hold: "**/api/planned-packages",
     answer: { body: await recorded("planned-packages-list.json") },
     skeleton: firstRow("[data-zone][aria-busy=true]"),
-    drawn: firstRow("[data-zone]:has([data-count-line])"),
+    drawn: firstRow("[data-section=packages-list]"),
   });
   expect(jumps(shifts)).toEqual([]);
 });

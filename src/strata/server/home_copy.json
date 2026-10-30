@@ -38,8 +38,7 @@
   },
   "drafts": {
     "one": "{count} draft is waiting for you to check.",
-    "many": "{count} drafts are waiting for you to check.",
-    "none": "No draft is waiting for you to check."
+    "many": "{count} drafts are waiting for you to check."
   },
   "quiet": {
     "one": "Nothing changed in the plans of the one project you follow in {window}.",

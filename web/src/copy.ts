@@ -18,14 +18,9 @@ const noneOf = (written: number, one: string, two: string, many: string) => (wri
 // STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
 const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
 
-// Each tab's purpose (ticket 110): one sentence that says what the tab is for and what to do there, for someone
-// dropped into the app. The Lessons tab's is shared by the library and the reviewer pages under the same h1, the
-// Packages tab's by its route and its page, and the Data tab's by its three pages.
-const LESSONS_PURPOSE =
-  "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a " +
-  "package's page where they apply.";
-const PACKAGES_PURPOSE = "Check a published Procurement Plan or plan a new package, and find the ones you worked on here.";
-const DATA_PURPOSE = "See how far each source can support an answer and where each dataset comes from.";
+// Since ticket 126 a sidebar section's page has no purpose under its title: a specialist knows what each tab is for,
+// and its title and first block say the rest (DESIGN.md section 5, Page head's Purpose row). The tabs' purposes of
+// ticket 110 left the copy file with it.
 // A planned package's purpose, true in every state, whether or not I could read the sentence (ticket 58; ticket 06's
 // rule for a purpose): the route's and the workspace's.
 const PLANNED_PURPOSE =
@@ -129,8 +124,6 @@ const PPSD_ROWS = {
     refusedOther: "I didn't write this cell.",
     metaYou: (date: string) => `I drafted these rows for you on ${date}.`,
     metaTeammate: (author: string, date: string) => `I drafted these rows for ${author} on ${date}.`,
-    barLead: "A working draft of suggested rows for the borrower's PPSD.",
-    barLeadTeammate: (author: string) => `A working draft of ${author}'s suggested rows for the borrower's PPSD.`,
     holdNotChecked: "Mark the rows as checked before you export them.",
     // The composed hold line's first clause, and its frame (section 4.5).
     holdClause: "mark the rows as checked",
@@ -196,7 +189,8 @@ export const copy = {
   // The browser tab's title: the page's h1, then the app's name.
   pageTitle: (title: string) => `${title} | Strata`,
 
-  // Every route's title, its purpose of one or two short sentences, and its empty state (the 06 design brief, with
+  // Every route's title, its purpose of one or two short sentences where the title and the first block don't say what
+  // the page is for (ticket 126), and its empty state (the 06 design brief, with
   // design-lead's round 1 wording for the empty states). Until a route's own ticket fills it, a
   // page reads nothing, so its empty state says what the page can't show yet and never claims
   // what the data hold: the stamp at the sidebar's foot may already show a date. {pid}, {stepRef} and {id}
@@ -211,12 +205,11 @@ export const copy = {
     // The Packages tab has its own words below (the 15 brief, packagesTab); this title names the browser tab.
     packages: {
       title: "Packages",
-      purpose: PACKAGES_PURPOSE,
     },
-    // The package workspace has its own words below (the 12 brief); this title names the browser tab.
+    // The package workspace has its own words below (the 12 brief); this title names the browser tab. Section 1's
+    // finding says with numbers what the page is for (ticket 126).
     package: {
       title: "Package {id}",
-      purpose: "This page shows how comparable packages went, so you can judge whether this package's plan is realistic.",
     },
     // A package planned from a sentence (the 15 brief): while I read the sentence, and once it is saved. Each
     // names itself in the browser tab with its title once it loads, such as "Rural roads, Kenya · Packages".
@@ -232,13 +225,11 @@ export const copy = {
     // these titles name the browser tab, and the purposes are the pages' own.
     projects: {
       title: "Projects",
-      purpose: "Find a World Bank-financed project by name, project ID or country, then open it to see its plans and documents.",
     },
     // Following (ticket 37): the Projects tab's first sub-tab for World Bank staff, at /projects/following.
     following: {
       title: "Projects",
       documentTitle: "Following, Projects",
-      purpose: "Follow the projects you work on, or find any World Bank-financed project by its name, project ID or country.",
     },
     project: {
       title: "Project {pid}",
@@ -252,7 +243,6 @@ export const copy = {
     },
     activity: {
       title: "Activity {stepRef}",
-      purpose: "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract.",
       emptyTitle: "I can't trace activity {stepRef} on this page yet.",
       emptyBody:
         "When I can, this page follows the activity from its row in the Procurement Plan to its signed contract.",
@@ -266,15 +256,11 @@ export const copy = {
     },
     lessons: {
       title: "Lessons",
-      purpose: LESSONS_PURPOSE,
       // The empty library's row says who decides, what happens to the proposed lessons and where the lessons show up
-      // anyway (ticket 114). The purpose above it says whose lessons they are, and the page's caption spells out IEG.
+      // anyway (ticket 114), and the page's foot spells out IEG.
       emptyBody:
         "I propose each lesson, and a lead procurement specialist decides whether it enters the library. Proposed " +
         "lessons wait for that decision, and only lesson reviewers can read them.",
-      emptyMore:
-        "On a package's page, in section 3, Procurement risks and what helped, I show the lessons from projects with " +
-        "comparable packages.",
       // Where section 3's own empty state links (routes.ts, RISKS_READINESS_HREF).
       link: "See which completion reports I have read",
     },
@@ -284,7 +270,6 @@ export const copy = {
     lessonsQueue: {
       title: "Waiting for review",
       documentTitle: "Waiting for review, Lessons",
-      purpose: LESSONS_PURPOSE,
     },
     lessonReview: {
       // The h1 when the item cannot load names one item, since the breadcrumb above it already ends at the queue.
@@ -297,7 +282,6 @@ export const copy = {
     lessonsReports: {
       title: "Passage reports",
       documentTitle: "Passage reports, Lessons",
-      purpose: LESSONS_PURPOSE,
     },
     passageReport: {
       title: "Passage reports",
@@ -307,7 +291,6 @@ export const copy = {
     lessonsJudging: {
       title: "Judging",
       documentTitle: "Judging, Lessons",
-      purpose: LESSONS_PURPOSE,
     },
     judgingQuery: {
       title: "Judging",
@@ -316,7 +299,6 @@ export const copy = {
     },
     drafts: {
       title: "Drafts",
-      purpose: "These are the drafts I wrote for you to check and export, and exporting sends nothing.",
       emptyTitle: "You have no drafts to check.",
       emptyBody:
         "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you " +
@@ -343,17 +325,15 @@ export const copy = {
       title: "Your plan",
       purpose: "I checked every activity in the Procurement Plan your team uploaded.",
     },
-    // The Data tab's two pages share one title and purpose, and each names itself in the browser
-    // tab (the 16 design brief, section 2). How Strata works left the tab in ticket 97.
+    // The Data tab's two pages share one title, and each names itself in the browser tab (the 16 design brief, section
+    // 2). How Strata works left the tab in ticket 97.
     data: {
       title: "Data",
       documentTitle: "Data readiness",
-      purpose: DATA_PURPOSE,
     },
     dataSources: {
       title: "Data",
       documentTitle: "Sources and licenses",
-      purpose: DATA_PURPOSE,
     },
     notFound: {
       title: "Page not found",
@@ -1032,16 +1012,14 @@ export const copy = {
       },
     },
   },
-  // Strata's byline (ticket 111; DESIGN.md section 1, principle 6): Strata's own words open with it, and a record's
-  // words end with their source. It names Strata in the third person, as the fixed label "Strata leans on this" does
-  // (section 7, rule 35), and never sits over a table, a quote, a STEP row, a Worth knowing line or a record.
+  // Strata's byline (ticket 111; DESIGN.md section 1, principle 6): since ticket 126 it shows no words, and only a
+  // screen reader hears it, as the answer's h3. It names Strata in the third person, as the fixed label "Strata leans on
+  // this" does (section 7, rule 35). A finding that runs no model keeps only its data-byline attribute.
   byline: {
     strata: "Strata",
-    // Over an answer, as its h3.
+    // Over an answer.
     inShort: "{strata}, in short",
-    // Over the plan check's finding and the package page's section 1 finding.
-    found: "{strata} found",
-    // Over a held-back sentence: section 1's abstention, and an answer that abstains.
+    // Over an answer that abstains, the sign that the verifier let an uncited sentence stand on a tool's abstention.
     heldBack: "{strata} held back",
   },
   answer: {
@@ -1108,8 +1086,7 @@ export const copy = {
     // refusalWindow, which lists each refusal's lead and its why after refusalWindowIntro.
     refusalAll: "See everything I turn down",
     refusalWindow: "What I turn down",
-    refusalWindowIntro:
-      "I turn these requests down every time, and I say what I can do instead. Each one is also a question in my test set that I must turn down.",
+    refusalWindowIntro: "I turn these requests down every time, and I say what I can do instead.",
     // A partial refusal: after the refusal's lead, before the rest of the answer (the 24 brief, section 4.6).
     refusalPartial: "I answered the rest of your question.",
     // The stream ended before its done event (section 5.9).
@@ -1189,7 +1166,6 @@ export const copy = {
   // The evidence card and the evidence drawer (the 14 brief, sections 5.11 to 5.13). Each source's
   // stratum and its document's short name come from the answer stream.
   evidence: {
-    eyebrow: { What: "What · record", How: "How · operations", Why: "Why · evaluation" },
     // The heading names the source, not the claim, so a drawer opened from a link still reads. It starts with the
     // document's short name, so it says which report is open (ticket 58); the forms without one are for a document
     // whose type has no short name.
@@ -1231,30 +1207,11 @@ export const copy = {
     // (ticket 100; DESIGN.md section 5, Evidence drawer: placement, head and motion).
     // The date keeps to one line (ticket 100's design review, item 6).
     planRowCaption: "Activity in the {agency} plan of {date}",
-    // The drawer head's one caption, which says what kind of source is open, under its title, with no middle dot
-    // (ticket 58; DESIGN.md section 5, Evidence drawer). A passage or a record by its stratum (GLOSSARY.md), a
-    // notice's text, and the views a timeline mark or section 5 opens. The plan row's and the package's are above.
+    // The drawer head's one caption, which says what kind of view is open, under its title, with no middle dot
+    // (ticket 58; DESIGN.md section 5, Evidence drawer): the views a timeline mark or section 5 opens. The plan row's and
+    // the package's are above. A report's passage or document and a record have none since ticket 126: the title names
+    // the report type and the meta line its date.
     captions: {
-      // By the report's type, as the documents API names it (its docty; config/project_page.toml): what the report
-      // is and when it was written, so an appraisal is never called an evaluation (the 58 design review, B2).
-      documentType: {
-        "Project Appraisal Document": "The appraisal document, written before the project began",
-        "Project Paper": "A paper on a change to the project",
-        "Implementation Status and Results Report": "A status report, written during the project",
-        "Implementation Completion and Results Report": "The completion report, written after the project closed",
-        // IEG spelled out, then its short form, with no possessive in brackets (the 58 design review, round 2, 4).
-        "Implementation Completion Report Review": "A review of the completion report by the Independent Evaluation Group (IEG)",
-        "Project Performance Assessment Report": "An assessment by the Independent Evaluation Group (IEG), written after the project closed",
-      } as Record<string, string>,
-      // For a source with no report type of its own, by its stratum, in GLOSSARY.md's words.
-      stratum: {
-        What: "A record of what happened",
-        How: "An operations document on how procurement was carried out",
-        Why: "A report that explains design choices and outcomes",
-      } as Record<string, string>,
-      // The drawer shows a notice without its contact details, so the caption claims no more than it shows.
-      notice: "A procurement notice the World Bank published",
-      document: "A report on this project's timeline",
       ratings: "Ratings from the project's status reports",
       contracts: "Contract records from the World Bank's contract awards data",
       disagreement: "Two reports that say different things",
@@ -1387,7 +1344,6 @@ export const copy = {
     // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
     // other permits in place before awarding contracts").
-    lessonEyebrow: "What · lesson",
     lessonSource: "Strata's lesson library, version {version}, decided on {date}.",
     lessonSourceUndated: "Strata's lesson library, version {version}.",
     markerLesson: (version: string, statement: string) => `Lesson, version ${version}, ${statement}`,
@@ -1409,7 +1365,6 @@ export const copy = {
     countsSource: "Strata's count of comparable completion reports, as of {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
-    visited: "You have opened this source.",
     // The excerpt sits in straight quotes, as the paragraph's own words.
     quoteOpen: '"',
     quoteClose: '"',
@@ -1442,11 +1397,10 @@ export const copy = {
     noHighlight: "This sentence does not quote the paragraph, so no words are highlighted.",
     noHighlightSection: "This sentence does not quote the section, so no words are highlighted.",
     noHighlightRow: "This sentence does not quote the row, so no words are highlighted.",
-    whole: "The whole paragraph, word for word.",
-    // Follows the line under a passage not written in your language of answers and drafts (ticket 42). No source is
-    // ever translated.
+    // The line under a passage not written in your language of answers and drafts (ticket 42), after a note that warns of
+    // something when there is one. No source is ever translated. (A paragraph read word for word has no note since
+    // ticket 126: the quoted box is the paragraph, and "Open at page N" checks it.)
     ownLanguage: "I quote sources only in the language they were written in.",
-    wholeSection: "The whole section, word for word.",
     // The passages ticket 18 adds (the 18 brief, section 7). The layout parser's text can differ from
     // the page, so these never say "word for word".
     wholeScanned: "The whole paragraph, as the layout parser read it from a scanned page. The PDF page has the exact words.",
@@ -1467,7 +1421,6 @@ export const copy = {
     // above it and the summary's first words both give the table's pages, so this does not (ticket 58).
     summaryNote: "I wrote this summary of the table. It is not the document's own words, and I never use it to back a number.",
     noticeTitle: "Notice {id}",
-    noticeEyebrow: "What · notice",
     noticeWhole: "The whole section, word for word, without contact details.",
     // Where a notice's contact details were removed at ingestion.
     contactRemoved: "(contact details removed)",
@@ -1528,7 +1481,6 @@ export const copy = {
       // A quantile dot's packages (the 15 brief, section 7.8): the drawer lists the packages the dot stands
       // for, as find_comparables names them, and each opens its records, with a way back to the list.
       dot: {
-        eyebrow: "What",
         region: (count: string, k: string) => `The ${count} comparable packages dot ${k} stands for`,
         regionOne: (k: string) => `The one comparable package dot ${k} stands for`,
         title: (count: string) => `${count} comparable packages`,
@@ -1809,7 +1761,7 @@ export const copy = {
     // While a search waits more than 400 ms for its answer, in the count line's place.
     searching: "Searching projects.",
     columns: { project: "Project", country: "Country", status: "Status" },
-    search: { label: "Search projects", hint: "Type part of a project's name, its project ID or its country." },
+    search: { label: "Search projects" },
     pages: "Pages of the project list",
     noMatchTitle: "I found no projects that match your search.",
     noMatchBody:
@@ -1869,6 +1821,8 @@ export const copy = {
       pipeline: "You follow one project, and it is in the pipeline.",
       dropped: "You follow one project, and it has closed.",
     } as Record<string, string>,
+    // The made-by window beside the list's heading (ticket 126): its button's name and title, then its sentence.
+    madeByName: "How I made this list",
     madeBy: "I ran these {checks} checks on {checked}, on public records through {through}. No model wrote this list.",
     madeByUndated: "I ran these {checks} checks on {checked}, on public records. No model wrote this list.",
     madeByAsOf: "I ran these {checks} checks as they would have run on {date}, on records public by then. No model wrote this list.",
@@ -2068,6 +2022,8 @@ export const copy = {
   // How I check the projects you follow, and the track record (the 37 brief, section 5 and 9.5).
   track: {
     heading: "How I check the projects you follow",
+    // The closed disclosure that holds the method, the replay's scope and the no-replay sentence (ticket 126).
+    how: "How these checks work",
     method:
       "Every night I run {checks} fixed checks on public records: Procurement Plans, contract awards, the loan history, ISRs and " +
       "disbursement records. I measure delay from the planned date as first published. I don't combine the checks into a score. " +
@@ -2147,6 +2103,8 @@ export const copy = {
       closing: ["Activity", "Implementing agency", "Planned completion", "Days after closing"],
       history: ["First recorded", "Closing date before", "Closing date after"],
     } as Record<string, string[]>,
+    // The ratings table writes PDO short, with a window that spells it out (ticket 126).
+    pdoShort: "PDO",
     pdo: "PDO is the project development objective.",
     planVersion: "Plan of {date}",
     noPlan: "No plan read",
@@ -2227,11 +2185,9 @@ export const copy = {
     notFoundBody: "Check the ID, or find the project in All projects.",
     notFoundLink: "All projects",
   },
+  // The plan links open the check, so the block has no purpose under its title (ticket 126).
   procurement: {
     title: "Procurement Plans",
-    purpose:
-      "Each implementing agency keeps its own Procurement Plan and updates it. When you open a version, I check every " +
-      "activity in it.",
     noun: "versions",
     nounOne: "version",
     columns: { version: "Version", disclosed: "Disclosed", activities: "Activities" },
@@ -2275,15 +2231,13 @@ export const copy = {
   },
 
   // A project's Packages, on its Procurement tab (the 21 brief, section 4).
+  // The table and its links show what the block holds, so it has no purpose under its title, and its search no hint
+  // (ticket 126).
   packages: {
     title: "Packages",
-    purpose:
-      "Every activity in each implementing agency's latest Procurement Plan, with its reference from " +
-      STEP_SPELLED +
-      ". Open a reference to follow its activity from the plan to the signed contract.",
     searchLabel: "Search packages",
-    searchHint: "Type part of a STEP reference or a description.",
     noun: "packages",
+    nounOne: "package",
     caption: "Packages in each agency's latest Procurement Plan",
     pages: "Pages of the package list",
     columns: {
@@ -2296,9 +2250,12 @@ export const copy = {
     source: "the latest Procurement Plan from each implementing agency, from the World Bank documents and reports API, read {date}.",
     sourceUndated: "the latest Procurement Plan from each implementing agency, from the World Bank documents and reports API.",
     noMatchTitle: "I found no packages that match your search.",
+    // STEP is spelled out here, the one place the tab writes it since its purpose left (ticket 126; rule 10).
     noMatchBody:
-      "I search the STEP references and descriptions in each agency's latest plan. Check the reference, or search for a " +
-      "word from the description.",
+      "I search the references from " +
+      STEP_SPELLED +
+      " and the descriptions in each agency's latest plan. Check the reference, or search for a word from the " +
+      "description.",
     noMatchLink: "Show all packages",
     none: "I haven't read a Procurement Plan for this project yet, so I can't list its packages.",
     error: "I couldn't load this project's packages because the data service didn't answer.",
@@ -2404,6 +2361,8 @@ export const copy = {
       one: ", after its closing date moved once",
       many: ", after its closing date moved {n} times",
     },
+    // The made-by window at the end of the finding (ticket 126): its button's name and title, then its sentence.
+    madeByName: "How I built this summary",
     madeBy: "I built this summary from World Bank records as of {as_of_date}. No model wrote it.",
     group: { dates: "Dates", money: "Money", ratings: "Ratings", who: "Sectors and implementing agencies" },
     col: { label: "Fact", date: "Date", money: "US$, millions", rating: "Rating", detail: "Detail", source: "Source" },
@@ -2459,8 +2418,10 @@ export const copy = {
       icr: "Implementation Completion and Results Report, {date}",
       ieg_ratings: "Independent Evaluation Group ratings, {date}",
     } as Record<string, string>,
-    // Under the Money table, when the loans data reports more disbursed and canceled than committed.
+    // In an info window on the Money table's title (ticket 126), when the loans data reports more disbursed and canceled
+    // than committed: the button's name and title, then the note.
     money: {
+      exceedsName: "Why the amounts add up to more than the commitment",
       // The nouns are said, not left to the reader (ticket 58; unslop rule 33).
       exceeds:
         "In the loans and credits data, the amounts disbursed and canceled add up to more than the commitment. I show " +
@@ -2494,13 +2455,9 @@ export const copy = {
   // produces its documents, newest first in each group.
   documents: {
     heading: "Documents",
-    purpose:
-      "These are the documents the World Bank published for this project, grouped by type. Open one to read it page by " +
-      "page, with its paragraphs numbered as the document numbers them.",
+    // The grouped table needs no purpose over it and no count line: each group's count and its "Show all N" say what is
+    // folded (ticket 126).
     noun: "documents",
-    // The count line: the rows the list shows, of every document listed. Both counts are the route's.
-    // The count line's noun (copy.table.showingOf): "Showing 12 of 39 documents.", "Showing the one document.".
-    countNoun: { one: "document", many: "documents" },
     caption: (name: string) => `Documents for ${name}, by type`,
     col: { document: "Document", dated: "Dated", disclosed: "Disclosed", pages: "Pages read", pdf: "PDF" },
     def: {
@@ -2508,9 +2465,10 @@ export const copy = {
       disclosed:
         "The date the World Bank made the document public. When you view a past date, I use only the documents disclosed " +
         "by then.",
+      // With what "Not read" means, which was a note under the table until ticket 126.
       pages:
         "How many of the document's pages I turned into numbered paragraphs and table rows. Partial means some pages were " +
-        "scans, figures or tables I couldn't read.",
+        "scans, figures or tables I couldn't read. \"Not read\" means I list the document but haven't read its pages.",
     },
     group: {
       pad: "Project Appraisal Document (PAD)",
@@ -2543,8 +2501,6 @@ export const copy = {
     reissueDated: "Re-issued {date}",
     notRead: "Not read",
     pagesOf: "{read} of {pages}",
-    notReadNote: "\"Not read\" means I list the document but haven't read its pages. {link} shows which documents I read.",
-    notReadLink: "Data readiness",
     pdf: "PDF",
     // The PDF link's name says the document's date once: after a name with none, or inside one that holds it.
     pdfName: (name: string, date: string) =>
@@ -2674,8 +2630,10 @@ export const copy = {
     label: "Baseline for delay",
     none:
       "No plan from this agency is saved as the baseline yet. If this is the plan agreed at negotiations, save it as " +
-      "the baseline. Later checks of this agency's plans then also measure delay from its dates.",
+      "the baseline.",
     save: "Save as the baseline",
+    // The Save button's tooltip and description (ticket 126): what saving does next.
+    saveNext: "Later checks of this agency's plans then also measure delay from its dates.",
     saving: "Saving the baseline",
     justSaved: "I saved the plan of {plan_date} as the baseline. The reasons below now also give delay against it.",
     undo: "Undo",
@@ -2749,10 +2707,9 @@ export const copy = {
     methodBaseline:
       "I checked every activity against {checks}. I measure delay two ways: from the first published planned date, " +
       "because each plan update can move the planned dates, and from the baseline, the plan of {baseline_date}.",
-    // The change line under the method sentence, and its link to the change list below.
+    // The change line under the finding, only when no change list says it (ticket 126: a version that changed has none,
+    // since the zone "What changed since the plan of ..." says it with its table).
     changes: {
-      line: "Compared with the plan of {prev_date}, this version {change_list}.",
-      link: "See what changed",
       // When only the comparison failed: the line says so and links the section, whose alert has Try again.
       error: "I couldn't load what changed in this plan.",
       errorLink: "Go to that section",
@@ -3185,8 +3142,6 @@ export const copy = {
         metaYou: (date: string) => `I drafted these notes for you on ${date}.`,
         metaTeammate: (author: string, date: string) => `I drafted these notes for ${author} on ${date}.`,
         // The draft bar: the kind's lead sentence, before the fixed consequence sentence.
-        barLead: "A working draft of your review notes on the borrower's Procurement Plan.",
-        barLeadTeammate: (author: string) => `A working draft of ${author}'s review notes on the borrower's Procurement Plan.`,
         holdNotChecked: "Mark the notes as checked before you export them.",
         // The composed hold line's first clause, and its frame, once a disagreement can hold too (ticket 36).
         holdClause: "mark the notes as checked",
@@ -3268,8 +3223,6 @@ export const copy = {
         refusedOther: "I didn't write this part.",
         metaYou: (date: string) => `I drafted this brief for you on ${date}.`,
         metaTeammate: (author: string, date: string) => `I drafted this brief for ${author} on ${date}.`,
-        barLead: "A working draft of your mission brief.",
-        barLeadTeammate: (author: string) => `A working draft of ${author}'s mission brief.`,
         holdNotChecked: "Mark the brief as checked before you export it.",
         holdClause: "mark the brief as checked",
         holdCompose: "Before you export it, {clauses}.",
@@ -3342,8 +3295,6 @@ export const copy = {
           "I wrote each Risk Description and Description of mitigation from {check} and their lessons, for your " +
           "Project Procurement Strategy for Development (PPSD). Open a source number to see its evidence beside the row.",
         tableCaption: (form: string, _date: string) => `Risk rows for your PPSD, ${form}, one row per risk you selected`,
-        barLead: "A working draft of risk rows for your Project Procurement Strategy for Development (PPSD).",
-        barLeadTeammate: (author: string) => `A working draft of ${author}'s risk rows for your team's PPSD.`,
         discarded: "I discarded these risk rows, and your team no longer sees them in Drafts.",
         previewPiuTitle: "I don't show this team's drafts in a preview.",
         previewPiuBody: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
@@ -3374,8 +3325,6 @@ export const copy = {
         refusedOther: "I didn't date this activity.",
         metaYou: (date: string) => `I drafted these dates for you on ${date}.`,
         metaTeammate: (author: string, date: string) => `I drafted these dates for ${author} on ${date}.`,
-        barLead: "A working draft of planned dates for your Procurement Plan.",
-        barLeadTeammate: (author: string) => `A working draft of ${author}'s planned dates for your team's Procurement Plan.`,
         holdNotChecked: "Mark the dates as checked before you export them.",
         holdClause: "mark the dates as checked",
         holdCompose: "Before you export them, {clauses}.",
@@ -3479,8 +3428,6 @@ export const copy = {
         refusedOther: "I didn't write this part. It is left out of the Word file.",
         metaYou: (date: string) => `I drafted this summary for you on ${date}.`,
         metaTeammate: (author: string, date: string) => `I drafted this summary for ${author} on ${date}.`,
-        barLead: "A working draft of the procurement summary for the Project Paper.",
-        barLeadTeammate: (author: string) => `A working draft of ${author}'s procurement summary for the Project Paper.`,
         holdNotChecked: "Mark the summary as checked before you export it.",
         holdClause: "mark the summary as checked",
         holdCompose: "Before you export it, {clauses}.",
@@ -3563,10 +3510,8 @@ export const copy = {
     // Sources (section 5.4).
     sources: {
       title: "Sources",
-      caption: (opened: string, total: string, citations: number, citationsText: string) =>
-        citations === 1
-          ? `You opened ${opened} of ${total}. In the Word file, the one citation becomes a footnote.`
-          : `You opened ${opened} of ${total}. In the Word file, each of the ${citationsText} citations becomes a footnote.`,
+      // How many you opened; the Word file shows its footnotes itself (ticket 126).
+      caption: (opened: string, total: string, _citations: number, _citationsText: string) => `You opened ${opened} of ${total}.`,
       citedIn: (count: number) => (count === 1 ? "Cited in the note on {refs}." : "Cited in the notes on {refs}."),
       opened: "You opened this.",
       notOpened: "You haven't opened this yet.",
@@ -3629,10 +3574,9 @@ export const copy = {
         `The evidence pack lists ${count === 1 ? "the one source" : `all ${countText} sources`}${disagreed ? "," : " and"} whether you opened ${
           count === 1 ? "it" : "each one"
         }${disagreed ? ", and the reason you gave for keeping another source" : ""}. Your browser downloaded the Word file, ` +
-        "and the evidence pack's files are below. I keep all three with this draft for your team. I sent nothing to anyone.",
+        "and the evidence pack's files are below.",
       revisitTitle: (date: string, count: number, countText: string) =>
         `Exported on ${date}. I made a Word file with ${count === 1 ? "1 footnote" : `${countText} footnotes`} and an evidence pack.`,
-      revisitBody: "You can download the same files again. I sent nothing to anyone.",
       // In place of revisitBody when the export's files are gone.
       revisitBodyMissing: "I sent nothing to anyone.",
       revisitTeammate: (author: string, date: string, count: number, countText: string) =>
@@ -4043,8 +3987,11 @@ export const copy = {
       in10: "8\u00a0in\u00a010 were signed within {q80}\u00a0months.",
       noIn10: "Fewer than 8 in 10 of these packages have been signed so far, so I can't say when 8 in 10 were signed.",
       noUpper: "So many of these packages are still open that I can't place the upper edge of the middle half.",
-      openMany: "{open} of the {total} are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was.",
-      openOne: "One of the {total} is still open. I kept it in the range as not signed yet, so the range does not look shorter than it was.",
+      openMany: "{open} of the {total} are still open.",
+      openOne: "{open} of the {total} is still open.",
+      // The open count's tooltip (ticket 126): how I counted them, which the sentence said until then.
+      openKept: "I kept them in the range as not signed yet, so the range does not look shorter than it was.",
+      openKeptOne: "I kept it in the range as not signed yet, so the range does not look shorter than it was.",
       abstain: "I give a range only from {min} or more comparable packages, because a range from fewer can mislead. Each dot is one real package, and the table lists them all.",
       abstainOpenMany: "{open} of them are still open.",
       abstainOpenOne: "One of them is still open.",
@@ -4320,6 +4267,8 @@ export const copy = {
       label: "Track record:",
       sentence: "of {n} packages from {year} that I had not seen, {m} finished inside my 8-in-10 range, where a well-sized range catches about {expected}.",
       misses: "Of the {misses} that finished outside it, {late} ran late.",
+      // In an info window where the line was (ticket 126): its button's name and title, then the sentence.
+      unavailableName: "Why I give no track record yet",
       unavailable: "I have fewer than {min} packages from {year} that I had not seen, so I can't give a track record yet.",
       none: "I have no backtest results yet, so I can't give a track record.",
       notReadable: "I couldn't read my backtest results, so I can't give a track record.",
@@ -4422,7 +4371,6 @@ export const copy = {
     label: "Compare with",
     description: "Choose one approach to see how comparable packages that went with it compare. Choose it again to stop comparing.",
     segment: (option: string) => `Show how comparable packages that went with ${option} compare.`,
-    none: "I have no other approach to compare for this package.",
     // A segment's label, and the option's words inside a sentence ("with open national").
     label_market_approach: {
       "Open - National": "Open national",
@@ -4621,7 +4569,6 @@ export const copy = {
       heading: "What I understood",
       youWrote: "You wrote:",
       quoted: (sentence: string) => `"${sentence}"`,
-      instruction: "Choose any part to change it.",
       guesses: (count: number, words: string) => (count === 1 ? `${words} guess to check.` : `${words} guesses to check.`),
       noGuesses: "No guesses left to check.",
       // A package reopened with its plan set starts with the panel folded to your sentence, so zone 1's finding leads
@@ -4772,9 +4719,9 @@ export const copy = {
       criteria: "Comparable packages: {list}.",
       review: (type: string) => `${type} review`,
       notices: (from: string, to: string) => `notices from ${from} to ${to}`,
-      promptQuestion:
-        "How many months does your plan allow from bid notice to signed contract? I ask before I show the past range, so " +
-        "the range doesn't set your plan.",
+      // The question, then why I ask first, in the question's window (ticket 126).
+      promptQuestion: "How many months does your plan allow from bid notice to signed contract?",
+      promptWhy: "I ask before I show the past range, so the range doesn't set your plan.",
       promptFound: (count: number, words: string) =>
         count === 1 ? "I found one comparable package for these criteria." : `I found ${words} comparable packages for these criteria.`,
       promptLabel: "Your plan, in months",
@@ -4800,10 +4747,7 @@ export const copy = {
     // Hidden from screen readers, so the heading reads "Procurement risks and what helped".
     number: "3",
     heading: "Procurement risks and what helped",
-    // True above the rows, the empty states, the error and the loading state alike (ticket 58; the 30 design review, F8).
-    intro:
-      "This section lists the procurement risks that came up again and again in the completion reports of projects with comparable packages. Each one has a lesson on what helped and the reports that say so.",
-    // Where PPSD is spelled out on this screen (DESIGN.md section 7, rule 10).
+    // The zone's name says what it lists, so it has no intro (ticket 126). Where PPSD is spelled out on this screen (DESIGN.md section 7, rule 10).
     instruction:
       "Select the risks that belong in section 3 of the borrower's Project Procurement Strategy for Development (PPSD). I save your choice with this package.",
     // The finding, the table's title: Fill templates whose {k} and {m} are Num values.
@@ -4821,10 +4765,7 @@ export const copy = {
     findingOneReport: '"{risk}" came up in the {m} completion report I read for projects with comparable packages.',
     findingTwoOneReport: '"{a}" and "{b}" both came up in the {m} completion report I read for projects with comparable packages.',
     findingManyOneReport: "{tied} of these risks came up in the {m} completion report I read for projects with comparable packages.",
-    countOne: "Showing the one risk I ranked.",
-    countBoth: "Showing both risks, in the order I ranked them.",
-    // The table shows every risk it ranked, so it says "all" (DESIGN.md section 5, Tables; the 58 design review, round 2).
-    count: (shown: string) => `Showing all ${shown} risks, in the order I ranked them.`,
+    // The table shows every risk it ranked, so it has no count line (ticket 126); the Note says how I ranked them.
     // The person's own count, so plain text, not a finding.
     selected: (selected: string, shown: string) => `You selected ${selected} of the ${shown} risks for the PPSD.`,
     selectedNone: "You haven't selected a risk for the PPSD yet.",
@@ -4904,7 +4845,12 @@ export const copy = {
     // change together (CLAUDE.md rule 4).
     note: (most: string) =>
       `I counted the completion reports of projects that had comparable packages, found with the criteria in section 1. I ranked the risks by how closely their lessons match this package and how strong their evidence is, never by how often people used a lesson. I show at most ${most}.`,
-    abbr: "ICR is the Implementation Completion and Results Report. An ICR Review is a review of it by the Independent Evaluation Group (IEG).",
+    // The foot strip's abbreviations, written short, each opening the window that spells it out (ticket 126).
+    abbreviationsLead: "Abbreviations:",
+    abbreviationsEnd: ".",
+    abbrShort: { icr: "ICR", icrReview: "ICR Review", ppar: "PPAR" },
+    abbrIcr: "ICR is the Implementation Completion and Results Report.",
+    abbrIcrReview: "An ICR Review is a review of it by the Independent Evaluation Group (IEG).",
     abbrPpar: "PPAR is IEG's Project Performance Assessment Report.",
     // The coverage line: Fill templates whose numbers are Num values. A reason follows "; " and the first
     // sentence, and a second reason follows ", and ".
@@ -4935,11 +4881,9 @@ export const copy = {
       noComparablesLink: "See Data readiness for these sources",
       noReports: "None of the {p} projects with comparable packages has a completion report I could read.",
       noReportsOne: "The one project with comparable packages has no completion report I could read.",
-      noReportsBody: "A project gets a completion report only after it closes.",
       noReportsLink: "See which completion reports I have read",
       noLessons: "I found {m} completion reports for projects with comparable packages, but no lesson in the library fits this package yet.",
       noLessonsOne: "I found one completion report for a project with comparable packages, but no lesson in the library fits this package yet.",
-      noLessonsBody: "A lesson enters the library only after two people decide on it. When they add one that fits, it appears here.",
       allRemoved: "I don't have risks I can support with a source.",
       allRemovedBody: (written: string) => `I found ${written} risks, and each one failed a check.`,
       allRemovedBodyOne: "I found one risk, and it failed a check.",
@@ -4963,7 +4907,6 @@ export const copy = {
       notRestated: "This lesson rests on the completion report alone. IEG's ICR Review did not restate it.",
       switcher: "Sources for this risk",
       tab: "{doc} {locator}",
-      reportsEyebrow: "Why · evaluation",
       reportsTitle: "Completion reports that raised this risk",
       reportsFinding: '{k} of {m} completion reports for projects with comparable packages raised "{risk}".',
       reportsFindingOne: 'The one completion report I read for projects with comparable packages raised "{risk}".',
@@ -5008,17 +4951,18 @@ export const copy = {
     error: "I couldn't load the planned dates for this package.",
     errorCode: "If it fails again, quote this code: {code}.",
     tryAgain: "Try again",
-    introDelay: (family: string) =>
-      `These are the steps STEP uses for ${family}. I dated each step by how far comparable packages ran past their planned dates. I measured from the dates as first published, because later plans can move them.`,
-    introDuration: (family: string) =>
-      `These are the steps STEP uses for ${family}. I dated each step from how long it took in comparable packages, using the dates in their published Procurement Plans.`,
+    // The method, behind the closed "How I dated the steps" (ticket 126), which also dropped the sentence that named the
+    // steps STEP uses: the table's rows are the steps.
+    howDated: "How I dated the steps",
+    introDelay:
+      "I dated each step by how far comparable packages ran past their planned dates. I measured from the dates as first published, because later plans can move them.",
+    introDuration: "I dated each step from how long it took in comparable packages, using the dates in their published Procurement Plans.",
     // Before a start date is given, no step is dated yet, so the intro says how I date them (ticket 58).
-    introDurationUndated: (family: string) =>
-      `These are the steps STEP uses for ${family}. I date each step from how long it took in comparable packages, using the dates in their published Procurement Plans.`,
+    introDurationUndated:
+      "I date each step from how long it took in comparable packages, using the dates in their published Procurement Plans.",
     // No step has a date or days in either choice, as on the fixture, so no choice of dates is offered. {min} is
     // the tool's min_comparables.
-    introNoneDated: (family: string) =>
-      `These are the steps STEP uses for ${family}. I date a step only when {min} or more comparable packages recorded it.`,
+    introNoneDated: "I date a step only when {min} or more comparable packages recorded it.",
     // The summary above already says how few comparable packages there were, so the intro does not repeat it.
     introAbstain: (family: string) =>
       `I give a date only from {min} comparable packages or more, because a date from fewer can mislead. Here are the steps STEP uses for ${family}, with how many comparable packages recorded each.`,
@@ -5231,9 +5175,6 @@ export const copy = {
     sourceNotice: "The Procurement Plan of {plan} and the contract's award notice.",
     lateTo: "I count days late to {date}.",
     asOf: "Dates as of {date}.",
-    // The plan's Process Status, when it says the activity ended or its contract was signed, so a step with no actual
-    // date is not late. It quotes STEP's value, as section 2's canceled row does.
-    status: 'The plan gave its Process Status as "{status}".',
     // A package from a sentence, or a plan that dates none of the steps.
     none: "No Procurement Plan gives dates for these steps yet.",
     // The steps routes failed: section 2 shows the error and Try again.
@@ -5269,7 +5210,6 @@ export const copy = {
       // A package planned from a sentence, which no plan lists, so the nightly job never scores it (ticket 58).
       not_in_plan: "I'm not giving an estimate. My model scores only packages listed in a Procurement Plan, and this one is not in a plan yet.",
     } as Record<string, string>,
-    compareNote: "The comparison above doesn't change this count. It is for this package's own criteria.",
     denominator: "I counted {m} packages here and {total} in the past range, because {reason}.",
     denominatorReasons: {
       canceled_included: "the past range leaves out canceled packages, and a canceled package counts here",
@@ -5320,7 +5260,6 @@ export const copy = {
       plan_row: (ref: string) => `Activity ${ref}`,
     } as Record<string, (reference: string) => string>,
     openRecords: (ref: string) => `Open the records for ${ref}`,
-    noneNext: "If a notice is missing from the records, I can't see that its package was advertised again.",
     noneLink: "See how complete the notices are",
     source: "{sources}. Records run through {through}.",
     sourceAsOf: "{sources}. Records as of {asOf}.",
@@ -5354,23 +5293,20 @@ export const copy = {
   criteria: {
     number: "5",
     heading: "Check your criteria",
-    // The collapsed summary's first sentence holds the ticket's words: "optional. Paste your qualification
-    // criteria to compare them with N packages whose criteria are public."
-    summary: "This check is optional. Paste your qualification criteria to compare them with {n} packages whose criteria are public.",
-    summaryOne:
-      "This check is optional. Paste your qualification criteria to compare them with one package whose criteria are public.",
-    summaryCompared:
-      "This check is optional. {date} you compared {count} items in your qualification criteria with {n} packages whose criteria are public.",
-    summaryComparedOne:
-      "This check is optional. {date} you compared one item in your qualification criteria with {n} packages whose criteria are public.",
+    // The collapsed summary: since ticket 126 it opens on what to do, since the zone starts closed and its Show button
+    // is the choice ("This check is optional." went).
+    summary: "Paste your qualification criteria to compare them with {n} packages whose criteria are public.",
+    summaryOne: "Paste your qualification criteria to compare them with one package whose criteria are public.",
+    summaryCompared: "{date} you compared {count} items in your qualification criteria with {n} packages whose criteria are public.",
+    summaryComparedOne: "{date} you compared one item in your qualification criteria with {n} packages whose criteria are public.",
     // The date's own words, set as one unit that never breaks, so "On" never ends a line alone (ticket 58).
     summaryOn: "On {date},",
     summaryNonePublic:
-      "This check is optional. None of the {total} comparable packages published their qualification criteria, so I can't compare yours yet.",
+      "None of the {total} comparable packages published their qualification criteria, so I can't compare yours yet.",
     summaryAlso: "It also covers rejected bids, cost estimates and lessons from comparable packages.",
     summaryAlsoNonePublic: "It still covers rejected bids, cost estimates and lessons from comparable packages.",
     summaryNoComparables:
-      "This check is optional, and it needs comparable packages. I have none for this package yet, so there is nothing to compare your qualification criteria with.",
+      "This check needs comparable packages. I have none for this package yet, so there is nothing to compare your qualification criteria with.",
     summaryError: "I couldn't count the comparable packages whose criteria are public.",
     show: "Show the check",
     hide: "Hide the check",
@@ -5380,15 +5316,18 @@ export const copy = {
     nTooltip: "Comparable packages whose notices published their qualification criteria.",
     // What a click on a count in this section opens, in the drawer or below it (ticket 96).
     listAct: "Select to list them.",
-    intro:
-      "Paste the qualification criteria from the bidding document. I break them into items, such as similar experience and average annual turnover, and compare each item with the {n} comparable packages whose criteria are public. The rejected bids, the cost estimate and the lessons below don't need your text.",
-    introOne:
-      "Paste the qualification criteria from the bidding document. I break them into items, such as similar experience and average annual turnover, and compare each item with the one comparable package whose criteria are public. The rejected bids, the cost estimate and the lessons below don't need your text.",
-    // The summary above already says none are public, so the open section does not say it again.
-    introNonePublic: "The rejected bids, the cost estimate and the lessons below come from the same comparable packages.",
+    // What to do, on first sight; how I compare is in the paste field's window (ticket 126).
+    intro: "Paste the qualification criteria from the bidding document.",
+    method:
+      "I break them into items, such as similar experience and average annual turnover, and compare each item with the {n} comparable packages whose criteria are public.",
+    methodOne:
+      "I break them into items, such as similar experience and average annual turnover, and compare each item with the one comparable package whose criteria are public.",
+    // The summary above already says none are public, so the open section says nothing but where to see why.
     introNonePublicLink: "See how complete the notices are",
     field: {
       label: "Your qualification criteria",
+      // The info window after the label (ticket 126): its button's name and title.
+      methodName: "How I compare your criteria",
       // "I save" is held together, so "I" never ends a line alone (ticket 58).
       hint: "Paste them as the bidding document writes them. When you compare them, I\u00a0save the text with this package, and only you can see it.",
       count: "{used} of {max} characters",
@@ -5455,19 +5394,19 @@ export const copy = {
       heading: "Your criteria, item by item",
       caption: "I compared {count} items in your qualification criteria with the {n} comparable packages whose criteria are public.",
       captionOne: "I compared one item in your qualification criteria with the {n} comparable packages whose criteria are public.",
-      count: "Showing all {count} items.",
-      countBoth: "Showing both items.",
-      countOne: "Showing the one item.",
+      // Each head opens its definition in a window (ticket 126); the table shows every item, so it has no count line.
       columns: {
         item: "Item",
-        itemDefinition: "The kinds of requirement I compare",
+        itemDefinition: "The kinds of requirement I compare.",
         words: "Your words",
-        wordsDefinition: "From your text, and how I read them",
+        wordsDefinition: "From your text, and how I read them.",
         asked: "Asked for it",
         // Its noun stays (ticket 58; the 31 review, round 3, F7).
-        askedDefinition: "Of {n} notices with public criteria",
+        askedDefinition: "Of {n} notices with public criteria.",
         sameOrLess: "Asked for the same or less",
         sameOrLessDefinition: "Of the notices I could compare with yours",
+        // Ends the definition before the rule for less and more, which follows it in the same window.
+        definitionEnd: ".",
       },
       rejected: "{r} comparable packages had bids rejected over this",
       rejectedOne: "One comparable package had bids rejected over this",
@@ -5542,7 +5481,6 @@ export const copy = {
       inLanguage: (language: string) => `In ${language}, as the award notice gives it.`,
       showMore: "Show {count} more",
       showOneMore: "Show one more",
-      noneNext: "If an award notice is missing from the records, I can't see its rejected bids.",
       noneLink: "See how complete the award notices are",
       noNotices: "I found no award notices for the comparable packages, so I can't count rejected bids.",
       source: "{sources}. Records run through {through}.",
@@ -5667,7 +5605,6 @@ export const copy = {
     error: "I couldn't load the cost comparison just now.",
     // The drawer's view of one comparable package's cost records (the 31 brief, section 6.11 E).
     drawer: {
-      eyebrow: "How · operations",
       title: "Cost records of {ref}",
       finding: "Its contracts were signed for {signed}, {diff} its cost estimate of {estimate}.",
       planRow: "Activity {ref}",
@@ -5689,7 +5626,6 @@ export const copy = {
       "Lessons from completion reports that a lead procurement specialist added to the library. I rank them by how well they fit this package and how strong their evidence is, never by how often people open them.",
     groups: { cost_estimates: "Cost estimates", designs_and_specifications: "Specifications" } as Record<string, string>,
     // The drawer's card form, the one word, so zone 5 shows no middle-dot label (ticket 101's design review, item 12).
-    eyebrow: "Why",
     quoted: (quote: string) => `"${quote}"`,
     sourceLead: "Source:",
     // The first ICR and IEG on the screen are spelled out (DESIGN.md section 7, rule 22).
@@ -5715,11 +5651,9 @@ export const copy = {
 
   // The Packages tab (the 15 brief, section 7.9).
   packagesTab: {
-    purpose: PACKAGES_PURPOSE,
     checkPlan: "Check a plan",
     planPackage: "Plan a package",
     // An implementing agency officer's Packages tab (ticket 38; the 38 brief, 5.1): their uploads, and Check my plan.
-    purposeAgency: "Check your plan before you submit it or plan a new package, and find the ones you worked on here.",
     checkMine: "Check my plan",
     uploadsTitle: "Your team's uploads",
     uploadName: (date: string) => `Your plan, uploaded ${date}`,
@@ -5751,7 +5685,6 @@ export const copy = {
     noProject: "None yet",
     // A package you are planning has no country until you set one, which is no gap in the records.
     noCountry: "None yet",
-    source: "your packages and plan checks, saved in Strata.",
     emptyTitle: "You have no packages or checked plans yet.",
     emptyBody: "Use Check a plan or Plan a package above to start one.",
     error: "I couldn't load your packages and checked plans just now. Try again in a moment.",
@@ -5776,6 +5709,8 @@ export const copy = {
       noneKnown: "I couldn't find the sources this link names. They may have been renamed since the link was made.",
       showAll: "Show all sources",
     },
+    // The made-by window at the headline's end (ticket 126): its button's name and title, then its sentence.
+    provenanceName: "How I built this headline",
     provenance: "I built this from the measures below, taken {date}. No model wrote it.",
     provenanceRange: "I built this from the measures below, taken {from} to {to}. No model wrote it.",
     // Under a headline Strata doesn't give, where "this" would point at nothing.
@@ -5783,17 +5718,15 @@ export const copy = {
     provenanceAbstainedRange: "I took the measures below from {from} to {to}.",
     // The source line under each table.
     sourceLine: "Strata's data readiness measures, taken {date}.",
+    // Each column head opens its definition; no line restates the heads under them or under the title (ticket 126).
     kinds: {
       title: "What you can ask",
-      caption: "Each kind of question, what it can draw on, and what holds it back.",
       kind: "What you can ask",
       readyFor: "Ready for",
-      readyForAbout: "records it can draw on",
       readyForDefinition:
         "What each kind of question can draw on, counted from the latest measures. A badge says the answers are " +
         "Partial, or that a Gap leaves nothing to draw on.",
       holds: "What holds it back",
-      holdsAbout: "gaps that limit answers",
       holdsDefinition:
         "The gaps in the sources each kind of question draws on. The biggest gaps come first: the ones whose fix " +
         "would add evidence to the most projects.",
@@ -5834,10 +5767,10 @@ export const copy = {
       noun: { one: "source", many: "sources" },
       source: "Source",
       columns: {
-        coverage: { label: "Coverage", about: "rows and fiscal years" },
-        linked: { label: "Linked", about: "to projects and other records" },
-        read_well: { label: "Read well", about: "read without errors" },
-        fresh: { label: "Fresh", about: "latest data, how often" },
+        coverage: { label: "Coverage" },
+        linked: { label: "Linked" },
+        read_well: { label: "Read well" },
+        fresh: { label: "Fresh" },
       },
       definitions: {
         coverage:
@@ -6229,10 +6162,9 @@ export const copy = {
     },
     // The Sources and licenses page (the 16 brief, section 7). Dataset names come only from the
     // source registry; DESIGN.md section 8 gives every fixed sentence here word for word.
+    // No lead sentence and no dataset count (ticket 126): the two headings and the credit lines show what the page holds.
     sourcesPage: {
-      lead: "Here is every dataset and document I use, credited the way the World Bank asks.",
       datasets: "Datasets",
-      datasetCount: "{count} datasets.",
       attribution: { before: "The World Bank: ", after: (source: string, license: string) => `: ${source}. License: ${license}.` },
       documents: "Documents and rules",
       collection: (name: string, publisher: string, origin: string) => `${name}, published by ${publisher}, from ${origin}.`,
@@ -6275,9 +6207,8 @@ export const copy = {
       filteredOne: "One source is behind {fromNoun}.",
       filteredFew: "{SourceCount} sources are behind {fromNoun}.",
       filteredMany: "The {sourceCount} sources below are behind {fromNoun}.",
-      // What holds a kind of question back: its top two gaps, each as a sentence, then how many more.
-      moreOne: "I list one more gap under Sources.",
-      more: "I list {n} more gaps under Sources.",
+      // What holds a kind of question back: its top two gaps, each as a sentence (since ticket 126 with no sentence on
+      // how many more the Sources table lists, and a source's lateness only when nothing else holds it back).
       nothingHolds: "Nothing I measured holds it back.",
       // The gap phrases, by what kind of gap it is. A shortfall has a form for one record short
       // (One), for every record short (All) and for the only record, which falls short (Only); the
@@ -6541,6 +6472,8 @@ export const copy = {
     card: {
       eyebrow: "{kind} · {stage}",
       quote: '"{quote}"',
+      // The version, beside the evidence badge, opens who decided it (ticket 126).
+      versionLabel: "Version {version}",
       decided: "A lead procurement specialist decided version {version} on {date}, after an accredited procurement specialist recommended it.",
       rules: "Its projects followed {edition}.",
       rulesUnknown: "I couldn't tell which rules the project followed.",
@@ -6688,7 +6621,6 @@ export const copy = {
       decidedOnRecheck: "Decided on {date}.",
       decidedTooltip: "Days from {published}, when the report became public, to the decision on {date}.",
       evidenceTitle: "The evidence",
-      eyebrow: "Why · evaluation",
       titleIcr: "Implementation Completion and Results Report, paragraph {para}",
       titleIcrReview: "ICR Review, section {section}",
       titlePpar: "Project Performance Assessment Report, paragraph {para}",
@@ -6788,9 +6720,11 @@ export const copy = {
       agreeLegend: "Do you agree with the decision?",
       agree: "Yes, I agree",
       disagree: "No, I disagree",
-      crossCheckIntro:
-        "A lead in {region} decided this on {date}. Each quarter, reviewers outside a region check {percent} " +
-        "percent of its decisions, so regions decide alike.",
+      // Who decided, then how cross-checks work in the window after it (ticket 126): its button's name and title, then
+      // the sentence.
+      crossCheckIntro: "A lead in {region} decided this on {date}.",
+      crossCheckName: "How cross-checks work",
+      crossCheckWhy: "Each quarter, reviewers outside a region check {percent} percent of its decisions, so regions decide alike.",
       reasonLabel: "Your reason",
       reasonHelperRecommend: "The lead reads your reason before deciding. It stays in the record with your name.",
       reasonHelperDecide: "It stays in the record with your name, beside the recommendation.",
@@ -7037,10 +6971,8 @@ export const copy = {
       "Your drafts still cite the versions you used, and nothing in a draft changes until then.",
     newTitle: "New",
     newCaption: "Lessons a lead procurement specialist added to the library since your last visit, newest first.",
+    // Shown only once you have sent a report (ticket 126).
     reportsTitle: "Your reports",
-    reportsNone:
-      "When a passage I cite is wrong, open it in the evidence drawer and choose Wrong passage. I tell you here what " +
-      "your report fixed.",
     libraryTitle: "The library",
     filters: {
       legend: "Filter the library",
@@ -7165,7 +7097,6 @@ export const copy = {
 
   // Two versions of a lesson, in the evidence drawer (ticket 39; the 39 brief, section 5.7).
   versions: {
-    eyebrow: "Lesson",
     title: "Versions {a} and {b} of a lesson",
     retiredTitle: "A retired lesson",
     caption: "Version {b} is current.",
@@ -7185,9 +7116,7 @@ export const copy = {
     crumbProcurement: "Procurement",
     titleFallback: "Activity {stepRef}",
     label: { ref: "STEP reference", agency: "Implementing agency" },
-    purpose:
-      "This page traces one activity from its row in the Procurement Plan to its notice, bids and signed contract, and shows the report paragraphs that appeared together with the contract.",
-    // The lead joins the parts that exist, in this order, "A and B" or "A, B and C" with no serial comma.
+    // The lead traces the activity in one line, so the page has no purpose over it (ticket 126). It joins the parts that exist, in this order, "A and B" or "A, B and C" with no serial comma.
     lead: "This activity was {parts}.",
     leadEstimated: "estimated at {estimate} in the plan",
     leadAdvertised: "advertised on {notice_date}",
@@ -7231,6 +7160,8 @@ export const copy = {
     label: "Contract trail for {stepRef}",
     // A bare section number as a card's title or a chip writes it; a named section is its own name.
     sectionNumber: "Section {section}",
+    // The proposal's Figure 3 legend, word for word (web/lint/server-copy.ts, proposalCopy). The activity page no longer
+    // shows it, since its heading names the dashed link (ticket 126).
     legend:
       "A solid line joins records that share a key, such as the STEP reference. A dashed line joins the contract to report paragraphs that appeared together with it.",
     plan: {
@@ -7250,7 +7181,8 @@ export const copy = {
       noneRecorded: "None recorded",
       // The step's full STEP name after its short label, for a screen reader (the hover shows it too).
       stepHidden: (name: string) => `, in STEP ${name}`,
-      datesNote: "Planned dates are as first published, in the plan of {first_plan_date}. Later plans can move them.",
+      // In the block's source line, after the plan's own (ticket 126).
+      datesNote: "Planned dates are as first published, in the plan of {first_plan_date}.",
       plannedLine: "Planned, as first published: {planned}. Actual: {actual}.",
       showInPlan: "Show it in its plan",
       pastRange: "See the past range",
@@ -7279,13 +7211,6 @@ export const copy = {
       caption: "Bids listed in award notice {id}, in the order the notice lists them",
       col: { bidder: "Bidder", consultant: "Consultant", opening: "Bid price at opening", evaluated: "Evaluated bid price", result: "Result" },
       colCurrency: (label: string, currency: string) => `${label} (${currency})`,
-      // Counts under ten in words (DESIGN.md section 7, rule 12): "Showing all three bids", "Showing the one bid".
-      count: (n: number, count: string, proposals: boolean) =>
-        n === 1
-          ? `Showing the one ${proposals ? "proposal" : "bid"}.`
-          : n === 2
-            ? `Showing both ${proposals ? "proposals" : "bids"}.`
-            : `Showing all ${count} ${proposals ? "proposals" : "bids"}.`,
       awarded: "Awarded",
       notAwarded: "Not awarded",
       rejected: "Rejected. The award notice gives the reason \"{reason}\".",
@@ -7319,12 +7244,11 @@ export const copy = {
     },
     together: {
       title: "Paragraphs that appeared together with the contract",
+      // In the heading's window since ticket 126.
       intro:
         "I link a contract to a paragraph in the same project's reports when they are close in time and share a sector, words or names. A link means only that they appeared together.",
       // Each report is a group under its name and date, and each card names its paragraph within it.
       reportTitle: "{doc}, {date}",
-      // The count starts its line, so a count word starts with a capital: "Two paragraphs", "29 paragraphs".
-      reportCount: (n: number, count: string) => (n === 1 ? "One paragraph" : `${count.charAt(0).toUpperCase()}${count.slice(1)} paragraphs`),
       showAll: (count: string) => `Show all ${count} paragraphs`,
       fromReport: " from the {doc} of {date}",
       cardTitle: "Paragraph {para}",
@@ -7379,17 +7303,14 @@ export const copy = {
         paragraphs === 1 ? "paragraph" : "paragraphs"
       } from one of its reports.`,
     findingNone: "In this project, no contract appeared together with a paragraph from its reports.",
-    legend:
-      "Solid lines join the project to the packages in its plans and the documents about it. Dashed lines join a package to report paragraphs that appeared together with one of its contracts. A dashed line means only that they appeared together.",
-    legendNone: "Solid lines join the project to the packages in its plans and the documents about it.",
+    // The one legend line the diagram needs: a dashed link is not a cause (ticket 126 dropped the solid-line sentences,
+    // which the diagram shows).
+    legend: "A dashed line means only that they appeared together.",
     // The list draws no lines, so its legend says what its items mean.
     legendList:
       "Each package lists the report paragraphs that appeared together with one of its contracts. This means only that they appeared together.",
-    linesHint: "Hover over or focus a package to see its links.",
     noPackages: "I haven't read a Procurement Plan for {pid} yet.",
     noPackagesLink: "Procurement Plans for {pid}",
-    // The count line's noun (copy.table.showingOf): "Showing 19 of 64 packages and documents.".
-    countNoun: { one: "package or document", many: "packages and documents" },
     toList: "Show as a list",
     toDiagram: "Show as a diagram",
     showingList: "Showing the list.",
@@ -7426,9 +7347,8 @@ export const copy = {
       plans: (n: number, count: string) => (n === 1 ? "and one more Procurement Plan" : `and ${count} more Procurement Plans`),
       documents: (n: number, count: string) => (n === 1 ? "and one more document" : `and ${count} more documents`),
     } as Record<string, (n: number, count: string) => string>,
-    // After a row whose documents I haven't read, all or some of them.
+    // After a row whose documents I haven't read, every one of them (ticket 126: how many of some is the Documents tab's).
     moreAllUnread: " I haven't read",
-    moreSomeUnread: (n: number, count: string) => (n === 1 ? ", one of them not read yet" : `, ${count} of them not read yet`),
     noneDetail: "I keep a link only when its score reaches {threshold}.",
     coverage: "I have read {read} of the project's {total} documents.",
     source:
@@ -7458,7 +7378,6 @@ export const copy = {
     timeSame: "The {doc} is dated {doc_date}, in the month of the signing.",
     timeAfterOne: "The {doc} is dated {doc_date}, one month after the signing.",
     timeBeforeOne: "The {doc} is dated {doc_date}, one month before the signing.",
-    only: "A link means only that they appeared together.",
     open: "Open the activity",
     openFor: (ref: string) => ` ${ref}`,
     // Each other package once, though a package can hold several contracts.
@@ -7593,6 +7512,8 @@ export const copy = {
   // Lessons > Passage reports and one passage's reports (ticket 32; the 32 brief, sections 5.3 and 5.4).
   passageReports: {
     title: "Passage reports",
+    // The closed disclosure that holds how reports are handled (ticket 126).
+    how: "How reports are handled",
     purposePilot:
       "When someone marks a passage as wrong or not useful in the evidence drawer, the report comes here. In this " +
       "pilot, a person reviews every report before I rank a passage differently, and that person is never one of the " +
@@ -7611,9 +7532,6 @@ export const copy = {
       passages: { one: "passage", many: "passages" },
       be: { one: "is", many: "are" },
     },
-    caption:
-      "Ranking a paragraph lower changes only questions like the ones in its reports. I never hide a paragraph, and I " +
-      "still show it when it is the only source.",
     groups: { you: "Waiting for you", others: "Waiting for another reviewer" } as Record<string, string>,
     order: "Oldest first.",
     kindLabel: {
@@ -7667,7 +7585,6 @@ export const copy = {
       "picked it for a check.",
     passageTitle: "The passage",
     reportsTitle: "What people reported",
-    reportsCaption: "Oldest first. I show each sender's role, not their name.",
     reportFirst: {
       wrong_passage: "{role} marked it as the wrong passage on {date}.",
       not_useful: "{role} marked it as not useful on {date}.",
@@ -7740,6 +7657,8 @@ export const copy = {
   // Lessons > Judging and one query's page (ticket 32; the 32 brief, sections 5.5 and 5.6).
   judging: {
     title: "Judging",
+    // The closed disclosure that holds how judging works (ticket 126).
+    how: "How judging works",
     purpose:
       "Two judges grade the passages I find for each query, each working alone. The queries were written from award " +
       "notices, and I show only passages that were public before each notice's date. Your grades make the labeled set " +
@@ -7802,6 +7721,8 @@ export const copy = {
     pageTitle: "Query {n}, Judging",
     header: "Query {n} of {total}. Written from award notice {ref}, published {date}.",
     meter: "{graded} of {pool} passages graded.",
+    // In the query header's window (ticket 126): its button's name and title, then the sentence.
+    poolName: "Which passages I show",
     poolNote: "I show only passages that were public before {date}, in a different order for each judge.",
     mapShow: "Show all {pool} passages",
     mapHide: "Hide the passage list",
@@ -7822,7 +7743,6 @@ export const copy = {
     barNoteNarrow: "Choosing a grade saves it and opens the next passage.",
     // Once every passage is graded, a grade only changes yours (ticket 58; the 32 design review, round 3, F2).
     barNoteChange: "Choosing a grade saves the change.",
-    keysNote: "While you are in this panel, the keys A, P and N choose a grade.",
     previous: "Previous passage",
     nextPassage: "Next passage",
     savedAs: "Saved as {grade}.",
@@ -7859,25 +7779,25 @@ export const copy = {
   // axis. {slots} are filled from GET /api/projects/{pid}/timeline; the page computes no number.
   timeline: {
     title: "Timeline",
-    purpose:
-      "This timeline puts the project's evaluations, operations documents and records on one time axis, so you can see " +
-      "what was known when.",
-    // The purpose's second sentence, only while there are items to select: marks on the chart, items in the list.
-    purposeSelect: "Select a mark to open its source.",
-    purposeSelectList: "Select an item to open its source.",
     // The chart's subtitle, with each shape drawn before its word ({report}, {event} and {record} are the glyphs,
-    // hidden from screen readers, so the words carry the meaning).
+    // hidden from screen readers, so the words carry the meaning). The tab has no purpose over it (ticket 126).
     subtitle: "Each mark is a {report} report, an {event} event or a {record} record. A dashed line joins two reports that disagree.",
-    // The same where no dashed line can be drawn: get_disagreements did not answer, or the view hides disagreements.
+    // The same where no dashed line is drawn: get_disagreements did not answer, the view hides disagreements, or no two
+    // reports disagree (ticket 126).
     subtitleNoLines: "Each mark is a {report} report, an {event} event or a {record} record.",
     subtitleList: "Each item is a report, an event or a record, in date order.",
-    lane: { why: "Why · evaluations", how: "How · operations", what: "What · records" } as Record<string, string>,
+    // The lanes' nouns (ticket 126 dropped Strata's three-layer prefixes, "Why · evaluations" and the like).
+    lane: { why: "Evaluations", how: "Operations", what: "Records" } as Record<string, string>,
     // The lane's word inside an item's name and the table's Stratum column.
-    laneWord: { why: "Why", how: "How", what: "What" } as Record<string, string>,
+    laneWord: { why: "Evaluations", how: "Operations", what: "Records" } as Record<string, string>,
     // An item's stratum on its own line in the list below 768 px.
-    laneItem: { why: "Why · evaluation", how: "How · operations", what: "What · record" } as Record<string, string>,
-    // The Note line under the chart: one sentence for each abbreviation that appears, then the bands and the codes.
+    laneItem: { why: "Evaluation", how: "Operations", what: "Record" } as Record<string, string>,
+    // The Note line under the chart: what the bands show, then the abbreviations that appear, each written short with a
+    // window that spells it out (ticket 126).
     noteLead: "Note:",
+    abbreviationsLead: "Abbreviations:",
+    abbreviationsEnd: ".",
+    abbrShort: { pad: "PAD", isr: "ISR", icr: "ICR", icr_review: "ICR Review", ppar: "PPAR" } as Record<string, string>,
     abbrev: {
       pad: "PAD is the Project Appraisal Document.",
       isr: "An ISR is an Implementation Status and Results Report.",
@@ -7908,10 +7828,7 @@ export const copy = {
     show: "Show the table",
     hide: "Hide the table",
     caption: (name: string) => `Everything on the timeline of ${name}, in date order.`,
-    count: (n: number, text: string) => (n === 1 ? "Showing the one item." : n === 2 ? "Showing both items." : `Showing all ${text} items.`),
-    itemsNoun: "items",
     columns: { date: "Date", stratum: "Stratum", item: "Item", rating: "Rating", note: "Note" },
-    stratumCaption: "What: records. How: operations. Why: evaluations.",
     // A mark's label on the chart.
     label: {
       pad: "PAD",
@@ -7971,15 +7888,15 @@ export const copy = {
       report: "{type}, {date}. {lane} lane. Item {i} of {n}.",
       reportReplaced: "{type}, {date}, replaced by its re-issue of {replaced}. {lane} lane. Item {i} of {n}.",
       reportDisagrees: "{type}, {date}. Disagrees with {other}. {lane} lane. Item {i} of {n}.",
-      isr: "ISR {sequence}, {date}, rated progress {rating}. How lane. Item {i} of {n}.",
+      isr: "ISR {sequence}, {date}, rated progress {rating}. Operations lane. Item {i} of {n}.",
       // An ISR whose rating get_disagreements did not give.
-      isrNoRating: "ISR {sequence}, {date}. How lane. Item {i} of {n}.",
-      isrDisagrees: "ISR {sequence}, {date}, rated progress {rating}. Disagrees with {other}. How lane. Item {i} of {n}.",
-      event: "{label}, {date}. How lane. Item {i} of {n}.",
-      record: "Contract {reference} signed, {date}. What lane. Item {i} of {n}.",
-      group: "{count} contracts signed in {year}. What lane. Item {i} of {n}.",
-      band: "ISRs {first} to {last} rated progress {rating}, from {start} to {end}. How lane. Item {i} of {n}.",
-      bandOne: "ISR {first} rated progress {rating}, from {start} to {end}. How lane. Item {i} of {n}.",
+      isrNoRating: "ISR {sequence}, {date}. Operations lane. Item {i} of {n}.",
+      isrDisagrees: "ISR {sequence}, {date}, rated progress {rating}. Disagrees with {other}. Operations lane. Item {i} of {n}.",
+      event: "{label}, {date}. Operations lane. Item {i} of {n}.",
+      record: "Contract {reference} signed, {date}. Records lane. Item {i} of {n}.",
+      group: "{count} contracts signed in {year}. Records lane. Item {i} of {n}.",
+      band: "ISRs {first} to {last} rated progress {rating}, from {start} to {end}. Operations lane. Item {i} of {n}.",
+      bandOne: "ISR {first} rated progress {rating}, from {start} to {end}. Operations lane. Item {i} of {n}.",
       disagreement: "2 reports disagree: {side1}, {date1}, and {side2}, {date2}. I lean on {lean}. Item {i} of {n}.",
     },
     group: (n: string, pid: string) => `${n} items on the timeline of ${pid}`,
@@ -8059,7 +7976,6 @@ export const copy = {
         trajectory:
           "Ratings that change from one ISR to the next describe different periods. I show them as a trajectory, not a disagreement.",
         caption: "ISR ratings of progress towards achievement of PDO",
-        count: (n: number, text: string) => (n === 1 ? "Showing the one ISR." : n === 2 ? "Showing both ISRs." : `Showing all ${text} ISRs.`),
         columns: { isr: "ISR", date: "Date", rating: "Progress towards achievement of PDO" },
         isr: "ISR {sequence}",
         source: "World Bank documents and reports API, the ISRs of {pid}.",
@@ -8069,8 +7985,6 @@ export const copy = {
         heading: "Contracts signed in {year}",
         // The table under the heading, which says what each row is rather than repeating the heading.
         tableTitle: "Each contract signed in {year}, in date order.",
-        count: (n: number, text: string) =>
-          n === 1 ? "Showing the one contract." : n === 2 ? "Showing both contracts." : `Showing all ${text} contracts.`,
         columns: { contract: "Contract (STEP reference)", signed: "Signed", amount: "Signed amount (US$)" },
         notInRecord: "Not in the record",
         source: "World Bank contract awards and procurement notices, {pid}.",
@@ -9101,8 +9015,8 @@ export const copy = {
   // node web/lint/server-copy.ts --write copies to src/strata/server/home_copy.json, so the browser counts nothing,
   // compares no dates and picks no count word.
   home: {
-    // The date line opens the h1 (5.1); the browser writes the date from the server's ISO date.
-    dateLine: (date: string) => `Your briefing for ${date}`,
+    // The date line opens the h1 only as of a past date (ticket 126; rule 45); the browser writes the date from the
+    // server's ISO date. Today's briefing has no eyebrow that tells you the date.
     dateLineAsOf: (date: string) => `Your briefing as of ${date}`,
     // Read between the date line and the briefing by a screen reader, which hears the h1 as one heading.
     dateLineEnd: ". ",
@@ -9118,9 +9032,9 @@ export const copy = {
     permission: "Your account can't read Strata's tables, so I can't show your briefing.",
     tryAgain: "Try again",
     // The Start here strip (5.5) and what follows Remove (5.6). The caption and button keep the ticket's words.
+    // The zone's name and each row's Example badge say whose examples they are, so it has no tag (ticket 126).
     start: {
       title: "Start here",
-      caption: "Examples Strata set up for you",
       remove: "Remove",
       removeName: "Remove the Start here examples",
       removing: "Removing",
@@ -9143,9 +9057,11 @@ export const copy = {
       } as Record<string, string>,
     },
     worth: {
-      // The panel's name, and its tag at the panel's right (ticket 98, replacing the middle dot that joined them).
+      // The panel's name, and the made-by window at its right (ticket 126, in place of ticket 98's tag "Fixed checks, no
+      // model"): its button's name and title, then its sentence.
       title: "Worth knowing",
-      tag: "Fixed checks, no model",
+      madeByName: "How I wrote these lines",
+      madeBy: "I wrote these lines from fixed checks on public records. No model wrote them.",
       sourceLead: "Source:",
       source: (through: string, checked: string) =>
         `Procurement Plans, project records and ISRs from World Bank APIs, through ${through}, and my lesson library. ` +
@@ -9176,8 +9092,7 @@ export const copy = {
       hide: "Hide them",
       showOne: "Show it",
       hideOne: "Hide it",
-      // The empty states (5.7).
-      firstRunTitle: "I brief you on the projects you follow.",
+      // The empty states (5.7). The first run's body and link say what to do; the status lead says you follow nothing.
       firstRunBody: "Follow a project from its page, and each day I list its changed plans and new signals here.",
       firstRunLink: "Go to All projects",
       // {window} is the server's window phrase ("the past seven days", "the 15 days to October 20, 2026").
@@ -9195,12 +9110,9 @@ export const copy = {
       title: "Waiting for you",
       toDrafts: "Go to Drafts",
       more: (count: string) => `See all ${count} drafts to check`,
-      empty:
-        "No draft is waiting for you to check. When you check a plan or plan a package, I can draft review notes or " +
-        "suggested rows for the borrower's PPSD for you to check.",
-      emptyAgency:
-        "No draft is waiting for you to check. When you check your plan, I can draft planned dates or risk rows for " +
-        "your PPSD for you to check.",
+      // The link is the next step, so the sentence says only that nothing waits (ticket 126).
+      empty: "No draft is waiting for you to check.",
+      emptyAgency: "No draft is waiting for you to check.",
       emptyLink: "Go to Packages",
       preview: "In a preview I don't show an implementing agency's drafts, because they stay with the team that made them.",
       asOf: "I show drafts only as they are today, so I leave them out of a briefing for a past date.",
@@ -9229,7 +9141,9 @@ export const copy = {
       `specialist decided it, and the library still shows version ${version}.`,
     publicView: {
       title: "Closed projects",
-      tag: "Contracts traced from public records",
+      // The made-by window at the panel's right (ticket 126), in place of the tag "Contracts traced from public records".
+      madeByName: "How I traced these contracts",
+      madeBy: "I traced these contracts from public records. No model wrote these lines.",
       action: "See its contracts",
       source: (through: string) => `Project records, notices and contract awards from World Bank APIs, through ${through}.`,
       more: "Find more projects",
@@ -9298,10 +9212,10 @@ export const copy = {
         one: "{count} lesson cited in your drafts was retired.",
         many: "{count} lessons cited in your drafts were retired.",
       },
+      // With none waiting, the briefing says nothing about drafts (ticket 126): Waiting for you says it beside it.
       drafts: {
         one: "{count} draft is waiting for you to check.",
         many: "{count} drafts are waiting for you to check.",
-        none: "No draft is waiting for you to check.",
       },
       quiet: {
         one: "Nothing changed in the plans of the one project you follow in {window}.",

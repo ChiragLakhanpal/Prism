@@ -11,7 +11,8 @@ import { expect, mockApi, mockShell, recorded, test } from "./mocked";
 type Route = {
   path: string;
   h1: string;
-  purpose: string;
+  // A not-found page says why in one sentence; a tab has no purpose under its title since ticket 126.
+  purpose?: string;
   tab?: string;
   empty?: { title: string; body: string; link?: [string, string] };
   link?: [string, string];
@@ -30,9 +31,7 @@ export const ROUTES: Route[] = [
     path: "/lessons",
     h1: "Lessons",
     tab: "Lessons",
-    // Ticket 110: one sentence that says what the tab is for.
-    purpose:
-      "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a package's page where they apply.",
+    // Ticket 110 gave the tab one sentence on what it is for; ticket 126 removed it, as it did every purpose.
     // Ticket 114: the card says who decides, and links where a package page's section 3 links when no completion
     // report was read. Ticket 102: it is the library's zone, as a row named "The library", since the digest above it
     // already says the library has no lessons yet, and the purpose says whose lessons they are.
@@ -62,7 +61,6 @@ export const ROUTES: Route[] = [
     path: "/drafts",
     h1: "Drafts",
     tab: "Drafts",
-    purpose: "These are the drafts I wrote for you to check and export, and exporting sends nothing.",
     empty: {
       title: "You have no drafts to check.",
       body: "When you check a plan or plan a package, I can draft review notes or PPSD rows, and they wait here for you to check.",
@@ -104,7 +102,7 @@ async function open(page: Page, path: string, width = 1440) {
 }
 
 for (const route of [...ROUTES, ...NOT_FOUND]) {
-  test(`${route.path} states its title and purpose, shows what will appear there, and carries the footer`, async ({ page }) => {
+  test(`${route.path} states its title${route.purpose ? " and purpose" : ""}, shows what will appear there, and carries the footer`, async ({ page }) => {
     const unrecorded = await mockApi(page, {
       "/api/me": { body: await recorded("me.json") },
       "/api/freshness": { body: await recorded("freshness.json") },
@@ -116,7 +114,8 @@ for (const route of [...ROUTES, ...NOT_FOUND]) {
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { level: 1 })).toHaveText(route.h1);
     await expect(page).toHaveTitle(`${route.h1} | Strata`);
-    await expect(main.getByText(route.purpose, { exact: true })).toBeVisible();
+    if (route.purpose) await expect(main.getByText(route.purpose, { exact: true })).toBeVisible();
+    else await expect(main.locator("h1 + p")).toHaveCount(0);
     const card = main.locator("[data-empty-state]");
     if (route.empty) {
       await expect(card).toHaveCount(1);
@@ -173,7 +172,7 @@ test("an item opens its page without reloading, moves focus to the new title and
   await expect(page.getByRole("navigation", { name: "Main" }).locator("[aria-current=page]")).toHaveText("Lessons");
 
   await page.goBack();
-  await expect(title).toContainText("Your briefing for");
+  await expect(title).toHaveAccessibleName(/^Your briefing\. /);
   await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Home" })).toHaveAttribute("aria-current", "page");
 });
 
@@ -193,7 +192,7 @@ test("every sidebar item opens its page and focuses its h1, in the open sidebar 
     await page.goto("/drafts");
     await expect(title).toHaveText("Drafts");
     for (const [item, path, h1] of [
-      ["Home", "/", /^Your briefing for/],
+      ["Home", "/", /^Your briefing\. /],
       ["Packages", "/packages", "Packages"],
       ["Projects", "/projects", "Projects"],
       ["Lessons", "/lessons", "Lessons"],

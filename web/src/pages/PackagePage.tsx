@@ -116,7 +116,6 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         loading
         narrowLines={3}
         narrowestLines={4}
-        purpose={copy.pages.package.purpose}
         facts={{ line: null, show: words.factsShow, onShow: () => undefined }}
       />
     );
@@ -181,7 +180,6 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             {facts.reference_as_read && <span className="ml-2">{words.referenceAsRead}</span>}
           </>
         }
-        purpose={copy.pages.package.purpose}
         facts={{ line: factsLine(facts), show: words.factsShow, onShow: planRowOf(facts), expanded: planRowOpen }}
       />
     );

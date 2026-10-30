@@ -136,7 +136,8 @@ function Lead({ trail }: { trail: Trail }) {
             ))}
         </p>
       )}
-      <p className="mt-4 text-caption text-ink-muted">{copy.trail.legend}</p>
+      {/* No legend line: the heading "Paragraphs that appeared together with the contract" names the dashed link itself
+          (ticket 126; rule 34). */}
     </div>
   );
 }
@@ -267,7 +268,6 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
         ) : data ? (
           <>
             <Pairs trail={data} />
-            <p className="mt-2 max-w-prose text-body text-ink-muted">{words.purpose}</p>
             <Lead trail={data} />
             <div className="mt-6">
               <ContractTrail trail={data} />
@@ -276,7 +276,6 @@ export function ActivityPage({ pid, stepRef }: { pid: string; stepRef: string })
         ) : (
           <>
             <PairsSkeleton />
-            <p className="mt-2 max-w-prose text-body text-ink-muted">{words.purpose}</p>
             <TrailSkeleton />
           </>
         )}

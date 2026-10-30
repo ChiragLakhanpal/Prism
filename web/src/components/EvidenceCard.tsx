@@ -177,28 +177,18 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
   );
 }
 
-export function eyebrow(evidence: EvidenceEvent): string {
-  // A notice is a record, though search returns its text as a passage (the 18 brief, section 7.4).
-  if (evidence.kind === "passage" && evidence.row.kind === "notice_text") return copy.evidence.noticeEyebrow;
-  if (lessonOf(evidence)) return copy.evidence.lessonEyebrow;
-  if (evidence.kind === "versions") return copy.versions.eyebrow;
-  // A quantile dot's list of packages is no record, so it names only its stratum.
-  if (evidence.kind === "dot") return copy.evidence.package.dot.eyebrow;
-  if (evidence.kind === "risk-reports" || evidence.kind === "risk-reports-all") return copy.packageRisks.drawer.reportsEyebrow;
-  const stratum = evidence.kind === "record" || evidence.kind === "package" ? "What" : (evidence.stratum ?? "Why");
-  return copy.evidence.eyebrow[stratum];
-}
-
-export function EvidenceCard({ evidence, n, sentence, visited = false }: { evidence: EvidenceEvent; n: number; sentence: number | null; visited?: boolean }) {
+// visited: kept for the callers that know it; since ticket 126 the card no longer says "You have opened this source."
+// (a draft's Sources list keeps its opened count where it matters). The card has no stratum eyebrow either: the title
+// under it already names the report or record.
+export function EvidenceCard({ evidence, n, sentence }: { evidence: EvidenceEvent; n: number; sentence: number | null; visited?: boolean }) {
   const fields = evidence.kind === "passage" ? passageFields(evidence) : null;
   const shown = fields ? excerpt(fields.text, highlightsFor(evidence, sentence)[0] ?? null) : null;
   return (
     <div data-evidence-card className="flex flex-col p-1">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-label text-ink-muted">{eyebrow(evidence)}</p>
+        <p className="text-h2 text-ink-heading">{sourceTitle(evidence)}</p>
         <SourceNumber n={n} />
       </div>
-      <p className="mt-1 text-h2 text-ink-heading">{sourceTitle(evidence)}</p>
       {fields && shown && fields.kind === "notice_text" && (
         <Lang as="p" code={fields.lang} data-excerpt className="mt-2 text-small text-ink">
           {copy.evidence.quoteOpen}
@@ -228,7 +218,6 @@ export function EvidenceCard({ evidence, n, sentence, visited = false }: { evide
         </>
       )}
       {!fields && <RecordSourceLine className="mt-2" evidence={evidence} />}
-      {visited && <p className="mt-1 text-caption text-ink-muted">{copy.evidence.visited}</p>}
     </div>
   );
 }

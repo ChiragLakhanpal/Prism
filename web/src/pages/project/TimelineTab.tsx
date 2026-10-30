@@ -11,6 +11,7 @@
 // populated, a lane with nothing in it, no ISR ratings, empty, the abstention line, disagreements that failed to
 // load, an error, the public view of a project still under way (no disagreements), and as of a date.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Abbr } from "../../components/Abbreviations";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";
@@ -29,7 +30,7 @@ import { copy } from "../../copy";
 import { answer, type Run } from "../../lib/answer";
 import { cx } from "../../lib/cx";
 import { evidenceHref, evidenceIn, openEvidence } from "../../lib/evidence";
-import { formatCount, formatDate } from "../../lib/format";
+import { formatDate } from "../../lib/format";
 import { useLoad } from "../../lib/load";
 import { address } from "../../lib/router";
 import { useStore } from "../../lib/store";
@@ -100,19 +101,36 @@ export function lineStates(data: Timeline, run: Run | null): Record<string, Line
   return states;
 }
 
-// The Note line: each abbreviation that appears, what the bands show and each code a band shows. The list writes
-// each run's rating in words and draws no bands, so there the Note says nothing about them.
+// The Note line: what the bands show (the chart's one legend line, ticket 126's K16), then each abbreviation that
+// appears and each code a band shows, written short, each opening a window that spells it out (ticket 126, pattern 4).
+// The list writes each run's rating in words and draws no bands, so there the Note says nothing about them.
 function Note({ data, codes, chart }: { data: Timeline; codes: string[]; chart: boolean }) {
   const types = new Set(data.items.flatMap((item) => (item.kind === "report" ? [item.type] : [])));
   if (data.items.some((item) => item.kind === "band")) types.add("isr");
-  const abbreviations = (["pad", "isr", "icr", "icr_review", "ppar"] as const).filter((type) => types.has(type)).map((type) => words.abbrev[type]);
-  const banded = data.items.some((item) => item.kind === "band");
-  const spelled = codes.map((rating) => words.codeNote(words.codes[rating] ?? rating, rating));
-  const parts = [...abbreviations, ...(banded && chart ? [words.bands, ...spelled] : [])];
-  if (!parts.length) return null;
+  const banded = data.items.some((item) => item.kind === "band") && chart;
+  const abbreviations = [
+    ...(["pad", "isr", "icr", "icr_review", "ppar"] as const)
+      .filter((type) => types.has(type))
+      .map((type) => <Abbr key={type} short={words.abbrShort[type]} spelled={words.abbrev[type]} />),
+    ...(banded ? codes : []).map((rating) => {
+      const code = words.codes[rating] ?? rating;
+      return <Abbr key={rating} short={code} spelled={words.codeNote(code, rating)} />;
+    }),
+  ];
+  if (!banded && !abbreviations.length) return null;
   return (
     <p data-timeline-note className="max-w-prose text-caption text-chart-text-subtle">
-      <span className="font-bold text-chart-text">{words.noteLead}</span> {parts.join(" ")}
+      {banded && (
+        <span className="block">
+          <span className="font-bold text-chart-text">{words.noteLead}</span> {words.bands}
+        </span>
+      )}
+      {abbreviations.length > 0 && (
+        <span className="block" data-timeline-abbreviations>
+          <span className="font-bold text-chart-text">{words.abbreviationsLead}</span> <Joined items={abbreviations} />
+          {words.abbreviationsEnd}
+        </span>
+      )}
     </p>
   );
 }
@@ -154,11 +172,11 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
     { key: "date", header: words.columns.date, width: "w-1/6", short: true },
     {
       key: "stratum",
+      // Its values are the lanes' nouns, so no caption decodes them (ticket 126); the Term still defines a stratum.
       header: (
-        <span className="flex flex-col">
-          <Term term="Stratum" inText={false}>{words.columns.stratum}</Term>
-          <span className="text-caption font-normal text-ink-muted">{words.stratumCaption}</span>
-        </span>
+        <Term term="Stratum" inText={false}>
+          {words.columns.stratum}
+        </Term>
       ),
       cardHeader: words.columns.stratum,
       width: "w-1/6",
@@ -210,7 +228,6 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
     <div id={id} data-timeline-table className="mt-4">
       <Table
         title={words.caption(data.project.display_name ?? data.project.project_id)}
-        count={{ noun: words.itemsNoun, total: rows.length, text: words.count(rows.length, formatCount(rows.length)) }}
         columns={columns}
         state={{ status: "ready", rows }}
         rowHeader="item"
@@ -346,7 +363,7 @@ export function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }
         </p>
       </div>
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
-        {wide ? <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}
+        {wide ? <Fill template={words.subtitleNoLines} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}
       </p>
       <TimelineSkeleton wide={wide} />
       <SkeletonLine width="w-3/5" className="mt-4 text-caption" />
@@ -401,8 +418,9 @@ export function TimelineCard({
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (
           <Fill
-            // No dashed line can be drawn when get_disagreements did not answer or the view hides disagreements.
-            template={data.disagreements.status === "ok" ? words.subtitle : words.subtitleNoLines}
+            // The dashed line's sentence only when a dashed line is drawn (ticket 126): never when get_disagreements did
+            // not answer, the view hides disagreements, or no two reports disagree.
+            template={data.disagreements.status === "ok" && data.items.some((item) => item.kind === "disagreement") ? words.subtitle : words.subtitleNoLines}
             slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }}
           />
         ) : (
@@ -500,17 +518,13 @@ export function TimelineTab({ pid }: { pid: string }) {
   } else {
     body = <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retryCard} />;
   }
-  // The purpose asks you to select a mark only where there is one to select.
-  const selectable = load.status === "loading" || (load.status === "ready" && load.data.items.length > 0);
+  // No purpose under the title: the chart's finding and legend say what it shows, and its marks look like buttons
+  // (ticket 126).
   return (
     <section ref={section} data-timeline={load.status} className="@container/timeline">
       <h2 ref={heading} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
         {words.title}
       </h2>
-      <p data-timeline-purpose className="mt-2 max-w-prose text-body text-ink-muted">
-        {words.purpose}
-        {selectable && <> {wide ? words.purposeSelect : words.purposeSelectList}</>}
-      </p>
       <div className="mt-6">{body}</div>
     </section>
   );

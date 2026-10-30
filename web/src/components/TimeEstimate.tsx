@@ -9,6 +9,8 @@ import type { PlanDateChoiceState } from "../lib/estimates";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
+import { InfoWindow } from "./MadeBy";
+import { DefinitionWindow } from "./Term";
 import { Num, type NumCheck } from "./Num";
 import { backtestFrom, estimateFrom, FromLine, modelFrom } from "./NumFrom";
 import type { Lane2 } from "./RangeChart";
@@ -278,13 +280,8 @@ export function EstimateSentences({ state, comparison, links }: { state: Estimat
 
 export function CompareControl({ result, pressed, onPress }: { result: EstimateResult; pressed: string | null; onPress: (lever: string | null) => void }) {
   const descriptionId = useId();
-  if (result.comparisons.length === 0) {
-    return (
-      <p className="text-small text-ink-muted" data-compare-none>
-        {what.none}
-      </p>
-    );
-  }
+  // With no other approach to compare, nothing shows: section 4 says it with its reason (ticket 126).
+  if (result.comparisons.length === 0) return null;
   return (
     <>
       <SegmentedControl
@@ -314,7 +311,17 @@ function TrackRecordLine({ result, onTestYears }: { result: EstimateResult; onTe
   // not_readable, the only answer with no test year: the viewer can't read strata.ops.
   if (track.year === null) return <>{t.notReadable}</>;
   if (track.abstention !== null) {
-    return <Fill template={t.unavailable} slots={{ min: whole(track.abstention.min_unseen_packages), year: <Num year={track.year} /> }} />;
+    // Why the second lane has no track record yet is one press away (ticket 126). The lane's label is drawn in the
+    // chart's picture, so its window opens from an info icon where the line was, after the line's own label, so the
+    // line is never a lone icon; the first-person sentence stays reachable (DESIGN.md section 7, rule 16).
+    return (
+      <>
+        <span className="font-bold text-chart-text">{t.label}</span>{" "}
+        <InfoWindow name={t.unavailableName} kind="note">
+          <Fill template={t.unavailable} slots={{ min: whole(track.abstention.min_unseen_packages), year: <Num year={track.year} /> }} />
+        </InfoWindow>
+      </>
+    );
   }
   // Each number of the track record says what it is, from the backtest for its year, and opens every test year.
   const x = words.explain;
@@ -377,17 +384,23 @@ export function PlanDateChoiceControl({ result, planDate }: { result: EstimateRe
   // choice. In a preview it still switches, as there, and the caption says the choice is not saved.
   return (
     <div data-plan-dates>
+      {/* How I use the date you choose is in the legend's window (ticket 126): feedforward for a control most readers
+          leave on its default. The radios are still described by it, from a hidden copy. */}
       <SegmentedControl<PlanDateChoice>
-        legend={words.planDates.label}
+        legend={
+          <DefinitionWindow openOnHover inText={false} label={words.planDates.label} title={words.planDates.label}>
+            {words.planDates.caption}
+          </DefinitionWindow>
+        }
         value={selected}
         onChange={planDate.onChoose}
         describedBy={captionId}
         options={PLAN_DATE_CHOICES.map((value) => ({ value, label: value === "middle" ? middle : eight }))}
       />
-      <p id={captionId} className="mt-2 text-caption text-ink-muted">
+      <span id={captionId} hidden>
         {words.planDates.caption}
-        {planDate.held && <> {words.planDates.preview}</>}
-      </p>
+      </span>
+      {planDate.held && <p className="mt-2 text-caption text-ink-muted">{words.planDates.preview}</p>}
       {planDate.failed && (
         <p className="mt-1 text-caption text-error" data-plan-dates-failed>
           {words.planDates.failed}

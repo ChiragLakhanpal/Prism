@@ -45,6 +45,7 @@ import { dataReadinessHref, fill } from "../routes";
 import { familyStep, stepFamilies, stepFamily, type StepEntry, type StepFamily } from "../steps";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
+import { Disclosure } from "./Disclosure";
 import { CollapsedSection } from "./CollapsedSection";
 import { Fill, Joined } from "./Fill";
 import { Num, NumLines, type NumCheck } from "./Num";
@@ -546,6 +547,14 @@ function StepLabel({ row }: { row: Row }) {
 
 // ── The table, from a 768 px page area, and the list below it ───────────
 
+// "STEP records actual dates for three of these steps. I suggest planned dates only and leave actual dates to STEP.",
+// for a package's own steps when STEP recorded any (ticket 126 moved it from the notes to the planned-date head).
+function actualsOf(dates: StepDates, kind: "step" | "planned"): string | null {
+  const count = dates.actual_steps_count;
+  if (kind !== "step" || count === null || count <= 0) return null;
+  return count === 1 ? words.actualsOne : words.actuals(formatCount(count));
+}
+
 type Body = {
   dates: StepDates;
   family: StepFamily;
@@ -596,8 +605,24 @@ function StepTable({ dates, family, rows, choice, kind, packageKey, openId, onOp
           )}
           {dating && (
             <th scope="col" className={head} data-choice-header={choice}>
-              {/* No step dated: the column says what dating takes, not how often packages ran later (ticket 58). */}
-              {dates.none_dated ? words.columns.planned : choice === "cautious" ? words.columns.cautious : words.columns.middle}
+              {/* No step dated: the column says what dating takes, not how often packages ran later (ticket 58). That
+                  STEP records the actual dates, and I suggest planned ones only, is in the head's window (ticket 126). */}
+              {actualsOf(dates, kind) ? (
+                <DefinitionWindow
+                  openOnHover
+                  inText={false}
+                  label={dates.none_dated ? words.columns.planned : choice === "cautious" ? words.columns.cautious : words.columns.middle}
+                  title={dates.none_dated ? words.columns.planned : choice === "cautious" ? words.columns.cautious : words.columns.middle}
+                >
+                  {actualsOf(dates, kind)}
+                </DefinitionWindow>
+              ) : dates.none_dated ? (
+                words.columns.planned
+              ) : choice === "cautious" ? (
+                words.columns.cautious
+              ) : (
+                words.columns.middle
+              )}
               <span className={note}>
                 {dates.none_dated ? (
                   <Fill template={words.columns.noneNote} slots={{ min: number(dates.min_comparables) }} />
@@ -681,6 +706,12 @@ function StepList({ dates, family, rows, choice, kind, packageKey, openId, onOpe
     <div id={captionId} className="pb-3">
       {caption}
     </div>
+    {/* The list has no column heads, so the line on actual dates that the table's head holds stays over it. */}
+    {actualsOf(dates, kind) && (
+      <p className="pb-3 text-caption text-ink-muted" data-actuals>
+        {actualsOf(dates, kind)}
+      </p>
+    )}
     <ol aria-labelledby={captionId} className="border-t border-line" data-step-list>
       {rows.map((row) => (
         <li key={row.step.step_key} data-step-item={row.step.step_key} className={cx("border-b border-line py-3", openId === row.listId && "bg-tint")}>
@@ -833,9 +864,8 @@ function Notes({ dates, family, choice, kind, result, asOf, from }: { dates: Ste
           />
         </p>
       )}
-      {kind === "step" && dates.actual_steps_count !== null && dates.actual_steps_count > 0 && (
-        <p data-actuals>{dates.actual_steps_count === 1 ? words.actualsOne : words.actuals(formatCount(dates.actual_steps_count))}</p>
-      )}
+      {/* That STEP records actual dates is in the planned-date head's window since ticket 126, and over the list,
+          which has no heads (actualsOf). */}
       <p data-coverage-line>
         {/* With no comparable package at all there is nothing to count, so only the link to Data readiness stays. */}
         {coverage.total > 0 && (
@@ -957,21 +987,26 @@ export function StepsView({
       </div>
     ) : dates && family && result ? (
       <div className="mt-6">
-        <p className="max-w-prose text-body text-ink" data-step-intro>
-          {/* The summary above says how few comparable packages there were, so the intro starts at the rule. */}
-          {dates.abstain_all ? (
-            <Fill template={words.introAbstain(family.family_name)} slots={{ min: number(dates.min_comparables) }} />
-          ) : dates.none_dated ? (
-            <Fill template={words.introNoneDated(family.family_name)} slots={{ min: number(dates.min_comparables) }} />
-          ) : dates.basis === "delay" ? (
-            words.introDelay(family.family_name)
-          ) : dates.needs_start_date && !dates.start_date ? (
-            // No step is dated before the start date, so the intro says how I date them, in the present (ticket 58).
-            words.introDurationUndated(family.family_name)
-          ) : (
-            words.introDuration(family.family_name)
-          )}
-        </p>
+        {/* How I dated the steps is method a reader opens once, behind a closed disclosure (ticket 126). The table's
+            rows are the steps, so no sentence names them, and each step's count of comparable packages stays in the
+            table (rule 15). */}
+        <Disclosure label={words.howDated}>
+          <p className="text-body text-ink" data-step-intro>
+            {/* The summary above says how few comparable packages there were, so the intro starts at the rule. */}
+            {dates.abstain_all ? (
+              <Fill template={words.introAbstain(family.family_name)} slots={{ min: number(dates.min_comparables) }} />
+            ) : dates.none_dated ? (
+              <Fill template={words.introNoneDated} slots={{ min: number(dates.min_comparables) }} />
+            ) : dates.basis === "delay" ? (
+              words.introDelay
+            ) : dates.needs_start_date && !dates.start_date ? (
+              // No step is dated before the start date, so the intro says how I date them, in the present (ticket 58).
+              words.introDurationUndated
+            ) : (
+              words.introDuration
+            )}
+          </p>
+        </Disclosure>
         {controls && (
           <div className="mt-4 flex flex-col gap-4">
             {dates.basis === "duration" && (

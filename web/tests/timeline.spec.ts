@@ -138,16 +138,16 @@ test("P130164's timeline places each report, event and record at its date, names
   await expect(items(page)).toHaveCount(14);
   const names = await items(page).evaluateAll((links) => links.map((link) => link.getAttribute("aria-label")));
   for (const [at, expected] of [
-    [0, "Project Appraisal Document, October 1, 2013. Why lane. Item 1 of 14."],
-    [1, "ISRs 1 to 9 rated progress Satisfactory, from February 22, 2014 to July 26, 2017. How lane. Item 2 of 14."],
-    [2, "Mid-term review, May 16, 2016. How lane. Item 3 of 14."],
-    [3, "ISR 7, August 26, 2016, rated progress Satisfactory. Disagrees with the ICR. How lane. Item 4 of 14."],
-    [4, "Contract IN-RRSMP-7431-CW-RFB signed, June 15, 2017. What lane. Item 5 of 14."],
-    [6, "Restructuring, July 27, 2017. How lane. Item 7 of 14."],
-    [7, "ISR 12, April 10, 2018, rated progress Moderately Unsatisfactory. How lane. Item 8 of 14."],
-    [9, "Implementation Completion and Results Report, October 10, 2019. Disagrees with ISR 7 and the ICR Review. Why lane. Item 10 of 14."],
+    [0, "Project Appraisal Document, October 1, 2013. Evaluations lane. Item 1 of 14."],
+    [1, "ISRs 1 to 9 rated progress Satisfactory, from February 22, 2014 to July 26, 2017. Operations lane. Item 2 of 14."],
+    [2, "Mid-term review, May 16, 2016. Operations lane. Item 3 of 14."],
+    [3, "ISR 7, August 26, 2016, rated progress Satisfactory. Disagrees with the ICR. Operations lane. Item 4 of 14."],
+    [4, "Contract IN-RRSMP-7431-CW-RFB signed, June 15, 2017. Records lane. Item 5 of 14."],
+    [6, "Restructuring, July 27, 2017. Operations lane. Item 7 of 14."],
+    [7, "ISR 12, April 10, 2018, rated progress Moderately Unsatisfactory. Operations lane. Item 8 of 14."],
+    [9, "Implementation Completion and Results Report, October 10, 2019. Disagrees with ISR 7 and the ICR Review. Evaluations lane. Item 10 of 14."],
     [10, "2 reports disagree: ISR 7, August 26, 2016, and the ICR, October 10, 2019. I lean on the ICR. Item 11 of 14."],
-    [11, "Implementation Completion Report Review, March 27, 2020, replaced by its re-issue of May 4, 2023. Why lane. Item 12 of 14."],
+    [11, "Implementation Completion Report Review, March 27, 2020, replaced by its re-issue of May 4, 2023. Evaluations lane. Item 12 of 14."],
   ] as const) {
     expect(names[at]).toBe(expected);
   }
@@ -160,9 +160,14 @@ test("P130164's timeline places each report, event and record at its date, names
   // The bands name their ratings in text, and the Note spells out each code.
   // A range is written with "to", never a dash (DESIGN.md, Tables; the 58 review, round 3, follow-up 2).
   await expect(chart(page).locator("[data-band-label]").first()).toHaveText("Satisfactory, ISRs 1 to 9");
-  await expect(page.locator("[data-timeline-note]")).toContainText("MS is Moderately Satisfactory. MU is Moderately Unsatisfactory.");
+  // Since ticket 126 (T8) the Note lists the short forms, each opening a window that spells it out.
+  const abbreviations = page.locator("[data-timeline-note] [data-timeline-abbreviations]");
+  await expect(abbreviations).toHaveText("Abbreviations: PAD, ISR, ICR, ICR Review, MS and MU.");
+  await abbreviations.getByRole("button", { name: "MU", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "MU" })).toContainText("MU is Moderately Unsatisfactory.");
+  await page.keyboard.press("Escape");
   // It spells out only the codes a band shows: the first band names Satisfactory in full.
-  await expect(page.locator("[data-timeline-note]")).not.toContainText("S is Satisfactory.");
+  await expect(abbreviations.getByRole("button", { name: "S", exact: true })).toHaveCount(0);
   // The ISR series is bands, never a dashed line: each line joins two reports of different kinds.
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(2);
   // role img with the alt text as its name; a time axis with no title and five ticks, on whole years.
@@ -217,7 +222,7 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await page.keyboard.press("End");
   await expect(items(page).last()).toBeFocused();
   await page.keyboard.press("Home");
-  // Down from the PAD goes to the How lane's nearest item in time.
+  // Down from the PAD goes to the Operations lane's nearest item in time.
   await page.keyboard.press("ArrowDown");
   await expect(items(page).nth(1)).toBeFocused();
   // Tab leaves the chart: one tab stop.
@@ -254,9 +259,12 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await expect(sides.nth(1)).toContainText(`"${ICR_78}"`);
   const looks = await sides.evaluateAll((all) => all.map((side) => [getComputedStyle(side).borderColor, getComputedStyle(side).backgroundColor]));
   expect(looks[0]).toEqual(looks[1]);
-  await expect(card).toContainText(
+  // Why I lean on the ICR is in the tag's window since ticket 126; the tag's words stay on the card (rule 35).
+  await sides.nth(1).getByRole("button", { name: "Strata leans on this" }).click();
+  await expect(page.locator("[data-disagreement-rule]")).toHaveText(
     "For a judgment of how a project went, I lean on the later, more independent report, here the ICR, and I keep ISR 7 as the record of the earlier view.",
   );
+  await page.keyboard.press("Escape");
   await expect(card).toContainText('If you keep ISR 7 instead, I treat "Progress towards achievement of PDO" as Satisfactory.');
   await expect(card).toContainText("You can keep ISR 7 instead from an answer or draft that rests on these two reports.");
   // Never the error state.
@@ -274,7 +282,10 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   // the ICR's side is a paragraph (the 23 brief, section 7.5; critique, round 3, item 1).
   await item(page, EFFICIENCY).click();
   const second = dialog.locator("[data-disagreement]");
-  await expect(second).toContainText("here the ICR Review, and I keep the ICR as the record of the earlier view.");
+  // The rule is in the lean tag's window since ticket 126.
+  await second.getByRole("button", { name: "Strata leans on this" }).click();
+  await expect(page.locator("[data-disagreement-rule]")).toContainText("here the ICR Review, and I keep the ICR as the record of the earlier view.");
+  await page.keyboard.press("Escape");
   await expect(second).toContainText('If you keep the ICR instead, I treat "efficiency rating" as');
   await expect(second).toContainText("You can keep the ICR instead from an answer or draft that rests on these two reports.");
   await expect(second).not.toContainText("keep ICR paragraph");
@@ -314,12 +325,12 @@ test("in a 1100 px page area the chart redraws beside the drawer at 536 px and k
 
   await item(page, "doc:26733307").click();
   await expect(dialog.getByRole("heading", { level: 2 })).toHaveText("ISR 7, August 26, 2016");
-  // The caption names the kind of report and when it was written (the 58 design review, follow-up 13).
-  await expect(dialog.locator("[data-drawer-caption]")).toHaveText("A status report, written during the project");
+  // The heading names the report, so its view has no type caption (ticket 126, R29).
+  await expect(dialog.locator("[data-drawer-caption]")).toHaveCount(0);
   await expect(dialog.locator("[data-document-fields]")).toContainText("Disclosed");
   await expect(dialog.locator("[data-claim-line]")).toContainText("ISR 7 and the ICR disagree about progress towards the project development objective (PDO) at the mid-term review.");
   await item(page, "doc:31525018").click();
-  await expect(dialog.locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
+  await expect(dialog.locator("[data-drawer-caption]")).toHaveCount(0);
   // A sentence that starts with a report's short name starts with a capital.
   await expect(dialog.locator("[data-claim-line]").first()).toContainText("The ICR and ISR 7 disagree about");
   await item(page, "doc:26733307").click();
@@ -461,7 +472,8 @@ test("Show the table lists every item in arrow-key order, under its caption", as
   await expect(page.getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   const table = page.locator("[data-timeline-table]");
   await expect(table).toContainText("Everything on the timeline of Rajasthan Road Sector Modernization, in date order.");
-  await expect(table).toContainText("Showing all 14 items.");
+  // Every item shows, so there is no count line (ticket 126, the inventory's pattern 2).
+  await expect(table).not.toContainText("Showing all");
   await expect(table.locator("tbody tr")).toHaveCount(14);
   await expect(table.locator("tbody tr").nth(3)).toContainText("Disagrees with the ICR.");
   await expect(table.locator("tbody tr").nth(9)).toContainText("Disagrees with ISR 7 and the ICR Review.");
@@ -559,7 +571,7 @@ test("when get_disagreements fails, the chart says it couldn't read the ratings,
   await expect(chart(page).locator("svg[role=img]")).not.toHaveAccessibleName(/I have no ISR ratings/);
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
   // ISR 13, December 28, 2018 (values.toml, isr-13-date): named without a rating it could not read.
-  await expect(chart(page).getByRole("link", { name: /^ISR 13, December 28, 2018\. How lane\./ })).toHaveCount(1);
+  await expect(chart(page).getByRole("link", { name: /^ISR 13, December 28, 2018\. Operations lane\./ })).toHaveCount(1);
   // Try again in the alert brings the chart back and takes you to it (the 23 brief, section 8.4).
   await page.route("**/api/projects/P130164/timeline", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("timeline-p130164.json") }));
   await page.locator("[data-timeline-card] [data-alert]").getByRole("button", { name: "Try again" }).focus();

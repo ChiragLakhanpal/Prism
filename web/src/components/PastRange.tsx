@@ -50,7 +50,6 @@ import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
 import { dataReadinessHref } from "../routes";
 import { Button } from "./Button";
-import { Byline } from "./Byline";
 import { CoverageLine } from "./Checks";
 import { Fill, Joined } from "./Fill";
 import { FootStrip } from "./FootStrip";
@@ -63,6 +62,7 @@ import { Skeleton, SkeletonLine, SkeletonText, SkeletonWords } from "./Skeleton"
 import { Source } from "./Source";
 import { Table, type Column, type Row } from "./Table";
 import { TaskZone, ZoneBlock } from "./TaskZone";
+import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 
 const words = copy.pastRange;
@@ -777,8 +777,20 @@ function Populated({
   const explainMiddle = statistic(words.explain.middle(whole(total)), filters.middle ? opensRows(words.act.middle, filters.middle) : toAll);
   const explainMedian = statistic(words.explain.median, filters.median ? opensRows(words.act.median, filters.median) : toAll);
   const explainIn10 = statistic(words.explain.in10, filters.in10 && range?.q80 != null ? opensRows(words.act.in10(months1(range.q80)), filters.in10) : toAll);
-  // The plan's months open the plan row they came from in the evidence drawer.
-  const planWhat = pkg ? { tooltip: words.explain.plan, from: <FromLine words={planFrom(pkg.plan.implementing_agency, pkg.plan.plan_date)} /> } : null;
+  // The plan's months open the plan row they came from in the evidence drawer. Their tooltip gives the plan row's two
+  // dates the months run between, which the line under the months input said until ticket 126: a number's own tooltip
+  // is where a reader checks it.
+  const planNotice = result.plan?.planned_notice_on ?? null;
+  const planSigning = result.plan?.planned_signing_on ?? null;
+  const planTip =
+    planNotice && planSigning ? (
+      <>
+        {words.explain.plan} <Fill template={words.control.helper} slots={{ notice: <Num date={planNotice} />, signing: <Num date={planSigning} /> }} />
+      </>
+    ) : (
+      words.explain.plan
+    );
+  const planWhat = pkg ? { tooltip: planTip, from: <FromLine words={planFrom(pkg.plan.implementing_agency, pkg.plan.plan_date)} /> } : null;
   const explainPlan: NumCheck | undefined = !pkg || !planWhat
     ? undefined
     : pkg.evidence_id && !figure
@@ -793,12 +805,14 @@ function Populated({
   let title: ReactNode;
   // Below 20 comparable packages the count of those signed within the plan follows the finding in body (ticket 101).
   let fewCount: ReactNode = null;
+  // Why I hold the range back, which the summary said until ticket 126: the count's tooltip in the finding holds it.
+  const whyHeld = <Fill template={words.summary.abstain} slots={{ min: whole(result.thresholds.min_comparables) }} />;
   if (abstained) {
     title =
       total === 1 ? (
         words.title.abstainOne
       ) : (
-        <Fill template={words.title.abstain} slots={{ n: <Num count={total} check={explainTotal} /> }} />
+        <Fill template={words.title.abstain} slots={{ n: <Num count={total} check={{ ...explainTotal, tooltip: <>{explainTotal.tooltip} {whyHeld}</> }} /> }} />
       );
     if (result.plan) {
       const w = result.plan.within;
@@ -843,17 +857,17 @@ function Populated({
   const s = words.summary;
   let summary: ReactNode;
   if (abstained) {
-    summary = (
-      <>
-        <Fill template={s.abstain} slots={{ min: whole(result.thresholds.min_comparables) }} />
-        {open > 0 && (
-          <>
-            {" "}
-            {open === 1 ? s.abstainOpenOne : <Fill template={s.abstainOpenMany} slots={{ open: <Num count={open} capital /> }} />}
-          </>
-        )}
-      </>
-    );
+    // With one package the finding has no count to hold why, so the summary keeps it.
+    const open1 = open > 0 ? (open === 1 ? s.abstainOpenOne : <Fill template={s.abstainOpenMany} slots={{ open: <Num count={open} capital /> }} />) : null;
+    summary =
+      total === 1 ? (
+        <>
+          {whyHeld}
+          {open1 && <> {open1}</>}
+        </>
+      ) : (
+        open1
+      );
   } else {
     // With no plan dates the title gives the middle half, so the summary starts with the middle one.
     const titled = !result.plan && range?.q25 != null && range.q75 != null;
@@ -872,11 +886,11 @@ function Populated({
         {open > 0 && (
           <>
             {" "}
-            {open === 1 ? (
-              <Fill template={s.openOne} slots={{ total: count(total) }} />
-            ) : (
-              <Fill template={s.openMany} slots={{ open: <Num count={open} capital />, total: count(total) }} />
-            )}
+            {/* How I counted the open packages is in the open count's tooltip (ticket 126): method a reader opens. */}
+            <Fill
+              template={open === 1 ? s.openOne : s.openMany}
+              slots={{ open: <Num count={open} capital check={{ tooltip: open === 1 ? s.openKeptOne : s.openKept, from: fromRecords }} />, total: count(total) }}
+            />
           </>
         )}
       </>
@@ -1123,11 +1137,10 @@ function Populated({
     >
       <div ref={measure}>
         {lead && <div className="mb-4">{lead}</div>}
-        {/* Strata's own words open with its byline, 8 px above them (ticket 111): what it found, or that it held back. */}
-        <Byline kind={abstained ? "heldBack" : "found"} />
         {/* The finding, the page's largest type (DESIGN.md section 1, principle 6): or, below 20 comparable packages,
-            the first-person sentence that holds back, with the count after it in body. */}
-        <p id={ids.title} className="mt-2 max-w-[22.5em] text-finding text-balance text-ink-heading" data-finding>
+            the first-person sentence that holds back, with the count after it in body. It carries its byline's kind
+            as data only, what Strata found or that it held back (tickets 111 and 126), and shows no byline words. */}
+        <p id={ids.title} className="max-w-[22.5em] text-finding text-balance text-ink-heading" data-finding data-byline={abstained ? "heldBack" : "found"}>
           {title}
         </p>
         {fewCount && (
@@ -1336,8 +1349,9 @@ function PlanControl({
         {planned ? (
           plan !== null ? w.helperPlanned : w.helperPlannedNone
         ) : notice && signing ? (
-          // Plain plan values, so they carry no popover (ticket 10's rule); the months worked out from them do.
-          <Fill template={w.helper} slots={{ notice: <Num date={notice} />, signing: <Num date={signing} /> }} />
+          // The plan row's two dates are in the plan months' tooltip in the finding (ticket 126), so the line under
+          // the input says nothing then.
+          null
         ) : plan !== null ? (
           w.helperTyped
         ) : (
@@ -1443,11 +1457,11 @@ function ComparablesTable({
     { key: "signed", header: t.columns.signed, short: true, width: "w-[7rem]" },
     {
       key: "months",
+      // Its definition is in the head's window, never a second line under it (ticket 126, pattern 3).
       header: (
-        <>
-          {t.columns.months}
-          <span className="block text-caption font-normal text-ink-muted">{t.columns.monthsNote}</span>
-        </>
+        <DefinitionWindow label={t.columns.months} title={t.columns.months} inText={false} triggerClassName="inline-flex min-h-6 items-center">
+          {t.columns.monthsNote}
+        </DefinitionWindow>
       ),
       cardHeader: t.columns.months,
       numeric: true,
@@ -1568,22 +1582,22 @@ const skeletonLines = (count: number, last = "w-3/5") => Array.from({ length: co
 function PastRangeSkeleton({ twoLanes, width, narrow }: { twoLanes: boolean; width: number; narrow: boolean }) {
   const type = chartType(width);
   const finding = narrow ? (width < 300 ? 5 : width < 380 ? 4 : width < 560 ? 3 : 2) : width < 560 ? 3 : 2;
-  // With lane 2 the summary holds its sentences too.
+  // With lane 2 the summary holds its sentences too. How the open packages are counted is the open count's tooltip
+  // since ticket 126, so the summary is a sentence shorter than ticket 59 measured.
   const summary = twoLanes
     ? narrow
-      ? width < 290 ? 10 : width < 350 ? 8 : width < 400 ? 7 : width < 460 ? 6 : width < 600 ? 5 : 4
-      : width < 780 ? 4 : 3
+      ? width < 290 ? 7 : width < 350 ? 6 : width < 400 ? 5 : width < 460 ? 4 : width < 600 ? 3 : 2
+      : width < 780 ? 3 : 2
     : narrow
-      ? width < 290 ? 8 : width < 350 ? 6 : width < 470 ? 5 : width < 600 ? 4 : 3
-      : width < 640 ? 4 : width < 900 ? 3 : 2;
+      ? width < 290 ? 6 : width < 350 ? 4 : width < 470 ? 3 : width < 600 ? 2 : 2
+      : width < 640 ? 3 : 2;
   const summaryLines = <SkeletonText className={cx(narrow ? "mt-2" : "mt-4", "text-body")} widths={skeletonLines(summary, "w-2/5")} />;
   // Lane 2's sentence under the chart, as when the time estimate holds back (the fixture's demo package).
   const lane2Lines = width < 300 ? 4 : width < 420 ? 3 : 2;
   return (
     <div aria-hidden="true" data-past-range-skeleton>
-      {/* The byline's line over the finding (ticket 111), and the finding's lines in its own style (ticket 101). */}
-      <SkeletonLine className="text-label" width="w-24" />
-      <SkeletonText className="mt-2 max-w-[22.5em] text-finding" widths={skeletonLines(finding)} />
+      {/* The finding's lines in its own style (ticket 101), with no byline over them (ticket 126). */}
+      <SkeletonText className="max-w-[22.5em] text-finding" widths={skeletonLines(finding)} />
       {narrow && summaryLines}
       <p className="mt-2" style={{ fontSize: type.m }}>
         <SkeletonWords text={words.subtitle} />
@@ -1594,9 +1608,10 @@ function PastRangeSkeleton({ twoLanes, width, narrow }: { twoLanes: boolean; wid
       </div>
       {/* Under 300 px the plan's row takes a second row of its own. */}
       {width < 300 && <span className="block h-11" />}
-      {/* The helper under the input, then the error's held line. Below 768 px the helper's place holds the reset button
-          too, so it is at least 44 px tall. */}
-      {narrow ? <SkeletonText className="mt-1 min-h-11 text-caption" widths={skeletonLines(2)} /> : <SkeletonLine className="mt-1 text-caption" width="w-3/5" />}
+      {/* The helper's place under the input, then the error's held line. Below 768 px it holds the reset button, so it
+          is 44 px tall; from 768 px it is empty when the plan row has both dates, which sit in the plan months' tooltip
+          since ticket 126. */}
+      {narrow ? <span className="mt-1 block h-11" /> : <span className="mt-1 block" />}
       <span className="mt-1 block min-h-lh text-caption" />
       {/* Under 300 px the chart's key takes a second line of row A (DESIGN.md section 6). */}
       <div className="mt-4" style={{ height: (twoLanes ? TWO_LANE_HEIGHT : CHART_HEIGHT) + (width < 300 ? 16 : 0) }} data-chart-skeleton>

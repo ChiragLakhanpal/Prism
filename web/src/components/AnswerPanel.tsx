@@ -513,7 +513,7 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       runId,
       message: (
         <>
-          {refusal.lead} {refusal.instead} {refusal.why}
+          {refusal.lead} {refusal.instead}
         </>
       ),
       note: <RefusalWindow />,
@@ -566,7 +566,7 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     refusal && run.refusal?.partial ? (
       <>
         <p>
-          {refusal.lead} {refusal.why} {copy.answer.refusalPartial}
+          {refusal.lead} {copy.answer.refusalPartial}
         </p>
         <div className="mt-2">
           <RefusalWindow />
@@ -655,6 +655,12 @@ function AskedLine({ run, current }: { run: Run; current: string }) {
   const words = copy.answer;
   // The answer's language, when it is not English or not your choice now (the 42 brief, section 5.4).
   const named = run.lang !== ENGLISH || run.lang !== current;
+  const preview = view === "piu" || view === "public";
+  // "Asked within P130164." alone says what the question's heading already names, so it goes when the question names
+  // its scope (ticket 126). A past date, a preview or a language changes what was answered, so the line stays with
+  // them; so does a scope the question does not name, such as a package's suggested question, and "Asked across all
+  // projects", which no heading says.
+  if (scope && run.asked.question.includes(scope) && !asOf && !preview && !named) return null;
   return (
     <p data-asked className="mt-1 text-caption text-ink-muted">
       {scope ? <Fill template={words.askedWithin} slots={{ id: mono(scope) }} /> : words.askedAcross}

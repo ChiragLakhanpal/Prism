@@ -6,12 +6,10 @@
 import { useEffect, useId, useState } from "react";
 import { getJson } from "../lib/api";
 import { Button } from "../components/Button";
-import { FootStrip } from "../components/FootStrip";
 import { Num } from "../components/Num";
 import { Tag } from "../components/LessonParts";
 import { PageHead } from "../components/PageHead";
 import { SkeletonLine, SkeletonWords } from "../components/Skeleton";
-import { Source } from "../components/Source";
 import { countText, Table, type Column, type Row } from "../components/Table";
 import { TaskZone } from "../components/TaskZone";
 import { DefinitionWindow } from "../components/Term";
@@ -152,16 +150,9 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
   }
   if (load.status === "loading") {
     return (
-      // The title and the count line as most lists read, held as skeleton words, so they take the lines the real ones
-      // take at every width (ticket 59).
-      <TaskZone
-        panel
-        leadName
-        name={<SkeletonWords text={words.title(2, formatCount(2), 1, formatCount(1))} />}
-        tag={<SkeletonWords text={countText({ noun: words.noun, one: words.nounOne, total: 3 })} />}
-        busy
-        sectionKey="packages-list"
-      >
+      // The title as most lists read, held as skeleton words, so it takes the lines the real one takes at every width
+      // (ticket 59). Most lists show every row, so no count line holds a place (ticket 126).
+      <TaskZone panel leadName name={<SkeletonWords text={words.title(2, formatCount(2), 1, formatCount(1))} />} busy sectionKey="packages-list">
         {/* Each loading row holds a row's name and its caption line, the STEP reference under it, so the rows and the
             source line stay put when the list arrives (ticket 59; the 15 design review, round 3, G6). */}
         <Table
@@ -181,16 +172,14 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
             ),
           }}
         />
-        <FootStrip>
-          <SkeletonLine className="text-caption" width="w-2/5" />
-        </FootStrip>
       </TaskZone>
     );
   }
   const { rows, counts } = load.data;
   const from = page * PAGE;
   const shown = rows.slice(from, from + PAGE);
-  const count = { noun: words.noun, one: words.nounOne, total: counts.total, from: from + 1, to: from + shown.length };
+  // A count line only when a page hides rows (ticket 126).
+  const countLine = countText({ noun: words.noun, one: words.nounOne, total: counts.total, from: from + 1, to: from + shown.length });
   return (
     <TaskZone
       panel
@@ -198,9 +187,11 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
       headingId={headingId}
       name={words.title(counts.packages, formatCount(counts.packages), counts.plan_checks, formatCount(counts.plan_checks))}
       tag={
-        <span data-count-line data-numbers>
-          {countText(count)}
-        </span>
+        countLine && (
+          <span data-count-line data-numbers>
+            {countLine}
+          </span>
+        )
       }
       sectionKey="packages-list"
     >
@@ -215,9 +206,7 @@ export function PackagesList({ load, onRetry }: { load: Load<PlannedList>; onRet
           </Button>
         </div>
       )}
-      <FootStrip>
-        <Source>{words.source}</Source>
-      </FootStrip>
+      {/* A list of the reader's own work needs no source line (ticket 126; DESIGN.md section 1, principle 1). */}
     </TaskZone>
   );
 }
@@ -281,7 +270,7 @@ function PackagesTab({ preview, search }: { preview: boolean; search: string }) 
   return (
     <div className="layout-grid min-h-svh" data-packages-page={load.status}>
       <div className="col-span-12">
-        <PageHead title={copy.pages.packages.title} purpose={officer ? words.purposeAgency : words.purpose} action={actions} />
+        <PageHead title={copy.pages.packages.title} action={actions} />
         {preview && <p className="mt-3 text-caption text-ink-muted">{previewReason("plan_package") ?? words.previewOff}</p>}
         {officer && <UploadsList />}
         <div className="mt-8">

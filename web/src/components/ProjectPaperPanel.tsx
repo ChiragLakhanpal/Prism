@@ -14,6 +14,7 @@ import { navigate } from "../lib/router";
 import { useStore } from "../lib/store";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
+import { Feedforward } from "./Feedforward";
 import { Fill } from "./Fill";
 import { TextLink } from "./TextLink";
 
@@ -79,14 +80,15 @@ export function ProjectPaperPanel({ plan, preview, asOf }: {
               </Alert>
             </div>
           )}
+          {/* "The draft waits in Drafts for you to check. I send nothing." is the button's tooltip and description
+              (ticket 126, pattern 5). */}
           <div className="mt-4">
-            <Button variant="secondary" aria-describedby={feedforwardId} onClick={() => navigate(startProjectPaper(plan))} data-pp-action>
-              {words.button}
-            </Button>
+            <Feedforward sentence={words.feedforward}>
+              <Button variant="secondary" onClick={() => navigate(startProjectPaper(plan))} data-pp-action>
+                {words.button}
+              </Button>
+            </Feedforward>
           </div>
-          <p id={feedforwardId} className="mt-2 text-caption text-ink-muted">
-            {words.feedforward}
-          </p>
         </>
       )}
     </section>
