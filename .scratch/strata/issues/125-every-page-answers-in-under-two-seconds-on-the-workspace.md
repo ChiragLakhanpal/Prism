@@ -47,3 +47,4 @@ Read first: `src/strata/lakehouse/engine.py` (`WarehouseEngine.run`, the stateme
     - The task named `docs/agents/areas/server.md` as the area brief, but no such file exists; the builder, the reviewer and the verifier used CLAUDE.md, the build's standing rules and `docs/agents/areas/app.md`.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. The main checkout was clean before the merge, and no other merge ran in it while mine was in progress.
   - Unblocks: none. No ticket lists 125 as a blocker.
+- October 29, 2026, orchestrator (17:47 PDT): the App redeploy ran from 362a2266 (the catch-up block "Tickets 125, the App redeploy ran"); the page's check by eye is the owner's.
