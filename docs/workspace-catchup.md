@@ -4415,3 +4415,7 @@ A first read is cold only when the warehouse has stopped (after ten idle minutes
 Parked on October 29, 2026 with ticket 125 (merge 362a2266). Run after step 4. In the Application Insights resource that `APPLICATIONINSIGHTS_CONNECTION_STRING` names, open Transaction search, pick one `GET /api/projects/P156634/timeline` request from step 4 that read the warehouse (a first read), and open its end-to-end transaction.
 
 It worked if each statement of the page's batch (11 for the staff Timeline) shows as a dependency under that request, not as an orphan span. Record the request's operation id and the dependency count here under ticket 125.
+
+## Tickets 128, the App redeploy ran: the App runs 92a3171b
+
+**Ran on October 29, 2026 (orchestrator), from a snapshot of 92a3171b.** The App redeployed from 92a3171b at 00:25 UTC on October 30 and GET /api/projects/P156634/timeline answers 200 (89,683 bytes, 31.1 s on a cold warehouse); GET /api/projects/P130164/timeline answers 200 (17,176 bytes, 12.4 s). The page the owner reported (reference 4ea75fa73165f2f36e32f9eadbb1c79c) loads; the cause was the statements API's text values compared with numbers. The local copy moved to the same build at http://127.0.0.1:50647. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
