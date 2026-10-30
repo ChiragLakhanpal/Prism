@@ -7,7 +7,9 @@ tests/ground_truth/values.toml, which quotes each ISR, the ICR and the ICR Revie
 never from the code.
 """
 
+import dataclasses
 import datetime as dt
+import json
 import shutil
 import tomllib
 from pathlib import Path
@@ -100,6 +102,42 @@ def test_the_pads_overall_risk_is_an_assertion_about_the_appraisal_in_the_pad_ti
     assert risk["public_from"].isoformat() == shelf["pad_disclosed"]["value"][:10]
     assert risk["evidence_id"] == f"strata.gold.passage:18381488/v1/{TRUTH['pad-overall-risk']['paragraph']}"
     assert (risk["pdf_page"], risk["quote"]) == (TRUTH["pad-overall-risk"]["pdf_page"], value("pad-overall-risk"))
+
+
+def test_two_cells_of_one_page_that_rate_the_same_thing_the_same_way_are_one_assertion(engine):
+    """Ticket 136: on the workspace the layout parser read the PAD's risk table twice, as table65.1 and table65b.1,
+    and the batch model rated the overall risk from both cells, so the PAD told one rating twice and every ISR that
+    rated otherwise disagreed with it twice. Here the PAD's Overall Implementation Risk row on PDF page 70 is read
+    twice the same way: the run keeps one assertion, from the cell that comes first on the page."""
+    ladder = assertions.load_ladder()
+    [pad] = [report for report in assertions.reports(engine, "P130164", ladder) if report.document_id == "18381488"]
+    truth = TRUTH["pad-risk-table-overall"]
+    cell = pad.passages["18381488/v1/table65.8"]
+    # The batch model quotes the cell's words as the layout parser joined them.
+    quote = f"Rating: {value('pad-risk-table-overall')}"
+    assert (cell["pdf_page"], quote in cell["text"]) == (truth["pdf_page"], True)
+    twice = {**pad.passages, "18381488/v1/table65b.8": {**cell, "passage_id": "18381488/v1/table65b.8"}}
+    pad = dataclasses.replace(pad, passages=twice)
+    rated = {"pdf_page": truth["pdf_page"], "quote": quote, "attribute": "overall_risk",
+             "field_name": "Overall Implementation Risk", "value": value("pad-risk-table-overall"),
+             "form": "rating_field", "period": "appraisal"}
+    answer = batch.Answer(pad.custom_id, json.dumps({"assertions": [
+        {**rated, "passage_id": "18381488/v1/table65b.8"}, {**rated, "passage_id": "18381488/v1/table65.8"}]}))
+    dates = assertions.periods(engine, "P130164", ladder=ladder)
+
+    kept, rejected = assertions.read_answer(pad, answer, ladder, dates, "recorded", "run", dt.datetime(2026, 10, 29))
+
+    assert rejected == []
+    assert [(one.evidence_id, one.value, one.pdf_page) for one in kept] == [
+        ("strata.gold.passage:18381488/v1/table65.8", value("pad-risk-table-overall"), truth["pdf_page"])]
+    # A different rating on the same page, or the same rating on another page, stays its own assertion.
+    design = pad.passages["18381488/v1/table65.4"]
+    assert quote in design["text"] and design["pdf_page"] != truth["pdf_page"]
+    other = {**rated, "passage_id": design["passage_id"], "pdf_page": design["pdf_page"], "field_name": "Design"}
+    answer = batch.Answer(pad.custom_id, json.dumps({"assertions": [{**rated, "passage_id": "18381488/v1/table65.8"},
+                                                                    other]}))
+    kept, _ = assertions.read_answer(pad, answer, ladder, dates, "recorded", "run", dt.datetime(2026, 10, 29))
+    assert len(kept) == 2
 
 
 def test_an_extracted_assertion_whose_quote_is_not_on_its_cited_page_is_rejected_and_counted(engine):
@@ -244,6 +282,51 @@ def test_the_reissued_icr_reviews_efficiency_rating_disagrees_with_the_icrs_and_
     assert efficiency["second_assertion_id"] == "strata.gold.passage:34056616/v2/5#P130164/efficiency"
     assert (efficiency["lean_assertion_id"], efficiency["rule_id"]) == (efficiency["second_assertion_id"], "outcome")
     assert efficiency["public_from"] == value("icr-review-reissue-date")
+
+
+PLAN_541055 = "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB#KE-NWWDA-541055-CW-RFB/signed_on"
+AWARD_541055 = "strata.gold.contract:1903781#KE-NWWDA-541055-CW-RFB/signed_on"
+
+
+def test_a_plan_that_still_says_pending_disagrees_with_the_contract_awards_that_say_the_contract_was_signed(engine):
+    """Ticket 132: the October 9, 2026 plan's row for KE-NWWDA-541055-CW-RFB says Pending Implementation, and the
+    contract awards say its contract was signed on June 22, 2026. The two cannot both be true, so they are one
+    disagreement about the signing, and the ladder leans on the contract record, the more specific record."""
+    [found] = [row for row in disagreements(engine, "KE-NWWDA-541055-CW-RFB") if PLAN_541055 in
+               (row["first_assertion_id"], row["second_assertion_id"])]
+    [plan] = rows(engine, "SELECT * FROM strata.gold.assertion WHERE assertion_id = :id", id=PLAN_541055)
+    [award] = rows(engine, "SELECT * FROM strata.gold.assertion WHERE assertion_id = :id", id=AWARD_541055)
+
+    assert (plan["field_name"], plan["value"]) == ("Process Status", value("plan-541055-status"))
+    assert (plan["form"], plan["evidence_id"]) == ("plan_row", "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB")
+    assert plan["made_at"] == dt.date(2026, 10, 9) and plan["replaced_on"] is None
+    assert award["value"] == value("award-541055-signed").isoformat()
+    # In the order they were written: the award of June 22, 2026, then the plan of October 9, 2026.
+    assert (found["first_assertion_id"], found["second_assertion_id"]) == (AWARD_541055, PLAN_541055)
+    assert (found["lean_assertion_id"], found["rule_id"]) == (AWARD_541055, "tieSpecific")
+    assert found["attribute"] == "signed_on" and found["period_event"] == "contract_signing"
+    assert found["public_from"] == dt.date(2026, 10, 9) and found["replaced_on"] is None
+
+
+def test_a_plan_replaced_before_the_signing_is_no_disagreement_and_one_replaced_after_it_is(engine):
+    """A plan row's Process Status stands until the agency's next version replaces it. KE-CWSB-565568-GO-RFQ's
+    contract was signed on September 4, 2026 (values.toml, award-565568-signed): the plan of July 31, 2026, which
+    the plan of August 17 replaced, said pending before then and was right; the plan of August 17 still says Under
+    Implementation, so it disagrees. The NWWDA plan of March 5, 2026 still said pending on May 11 and June 22, when
+    the awards say KE-NWWDA-541062-CW-RFQ and KE-NWWDA-541055-CW-RFB were signed, so it disagreed until the plan
+    of October 9 replaced it."""
+    def plans_disagreeing(subject):
+        found = []
+        for row in disagreements(engine, subject):
+            for side in (row["first_assertion_id"], row["second_assertion_id"]):
+                if side.startswith("strata.silver.plan_rows:") and row["attribute"] == "signed_on":
+                    found.append((side.split(":")[1].split("/")[0], row["replaced_on"]))
+        return sorted(found)
+
+    assert value("award-565568-signed") == dt.date(2026, 9, 4)
+    assert plans_disagreeing("KE-CWSB-565568-GO-RFQ") == [("40122770", None)]
+    assert plans_disagreeing("KE-NWWDA-541055-CW-RFB") == [("40090127", dt.date(2026, 10, 9)), ("40132287", None)]
+    assert plans_disagreeing("KE-NWWDA-541062-CW-RFQ") == [("40090127", dt.date(2026, 10, 9)), ("40132287", None)]
 
 
 def test_two_signed_amounts_within_the_tolerance_share_are_not_a_disagreement(engine, copy_db, tmp_path):

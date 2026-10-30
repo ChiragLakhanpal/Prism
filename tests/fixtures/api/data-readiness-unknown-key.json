@@ -2009,7 +2009,8 @@
           "status": null,
           "note": null,
           "schedule": "daily",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     }

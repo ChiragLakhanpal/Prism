@@ -16,7 +16,7 @@ import { ListSearch } from "../../components/ListSearch";
 import { Pagination } from "../../components/Pagination";
 import { Source } from "../../components/Source";
 import { MethodText } from "../../components/PlanCheck";
-import { Table, type Column, type Row } from "../../components/Table";
+import { countSaid, Table, type Column, type Row } from "../../components/Table";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { TextLink } from "../../components/TextLink";
@@ -91,7 +91,9 @@ export function Packages({ pid, none }: { pid: string; none: boolean }) {
       />
     );
   } else if (shown.total === 0 && !shown.query) {
-    body = <p className="max-w-prose text-body text-ink">{words.none}</p>;
+    // The plans I read list no activity, or I read none: the route's plans_read says which (ticket 134).
+    const read = [...new Set((shown.plans_read ?? []).map((plan) => formatDate(plan.plan_date)))];
+    body = <p className="max-w-prose text-body text-ink">{read.length ? words.readEmpty(read) : words.none}</p>;
   } else if (shown.total === 0) {
     body = (
       <EightColumns>
@@ -126,7 +128,14 @@ export function Packages({ pid, none }: { pid: string; none: boolean }) {
           title={words.title}
           labelledBy={headingId}
           level={2}
-          count={{ noun: words.noun, total: shown.total, from: shown.first, to: shown.last }}
+          // A search is a filter that leaves rows out, so it keeps its count line with every match shown (ticket 126).
+          count={{
+            noun: words.noun,
+            total: shown.total,
+            from: shown.first,
+            to: shown.last,
+            text: shown.query && shown.first <= 1 && shown.last >= shown.total ? countSaid({ noun: words.noun, one: words.nounOne, total: shown.total }) : undefined,
+          }}
           countLead
           busy={list.waiting && list.searching ? words.searching : undefined}
           columns={columns}
@@ -146,11 +155,10 @@ export function Packages({ pid, none }: { pid: string; none: boolean }) {
         <h2 id={headingId} className="text-h2 text-ink-heading">
           {words.title}
         </h2>
-        <p className="mt-2 text-body text-ink">{words.purpose}</p>
       </EightColumns>
       {!none && (load.status !== "ready" || load.data.total > 0 || load.data.query) && (
         <div className="layout-grid mt-6">
-          <ListSearch className="col-span-12 @md/page:col-span-6" label={words.searchLabel} hint={words.searchHint} value={list.query} onSearch={list.search} />
+          <ListSearch className="col-span-12 @md/page:col-span-6" label={words.searchLabel} value={list.query} onSearch={list.search} />
         </div>
       )}
       <div className="mt-4">{body}</div>

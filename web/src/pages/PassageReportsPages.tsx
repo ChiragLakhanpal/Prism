@@ -16,9 +16,10 @@ import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { ReasonField } from "../components/DecisionForm";
+import { Disclosure } from "../components/Disclosure";
 import { PassageBlock } from "../components/EvidenceDrawer";
 import { Fill } from "../components/Fill";
-import { fillText } from "../components/LessonParts";
+import { actorText, fillText } from "../components/LessonParts";
 import { OutcomePanel } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
@@ -32,7 +33,7 @@ import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { ApiError, postJson } from "../lib/api";
 import { refusedAs, useLoad, type Load } from "../lib/load";
-import { LESSONS_HREF, pageHref } from "../lib/lessons";
+import { LESSONS_HREF, pageHref, type Actor } from "../lib/lessons";
 import {
   REPORTS_HREF,
   reportHref,
@@ -173,7 +174,7 @@ function Decided({ queue }: { queue: ReportsQueue }) {
       <Table
         level={2}
         title={<Fill template={w.decidedTitle} slots={{ days }} />}
-        count={{ noun: w.decidedNoun, one: w.decidedNounOne, total: decided.total, from: decided.from, to: decided.to }}
+        count={{ noun: w.decidedNoun, one: w.decidedNounOne, total: decided.total, from: decided.from, to: decided.to, ordered: true }}
         rowHeader="passage"
         columns={[
           { key: "passage", header: w.columns.passage, width: "w-[46%]" },
@@ -193,15 +194,19 @@ function Decided({ queue }: { queue: ReportsQueue }) {
   );
 }
 
+// How reports are handled, which a reviewer reads once, behind a closed disclosure (ticket 126). It keeps rule 29's
+// words: a reviewer ranks a passage lower, never hides it.
 function Purpose({ queue }: { queue?: ReportsQueue | null }) {
   return (
-    <p className="max-w-prose text-body text-ink-muted" data-reports-purpose>
-      {queue?.mode === "scale" ? (
-        <Fill template={w.purposeScale} slots={{ min: <Num count={queue.silver_min} />, every: <Num value={queue.audit_every} options={{ compact: false }} /> }} />
-      ) : (
-        w.purposePilot
-      )}
-    </p>
+    <Disclosure label={w.how}>
+      <p className="text-body text-ink" data-reports-purpose>
+        {queue?.mode === "scale" ? (
+          <Fill template={w.purposeScale} slots={{ min: <Num count={queue.silver_min} />, every: <Num value={queue.audit_every} options={{ compact: false }} /> }} />
+        ) : (
+          w.purposePilot
+        )}
+      </p>
+    </Disclosure>
   );
 }
 
@@ -221,7 +226,8 @@ export function ReportsBody({ queue }: { queue: ReportsQueue }) {
       <div className="mt-6">
         <Lead queue={queue} />
       </div>
-      <p className="mt-2 max-w-prose text-caption text-ink-muted">{w.caption}</p>
+      {/* No caption under the lead: the decision form's feedforward says what ranking lower does, where it matters
+          (ticket 126; rules 29 and 31). */}
       {!empty && (
         <div className="mt-8 flex flex-col gap-8 @md/page:mt-12 @md/page:gap-12">
           <Group groupKey="you" rows={queue.groups.you} />
@@ -245,7 +251,6 @@ export function ReportsSkeleton() {
       <span className="mt-6 flex max-w-prose flex-col text-lead">
         <SkeletonLine width="w-[70%]" />
       </span>
-      <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
       <div className="mt-8 @md/page:mt-12">
         {[0, 1, 2].map((index) => (
           <div key={index} className="flex flex-col gap-1 border-t-2 border-line py-4" data-skeleton-row>
@@ -340,7 +345,7 @@ function Reports({ group }: { group: ReportGroup }) {
       <h2 id={id} className="text-h2 text-ink-heading">
         {w.reportsTitle}
       </h2>
-      <p className="mt-1 text-caption text-ink-muted">{w.reportsCaption}</p>
+      {/* The rows show each sender's role, so no caption says it (ticket 126; rule 31). */}
       <ol className="mt-4">
         {shown.map((report) => (
           <ReportItem key={report.report_id} report={report} />
@@ -356,7 +361,8 @@ function Reports({ group }: { group: ReportGroup }) {
 }
 
 type Saved = { saved: { outcome: string; next: string | null }; item: ReportGroup };
-type GaveWay = { kind: "stale"; name: string | null; time: string | null; reason: string } | { kind: "lost" };
+// actor: who decided first, by the Lessons pages' one rule (ticket 140), never a name.
+type GaveWay = { kind: "stale"; actor: Actor | null; time: string | null; reason: string } | { kind: "lost" };
 
 function DecisionForm({ group, onSaved, onGaveWay, initial }: {
   group: ReportGroup;
@@ -391,8 +397,8 @@ function DecisionForm({ group, onSaved, onGaveWay, initial }: {
       }));
     } catch (error) {
       setSaving(null);
-      const body = error instanceof ApiError ? (error.body as { code?: string; values?: { name?: string; time?: string }; item?: ReportGroup }) : null;
-      if (body?.code === "stale") onGaveWay({ kind: "stale", name: body.values?.name ?? null, time: body.values?.time ?? null, reason }, body.item);
+      const body = error instanceof ApiError ? (error.body as { code?: string; values?: { actor?: Actor | null; time?: string }; item?: ReportGroup }) : null;
+      if (body?.code === "stale") onGaveWay({ kind: "stale", actor: body.values?.actor ?? null, time: body.values?.time ?? null, reason }, body.item);
       else if (body?.code === "not_a_passage_reviewer") onGaveWay({ kind: "lost" });
       else setFailed(true);
     }
@@ -461,7 +467,7 @@ function Record({ group, onReopened, initialOpen = false, initialFailed = false,
   const lead = (
     <Fill
       template={w.record[outcome.outcome]}
-      slots={{ kind, date: <Num date={outcome.decided_on} />, name: outcome.reviewer_name ?? "", agreeing: countWord(outcome.agreeing ?? 0) }}
+      slots={{ kind, date: <Num date={outcome.decided_on} />, actor: actorText(outcome.actor, true), agreeing: countWord(outcome.agreeing ?? 0) }}
     />
   );
   const state = outcome.outcome === "ranked_lower" || outcome.outcome === "ranked_lower_by_agreement" || outcome.outcome === "left_lower" ? "success" : "neutral";
@@ -574,7 +580,7 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
     action = (
       <div ref={panel} tabIndex={-1} className="flex flex-col gap-4 outline-none" data-gave-way="stale">
         <Alert state="info" live="status">
-          <Fill template={w.form.stale} slots={{ name: gaveWay.name ?? "", date: gaveWay.time ? <Num date={gaveWay.time} /> : "" }} /> {w.form.staleBody}
+          <Fill template={w.form.stale} slots={{ actor: actorText(gaveWay.actor), date: gaveWay.time ? <Num date={gaveWay.time} /> : "" }} /> {w.form.staleBody}
         </Alert>
         <ReasonField label={w.form.staleReason} value={gaveWay.reason} max={group.limits.reason_max_chars} readOnly />
         {/* What the other reviewer decided, and why: the refusal returned the group as it is now. */}
@@ -708,7 +714,6 @@ export function PassageReportPage({ groupId }: { groupId: string }) {
       body = (
         <>
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">{copy.pages.lessons.title}</h1>
-          <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{copy.pages.lessons.purpose}</p>
           <div className="mt-8">
             <NoAccess />
           </div>

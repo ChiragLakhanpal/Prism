@@ -58,6 +58,11 @@ export type LessonEvidence = {
   excerpt?: { text: string; highlight: [number, number]; starts_inside: boolean; ends_inside: boolean } | null;
 };
 
+// Who made an act, as the server's one rule names them (ticket 140; strata.config.Roles.actor): you, their role with the
+// region they acted for (none on pages nobody reviews by region), or a reviewer the roles file no longer lists. Never a
+// name or an email. LessonParts' actorText writes it.
+export type Actor = { who: "you" } | { who: "role"; role: string; region: string | null } | { who: "reviewer" };
+
 export type LessonCard = {
   lesson_id: string;
   version: number;
@@ -71,6 +76,9 @@ export type LessonCard = {
   ieg_status: IegStatus;
   review_date: string | null;
   decided_on: string;
+  // Who decided the card's version and who recommended it (ticket 140).
+  decided_by: Actor;
+  recommended_by: Actor;
   state: "current" | "rechecking" | "retired_wrong" | "retired_outdated";
   rechecking_since: string | null;
   region: string | null;
@@ -103,7 +111,7 @@ export type Library = {
 };
 
 export type Clock = { day: number | null; limit_days: number | null; start_on: string; due_on: string; overdue_days: number; last_day: boolean };
-export type Act = { name: string; role: string; phrase: string; on: string; reason: string | null; region: string | null; repeat_of: string | null; change: Record<string, unknown> | null };
+export type Act = { actor: Actor; phrase: string; on: string; reason: string | null; repeat_of: string | null; change: Record<string, unknown> | null };
 export type Can = { act: "recommend" | "decide" | "cross_check" | null; reason_code: string | null; values: Record<string, string> };
 
 export type QueueRow = {
@@ -120,7 +128,8 @@ export type QueueRow = {
   may_repeat: boolean;
   clock: Clock | null;
   recommendation: Act | null;
-  origin: { kind: string; name: string | null; on: string; reason: string | null; region: string | null } | null;
+  // Who started a re-check; none when I started it because an edition took effect.
+  origin: { kind: string; actor: Actor | null; on: string; reason: string | null } | null;
   decided: { region: string; on: string | null } | null;
   can: Can;
 };
@@ -161,9 +170,8 @@ export type Summary = {
 export type HistoryEvent = {
   event: string;
   on: string | null;
-  name?: string | null;
-  role?: string | null;
-  region?: string | null;
+  // Who acted, for a person's act or request (ticket 140).
+  actor?: Actor | null;
   outcome?: string | null;
   reason?: string | null;
   doc_short?: string;
@@ -187,6 +195,8 @@ export type Outcome = {
   days_from_publication?: number | null;
   published_on?: string | null;
   decided_region?: string;
+  // A cross-check's: who checked it (ticket 140).
+  actor?: Actor | null;
 };
 
 export type ReviewItem = QueueRow & {

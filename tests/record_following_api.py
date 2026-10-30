@@ -10,7 +10,10 @@ run:
 One story makes the real ones, on the fixture database as of October 22, 2026, ticket 09's as-of date (the mission
 brief's draft as of October 23, as tests/test_drafts.py writes drafts): Ana, World Bank staff on the Kenya water
 team, follows P156634 and P130164, opens Following, opens it as of June 30, 2024, and writes a mission brief on
-P156634, which she checks and exports. Ben, also staff, follows nothing. Cy is not staff.
+P156634, which she checks and exports. The brief's awards rest on KE-CWSB-567630-CW-DIR's contract record, which
+disagrees with the agency's plan of August 17, 2026 that still says Pending Implementation (ticket 132), so check 6
+attaches that disagreement and Ana keeps the contract record, the side Strata leans on, before she exports
+(drafts-mission-brief-kept.json). Ben, also staff, follows nothing. Cy is not staff.
 
 The states the fixture cannot reach (a Watch row, a Not checked row, a partly checked row, a pipeline row, many quiet
 rows, a stored track record) are made up from the real answer, each named following-made-up-*.json and saying so in
@@ -38,6 +41,7 @@ from strata.lakehouse import catalog  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.server.access import Access, StaticGroups  # noqa: E402
 from strata.server.app import create_app  # noqa: E402
+from strata.server.choices import ChoiceLog  # noqa: E402
 from strata.server.evidence import OpenedLog  # noqa: E402
 from strata.server.following import FollowStore  # noqa: E402
 
@@ -77,7 +81,9 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, files: dict | None = No
     clock = iter(dt.datetime(2026, 10, 23, 14, minute, tzinfo=dt.UTC) for minute in range(60))
     days = {"today": dt.date(2026, 10, 22)}
     state = lambda: DuckDBEngine.open(state_db)  # noqa: E731
+    choice_ids = iter(f"choice-{number:04d}" for number in range(1, 100))
     app = create_app(engine_for=reading, drafts=DraftStore(state), opened=OpenedLog(state), follows=FollowStore(state),
+                     choices=ChoiceLog(state, now=lambda: next(clock), new_id=lambda: next(choice_ids)),
                      writers=lambda kind: ScriptedAgent(written), access=Access(load_roles(), StaticGroups(GROUPS)),
                      today=lambda: days["today"], now=lambda: next(clock), new_draft_id=lambda: f"draft-{next(numbers):04d}",
                      new_run_id=lambda: "run-0001")
@@ -101,6 +107,12 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, files: dict | None = No
             await get("drafts-write-mission-brief.sse", "/api/drafts", method="POST",
                       json={"kind": "mission_brief", "project_id": "P156634", "idempotency_key": "brief-1"})
             await get("drafts-mission-brief-draft.json", "/api/drafts/draft-0001")
+            # Each disagreement check 6 attached holds the export until Ana keeps a side: here Strata's.
+            for card in json.loads(found["drafts-mission-brief-draft.json"])["disagreements"]:
+                lean = next(side["assertion_id"] for side in card["sides"] if side["leaned"])
+                await client.post(f"/api/disagreements/{card['disagreement_id']}/choices", headers=ANA,
+                                  json={"kept_assertion_id": lean, "reason": "", "draft_id": "draft-0001"})
+            await get("drafts-mission-brief-kept.json", "/api/drafts/draft-0001")
             await get("following-with-brief.json", "/api/following")
             await get("drafts-mission-brief-checked.json", "/api/drafts/draft-0001/check", method="POST",
                       json={"expected_state": "draft"})

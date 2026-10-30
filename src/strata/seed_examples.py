@@ -38,7 +38,7 @@ import httpx
 from strata.config import Examples, Roles, load_examples, load_roles
 from strata.knowledge.lessons import notices
 from strata.server.home import HomeStore
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 
 FOLLOWS = "follows"
 REVIEW_NOTES = "review_notes_demo_plan"
@@ -243,10 +243,18 @@ def read_env_file(path: str) -> dict[str, str]:
     return values
 
 
-def main(argv: list[str] | None = None) -> int:  # pragma: no cover - the live run is a workspace step
+def main(argv: list[str] | None = None, environ: dict[str, str] | None = None) -> int:
     """Run against the workspace the env file names, as the app's own service principal:
 
         uv run python -m strata.seed_examples --env-file .env
+
+    The env file's values win over the process's environment (environ, by default os.environ). Each time the platform
+    starts the App again it makes the App's service principal a new secret, so the DATABRICKS_CLIENT_SECRET the env
+    file holds stops working at the App's next restart (ticket 129). The command then writes as the owner, with the
+    env file's DATABRICKS_TOKEN, and says so in one line (strata.server.settings.app_token). The owner owns the catalog
+    strata, so writing as the owner needs no grant beyond those the owner already holds. No table the command writes
+    has a column for who wrote a row: seeded_by and decided_by say strata, since no person set an example up, and the
+    owner shows as the writer only in each table's history (DESCRIBE HISTORY).
     """
     parser = argparse.ArgumentParser(description="Set up the examples the reviewing panel lands on.")
     parser.add_argument("--env-file", help="the env file that names the workspace, as the setup wizard wrote it")
@@ -258,7 +266,9 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - the live r
     from strata.server.access import Access, StaticGroups
     from strata.server.settings import _the_app_s_engine, app_from_env
 
-    environ = dict(os.environ) | (read_env_file(arguments.env_file) if arguments.env_file else {})
+    environ = dict(os.environ if environ is None else environ) | (
+        read_env_file(arguments.env_file) if arguments.env_file else {})
+    # One engine for the whole run, so the App's secret is tried once and a fallback is said once.
     state = _the_app_s_engine(environ)
     if state is None:
         print("I need the workspace: DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID, DATABRICKS_CLIENT_ID and "
@@ -282,7 +292,7 @@ def main(argv: list[str] | None = None) -> int:  # pragma: no cover - the live r
 
     # The panel are World Bank staff: the app reads their groups from the roles file's [staff], not their tokens.
     access = Access(roles, StaticGroups({person.user_id: list(roles.staff) for person in people}))
-    app = app_from_env(environ, engine_for=as_the_app, access=access)
+    app = app_from_env(environ, engine_for=as_the_app, access=access, the_app=state)
     report = seed(asgi_call(app), people, examples, HomeStore(state), DraftStore(state), as_the_app)
     for email, said in report.items():
         print(f"{email}: " + ", ".join(f"{key} {value.replace('_', ' ')}" for key, value in said.items()) + ".")

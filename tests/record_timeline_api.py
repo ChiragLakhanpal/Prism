@@ -17,6 +17,8 @@ date its address names:
   timeline-p156634-public.json, its public view, which shows no disagreement on a project still under way.
 - timeline-p130164-failed.json: the showcase's timeline when get_disagreements does not answer (FAILED): the marks,
   with no rating bands and no dashed lines, and the newest ISR as the How lane's one ISR mark.
+- timeline-p130164-grouped.json: the showcase's timeline on the planted copy of tests/planted_groups.py (GROUPED),
+  as the workspace's assertions pass read it: 16 pairs about three facts, drawn as three dashed lines (ticket 136).
 - evidence-*.json: what each kind of mark opens in the evidence drawer, from a link: a report's document view (ISR 7,
   the ICR, the replaced ICR Review and the PAD), a band's ratings, a disagreement's two sides with each side's
   passage, an event's passage, the contract's signing and a year of contracts.
@@ -33,7 +35,11 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+# The planted copy's module sits beside this one; added once, as a pytest worker loads this file once.
+if str(ROOT / "tests") not in sys.path:
+    sys.path.insert(0, str(ROOT / "tests"))
 
+from planted_groups import plant  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.server.app import create_app  # noqa: E402
 
@@ -45,6 +51,9 @@ DAY = "asof=2026-10-23"
 TODAY = dt.date(2026, 10, 23)
 PDO = "437378890475ef48"  # ISR 7 and ICR paragraph 78 on progress towards the PDO at the mid-term review
 EFFICIENCY = "51ea6e6516c0ea63"  # ICR paragraph 44 and the re-issued ICR Review on efficiency
+# Ticket 132: the October 9, 2026 plan's row for KE-NWWDA-541055-CW-RFB, which still says Pending Implementation, and
+# the contract awards' record of its signing on June 22, 2026, which the Timeline lists where the records disagree.
+MOVED_ON_541055 = "a29dcd3a40952830"
 
 TIMELINE = {
     "timeline-p130164.json": "/api/projects/P130164/timeline",
@@ -64,6 +73,7 @@ TIMELINE = {
     "evidence-ratings-p130164-12-13.json": f"/api/evidence?id=ratings:P130164:pdo_progress:12-13&{DAY}",
     "evidence-disagreement-p130164-pdo.json": f"/api/evidence?id=disagreement:{PDO}&{DAY}",
     "evidence-disagreement-p130164-efficiency.json": f"/api/evidence?id=disagreement:{EFFICIENCY}&{DAY}",
+    "evidence-disagreement-ke-nwwda-541055-moved-on.json": f"/api/evidence?id=disagreement:{MOVED_ON_541055}&{DAY}",
     "evidence-isr-p130164-7-s4.json": f"/api/evidence?id=strata.gold.passage:26733307/v1/s4&{DAY}",
     "evidence-icr-p130164-78.json": f"/api/evidence?id=strata.gold.passage:31525018/v1/78&{DAY}",
     "evidence-icr-p130164-44.json": f"/api/evidence?id=strata.gold.passage:31525018/v1/44&{DAY}",
@@ -78,6 +88,17 @@ TIMELINE = {
 FAILED = {
     "timeline-p130164-failed.json": "/api/projects/P130164/timeline",
 }
+
+
+# The answers recorded on the planted copy (tests/planted_groups.py), whose pairs share a report (ticket 136).
+GROUPED = {
+    "timeline-p130164-grouped.json": "/api/projects/P130164/timeline",
+}
+
+
+def planted(folder: Path) -> Path:
+    """The planted copy of the fixture database, in folder."""
+    return plant(FIXTURE_DB, folder / "planted.duckdb")
 
 
 def failing_get_disagreements(call):
@@ -108,8 +129,8 @@ def answer(database: Path, path: str) -> dict:
     return asyncio.run(go())
 
 
-def write(name: str, path: str) -> None:
-    (OUT / name).write_text(json.dumps(answer(FIXTURE_DB, path), indent=2, ensure_ascii=False) + "\n")
+def write(name: str, path: str, database: Path = FIXTURE_DB) -> None:
+    (OUT / name).write_text(json.dumps(answer(database, path), indent=2, ensure_ascii=False) + "\n")
     print(f"Wrote tests/fixtures/api/{name}.")
 
 
@@ -125,6 +146,12 @@ def main() -> None:
             write(name, path)
     finally:
         timeline.registry.call = call
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as folder:
+        database = planted(Path(folder))
+        for name, path in GROUPED.items():
+            write(name, path, database)
 
 
 if __name__ == "__main__":

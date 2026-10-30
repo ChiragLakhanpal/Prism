@@ -209,7 +209,31 @@
           "leaned": true
         }
       ],
-      "after": "doc:31525018"
+      "after": "doc:31525018",
+      "group": {
+        "count": 1,
+        "disagreement_ids": [
+          "437378890475ef48"
+        ],
+        "anchor_side": "earlier",
+        "anchor_item_id": "doc:26733307",
+        "anchor_reports": [
+          {
+            "type": "isr",
+            "count": 1,
+            "sequence": 7
+          }
+        ],
+        "other_reports": [
+          {
+            "type": "icr",
+            "count": 1,
+            "sequence": null
+          }
+        ],
+        "reports": 2,
+        "lean": "others"
+      }
     },
     {
       "id": "doc:31906731",
@@ -293,7 +317,31 @@
           "leaned": true
         }
       ],
-      "after": "doc:34056616"
+      "after": "doc:34056616",
+      "group": {
+        "count": 1,
+        "disagreement_ids": [
+          "51ea6e6516c0ea63"
+        ],
+        "anchor_side": "earlier",
+        "anchor_item_id": "doc:31525018",
+        "anchor_reports": [
+          {
+            "type": "icr",
+            "count": 1,
+            "sequence": null
+          }
+        ],
+        "other_reports": [
+          {
+            "type": "icr_review",
+            "count": 1,
+            "sequence": null
+          }
+        ],
+        "reports": 2,
+        "lean": "others"
+      }
     }
   ],
   "table": [
@@ -728,8 +776,11 @@
   },
   "disagreements": {
     "status": "ok",
-    "count": 2
+    "count": 2,
+    "pairs": 2
   },
+  "records_disagree": [],
+  "records_disagree_count": 0,
   "disagreement_line_state": "info",
   "rejected": {
     "count": 1
@@ -739,6 +790,58 @@
     "how": 4,
     "what": 1
   },
+  "contracts": {
+    "count": 8,
+    "sources": [
+      {
+        "source": "awards_fy2001_2016",
+        "count": 7
+      },
+      {
+        "source": "notices",
+        "count": 1
+      }
+    ],
+    "left_out": {
+      "count": 7,
+      "no_step_reference": [
+        {
+          "source": "awards_fy2001_2016",
+          "count": 7
+        }
+      ],
+      "no_signing_date": []
+    }
+  },
+  "records_note": [
+    {
+      "text": "I hold "
+    },
+    {
+      "number": 8
+    },
+    {
+      "text": " contracts for this project."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "The Records lane finds each contract's package by its STEP reference, so it leaves out "
+    },
+    {
+      "number": 7
+    },
+    {
+      "text": " from "
+    },
+    {
+      "text": "the contract awards for fiscal 2001 to 2016"
+    },
+    {
+      "text": ", which have none."
+    }
+  ],
   "finding": [
     {
       "number": 2,

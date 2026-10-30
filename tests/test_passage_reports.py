@@ -20,6 +20,8 @@ from strata.tools import registry
 QUESTION = "Why were works contracts in P130164 advertised again?"
 # What the scripted agent asks search_passages for this question (tests/fixtures/agent/recorded/p130164-rebidding.json).
 SEARCHED = "works contracts advertised again rebidding"
+# A passage reviewer as another reviewer reads them: by role, with no region, since nobody reviews passages by region.
+PASSAGE_REVIEWER = {"who": "role", "role": "passage reviewer", "region": None}
 
 
 @pytest.fixture
@@ -240,7 +242,9 @@ def test_a_decision_needs_a_reason_and_the_state_the_reviewer_saw(loop):
     assert loop.decide(DANIEL, row["group_id"], reason="  ").json()["code"] == "no_reason"
     assert loop.decide(PRIYA, row["group_id"], outcome="keep", reason="It answers the question.").status_code == 200
     stale = loop.decide(DANIEL, row["group_id"], state=row["state"])
-    assert (stale.status_code, stale.json()["code"], stale.json()["values"]["name"]) == (409, "stale", "Priya Nair")
+    # Who decided first is named by role, never by name (ticket 140).
+    assert (stale.status_code, stale.json()["code"], stale.json()["values"]["actor"]) == (409, "stale", PASSAGE_REVIEWER)
+    assert "Priya" not in stale.text
     assert [act["act"] for act in loop.rows("SELECT act FROM strata.ops.label_decisions")] == ["declined"]
 
 
@@ -254,8 +258,12 @@ def test_the_reporter_sees_the_decision_and_a_reopened_record_gives_back_the_ear
     mine = loop.request("GET", "/api/feedback", ANA, params={"evidence_id": PARAGRAPH_54, "run_id": run}).json()["my_report"]
     assert (mine["status"], mine["reviewer_reason"]) == ("ranked_lower", "It is about estimates in general, not these contracts.")
     record = loop.request("GET", f"/api/passage-reports/{row['group_id']}", DANIEL).json()
-    assert (record["stage"], record["outcome"]["outcome"], record["outcome"]["reviewer_name"]) == (
-        "decided", "ranked_lower", "Daniel Okafor")
+    assert (record["stage"], record["outcome"]["outcome"], record["outcome"]["actor"]) == (
+        "decided", "ranked_lower", {"who": "you"})
+    # Another passage reviewer reads the decision by role (ticket 140), and nobody reads Daniel's name or email.
+    theirs = loop.request("GET", f"/api/passage-reports/{row['group_id']}", PRIYA)
+    assert theirs.json()["outcome"]["actor"] == PASSAGE_REVIEWER
+    assert "daniel" not in (str(record) + theirs.text).lower()
     decided = loop.request("GET", "/api/passage-reports", DANIEL).json()["decided"]["rows"]
     assert [(found["outcome"], found["report_count"]) for found in decided] == [("ranked_lower", 1)]
     # A report a reviewer decided can no longer be withdrawn.

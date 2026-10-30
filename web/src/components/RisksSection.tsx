@@ -52,6 +52,7 @@ import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Checkbox } from "./Checkbox";
 import { CheckLine, notCheckedFor, RemovedBox, type Removed } from "./Checks";
+import { Abbr } from "./Abbreviations";
 import { Fill, Joined } from "./Fill";
 import { FootStrip } from "./FootStrip";
 import { Num } from "./Num";
@@ -171,8 +172,8 @@ export function RisksView({
         }
       >
         <div className="@container/risks">
-          <p className="max-w-prose text-body text-ink">{words.intro}</p>
-          {populated && <p className="mt-2 max-w-prose text-body text-ink">{words.instruction}</p>}
+          {/* The zone's name says what the section lists, so it opens on what to do (ticket 126). */}
+          {populated && <p className="max-w-prose text-body text-ink">{words.instruction}</p>}
           {updating && (
             <div className={cx(lastHeight !== null && "overflow-hidden")} style={{ height: lastHeight ?? undefined }} data-risks-updating>
               <RisksSkeleton />
@@ -249,11 +250,9 @@ function Ready({
       <h3 id={findingId} data-finding className="mt-6 max-w-prose text-h2 text-balance text-ink-heading">
         <Finding result={result} onAll={handlers.onAll} onCount={handlers.onCount} from={from} />
       </h3>
+      {/* No count line: every risk shows, and the Note in the foot strip says how I ranked them (ticket 126). */}
       <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small">
-        <p id={countId} className="text-ink-muted" data-count-line>
-          {rows.length === 1 ? words.countOne : rows.length === 2 ? words.countBoth : words.count(formatCount(rows.length))}
-        </p>
-        <p className="text-ink" data-selection-status>
+        <p id={countId} className="text-ink" data-selection-status>
           {chosen === 0 ? words.selectedNone : words.selected(formatNumber(chosen, { compact: false }), formatNumber(rows.length, { compact: false }))}
           {preview && <span className="ml-2 text-caption text-ink-muted">{words.preview}</span>}
         </p>
@@ -565,9 +564,17 @@ function Notes({ result }: { result: RisksResult }) {
       <p className="max-w-prose text-caption text-ink-muted">
         <span className="font-semibold">{words.noteLabel}</span> {words.note(formatCount(result.max_rows))}
       </p>
-      <p className="max-w-prose text-caption text-ink-muted">
-        {words.abbr}
-        {ppar && <> {words.abbrPpar}</>}
+      {/* The abbreviations written short, each opening the window that spells it out (ticket 126, pattern 4; rule 22). */}
+      <p className="max-w-prose text-caption text-ink-muted" data-risk-abbreviations>
+        <span className="font-semibold">{words.abbreviationsLead}</span>{" "}
+        <Joined
+          items={[
+            <Abbr key="icr" short={words.abbrShort.icr} spelled={words.abbrIcr} />,
+            <Abbr key="icr_review" short={words.abbrShort.icrReview} spelled={words.abbrIcrReview} />,
+            ...(ppar ? [<Abbr key="ppar" short={words.abbrShort.ppar} spelled={words.abbrPpar} />] : []),
+          ]}
+        />
+        {words.abbreviationsEnd}
       </p>
       <Coverage result={result} from={from} />
       <SourceLine result={result} />
@@ -656,12 +663,13 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
       );
     case "no_reports":
       return (
+        // The first sentence and its link stay; why a project has no report yet is something a specialist knows
+        // (ticket 126). Its count can be checked (ticket 60).
         <EmptyCard
           title={
             result.p === 1 ? e.noReportsOne : <Fill template={e.noReports} slots={{ p: <Num count={result.p ?? 0} check={{ tooltip: words.numTips.coverageP, from }} /> }} />
           }
         >
-          <p className="mt-2 max-w-prose text-body text-ink">{e.noReportsBody}</p>
           <p className="mt-2">
             <TextLink href={readiness}>{e.noReportsLink}</TextLink>
           </p>
@@ -677,9 +685,7 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
               <Fill template={e.noLessons} slots={{ m: <Num count={result.m ?? 0} check={{ tooltip: words.numTips.m, from }} /> }} />
             )
           }
-        >
-          <p className="mt-2 max-w-prose text-body text-ink">{e.noLessonsBody}</p>
-        </EmptyCard>
+        />
       );
     default: {
       const written = result.written ?? result.verifier?.removed.length ?? 0;
@@ -711,9 +717,6 @@ function NoReportsHeld() {
     <div aria-hidden="true" data-risks-held>
       <p className="max-w-prose text-body">
         <SkeletonWords text={fill(e.noReports, { p: formatCount(3) })} />
-      </p>
-      <p className="mt-2 max-w-prose text-body">
-        <SkeletonWords text={e.noReportsBody} />
       </p>
       <p className="mt-2">
         <SkeletonWords text={e.noReportsLink} />

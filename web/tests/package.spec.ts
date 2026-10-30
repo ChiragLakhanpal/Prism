@@ -110,9 +110,12 @@ async function derived(name: string, edit: (body: Comparables) => void): Promise
 }
 
 // A plan row with no planned dates: no plan, so no share of it either.
+// A plan row with no planned dates, as the server answers it: no plan, and no step date for the plan line's two ends
+// (ticket 139).
 const noPlan = (body: Comparables) => {
   body.plan = null;
   (body.frequencies as { plan: unknown }).plan = null;
+  Object.assign(body.package as object, { planned_notice_on: null, planned_signing_on: null });
 };
 
 async function signedWithin(months: number): Promise<number> {
@@ -160,10 +163,14 @@ test("the workspace names the package, lists its facts in STEP's field names, an
   await expect(page.getByRole("figure", { name: FINDING })).toBeVisible();
   await expect(section(page).locator("[data-summary]")).toHaveText(
     "The middle half of these packages took 3.3 to 7.9 months, and the middle one took 4.4. 8 in 10 were signed within 9.1 months. " +
-      "Four of the 49 are still open. I kept them in the range as not signed yet, so the range does not look shorter than it was. " +
+      "Four of the 49 are still open. " +
       // Lane 2 (ticket 26): the demo package lies outside what the fixture's model learned from.
       "The past range above still shows every comparable package.",
   );
+  // How I count the open ones is the open count's tooltip since ticket 126 (T14).
+  await section(page).locator("[data-summary] [data-num]").filter({ hasText: "Four" }).focus();
+  await expect(page.getByRole("tooltip")).toContainText("I kept them in the range as not signed yet, so the range does not look shorter than it was.");
+  await page.keyboard.press("Escape");
   await expect(section(page).locator("[data-coverage-line]")).toContainText(
     "Based on 49 of 65 matching packages; three lacked the STEP reference that links notice to contract, 10 had no specific procurement " +
       "notice in the records I hold and three were canceled before a contract was signed.",
@@ -412,39 +419,34 @@ test("the statistics' labels and their knockouts stop above the axis, so the axi
   }
 });
 
-test("below 768 px the reset button takes the helper's place while the line is off the plan, so the chart sits about 16 px under the control", async ({ page }) => {
+test("below 768 px the reset button shows under the input while the line is off the plan, and the chart does not move", async ({ page }) => {
   for (const width of [390, 320]) {
     await openPackage(page, { width });
     await ready(page);
     const input = page.getByRole("textbox", { name: "Planned months" });
-    const helper = page.getByText(/^The plan row puts the notice on/);
     const chartTop = () => page.locator("[data-range-chart]").evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
-    const pageBox = (locator: typeof helper) => locator.evaluate((el) => {
+    const pageBox = (locator: typeof input) => locator.evaluate((el) => {
       const box = el.getBoundingClientRect();
       return { top: box.top + window.scrollY, bottom: box.bottom + window.scrollY };
     });
     const inputBox = await pageBox(input);
-    const helperBox = await pageBox(helper);
     const before = await chartTop();
 
-    // Ticket 59 (the 12 critique, round 11, item 3): the helper sits right under the input it explains, and the error's
-    // held line sits under the helper, so the helper reads as the input's and an error appears between it and the chart.
-    expect(helperBox.top - inputBox.bottom, `${width} px`).toBeLessThanOrEqual(8);
+    // The plan row's two dates are in the plan months' tooltip since ticket 126 (T13), so no helper line sits under the
+    // input. The error's held line still sits between the control and the chart (ticket 59).
+    await expect(page.getByText(/^From the plan's step dates/)).toHaveCount(0);
     const errorBox = await pageBox(page.locator("[data-plan-control] > p.text-error"));
-    expect(errorBox.top, `${width} px: the error's line under the helper`).toBeGreaterThanOrEqual(helperBox.bottom);
+    expect(errorBox.top, `${width} px: the error's line under the input`).toBeGreaterThanOrEqual(inputBox.bottom);
     expect(before, `${width} px: and the chart under it`).toBeGreaterThanOrEqual(errorBox.bottom);
-    expect(before - helperBox.bottom, `${width} px`).toBeLessThanOrEqual(48);
 
     await page.getByRole("slider").focus();
     await page.keyboard.press("ArrowRight");
     const reset = page.getByRole("button", { name: "Use the plan's 1.5 months" });
     await expect(reset).toBeVisible();
-    await expect(helper).toBeHidden();
     const resetBox = await pageBox(reset);
-    expect(Math.abs(resetBox.top - helperBox.top), `${width} px`).toBeLessThanOrEqual(1);
+    expect(resetBox.top - inputBox.bottom, `${width} px: the reset right under the input`).toBeLessThanOrEqual(8);
+    expect(errorBox.top, `${width} px: and the error's line under the reset`).toBeGreaterThanOrEqual(resetBox.bottom);
     expect(await chartTop(), `${width} px`).toBe(before);
-    // Hidden, the helper still describes the input.
-    await expect(input).toHaveAccessibleDescription(/The plan row puts the notice on/);
   }
 });
 
@@ -472,8 +474,10 @@ test("from 768 px the reset button sits on the input's row with its focus ring 8
     });
     expect(gap - ring, `${width} px`).toBeGreaterThanOrEqual(8);
     expect(sameRow, `${width} px`).toBe(true);
-    await expect(page.getByText(/^The plan row puts the notice on/), `${width} px`).toBeVisible();
   }
+  // The plan row's two dates are in the plan months' tooltip in the finding since ticket 126 (T13).
+  await section(page).locator("[data-finding] [data-num]").filter({ hasText: "1.5" }).first().focus();
+  await expect(page.getByRole("tooltip")).toContainText("From the plan's step dates: bid invitation March 10, 2026, contract signed April 24, 2026.");
 });
 
 // The readout sits beside the knob in row B, so it keeps clear of the knob's focus ring, on either side
@@ -545,7 +549,11 @@ test("below 768 px the table's cards say what Months counts once, on the count l
   // At 1024 px the zones take the whole frame beside the rail, so the table's frame has its 49rem and shows its rows.
   await page.setViewportSize({ width: 1024, height: 900 });
   await expect(page.locator("[data-comparables-table]").getByText(definition, { exact: true })).toBeHidden();
-  await expect(page.locator("[data-comparables-table] thead")).toContainText("From notice to signature, or so far if still open");
+  // The Months head's window holds the definition since ticket 126 (T19; pattern 3).
+  await expect(page.locator("[data-comparables-table] thead")).not.toContainText("so far if still open");
+  await page.locator("[data-comparables-table] thead").getByRole("button", { name: "Months" }).click();
+  await expect(page.getByRole("dialog", { name: "Months" })).toContainText("From notice to signature, or so far if still open");
+  await page.keyboard.press("Escape");
 });
 
 test("a number that is not between 0.5 and 60 months leaves the line where it was and says why", async ({ page }) => {
@@ -999,17 +1007,17 @@ test("a quantile dot the curve never reached is pinned at the plot's edge, so th
   }
 });
 
-// Ticket 111: Strata's own words open with its byline, and a record's words end with their source. On this page the
-// byline sits over section 1's finding alone: "Strata found", or "Strata held back" over its abstention, 8 px above
-// the words, outside the finding's own heading.
-test("section 1's finding opens with Strata's byline, its abstention with Strata held back, and nothing else on the page has one", async ({ page }) => {
+// Ticket 111 marked Strata's own words with its byline; ticket 126 took the words "Strata found" and "Strata held back"
+// off the screen and kept the mark. On this page it is on section 1's finding alone: "found", or "heldBack" on its
+// abstention, and the finding itself carries no words but its own.
+test("section 1's finding carries the found mark, its abstention the held-back mark, and nothing else on the page has one", async ({ page }) => {
   await openPackage(page);
   await ready(page);
   const bylines = page.locator("[data-byline]");
-  await expect(bylines).toHaveText(["Strata found"]);
-  await expect(section(page).locator("[data-finding]")).toHaveText(FINDING);
-  const [over, under] = [(await bylines.boundingBox())!, (await section(page).locator("[data-finding]").boundingBox())!];
-  expect(Math.round(under.y - (over.y + over.height))).toBe(8);
+  await expect(bylines).toHaveCount(1);
+  await expect(bylines).toHaveAttribute("data-byline", "found");
+  await expect(bylines).toHaveText(FINDING);
+  await expect(page.locator("main")).not.toContainText("Strata found");
 
   await openPackage(page, {
     comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
@@ -1017,7 +1025,8 @@ test("section 1's finding opens with Strata's byline, its abstention with Strata
   });
   await ready(page);
   await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range from only seven comparable packages. Here are all seven.");
-  await expect(bylines).toHaveText(["Strata held back"]);
+  await expect(bylines).toHaveAttribute("data-byline", "heldBack");
+  await expect(page.locator("main")).not.toContainText("Strata held back");
 });
 
 // Ticket 59, item 59, as the design review of round 1 settled it: on the 0 to 12 axis under 400 px wide, where the label
@@ -1102,6 +1111,19 @@ test("a package with no public notice quotes its Market Approach and offers the 
     "href",
     "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09#KE-NWWDA-541062-CW-RFQ",
   );
+});
+
+// Ticket 131: a reference that breaks STEP's form, which the plan reader kept as it read it, says so on its ID line; the
+// demo package's reference, which follows STEP's form, says nothing.
+test("a reference the plan reader kept as it read it says so on the ID line, and a whole one does not", async ({ page }) => {
+  await openPackage(page);
+  await expect(page.locator("[data-page-head] [data-id-line]")).toContainText(REF);
+  await expect(page.locator("[data-page-head] [data-id-line]")).not.toContainText("as I read it from the plan");
+
+  const flagged = JSON.parse(await recorded("package-ke-nwwda-541055.json"));
+  flagged.package.reference_as_read = true;
+  await openPackage(page, { pkg: { body: JSON.stringify(flagged) } });
+  await expect(page.locator("[data-page-head] [data-id-line]")).toContainText("as I read it from the plan");
 });
 
 test("when the whole page fails, the reference is the heading and is not repeated under it", async ({ page }) => {
@@ -1295,6 +1317,7 @@ test("the page barely moves when the package and then its comparables arrive, at
   }
 });
 
+// The head has no purpose under its h1 since ticket 126, so the zones under it are what must stay put.
 test("from 768 px the heading's skeleton holds the Description's two lines, so the page under it stays put when the package arrives", async ({ page }) => {
   for (const width of [1024, 1440]) {
     let answer: () => void = () => {};
@@ -1306,13 +1329,15 @@ test("from 768 px the heading's skeleton holds the Description's two lines, so t
       await route.fulfill({ contentType: "application/json", body: await recorded("package-ke-nwwda-541055.json") });
     });
     await page.reload();
-    const purpose = page.getByText(/^This page shows how comparable packages went/);
-    const held = (await purpose.boundingBox())!.y;
+    await expect(page.getByText(/^This page shows how comparable packages went/)).toHaveCount(0);
+    const top = () => page.locator("[data-zones]").evaluate((el) => el.getBoundingClientRect().top + window.scrollY);
+    await expect(page.locator("[data-page-head] [data-facts-line]")).toBeAttached();
+    const held = await top();
 
     answer();
     await expect(page.locator("main h1")).toContainText("Equipping of Exploratory");
 
-    expect(Math.abs((await purpose.boundingBox())!.y - held), `${width} px`).toBeLessThanOrEqual(8);
+    expect(Math.abs((await top()) - held), `${width} px`).toBeLessThanOrEqual(8);
   }
 });
 
@@ -1767,8 +1792,8 @@ test("a plan row with no planned dates has no plan line until you type months", 
   );
   // The title already gives the middle half, so the summary starts with the middle one.
   await expect(section(page).locator("[data-summary]")).toHaveText(
-    "The middle one took 4.4 months. 8 in 10 were signed within 9.1 months. Four of the 49 are still open. I kept them in the range " +
-      "as not signed yet, so the range does not look shorter than it was. The past range above still shows every comparable package.",
+    "The middle one took 4.4 months. 8 in 10 were signed within 9.1 months. Four of the 49 are still open. " +
+      "The past range above still shows every comparable package.",
   );
   await expect(page.getByRole("slider")).toHaveCount(0);
   await expect(section(page).getByText(/^The plan row has no planned notice date or signing date, so there is no plan line yet/)).toBeVisible();
@@ -2111,8 +2136,8 @@ test("below 20 comparables the sentence that holds back is zone 1's finding, the
   await expect(page.locator("[data-chart-drawing] :is([data-band], [data-middle], [data-in10])")).toHaveCount(0);
   await expect(section(page).getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   await expect(section(page).locator("[data-comparables-table] [data-table-view]:visible").locator("tbody tr, li")).toHaveCount(7);
-  // One to nine in words, as the finding writes the count (DESIGN.md section 7, rule 12; ticket 101's design review).
-  await expect(section(page).locator("[data-comparables-table] [data-count-row] p").first()).toHaveText("Showing all seven packages.");
+  // Every package shows, so the table has no count line (ticket 126); the finding already counts them in words.
+  await expect(section(page).locator("[data-comparables-table]")).not.toContainText("Showing all");
 });
 
 // How far apart, in pixels, the tops of a phrase's characters sit inside an element, with a no-break space read as a
@@ -2207,7 +2232,16 @@ for (const [width, open, least] of [
   });
 }
 
-test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones keep their left edge and width, and the opened dot keeps its ring", async ({ page }) => {
+// Each zone's box in the page, and the stage labels', so a test can say that nothing in the work moved.
+const zoneBoxes = (page: Page) =>
+  page.locator("[data-zones] > *").evaluateAll((all) =>
+    all.map((el) => {
+      const box = el.getBoundingClientRect();
+      return [box.left, box.top + window.scrollY, box.width, box.height].map((n) => Math.round(n));
+    }),
+  );
+
+test("at 1440 and 1280 px a dot's drawer takes the side column's place, facts and step tracker both, every zone keeps its place and size, and the opened dot keeps its ring", async ({ page }) => {
   for (const width of [1440, 1280]) {
     await openPackage(page, { width, drawer: "evidence-package-ke-mowi-47509.json" });
     await ready(page);
@@ -2215,10 +2249,12 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     const before = (await zones.boundingBox())!;
     const zone1 = section(page);
     const zone1Height = (await zone1.boundingBox())!.height;
-    const tracker = page.locator("[data-step-tracker]");
+    // The step tracker is in the side column under the facts here (ticket 130).
+    const tracker = page.locator("[data-side-slot] [data-step-tracker]");
     await expect(tracker.locator("[data-step-state]").first()).toBeVisible();
-    const trackerHeight = (await tracker.boundingBox())!.height;
+    const trackerBox = (await tracker.boundingBox())!;
     await expect(page.getByRole("region", { name: "From the plan row" })).toBeVisible();
+    const boxes = await zoneBoxes(page);
     const dot = page.locator('[data-dot-target][aria-label^="KE-MOWI-47509-CW-RFB,"]');
     await dot.scrollIntoViewIfNeeded();
     const spot = (await dot.boundingBox())!;
@@ -2233,13 +2269,23 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     // clicked stays where it was, beside its records (ticket 101's critique, round 1).
     expect(Math.round((await dot.boundingBox())!.y), `${width} px`).toBe(Math.round(spot.y));
     expect((await zone1.boundingBox())!.height, `${width} px`).toBeCloseTo(zone1Height, 0);
-    // The step tracker reads its own width, so it keeps its row of six too (ticket 101's critique, round 2).
-    expect((await tracker.boundingBox())!.height, `${width} px`).toBeCloseTo(trackerHeight, 0);
-    // The drawer sits where the side panel was, beside the zones.
+    // Every zone and stage label keeps its box, and the step tracker hides with the facts, since the drawer opens in
+    // the side column's place.
+    expect(await zoneBoxes(page), `${width} px`).toEqual(boxes);
+    await expect(tracker, `${width} px`).toBeHidden();
+    // The drawer sits where the side column was, beside the zones.
     expect((await drawer.boundingBox())!.x).toBeGreaterThan(after.x + after.width);
+    expect((await drawer.boundingBox())!.x, `${width} px`).toBeLessThanOrEqual(trackerBox.x);
     // The opened dot keeps its 2 px info-icon ring while the drawer shows it.
     const ring = page.locator("[data-opened-ring]");
     await expect(ring).toBeAttached();
     expect(await ring.evaluate((el) => [getComputedStyle(el).stroke, getComputedStyle(el).strokeWidth])).toEqual(["rgb(0, 113, 188)", "2px"]);
+    // Closed, the side column comes back as it was, and the zones still have not moved.
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+    await expect(tracker).toBeVisible();
+    const back = (await tracker.boundingBox())!;
+    expect([back.x, back.width], `${width} px`).toEqual([trackerBox.x, trackerBox.width]);
+    expect(await zoneBoxes(page), `${width} px`).toEqual(boxes);
   }
 });

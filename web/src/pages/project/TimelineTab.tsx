@@ -11,6 +11,7 @@
 // populated, a lane with nothing in it, no ISR ratings, empty, the abstention line, disagreements that failed to
 // load, an error, the public view of a project still under way (no disagreements), and as of a date.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Abbr } from "../../components/Abbreviations";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";
@@ -37,18 +38,24 @@ import {
   HEIGHT,
   LANES,
   bandLine,
-  capitalize,
+  chipShort,
   fullLabel,
   joinNames,
+  leanLine,
   othersOf,
-  shortName,
+  pillText,
   type Item,
   type Lane,
+  type RecordDisagreement,
+  type RecordSide,
   type Timeline,
 } from "../../lib/timeline";
+import { MonoWords } from "../../components/MonoWords";
 import { withReadParams } from "../../lib/view";
 
 const words = copy.timeline;
+// The plan's Process Status in a moved-on sentence, as the plan check words it (ticket 132).
+const stillSays = copy.checkPlan.reason.stillSays;
 const CHART_MIN = 520;
 const WIDE = "(width >= 48rem)";
 
@@ -89,30 +96,53 @@ const titleSize = (chart: boolean, width: number) => (chart ? (width > 700 ? 20 
 const titleLines = (chart: boolean, width: number) => (chart ? (width >= 1000 ? 1 : 2) : width >= 320 ? 3 : 4);
 
 // A disagreement's line takes its card's state: amber only while an answer open on this page has a sentence it
-// changes (the 23 brief, section 4.4), and the default otherwise.
+// changes (the 23 brief, section 4.4), and the default otherwise. A line for several pairs (ticket 136) takes the
+// state of any of its pairs the answer shows.
 export function lineStates(data: Timeline, run: Run | null): Record<string, LineState> {
   const states: Record<string, LineState> = {};
   for (const item of data.items) {
     if (item.kind !== "disagreement") continue;
-    const found = run?.disagreements.find((one) => one.id.endsWith(`:${item.disagreement_id}`));
-    states[item.id] = found ? (found.changes_answer ? "warning" : "info") : data.disagreement_line_state;
+    const ids = item.group?.disagreement_ids ?? [item.disagreement_id];
+    const found = run?.disagreements.filter((one) => ids.some((id) => one.id.endsWith(`:${id}`))) ?? [];
+    states[item.id] = found.length ? (found.some((one) => one.changes_answer) ? "warning" : "info") : data.disagreement_line_state;
   }
   return states;
 }
 
-// The Note line: each abbreviation that appears, what the bands show and each code a band shows. The list writes
-// each run's rating in words and draws no bands, so there the Note says nothing about them.
+// What the title's count counts: pairs of reports, or, where a line stands for several pairs, points (ticket 136).
+const findingCheck = (data: Timeline) =>
+  data.items.some((item) => item.kind === "disagreement" && (item.group?.count ?? 1) > 1) ? words.findingCheckPoints : words.findingCheck;
+
+// The Note line: what the bands show (the chart's one legend line, ticket 126's K16), then each abbreviation that
+// appears and each code a band shows, written short, each opening a window that spells it out (ticket 126, pattern 4).
+// The list writes each run's rating in words and draws no bands, so there the Note says nothing about them.
 function Note({ data, codes, chart }: { data: Timeline; codes: string[]; chart: boolean }) {
   const types = new Set(data.items.flatMap((item) => (item.kind === "report" ? [item.type] : [])));
   if (data.items.some((item) => item.kind === "band")) types.add("isr");
-  const abbreviations = (["pad", "isr", "icr", "icr_review", "ppar"] as const).filter((type) => types.has(type)).map((type) => words.abbrev[type]);
-  const banded = data.items.some((item) => item.kind === "band");
-  const spelled = codes.map((rating) => words.codeNote(words.codes[rating] ?? rating, rating));
-  const parts = [...abbreviations, ...(banded && chart ? [words.bands, ...spelled] : [])];
-  if (!parts.length) return null;
+  const banded = data.items.some((item) => item.kind === "band") && chart;
+  const abbreviations = [
+    ...(["pad", "isr", "icr", "icr_review", "ppar"] as const)
+      .filter((type) => types.has(type))
+      .map((type) => <Abbr key={type} short={words.abbrShort[type]} spelled={words.abbrev[type]} />),
+    ...(banded ? codes : []).map((rating) => {
+      const code = words.codes[rating] ?? rating;
+      return <Abbr key={rating} short={code} spelled={words.codeNote(code, rating)} />;
+    }),
+  ];
+  if (!banded && !abbreviations.length) return null;
   return (
     <p data-timeline-note className="max-w-prose text-caption text-chart-text-subtle">
-      <span className="font-bold text-chart-text">{words.noteLead}</span> {parts.join(" ")}
+      {banded && (
+        <span className="block">
+          <span className="font-bold text-chart-text">{words.noteLead}</span> {words.bands}
+        </span>
+      )}
+      {abbreviations.length > 0 && (
+        <span className="block" data-timeline-abbreviations>
+          <span className="font-bold text-chart-text">{words.abbreviationsLead}</span> <Joined items={abbreviations} />
+          {words.abbreviationsEnd}
+        </span>
+      )}
     </p>
   );
 }
@@ -154,11 +184,11 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
     { key: "date", header: words.columns.date, width: "w-1/6", short: true },
     {
       key: "stratum",
+      // Its values are the lanes' nouns, so no caption decodes them (ticket 126); the Term still defines a stratum.
       header: (
-        <span className="flex flex-col">
-          <Term term="Stratum" inText={false}>{words.columns.stratum}</Term>
-          <span className="text-caption font-normal text-ink-muted">{words.stratumCaption}</span>
-        </span>
+        <Term term="Stratum" inText={false}>
+          {words.columns.stratum}
+        </Term>
       ),
       cardHeader: words.columns.stratum,
       width: "w-1/6",
@@ -170,10 +200,7 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
   ];
   const note = (item: Item): ReactNode => {
     if (item.kind === "band") return words.note.trajectory;
-    if (item.kind === "disagreement") {
-      const lean = item.sides.find((side) => side.leaned);
-      return lean ? words.note.leans.replace("{lean}", shortName(lean)) : null;
-    }
+    if (item.kind === "disagreement") return leanLine(item);
     if (item.kind === "report" && item.replaced_by) return words.note.replaced.replace("{date}", formatDate(item.replaced_by.date));
     if (item.kind === "report" && item.disagrees_with?.length) return words.note.disagrees.replace("{other}", joinNames(othersOf(item, data.items)));
     return null;
@@ -210,7 +237,6 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
     <div id={id} data-timeline-table className="mt-4">
       <Table
         title={words.caption(data.project.display_name ?? data.project.project_id)}
-        count={{ noun: words.itemsNoun, total: rows.length, text: words.count(rows.length, formatCount(rows.length)) }}
         columns={columns}
         state={{ status: "ready", rows }}
         rowHeader="item"
@@ -282,9 +308,9 @@ function ListItemText({ item, data, states }: { item: Item; data: Timeline; stat
           <Num date={item.date} style="table" />
         </span>
         <span className="mt-1 block">
-          <StatusBadge kind={state === "warning" ? "chip-warning" : "chip-info"} />
+          <StatusBadge kind={state === "warning" ? "chip-warning" : "chip-info"} text={chipShort(item)} />
         </span>
-        <span className="mt-1 block text-caption text-ink">{capitalize(words.sides.replace("{side1}", shortName(item.sides[0])).replace("{side2}", shortName(item.sides[1])))}</span>
+        <span className="mt-1 block text-caption text-ink">{pillText(item)}</span>
       </>
     );
   }
@@ -346,7 +372,7 @@ export function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }
         </p>
       </div>
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
-        {wide ? <Fill template={words.subtitle} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}
+        {wide ? <Fill template={words.subtitleNoLines} slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }} /> : words.subtitleList}
       </p>
       <TimelineSkeleton wide={wide} />
       <SkeletonLine width="w-3/5" className="mt-4 text-caption" />
@@ -361,7 +387,7 @@ export function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }
 }
 
 // The chart card, in any state the payload gives: the finding, the subtitle, the chart or the list, the notes, the
-// source line and the table twin. The design gallery draws it as it is.
+// source line and the table twin, under the chart and under the list. The design gallery draws it as it is.
 export function TimelineCard({
   data,
   wide,
@@ -396,13 +422,14 @@ export function TimelineCard({
     <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: titleSize(chart, width) }}>
         {/* The count's tooltip opens above it, so it never hides the finding's second line. */}
-        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, from: reportsFrom(data), act: words.findingCheckAct, opens: "rows", onOpen: openTable, side: "top" } : undefined} />
+        <SegmentText segments={data.finding} check={chart ? { tooltip: findingCheck(data), from: reportsFrom(data), act: words.findingCheckAct, opens: "rows", onOpen: openTable, side: "top" } : undefined} />
       </p>
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (
           <Fill
-            // No dashed line can be drawn when get_disagreements did not answer or the view hides disagreements.
-            template={data.disagreements.status === "ok" ? words.subtitle : words.subtitleNoLines}
+            // The dashed line's sentence only when a dashed line is drawn (ticket 126): never when get_disagreements did
+            // not answer, the view hides disagreements, or no two reports disagree.
+            template={data.disagreements.status === "ok" && data.items.some((item) => item.kind === "disagreement") ? words.subtitle : words.subtitleNoLines}
             slots={{ report: <Glyph kind="report" />, event: <Glyph kind="event" />, record: <Glyph kind="record" /> }}
           />
         ) : (
@@ -440,18 +467,103 @@ export function TimelineCard({
       </div>
       <div className="mt-4 flex flex-col gap-2">
         <Note data={data} codes={chart ? codes : []} chart={chart} />
+        {/* The contracts the Records lane leaves out, by source, after the count the Connections tab names too
+            (ticket 138). The server writes it from copy templates, as it writes the title. */}
+        {data.records_note && (
+          <p data-timeline-records-note className="max-w-prose text-caption text-ink-muted">
+            <SegmentText segments={data.records_note} />
+          </p>
+        )}
         {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} data={data} />}
         <SourceLine data={data} />
       </div>
-      {chart && (
-        <>
-          <Button variant="ghost" className="mt-2" flush aria-expanded={table} aria-controls={tableId} onClick={() => setTable((open) => !open)}>
-            {table ? words.hide : words.show}
-          </Button>
-          {table ? <TimelineTable data={data} id={tableId} onOpen={onOpen} /> : <div id={tableId} hidden />}
-        </>
-      )}
+      {/* Under the list too: a list item stands for a line, which may stand for several pairs, so only the table
+          lists every pair (ticket 136; code review round 1, B1). Below 768 px Table draws its rows as cards. */}
+      <Button variant="ghost" className="mt-2" flush aria-expanded={table} aria-controls={tableId} onClick={() => setTable((open) => !open)}>
+        {table ? words.hide : words.show}
+      </Button>
+      {table ? <TimelineTable data={data} id={tableId} onOpen={onOpen} /> : <div id={tableId} hidden />}
     </figure>
+  );
+}
+
+// Where a package's records disagree (ticket 132): the pairs of records no dashed line joins, such as a plan row that
+// still says pending and the contract awards that say the contract was signed, the newest first. Each line says what
+// the two records say and which one I lean on, and opens both in the evidence drawer. The plan check cites the same
+// disagreement on its moved-on row.
+function RecordLine({ one, onOpen }: { one: RecordDisagreement; onOpen: (one: RecordDisagreement, element: HTMLElement) => void }) {
+  const r = words.records;
+  const status = one.sides.find((side) => side.value_form === "status");
+  const other = one.sides.find((side) => side !== status);
+  const leaned = one.sides.find((side) => side.leaned);
+  const name = (side: RecordSide) => <Fill template={r.name[side.record] ?? r.name.plan} slots={{ date: <Num date={side.made_at} /> }} />;
+  const value = (side: RecordSide) =>
+    side.value_form === "date" ? <Num date={side.value} /> : side.value_form === "amount" ? <Num value={Number(side.value)} options={{ decimals: 2, compact: false }} /> : side.value;
+  const [first, second] = one.sides;
+  const sentence =
+    status && other ? (
+      <Fill
+        template={r.status[other.record] ?? r.status.contract_awards}
+        slots={{ plan: <Num date={status.made_at} />, date: <Num date={other.value} />, status: stillSays[status.value] ?? status.value }}
+      />
+    ) : (
+      <Fill
+        template={one.attribute === "signed_amount_usd" ? r.signed_amount_usd : r.signed_on}
+        slots={{ first: name(first), value1: value(first), second: name(second), value2: value(second) }}
+      />
+    );
+  return (
+    <li data-record-disagreement={one.disagreement_id} data-activity={one.step_reference} className="flex flex-col items-start gap-1 border-l border-line pl-3">
+      <MonoWords text={one.step_reference} medium />
+      <p className="max-w-prose text-small text-ink">
+        {sentence}
+        {leaned && (
+          <>
+            {" "}
+            <Fill template={r.lean} slots={{ lean: r.leanName[leaned.record] ?? r.leanName.plan }} />
+          </>
+        )}
+      </p>
+      <Button variant="ghost" flush aria-label={r.openLabel(one.step_reference)} onClick={(event) => onOpen(one, event.currentTarget)}>
+        {r.open}
+      </Button>
+    </li>
+  );
+}
+
+function RecordsDisagree({
+  found,
+  count,
+  onOpen,
+}: {
+  found: RecordDisagreement[];
+  count: number;
+  onOpen: (one: RecordDisagreement, element: HTMLElement) => void;
+}) {
+  const r = words.records;
+  const titleId = useId();
+  const [all, setAll] = useState(false);
+  const shown = all ? found : found.slice(0, r.listUpTo);
+  return (
+    <section aria-labelledby={titleId} data-records-disagree className="mt-6 flex flex-col gap-3">
+      <h3 id={titleId} className="text-h3 text-ink-heading">
+        {r.title}
+      </h3>
+      <p className="max-w-prose text-small text-ink-muted">{r.lede}</p>
+      <p data-records-disagree-count className="text-small text-ink">
+        <Fill template={r.count(count)} slots={{ n: <Num count={count} capital /> }} />
+      </p>
+      <ul className="flex flex-col gap-4">
+        {shown.map((one) => (
+          <RecordLine key={one.id} one={one} onOpen={onOpen} />
+        ))}
+      </ul>
+      {count > r.listUpTo && (
+        <Button variant="ghost" flush aria-expanded={all} onClick={() => setAll((open) => !open)}>
+          <Fill template={all ? r.showFewer : r.showAll} slots={{ n: formatCount(all ? r.listUpTo : count) }} />
+        </Button>
+      )}
+    </section>
   );
 }
 
@@ -498,19 +610,27 @@ export function TimelineTab({ pid }: { pid: string }) {
   } else if (load.data.items.length === 0) {
     body = <EmptyState level={3} title={words.emptyTitle} body={words.emptyBody} link={{ href: "/data", text: words.emptyLink }} />;
   } else {
-    body = <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retryCard} />;
+    const records = load.data.records_disagree ?? [];
+    body = (
+      <>
+        <TimelineCard data={load.data} wide={wide} openId={openId} states={lineStates(load.data, run)} onOpen={onOpen} onRetry={retryCard} />
+        {records.length > 0 && (
+          <RecordsDisagree
+            found={records}
+            count={load.data.records_disagree_count ?? records.length}
+            onOpen={(one, element) => openEvidence(one.evidence_id, { serial: null, sentence: null, marker: element, runId: null, fallback: heading.current })}
+          />
+        )}
+      </>
+    );
   }
-  // The purpose asks you to select a mark only where there is one to select.
-  const selectable = load.status === "loading" || (load.status === "ready" && load.data.items.length > 0);
+  // No purpose under the title: the chart's finding and legend say what it shows, and its marks look like buttons
+  // (ticket 126).
   return (
     <section ref={section} data-timeline={load.status} className="@container/timeline">
       <h2 ref={heading} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none">
         {words.title}
       </h2>
-      <p data-timeline-purpose className="mt-2 max-w-prose text-body text-ink-muted">
-        {words.purpose}
-        {selectable && <> {wide ? words.purposeSelect : words.purposeSelectList}</>}
-      </p>
       <div className="mt-6">{body}</div>
     </section>
   );

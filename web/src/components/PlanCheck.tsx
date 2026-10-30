@@ -3,10 +3,11 @@
 //
 // - PlanCheckHeader: the agency's name (the h1, wrapping in full), the plan's date, the check pill and the page's one
 //   action. It sticks under the bar from a 1024 px window 50rem tall, and only while it holds that action.
-// - PlanCheck: the finding in the finding style with the method and change lines, then the activities panel: its
-//   name and count line, the rows in STEP's columns with each mark's badge and reason, the activities with no
-//   signals folded behind "Show them", and a foot strip with the source line and what Strata cannot see. Then the
-//   zones the page passes: "What changed" as a closed row and the baseline as a row.
+// - PlanCheck: the finding in the finding style, with "How I checked" beside it from a 75rem page area (ticket 130),
+//   then the activities panel: its name and count line, the rows in STEP's columns with each mark's badge and reason,
+//   the activities with no signals folded behind "Show them", and a foot strip with the source line and what Strata
+//   cannot see. Below that page area "How I checked" follows the activities. Then the zones the page passes: "What
+//   changed" as a closed row and the baseline as a row.
 // - PlanCheckSkeleton: the same places while the check loads, under the real panel name and column heads.
 //
 // A row's reference is a button that opens the row's records in the evidence drawer (PlanRowRecords.tsx), and the
@@ -19,12 +20,13 @@
 // in data-activity, and an address whose hash names a reference opens the fold if it must, brings
 // that activity into view with nothing cut at the top edge, and focuses it (ticket 14 links to plan
 // rows this way).
-import { createElement, useEffect, useId, useState, type ReactNode, type Ref } from "react";
+import { createElement, Fragment, useEffect, useId, useRef, useState, type ReactNode, type Ref } from "react";
+import { usePageAtLeast } from "../lib/usePageAtLeast";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
 import { cx } from "../lib/cx";
-import { evidenceIn, openEvidence, remember } from "../lib/evidence";
+import { evidenceHref, evidenceIn, openEvidence, remember, visited } from "../lib/evidence";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { planRowCheckId } from "../lib/planRows";
 import { address } from "../lib/router";
@@ -32,9 +34,8 @@ import { fill } from "../routes";
 import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { Button } from "./Button";
-import { Byline } from "./Byline";
 import { CheckPill } from "./CheckPill";
-import { EightColumns } from "./EightColumns";
+import { CitationMarker } from "./CitationMarker";
 import { Fill, Joined, Unbroken } from "./Fill";
 import { FootStrip } from "./FootStrip";
 import { useShows } from "../lib/view";
@@ -42,18 +43,19 @@ import { ListedRefs, MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { checkFrom, FromLine, planFrom } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
+import { SidePanel } from "./SidePanel";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
 import { Steps, type Step } from "./Steps";
-import { CARD_FIELD, CARD_FIELDS, countLineOf } from "./Table";
+import { CARD_FIELD, CARD_FIELDS } from "./Table";
 import { TaskZone } from "./TaskZone";
 import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 
 const words = copy.checkPlan;
-export const BADGE: Record<Mark, BadgeKind> = { needs_a_look: "needs-a-look", watch: "watch", data_note: "data-note" };
-const RANK: Record<Mark, number> = { needs_a_look: 0, watch: 1, data_note: 2 };
+export const BADGE: Record<Mark, BadgeKind> = { needs_a_look: "needs-a-look", watch: "watch", moved_on: "moved-on", data_note: "data-note" };
+const RANK: Record<Mark, number> = { needs_a_look: 0, watch: 1, moved_on: 2, data_note: 3 };
 
 export type CheckedPlan = CheckPlanResult & {
   plan: NonNullable<CheckPlanResult["plan"]>;
@@ -129,6 +131,25 @@ function BaselineSentence({ reason, result, kind }: { reason: Reason; result: Ch
   );
 }
 
+// The citation of a moved-on reason (ticket 132): the disagreement between the plan row and the record that says the
+// contract was signed, which opens in the evidence drawer with both sides, as the Timeline tab's list opens it.
+function DisagreementCite({ id, record }: { id: string; record?: string | null }) {
+  const key = `disagreement:${id}`;
+  const opened = useStore(visited).has(key);
+  const open = evidenceIn(useStore(address).search) === key;
+  return (
+    <CitationMarker
+      n={1}
+      source={words.movedOnSource[record ?? ""] ?? words.movedOnSource.contract_awards}
+      href={evidenceHref(key)}
+      evidenceId={key}
+      opened={opened}
+      active={open}
+      onOpen={(marker) => openEvidence(key, { serial: null, sentence: null, marker, runId: null })}
+    />
+  );
+}
+
 // One reason's sentence from the copy file, filled with the tool's values for it.
 function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan }) {
   const r = words.reason;
@@ -194,6 +215,17 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       return <Fill template={r.no_planned_date} slots={{ step: reason.step }} />;
     case "no_estimate":
       return <>{r.no_estimate}</>;
+    case "moved_on_since_plan":
+      // Ticket 132: what the record shows, with the disagreement between the plan row and that record cited.
+      return (
+        <>
+          <Fill
+            template={r.moved_on_since_plan[reason.record ?? ""] ?? r.moved_on_since_plan.contract_awards}
+            slots={{ date: day(reason.signed_on!), status: r.stillSays[reason.process_status ?? ""] ?? reason.process_status }}
+          />
+          {reason.disagreement_id && <DisagreementCite id={reason.disagreement_id} record={reason.record} />}
+        </>
+      );
     default:
       // The registry refuses a reason code config/tools.toml does not list, so none reaches here.
       return null;
@@ -250,6 +282,7 @@ function Counted({ rows, mark }: { rows: Activity[]; mark: Mark }) {
 // 100; DESIGN.md section 5, Plan check table), and its tooltip says so.
 function Finding({ result, onMark }: { result: CheckedPlan; onMark?: (mark: Mark) => void }) {
   const { needs_a_look: look, watch, data_note: notes } = result.counts;
+  const moved = result.counts.moved_on ?? 0;
   const f = words.finding;
   const word = (count: number, mark: Mark, capital: boolean) => {
     const what = checked(result, <Counted mark={mark} rows={result.rows.filter((row) => row.marks.some((m) => m.mark === mark))} />);
@@ -262,34 +295,45 @@ function Finding({ result, onMark }: { result: CheckedPlan; onMark?: (mark: Mark
   return (
     <>
       <Fill template={first} slots={{ look: word(look, "needs_a_look", true), watch: word(watch, "watch", false) }} />
+      {moved > 0 && <Fill template={f.movedOn(moved)} slots={{ moved: word(moved, "moved_on", false) }} />}
       {notes > 0 && <Fill template={f.notes(notes)} slots={{ notes: word(notes, "data_note", false) }} />}
       {f.end}
     </>
   );
 }
 
-function Method({ result }: { result: CheckedPlan }) {
+// How I checked and how I measure delay: "I checked every activity against its own dates, ... because each plan update
+// can move the planned dates." Since ticket 126 it opens the "What Strata found" column's window, since a reader who
+// questions a delay opens that column, and no longer sits under the finding.
+function MethodSentence({ result }: { result: CheckedPlan }) {
   const phrases = result.checks_run.map((check) => words.checks[check as keyof typeof words.checks]).filter(Boolean);
+  return result.baseline ? (
+    <Fill template={words.methodBaseline} slots={{ checks: <Joined items={phrases} />, baseline_date: day(result.baseline.plan_date) }} />
+  ) : (
+    <Fill template={words.method} slots={{ checks: <Joined items={phrases} /> }} />
+  );
+}
+
+// What stays under the finding: a check I could not run on this plan, and how many activities I could not check fully.
+// Both change what the finding covers, so they stay on first sight; with neither, nothing shows.
+function methodNotes(result: CheckedPlan): boolean {
+  return !result.checks_run.includes("closing_date") || result.counts.not_fully_checked > 0;
+}
+
+function Method({ result }: { result: CheckedPlan }) {
   const partly = result.counts.not_fully_checked;
+  const notes = [
+    !result.checks_run.includes("closing_date") && words.noClosingDate,
+    partly > 0 && <Fill key="partial" template={words.partial(partly)} slots={{ count: formatCount(partly) }} />,
+  ].filter(Boolean);
   return (
     <p className="text-body text-ink" data-method>
-      {result.baseline ? (
-        <Fill template={words.methodBaseline} slots={{ checks: <Joined items={phrases} />, baseline_date: day(result.baseline.plan_date) }} />
-      ) : (
-        <Fill template={words.method} slots={{ checks: <Joined items={phrases} /> }} />
-      )}
-      {!result.checks_run.includes("closing_date") && (
-        <>
-          {" "}
-          {words.noClosingDate}
-        </>
-      )}
-      {partly > 0 && (
-        <>
-          {" "}
-          <Fill template={words.partial(partly)} slots={{ count: formatCount(partly) }} />
-        </>
-      )}
+      {notes.map((note, index) => (
+        <Fragment key={index}>
+          {index > 0 && " "}
+          {note}
+        </Fragment>
+      ))}
     </p>
   );
 }
@@ -298,18 +342,23 @@ function Definition({ result, triggerClassName }: { result: CheckedPlan; trigger
   const limits = result.thresholds;
   return (
     <DefinitionWindow label={words.columns.found} title={words.columns.found} triggerClassName={triggerClassName}>
-      <Fill
-        template={words.foundDefinition}
-        slots={{
-          lookRule: <Fill template={words.lookRule} slots={{ amount: formatAmountText(Number(limits.completion_passed_min_estimated_usd)) }} />,
-          watchRule: (
-            <Fill
-              template={words.watchRule}
-              slots={{ days: whole(limits.days_before_closing), ratio: formatNumber(Number(limits.actual_to_estimate_ratio)) }}
-            />
-          ),
-        }}
-      />
+      <p data-method-sentence>
+        <MethodSentence result={result} />
+      </p>
+      <p className="mt-2">
+        <Fill
+          template={words.foundDefinition}
+          slots={{
+            lookRule: <Fill template={words.lookRule} slots={{ amount: formatAmountText(Number(limits.completion_passed_min_estimated_usd)) }} />,
+            watchRule: (
+              <Fill
+                template={words.watchRule}
+                slots={{ days: whole(limits.days_before_closing), ratio: formatNumber(Number(limits.actual_to_estimate_ratio)) }}
+              />
+            ),
+          }}
+        />
+      </p>
     </DefinitionWindow>
   );
 }
@@ -474,6 +523,12 @@ function Reference({ row, open, onOpen }: { row: Activity; open: boolean; onOpen
   );
 }
 
+// Under a reference that breaks STEP's form and that the plan reader kept as it read it (ticket 131), so the reader
+// knows the odd characters come from the plan, not from Strata.
+function AsRead({ row }: { row: Activity }) {
+  return row.reference_as_read ? <span className="block text-small text-ink-muted">{words.referenceAsRead}</span> : null;
+}
+
 function Found({ row, result }: { row: Activity; result: CheckedPlan }) {
   return row.marks.length > 0 ? (
     <div className="flex flex-col gap-3">
@@ -495,6 +550,7 @@ function TableRow({ row, result, fresh, mark, change, onOpen }: RowProps) {
     <tr id={rowKey(row)} data-named={mark === "named" || undefined} data-row-mark={mark} className={cx("border-t border-line align-top", fresh && "animate-fade-in")}>
       <th scope="row" tabIndex={-1} data-activity={rowKey(row)} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
         <Reference row={row} open={mark === "open"} onOpen={onOpen} />
+        <AsRead row={row} />
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
         <UploadLines row={row} />
         <ChangedLine change={change} />
@@ -534,6 +590,7 @@ function ActivityCard({ row, result, fresh, mark, change, onOpen }: RowProps) {
             <Reference row={row} open={mark === "open"} onOpen={onOpen} />
           </span>
         </h3>
+        <AsRead row={row} />
         {/* The Description in ink-muted and the reasons in ink, so the reason under it reads as the finding (ticket 59). */}
         {row.description && <p className="mt-1 text-small text-ink-muted">{row.description}</p>}
         <UploadLines row={row} />
@@ -747,7 +804,7 @@ export function checkPill(result: CheckedPlan): ReactNode {
 
 // The activities panel's name and its count line, the same while the check loads and once it is ready, so nothing
 // under them moves when the rows arrive.
-function ActivitiesZone({ id, tag, busy, children }: { id?: string; tag: ReactNode; busy?: boolean; children: ReactNode }) {
+function ActivitiesZone({ id, tag, busy, children }: { id?: string; tag?: ReactNode; busy?: boolean; children: ReactNode }) {
   return (
     <TaskZone panel name={words.activitiesTitle} headingId={id} tag={tag} busy={busy} sectionKey="activities">
       {children}
@@ -755,8 +812,12 @@ function ActivitiesZone({ id, tag, busy, children }: { id?: string; tag: ReactNo
   );
 }
 
-export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source, reveal = false }: {
+export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source, reveal = false, howChecked }: {
   result: CheckedPlan;
+  // Ticket 130: "How I checked" (HowIChecked.tsx), beside the finding in columns 9 to 12 from a page area of 75rem, and
+  // after the activities below it, so the first marked row stays in the first screen at 1024 by 768. It renders in one
+  // place only, so the reading order is the finding, how it was checked, then the activities, or the rows first.
+  howChecked?: ReactNode;
   // Ticket 111: the finding replaces a narration that showed for at least 400 ms, so its byline, the finding and the
   // method sentence enter, once: opacity and a 4 px rise over 200 ms.
   reveal?: boolean;
@@ -863,38 +924,38 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           : undefined;
   const rowProps = (row: Activity) => ({ row, result, mark: markOf(row), change: changed[row.activity_reference_no], onOpen: openRecords });
 
-  // One to nine in words, "both" for two and a full stop, as every count line (ticket 58).
-  const shownRows = open || unmarked === 0 ? activities : marked;
-  const countLine = countLineOf(shownRows, activities, words.countNoun);
+  // An upload's own method sentence (ticket 38), or the notes that change what the finding covers.
+  const notes = method ?? (methodNotes(result) ? <Method result={result} /> : null);
+  const root = useRef<HTMLElement>(null);
+  const wide = usePageAtLeast(root, 75);
+  const beside = howChecked != null && wide;
 
   return (
-    <section aria-labelledby={findingId} data-plan-check>
-      <EightColumns prose className="mt-6">
-        <div data-finding-block className={cx(reveal && "animate-reveal")}>
-          {/* Strata's own words open with its byline, 8 px above them (ticket 111): "Strata held back" over the public
-              view's finding, which holds the signals back (DESIGN.md section 5, Byline). */}
-          <Byline kind={result.withheld ? "heldBack" : "found"} />
+    <section ref={root} aria-labelledby={findingId} data-plan-check>
+      {/* Columns 1 to 8 as EightColumns draws them, or 1 to 7 with "How I checked" in 9 to 12 beside them; the row holds
+          at least the panel's height, as the skeleton's does, so the activities stay put when the check arrives. */}
+      <div className={cx("layout-grid mt-6", beside && HOW_CHECKED_ROW)}>
+        <div className={cx("min-w-0 max-w-[72ch]", beside ? "col-span-7" : "col-span-12 @lg/page:col-span-8")}>
+        {/* The finding's block keeps its byline's kind as data only: "found", or "heldBack" over the public view's
+            finding, which holds the signals back (tickets 111 and 126; DESIGN.md section 5, Byline). Its 16 px foot is
+            the room the narration's slow line takes while the check runs, so the panel under it never moves. */}
+        <div data-finding-block data-byline={result.withheld ? "heldBack" : "found"} className={cx("pb-4", reveal && "animate-reveal")}>
           {/* The page's finding, in the finding style (ticket 100): a count word's tooltip opens under all of it
               (DESIGN.md, Number tooltip), and a press marks the rows it counts. */}
-          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="mt-2 text-finding text-pretty text-ink-heading focus:outline-none" data-finding>
+          <h2 ref={findingRef} id={findingId} tabIndex={-1} className="text-finding text-pretty text-ink-heading focus:outline-none" data-finding>
             <Finding result={result} onMark={(mark) => setCounted((now) => ({ mark, times: (now?.times ?? 0) + 1 }))} />
           </h2>
-          <div className="mt-4">
-            {method ?? <Method result={result} />}
-          </div>
+          {notes && <div className="mt-4">{notes}</div>}
         </div>
         {afterMethod}
-      </EightColumns>
+        </div>
+        {beside && <div className="col-span-4 col-start-9 min-w-0">{howChecked}</div>}
+      </div>
 
       <div className="mt-8">
-        <ActivitiesZone
-          id={zoneId}
-          tag={
-            <span data-count-line data-numbers>
-              {countLine}
-            </span>
-          }
-        >
+        {/* No count line: the fold row "Three more activities have no signals: ... Show them" says what is hidden
+            (ticket 126). */}
+        <ActivitiesZone id={zoneId}>
           {/* The table and the cards each read the plan container's width, which the evidence drawer narrows. */}
           <div data-zone-table className="@container/plan">
             {/* The frame keeps the row header's focus ring inside the panel. */}
@@ -973,11 +1034,21 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
             </p>
           </FootStrip>
         </ActivitiesZone>
+        {howChecked != null && !beside && <div className="my-4 max-w-[72ch]">{howChecked}</div>}
         {after}
       </div>
     </section>
   );
 }
+
+// The least height of the finding's row while "How I checked" sits beside it, which the skeleton's row holds too, so
+// the activities under it never move when the check arrives (ticket 130). It is the panel's height with its three facts
+// and a saved baseline at 1280 px (494 px), the narrowest window where it sits beside the finding, and it keeps the
+// first marked row in a 1440 by 900 window's first screen; a longer panel grows the row.
+const HOW_CHECKED_ROW = "min-h-[31rem]";
+// The same least height for the skeleton's row, which reads the page area's width from its container instead of the
+// hook. The two must match; Tailwind needs whole class names, so both are written out in full.
+const HOW_CHECKED_ROW_LOADING = "@xl/page:min-h-[31rem]";
 
 // The plan's source line: under the activities, and in a row's records in the drawer.
 export function PlanSource({ result }: { result: CheckedPlan }) {
@@ -1017,12 +1088,14 @@ export function PlanSource({ result }: { result: CheckedPlan }) {
   );
 }
 
-// A finding as long as most are, "One needs a look and two are worth watching; three have data notes.", from the
-// finding's own templates. It only holds the finding's place, unseen, while the check loads.
+// A finding as long as most are, "One needs a look and two are worth watching; two have moved on since the plan;
+// three have data notes.", from the finding's own templates. It only holds the finding's place, unseen, while the
+// check loads. Since ticket 132 a plan the records have moved past says so in its finding, so the typical one does.
 function typicalFinding(): string {
   const f = words.finding;
   return (
     fill(f.lookAndWatch(1, 2), { look: formatCount(1, { capital: true }), watch: formatCount(2) }) +
+    fill(f.movedOn(2), { moved: formatCount(2) }) +
     fill(f.notes(3), { notes: formatCount(3) }) +
     f.end
   );
@@ -1032,11 +1105,15 @@ function typicalFinding(): string {
 // finding and the method sentence (ticket 111), then the activities panel with its real name and column heads over
 // five skeleton rows, or three skeleton cards below a frame of 34rem. Nothing moves when the rows arrive, and nothing
 // shimmers.
-export function PlanCheckSkeleton({ slow, afterNarration }: {
+export function PlanCheckSkeleton({ slow, afterNarration, howChecked = false }: {
   slow?: boolean;
   // The change line under the narration (ticket 59; the critique of round 1): the line itself once what changed has
   // answered, which needs nothing from the check, or its held lines until then, so the panel below stays put.
   afterNarration?: ReactNode;
+  // Ticket 130: the page draws "How I checked", so from a page area of 75rem the narration keeps to columns 1 to 7 and
+  // the row holds the panel's place in 9 to 12, its labels over value bars; below that the panel follows the activities,
+  // so the skeleton holds nothing for it.
+  howChecked?: boolean;
 }) {
   const rows = [0, 1, 2, 3, 4];
   // The narration (ticket 111): the answer panel's own steps, with one running step and how I check under it, then,
@@ -1050,28 +1127,42 @@ export function PlanCheckSkeleton({ slow, afterNarration }: {
   };
   return (
     <div data-plan-skeleton>
-      <EightColumns prose className="mt-6">
-        {/* The narration and the places it holds share one grid cell, so it is exactly as tall as the byline, the
-            finding and the method sentence it stands for. The places are a typical finding and the method sentence
-            with every check, written from the copy file's templates in the finding's and the method's own styles and
-            never seen or heard, so they take the lines the real ones take at every width (ticket 59). Its count
-            words keep to the line's height (Num). */}
+      {/* EightColumns' columns 1 to 8, or 1 to 7 beside "How I checked"'s place from a page area of 75rem, which holds
+          the row's least height as the populated row does (HOW_CHECKED_ROW_LOADING). */}
+      <div className={cx("layout-grid mt-6", howChecked && HOW_CHECKED_ROW_LOADING)}>
+        <div className={cx("col-span-12 min-w-0 max-w-[72ch] @lg/page:col-span-8", howChecked && "@xl/page:col-span-7")}>
+        {/* The narration and the place it holds share one grid cell, so it is exactly as tall as the finding it stands
+            for. The place is a typical finding, written from the copy file's templates in the finding's own style and
+            never seen or heard, so it takes the lines the real one takes at every width (ticket 59). Its count words
+            keep to the line's height (Num). Since ticket 126 the finding has no byline over it and no method sentence
+            under it, which moved into the "What Strata found" column's window; the place and the finding's block each
+            keep 16 px under the finding, which the narration's slow line fills at 1440 and 390 px. */}
         <div className="grid" data-plan-narration>
           <div aria-hidden="true" className="invisible col-start-1 row-start-1">
-            <SkeletonLine className="text-label" width="w-24" />
-            <p className="mt-2 text-finding text-pretty">{typicalFinding()}</p>
-            <p className="mt-4 text-body">
-              <Fill template={words.method} slots={{ checks: <Joined items={Object.values(words.checks)} /> }} />
-            </p>
+            <p className="pb-4 text-finding text-pretty">{typicalFinding()}</p>
           </div>
           <div className="col-start-1 row-start-1">
             <Steps steps={[narration]} announce={false} />
           </div>
         </div>
         {afterNarration}
-      </EightColumns>
+        </div>
+        {howChecked && (
+          <div aria-hidden="true" className="hidden min-w-0 @xl/page:col-span-4 @xl/page:col-start-9 @xl/page:block">
+            <SidePanel
+              title={copy.checkPlan.howChecked.title}
+              loading
+              facts={[copy.checkPlan.howChecked.method, copy.checkPlan.howChecked.compared, copy.checkPlan.howChecked.baseline].map((label) => ({
+                label,
+                value: null,
+                wide: true,
+              }))}
+            />
+          </div>
+        )}
+      </div>
       <div className="mt-8">
-        <ActivitiesZone busy tag={<SkeletonLine className="text-caption" width="w-40" />}>
+        <ActivitiesZone busy>
           <div data-zone-table className="@container/plan">
             {/* The real column heads are only places: a screen reader hears the narration's step, not an empty table. */}
             <div aria-hidden="true" className="hidden overflow-hidden @plan-cards/plan:block">

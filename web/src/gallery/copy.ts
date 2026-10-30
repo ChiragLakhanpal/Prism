@@ -95,7 +95,7 @@ export const galleryCopy = {
     table: {
       title: "Table",
       purpose:
-        "A table has a title sentence, a count line, units in the column heads and a source line. The title, count and source show only with the rows. Below 768 px each row becomes a card. A table with wide columns becomes cards below 1024 px instead.",
+        "A table has a title sentence, units in the column heads and a source line, and a count line only when rows are hidden by a page, a filter or a fold. The title, count and source show only with the rows. Below 768 px each row becomes a card. A table with wide columns becomes cards below 1024 px instead.",
     },
     skeleton: {
       title: "Skeleton",
@@ -345,7 +345,6 @@ export const galleryCopy = {
     slow: "Loading, after one second",
     slowTwo: "Loading, after two seconds",
     // Ticket 59, round 2: the held states the page draws while its answers load.
-    loadingChangeLine: "Loading, with the change line's place held under the narration",
     loadingWithAgain: "Loading, with Advertised again's skeleton under the past range's",
     loadingEstimate: "Loading the time estimate, with a held-back estimate's sentences held under the chart and in the summary",
     withText: "With text",
@@ -361,7 +360,8 @@ export const galleryCopy = {
     currentPage: "On the project's own page",
     otherPage: "On another page",
     french: "A passage in French",
-    hint: "Focused and empty: the hint",
+    rest: "At rest on a package page, at the work's width: the placeholder names Strata, and the / hint ends the row",
+    hint: "Focused and empty: the hint, and the keys in the list's foot",
     project: "A project ID",
     loan: "A loan number",
     loanPending: "A bare number, before its lookup finds a loan",
@@ -447,6 +447,11 @@ export const galleryCopy = {
     cardsBelowLg: "Cards below 1024 px, for a table with wide columns",
     cardsBelowFit: "Cards while the table's own frame is under 784 px, for a wide table that may keep to columns 1 to 8",
     card: "Card",
+    // Ticket 126's patterns: what a screen tucks away, one press from the thing it explains.
+    madeBy: "Made-by window, after the sentence it describes",
+    feedforward: "Feedforward as a button's tooltip and description",
+    disclosure: "Disclosure, closed",
+    abbreviations: "Abbreviations written short, each with its window",
     emptyState: "Empty state",
     signals: "Signals",
     readiness: "Data readiness",
@@ -469,7 +474,6 @@ export const galleryCopy = {
     checkLine: "Check line",
     coverage: "Coverage line",
     removed: "Removed box",
-    byline: "Byline",
     steps: "Steps",
     states: "States",
     held: "Held, with the sentence that says what releases it",
@@ -1023,6 +1027,20 @@ export const galleryCopy = {
     externalLinkMore: " of the Project Appraisal Document for P130164 in the World Bank's PDF",
     tabsLabel: "Project sections",
     tabs: ["Summary", "Procurement", "Timeline", "Documents", "Connections"],
+    // Ticket 126's patterns, with made-up words.
+    madeByLead: "Sample Water Agency's plan has eight activities, and one needs a look.",
+    madeByName: "How I built this sample",
+    madeBy: "I built this sample from made-up records as of {date}. No model wrote it.",
+    feedforwardButton: "Draft review notes (1 row)",
+    feedforward: "The draft waits in Drafts for you to check. I send nothing.",
+    disclosureLabel: "How these sample checks work",
+    disclosureBody: "Each night I run fixed checks on made-up records. Each signal is a reason to look, not a finding.",
+    abbreviationsLead: "Abbreviations:",
+    abbreviationsEnd: ".",
+    abbreviations: [
+      ["PAD", "PAD is the Project Appraisal Document."],
+      ["ISR", "An ISR is an Implementation Status and Results Report."],
+    ] as [string, string][],
     cardTitle: "Sample Water Agency, Procurement Plan of October 9, 2026",
     cardBody: "Eight activities were checked. One needs a look and two are worth watching.",
     cardSource: "A sample plan check made for the gallery, in STEP's columns.",
@@ -1415,7 +1433,6 @@ export const galleryCopy = {
       kinds: [
         { kind: "plan_check", tool: "check_plan", status: "partial", ready_for: 0, spell_out: false, holds_back: [
           [{ text: "Of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts, " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " lack a STEP reference." }],
-          [{ text: "I list one more gap under Sources." }],
         ] },
         { kind: "document_search", tool: "search_passages", status: "partial", ready_for: 11, spell_out: false, holds_back: [
           [{ text: "I couldn't read the risk annex in the Project Appraisal Document for " }, { mono: "P000001" }, { text: ", one of " }, { link: "the hardest documents I read", href: "#hardest-documents" }, { text: "." }],
@@ -1507,14 +1524,13 @@ export const galleryCopy = {
     },
     criteria: {
       name: "Check your criteria",
-      summary: "This check is optional. Paste your qualification criteria to compare them with the 12 comparable packages whose criteria are public.",
+      summary: "Paste your qualification criteria to compare them with the 12 comparable packages whose criteria are public.",
       show: "Show the check",
       hide: "Hide the check",
       body: "The field for your qualification criteria and the comparison show here once the zone opens.",
     },
     activities: {
       name: "Activities in this plan",
-      tag: "Showing 6 of 9 activities.",
       body: "Each activity with a signal is a row of the table here, with what I found.",
       source: "Procurement Plan of October 9, 2026, from the World Bank documents API.",
     },
@@ -1525,7 +1541,7 @@ export const galleryCopy = {
     },
     startHere: {
       name: "Start here",
-      tag: "Examples Strata set up for you",
+      tag: "From real records",
       sentence: "Follow an example to see what I can do. I tick each one you follow.",
       link: "Check the Procurement Plan of October 9, 2026",
       remove: "Remove",

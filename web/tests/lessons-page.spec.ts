@@ -8,7 +8,7 @@ import { expect, recorded, test } from "./mocked";
 
 type Answer = { status?: number; body: string };
 const REBIDDING = "lesson-e903b07ad1";
-const DRAFT_TITLE = "Suggested PPSD risk rows for Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply";
+const DRAFT_TITLE = "Suggested PPSD risk rows for Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply";
 
 async function serve(page: Page, answers: Record<string, Answer>) {
   const asked: { call: string; search: string; body: unknown }[] = [];
@@ -82,7 +82,7 @@ test("the digest is the page's finding inside the first screen at 390 by 844 and
   await expect(digest).toHaveText(
     "Since your last visit on October 22, 2026, two completion reports and two ICR Reviews came in. Two lessons are new and two changed.",
   );
-  // 24 px after a finding (DESIGN.md section 4, space roles), then its sources note.
+  // 24 px after a finding (DESIGN.md section 4, space roles), then the quiet line; the sources note is at the foot.
   const after = await digest.evaluate((found) => found.nextElementSibling!.getBoundingClientRect().top - found.getBoundingClientRect().bottom);
   expect(after).toBeCloseTo(24, 0);
   expect(await zones(page)).toEqual([
@@ -287,16 +287,16 @@ test("a first visit's status sentence is lead, not the finding, and a visit with
   await expect(status).toHaveText("This is your first visit to Lessons. The library holds two current lessons.");
   expect(await typeOf(status)).toBe("18px/28px 400");
   await expect(page.locator("main [data-finding]")).toHaveCount(0);
-  // Its caption, then the sources note, then the zones: the reader's reports and the library.
+  // Its caption, then the library. Since ticket 126 "Your reports" shows only once you have sent one, and the sources
+  // note is at the page's foot.
   await expect(page.locator("[data-digest=first] p")).toHaveText([
     "This is your first visit to Lessons. The library holds two current lessons.",
     "From your next visit, I start this page with what came in since this one.",
+  ]);
+  expect(await zones(page)).toEqual([["The library", "panel"]]);
+  await expect(page.locator("[data-lessons-sources]")).toHaveText(
     "Lessons come from Implementation Completion and Results Reports (ICRs), and from ICR Reviews and Project Performance Assessment Reports (PPARs) by the Independent Evaluation Group (IEG).",
-  ]);
-  expect(await zones(page)).toEqual([
-    ["Your reports", "row"],
-    ["The library", "panel"],
-  ]);
+  );
   // The count word in the status sentence still opens what it counts.
   await status.getByRole("button", { name: "two" }).click();
   await expect(page.getByRole("dialog", { name: "The library" })).toBeVisible();
@@ -348,10 +348,7 @@ test("when the page's one read fails, its error alert is in the alert slot with 
 test("at 1440 and 390 px the empty library is a row that says whose lessons they are, who decides, and where they show up on a package's page", async ({ page }) => {
   await openLessons(page, "lessons-page-empty.json");
   await expect(page.locator("main [data-status-lead]")).toHaveText("This is your first visit to Lessons. The library has no lessons yet.");
-  expect(await zones(page)).toEqual([
-    ["Your reports", "row"],
-    ["The library", "row"],
-  ]);
+  expect(await zones(page)).toEqual([["The library", "row"]]);
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     const card = page.locator("[data-library=empty]");
@@ -361,18 +358,17 @@ test("at 1440 and 390 px the empty library is a row that says whose lessons they
     await expect(card.locator("[data-library-empty] p")).toHaveText([
       "I propose each lesson, and a lead procurement specialist decides whether it enters the library. Proposed lessons " +
         "wait for that decision, and only lesson reviewers can read them.",
-      "On a package's page, in section 3, Procurement risks and what helped, I show the lessons from projects with " +
-        "comparable packages.",
       "See which completion reports I have read",
     ]);
-    // The purpose above says whose lessons they are, so the row does not say it again.
-    await expect(page.locator("main [data-page-head]")).toContainText("quoted from completion reports");
+    // The page's foot says where lessons come from, so the row does not say it again; the tour sentence and the
+    // purpose went in ticket 126.
+    await expect(page.locator("main [data-page-head]")).not.toContainText("quoted from completion reports");
     const section3 = JSON.parse(await recorded("risks-ke-nwwda-541055.json"));
     expect(section3.empty_reason).toBe("no_reports");
     const link = card.getByRole("link", { name: "See which completion reports I have read" });
     await expect(link).toHaveAttribute("href", `/data?sources=${section3.coverage.sources.join(",")}&from=package_risks`);
     await expect(link).toHaveAttribute("href", "/data?sources=notices,awards,documents,projects&from=package_risks");
-    // The page's caption spells IEG out above the card; the opening sentence still counts what came in.
+    // The page's foot spells IEG out; the opening sentence still counts what came in.
     await expect(page.locator("main")).toContainText("by the Independent Evaluation Group (IEG)");
     await expect(page.locator("#lessons-digest")).toHaveText("This is your first visit to Lessons. The library has no lessons yet.");
     await expect(card).not.toContainText(/approv/i);

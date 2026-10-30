@@ -1122,7 +1122,8 @@
     "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
     "public_from": "2026-10-09",
     "step_reference": "KE-NWWDA-229129-CW-RFB",
-    "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+    "reference_as_read": false,
+    "description": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
     "project_id": "P156634",
     "project_name": "Water and Sanitation Development Project",
     "country_code": "KE",
@@ -1161,6 +1162,7 @@
       "country",
       "notice_to"
     ],
+    "period": "plan_date",
     "country_name": "Kenya"
   },
   "counts": {

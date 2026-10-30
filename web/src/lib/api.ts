@@ -109,7 +109,10 @@ export type PackageRow = {
   estimated_amount_usd: string | null;
   process_status: string | null;
 };
-export type PackageList = Paged<PackageRow> & { read_through: string | null };
+// plans_read: each agency's latest plan I read, with how many activities it lists, so a project whose read plans list no
+// activity names them rather than say I haven't read a plan (ticket 134).
+export type PlanRead = { implementing_agency: string; agency_id: string; plan_date: string; activities: number };
+export type PackageList = Paged<PackageRow> & { read_through: string | null; plans_read: PlanRead[] };
 
 // GET /api/projects/{pid}: the project page's header and each agency's plan versions, newest first.
 export type PlanVersion = {
@@ -140,8 +143,10 @@ export type ChangeState = "compared" | "earliest" | "previous_not_read";
 
 // version_count and shown_count are the route's counts, so the screen never counts them.
 export type Agency = {
+  // The longest way the project writes the agency's name; also_written_as holds the others (ticket 133).
   implementing_agency: string;
   agency_id: string;
+  also_written_as?: string[];
   versions: PlanVersion[];
   version_count: number;
   shown_count?: number;
@@ -161,6 +166,8 @@ export type ProjectPage = {
   };
   agencies: Agency[];
   documents_through: string | null;
+  // The Procurement Plans the project's documents list that I haven't read, the Documents tab's Not read (ticket 134).
+  plans_unread: number;
 };
 
 // GET /api/projects/{pid}/procurement/{agencyId}/{version}/changes: what changed since the version before.
@@ -297,11 +304,16 @@ export type SourcePageAnswer = {
 
 // GET /api/projects/{pid}/procurement/{agencyId}[/{version}]: check_plan's result
 // (config/tools.toml, [tools.check_plan]). Every number the screen states is in it.
-export type Mark = "needs_a_look" | "watch" | "data_note";
+// moved_on (ticket 132): the plan still says pending, and a contract record or an award notice says the contract was
+// signed. It is not a signal.
+export type Mark = "needs_a_look" | "watch" | "moved_on" | "data_note";
 export type Reason = {
   code: string;
   mark: Mark;
   evidence_ids: string[];
+  // moved_on_since_plan: which record says the contract was signed, and the disagreement between it and the plan row.
+  record?: "contract_awards" | "award_notice" | null;
+  disagreement_id?: string | null;
   planned_completion_on?: string | null;
   planned_completion_plan_date?: string | null;
   closing_date?: string | null;
@@ -332,6 +344,8 @@ export type Activity = {
   public_from: string;
   // An upload's row may have no reference yet (ticket 38); a published plan's always has one.
   activity_reference_no: string;
+  // True when the reference breaks STEP's form and the plan reader kept it as it read it (ticket 131).
+  reference_as_read?: boolean;
   // An upload's row: its place in the officer's file, and whether a published plan of the project lists it.
   position?: number | null;
   listed?: boolean | null;
@@ -393,6 +407,8 @@ export type CheckPlanResult = {
     not_fully_checked: number;
     needs_a_look: number;
     watch: number;
+    // Ticket 132: counted apart from the activities still pending. A check recorded before it may lack it.
+    moved_on?: number;
     data_note: number;
     // The activities with a signal (needs a look or watch): the rows a draft of review notes covers.
     signal: number;
@@ -411,6 +427,8 @@ export type PackageFacts = {
   evidence_id: string;
   public_from: string;
   step_reference: string;
+  // True when the reference breaks STEP's form and the plan reader kept it as it read it (ticket 131).
+  reference_as_read?: boolean;
   description: string | null;
   project_id: string;
   project_name: string | null;
@@ -623,6 +641,19 @@ export type QuantileDot = {
   high_months: number;
 };
 
+// How find_comparables' period of notices ends (src/strata/tools/find_comparables.py, period; ticket 137): on the plan's
+// date, the as-of date, a date the call gave, or the as-of date because the plan is older than the period's start. The
+// last two never run forward, so no package can match: the as-of date comes before the period's start, or a date the call
+// gave ends the period before it starts.
+export type ComparablesPeriod =
+  | "plan_date"
+  | "as_of"
+  | "asked"
+  | "plan_before_data"
+  | "plan_before_start"
+  | "before_data"
+  | "ends_before_start";
+
 export type ComparablesResult = {
   tool: "find_comparables";
   as_of: string;
@@ -648,6 +679,7 @@ export type ComparablesResult = {
     size_from_usd: number | null;
     size_to_usd: number | null;
     from_package: string[];
+    period: ComparablesPeriod;
   } | null;
   counts: { comparables: number; signed: number; still_open: number; canceled: number; canceled_as_still_open: boolean } | null;
   past_range: { q25: number | null; q50: number | null; q75: number | null; q80: number | null } | null;

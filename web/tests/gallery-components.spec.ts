@@ -171,11 +171,13 @@ test("the cost intro keeps each amount on one line", async ({ page }) => {
   }
 });
 
-// The 58 design review, round 2, follow-ups 2 and 3: a table that shows all its rows says "all", and a removed count
-// from the one report read keeps "1 of 1" with the noun in the singular.
-test("the risks table says all three, and a removed count from one report reads 1 of 1 completion report", async ({ page }) => {
+// The 58 design review, round 2, follow-up 3: a removed count from the one report read keeps "1 of 1" with the noun in
+// the singular. Since ticket 126 (R61) a risks table that shows all its rows has no count line: the Note in its foot
+// strip says how I ranked them.
+test("the risks table has no count line, and a removed count from one report reads 1 of 1 completion report", async ({ page }) => {
   await page.goto("/gallery/risks");
-  await expect(page.locator("[data-state-section=many-tied]")).toContainText("Showing all three risks, in the order I ranked them.");
+  await expect(page.locator("[data-state-section=many-tied]")).not.toContainText("Showing all three risks");
+  await expect(page.locator("[data-state-section=many-tied]")).toContainText("I ranked the risks by how closely their lessons match this package");
   const removed = page.locator("[data-state-section=removed] [data-removed-box]");
   await expect(removed).toContainText("came up in 1 of 1 completion report");
   await expect(removed).not.toContainText("completion reports");
@@ -372,12 +374,13 @@ test("the coverage line ends its first sentence with the gap, or with a period w
   ]);
 });
 
-test("a table shows its title, count and source lines only with its rows", async ({ page }) => {
+// Ticket 126: a table that shows all its rows has no count line; a paged, filtered or folded one keeps its own.
+test("a table shows its title and source lines only with its rows, and no count line when every row shows", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/gallery/table");
   const ready = page.locator("[data-state-section=ready] [data-table]");
   await expect(ready.getByRole("heading")).toHaveText("Three of the four sample activities were signed after their planned date.");
-  await expect(ready).toContainText("Showing all four activities.");
+  await expect(ready).not.toContainText("Showing all four activities.");
   await expect(ready).toContainText("Source: Sample rows made for the gallery, in STEP's columns.");
   // A STEP amount keeps STEP's form with its cents (DESIGN.md section 6; ticket 60).
   await expect(ready.locator("tbody tr").first()).toContainText("1,230,000.00");
@@ -522,7 +525,8 @@ test("the steps toggle lines up with the answer's text, and its fill and focus r
       const ring = 4;
       const button = (await toggle.boundingBox())!;
       const icon = (await toggle.locator("svg").boundingBox())!;
-      const text = (await answer.locator("h3, p").first().boundingBox())!;
+      // The first text you see: the byline is a heading only a screen reader reads since ticket 126.
+      const text = (await answer.locator("[data-in-short], h3:not([data-byline]), p").first().boundingBox())!;
       // The card's 1 px border stays clear of the fill and the ring.
       expect(button.x - ring, `${state} at ${width}`).toBeGreaterThan(card.x + 1);
       // The icon box starts on the text's edge: a flush button has no side border to push it in.
@@ -543,9 +547,35 @@ test("in forced-colors mode the flush steps toggle keeps its side borders, and o
   expect(await sides()).toEqual(["2px", "2px"]);
 });
 
+// Ticket 126, criterion 1: an answer that held back keeps "Strata held back" as its h3, for a screen reader only. No
+// recorded stream abstains, so the gallery's abstained sample is the one place it is drawn.
+test("an answer that held back keeps Strata held back as a heading only a screen reader reads, at 1440 and 390 px", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/answer");
+    const byline = page.locator("[data-answer=abstained]").getByRole("heading", { level: 3, name: "Strata held back" });
+    await expect(byline, `${width} px`).toHaveAttribute("data-byline", "heldBack");
+    const box = await byline.evaluate((element) => element.getBoundingClientRect());
+    expect(box.width, `${width} px`).toBeLessThanOrEqual(1);
+    expect(box.height, `${width} px`).toBeLessThanOrEqual(1);
+    // No text on the page that a sighted reader sees holds the byline's words.
+    const shown = await page.evaluate((words) => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const element = node.parentElement;
+        if (!element || !(node.textContent ?? "").includes(words)) continue;
+        const rect = element.getBoundingClientRect();
+        if (rect.width > 1 && rect.height > 1 && getComputedStyle(element).visibility !== "hidden") return true;
+      }
+      return false;
+    }, "Strata held back");
+    expect(shown, `${width} px`).toBe(false);
+  }
+});
+
 // Ticket 115: the server's answer for KE-KURA-219079-CS-INDV on the fixture (tests/record_steps_api.py), whose plan
 // of September 24, 2026 gave its Process Status as Canceled (tests/ground_truth/values.toml, [step_tracker]).
-test("the step tracker marks no step of a canceled activity late and says why in one sentence, and keeps its card when the steps fail", async ({ page }) => {
+test("the step tracker marks no step of a canceled activity late, and keeps its card when the steps fail", async ({ page }) => {
   await page.goto("/gallery/steps");
   const ended = page.locator("[data-state-section=tracker-ended]");
   await expect(ended.locator("[data-step-state]")).toHaveCount(5);
@@ -556,7 +586,8 @@ test("the step tracker marks no step of a canceled activity late and says why in
     "unknown",
     "unknown",
   ]);
-  await expect(ended.locator("[data-tracker-status]")).toHaveText('The plan gave its Process Status as "Canceled".');
+  // The page's side panel shows the Process Status, so the tracker does not repeat it (ticket 126, R38).
+  await expect(ended.locator("[data-tracker-status]")).toHaveCount(0);
   await expect(ended.locator("[data-source]")).toHaveText("Source: The Procurement Plan of September 24, 2026. Dates as of October 28, 2026.");
 
   // When the steps fail to load, the card stays with its heading and one sentence that points to section 2.
@@ -631,7 +662,8 @@ test("the abstention's sentence, table and check line count the same 12 packages
   const answer = page.locator("[data-answer=abstained]");
   await expect(answer).toContainText("only 12 comparable packages. Here are all 12.");
   await expect(answer.locator("[data-table-view=table] tbody tr")).toHaveCount(12);
-  await expect(answer.locator("[data-table]")).toContainText("Showing all 12 comparable packages");
+  // Every row shows, so the table has no count line (ticket 126); the sentence counts them.
+  await expect(answer.locator("[data-table]")).not.toContainText("Showing all 12");
   await expect(answer.locator("[data-check-line]")).toContainText("Checked: 12 of 12 numbers match records.");
   await answer.getByRole("button", { name: "Show the three steps I took" }).click();
   await expect(answer.locator("[data-steps]")).toContainText("I found 12 comparable packages.");
@@ -639,12 +671,14 @@ test("the abstention's sentence, table and check line count the same 12 packages
 });
 
 // DESIGN.md section 5: "Check line ... Sits under 'In short', with the removed box open below
-// it." In an abstention the rows come after both, so the proof stays beside the sentence.
+// it." In an abstention the rows come after both, so the proof stays beside the sentence. Since ticket 126 (R33) the
+// removed box shows only when a sentence was removed, so the samples with none end the block at the check line.
 test("in every answer with checks, the check line and the removed box come right under In short, before the rows", async ({
   page,
 }) => {
   await page.goto("/gallery/answer");
   for (const state of ["ready", "abstained"]) {
+    const removed = await page.locator(`[data-answer=${state}] [data-removed-lead]`).count();
     const order = await page.locator(`[data-answer=${state}]`).evaluate((root) =>
       [...root.querySelectorAll("[data-in-short], [data-check-line], [data-removed-lead], [data-table], [data-steps]")].map(
         (el) =>
@@ -655,7 +689,7 @@ test("in every answer with checks, the check line and the removed box come right
           : "steps",
       ),
     );
-    expect(order.slice(0, 3), state).toEqual(["in short", "check line", "removed box"]);
+    expect(order.slice(0, removed ? 3 : 2), state).toEqual(["in short", "check line", ...(removed ? ["removed box"] : [])]);
   }
   const held = page.locator("[data-answer=abstained]");
   const checkLine = (await held.locator("[data-check-line]").boundingBox())!;
@@ -724,17 +758,11 @@ test("a term opens GLOSSARY.md's definition in a window, focus moves to its titl
   await expect(term).toBeFocused();
 });
 
-// The review of round 2, F1: the gallery shows the two held states round 2 added. The plan check's skeleton holds the
-// change line's place under the narration, and section 1's skeleton has Advertised again's under it, which sends no
-// request while section 1 has no result.
-test("the gallery shows the plan check's held change line and section 1's skeleton with Advertised again's under it", async ({ page }) => {
+// The review of round 2, F1: section 1's skeleton has Advertised again's under it, which sends no request while
+// section 1 has no result. (The plan check's held change line left with the change line itself, in ticket 126.)
+test("the gallery shows section 1's skeleton with Advertised again's under it", async ({ page }) => {
   const asked: string[] = [];
   page.on("request", (request) => new URL(request.url()).pathname.startsWith("/api/") && asked.push(request.url()));
-  await page.goto("/gallery/plan-check");
-  const plan = page.locator("[data-state-section=loading-change-line]");
-  await expect(plan.getByRole("heading", { name: "Loading, with the change line's place held under the narration" })).toBeVisible();
-  await expect(plan.locator("[data-change-line-held]")).toBeVisible();
-  await expect(plan.locator("[data-change-line-held] [data-skeleton-words]")).toHaveAttribute("aria-hidden", "true");
   await page.goto("/gallery/past-range");
   const range = page.locator("[data-state-section=loading-with-again]");
   await expect(range.getByRole("heading", { name: "Loading, with Advertised again's skeleton under the past range's" })).toBeVisible();
@@ -764,9 +792,9 @@ test("the gallery shows section 1 while the time estimate loads, with a held-bac
 // drop their bar, and a reader would see a count or a claim no tool returned while the page loads.
 test("held skeleton words stay unseen, with their bar, when the reader's system forces its own colours", async ({ page }) => {
   await page.emulateMedia({ forcedColors: "active" });
+  // The plan check's held change line went with the line itself in ticket 126, so its state is no longer drawn.
   for (const [slug, section] of [
     ["skeleton", "words"],
-    ["plan-check", "loading-change-line"],
     ["past-range", "loading-estimate"],
   ]) {
     await page.goto(`/gallery/${slug}`);
@@ -987,8 +1015,8 @@ async function answerSample(page: Page, section: string) {
       sentences: inShort.textContent!,
       markers: root.querySelectorAll("[data-in-short] [data-citation]").length,
       checkLine: root.querySelector("[data-check-line]")!.textContent!,
-      // "I removed one sentence." or "I removed no sentences."
-      removed: root.querySelector("[data-removed-lead]")!.textContent!,
+      // "I removed one sentence."; with none removed there is no box since ticket 126 (R33).
+      removed: root.querySelector("[data-removed-lead]")?.textContent ?? "",
       steps: [...root.querySelectorAll("[data-steps] li")].map((li) => li.textContent!),
       rows: root.querySelectorAll("[data-table-view=table] tbody tr").length,
     };
@@ -1143,13 +1171,10 @@ test("the drawer's head shows no eyebrow or middle dot on any of its views on th
   );
   expect(found.length).toBeGreaterThan(5);
   expect(found.filter((head) => head.text.includes("·") || head.eyebrows > 0)).toEqual([]);
-  // Ticket 58: a passage's or a record's head carries one caption that says what kind of source it is.
+  // Ticket 126 (R29): the title names the report or record, so only a plan row's caption, which names its plan, stays.
   const captions = await page.locator("[data-drawer-header] [data-drawer-caption]").allTextContents();
-  expect(captions.length).toBeGreaterThan(5);
+  expect(captions.filter((caption) => !caption.startsWith("Activity in the "))).toEqual([]);
   expect(captions.filter((caption) => caption.includes("·"))).toEqual([]);
-  // A report is named by its type, so an appraisal document is never called an evaluation (the 58 design review, B2).
-  expect(captions).toContain("The completion report, written after the project closed");
-  expect(captions.filter((caption) => caption.includes("evaluation that explains"))).toEqual([]);
 });
 
 // Ticket 14's evidence drawer, on the gallery's Evidence page. The record is KE-NWWDA-229129-CW-RFB
@@ -1208,7 +1233,8 @@ test("a record's evidence card ends with its drawer's source line, and an ISR se
   const section = page.locator("[data-state-section=section] [role=dialog]");
   // A section with a name is named alone, with no "section" before it (the 58 design review, follow-up 7).
   await expect(section.getByRole("heading", { level: 2 })).toHaveText("ISR, Rajasthan Road Sector Modernization, Project Development Objective Indicators");
-  await expect(section).toContainText("The whole section, word for word.");
+  // The quoted box is the section; "The whole section, word for word." went in ticket 126 (R28).
+  await expect(section).not.toContainText("word for word");
   await expect(section.locator("[data-meta-line]")).not.toContainText("¶");
   // The switcher's tabs name two sections, and a long tab wraps inside its pill.
   const tabs = page.locator("[data-state-section=switcher-section]").getByRole("tab");

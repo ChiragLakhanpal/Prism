@@ -278,9 +278,11 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             dt.date.fromisoformat(plan_date)
         except ValueError:
             return refused(422, "no_plan")
-        from strata.tools.check_plan import agency_id
+        from strata.lakehouse.clean import same_agency
 
-        if agency_id(access.agency(viewer) or "") != agency:
+        # The team's agency as the roles file writes it may be another of the plan's names ("Rajasthan State Public
+        # Works Department" for the plan check's public-works-department): the one pairing rule decides (ticket 133).
+        if not same_agency(access.agency(viewer) or "", agency):
             return refused(403, "not_own_agency")
         return {"project_id": project_id, "agency_id": agency, "plan_date": plan_date}
 
@@ -472,7 +474,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         if not project_id or not agency_id:
             return refused(422, "no_plan")
 
-        from strata.tools.check_plan import agency_id as agency_key
+        from strata.lakehouse.clean import agency_id as agency_key
 
         # check_plan takes the agency's name or its id in any case, so the lookup compares their ids (ticket 35's
         # review round 4, P1): a typed address finds the draft the plan check's own link would.

@@ -6,18 +6,24 @@
 import { useLayoutEffect, useState, type RefObject } from "react";
 
 export function usePageAtLeast(inside: RefObject<HTMLElement | null>, rem: number): boolean {
+  return useWidthAtLeast(inside, "[data-page-column]", rem);
+}
+
+// Whether the container the selector names, around the element, is at least this wide in rem, read again whenever it
+// resizes. Before the first layout it answers false.
+export function useWidthAtLeast(inside: RefObject<HTMLElement | null>, selector: string, rem: number): boolean {
   const [wide, setWide] = useState(false);
   useLayoutEffect(() => {
-    const page = inside.current?.closest<HTMLElement>("[data-page-column]") ?? null;
-    if (!page) return;
+    const box = inside.current?.closest<HTMLElement>(selector) ?? null;
+    if (!box) return;
     const update = () => {
       const root = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-      setWide(page.clientWidth >= rem * root);
+      setWide(box.clientWidth >= rem * root);
     };
     update();
     const watch = new ResizeObserver(update);
-    watch.observe(page);
+    watch.observe(box);
     return () => watch.disconnect();
-  }, [inside, rem]);
+  }, [inside, selector, rem]);
   return wide;
 }

@@ -39,7 +39,7 @@ from strata.lakehouse.engine import Engine
 from strata.lakehouse.passages import select
 from strata.reader.layout import https
 from strata.server.projects import display_name
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 
 SQL = Path(__file__).resolve().parent / "sql" / "documents"
 # The documents API's type for each group, in the order a project produces its documents.
@@ -147,6 +147,22 @@ class _Documents:
 
 def _newest_first(entries: list[dict]) -> list[dict]:
     return sorted(entries, key=lambda entry: (entry["document_date"] or "", entry["document_id"]), reverse=True)
+
+
+def plans_unread_reads(project_id: str) -> list[tuple[str, dict]]:
+    """The statements plans_unread() runs, for the Procurement tab's first batch (ticket 125)."""
+    return [(_query(name), {"project_id": project_id}) for name in ("lists", "read", "plans")]
+
+
+def plans_unread(engine: Engine, project_id: str, as_of: dt.date) -> int:
+    """How many Procurement Plans the project's documents list, public by the date, that I haven't read: the ones this
+    tab marks Not read. The Procurement tab says the plan it shows is the only one I have read, and links here when
+    there are others (ticket 134: P156634 lists 240 plans)."""
+    held = _Documents(engine, project_id)
+    day = as_of.isoformat()
+    entries = [held.entry(document_id) for document_id in held.all_ids()]
+    return sum(1 for entry in entries if entry["type"] == "procurement_plan" and not entry["read"]
+               and entry["public_from"] and entry["public_from"] <= day)
 
 
 def documents_tab(engine: Engine, project_id: str, as_of: dt.date, shown: int = 5) -> dict | None:

@@ -115,7 +115,7 @@ test("the sentence yields the wireframe's chips: four under What with one guess,
     "Add your plan",
   ]);
   await expect(card(page).locator("[data-you-wrote]")).toHaveText(`You wrote: "${SENTENCE}"`);
-  await expect(card(page).locator("[data-instruction]")).toHaveText("Choose any part to change it. One guess to check.");
+  await expect(card(page).locator("[data-instruction]")).toHaveText("One guess to check."); // the chips act as buttons, so no instruction (ticket 126)
   // One POST planned the package; nothing else made one.
   expect(asked.filter((request) => request.method() === "POST" && new URL(request.url()).pathname === "/api/planned-packages")).toHaveLength(1);
   // Section 1 draws the comparables the stream sent, and asks for none itself (ticket 15's verification round 3, V2).
@@ -658,9 +658,14 @@ test("with no plan yet, section 1 names its comparables and asks for the plan be
   await expect(page.locator("[data-criteria-line]")).toHaveText(
     "Comparable packages: Works, Request for Bids, Kenya, notices from 2019 to 2026.",
   );
-  await expect(prompt).toContainText(
-    "How many months does your plan allow from bid notice to signed contract? I ask before I show the past range, so the range doesn't set your plan.",
+  // Why I ask first is in the question's window since ticket 126.
+  await expect(prompt).toContainText("How many months does your plan allow from bid notice to signed contract?");
+  await expect(prompt).not.toContainText("I ask before I show the past range");
+  await prompt.getByRole("button", { name: "How many months does your plan allow from bid notice to signed contract?" }).click();
+  await expect(page.getByRole("dialog", { name: "How many months does your plan allow from bid notice to signed contract?" })).toContainText(
+    "I ask before I show the past range, so the range doesn't set your plan.",
   );
+  await page.keyboard.press("Escape");
   await expect(prompt).toContainText("I found 49 comparable packages for these criteria.");
   await expect(page.locator("[data-finding]")).toHaveCount(0);
   // The prompt is as tall as its words and controls, with no blank held under its buttons for a chart that comes only
@@ -718,7 +723,7 @@ test("keeping the guess makes it a typed chip, and the guess count goes away", a
 
   await expect(chip(page, "lots")).toHaveText("2 lots");
   await expect(chip(page, "lots")).toHaveAttribute("data-look", "typed");
-  await expect(card(page).locator("[data-instruction]")).toHaveText("Choose any part to change it.");
+  await expect(card(page).locator("[data-instruction]")).toHaveCount(0);
   await expect(live(page)).toHaveText("Number of lots kept as 2 lots. No guesses left to check.");
   await expect(chip(page, "lots")).toBeFocused();
 });
@@ -1104,10 +1109,11 @@ test.describe("on the day the rows were worked on", () => {
 });
 
 // Ticket 100 (DESIGN.md section 5, Page head and Task zone): the head holds "Check a plan" and "Plan a package" at its
-// right when the page area allows and under the purpose otherwise; the list is one panel, its title sentence in lead,
-// the count line, the table and its source in the foot strip; "Last worked on" opens its definition from the column
-// head, which a card names too below 768 px.
-test("the Packages head holds its two buttons at its right or under the purpose, and Last worked on opens its definition at 1440 and 390 px", async ({ page }) => {
+// right when the page area allows and under the h1 otherwise; the list is one panel, its title sentence in lead, the
+// table; "Last worked on" opens its definition from the column head, which a card
+// names too below 768 px. Ticket 126 took the purpose from under the h1, and the count line from a list that shows
+// every row.
+test("the Packages head holds its two buttons at its right or under the h1, and Last worked on opens its definition at 1440 and 390 px", async ({ page }) => {
   await serve(page, { "GET /api/planned-packages": { body: await recorded("planned-packages-list.json") } });
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
@@ -1115,36 +1121,36 @@ test("the Packages head holds its two buttons at its right or under the purpose,
     await expect(page.locator("[data-packages-page=ready]")).toBeVisible();
     const box = async (locator: import("@playwright/test").Locator) => (await locator.boundingBox())!;
     const h1 = await box(page.locator("main h1"));
-    const purpose = await box(page.getByText("Check a published Procurement Plan or plan a new package, and find the ones you worked on here."));
+    await expect(page.getByText("Check a published Procurement Plan or plan a new package")).toHaveCount(0);
     const check = await box(page.getByRole("button", { name: "Check a plan" }));
     const plan = await box(page.getByRole("button", { name: "Plan a package" }));
     if (width === 1440) {
-      // At the head's right: beside the h1 and its purpose, the primary first.
-      expect(check.x, "Check a plan at the head's right").toBeGreaterThan(purpose.x + purpose.width);
+      // At the head's right: beside the h1, the primary first.
+      expect(check.x, "Check a plan at the head's right").toBeGreaterThan(h1.x + h1.width);
       expect(plan.x).toBeGreaterThan(check.x);
       expect(Math.abs(check.y - h1.y)).toBeLessThan(h1.height);
     } else {
-      // Under the purpose.
-      expect(check.y).toBeGreaterThan(purpose.y + purpose.height);
+      // Under the h1.
+      expect(check.y).toBeGreaterThan(h1.y + h1.height);
       expect(plan.y).toBeGreaterThanOrEqual(check.y);
     }
-    // One panel: its title sentence in lead, the count line, the rows, and the source in its foot strip.
+    // One panel: its title sentence in lead and the rows, with no source line for your own work. Every row shows, so no
+    // count line.
     const list = page.locator("[data-section=packages-list]");
     await expect(list.getByRole("heading", { level: 2 })).toHaveText("You have three packages in progress and one checked plan.");
     await expect(list).toHaveAttribute("data-zone", "panel");
     await expect(list.getByRole("heading", { level: 2 })).toHaveCSS("font-size", "18px");
-    await expect(list.locator("[data-count-line]")).toHaveText("Showing all four packages and plans.");
-    await expect(list.locator("[data-foot-strip] [data-source]")).toHaveText("Source: your packages and plan checks, saved in Strata.");
+    await expect(list.locator("[data-count-line]")).toHaveCount(0);
+    await expect(list.locator("[data-source]")).toHaveCount(0); // your own work needs no source line (ticket 126, R52)
     // The panel is the table's frame, as All projects' is: no box inside it, and its rows start on the name's text
-    // edge, 16 px under the name and its count line (the critique of ticket 100, round 1).
+    // edge, 16 px under the name (the critique of ticket 100, round 1).
     const name = await box(list.getByRole("heading", { level: 2 }));
     // The first row's name, its link, in the table at 1440 px and in its card row at 390 px.
     const first = await box(list.locator("[data-table-panel] a").filter({ visible: true }).first());
     expect(Math.abs(first.x - name.x), "the rows on the name's text edge").toBeLessThanOrEqual(1);
     await expect(list.locator("[data-table-panel]")).toHaveCount(1);
-    const tag = await box(list.locator("[data-count-line]"));
     const table = await box(list.locator("[data-table-panel]"));
-    expect(table.y - (tag.y + tag.height)).toBeGreaterThanOrEqual(16);
+    expect(table.y - (name.y + name.height)).toBeGreaterThanOrEqual(16);
     const term = list.getByRole("button", { name: "Last worked on" }).filter({ visible: true }).first();
     await term.click();
     const definition = page.getByRole("dialog", { name: "Last worked on" });
@@ -1399,8 +1405,8 @@ test("reopened with its plan, a planned package folds What I understood to your 
     await expect(understood.getByRole("button", { name: "Hide what I understood" })).toBeFocused();
     await expect(chip(page, "plan_months")).toHaveText("Your plan: 6 months");
     await expect(understood.locator("[data-foot-strip] [data-computed-note]")).toBeVisible();
-    // Opened, the chips' instruction follows, and the guess count is said once.
-    await expect(understood.locator("[data-instruction]")).toHaveText("Choose any part to change it.");
+    // Opened, the chips follow with no instruction (ticket 126), and the guess count is said once.
+    await expect(understood.locator("[data-instruction]")).toHaveCount(0);
     expect((await understood.innerText()).match(/guess to check/g), where).toHaveLength(1);
     // The plan's line says what it shows whether the row is folded or open (ticket 101's design review, round 2).
     await expect(page.locator("[data-past-range]")).toContainText(

@@ -3966,8 +3966,862 @@
   },
   "disagreements": {
     "status": "ok",
-    "count": 0
+    "count": 0,
+    "pairs": 0
   },
+  "records_disagree": [
+    {
+      "id": "disagreement:a29dcd3a40952830",
+      "evidence_id": "disagreement:a29dcd3a40952830",
+      "disagreement_id": "a29dcd3a40952830",
+      "step_reference": "KE-NWWDA-541055-CW-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2026-06-22",
+          "value_form": "date",
+          "made_at": "2026-06-22",
+          "public_from": "2026-06-22",
+          "evidence_id": "strata.gold.contract:1903781",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Process Status",
+          "value": "Pending Implementation",
+          "value_form": "status",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:b38b4a815e8525ea",
+      "evidence_id": "disagreement:b38b4a815e8525ea",
+      "disagreement_id": "b38b4a815e8525ea",
+      "step_reference": "KE-NWWDA-541062-CW-RFQ",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2026-05-11",
+          "value_form": "date",
+          "made_at": "2026-05-11",
+          "public_from": "2026-05-11",
+          "evidence_id": "strata.gold.contract:1903551",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Process Status",
+          "value": "Pending Implementation",
+          "value_form": "status",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:ef5fb8532b6406b8",
+      "evidence_id": "disagreement:ef5fb8532b6406b8",
+      "disagreement_id": "ef5fb8532b6406b8",
+      "step_reference": "KE-CWSB-565568-GO-RFQ",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-09-04",
+      "public_from": "2026-09-04",
+      "sides": [
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Process Status",
+          "value": "Under Implementation",
+          "value_form": "status",
+          "made_at": "2026-08-17",
+          "public_from": "2026-08-17",
+          "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-565568-GO-RFQ",
+          "leaned": false
+        },
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2026-09-04",
+          "value_form": "date",
+          "made_at": "2026-09-04",
+          "public_from": "2026-09-04",
+          "evidence_id": "strata.gold.contract:1902413",
+          "leaned": true
+        }
+      ]
+    },
+    {
+      "id": "disagreement:83eeb55bf1335b4c",
+      "evidence_id": "disagreement:83eeb55bf1335b4c",
+      "disagreement_id": "83eeb55bf1335b4c",
+      "step_reference": "KE-CWSB-567630-CW-DIR",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-08-28",
+      "public_from": "2026-08-28",
+      "sides": [
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Process Status",
+          "value": "Pending Implementation",
+          "value_form": "status",
+          "made_at": "2026-08-17",
+          "public_from": "2026-08-17",
+          "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
+          "leaned": false
+        },
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2026-08-28",
+          "value_form": "date",
+          "made_at": "2026-08-28",
+          "public_from": "2026-08-28",
+          "evidence_id": "strata.gold.contract:1901323",
+          "leaned": true
+        }
+      ]
+    },
+    {
+      "id": "disagreement:ee2d20a65ae782aa",
+      "evidence_id": "disagreement:ee2d20a65ae782aa",
+      "disagreement_id": "ee2d20a65ae782aa",
+      "step_reference": "KE-KIMAWASCO-372410-GO-RFQ",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-12-19",
+      "public_from": "2025-12-19",
+      "sides": [
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Process Status",
+          "value": "Under Implementation",
+          "value_form": "status",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-372410-GO-RFQ",
+          "leaned": false
+        },
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2025-12-19",
+          "value_form": "date",
+          "made_at": "2025-12-19",
+          "public_from": "2025-12-19",
+          "evidence_id": "strata.gold.contract:1869293",
+          "leaned": true
+        }
+      ]
+    },
+    {
+      "id": "disagreement:8897d32fa28e641b",
+      "evidence_id": "disagreement:8897d32fa28e641b",
+      "disagreement_id": "8897d32fa28e641b",
+      "step_reference": "KE-KIMAWASCO-481608-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-07-04",
+      "public_from": "2025-07-04",
+      "sides": [
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Process Status",
+          "value": "Pending Implementation",
+          "value_form": "status",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-481608-GO-RFB",
+          "leaned": false
+        },
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2025-07-04",
+          "value_form": "date",
+          "made_at": "2025-07-04",
+          "public_from": "2025-07-04",
+          "evidence_id": "strata.gold.contract:1853775",
+          "leaned": true
+        }
+      ]
+    },
+    {
+      "id": "disagreement:d18c23df101e2449",
+      "evidence_id": "disagreement:d18c23df101e2449",
+      "disagreement_id": "d18c23df101e2449",
+      "step_reference": "KE-KIMAWASCO-372126-GO-RFQ",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2023-11-01",
+          "value_form": "date",
+          "made_at": "2023-11-01",
+          "public_from": "2023-11-01",
+          "evidence_id": "strata.gold.contract:1838833",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Process Status",
+          "value": "Under Implementation",
+          "value_form": "status",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-372126-GO-RFQ",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:1b366716390622fa",
+      "evidence_id": "disagreement:1b366716390622fa",
+      "disagreement_id": "1b366716390622fa",
+      "step_reference": "KE-NWWDA-199461-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2021-07-09",
+          "value_form": "date",
+          "made_at": "2021-07-09",
+          "public_from": "2021-07-09",
+          "evidence_id": "strata.gold.contract:1671570",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-07-19",
+          "value_form": "date",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-199461-GO-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:c604425e71c1d548",
+      "evidence_id": "disagreement:c604425e71c1d548",
+      "disagreement_id": "c604425e71c1d548",
+      "step_reference": "KE-NWWDA-199461-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "award_notice",
+          "form": "award_notice",
+          "field_name": "Contract Signature Date",
+          "value": "2021-07-09",
+          "value_form": "date",
+          "made_at": "2021-09-20",
+          "public_from": "2021-09-20",
+          "evidence_id": "strata.gold.notice:OP00147052",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-07-19",
+          "value_form": "date",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-199461-GO-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:0855976c9cbd8485",
+      "evidence_id": "disagreement:0855976c9cbd8485",
+      "disagreement_id": "0855976c9cbd8485",
+      "step_reference": "KE-NWWDA-199471-GO-RFQ",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "award_notice",
+          "form": "award_notice",
+          "field_name": "Contract Signature Date",
+          "value": "2021-03-03",
+          "value_form": "date",
+          "made_at": "2021-09-20",
+          "public_from": "2021-09-20",
+          "evidence_id": "strata.gold.notice:OP00147067",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-03-19",
+          "value_form": "date",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-199471-GO-RFQ",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:758c4440fac6cfe1",
+      "evidence_id": "disagreement:758c4440fac6cfe1",
+      "disagreement_id": "758c4440fac6cfe1",
+      "step_reference": "KE-NWWDA-199471-GO-RFQ",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2021-03-03",
+          "value_form": "date",
+          "made_at": "2021-03-03",
+          "public_from": "2021-03-03",
+          "evidence_id": "strata.gold.contract:1671582",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-03-19",
+          "value_form": "date",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-199471-GO-RFQ",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:070bf41652447043",
+      "evidence_id": "disagreement:070bf41652447043",
+      "disagreement_id": "070bf41652447043",
+      "step_reference": "KE-NWWDA-207796-CS-INDV",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2021-07-02",
+          "value_form": "date",
+          "made_at": "2021-07-02",
+          "public_from": "2021-07-02",
+          "evidence_id": "strata.gold.contract:1668349",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-07-06",
+          "value_form": "date",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-207796-CS-INDV",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:c9189a168ed967d6",
+      "evidence_id": "disagreement:c9189a168ed967d6",
+      "disagreement_id": "c9189a168ed967d6",
+      "step_reference": "KE-NWWDA-207796-CS-INDV",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2026-10-09",
+      "public_from": "2026-10-09",
+      "sides": [
+        {
+          "record": "award_notice",
+          "form": "award_notice",
+          "field_name": "Contract Signature Date",
+          "value": "2021-07-02",
+          "value_form": "date",
+          "made_at": "2021-08-20",
+          "public_from": "2021-08-20",
+          "evidence_id": "strata.gold.notice:OP00143371",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-07-06",
+          "value_form": "date",
+          "made_at": "2026-10-09",
+          "public_from": "2026-10-09",
+          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-207796-CS-INDV",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:8e65527449065ff3",
+      "evidence_id": "disagreement:8e65527449065ff3",
+      "disagreement_id": "8e65527449065ff3",
+      "step_reference": "KE-CWSB-232660-CW-RFB",
+      "attribute": "signed_amount_usd",
+      "rule_id": "tieSpecific",
+      "date": "2026-08-17",
+      "public_from": "2026-08-17",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_amount_usd",
+          "value": "19041934.18",
+          "value_form": "amount",
+          "made_at": "2022-04-13",
+          "public_from": "2022-04-13",
+          "evidence_id": "strata.gold.contract:1691287",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Actual Amount (US$)",
+          "value": "17460603.16",
+          "value_form": "amount",
+          "made_at": "2026-08-17",
+          "public_from": "2026-08-17",
+          "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-232660-CW-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:599c22abf103b399",
+      "evidence_id": "disagreement:599c22abf103b399",
+      "disagreement_id": "599c22abf103b399",
+      "step_reference": "KE-CWSB-233052-CW-RFB",
+      "attribute": "signed_amount_usd",
+      "rule_id": "tieSpecific",
+      "date": "2026-08-17",
+      "public_from": "2026-08-17",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_amount_usd",
+          "value": "8872723.91",
+          "value_form": "amount",
+          "made_at": "2021-11-17",
+          "public_from": "2021-11-17",
+          "evidence_id": "strata.gold.contract:1676946",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Actual Amount (US$)",
+          "value": "7205649.46",
+          "value_form": "amount",
+          "made_at": "2026-08-17",
+          "public_from": "2026-08-17",
+          "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-233052-CW-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:2a5cdd9a64a57061",
+      "evidence_id": "disagreement:2a5cdd9a64a57061",
+      "disagreement_id": "2a5cdd9a64a57061",
+      "step_reference": "KE-KIMAWASCO-130411-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2020-03-30",
+          "value_form": "date",
+          "made_at": "2020-03-30",
+          "public_from": "2020-03-30",
+          "evidence_id": "strata.gold.contract:1618150",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2020-04-12",
+          "value_form": "date",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-130411-GO-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:5b9951c80a0c371c",
+      "evidence_id": "disagreement:5b9951c80a0c371c",
+      "disagreement_id": "5b9951c80a0c371c",
+      "step_reference": "KE-KIMAWASCO-142995-CW-RFB",
+      "attribute": "signed_amount_usd",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_amount_usd",
+          "value": "5350893.87",
+          "value_form": "amount",
+          "made_at": "2021-03-30",
+          "public_from": "2021-03-30",
+          "evidence_id": "strata.gold.contract:1618181",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Actual Amount (US$)",
+          "value": "5209625.02",
+          "value_form": "amount",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-142995-CW-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:25f3ca1a9e054921",
+      "evidence_id": "disagreement:25f3ca1a9e054921",
+      "disagreement_id": "25f3ca1a9e054921",
+      "step_reference": "KE-KIMAWASCO-74931-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2019-12-23",
+          "value_form": "date",
+          "made_at": "2019-12-23",
+          "public_from": "2019-12-23",
+          "evidence_id": "strata.gold.contract:1610830",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2019-12-27",
+          "value_form": "date",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-74931-GO-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:e3b05d8e8dd4d230",
+      "evidence_id": "disagreement:e3b05d8e8dd4d230",
+      "disagreement_id": "e3b05d8e8dd4d230",
+      "step_reference": "KE-KIMAWASCO-74939-GO-RFQ",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2019-12-23",
+          "value_form": "date",
+          "made_at": "2019-12-23",
+          "public_from": "2019-12-23",
+          "evidence_id": "strata.gold.contract:1610825",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2020-01-08",
+          "value_form": "date",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-74939-GO-RFQ",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:0160a935d8635e5d",
+      "evidence_id": "disagreement:0160a935d8635e5d",
+      "disagreement_id": "0160a935d8635e5d",
+      "step_reference": "KE-KIMAWASCO-74960-CS-QCBS",
+      "attribute": "signed_amount_usd",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_amount_usd",
+          "value": "1460792.78",
+          "value_form": "amount",
+          "made_at": "2021-02-17",
+          "public_from": "2021-02-17",
+          "evidence_id": "strata.gold.contract:1646035",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Actual Amount (US$)",
+          "value": "448722.37",
+          "value_form": "amount",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-74960-CS-QCBS",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:5452d1a245787986",
+      "evidence_id": "disagreement:5452d1a245787986",
+      "disagreement_id": "5452d1a245787986",
+      "step_reference": "KE-KIMAWASCO-74960-CS-QCBS",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2021-02-17",
+          "value_form": "date",
+          "made_at": "2021-02-17",
+          "public_from": "2021-02-17",
+          "evidence_id": "strata.gold.contract:1646035",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-03-05",
+          "value_form": "date",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-74960-CS-QCBS",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:860283a40d572c12",
+      "evidence_id": "disagreement:860283a40d572c12",
+      "disagreement_id": "860283a40d572c12",
+      "step_reference": "KE-KIMAWASCO-74960-CS-QCBS",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "award_notice",
+          "form": "award_notice",
+          "field_name": "Contract Signature Date",
+          "value": "2021-02-17",
+          "value_form": "date",
+          "made_at": "2021-04-09",
+          "public_from": "2021-04-09",
+          "evidence_id": "strata.gold.notice:OP00124775",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2021-03-05",
+          "value_form": "date",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-74960-CS-QCBS",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:2838bdf6cf690674",
+      "evidence_id": "disagreement:2838bdf6cf690674",
+      "disagreement_id": "2838bdf6cf690674",
+      "step_reference": "KE-KIMAWASCO-76105-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieSpecific",
+      "date": "2025-03-19",
+      "public_from": "2025-03-19",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2019-12-23",
+          "value_form": "date",
+          "made_at": "2019-12-23",
+          "public_from": "2019-12-23",
+          "evidence_id": "strata.gold.contract:1610815",
+          "leaned": true
+        },
+        {
+          "record": "plan",
+          "form": "plan_row",
+          "field_name": "Signed Contract",
+          "value": "2019-12-31",
+          "value_form": "date",
+          "made_at": "2025-03-19",
+          "public_from": "2025-03-19",
+          "evidence_id": "strata.silver.plan_rows:40001676/KE-KIMAWASCO-76105-GO-RFB",
+          "leaned": false
+        }
+      ]
+    },
+    {
+      "id": "disagreement:cb4641eee15c936d",
+      "evidence_id": "disagreement:cb4641eee15c936d",
+      "disagreement_id": "cb4641eee15c936d",
+      "step_reference": "KE-MOWASCO-307384-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieRecent",
+      "date": "2023-05-02",
+      "public_from": "2023-05-02",
+      "sides": [
+        {
+          "record": "award_notice",
+          "form": "award_notice",
+          "field_name": "Contract Signature Date",
+          "value": "2023-02-13",
+          "value_form": "date",
+          "made_at": "2023-03-02",
+          "public_from": "2023-03-02",
+          "evidence_id": "strata.gold.notice:OP00216798",
+          "leaned": false
+        },
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2023-05-02",
+          "value_form": "date",
+          "made_at": "2023-05-02",
+          "public_from": "2023-05-02",
+          "evidence_id": "strata.gold.contract:1729821",
+          "leaned": true
+        }
+      ]
+    },
+    {
+      "id": "disagreement:b077bff3a5ab6fc7",
+      "evidence_id": "disagreement:b077bff3a5ab6fc7",
+      "disagreement_id": "b077bff3a5ab6fc7",
+      "step_reference": "KE-MOWASCO-307378-GO-RFB",
+      "attribute": "signed_on",
+      "rule_id": "tieRecent",
+      "date": "2023-03-03",
+      "public_from": "2023-03-03",
+      "sides": [
+        {
+          "record": "contract_awards",
+          "form": "contract_record",
+          "field_name": "contract_signing_date",
+          "value": "2022-12-01",
+          "value_form": "date",
+          "made_at": "2022-12-01",
+          "public_from": "2022-12-01",
+          "evidence_id": "strata.gold.contract:1729599",
+          "leaned": false
+        },
+        {
+          "record": "award_notice",
+          "form": "award_notice",
+          "field_name": "Contract Signature Date",
+          "value": "2022-11-22",
+          "value_form": "date",
+          "made_at": "2023-03-03",
+          "public_from": "2023-03-03",
+          "evidence_id": "strata.gold.notice:OP00216847",
+          "leaned": true
+        }
+      ]
+    }
+  ],
+  "records_disagree_count": 25,
   "disagreement_line_state": "info",
   "rejected": {
     "count": 0
@@ -3977,6 +4831,74 @@
     "how": 3,
     "what": 244
   },
+  "contracts": {
+    "count": 262,
+    "sources": [
+      {
+        "source": "awards",
+        "count": 256
+      },
+      {
+        "source": "notices",
+        "count": 6
+      }
+    ],
+    "left_out": {
+      "count": 8,
+      "no_step_reference": [
+        {
+          "source": "awards",
+          "count": 6
+        },
+        {
+          "source": "notices",
+          "count": 2
+        }
+      ],
+      "no_signing_date": []
+    }
+  },
+  "records_note": [
+    {
+      "text": "I hold "
+    },
+    {
+      "number": 262
+    },
+    {
+      "text": " contracts for this project."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "The Records lane finds each contract's package by its STEP reference, so it leaves out "
+    },
+    {
+      "number": 6
+    },
+    {
+      "text": " from "
+    },
+    {
+      "text": "the contract awards since fiscal 2020"
+    },
+    {
+      "text": " and "
+    },
+    {
+      "number": 2
+    },
+    {
+      "text": " from "
+    },
+    {
+      "text": "award notices"
+    },
+    {
+      "text": ", which have none."
+    }
+  ],
   "finding": [
     {
       "text": "ISR ratings of progress fell from "

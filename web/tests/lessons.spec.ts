@@ -5,6 +5,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, openSidebar, recorded, test, windowBeside } from "./mocked";
+import { EMAIL, people } from "./people";
 
 const REBIDDING = "new-e903b07ad1";
 const PERMITS = "new-64ec0401e3";
@@ -180,6 +181,8 @@ test("the decided table keeps each date on one line, and each day count says wha
   await reviewer(page, { "/api/lessons/review": await file("lessons-queue-decided.json") });
   await page.goto("/lessons/review");
   const table = page.locator("[data-queue-decided=table]");
+  // Every decision shows, and the count line stays because it is where the list says its order (ticket 126).
+  await expect(table.locator("[data-count-row] p[data-numbers]")).toHaveText("Showing all three decisions, newest first.");
   const date = table.locator("tbody tr").first().locator("td").nth(1);
   await expect(date).toHaveText("Oct 27, 2026");
   const lines = await date.evaluate((cell) => Math.round(cell.querySelector("span")!.getBoundingClientRect().height / parseFloat(getComputedStyle(cell).lineHeight)));
@@ -317,8 +320,9 @@ test("a recommendation needs a reason, sends the stage the reviewer saw, and end
   await expect(panel).toContainText("A different lead procurement specialist decides next, by November 5, 2026.");
   const post = asked.find((call) => call.method === "POST");
   expect(post?.body).toMatchObject({ expected_stage: "recommendation", outcome: "add" });
+  // Your own act is yours in the history too, never your name (ticket 140).
   await expect(page.locator("[data-history] li").last()).toContainText(
-    "Asha Raman, accredited procurement specialist, recommended adding it. Reason: \"The ICR and IEG's review both say estimates below market rates led to rebidding.\"",
+    "You recommended adding it. Reason: \"The ICR and IEG's review both say estimates below market rates led to rebidding.\"",
   );
 });
 
@@ -368,7 +372,9 @@ test("an act on an item that moved on keeps the reviewer's unsent reason", async
   await form.getByRole("button", { name: "Recommend rejecting it" }).click();
   const stale = page.locator("[data-gave-way=stale]");
   await expect(stale).toBeFocused();
-  await expect(stale).toContainText("While you had this lesson open, Asha Raman recommended it on October 27, 2026.");
+  await expect(stale).toContainText(
+    "While you had this lesson open, an accredited procurement specialist for South Asia recommended it on October 27, 2026.",
+  );
   await expect(stale).toContainText("I didn't send your reason. You can copy it from the box below.");
   await expect(stale.getByRole("textbox")).toHaveValue("Too general to act on.");
 });
@@ -420,7 +426,13 @@ test("the library lists lesson cards newest first, naming roles and never people
   await expect(cards).toHaveCount(2);
   await expect(page.locator("[data-library] [data-lead]")).toHaveText("Showing both current lessons, newest first.");
   const first = cards.first();
-  await expect(first).toContainText("A lead procurement specialist decided version 2 on October 29, 2026, after an accredited procurement specialist recommended it.");
+  // Who decided, by role, is in the version's window beside the badges since ticket 126 (T30), and each by its region
+  // since ticket 140.
+  await first.getByRole("button", { name: "Version 2" }).click();
+  await expect(page.getByRole("dialog", { name: "Version 2" })).toContainText(
+    "A lead procurement specialist for South Asia decided version 2 on October 29, 2026, after an accredited procurement specialist for South Asia recommended it.",
+  );
+  await page.keyboard.press("Escape");
   await expect(first).toContainText("Its projects followed the World Bank's Procurement Guidelines of January 2011.");
   await expect(page.locator("main")).not.toContainText("Asha Raman");
   await expect(page.locator("main")).not.toContainText("Omar Haddad");
@@ -449,6 +461,86 @@ test("a lesson reviewer can ask for a re-check from a card, with a reason", asyn
   await expect(card.locator("[data-badge=rechecking]")).toHaveText("Being re-checked");
   // The sub-tab's count is asked for again after the save.
   await expect.poll(() => asked.filter((call) => call.path === "/api/lessons/me").length).toBe(2);
+});
+
+// ── Who an act names (ticket 140) ────────────────────────────────────────
+//
+// One rule names the person behind an act: "You" to that person, their role and region to everyone else the roles file
+// lists, and "A reviewer" for anyone it no longer lists. No page under /lessons prints a person's name or email.
+
+async function namesNoPerson(page: Page) {
+  const text = (await page.locator("main").innerText()).toLowerCase();
+  expect((await people()).filter((word) => text.includes(word.toLowerCase()))).toEqual([]);
+  expect(text).not.toMatch(EMAIL);
+}
+
+test("the queue names your own recommendation as yours and anyone else's act by role and region, never by name", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Omar recommended adding paragraph 55 as evidence to IEG's lesson, so a different lead decides it.
+  await reviewer(page, { "/api/lessons/review": await file("lessons-queue-same-person.json") });
+  await page.goto("/lessons/review");
+  const own = page.locator(`[data-queue-row=${PERMITS}]`);
+  await expect(own).toContainText("You recommended adding it as evidence to another lesson on October 27, 2026.");
+  await expect(own).toContainText("You recommended it, so a different lead decides.");
+  await namesNoPerson(page);
+
+  // A lead's queue: Asha, an accredited procurement specialist, recommended the rebidding lesson.
+  await reviewer(page, { "/api/lessons/review": await file("lessons-queue-lead.json") });
+  await page.goto("/lessons/review");
+  await expect(page.locator(`[data-queue-row=${REBIDDING}]`)).toContainText(
+    "An accredited procurement specialist for South Asia recommended adding it on October 27, 2026.",
+  );
+  await namesNoPerson(page);
+
+  // Wanjiru, a lead in Eastern and Southern Africa, asked for the re-check: her region, not the lesson's.
+  await reviewer(page, { "/api/lessons/review": await file("lessons-queue-recheck.json") });
+  await page.goto("/lessons/review");
+  await expect(page.locator(`[data-queue-row=${RECHECK}]`)).toContainText(
+    "A lead procurement specialist for Eastern and Southern Africa asked for a re-check on October 28, 2026.",
+  );
+  await namesNoPerson(page);
+});
+
+test("an item's history names each act by the same rule, yours as yours", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await reviewer(page, {
+    [`/api/lessons/review/${RECHECK}`]: await file("lessons-item-recheck-decide.json"),
+    [`/api/lessons/review/${REBIDDING}`]: await file("lessons-item-decided-added.json"),
+  });
+  await page.goto(`/lessons/review/${RECHECK}`);
+  const history = page.locator("[data-history]");
+  await expect(history).toContainText("A lead procurement specialist for Eastern and Southern Africa asked for a re-check.");
+  await expect(history).toContainText("An accredited procurement specialist for South Asia recommended changing it.");
+  await namesNoPerson(page);
+
+  // Asha reads the record of the lesson she recommended and Omar added.
+  await page.goto(`/lessons/review/${REBIDDING}`);
+  await expect(history).toContainText("You recommended adding it.");
+  await expect(history).toContainText("A lead procurement specialist for South Asia added it to the library as version 1.");
+  await namesNoPerson(page);
+});
+
+test("a library card names who decided its version and who recommended it, yours as yours", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Asha recommended the change that became version 2 of the rebidding lesson, and reads the library.
+  await reviewer(page, { "/api/lessons/page": await file("lessons-page-reviewer.json") });
+  await page.goto("/lessons");
+  const first = page.locator("[data-library] [data-lesson-card=full]").first();
+  await first.getByRole("button", { name: "Version 2" }).click();
+  await expect(page.getByRole("dialog", { name: "Version 2" })).toContainText(
+    "A lead procurement specialist for South Asia decided version 2 on October 29, 2026, after you recommended it.",
+  );
+  await namesNoPerson(page);
+
+  // A retired lesson's card names who retired it by the same rule.
+  const retired = JSON.parse(await recorded("lessons-page.json"));
+  retired.library = JSON.parse(await recorded("lessons-library-retired.json"));
+  await viewer(page, { "/api/lessons/page": { body: JSON.stringify(retired) } });
+  await page.goto("/lessons?status=retired");
+  await expect(page.locator("[data-library] [data-lesson-card=full]").first()).toContainText(
+    "A lead procurement specialist for South Asia retired it on October 29, 2026. The lead's reason: \"IEG's own review later said the permits were not the cause.\"",
+  );
+  await namesNoPerson(page);
 });
 
 // ── The evidence drawer ──────────────────────────────────────────────────

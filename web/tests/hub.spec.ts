@@ -210,7 +210,12 @@ test("P130164's Summary renders from records with no request to a route that cal
     "The project closed on December 31, 2018, its original closing date. The World Bank committed US$160.0 million to it. " +
       "Of that, US$121.6 million was disbursed and US$30.7 million was canceled.",
   );
-  await expect(summary.locator("[data-made-by]")).toHaveText("I built this summary from World Bank records as of October 23, 2026. No model wrote it.");
+  // Ticket 126: how I built it is in the made-by window at the finding's end, with its date as a number.
+  await summary.locator("[data-made-by]").getByRole("button", { name: "How I built this summary" }).click();
+  await expect(page.getByRole("dialog", { name: "How I built this summary" })).toContainText(
+    "I built this summary from World Bank records as of October 23, 2026. No model wrote it.",
+  );
+  await page.keyboard.press("Escape");
   // Every value on the Summary has a source line, with a citation marker.
   const facts = summary.locator("[data-fact]");
   expect(await facts.count()).toBeGreaterThanOrEqual(12);
@@ -228,9 +233,12 @@ test("P130164's Summary renders from records with no request to a route that cal
   for (const [key, value] of [["commitment", "160.0"], ["disbursed", "121.6"], ["canceled", "30.7"]]) {
     await expect(summary.locator(`[data-fact=${key}] td`).first()).toHaveText(value);
   }
-  await expect(summary.locator("[data-fact=ea_category]")).toContainText(
+  // Ticket 126: why a category stands in for a risk rating is in its label's window.
+  await summary.locator("[data-fact=ea_category]").getByRole("button", { name: "Environmental Assessment Category" }).click();
+  await expect(page.getByRole("dialog", { name: "Environmental Assessment Category" })).toContainText(
     "The project record has no risk rating under the Environmental and Social Framework (ESF), so I show its Environmental Assessment Category.",
   );
+  await page.keyboard.press("Escape");
   await expect(summary.locator("[data-fact=sectors]")).toContainText("Rural and Inter-Urban Roads: 97%");
   // The ICR's own outcome rating sits before IEG's, cited to the ICR's paragraph 45, which its marker opens.
   const icr = summary.locator("[data-fact=icr_outcome]");
@@ -264,9 +272,10 @@ test("Summary opens on its finding in the finding style, then its fact tables, t
   const summary = page.locator("[data-summary=ready]");
   await expect(summary).toBeVisible();
   const finding = summary.locator("[data-summary-lead]");
-  // The finding is built from the records with no model, so it carries no byline (ticket 111), and its caption says so.
+  // The finding is built from the records with no model, so it carries no byline (ticket 111), and its made-by window
+  // says so (ticket 126).
   await expect(summary.locator("[data-byline]")).toHaveCount(0);
-  await expect(summary.locator("[data-made-by]")).toContainText("No model wrote it.");
+  await expect(finding.locator("[data-made-by]").getByRole("button", { name: "How I built this summary" })).toBeVisible();
   expect(await finding.evaluate((element) => [getComputedStyle(element).fontSize, getComputedStyle(element).fontWeight])).toEqual(["28px", "300"]);
   const tables = summary.locator("[data-fact-table]");
   await expect(tables.locator("h3")).toHaveText(["Dates", "Money", "Ratings", "Sectors and implementing agencies"]);
@@ -354,10 +363,13 @@ test("an amount summed over two credits has a marker for each, and the Money tab
   await commitment.locator("[data-citation]").nth(1).click();
   await expect(page.getByRole("dialog").getByRole("heading", { name: /IDA60300/ })).toBeVisible();
   await page.keyboard.press("Escape");
-  // The route says the loans data reports more disbursed and canceled than committed; the page never sums.
-  await expect(summary.locator("[data-money-note]")).toHaveText(
+  // The route says the loans data reports more disbursed and canceled than committed; the page never sums. Since
+  // ticket 126 the note is in an info window on the Money table's title.
+  await summary.locator("[data-money-note]").getByRole("button", { name: "Why the amounts add up to more than the commitment" }).click();
+  await expect(page.getByRole("dialog", { name: "Why the amounts add up to more than the commitment" })).toContainText(
     "In the loans and credits data, the amounts disbursed and canceled add up to more than the commitment. I show each amount as the data reports it.",
   );
+  await page.keyboard.press("Escape");
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await open(page, "/projects/P130164");
@@ -506,18 +518,14 @@ test("P130164's Documents list the PAD, the ISRs, the ICR and the ICR Review re-
   await expect(plan.getByRole("link", { name: /^Procurement Plan of Jun 20, 2018$/ })).toHaveCount(0);
   await expect(plan.locator("td").nth(2)).toHaveText("Not read");
   await expect(icr.getByRole("link", { name: "Open the PDF of Implementation Completion and Results Report, October 10, 2019, on the World Bank's site (opens in a new tab)" })).toHaveAttribute("target", "_blank");
-  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 18 of 61 documents.");
+  // Ticket 126: no count line; each group's count and its "Show all N" say what is folded.
+  await expect(page.locator("[data-documents-count]")).toHaveCount(0);
 
   // A group's fold opens in place and keeps focus on its button.
   const more = list.getByRole("button", { name: "Show all 13" });
   await more.click();
   await expect(list.locator("[data-group=isr] tr[data-document]")).toHaveCount(13);
   await expect(list.getByRole("button", { name: "Show fewer" })).toBeFocused();
-  await expect(page.locator("[data-documents-count]")).toHaveText("Showing 26 of 61 documents.");
-  // Every group open, the list shows every document and says "all" (the 58 review, round 2, follow-up 1).
-  await list.getByRole("button", { name: "Show all 15" }).click();
-  await list.getByRole("button", { name: "Show all 30" }).click();
-  await expect(page.locator("[data-documents-count]")).toHaveText("Showing all 61 documents.");
 });
 
 test("Documents keeps each date and count on one line, starts Pages read at a card's left edge, and names a document with no type", async ({ page }) => {
@@ -855,10 +863,13 @@ test("the Procurement tab says what changed in each agency's latest plan and lin
   await expect(page.locator("[data-agency=ministry-of-water-and-irrigation] [data-changes-sentence]")).toHaveText(
     "The latest plan is the plan of April 30, 2020. Compared with the plan of November 8, 2019, it added one activity and re-dated one. See what changed",
   );
-  // An agency with one plan says it has nothing to compare it with, and links nowhere.
+  // An agency with one plan says it has nothing to compare it with. P156634's documents list 240 Procurement Plans and I
+  // read 11, so it is the only plan I have read, and the sentence links to the others on the Documents tab (ticket 134).
   const kilifi = page.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd] [data-changes-sentence]");
-  await expect(kilifi).toHaveText("The only plan I have from this agency is the plan of March 19, 2025, so I can't compare it with an earlier version.");
-  await expect(kilifi.getByRole("link")).toHaveCount(0);
+  await expect(kilifi).toHaveText(
+    "The only plan I have read from this agency is the plan of March 19, 2025, so I can't compare it with an earlier version. See the plans I haven't read",
+  );
+  await expect(kilifi.getByRole("link", { name: "See the plans I haven't read" })).toHaveAttribute("href", "/projects/P156634/documents");
 
   await sentence.getByRole("link", { name: "See what changed" }).click();
 
@@ -918,7 +929,8 @@ test("an agency's version list shows the five newest and the baseline, and folds
   await more.click();
 
   await expect(block.locator("[data-table-view=table] tbody tr")).toHaveCount(7);
-  await expect(block.getByText("Showing all seven versions.")).toBeVisible();
+  // Every version shows now, so the count line goes (ticket 126).
+  await expect(block.getByText(/^Showing /)).toHaveCount(0);
   const fewer = block.getByRole("button", { name: "Show fewer versions" });
   await expect(fewer).toBeFocused();
   await expect(fewer).toHaveAttribute("aria-expanded", "true");
@@ -938,13 +950,15 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   await expect(page).toHaveURL(/packages_page=2$/);
   await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21 to 40 of 46 packages.");
 
-  // The description reads "Exploratory Bo reholes" in the PDF, and the search still finds "boreholes".
+  // The PDF splits "Bo reholes", which the plan reader joins (ticket 131), and the search finds "boreholes".
   const field = page.getByRole("searchbox", { name: "Search packages" });
   await field.fill("boreholes");
   await expect(page).toHaveURL(/packages_q=boreholes$/);
   const found = page.locator("[data-packages=ready] [data-table-view=table] tbody tr");
   await expect(found).toHaveCount(5);
-  await expect(found.nth(2)).toContainText("Equipping of Exploratory Bo reholes Project-Lot 1");
+  // A search is a filter, so its count line stays with every match shown (ticket 126, the inventory's pattern 2).
+  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing all five packages.");
+  await expect(found.nth(2)).toContainText("Equipping of Exploratory Boreholes Project-Lot 1");
   await field.fill("atlantis");
   await expect(page.locator("[data-packages] [data-empty-state]")).toContainText("I found no packages that match your search.");
   expect(unrecorded).toEqual([]);
@@ -956,8 +970,9 @@ test("the NWWDA plan of October 9, 2026 lists what changed since the plan of Mar
   await open(page, `${NWWDA}/2026-10-09`, 1440, await p156634());
   await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
   // The two versions differ only in two estimates (tests/ground_truth/values.toml, plan-541055-estimated
-  // and plan-541062-estimated, and their plan-of-March-5 entries): nothing was added, dropped or re-dated.
-  await expect(page.locator("[data-change-line]")).toHaveText("Compared with the plan of March 5, 2026, this version re-estimated two activities. See what changed");
+  // and plan-541062-estimated, and their plan-of-March-5 entries): nothing was added, dropped or re-dated. The zone says
+  // it with its table, so there is no change line under the finding (ticket 126).
+  await expect(page.locator("[data-change-line]")).toHaveCount(0);
   const changes = page.locator("[data-changes]");
   await expect(changes.getByRole("heading", { level: 2 })).toHaveText("What changed since the plan of March 5, 2026");
   await expect(changes).toContainText("This version re-estimated two activities. No activity was added, dropped or re-dated.");
@@ -967,12 +982,6 @@ test("the NWWDA plan of October 9, 2026 lists what changed since the plan of Mar
   await expect(changes.locator("[data-change-kind]")).toHaveCount(0);
   await show.click();
   await expect(changes.getByRole("button", { name: "Hide the changes" })).toBeFocused();
-  await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
-  // Closed again, "See what changed" in the change line opens it in place and moves focus to its heading.
-  await changes.getByRole("button", { name: "Hide the changes" }).click();
-  await expect(changes.locator("[data-change-kind]")).toHaveCount(0);
-  await page.locator("[data-change-line]").getByRole("link", { name: "See what changed" }).click();
-  await expect(changes.getByRole("heading", { level: 2 })).toBeFocused();
   await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
   const table = changes.locator("[data-change-kind=reestimated]");
   await expect(table.getByRole("heading", { level: 3 })).toHaveText("Two activities were re-estimated.");
@@ -996,7 +1005,7 @@ for (const [width, height] of [[1440, 900], [1024, 768]] as const) {
     await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
     const changes = page.locator("[data-changes]");
     await expect(changes).toHaveAttribute("data-zone", "row");
-    await page.locator("[data-change-line]").getByRole("link", { name: "See what changed" }).click();
+    await changes.getByRole("button", { name: "Show the changes" }).click();
     await expect(changes.locator("[data-change-kind]")).toHaveCount(1);
     await expect(changes).toHaveAttribute("data-zone", "panel");
     // Its evidence ends as a panel's does: the source line in a foot strip.
@@ -1100,9 +1109,12 @@ test("after Save as the baseline, a check reports delay against the baseline and
   // The reasons now name both measures, each labeled: the first published planned date and the baseline.
   await expect(signed).toContainText("Signed January 3, 2022, 186 days after its first published planned date, at US$1,245,092.76, about 4 times its estimate.");
   await expect(signed.locator("[data-baseline-delay=late]")).toHaveText("That was 186 days after its baseline date of July 1, 2021.");
-  await expect(page.locator("[data-method]")).toContainText(
+  // How I measure delay opens the What Strata found column's window since ticket 126.
+  await page.locator("[data-view=table] thead").getByRole("button", { name: "What Strata found" }).click();
+  await expect(page.getByRole("dialog", { name: "What Strata found" }).locator("[data-method-sentence]")).toContainText(
     "I measure delay two ways: from the first published planned date, because each plan update can move the planned dates, and from the baseline, the plan of July 21, 2025.",
   );
+  await page.keyboard.press("Escape");
 
   // Undo puts things back as they were, with no dialog.
   await panel.getByRole("button", { name: "Undo" }).click();
@@ -1169,6 +1181,19 @@ test("a save that another save beat names the plan that won, and never says it s
   await expect(panel.getByRole("button", { name: "Make this plan the baseline" })).toBeVisible();
 });
 
+test("a reason whose activity the baseline did not list says it measures delay only from the first published date", async ({ page }) => {
+  // Made up from the recorded baseline check: KE-NWWDA-229129-CW-RFB's signing reason as a baseline that did not list
+  // the activity gives it, as tests/test_project_hub.py's baseline of December 7, 2020 does on the server.
+  const check = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09-baseline.json"));
+  const row = check.rows.find((found: { activity_reference_no: string }) => found.activity_reference_no === "KE-NWWDA-229129-CW-RFB");
+  row.marks[0].reasons[0].baseline = { state: "not_in_baseline", planned_on: null, days: null, plan_date: "2025-07-21" };
+  await open(page, `${NWWDA}/2026-10-09`, 1440, { ...(await p156634()), [`/api${NWWDA}/2026-10-09`]: { body: JSON.stringify(check) } });
+
+  await expect(page.locator("#KE-NWWDA-229129-CW-RFB [data-baseline-delay=not_in_baseline]")).toHaveText(
+    "It was not in the baseline plan, so I measure its delay only from its first published planned date.",
+  );
+});
+
 test("a later plan's check names the saved baseline and who saved it, gives both delays, and asks in place before replacing it", async ({ page }) => {
   await open(page, `${NWWDA}/2026-10-09`, 1440, {
     ...(await p156634()),
@@ -1180,9 +1205,10 @@ test("a later plan's check names the saved baseline and who saved it, gives both
   );
   await expect(panel.getByRole("link", { name: "Plan of Jul 21, 2025" })).toHaveAttribute("href", `${NWWDA}/2025-07-21`);
   await expect(page.locator("#KE-NWWDA-229129-CW-RFB [data-baseline-delay=late]")).toHaveText("That was 186 days after its baseline date of July 1, 2021.");
-  await expect(page.locator("#KE-NWWDA-541055-CW-RFB [data-baseline-delay=not_in_baseline]")).toHaveText(
-    "It was not in the baseline plan, so I measure its delay only from its first published planned date.",
-  );
+  // KE-NWWDA-541055-CW-RFB, which the baseline did not list, has moved on since the plan (ticket 132), so no reason
+  // measures its delay; tests/test_project_hub.py checks a reason the baseline did not list on KE-NWWDA-229129-CW-RFB.
+  await expect(page.locator("#KE-NWWDA-541055-CW-RFB [data-baseline-delay]")).toHaveCount(0);
+  await expect(page.locator("#KE-NWWDA-541055-CW-RFB [data-badge=moved-on]")).toHaveCount(1);
   // The baseline's days explain themselves, as the first delay's do.
   await page.locator("#KE-NWWDA-229129-CW-RFB [data-baseline-delay] button[data-num]").focus();
   await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(

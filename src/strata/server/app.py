@@ -148,6 +148,7 @@ from strata.knowledge.lessons.visits import LessonVisits, Visit
 from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, TraceIds, Turn,
                                  new_run_id as random_run_id, no_agent)
+from strata.lakehouse.clean import agency_id as agency_key
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied, read_together
 from strata.config import PackageForm, load_package_form
 from strata.packages.store import PackageStore
@@ -635,7 +636,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                                "counts": checked["counts"], "withheld": checked["withheld"],
                                "abstention": checked["abstention"]})
             short = view_rules.preview_agency_short if agency == view_rules.preview_agency else None
-            return {"agency": {"name": agency, "short_name": short, "agency_id": upload_routes.agency_id(agency)},
+            return {"agency": {"name": agency, "short_name": short, "agency_id": agency_key(agency)},
                     "as_of": as_of.isoformat(), "state": "ok" if listed else "none", "projects": listed}
         return read_for(f"the projects of {agency}", viewer, read)
 
@@ -829,7 +830,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.delete("/api/projects/{project_id}/procurement/{agency_id}/baseline")
     def remove_baseline(project_id: str, agency_id: str, viewer: Viewer = Depends(current_viewer)):
         def write(engine: Engine):
-            baseline.remove(engine, project_id, agency_id)
+            baseline.remove(engine, project_id, agency_id, now().astimezone(dt.UTC).date())
             return {"baseline": None}
         return write_baseline(viewer, f"removing the baseline of {project_id}, {agency_id}", write)
 
@@ -1338,11 +1339,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         rule = view_rules.views[found.view]
         return {"email": viewer.email, "name": viewer.name, "signed_in": viewer.signed_in,
                 "has_token": viewer.token is not None, "staff": access.is_staff(viewer),
-                "agency": {"name": agency, "agency_id": upload_routes.agency_id(agency)} if agency else None,
+                "agency": {"name": agency, "agency_id": agency_key(agency)} if agency else None,
                 "own_view": own, "views": list(view_routes.offered(view_rules, own)),
                 "applied": {"view": found.view, "preview": found.preview, "problem": found.problem},
                 "preview_agency": {"name": view_rules.preview_agency, "short_name": view_rules.preview_agency_short,
-                                   "agency_id": upload_routes.agency_id(view_rules.preview_agency)},
+                                   "agency_id": agency_key(view_rules.preview_agency)},
                 "tabs": list(rule.tabs), "hidden": list(rule.hidden),
                 # What the applied view keeps, and for each act the copy key of the sentence a preview gives.
                 "capabilities": sorted(found.capabilities),

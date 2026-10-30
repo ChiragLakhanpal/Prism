@@ -9,6 +9,8 @@
     "failed": "I couldn't read this project's ISR ratings or check its reports for disagreements just now.",
     "leadOne": "Two reports disagree",
     "leadSeveral": "{count} pairs of reports disagree",
+    "leadPoint": "Reports disagree on one point",
+    "leadPoints": "Reports disagree on {count} points",
     "fell": "ISR ratings of progress fell from {first} to {last}",
     "rose": "ISR ratings of progress rose from {first} to {last}",
     "same": "ISR ratings of progress were {rating} at the first ISR and at the last"
@@ -36,6 +38,7 @@
     "noRatings": "I have no ISR ratings for this project.",
     "ratingsFailed": "I couldn't read this project's ISR ratings just now.",
     "line": "A dashed line joins {side1} and {side2}, which disagree.",
+    "lineGroup": "A dashed line marks where {anchor} and {others} disagree.",
     "noLines": "No reports disagree.",
     "asOf": "It shows what was public on {date}."
   },
@@ -46,6 +49,40 @@
     "icr_review": "the ICR Review",
     "ppar": "the PPAR",
     "other": "the report"
+  },
+  "records": {
+    "held": {
+      "one": "I hold {n} contract for this project.",
+      "many": "I hold {n} contracts for this project."
+    },
+    "noReference": {
+      "one": "The Records lane finds each contract's package by its STEP reference, so it leaves out {sources}, which has none.",
+      "many": "The Records lane finds each contract's package by its STEP reference, so it leaves out {sources}, which have none."
+    },
+    "noDate": {
+      "one": "The Records lane leaves out {sources}, which has no signing date.",
+      "many": "The Records lane leaves out {sources}, which have no signing date."
+    },
+    "noDateAlso": {
+      "one": "It also leaves out {sources}, which has no signing date.",
+      "many": "It also leaves out {sources}, which have no signing date."
+    },
+    "from": "{n} from {source}",
+    "comma": ", ",
+    "and": " and ",
+    "sources": {
+      "awards": "the contract awards since fiscal 2020",
+      "awards_fy2001_2016": "the contract awards for fiscal 2001 to 2016",
+      "notices": "award notices"
+    }
+  },
+  "plural": {
+    "pad": "{n} PADs",
+    "isr": "{n} ISRs",
+    "icr": "{n} ICRs",
+    "icr_review": "{n} ICR Reviews",
+    "ppar": "{n} PPARs",
+    "other": "{n} reports"
   },
   "numberWords": [
     "one",

@@ -45,12 +45,14 @@
     "last_day": false
   },
   "recommendation": {
-    "name": "Asha Raman",
-    "role": "accredited procurement specialist",
+    "actor": {
+      "who": "role",
+      "role": "accredited procurement specialist",
+      "region": "South Asia"
+    },
     "phrase": "add",
     "on": "2026-10-27",
     "reason": "The ICR and IEG's review both say estimates below market rates led to rebidding.",
-    "region": "South Asia",
     "repeat_of": null,
     "change": null
   },
@@ -385,9 +387,11 @@
     {
       "event": "recommended",
       "on": "2026-10-27",
-      "name": "Asha Raman",
-      "role": "accredited procurement specialist",
-      "region": "South Asia",
+      "actor": {
+        "who": "role",
+        "role": "accredited procurement specialist",
+        "region": "South Asia"
+      },
       "outcome": "add",
       "reason": "The ICR and IEG's review both say estimates below market rates led to rebidding.",
       "changes": []

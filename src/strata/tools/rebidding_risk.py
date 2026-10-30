@@ -32,8 +32,9 @@ import datetime as dt
 from strata.config import load_rebidding_reasons
 from strata.estimates import rebidding
 from strata.estimates.rebidding import CANCELED_ROW, NO_AWARD, SAME_REFERENCE, Label, Reason
+from strata.reader.repair import LOOK_ALIKE
 from strata.tools import common, find_comparables, rejected_bids
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 from strata.tools.registry import Call
 from strata.tools.search_passages import notice_page
 
@@ -85,7 +86,12 @@ def read_plan_row(engine, key: str, as_of: dt.date) -> dict | None:
         return None
     row = found[0]
     amount = row["estimated_amount_usd"]
-    fields = [{"key": "description", "value": row["description"], "kind": "text"},
+    # The page's words (ticket 131): the reference as read when a look-alike swap changed it, and the description as
+    # read. A reference the plan's text settled (ticket 78) is the page's own, so the parser's misreading stays out.
+    as_read = row["activity_reference_no_as_read"]
+    fields = [*([{"key": "activity_reference_no_as_read", "value": as_read, "kind": "text"}]
+                if row["reference_repair"] == LOOK_ALIKE and as_read and as_read != reference else []),
+              {"key": "description", "value": row["description"], "kind": "text"},
               {"key": "method", "value": row["method"], "kind": "text"},
               {"key": "market_approach", "value": row["market_approach"], "kind": "text"},
               {"key": "review_type", "value": row["review_type"], "kind": "text"},

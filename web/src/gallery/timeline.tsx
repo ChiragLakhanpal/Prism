@@ -38,10 +38,13 @@ const [ISR_7, ICR_78] = (PDO.row.sides as SideData[]).map(sideShort);
 // The showcase as the server answers when get_disagreements does not (tests/record_timeline_api.py, FAILED): no
 // dashed lines and no bands, and the newest ISR as the How lane's one ISR mark.
 const FAILED = failed as unknown as Timeline;
-// The showcase with no records and no ratings: the What lane's caption and the band row's.
+// The showcase with no records and no ratings: the What lane's caption and the band row's. It holds no contract
+// either, so the lane says it has none rather than that it left some out (ticket 138), which the as-of sample shows.
 const SPARSE: Timeline = {
   ...SHOWCASE,
   items: SHOWCASE.items.filter((item) => item.kind !== "record" && item.kind !== "band"),
+  contracts: { count: 0, sources: [], left_out: { count: 0, no_step_reference: [], no_signing_date: [] } },
+  records_note: null,
 };
 
 function Labeled({ label, children }: { label: string; children: ReactNode }) {

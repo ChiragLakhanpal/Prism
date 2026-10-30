@@ -136,7 +136,71 @@ def test_the_arrow_keys_go_in_date_order_with_ties_why_how_what_and_marks_before
                      ("record", "contract"), ("band", None), ("event", "restructuring"), ("report", "isr"),
                      ("band", None), ("report", "icr"), ("disagreement", None), ("report", "icr_review"),
                      ("report", "icr_review"), ("disagreement", None)]
-    assert p130164["table"] == p130164["items"]
+    # Each disagreement is a group of one pair here, so the table lists the same items in the same order.
+    assert [item["id"] for item in p130164["table"]] == [item["id"] for item in p130164["items"]]
+
+
+# ── One line per fact (ticket 136) ───────────────────────────────────────
+
+@pytest.fixture(scope="module")
+def grouped(fixture_db, tmp_path_factory):
+    """P130164's timeline on the planted copy (tests/planted_groups.py): 16 pairs about three facts."""
+    from planted_groups import plant
+
+    database = plant(fixture_db, tmp_path_factory.mktemp("groups") / "planted.duckdb")
+    response = get(app_on(database, today=lambda: dt.date(2026, 10, 23)), f"/api/projects/P130164/timeline?{DAY}")
+    assert response.status_code == 200, response.text
+    return response.json()
+
+
+def test_the_chart_draws_one_line_per_group_and_the_table_lists_every_pair(grouped):
+    """Ticket 136, criterion 2: three facts told 16 times are three dashed lines, and the table keeps all 16."""
+    lines = placed(grouped, kind="disagreement")
+    assert sorted((line["attribute"], line["group"]["count"]) for line in lines) == [
+        ("efficiency", 1), ("overall_risk", 4), ("pdo_progress", 11)]
+    assert len([item for item in grouped["table"] if item["kind"] == "disagreement"]) == 16
+    assert grouped["disagreements"] == {"status": "ok", "count": 3, "pairs": 16}
+    # Every pair in the table opens its own disagreement, and every pair belongs to one line.
+    pairs = {item["disagreement_id"] for item in grouped["table"] if item["kind"] == "disagreement"}
+    assert sorted(pairs) == sorted(one for line in lines for one in line["group"]["disagreement_ids"])
+
+
+def test_a_line_joins_the_one_report_to_the_nearest_of_the_reports_that_disagree_with_it(grouped):
+    """The PAD against ISRs 8 to 11 on overall risk is drawn from the PAD to ISR 8, and ISRs 1 to 11 against the ICR
+    on progress towards the PDO from ISR 11 to the ICR, so the pill names the one report and counts the others."""
+    risk = one(grouped, kind="disagreement", attribute="overall_risk")
+    assert [(side["type"], side["sequence"]) for side in risk["sides"]] == [("pad", None), ("isr", 8)]
+    assert risk["group"]["anchor_item_id"] == one(grouped, kind="report", type="pad")["id"]
+    assert (risk["group"]["anchor_reports"], risk["group"]["other_reports"], risk["group"]["reports"]) == (
+        [{"type": "pad", "count": 1, "sequence": None}], [{"type": "isr", "count": 4, "sequence": None}], 5)
+    assert risk["group"]["lean"] == "others"  # the moment rule leans on each ISR, rated at its own moment
+    progress = one(grouped, kind="disagreement", attribute="pdo_progress")
+    assert [(side["type"], side["sequence"]) for side in progress["sides"]] == [("isr", 11), ("icr", None)]
+    assert (progress["group"]["anchor_reports"], progress["group"]["other_reports"], progress["group"]["lean"]) == (
+        [{"type": "icr", "count": 1, "sequence": None}], [{"type": "isr", "count": 11, "sequence": None}], "anchor")
+    efficiency = one(grouped, kind="disagreement", attribute="efficiency")
+    assert efficiency["group"]["other_reports"] == [{"type": "icr_review", "count": 1, "sequence": None}]
+
+
+def test_the_finding_counts_the_points_the_reports_disagree_on_and_the_alt_text_names_each_line(grouped):
+    from strata.server.timeline import text_of
+
+    first, last = truth("isr-1-rating"), truth("isr-13-rating")
+    assert text_of(grouped["finding"]) == (
+        f"Reports disagree on three points, and ISR ratings of progress fell from {first} to {last}.")
+    assert {"number": 3} in grouped["finding"]
+    alt = text_of(grouped["alt"])
+    assert "A dashed line marks where the PAD and four ISRs disagree." in alt
+    assert "A dashed line marks where the ICR and 11 ISRs disagree." in alt
+    assert "A dashed line joins the ICR and the ICR Review, which disagree." in alt
+
+
+def test_only_the_reports_at_the_ends_of_a_line_get_their_own_isr_mark(grouped):
+    """ISRs 8 and 11 end a line, and ISR 12's rating changed side; the other ISRs of the two groups show in the band
+    row and in the table's pairs, so the How lane does not fill with circles."""
+    assert [item["sequence"] for item in placed(grouped, kind="report", type="isr")] == [8, 11, 12]
+    pad = one(grouped, kind="report", type="pad")
+    assert pad["disagrees_with"] == [one(grouped, kind="disagreement", attribute="overall_risk")["id"]]
 
 
 def test_an_isr_gets_its_own_mark_only_as_a_side_of_a_disagreement_or_where_its_rating_changed_side(p130164):
@@ -167,7 +231,8 @@ def test_the_finding_and_the_alt_text_are_written_from_the_tool_s_values(p130164
         "A dashed line joins ISR 7 and the ICR, which disagree. A dashed line joins the ICR and the ICR Review, which disagree. "
         "It shows what was public on October 23, 2026.")
     assert p130164["rejected"] == {"count": 1}
-    assert p130164["disagreements"] == {"status": "ok", "count": 2}
+    # Two lines, each a group of one pair (ticket 136).
+    assert p130164["disagreements"] == {"status": "ok", "count": 2, "pairs": 2}
     # The dashed line's state when no open answer depends on it, from config/project_page.toml's [timeline].
     assert p130164["disagreement_line_state"] == "info"
 
@@ -227,7 +292,68 @@ def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement(serv
     assert body["project"]["status"] == "Active"
     assert body["disagreements"]["status"] == "hidden"
     assert placed(body, kind="disagreement") == []
+    assert body["records_disagree"] == []
+    assert body["records_disagree_count"] == 0
     assert not any("disagree" in segment.get("text", "") for segment in body["finding"] + body["alt"])
+
+
+def test_the_plan_check_and_the_timeline_name_the_same_disagreement_about_ke_nwwda_541055(server):
+    """Ticket 132, criterion 2: the plan check's row for KE-NWWDA-541055-CW-RFB is moved on since the plan, and the
+    disagreement its reason cites is the one the Timeline tab lists where the records disagree: the plan of October
+    9, 2026 still says Pending Implementation, and the contract awards say the contract was signed on June 22, 2026.
+    One definition (CLAUDE.md rule 4): neither route works the finding out for itself."""
+    check = get(server, f"/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09?{DAY}")
+    timeline = get(server, f"/api/projects/P156634/timeline?{DAY}")
+    assert check.status_code == timeline.status_code == 200
+
+    [row] = [row for row in check.json()["rows"] if row["activity_reference_no"] == "KE-NWWDA-541055-CW-RFB"]
+    [mark] = row["marks"]
+    [reason] = mark["reasons"]
+    assert (mark["mark"], reason["code"]) == ("moved_on", "moved_on_since_plan")
+    listed = [found for found in timeline.json()["records_disagree"]
+              if found["disagreement_id"] == reason["disagreement_id"]]
+    assert len(listed) == 1
+    # The route counts its list, so the tab writes "25 pairs of package records disagree." from the route's number.
+    assert timeline.json()["records_disagree_count"] == len(timeline.json()["records_disagree"]) == 25
+    [found] = listed
+    assert found["step_reference"] == "KE-NWWDA-541055-CW-RFB"
+    assert found["evidence_id"] == f"disagreement:{reason['disagreement_id']}"
+    plan, award = sorted(found["sides"], key=lambda side: side["record"] != "plan")
+    assert (plan["record"], plan["field_name"], plan["value"], plan["made_at"]) == (
+        "plan", "Process Status", truth("plan-541055-status"), "2026-10-09")
+    assert (award["record"], award["value"], award["evidence_id"]) == (
+        "contract_awards", truth("award-541055-signed"), "strata.gold.contract:1903781")
+    assert award["leaned"] and not plan["leaned"]
+    # The drawer opens it from the list, as from any other link.
+    assert get(server, f"/api/evidence?id={found['evidence_id']}&{DAY}").status_code == 200
+
+
+def test_a_replaced_plans_moved_on_citation_still_opens_with_both_records(server):
+    """Ticket 132's review round 1, B1: the agency's plan of October 9, 2026 replaced its plan of March 5, 2026, whose
+    check still marks KE-NWWDA-541055-CW-RFB moved on since the plan. The disagreement that reason cites is no longer
+    a current one, yet the drawer opens it as of the same date with both records: the March plan's Process Status and
+    the contract award of June 22, 2026 (CLAUDE.md rule 2)."""
+    check = get(server, f"/api/projects/P156634/procurement/northern-water-works-development-agency/2026-03-05?{DAY}")
+    assert check.status_code == 200
+    [row] = [row for row in check.json()["rows"] if row["activity_reference_no"] == "KE-NWWDA-541055-CW-RFB"]
+    [reason] = [reason for mark in row["marks"] for reason in mark["reasons"] if reason["code"] == "moved_on_since_plan"]
+
+    opened = get(server, f"/api/evidence?id=disagreement:{reason['disagreement_id']}&{DAY}")
+    assert opened.status_code == 200
+    body = opened.json()
+    assert body["kind"] == "disagreement"
+    sides = {side["form"]: side for side in body["row"]["sides"]}
+    assert set(sides) == {"plan_row", "contract_record"}
+    assert sides["plan_row"]["evidence_id"] == reason["evidence_ids"][0]  # the March plan's own row
+    assert (sides["plan_row"]["value"], sides["contract_record"]["value"]) == (
+        truth("plan-541055-status"), truth("award-541055-signed"))
+    assert sides["contract_record"]["evidence_id"] == "strata.gold.contract:1903781"
+    assert body["row"]["replaced_on"] == truth("plan-2026-10-09-disclosed")  # the day the October plan replaced it
+    # The plan row and the record the reason cites open too (the disagreement's own id is the tool's, which the screen
+    # opens as disagreement:{id}, above).
+    for cited in reason["evidence_ids"]:
+        if not cited.startswith("strata.gold.disagreement:"):
+            assert get(server, f"/api/evidence?id={cited}&{DAY}").status_code == 200, cited
 
 
 def test_the_public_view_of_a_project_still_under_way_shows_no_disagreement_from_a_drawer_link_either(server, fixture_db):
@@ -369,16 +495,18 @@ def recorder():
 RECORDER = recorder()
 
 
-@pytest.mark.parametrize("name", sorted(RECORDER.TIMELINE) + sorted(RECORDER.FAILED))
-def test_each_timeline_recording_is_what_the_server_answers_on_the_fixture(server, name, monkeypatch):
+@pytest.mark.parametrize("name", sorted(RECORDER.TIMELINE) + sorted(RECORDER.FAILED) + sorted(RECORDER.GROUPED))
+def test_each_timeline_recording_is_what_the_server_answers_on_the_fixture(server, name, monkeypatch, tmp_path):
     import json
 
     from strata.server import timeline
 
     if name in RECORDER.FAILED:
         monkeypatch.setattr(timeline.registry, "call", RECORDER.failing_get_disagreements(timeline.registry.call))
+    if name in RECORDER.GROUPED:
+        server = app_on(RECORDER.planted(tmp_path), today=lambda: RECORDER.TODAY)
     recorded = json.loads((RECORDER.OUT / name).read_text())
-    path = RECORDER.TIMELINE.get(name) or RECORDER.FAILED[name]
+    path = RECORDER.TIMELINE.get(name) or RECORDER.FAILED.get(name) or RECORDER.GROUPED[name]
     assert get(server, path).json() == recorded, (
         f"Check the change, then write the files again: uv run --frozen python tests/record_timeline_api.py ({name})")
 

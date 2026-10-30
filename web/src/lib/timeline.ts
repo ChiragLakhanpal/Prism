@@ -42,6 +42,20 @@ export type EventItem = Base & { kind: "event"; type: string; lane: "how"; sourc
 export type RecordItem = Base & { kind: "record"; type: "contract"; lane: "what"; step_reference: string; signed_amount_usd: string | null };
 export type GroupItem = Base & { kind: "group"; type: "contracts"; lane: "what"; year: number; count: number };
 export type BandItem = Base & { kind: "band"; lane: "how"; end: string; rating: string; first: number; last: number; count: number };
+// Several reports of one kind on one side of a line: "13 ISRs", or "ISR 7" when there is one.
+export type ReportKind = { type: string; count: number; sequence: number | null };
+// The pairs a dashed line stands for (ticket 136): one report, its anchor, against one or more others about one fact.
+// Every count is the server's; the page only names them.
+export type Group = {
+  count: number;
+  disagreement_ids: string[];
+  anchor_side: "earlier" | "later";
+  anchor_item_id: string;
+  anchor_reports: ReportKind[];
+  other_reports: ReportKind[];
+  reports: number;
+  lean: "anchor" | "others" | null;
+};
 export type DisagreementItem = Base & {
   kind: "disagreement";
   lane: null;
@@ -50,11 +64,37 @@ export type DisagreementItem = Base & {
   rule_id: string | null;
   sides: [Side, Side];
   after: string;
+  // A line on the chart has its group; a pair in the table has none.
+  group?: Group;
 };
 export type MarkItem = ReportItem | EventItem | RecordItem | GroupItem;
 export type Item = MarkItem | BandItem | DisagreementItem;
 
 export type Segment = { text: string } | { number: number; capital?: boolean } | { year: number } | { date: string };
+
+export type RecordSide = {
+  record: "plan" | "contract_awards" | "award_notice";
+  form: string;
+  field_name: string;
+  value: string;
+  value_form: string;
+  made_at: string;
+  public_from: string;
+  evidence_id: string;
+  leaned: boolean;
+};
+
+export type RecordDisagreement = {
+  id: string;
+  evidence_id: string;
+  disagreement_id: string;
+  step_reference: string;
+  attribute: string;
+  rule_id: string | null;
+  date: string;
+  public_from: string;
+  sides: RecordSide[];
+};
 
 export type Timeline = {
   project: { project_id: string; project_name: string; display_name: string; status: string | null };
@@ -64,17 +104,31 @@ export type Timeline = {
   items: Item[];
   table: Item[];
   ratings: { attribute: string; field_name: string; first_rating: string; last_rating: string; direction: string; isr_count: number } | null;
-  disagreements: { status: "ok" | "hidden" | "failed"; count: number };
+  // count: the dashed lines; pairs: the pairs of reports the table lists (ticket 136).
+  disagreements: { status: "ok" | "hidden" | "failed"; count: number; pairs: number };
+  // Ticket 132: where a package's records disagree (a plan row, the contract awards, an award notice), which no dashed
+  // line joins, the newest first. A recording made before the ticket may lack it.
+  records_disagree?: RecordDisagreement[];
+  // How many there are, as the route counts them, for the list's count line and its Show all.
+  records_disagree_count?: number;
   // The state a dashed line takes when no answer or draft open on the page depends on it: config/project_page.toml's
   // [timeline] disagreement_line_state (the 23 brief, section 10), "info" unless it is switched back to "warning".
   disagreement_line_state: "info" | "warning";
   rejected: { count: number } | null;
   counts: Record<Lane, number>;
+  // The project's contracts, as the Connections tab counts them too, and those the Records lane leaves out (ticket
+  // 138; src/strata/server/contracts.py). records_note names them by source, or is null when the lane leaves none out.
+  contracts: ContractsHeld & { left_out: { count: number; no_step_reference: SourceCount[]; no_signing_date: SourceCount[] } };
+  records_note: Segment[] | null;
   finding: Segment[];
   alt: Segment[];
   sources: string[];
   data_through: string | null;
 };
+
+export type SourceCount = { source: string; count: number };
+// A project's contracts by src/strata/server/contracts.py's one definition, which both tabs read.
+export type ContractsHeld = { count: number; sources: SourceCount[] };
 
 export const LANES: Lane[] = ["why", "how", "what"];
 
@@ -101,8 +155,49 @@ export function fullLabel(item: Item): string {
     return item.replaced_by ? fill(words.replaced, { label: base }) : item.reissued ? fill(words.reissued, { label: base }) : base;
   }
   if (item.kind === "band") return bandItem(item);
-  if (item.kind === "disagreement") return words.chip;
+  if (item.kind === "disagreement") return item.group ? pillText(item) : pairLabel(item);
   return markLabel(item);
+}
+
+// What the reports disagree about: "Overall risk".
+export function factName(attribute: string): string {
+  return words.fact[attribute] ?? words.factOther;
+}
+
+// One side of a line's reports: "the PAD", "ISR 7", "13 ISRs", "the ICR and 2 ICR Reviews".
+export function reportsName(kinds: ReportKind[]): string {
+  return joinNames(kinds.map((kind) => (kind.count === 1 ? shortName(kind) : fill(words.server.plural[kind.type] ?? words.server.plural.other, { n: kind.count }))));
+}
+
+// A dashed line's pill (ticket 136): "Overall risk: the PAD and 13 ISRs disagree".
+export function pillText(item: DisagreementItem): string {
+  const [anchor, others] = item.group ? [reportsName(item.group.anchor_reports), reportsName(item.group.other_reports)] : item.sides.map(shortName);
+  return fill(words.pill, { fact: factName(item.attribute), anchor, others });
+}
+
+// The pill where the whole one has no room: "14 reports disagree".
+export function chipShort(item: DisagreementItem): string {
+  return fill(words.chipCount, { n: item.group?.reports ?? 2 });
+}
+
+// A pair of reports in the table: "Overall risk: the PAD and ISR 9".
+export function pairLabel(item: DisagreementItem): string {
+  return fill(words.pair, { fact: factName(item.attribute), side1: shortName(item.sides[0]), side2: shortName(item.sides[1]) });
+}
+
+// The report a line or a pair leans on, as its tooltip's and the table's last line says it, or null.
+export function leanLine(item: DisagreementItem): string | null {
+  const group = item.group;
+  if (group && group.count > 1) {
+    if (group.lean === "anchor") return fill(words.tip.leans, { lean: reportsName(group.anchor_reports) });
+    if (group.lean === "others") {
+      const one = group.other_reports.length === 1 && group.other_reports[0].count === 1;
+      return one ? fill(words.tip.leans, { lean: reportsName(group.other_reports) }) : fill(words.tip.leansEach, { others: reportsName(group.other_reports) });
+    }
+    return words.tip.leansTable;
+  }
+  const lean = item.sides.find((side) => side.leaned);
+  return lean ? fill(words.tip.leans, { lean: shortName(lean) }) : null;
 }
 
 export function bandItem(band: BandItem): string {
@@ -149,15 +244,21 @@ export function joinNames(names: string[]): string {
   return names.reduce((out, name, index) => (index === 0 ? name : `${out}${index === names.length - 1 ? copy.list.and : copy.list.comma}${name}`), "");
 }
 
-// The short names of the reports a report disagrees with, in the order of its disagreements.
+// The short names of the reports a report disagrees with, in the order of its disagreements: for a line's one report
+// (its anchor), every report on the line's other side, as "13 ISRs".
 export function othersOf(item: ReportItem, items: Item[]): string[] {
   return (item.disagrees_with ?? [])
     .map((id) => items.find((one) => one.id === id))
-    .flatMap((found) => (found && found.kind === "disagreement" ? [shortName(found.sides.find((side) => side.item_id !== item.id)!)] : []));
+    .flatMap((found) => {
+      if (!found || found.kind !== "disagreement") return [];
+      if (found.group && found.group.anchor_item_id === item.id) return [reportsName(found.group.other_reports)];
+      return [shortName(found.sides.find((side) => side.item_id !== item.id)!)];
+    });
 }
 
-// Each item's accessible name, with its place in the arrow-key order.
-export function itemName(item: Item, index: number, total: number, items: Item[]): string {
+// Each item's accessible name, with its place in the arrow-key order. A dashed line's name starts with the words
+// its chip shows (chip), the whole pill or its count alone.
+export function itemName(item: Item, index: number, total: number, items: Item[], chip?: string): string {
   const at = { i: index + 1, n: total };
   const lane = (key: Lane | null) => (key ? words.laneWord[key] : "");
   if (item.kind === "report") {
@@ -183,9 +284,16 @@ export function itemName(item: Item, index: number, total: number, items: Item[]
       ...at,
     });
   }
+  const pill = pillText(item);
+  const lead = !chip || chip === pill ? pill : fill(words.name.lead, { chip, pill });
+  if (item.group && item.group.count > 1) {
+    const lean = leanLine(item);
+    return fill(words.name.disagreementGroup, { lead, lean: lean ? fill(words.name.leanNext, { lean }) : "", ...at });
+  }
   const [one, two] = item.sides;
   const lean = item.sides.find((side) => side.leaned);
   return fill(words.name.disagreement, {
+    lead,
     side1: shortName(one),
     date1: long(one.made_at),
     side2: shortName(two),
@@ -288,7 +396,8 @@ export type Placed = { id: string; text: string; x: number; y: number; anchor: "
 // the later mark, 8 px at a time, off a lane's label and an earlier chip. points samples the drawn line every 4 px,
 // so the mark labels can keep off it.
 export type Point = { x: number; y: number };
-export type Line = { id: string; path: string; chip: Box; cx: number; cy: number; points: Point[] };
+// form: which of the chip's widths it took, the pill's whole words (0) or its count alone (1).
+export type Line = { id: string; path: string; chip: Box; cx: number; cy: number; points: Point[]; form: number };
 const RING = 6 + 2 + 4;
 // How far a bracket's top sits above its marks: in the lane's label row, or in row A when the lane label is in the way.
 const RISE = { labelRow: ROW.text + ROW.label, rowA: 28 };
@@ -299,7 +408,9 @@ function sample(from: Point, to: Point): Point[] {
   return Array.from({ length: steps + 1 }, (_, k) => ({ x: from.x + ((to.x - from.x) * k) / steps, y: from.y + ((to.y - from.y) * k) / steps }));
 }
 
-export function lineFor(item: DisagreementItem, x: Scale, chipWidth: number, laneLabels: Box[], width: number, placed: Box[]): Line {
+// chipWidths: the chip's widths, longest words first (ticket 136): the first that fits clear of a lane's label and an
+// earlier chip, sliding toward the later mark and then toward the earlier, is drawn; when none fits, the last.
+export function lineFor(item: DisagreementItem, x: Scale, chipWidths: number | number[], laneLabels: Box[], width: number, placed: Box[]): Line {
   const [one, two] = item.sides;
   const a = { x: x(one.made_at), y: markY(one.lane) };
   const b = { x: x(two.made_at), y: markY(two.lane) };
@@ -336,20 +447,30 @@ export function lineFor(item: DisagreementItem, x: Scale, chipWidth: number, lan
   }
   const length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
   const step = 8 / length;
-  let t = 0.5;
-  const boxAt = (point: Point): Box => {
-    const left = Math.min(Math.max(point.x - chipWidth / 2, PAD), width - PAD - chipWidth);
-    return { x0: left, x1: left + chipWidth, y0: point.y - half, y1: point.y + half };
-  };
-  let point = at(t);
-  let box = boxAt(point);
+  const widths = Array.isArray(chipWidths) ? chipWidths : [chipWidths];
   const blocked = (candidate: Box) => [...laneLabels, ...placed].some((other) => !clear(candidate, other));
-  while (blocked(box) && t + step < 0.9) {
-    t += step;
-    point = at(t);
-    box = boxAt(point);
+  const made = (point: Point, box: Box, form: number): Line => ({ id: item.id, path, chip: box, cx: (box.x0 + box.x1) / 2, cy: point.y, points, form });
+  let fallback: Line | null = null;
+  for (const [form, chipWidth] of widths.entries()) {
+    const boxAt = (point: Point): Box => {
+      const left = Math.min(Math.max(point.x - chipWidth / 2, PAD), width - PAD - chipWidth);
+      return { x0: left, x1: left + chipWidth, y0: point.y - half, y1: point.y + half };
+    };
+    // From the middle toward the later mark, as far as 0.9 of the way, then from the middle toward the earlier one.
+    const forward = [0.5];
+    for (let t = 0.5 + step; t < 0.9; t += step) forward.push(t);
+    const backward: number[] = [];
+    for (let t = 0.5 - step; t > 0.1; t -= step) backward.push(t);
+    for (const t of [...forward, ...backward]) {
+      const point = at(t);
+      const box = boxAt(point);
+      if (!blocked(box)) return made(point, box, form);
+    }
+    // Where nothing fits, the chip stays at its last place toward the later mark, as it did before ticket 136.
+    const point = at(forward[forward.length - 1]);
+    fallback = made(point, boxAt(point), form);
   }
-  return { id: item.id, path, chip: box, cx: (box.x0 + box.x1) / 2, cy: point.y, points };
+  return fallback!;
 }
 
 // Mark labels (section 4.5): in date order within each lane, after the chips, each takes the first place that

@@ -45,12 +45,14 @@
     "last_day": false
   },
   "recommendation": {
-    "name": "Omar Haddad",
-    "role": "lead procurement specialist",
+    "actor": {
+      "who": "role",
+      "role": "lead procurement specialist",
+      "region": "South Asia"
+    },
     "phrase": "repeat",
     "on": "2026-10-27",
     "reason": "It gives the same advice as IEG's lesson.",
-    "region": "South Asia",
     "repeat_of": "lesson-cfdf000a46",
     "change": null
   },
@@ -338,6 +340,16 @@
       "ieg_status": "ieg_lesson",
       "review_date": null,
       "decided_on": "2026-10-27",
+      "decided_by": {
+        "who": "role",
+        "role": "lead procurement specialist",
+        "region": "South Asia"
+      },
+      "recommended_by": {
+        "who": "role",
+        "role": "accredited procurement specialist",
+        "region": "South Asia"
+      },
       "state": "current",
       "rechecking_since": null,
       "retired": null,
@@ -398,9 +410,11 @@
     {
       "event": "recommended",
       "on": "2026-10-27",
-      "name": "Omar Haddad",
-      "role": "lead procurement specialist",
-      "region": "South Asia",
+      "actor": {
+        "who": "role",
+        "role": "lead procurement specialist",
+        "region": "South Asia"
+      },
       "outcome": "repeat",
       "reason": "It gives the same advice as IEG's lesson.",
       "changes": []

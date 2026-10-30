@@ -4423,3 +4423,438 @@ It worked if each statement of the page's batch (11 for the staff Timeline) show
 ## Tickets 125, the App redeploy ran: the App runs 362a2266
 
 **Ran on October 29, 2026 (orchestrator), from a snapshot of 362a2266.** Step 1: the App redeployed from 362a2266 at 00:41 UTC on October 30 (exit 0). Step 4, at 17:41 PDT with a viewer's OAuth token, each route read twice: /api/projects/P156634/summary 0.45 s then 0.40 s, /timeline 0.57 s then 0.58 s, /packages 0.38 s then 0.42 s, /api/packages/KE-NWWDA-541055-CW-RFB 0.46 s then 0.40 s, all 200 with Cache-Control private, max-age about 7165; the first reads were warm because the App read the demo's pages ahead at startup (step 2 holds by these timings; the /logz stream showed no matching line within 25 seconds). Step 3: /api/projects/P156634/summary?asof=2026-10-22 answered 200 in 4.8 s but with two ratings from the projects API where the fixture gives four, because strata.silver.isr_ratings was empty in the workspace (0 rows for every project); the orchestrator rebuilt it from the stored ISR pages with src/strata/lakehouse/isr_ratings.py for P156634, P130164, P161305, P155350, P127203 and P113151 (180 rows, 22 s, no model), after which the summary as of 2026-10-21 on the App gives the same four ratings with the same evidence ids as the local copy (passage 40114539/v1/s3 for PDO and implementation). Step 5 not done: Application Insights returned no request or dependency rows for the last two hours at 17:55 PDT although the App binds the appinsights secret; check later. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 129, step 1 of 1: after a platform restart, the demo-ready command's Home step writes as the owner (criterion 3)
+
+Parked on October 29, 2026 with ticket 129, which merged into build/strata as e2dcb2f1 (branch `strata/129-the-scripts-that-act-as-the-app-fall-back-to-the-owner-s-token` at 29effe96). Every key is set, but mergers run no workspace step: the orchestrator runs this one.
+
+What ticket 129 changes: when the workspace's token endpoint answers 401 to the App's client secret, `src/strata/server/settings.py`'s `_the_app_s_engine` switches once to the owner's token (DATABRICKS_TOKEN in the env file) and prints one line. The seed command (`strata.seed_examples`) and the demo-ready command's Home step use it. The App itself never falls back: with DATABRICKS_APP_PORT set, no owner's token is passed. `settings.py` ships with the App, but on the App it works as before, and the seed runs on this machine, so this step needs no redeploy. No table, grant, secret or SQL file changed. The owner owns the catalog, so no new grant is needed either.
+
+Run it only after the platform has restarted the App since DATABRICKS_CLIENT_SECRET was last pasted into the env file, and do not paste a new secret first. If the App has not restarted since then, the Home step passes without the fallback line, and this block stays open until the next restart. Run it from the main checkout, not from a snapshot, because the command reads `data/out/fixture.duckdb` (`docs/paid-workspace.md`, command 16):
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
+
+It worked if step 5 (Home) passes, prints "The App's secret is gone since the platform restarted the App; writing as the owner instead." once, and its summary reads "The examples are seeded, as the owner, and the window is checked." This is criterion 3's live proof, and it asks only about the Home step; a different step that fails (the smoke question, say) does not fail this block. If the Home step instead fails with `EngineError: The workspace gave the app no token: HTTP Error 401: Unauthorized` and prints no fallback line, the env file's DATABRICKS_TOKEN is empty or no longer valid. Record the exit code, the Home step's lines, the time, and when the App last restarted here under ticket 129.
+
+## Tickets 126 and 129, the App redeploy ran: the App runs cbd7e47d
+
+**Ran on October 29, 2026 (orchestrator), from a snapshot of cbd7e47d.** The App redeployed from cbd7e47d at 02:40 UTC on October 30 (exit 0), with tickets 126 (the tucked-away lines) and 129 (the fallback to the owner's token). Ticket 129, criterion 3: the demo-ready command ran once from a snapshot of cbd7e47d at 02:44 UTC with the App principal's secret still dead in the environment file (the platform rotated it at 14:46 UTC on October 29) and every step passed; its Home step printed 'passed. The examples are seeded, as the owner, and the window is checked.', so the seed wrote as the owner through the fallback with no new secret pasted. The other steps: the App's health in 2 s, Genie after 20 s warm, the smoke question's cited answer passed the six checks (strata.gold.passage:31525018/v1/54), the P156634 recheck on watch with four changes since the fixture, the workspace listing with seven changes. Ticket 126 on the App: the walkthrough's screens are being captured again from this build for the demo document. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 131, step 1 of 4: add the five as-read columns to silver.plan_rows, before any deploy
+
+Parked on October 29, 2026 with ticket 131, which merged into build/strata as a8fb048d (branch `strata/131-plan-text-read-from-a-pdf-is-repaired` at 246c3dcc). Every key is set, but mergers run no workspace step: the orchestrator or the second session (strata-58) runs these four steps, one at a time and in this order, from a snapshot that includes this merge (a8fb048d, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). The steps are the builder's, in the builder's order.
+
+What ticket 131 changes: the plan reader repairs each plan row after it reads the row and before it writes it (`src/strata/reader/repair.py`, called once in `plans.write_rows`). A word split by a space in a description is joined when a notice title or another plan row holds the joined word. A reference that breaks STEP's grammar is swapped once over the look-alike pairs (0 and O, 8 and B, 1 and I, 5 and S) when a notice or another plan version carries the result; otherwise it stays as read, with `reference_repair` set to `reference_as_read`. The kinds, the methods, the pairs and the join guard are in `config/references.toml`. `strata.silver.plan_rows` gains five columns that keep the text as read, and the plan check, the package page, the source view and the evidence drawer read them.
+
+Run this once on the paid workspace's SQL warehouse, before any bundle or App deploy from a commit that holds this merge, and before step 3's rewrite. CREATE TABLE IF NOT EXISTS adds no column to a table that exists. Without these columns, the plan check, the package page, the source view and the evidence drawer answer 500, and `parse_and_embed` and the rewrite fail on INSERT.
+
+    ALTER TABLE strata.silver.plan_rows ADD COLUMNS (activity_reference_no_as_read STRING, reference_repair STRING, reference_carried_by STRING, description_as_read STRING, description_joins STRING)
+
+It worked if the statement ends SUCCEEDED and `DESCRIBE TABLE strata.silver.plan_rows` lists the five columns last, in that order. `src/strata/lakehouse/tables/silver/plan_rows.sql` gives the same statement. If it says a column already exists, go on. Record the statement's state and the DESCRIBE lines here under ticket 131.
+
+## Ticket 131, step 2 of 4: deploy the bundle and redeploy the App
+
+Run after step 1, from the same snapshot. The bundle deploy carries the reader and `plans.py` to the nightly job. The App redeploy carries the server SQL, the tools and `web/`. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The builder wrote the first command without `--env-file`. A snapshot holds no `.env`, so it names the main checkout's, as ticket 122's block does.
+
+It worked if both exit 0, and the App deploy's last line is `Strata is running at https://...`. Record both exit codes, the bundle deploy's "3. What changed:" lines, the commit the App runs, and any secret the App deploy's step 3 names here under ticket 131.
+
+## Ticket 131, step 3 of 4: write P156634's plan rows again from bronze, then rebuild gold
+
+Run after step 2, from the same snapshot. This is ticket 122's rewrite path for one project: it fetches and parses no document.
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P156634
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+It worked if `run_live.py` exits 0, fetches and parses nothing, and prints P156634's row count, and `bronze_to_gold` ends SUCCESS. Then:
+
+    SELECT activity_reference_no, activity_reference_no_as_read, reference_repair, description FROM strata.silver.plan_rows WHERE document_id = '40132287'
+
+It shows the joined descriptions (Boreholes, Sarman where a notice writes it, Nairobi). It also shows the row read as KE-NWWDA-193461-90-RF8 with `reference_repair` `reference_as_read`, and, if the parser read -RFQ, KE-NWWDA-229129-CW-RFB with `reference_repair` `plan_text`. Record the script's lines, the job run id and its result, and the query's rows here under ticket 131.
+
+## Ticket 131, step 4 of 4: the repaired text on the App (criterion 3)
+
+Run after step 3. Signed in to the App as a staff viewer:
+
+    GET https://strata-7405609289499029.9.azure.databricksapps.com/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
+
+It worked if all of these hold:
+
+- The route gives the repaired descriptions, and `reference_as_read` true for KE-NWWDA-193461-90-RF8 alone.
+- The plan check at `/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09` shows "As I read it from the plan" under that row.
+- `/packages/KE-NWWDA-193461-90-RF8` shows "as I read it from the plan" on its ID line.
+- The plan check and `/packages/KE-NWWDA-541055-CW-RFB` read "Boreholes" and "Sarman".
+- The source view of the plan's page 3 (document 40132287), `GET /api/projects/P156634/documents/procurement-plan-northern-water-works-development-agency-2026-10-09?page=3`, lists KE-NWWDA-229129-CW-RFB in its `plan_rows`, not -RFQ.
+
+Look for the builder's words, "As I read it from the plan", not the ticket's "as the plan prints it" (a decision parked for the user under ticket 131). The walkthrough's row stays KE-NWWDA-193461-90-RF8 with the note, because no single look-alike swap reaches a valid reference; that is expected, not a failure. Record the status, the time and what each page shows here under ticket 131. This is criterion 3's live proof.
+
+## Ticket 132, step 1 of 4: deploy the bundle and redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit 3a016534. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these four blocks one at a time and in order, from a snapshot at or after 3a016534. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The builder named only the App deploy. The merger added the bundle deploy, because step 3's `detect_disagreements` runs in the nightly job and needs the job to carry this ticket's `src/strata/knowledge/sql/assertions/plan_statuses.sql` and `config/evidence_ladder.toml`. No table changes: `gold/assertion.sql` changed only in a comment (the new `status` value form).
+
+It worked if both exit 0, the App deploy's last line is `Strata is running at https://...`, and the App's active deployment names 3a016534 or a later commit. Record both exit codes, the commit the App runs, and any secret the App deploy's step 3 names here under ticket 132.
+
+## Ticket 132, step 2 of 4: sync the agent's tool descriptions
+
+Run after step 1, from the same snapshot. `check_plan` and `project_signals` in `config/tools.toml` changed (both descriptions name the moved-on case).
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked if the `--check` run exits 0. Record both exit codes here under ticket 132.
+
+## Ticket 132, step 3 of 4: the nightly's detect_disagreements writes 541055's status disagreement
+
+Run after step 1, when the orchestrator allows writes on the workspace again. The builder asked for the pass for P156634; until ticket 135 scopes the pass to a list of projects, the task rebuilds every project's assertions (9 minutes in the scheduled run of October 29). The scheduled nightly after step 1's bundle deploy does the same; if it ran, record its run id instead of starting another.
+
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["detect_disagreements"]}' --timeout 160m -p strata
+
+It worked if the task ends SUCCESS and this query returns at least one row:
+
+    SELECT d.disagreement_id FROM strata.gold.disagreement AS d JOIN strata.gold.assertion AS a ON a.assertion_id IN (d.first_assertion_id, d.second_assertion_id) WHERE a.subject_id = 'KE-NWWDA-541055-CW-RFB' AND a.value_form = 'status'
+
+Record the run id, the task's result and the disagreement ids here under ticket 132.
+
+## Ticket 132, step 4 of 4: the moved-on row and its disagreement on the App (criterion 3)
+
+Run after steps 1 and 3. Signed in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a staff viewer, open:
+
+    /projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
+
+It worked if all of these hold:
+
+- KE-NWWDA-541055-CW-RFB shows Moved on with the sentence "The plan still says pending, but the contract awards say the contract was signed on June 22, 2026."
+- That sentence's citation opens both records: the plan row and the contract award record (`strata.gold.contract:1903781` on the fixture).
+- `/projects/P156634/timeline` lists the same disagreement under "Where the records disagree".
+- The citation on the plan of March 5, 2026 (`/projects/P156634/procurement/northern-water-works-development-agency/2026-03-05`) also opens.
+
+Record the status, the time and what each page shows here under ticket 132. This is criterion 3's live proof.
+
+## Ticket 132, follow-up after step 3 (review C3, not a criterion): re-record the review notes and mission brief writers
+
+The round 2 review asked for this block. The writers' recordings in `tests/fixtures/agent/recorded` were made before ticket 132, so the draft stories replay them on `tests/writer_world.py`'s copy of the fixture, without the plan rows' Process Status assertions and their disagreements. Run it after steps 2 and 3, so the writers and the warehouse's disagreements are current. It writes over tracked files, so run it on the branch of the follow-up ticket that removes `tests/writer_world.py` and `writers_fixture_db` in `tests/conftest.py`, not in the main checkout during a merge:
+
+    uv run --script ops/agent/record.py --env-file "<main checkout>/.env" --writers
+
+It worked if it exits 0 and its diff shows the review notes and the mission brief recorded from the plan check as it now marks the NWWDA plan of October 9, 2026 (on the fixture: 0 Needs a look, 1 Watch, 2 Moved on since the plan). Then re-record the drafts answers on the fixture as built (`tests/record_drafts_api.py`), delete `tests/writer_world.py`, and run the gate. Record the exit code and the recordings that changed here under ticket 132.
+
+## Tickets 131 and 132, the App redeploy ran: the App runs 3a016534
+
+**Ran on October 29, 2026 (orchestrator), from a snapshot of 3a016534.** The App redeployed from 3a016534 at 04:40 UTC on October 30 (exit 0) with tickets 131 and 132. Ticket 131: step 1 ran at 20:56 PDT (the five as-read columns added to strata.silver.plan_rows; DESCRIBE lists them last); step 2's bundle deploy refused to overwrite remote changes in the job bundle (it asks for --force, which waits for the owner; the nightly is paused), the App deploy ran; step 3 ran from a snapshot of 1f859636: the plan rewrite for P156634 wrote the 8 plan rows of document 40132287 again with four references settled from the plan's text (229129-CW-RFQ to -RFB, 541055-CW-RFQ to -RFB, 193471-9O-RFQ to 199471-GO-RFQ, 207796-CS-IND to -INDV) and KE-NWWDA-193461-9O-RF8 kept as read (reference_repair reference_as_read), descriptions joined (Boreholes, Sarman), then bronze_to_gold alone on the nightly job ended SUCCESS in 17 minutes and strata.gold.package carries the repaired references; step 4 at 21:45 PDT: the plan check route for the plan of October 9, 2026 answers with Boreholes and Sarman, no broken form, and reference_as_read true for 193461-9O-RF8 alone (criterion 3 met). Ticket 132: step 1's App deploy ran (the bundle deploy waits as above); step 2 ran at 21:29 PDT (agent sync to strata-orchestrator version 12; the check exits 0); step 3 (detect_disagreements for 541055's status disagreement) waits for the owner's scoped run from the new code (the scoped script under .notes/workflows, which imports the main checkout's src), because the whole-workspace task trips the inline cap (ticket 135) and the session's rules stop the orchestrator from writing to the workspace that way; step 4 after it. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 138, step 1 of 2: redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit 2589ad25. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after 2589ad25. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's server and web code only. No table, job, tool description or agent prompt changed (the new `src/strata/server/sql/contracts/project.sql` reads `strata.gold.contract` as it stands), so no bundle deploy and no agent sync is needed. If a later merge's redeploy already runs 2589ad25 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 2589ad25 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 138.
+
+## Ticket 138, step 2 of 2: the Timeline and Connections tabs give P130164 the same contracts (criterion 3)
+
+Run after step 1. Open the two tabs in a fresh browser context, or in a browser profile that has not opened P130164 in the past two hours. Review F2 says why: the Timeline answer is a kept page (`Cache-Control: private, max-age` up to 7,200 s), and an answer kept from before the redeploy has no `contracts` field, which blanks the app. Signed in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role, call:
+
+    GET /api/projects/P130164/timeline
+    GET /api/projects/P130164/connections
+
+The builder named the Free Edition App (https://strata-7474658003099155.aws.databricksapps.com), which is history since October 26. Use the paid workspace's App above.
+
+It worked if all of these hold:
+
+- Both answers' `contracts.count` are equal. On the fixture it is 8 (7 from `awards_fy2001_2016`, 1 from `notices`). The workspace may hold another number, N.
+- On the Timeline tab (`/projects/P130164/timeline`), the note under the chart reads "I hold N contracts for this project. The Records lane finds each contract's package by its STEP reference, so it leaves out ... from the contract awards for fiscal 2001 to 2016, which have none." If the Records lane is empty, it no longer says "I have no contract records for this project."
+- On the Connections tab (`/projects/P130164/connections`), the finding names the same N: "In this project, M of its N contracts appeared together with ..." when some have no link, or "In this project, N contracts appeared together with ..." when all do.
+
+Record both counts, the Timeline note and the Connections finding word for word, the commit the App runs and the time here under ticket 138. This is criterion 3's live proof.
+
+## Ticket 133, step 1 of 2: note the three Kenya projects' headings, then redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit 9dee397f. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after 9dee397f. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+Before the deploy, signed in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role, save the agency headings the App gives now, so step 2 can compare them:
+
+    GET /api/projects/P156634
+    GET /api/projects/P161305
+    GET /api/projects/P155350
+
+Keep each answer's agency headings (each heading's `implementing_agency` and `agency_id`, in order). Then redeploy:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's server and tool code only (`src/strata/lakehouse/clean.py`'s pairing rule and its callers). No table, job, tool description or agent prompt changed, so no bundle deploy and no agent sync is needed. If a later merge's redeploy already runs 9dee397f or a later commit, record that run here instead of deploying again, and take the headings from the answers you or the owner saved before that deploy, or say that none were saved.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 9dee397f or a later commit. Record the exit code, the commit the App runs, any secret step 3 names, and the three projects' headings from before the deploy here under ticket 133.
+
+## Ticket 133, step 2 of 2: P130164's plan and notices meet on one heading (criterion 3)
+
+Run after step 1, read-only. Signed in to the App as a viewer with a role, call:
+
+    GET /api/projects/P130164
+
+It worked if the answer holds one agency heading for the Public Works Department, with `implementing_agency` "Rajasthan State Public Works Department", with `also_written_as` ["Public Works Department"] and the plan of June 20, 2018 among its versions, and no second heading whose `implementing_agency` is "Public Works Department". Note that heading's `agency_id` (on the fixture copy it is `public-works-department`, the plan's spelling). Then call:
+
+    GET /api/projects/P130164/procurement/<that agency_id>
+    GET /api/projects/P130164/procurement/rajasthan-state-public-works-department
+
+It worked if both open the same plan with the same `agency_id`, `abstention` is null, and the plan's rows pair with the notices (the check marks rows from the records, not "I don't have a Procurement Plan from this agency yet"). Then call:
+
+    GET /api/projects/P156634
+    GET /api/projects/P161305
+    GET /api/projects/P155350
+
+It worked if each gives the same headings as step 1 saved, in the same order, each with `also_written_as` []. P161305 keeps two headings, "Kenya National Highways Authority" and "Kenya National Highways Authority (KeNHA)"; that is expected (a decision parked for the user under ticket 133). Coast and Northern Water Works Development Agency on P156634 stay two headings.
+
+In the browser, `/projects/P130164/procurement` shows one section headed "Rajasthan State Public Works Department" with the June 20, 2018 plan, and its window reads "Rajasthan State Public Works Department. Also written as Public Works Department." Record the heading, its `agency_id`, both plan check answers' plan dates and abstention, the three projects' headings, the commit the App runs and the time here under ticket 133. This is criterion 3's live proof.
+
+## Ticket 136, step 1 of 3: sync the agent's get_disagreements description
+
+The merger parked this on October 29, 2026, after merge commit a25cf415. Every key is set, but mergers run no workspace step, so the orchestrator runs these three blocks today, one at a time and in order, from a snapshot at or after a25cf415. The get_disagreements description in `config/tools.toml` changed (it now names the groups), and the Foundry agent keeps the old one until the sync runs.
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked when the `--check` run exits 0. Record both exit codes and the agent version here under ticket 136.
+
+## Ticket 136, step 2 of 3: the assertions pass for P130164 from the new code
+
+Run after step 1, and after a bundle deploy that carries a25cf415 or a later commit (`uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace`; ticket 132's record above says the bundle deploy waits for `--force`, which is the owner's call). In the builder's words, run the assertions pass for P130164 from the new code, either the nightly's task:
+
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["detect_disagreements"]}' --timeout 160m -p strata
+
+or the scoped run from ticket 135, limited to P130164. Ticket 135 has not merged, so `ops/assertions/batch_live.py` has no `--projects` yet, and the pass over the whole workspace trips the warehouse's inline cap (ticket 132's record above). Until 135 lands, the scoped route is the one the orchestrator used for ticket 132: `.notes/workflows/assertions-demo.py`, which imports the main checkout's `src`, limited to P130164. Each of these reads the held answers again through `read_answer`, so `once_a_page` runs and keeps one of the PAD's two risk cells. `redetect` alone does not: it keeps `18381488/v1/table65b.1` (the round 2 review and the verifier say so).
+
+It worked when this query returns no rows:
+
+    SELECT d.disagreement_id FROM strata.gold.disagreement AS d JOIN strata.gold.assertion AS a ON a.assertion_id IN (d.first_assertion_id, d.second_assertion_id) WHERE d.project_id = 'P130164' AND a.evidence_id = 'strata.gold.passage:18381488/v1/table65b.1'
+
+Record the run, its result and the row count here under ticket 136.
+
+## Ticket 136, step 3 of 3: one line per fact on the P130164 Timeline tab (criterion 3)
+
+Run after step 2. Redeploy the App from the same snapshot. If a later merge's redeploy already runs a25cf415 or a later commit, record that run instead of deploying again.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then open the P130164 Timeline tab in a fresh browser context, because the timeline answer is a kept page for up to two hours (ticket 138's step 2 says why). Sign in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role and open `/projects/P130164/timeline`.
+
+It worked when all of these hold, at 1440 and 390 px:
+
+- There is one dashed line and one pill per fact, not one for each pair (the tab read 60 pills on October 29 at 20:10 PDT).
+- No pill overlaps another.
+- No pill names a report on both of its sides.
+- "Show the table" lists every pair.
+
+Record the deploy's exit code, the commit the App runs, the pills word for word, the pair count and the time here under ticket 136. This is criterion 3's live proof.
+
+## Ticket 134, step 1 of 2: redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit de8e6a06. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after de8e6a06. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's server and web code and in `config/thresholds.toml` (`[ingestion] paused_since = "2026-10-29"`, which the App reads on each request). The new `src/strata/server/sql/projects/plans_read.sql` reads `strata.silver.plan_versions` and `strata.silver.plan_rows` as they stand. No table, job, tool description or agent prompt changed, so no bundle deploy and no agent sync is needed. If a later merge's redeploy already runs de8e6a06 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names de8e6a06 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 134.
+
+## Ticket 134, step 2 of 2: the three honest sentences on the App (criterion 3)
+
+Run after step 1, read-only. The builder named the Free Edition App (https://strata-7474658003099155.aws.databricksapps.com), which is history since October 26. Use the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, signed in as a viewer with a role. Open each page in a fresh browser context, so no answer kept from before the redeploy is shown.
+
+1. Open `/projects/P156634/procurement`. It worked if the Northern Water Works Development Agency's block reads "The only plan I have read from this agency is the plan of October 9, 2026, so I can't compare it with an earlier version. See the plans I haven't read", and the link opens `/projects/P156634/documents`. This proves part (a). If the date differs because the workspace holds a later plan, record the sentence as shown; it must start "The only plan I have read from this agency".
+2. Open `/projects/P127203/procurement`. It worked if Packages reads "I read the plan of September 17, 2019 and found no activities in it." and the page does not show "I haven't read a Procurement Plan for this project yet". This proves part (b).
+3. Open `/data`. It worked if the project records row's Fresh cell reads "Oct 26 · daily" and then "Refresh paused since Oct 29", with no "days late" anywhere on the page, and What holds it back reads "Refresh paused since October 29; project records as of October 26." wherever the late sentence used to appear. This proves part (c).
+
+While on P156634's and P127203's Procurement tabs, also note any agency that says "I haven't read the plan of ..., the version before the latest". The verifier flagged that a previous plan that was read but held no rows still gets that sentence (review follow-up 1, outside this ticket's criteria); a note here helps the follow-up ticket.
+
+Record the three sentences word for word, the link's target, the commit the App runs and the time here under ticket 134. This is criterion 3's live proof.
+
+## Ticket 137, step 1 of 3: redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit dc4ab518. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these three blocks one at a time and in order, from a snapshot at or after dc4ab518. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's tool, server and web code (`src/strata/tools/find_comparables.py`'s period of notices, `config/tools.toml`, and section 1's note in `web/src/lib/period.ts` and `web/src/components/PastRange.tsx`). No table or job changed, so no bundle deploy is needed. The tool descriptions changed, so step 2 syncs the agent. If a later merge's redeploy already runs dc4ab518 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names dc4ab518 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 137.
+
+## Ticket 137, step 2 of 3: sync the agent's tool descriptions
+
+Run after step 1, from the same snapshot. `config/tools.toml` changed find_comparables' description (it names `criteria.period` and its seven cases, with `before_data` "when the as-of date comes before 2019-07-01", and says "Name no period then") and the `notice_to` parameter of three tools. The Foundry agent keeps the old descriptions until the sync runs (review round 1, finding 2).
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked if the `--check` run exits 0 and reports no difference. Record both exit codes and the agent version here under ticket 137.
+
+## Ticket 137, step 3 of 3: section 1 of IN-RRSMP-7516-CW-RFB names a period that never ends before it starts (criterion 3)
+
+Run after step 1, read-only. The builder named the workspace host (https://adb-7405609289499029.9.azuredatabricks.net); its App is https://strata-7405609289499029.9.azure.databricksapps.com. Sign in as a viewer with a role and open `/packages/IN-RRSMP-7516-CW-RFB` in a fresh browser context, so no answer kept from before the redeploy is shown.
+
+It worked if section 1 reads "They had to be in India. The plan is older than the contract awards data since fiscal 2020, so I looked for packages with notices from July 1, 2019 to <the as-of date>." and no range on the page ends on June 20, 2018 (the walkthrough's capture of October 29 read "They had to be in India and have notices from July 1, 2019 to June 20, 2018"). `GET /api/packages/IN-RRSMP-7516-CW-RFB/comparables` gives `criteria.notice_from` 2019-07-01, `criteria.notice_to` the as-of date and `criteria.period` `plan_before_data`. If the workspace holds a newer plan for this package, dated on or after July 1, 2019, the sentence ends on that plan's date instead (`period` `plan_date`); record it as shown.
+
+While on the page, also note whether the plan-row panel shows a raw "{agency}" ("{agency} plan of June 20, 2018"). The verifier saw it on the fixture copy, where the stand-in plan row has no implementing agency. It is outside this ticket's criteria, and a note here helps a follow-up ticket.
+
+Record section 1's sentence word for word, the comparables answer's `notice_from`, `notice_to` and `period`, the commit the App runs and the time here under ticket 137. This is criterion 3's live proof.
+
+## Ticket 140, step 1 of 2: redeploy the App
+
+The merger parked this on October 30, 2026, after merge commit 7a146529. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after 7a146529. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Only the App's server and web code changed: `Roles.actor` in `src/strata/config.py`, the lesson review and the Lessons page (`src/strata/knowledge/lessons/review.py` and `page.py`), Passage reports (`src/strata/knowledge/retrieval/reports.py`), and the web's `actorText` with its copy. No table, job, tool description or agent prompt changed, so no bundle deploy and no agent sync is needed. Tickets 134 and 137 park an App redeploy too; one deploy from a snapshot at or after 7a146529 serves all three. If a later merge's redeploy already runs 7a146529 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 7a146529 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 140.
+
+## Ticket 140, step 2 of 2: the review queue names the owner as "you" and everyone else by role (criterion 3)
+
+Run after step 1, read-only. Sign in to the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, as the owner (chirag.lakhanpal.cl@gmail.com), in a fresh browser context, so no answer kept from before the redeploy is shown.
+
+1. Open `/lessons/review`.
+2. Open one item's page from the queue.
+3. Open `/lessons`.
+4. From the same signed-in browser, call `GET /api/lessons/review`.
+
+It worked if:
+
+- every queue row's `recommendation` and `origin` holds `actor` and no `name`;
+- the owner's own acts read "You recommended ... on {date}.";
+- anyone else's acts read "A/An {role} for {region} ...". The live `config/roles.toml` lists only the owner, so an act that anyone else recorded reads "A reviewer ...";
+- "Chirag Lakhanpal" and no email appear anywhere in the page content of the three pages.
+
+If the queue holds no item, record that it is empty and that the item page could not be opened; the proof then waits for the first recommendation on the workspace.
+
+While on `/lessons`, also open its public preview (`/lessons?view=public`) and note whether a card reads "You decided ...". The verifier found that a preview still names the viewer's own act "You" (review follow-up 1, outside this ticket's criteria); a note here helps the follow-up ticket.
+
+Record the lines word for word, the commit the App runs and the time here under ticket 140. This is criterion 3's live proof.
+
+## Tickets 127, 138, 133, 136 and 134, the App redeploy ran: the App runs de8e6a06
+
+**Ran on October 30, 2026 (orchestrator), from a snapshot of de8e6a06.** The App redeployed from de8e6a06 (deployment of 06:56 UTC on October 30; two earlier attempts ended in the platform's DeadlineExceeded while the compute started cold, with no deployment made) with tickets 127, 138, 133, 136 and 134, and the local copy moved to the same build. Checked on the App's pages at 00:05 PDT, captured at 1440 px: ticket 127, the ask box sits on the work's columns, 56 px, with no printed name and the placeholder 'Ask Strata about this project'; ticket 136, the P130164 Timeline tab reads 'Reports disagree on four points, and ISR ratings of progress fell from Satisfactory to Moderately Unsatisfactory' with four pills that do not overlap (the PAD and 8 ISRs on overall risk; the ICR and 11 ISRs on progress towards the PDO; the PAD and the ICR Review; the ICR Review and 4 ISRs), the band row and Show the table (criterion 3's live half holds for the lines; the PAD's twice-read table cell stays until the owner's scoped assertions run from the new code, step 2 of 136's block); ticket 138, the same tab's records lane reads 'I can't place this project's contracts in this lane. The note under the chart says why.' and the note 'I hold seven contracts for this project. The Records lane finds each contract's package by its STEP reference, so it leaves out seven from the contract awards for fiscal 2001 to 2016, which have none.' (the Connections tab's count and the timeline's now share one definition); ticket 133, the P130164 Procurement tab shows one heading, Rajasthan State Public Works Department, with the plan of June 20, 2018 (13 activities) and its packages; ticket 134, that tab reads 'The only plan I have read from this agency is the plan of June 20, 2018, so I can't compare it with an earlier version. See the plans I haven't read'. The Data page's paused-refresh line and the Kenya plan check's wording are in the morning's capture. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 135, step 1 of 2: the assertions pass for the five demo projects reads within the inline limit (criterion 3)
+
+The merger parked this on October 30, 2026, after merge commit a95183e1. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after a95183e1. No bundle deploy and no App deploy is needed: the script runs on this machine against the SQL warehouse, and its `WarehouseEngine` now reads within `warehouse.statement_result_bytes` (26,214,400 in `config/thresholds.toml`), the cap the owner's run of October 29 at about 20:05 PDT hit.
+
+    uv run --script ops/assertions/batch_live.py --env-file "<main checkout>/.env" --projects P156634,P130164,P161305,P155350,P113151
+
+It worked if it prints no "Inline byte limit exceeded" and exits 0. After the run's summary ("Run live-... holds ... assertions and ... disagreements ...") it prints one line for each of the five projects, in the form "P156634: N assertions (I from ISR ratings, R from records, G from the IEG ratings dataset, T read from reports), and the check rejected ...", then "The showcase disagreement came back as the benchmark expects".
+
+- Exit 1 with "still in a running batch": the batch is still running. Run the same command again later. It waits for the same batch and does not ask again for answers it holds.
+- A line "I left out ...": a project's own rows passed the limit, so it kept the assertions the tables held. Record the line. The review's follow-ups F5 and F6 cover this case.
+- Exit 2: it could not run. Record the error.
+
+This run includes P130164 and runs the pass from the new code, so it also serves ticket 136's step 2 above. After it, run that block's query and record its result under ticket 136.
+
+Record the exit code, the run summary, the five project lines word for word and the time here under ticket 135.
+
+Ticket 123's limit is now `warehouse.statement_result_bytes` in `config/thresholds.toml`. Ticket 123's step 1 above still names `ingestion.inline_result_bytes`, which ticket 135 removed.
+
+## Ticket 135, step 2 of 2: the P156634 Timeline tab shows the ISR rating bands (criterion 3)
+
+Run after step 1, read-only. The builder named the Free Edition App (https://strata-7474658003099155.aws.databricksapps.com), which is history since October 26. Use the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, signed in as a viewer with a role. Open `/projects/P156634/timeline` in a fresh browser context, because the timeline answer is a kept page for up to two hours (ticket 138's step 2 says why). The App already runs de8e6a06, which draws the band row, so no redeploy is needed.
+
+It worked if the Timeline tab shows grey ISR rating bands in the Operations lane, with labels in the form "ISRs 1 to 4 rated progress Satisfactory", and the Note line under the chart reads "The grey bands show each ISR's rating of progress towards the project development objective (PDO). Darker means a lower rating." It did not work if the band row reads "I have no ISR ratings for this project." or "I couldn't read this project's ISR ratings just now."
+
+Record the band labels word for word, the commit the App runs and the time here under ticket 135. With step 1, this is criterion 3's live proof.
+
+## Ticket 139, step 1 of 3: redeploy the App
+
+The merger parked this on October 30, 2026, after merge commit 97fb5bcb. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these three blocks one at a time and in order, from a snapshot at or after 97fb5bcb. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Only the App's tool, server and web code changed: section 1's plan dates now come from the step tracker's reader (`plan_line` in `src/strata/estimates/step_dates.py`, used by `src/strata/tools/find_comparables.py`, whose `package.sql` no longer joins `silver.plan_steps`), and section 1's sentences (`web/src/components/PastRange.tsx`, `web/src/copy.ts`). No table, job, tool description (`config/tools.toml`) or agent prompt changed, so no bundle deploy and no agent sync is needed. The App runs de8e6a06 today, which holds neither ticket 137's dc4ab518 nor ticket 140's 7a146529, so one deploy from a snapshot at or after 97fb5bcb also serves their parked redeploys. If a later merge's redeploy already runs 97fb5bcb or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 97fb5bcb or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 139.
+
+## Ticket 139, step 2 of 3: section 1 and the tracker name the same plan dates on KE-SDOR-KIHBT-563865-CW-RFB (criterion 3, as the review rewrote it)
+
+Run after step 1, read-only. Sign in to the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, as a viewer with a role, and open `/packages/KE-SDOR-KIHBT-563865-CW-RFB` in a fresh browser context, so no answer kept from before the redeploy is shown. From the same signed-in browser, also call `GET /api/packages/KE-SDOR-KIHBT-563865-CW-RFB/comparables` and `GET /api/packages/KE-SDOR-KIHBT-563865-CW-RFB/steps`.
+
+It worked if:
+
+- under Planned months, section 1 reads "The plan's step dates put the signed contract on November 7, 2029 but give no planned notice date, so there is no plan line yet. Type a number of months to compare." and draws no plan line;
+- the step tracker shows the bid invitation as "Bid invitation (SPN) No date Not in the plan" and the signed contract as "Contract signed Planned for Nov 7, 2029";
+- the comparables answer gives `package.planned_notice_on` null, `package.planned_signing_on` 2029-11-07 and `plan` null, and the steps answer gives `plan_latest_date` null for `step_key` `bid_invitation` and 2029-11-07 for `contract_signed`.
+
+It did not work if section 1 still reads "The plan row has no planned notice date or signing date, so there is no plan line yet." while the tracker shows a planned signing.
+
+Record section 1's sentence and the tracker's two lines word for word, the two answers' dates, the commit the App runs and the time here under ticket 139. This is criterion 3's live proof as the review and the verifier rewrote it ("section 1 and the tracker name the same plan dates"). The ticket's criterion as written ("draws the plan line") cannot pass until step 3: both found that the live plan reader places this row's dates one step late (a decision parked for the user).
+
+## Ticket 139, step 3 of 3: the plan line of 5.8 months, after the plan-reader follow-up (waits on a new ticket)
+
+Do not run this yet. It waits on a follow-up ticket, which the orchestrator opens, for the live layout parser's step columns on P161305's Procurement Plan of September 28, 2026, with this package as its test row. The verifier read the row's six dates ("2026-09-21 2026-10-06 2026-12-09 2027-01-28 2027-04-02 2029-11-0...") in the fixture parser's order and got a bid invitation on October 6, 2026 and a signing on April 2, 2027, where the live tracker puts December 9, 2026 under "Bidding document issued" and November 7, 2029 under the signing. Once that ticket has merged and that plan has been read again on the workspace, open `/packages/KE-SDOR-KIHBT-563865-CW-RFB` again, read-only, in a fresh browser context.
+
+It worked if section 1 draws a plan line of 5.8 months whose tooltip reads "From the plan's step dates: bid invitation October 6, 2026, contract signed April 2, 2027.", and the tracker shows the Bid invitation (SPN) with the planned date Oct 6, 2026 (late by then, since that date has passed) and the contract signed planned for Apr 2, 2027. Record the tooltip and the tracker's two lines word for word, the commit the App runs and the time here under ticket 139. This is the ticket's criterion 3 as first written.
+
+## Tickets 130, 135, 137, 139 and 140, the App redeploy ran: the App runs 97fb5bcb
+
+**Ran on October 30, 2026 (orchestrator), from a snapshot of 97fb5bcb.** The App redeployed from 97fb5bcb (deployment of 09:08 UTC on October 30, exit 0) with tickets 130, 135, 137 and 139 (and 140 from the earlier merge), and the local copy moved to the same build. Ticket 137, step 2: the agent sync ran at 02:02 PDT from the same snapshot (strata-orchestrator version 14; the check exits 0). Checked on the App's pages at 02:20 PDT, captured at 1440 px: ticket 137, /packages/IN-RRSMP-7516-CW-RFB section 1 names no range that ends before it starts; it reads '3,732 past packages matched this one, but I can't measure how long any of them took. Of the 3,732, 1,964 lacked the STEP reference that links notice to contract and 1,768 had no specific procurement notice in the records I hold.'; ticket 139, /packages/KE-SDOR-KIHBT-563865-CW-RFB section 1 reads 'The plan's step dates put the signed contract on November 7, 2029 but give no planned notice date, so there is no plan line yet. Type a number of months to compare.', the same dates the tracker shows (Bidding document issued planned for Dec 9, 2026 through Contract signed planned for Nov 7, 2029), so the two no longer contradict each other; ticket 130, both package pages carry 'From the plan row' and 'Where the steps stand' as a list in the right column at 1440 px; ticket 140, the review queue as the owner reads 'You recommended adding it on October 29, 2026. You recommended it, so a different lead decides.' with no person's name on the page; ticket 135, the scoped run is the owner's (the script now takes a project list and reads in pages). The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 141, step 1 of 4: write the plan rows of P155350, P156634 and P130164 again from bronze, then rebuild gold
+
+The merger parked this on October 30, 2026, after merge commit a5d002c7 (branch `strata/141-the-pakistan-plan-s-rows-carry-their-method-and-estimate` at 75988d26). Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these four blocks one at a time and in order, from a snapshot at or after a5d002c7, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run steps 1 to 4 on the same day and outside the nightly window, so no nightly `parse_and_embed` on the old reader runs between the rewrite and step 4's bundle deploy.
+
+What ticket 141 changes: the plan reader (`src/strata/reader/step.py`) now matches a column label that ai_parse_document cut with spaces ("Actual Am ount (US$" is Actual Amount (US$)), and reads a row that the parser folded into a repeated header (PK-SID-2961-CW-RFP on PDF page 4 of P155350's plan of June 10, 2024, document 34337516). `src/strata/lakehouse/sql/plans/plan_data_notes.sql` adds RFP (Request for Proposals) to the reference codes. An -RFP reference whose Method column names another method now gets a `method_differs_from_reference` note, and the row keeps the Method column's method. No table, route or web file changed. Steps 1 to 3 are the builder's step 1 and 2 plus criterion 2's workspace part, which the verifier parked. Step 4 is the builder's step 3.
+
+First, before any rewrite, keep this read-only answer for step 3. It fingerprints every P130164 and P156634 row except the two rows this ticket recovers:
+
+    SELECT project_id, document_id, count(*) AS plan_rows, sum(hash(activity_reference_no, method, estimated_amount_usd, actual_amount_usd, process_status)) AS fingerprint FROM strata.silver.plan_rows WHERE project_id IN ('P130164', 'P156634') AND activity_reference_no NOT IN ('IN-RRSMP-7431-CW-RFB', 'NWWDA-WSDP-03-2019-2020') GROUP BY project_id, document_id ORDER BY project_id, document_id
+    SELECT activity_reference_no, document_id, pdf_page FROM strata.silver.plan_rows WHERE activity_reference_no IN ('IN-RRSMP-7431-CW-RFB', 'NWWDA-WSDP-03-2019-2020') ORDER BY activity_reference_no, document_id
+
+Then write the three projects' plan rows again from bronze (ticket 122's rewrite path, which fetches and parses no document; `--project` takes one project a run) and rebuild gold once:
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P155350
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P156634
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P130164
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+It worked if each `run_live.py` exits 0 and fetches and parses nothing, P155350's run prints 16 rows for the plan of June 10, 2024 (15 before; the builder's count), and `bronze_to_gold` ends SUCCESS. Record the two queries' answers, each script's lines, the job run id and its result here under ticket 141.
+
+## Ticket 141, step 2 of 4: P155350's plan rows read the method and amounts the plan prints (criterion 3's rows)
+
+Run after step 1, read-only:
+
+    SELECT activity_reference_no, pdf_page, method, estimated_amount_usd, actual_amount_usd, process_status FROM strata.silver.plan_rows WHERE document_id = '34337516' ORDER BY pdf_page, activity_reference_no
+    SELECT activity_reference_no, reference_method_code, reference_method, method FROM strata.silver.plan_data_notes WHERE document_id = '34337516' AND note = 'method_differs_from_reference' ORDER BY activity_reference_no
+
+It worked if all of these hold:
+
+- The first query returns 16 rows on PDF page 4.
+- PK-SID-2961-CW-RFP is among them, with Request for Bids, 5024100.36 and Signed.
+- PK-SID-20260-CW-RFB shows 3557787.46.
+- Every `estimated_amount_usd` is NULL, because the plan prints no Estimated Amount column.
+- Every method is Request for Bids.
+- The second query gives each -RFP row (2961, 2962, 2963, 2964, 2965, 2967, 2968, and 2969 as the parser read it) RFP, Request for Proposals and Request for Bids.
+
+Three figures are known to be wrong until the review's follow-up 1 lands, and they are not a failure of this step. PK-SID-29086-CW-RFB reads 4324242.94, where PDF page 4 prints 4,924,242.94 (ai_parse_document read a 9 as a 3). PK-SID-2969-CW-RFP carries 1042222.84, which page 4 prints on PK-SID-2960-CW-RFP. PK-SID-69713-CW-RFB carries 3704929.34, which page 4 prints on PK-SID-69711-CW-RFB. The last two are ticket 78's `_settle` picking the wrong listed reference. Record both queries' rows here under ticket 141.
+
+## Ticket 141, step 3 of 4: P130164 and P156634 read as before, except the two recovered rows (criterion 2, workspace part)
+
+Run after step 1, read-only: run step 1's two queries again and compare them with the answers kept before the rewrite.
+
+It worked if the first query's rows are the same as before, document by document (the same count and fingerprint), and the second query lists IN-RRSMP-7431-CW-RFB and NWWDA-WSDP-03-2019-2020 each in one more plan version than before, with NWWDA-WSDP-03-2019-2020 newly in document 40132287 (PDF page 3). Any other difference fails criterion 2: record which document and which rows differ, and do not go on to step 4. Record both answers here under ticket 141. P130164's plan of June 20, 2018 is not in the fixture, so this is the only proof that it reads as before.
+
+## Ticket 141, step 4 of 4: deploy the bundle and redeploy the App, then P155350's Procurement tab (criterion 3, restated)
+
+Run after steps 2 and 3, from the same snapshot. The bundle deploy carries the reader to the nightly's `parse_and_embed`. The App redeploy carries the RFP code to the plan check of an uploaded plan (`check_plan.reference_methods()` reads the same note definition). Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+If a later merge's redeploy already runs a5d002c7 or a later commit, record that run here instead of deploying again.
+
+Then sign in to https://strata-7405609289499029.9.azure.databricksapps.com as a viewer with a role and open `/projects/P155350`, Procurement tab, the plan of June 10, 2024, in a fresh browser context. It worked if the plan shows 16 activities including PK-SID-2961-CW-RFP, each row shows its Actual Amount, Estimated reads "Not in the plan", each -RFP row's method reads Request for Bids, and the plan check shows the method note on each -RFP row ("The reference ends in RFP (Request for Proposals), but the Method column says Request for Bids. I use the Method column."). The ticket's own words ("estimates and Request for Proposals on the -RFP rows") cannot hold, because the World Bank's PDF and text of document 34337516 print neither; the review and the verifier restated the proof this way (a decision parked for the user). Record both exit codes, the bundle deploy's "3. What changed:" lines, the commit the App runs, any secret the App deploy's step 3 names, and what the tab shows here under ticket 141.

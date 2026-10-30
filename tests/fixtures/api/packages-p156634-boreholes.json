@@ -10,7 +10,7 @@
   "rows": [
     {
       "activity_reference_no": "KE-NWWDA-229129-CW-RFB",
-      "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+      "description": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
       "implementing_agency": "Northern Water Works Development Agency",
       "agency_id": "northern-water-works-development-agency",
       "plan_date": "2026-10-09",
@@ -21,7 +21,7 @@
     },
     {
       "activity_reference_no": "KE-NWWDA-503455-CW-RFQ",
-      "description": "Drilling 4 No. New Explorato ry Boreholes in Arbajahan an d Sarman in Wajir County",
+      "description": "Drilling 4 No. New Exploratory Boreholes in Arbajahan and Sarman in Wajir County",
       "implementing_agency": "Northern Water Works Development Agency",
       "agency_id": "northern-water-works-development-agency",
       "plan_date": "2026-10-09",
@@ -32,7 +32,7 @@
     },
     {
       "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
-      "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+      "description": "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply",
       "implementing_agency": "Northern Water Works Development Agency",
       "agency_id": "northern-water-works-development-agency",
       "plan_date": "2026-10-09",
@@ -43,7 +43,7 @@
     },
     {
       "activity_reference_no": "KE-NWWDA-541061-CW-RFQ",
-      "description": "Equipping of Exploratory Bo reholes Project - Lot 2- Nurgo ws Water Supply",
+      "description": "Equipping of Exploratory Boreholes Project - Lot 2- Nurgows Water Supply",
       "implementing_agency": "Northern Water Works Development Agency",
       "agency_id": "northern-water-works-development-agency",
       "plan_date": "2026-10-09",
@@ -54,7 +54,7 @@
     },
     {
       "activity_reference_no": "KE-NWWDA-541062-CW-RFQ",
-      "description": "Equipping of Exploratory Bo reholes project- Lot 3- Qaras Water Supply",
+      "description": "Equipping of Exploratory Boreholes project- Lot 3- Qaras Water Supply",
       "implementing_agency": "Northern Water Works Development Agency",
       "agency_id": "northern-water-works-development-agency",
       "plan_date": "2026-10-09",
@@ -64,5 +64,31 @@
       "process_status": "Pending Implementation"
     }
   ],
-  "read_through": "2026-10-23"
+  "read_through": "2026-10-23",
+  "plans_read": [
+    {
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "activities": 9
+    },
+    {
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "activities": 8
+    },
+    {
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "activities": 22
+    },
+    {
+      "implementing_agency": "Ministry of Water and Irrigation",
+      "agency_id": "ministry-of-water-and-irrigation",
+      "plan_date": "2020-04-30",
+      "activities": 7
+    }
+  ]
 }

@@ -102,7 +102,9 @@
   "outcome": {
     "outcome": "ranked_lower",
     "decided_on": "2026-10-23T11:40:16Z",
-    "reviewer_name": "Daniel Okafor",
+    "actor": {
+      "who": "you"
+    },
     "reason": "The paragraph is about estimates in general. Questions about these contracts need paragraph 55.",
     "agreeing": null
   },

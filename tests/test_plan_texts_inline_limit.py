@@ -31,8 +31,8 @@ FETCHED = dt.datetime(2026, 10, 28, 8, 0, tzinfo=dt.UTC)
 PLAN_TEXT_TABLES = ("document_texts", "document_pages", "layout_pages")  # in bronze
 TABLES = ("bronze.document_lists", "bronze.document_texts", "bronze.document_pages", "bronze.layout_pages",
           "silver.plan_versions", "silver.plan_listings", "silver.plan_rows", "silver.plan_steps",
-          "silver.plan_step_delays", "silver.plan_data_notes", "ops.skipped_documents", "ops.parse_runs",
-          "ops.parse_failures", "ops.data_readiness")
+          "silver.plan_step_delays", "silver.plan_data_notes", "silver.notices", "ops.skipped_documents",
+          "ops.parse_runs", "ops.parse_failures", "ops.data_readiness")
 
 
 def document_id(number: int) -> str:
@@ -178,10 +178,10 @@ def test_a_read_past_the_limit_asks_for_one_plan_version_at_a_time_and_no_statem
 
 
 def with_limit(limit: int) -> config.Thresholds:
-    """config/thresholds.toml with ingestion.inline_result_bytes set to limit."""
+    """config/thresholds.toml with warehouse.statement_result_bytes set to limit."""
     thresholds = config.load_thresholds()
-    return config.Thresholds(thresholds.path, {**thresholds.values, "ingestion": {
-        **thresholds.values["ingestion"], "inline_result_bytes": limit}})
+    return config.Thresholds(thresholds.path, {**thresholds.values, "warehouse": {
+        **thresholds.values["warehouse"], "statement_result_bytes": limit}})
 
 
 def test_the_rewrite_reads_only_the_versions_silver_holds_through_the_same_read(bronze):
@@ -260,7 +260,7 @@ def test_a_plan_version_whose_own_pages_pass_the_limit_is_left_out_and_named(bro
     assert len(versions) == VERSIONS - 1 and long not in {version.document_id for version in versions}
     assert noting.largest_on_plan_texts() <= SMALL_LIMIT
     assert long not in {value for _, params, _, _ in noting.reads("document_pages", "text") for value in params.values()}
-    assert f"document {long} of {PROJECT}" in caplog.text and "ingestion.inline_result_bytes" in caplog.text
+    assert f"document {long} of {PROJECT}" in caplog.text and "warehouse.statement_result_bytes" in caplog.text
 
 
 def step_tables(number: int) -> str:

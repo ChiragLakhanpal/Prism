@@ -14,7 +14,7 @@ For one project, a run:
    series per implementing agency, and every Activity Reference No. its text lists. These become
    silver.plan_versions and silver.plan_listings. It asks bronze for the texts of the versions it reads alone, by
    document id, in statements whose results fit the SQL warehouse's inline limit (config/thresholds.toml,
-   ingestion.inline_result_bytes): one statement when they fit together, one version a statement when they do not
+   warehouse.statement_result_bytes): one statement when they fit together, one version a statement when they do not
    (ticket 123). The rewrite (rewrite) reads through the same place.
 3. Decides each activity's first listing, the earliest version read that lists it, which holds its
    first published planned dates. The first listing is confirmed only when every plan the list
@@ -60,8 +60,8 @@ from importlib import resources
 from strata.config import ConfigError, Thresholds, load_sources, load_thresholds
 from strata.lakehouse import clean, contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
-from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
-from strata.reader import step
+from strata.lakehouse.engine import ESCAPED, Engine, RowTooLarge, WarehouseEngine, json_bytes
+from strata.reader import repair, step
 from strata.reader.documents import Documents, NotFetched, StopReading, list_url
 from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, https, tables_from_json, tables_to_json
 
@@ -441,9 +441,6 @@ def _published_order(version: Version) -> tuple:
 # What a row of a read holds beside its long text, in bytes: its document id, page number, hash and dates, and the
 # quotes and commas the warehouse's JSON_ARRAY result writes around them.
 ROW_BYTES = 256
-# The characters JSON writes with a backslash: the control characters, the quote mark and the backslash itself. Each
-# takes two to six bytes in the warehouse's result where the text holds one.
-ESCAPED = "".join(chr(code) for code in range(1, 32)) + '"\\'
 
 
 @dataclass(frozen=True)
@@ -470,8 +467,9 @@ PARSED_PAGES = TextRead("strata.bronze.layout_pages",
 
 
 def inline_result_bytes(thresholds: Thresholds) -> int:
-    """The most bytes one statement's result may hold (config/thresholds.toml, ingestion.inline_result_bytes)."""
-    return int(thresholds.value("ingestion.inline_result_bytes"))
+    """The most bytes one statement's result may hold (config/thresholds.toml, warehouse.statement_result_bytes), the
+    limit the SQL warehouse keeps and every read within it shares (strata.lakehouse.engine.read_in_parts)."""
+    return int(thresholds.value("warehouse.statement_result_bytes"))
 
 
 def _document_marks(document_ids: list[str]) -> tuple[str, dict[str, str]]:
@@ -499,8 +497,7 @@ def read_plans(engine: Engine, read: TextRead, project_id: str, document_ids: li
     warehouse refused it."""
     text = read.text
     sizes = {str(document_id): int(size) for document_id, size in engine.run(
-        f"SELECT document_id, sum(5 * octet_length(encode({text}, 'UTF-8')) - 4 * length({text}) "  # sql-lint: names only
-        f"+ 5 * (length({text}) - length(translate({text}, :escaped, ''))) + :row_bytes) AS bytes FROM {read.table} "
+        f"SELECT document_id, sum({json_bytes(text)} + :row_bytes) AS bytes FROM {read.table} "  # sql-lint: names only
         "WHERE project_id = :project_id GROUP BY document_id",
         {"project_id": project_id, "escaped": ESCAPED, "row_bytes": ROW_BYTES}).rows}
     held = [document_id for document_id in dict.fromkeys(document_ids) if document_id in sizes]
@@ -508,7 +505,7 @@ def read_plans(engine: Engine, read: TextRead, project_id: str, document_ids: li
     for document_id in too_large:
         log.warning("I left document %s of %s out of my read of %s: its rows can take up to %s bytes, and the SQL "
                     "warehouse returns at most %s in one statement (config/thresholds.toml, "
-                    "ingestion.inline_result_bytes). %s", document_id, project_id, read.table,
+                    "warehouse.statement_result_bytes). %s", document_id, project_id, read.table,
                     f"{sizes[document_id]:,}", f"{limit:,}", read.left_out)
     wanted = [document_id for document_id in held if document_id not in too_large]
     parts = [wanted] if sum(sizes[document_id] for document_id in wanted) <= limit else [[one] for one in wanted]
@@ -763,6 +760,20 @@ class RowsRead:
     settled: tuple[tuple[str, str, str], ...] = ()  # (document_id, as the parser read it, as the text writes it)
 
 
+# What the repair kept beside each row (strata.reader.repair; ticket 131): the reference and description as read, why
+# the reference differs or is flagged, the record that carries it, and each split word joined.
+REPAIR_COLUMNS = ("activity_reference_no_as_read", "reference_repair", "reference_carried_by", "description_as_read",
+                  "description_joins")
+
+
+def project_notices(engine: Engine, project_id: str) -> list[repair.Notice]:
+    """The project's notices as silver holds them, each with its reference and title: the repair's dictionary. The
+    nightly job's bronze_to_gold fills strata.silver.notices before parse_and_embed reads the plans, and a rewrite
+    reads it as it stands (ticket 131)."""
+    return [repair.Notice(str(notice_id), reference, title)
+            for notice_id, reference, title in engine.run(_sql("notices.sql"), {"project_id": project_id}).rows]
+
+
 def plain_words(table: Table) -> Table:
     """A parsed table with its title and every cell in plain words (strata.lakehouse.clean.plain_text), the one place
     the plan reader takes markup out of what the layout parser wrote. On the workspace, ai_parse_document wrote each
@@ -790,6 +801,7 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
         engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
                    {"project_id": project_id})
     rows, steps, read, without_reference, unknown, settled = [], [], set(), 0, set(), []
+    readings: list[tuple[Version, step.Reading, str]] = []
     for version in versions:
         pages = version.table_pages
         found = [parsed.get((version.document_id, number)) for number, _ in pages]
@@ -797,7 +809,7 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
             continue
         reading = step.plan_rows([(number, [plain_words(table) for table in tables_from_json(page[2])])
                                   for (number, _), page in zip(pages, found)], version.listings, misread_characters)
-        parser = found[0][1]
+        readings.append((version, reading, found[0][1]))
         read.add(version.document_id)
         without_reference += reading.rows_without_reference
         unknown |= reading.unknown_columns
@@ -805,15 +817,22 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
             log.warning("The layout parser read %s in document %s of %s, which the plan's text writes as %s, so I "
                         "wrote %s.", misread, version.document_id, project_id, written, written)
             settled.append((version.document_id, misread, written))
+    # Each row repaired after it is read and before it is written, with the project's notices and its other plan
+    # versions as the dictionary (strata.reader.repair; ticket 131).
+    repair.plan([repair.VersionRows(version.document_id, version.listings, reading.rows)
+                 for version, reading, _ in readings], project_notices(engine, project_id))
+    for version, reading, parser in readings:
         for row in reading.rows:
+            joins = json.dumps([join.as_dict() for join in row.description_joins]) if row.description_joins else None
             rows.append((version.document_id, project_id, row.section, row.activity_reference_no,
                          row.description or None, *(row.fields.get(column) for column in ROW_COLUMNS),
-                         row.pdf_page, parser, version.public_from))
+                         row.activity_reference_no_as_read, row.reference_repair, row.reference_carried_by,
+                         row.description_as_read or None, joins, row.pdf_page, parser, version.public_from))
             steps += [(version.document_id, project_id, row.activity_reference_no, s.step, s.step_order,
                        s.planned_on, s.actual_on, version.public_from) for s in row.steps]
     insert(engine, "strata.silver.plan_rows",
            ("document_id", "project_id", "section", "activity_reference_no", "description", *ROW_COLUMNS,
-            "pdf_page", "parser", "public_from"), rows)
+            *REPAIR_COLUMNS, "pdf_page", "parser", "public_from"), rows)
     insert(engine, "strata.silver.plan_steps",
            ("document_id", "project_id", "activity_reference_no", "step", "step_order", "planned_on", "actual_on",
             "public_from"), steps)

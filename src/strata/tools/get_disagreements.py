@@ -23,7 +23,14 @@ A subject is a project, with its packages, or one package by its STEP reference.
   ratings in order and its runs of equal ratings. A trajectory is never a disagreement.
 - rejected: how many assertions read from the project's reports the run left out, by reason, such as a
   quote that was not word for word on its cited page.
-The registry returns the trajectories and the rejected count as one more citable record, the summary.
+- groups and counts (ticket 136): the disagreements about one fact, one group each. Pairs about the same subject,
+  under the same ladder rule and attribute, that share one report (the group's anchor) on their earlier side or on
+  their later side are one group: the PAD's overall risk against each ISR's, or ISRs 1 to 11 against the ICR's
+  progress towards the PDO. A group gives its anchor, its count of pairs, their ids, the documents on each side and
+  the side every pair leans on; counts says how many groups over how many disagreements. The rows keep every pair,
+  for a table.
+The registry returns the trajectories, the rejected count, the groups and their counts as one more citable record,
+the summary.
 
 A report re-issued under the same number replaces its earlier version from the day the re-issue became
 public: a disagreement with a replaced side is left out of current answers, and the coverage line counts it.
@@ -175,6 +182,78 @@ def _row(found: dict, sides: tuple[Assertion, Assertion], passages: dict[str, di
     }
 
 
+def _document(side: dict) -> dict:
+    return {key: side[key] for key in ("document_id", "document_type", "sequence", "made_at", "evidence_tier")}
+
+
+SIDES = ("earlier", "later")
+
+
+def lean(rows: list[dict]) -> str | None:
+    """The side every pair of a group leans on, earlier or later, or None when the pairs lean different ways or the
+    ladder ranked both sides the same."""
+    leaned = {"earlier" if row["lean_assertion_id"] == row["sides"][0]["assertion_id"] else "later"
+              if row["lean_assertion_id"] else None for row in rows}
+    return leaned.pop() if len(leaned) == 1 else None
+
+
+def written(documents: list[dict]) -> list[dict]:
+    """Reports in the order they were written. A record about a package has no document id, so it sorts as empty."""
+    return sorted(documents, key=lambda one: (one["made_at"] or "", one["document_id"] or ""))
+
+
+def _stars(members: list[dict]) -> list[tuple[tuple[str, str], list[dict]]]:
+    """The pairs about one fact as stars: the report on one side that the most pairs share is a group's anchor, with
+    every pair it is in; those pairs leave, and the next anchor is chosen from the rest. On a tie the earlier side
+    wins, then the report of the first pair. So no report is ever on both sides of one group, as it would be if
+    pairs that share a report were joined in a chain (code review round 1, F1)."""
+    left = list(members)
+    out = []
+    while left:
+        shared: dict[tuple[str, str], list[dict]] = {}
+        for row in left:
+            for side, held in zip(SIDES, row["sides"]):
+                shared.setdefault((side, held["document_id"]), []).append(row)
+        anchor, together = max(shared.items(), key=lambda item: (len(item[1]), item[0][0] == "earlier"))
+        taken = {id(row) for row in together}
+        left = [row for row in left if id(row) not in taken]
+        out.append((anchor, together))
+    return out
+
+
+def groups(rows: list[dict]) -> list[dict]:
+    """The disagreements about one fact, as one group each (ticket 136): pairs about the same subject, under the same
+    ladder rule and attribute, that share one report, their anchor, on their earlier side or on their later side. The
+    PAD's overall risk against each ISR's is one group, and so are ISRs 1 to 11 against the ICR's progress towards the
+    PDO. Each group gives its anchor, its count of pairs, their ids, the documents on each side in the order written,
+    and the side every pair leans on, if one. The rows keep every pair; a group adds no figure the rows do not hold."""
+    by_fact: dict[tuple, list[dict]] = {}
+    for row in rows:
+        by_fact.setdefault((row["subject_kind"], row["subject_id"], row["rule_id"], row["attribute"]), []).append(row)
+    found = []
+    for members in by_fact.values():
+        order = {id(row): at for at, row in enumerate(members)}
+        for (side, document_id), together in sorted(_stars(members), key=lambda star: order[id(star[1][0])]):
+            sides: dict[str, dict[str, dict]] = {"earlier": {}, "later": {}}
+            for row in together:
+                for name, held in zip(SIDES, row["sides"]):
+                    sides[name].setdefault(held["document_id"], _document(held))
+            head = together[0]
+            found.append({"subject_kind": head["subject_kind"], "subject_id": head["subject_id"],
+                          "attribute": head["attribute"], "rule_id": head["rule_id"],
+                          "anchor": {"side": side, "document_id": document_id}, "count": len(together),
+                          "disagreement_ids": [row["disagreement_id"] for row in together],
+                          "earlier": written(list(sides["earlier"].values())),
+                          "later": written(list(sides["later"].values())), "lean": lean(together)})
+    return found
+
+
+def _grouped(rows: list[dict]) -> dict:
+    """The groups of the rows and their counts: how many facts the reports disagree about, over how many pairs."""
+    found = groups(rows)
+    return {"groups": found, "counts": {"groups": len(found), "disagreements": len(rows)}}
+
+
 def trajectories(held: list[Assertion]) -> list[dict]:
     """Each series of ratings of successive periods from one tier of source, such as the ISRs, with at least two
     ratings and no two of its periods overlapping, in date order, with its runs of equal ratings."""
@@ -219,11 +298,29 @@ def reads(project_id: str, as_of: dt.date, view: str) -> list[tuple[str, dict]]:
             *withheld_reads(view, "disagreements_on_active_projects", project_id, as_of)]
 
 
+def replaced(call: Call, project_id: str, disagreement_id: str) -> dict | None:
+    """One disagreement about the project, by its id, that a later version replaced on or before the as-of date, built
+    as a current row is, with replaced_on saying when. Current answers leave it out, but a check of the replaced plan
+    still cites it (ticket 132's review round 1, B1), so the drawer opens it with both sides. None when no such
+    disagreement was public on the date (both sides, ADR 0002) or no later version had replaced it by then."""
+    common = {"subject_id": project_id, "package": "package"}
+    found = next((row for row in _rows(call, "disagreements.sql", as_of=call.as_of, **common)
+                  if row["disagreement_id"] == disagreement_id), None)
+    day = typed("replaced_on", found["replaced_on"]) if found else None
+    if day is None or day > call.as_of:
+        return None
+    held = _rows(call, "assertions.sql", as_of=call.as_of, passages=f"{PASSAGES}:", **common)
+    by_id = {row["assertion_id"]: from_row(row) for row in held}
+    passages = {row["assertion_id"]: _passage(row) for row in held}
+    sides = (by_id[found["first_assertion_id"]], by_id[found["second_assertion_id"]])
+    return {**_row(found, sides, passages), "replaced_on": _iso(day)}
+
+
 def get_disagreements(call: Call, subject_id: str, attribute: str | None = None) -> dict:
     """The disagreements and trajectories about the subject, as of call.as_of."""
     subject_id = subject_id.strip()
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "trajectories": [],
-             "rejected": {"count": 0, "reasons": []}}
+             "rejected": {"count": 0, "reasons": []}, **_grouped([])}
     # A project ID or a STEP reference in any case, named from here on as Strata holds it (ticket 20's verification
     # round 3, V2).
     held = _rows(call, "subject.sql", project="project", package="package", subject_id=subject_id)
@@ -266,7 +363,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
         # ratings of successive reports are records, not disagreements, so the trajectories stay.
         return {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
                 "abstention": {"reason": WITHHELD, "subject_id": subject_id}, "subject": subject,
-                "trajectories": trajectories(current), "rejected": rejected}
+                "trajectories": trajectories(current), "rejected": rejected, **_grouped([])}
     return {"rows": rows, "coverage": {"matched": len(found), "used": len(rows), "not_used": not_used},
             "abstention": abstention, "subject": subject, "trajectories": [] if abstention else trajectories(current),
-            "rejected": rejected}
+            "rejected": rejected, **_grouped(rows)}

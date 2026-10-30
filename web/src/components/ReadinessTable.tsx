@@ -35,7 +35,8 @@ export type ReadinessColumn = {
   // which the cards repeat beside each value.
   label: ReactNode;
   name: string;
-  about: ReactNode;
+  // A short definition under the head; a head whose window holds the definition has none (ticket 126).
+  about?: ReactNode;
   numeric?: boolean;
   // The column's share of the table, as a width class such as "w-1/5".
   width?: string;
@@ -104,12 +105,12 @@ const CELL = "px-4 py-3 wrap-anywhere text-ink";
 const NUMERIC_HEAD = "text-right [&_[data-term]]:text-right";
 const NUMERIC_CELL = "text-right [&>*]:items-end [&_[data-num]]:text-right";
 
-function Heading({ label, about }: { label: ReactNode; about: ReactNode }) {
+function Heading({ label, about }: { label: ReactNode; about?: ReactNode }) {
   return (
     <>
       <span className="block">{label}</span>
       {/* Balanced, so a short definition never leaves one word on a line of its own (design review r2 P7). */}
-      <span className="block text-caption font-normal text-balance text-ink-muted">{about}</span>
+      {about && <span className="block text-caption font-normal text-balance text-ink-muted">{about}</span>}
     </>
   );
 }
@@ -161,14 +162,12 @@ export function ReadinessTable({
   // the panel is the frame.
   const framed = closed !== undefined;
 
+  // The count line shows only when a filter hides rows (ticket 126), so while the rows load it holds no place.
   const countLine = lines ? (
     <p className="text-caption text-pretty text-ink-muted" data-table-lines data-numbers>
       {lines}
     </p>
-  ) : (
-    // The count line shows only with the rows; its skeleton holds its place until then.
-    loading && <SkeletonLine width="w-1/4" className="text-caption" />
-  );
+  ) : null;
   // While the rows are cards, each column's short definition shows once, here, rather than in every card (DESIGN.md
   // section 5, Tables: a column head's definition ends the count line's row once while the rows are cards; ticket 104).
   // Screen readers hear it in each card's term instead.

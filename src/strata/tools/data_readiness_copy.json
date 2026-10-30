@@ -18,8 +18,6 @@
   "filteredOne": "One source is behind {fromNoun}.",
   "filteredFew": "{SourceCount} sources are behind {fromNoun}.",
   "filteredMany": "The {sourceCount} sources below are behind {fromNoun}.",
-  "moreOne": "I list one more gap under Sources.",
-  "more": "I list {n} more gaps under Sources.",
   "nothingHolds": "Nothing I measured holds it back.",
   "gap": {
     "published": "the {sourceNoun} for fiscal {fromYear} to {toYear}, which no World Bank dataset publishes",
@@ -38,6 +36,7 @@
     "readWell": "the {missing} of {total} {noun} I couldn't read without errors",
     "late": "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
     "lateOneDay": "the {sourceNoun}, last fetched {date}, one day behind their {schedule} update",
+    "paused": "the {sourceNoun} as of {date}, with the refresh paused since {pausedDate}",
     "declared": "the {sourceNoun}, which cover {note}",
     "noRows": "the {sourceNoun}, of which I hold no rows yet"
   },
@@ -58,6 +57,7 @@
     "readWell": "I couldn't read {missing} of {total} {noun} without errors.",
     "late": "I last fetched the {sourceNoun} on {date}, {days} days behind their {schedule} update.",
     "lateOneDay": "I last fetched the {sourceNoun} on {date}, one day behind their {schedule} update.",
+    "paused": "Refresh paused since {pausedDate}; {sourceNoun} as of {date}.",
     "declared": "The {sourceNoun} cover {note}.",
     "noRows": "I hold no rows of the {sourceNoun} yet."
   },

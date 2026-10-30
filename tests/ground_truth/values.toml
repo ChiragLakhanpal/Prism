@@ -122,6 +122,16 @@ quote = "2013-11-06T05:00:00Z"
 record = "api/documents/P130164.json"
 at = "documents.D18381488.disclosure_date"
 
+# Ticket 137: the newest Procurement Plan P130164's documents list names, older than the awards data since FY2020
+# (July 1, 2019), so its packages' comparables run from that start to the as-of date (tests/test_comparables_period.py).
+[[value]]
+id = "plan-p130164-newest-date"
+says = "P130164's newest Procurement Plan, document 30152361, is dated June 20, 2018."
+value = 2018-06-20
+quote = "2018-06-20T04:00:00Z"
+record = "api/documents/P130164.json"
+at = "documents.D30152361.docdt"
+
 [[value]]
 id = "project-p130164-name"
 says = "The projects API names P130164 Rajasthan Road Sector Modernization Project."
@@ -562,6 +572,17 @@ project = "P130164"
 date = 2013-10-01
 paragraph = 49
 pdf_page = 26
+
+[[value]]
+id = "pad-risk-table-overall"
+says = "The P130164 PAD's risk table (Annex 4, the ORAF) rates the Overall Implementation Risk Substantial in its last row, on PDF page 70. The layout parser reads the row as one table cell, 18381488/v1/table65.8, whose words read \"Rating: Substantial\" (ticket 136)."
+value = "Substantial"
+quote = "Overall Implementation Risk: Rating Substantial"
+document = "documents/P130164/pad-2013-10-01"
+document_type = "Project Appraisal Document"
+project = "P130164"
+date = 2013-10-01
+pdf_page = 70
 
 [[value]]
 id = "isr-1-pdo-indicators"

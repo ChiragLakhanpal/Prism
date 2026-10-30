@@ -4,6 +4,7 @@
 // Procurement Plans; the words are the 10 design brief's.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
+import { copy } from "../src/copy";
 import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
 
 type Answer = { status?: number; body: string };
@@ -65,9 +66,8 @@ test("All projects shows 20 projects a page with the range it shows, sets projec
   const main = page.getByRole("main");
 
   await expect(main.getByRole("heading", { level: 1 })).toHaveText("Projects");
-  await expect(
-    main.getByText("Find a World Bank-financed project by name, project ID or country, then open it to see its plans and documents."),
-  ).toBeVisible();
+  // No purpose under the title since ticket 126.
+  await expect(main.getByText("Find a World Bank-financed project by name")).toHaveCount(0);
   // Ticket 99: one panel named "All projects" holds the search, the count line, the table, the pages and the source in
   // its foot strip, in that order (DESIGN.md section 5, Task zone and Foot strip).
   const panel = listZone(page);
@@ -152,12 +152,16 @@ test("the list search filters on the server as you type, by name, project ID or 
   });
   const main = page.getByRole("main");
   const field = main.getByRole("searchbox", { name: "Search projects" });
-  await expect(field).toHaveAccessibleDescription("Type part of a project's name, its project ID or its country.");
+  // Ticket 126: the label says what the field searches, so it has no hint under it.
+  await expect(field).toHaveAccessibleDescription("");
   await expect(field).not.toHaveAttribute("placeholder");
 
   await field.pressSequentially("india");
 
+  // A search is a filter, so its count line stays when the one match shows (ticket 126, the inventory's pattern 2), and
+  // the polite status says it too.
   await expect(main.locator("[data-page-lead]")).toHaveText("Showing the one project.");
+  await expect(page.getByRole("status").filter({ hasText: "Showing the one project." })).toHaveCount(1);
   await expect(main.locator("[data-table-view=table] tbody tr")).toHaveCount(1);
   await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P130164" })).toBeVisible();
   // One request for the word, sent once typing stopped, and the address keeps the search in place.
@@ -311,7 +315,8 @@ test("a project's Procurement tab shows each agency's plan versions newest first
   expect(await size(main.getByRole("heading", { level: 2, name: "Procurement Plans" }))).toBe("18px");
   expect(await size(nwwda.getByRole("heading", { level: 3 }))).toBe("16px");
   expect(await size(main.locator("[data-other-agencies]").getByRole("heading", { level: 3 }))).toBe("16px");
-  await expect(nwwda.getByText("Showing all five versions.")).toBeVisible();
+  // Every version shows, so there is no count line (ticket 126).
+  await expect(nwwda.getByText(/^Showing /)).toHaveCount(0);
   await expect(nwwda.locator("[data-table-view=table] tbody th")).toHaveText([
     "Plan of Oct 9, 2026 Latest",
     "Plan of Mar 5, 2026",
@@ -320,7 +325,7 @@ test("a project's Procurement tab shows each agency's plan versions newest first
     "Plan of Dec 7, 2020",
   ]);
   await expect(nwwda.locator("[data-table-view=table] tbody tr").first().locator("td")).toHaveText(["Oct 9, 2026", "9"]);
-  await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText("Showing the one version.")).toBeVisible();
+  await expect(main.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd]").getByText(/^Showing /)).toHaveCount(0);
   // One source line, under the last agency's table, not the same line under each (ticket 58).
   const sources = main.locator("[data-agency] [data-source]");
   await expect(sources).toHaveCount(1);
@@ -471,13 +476,75 @@ test("a project's page says when the data service didn't answer, and when your a
   expect(await axe(page), "permission at 390 px").toEqual([]);
 });
 
-test("an agency's count line states the route's count of its versions", async ({ page }) => {
+test("an agency's count line states the route's count of its versions while some are folded", async ({ page }) => {
   const body = JSON.parse(await recorded("project-p156634.json"));
   body.agencies[0].version_count = 7;
-  body.agencies[0].shown_count = 7;
+  body.agencies[0].shown_count = 5;
   await open(page, "/projects/P156634/procurement", { ...(await p156634()), "/api/projects/P156634": { body: JSON.stringify(body) } });
 
-  await expect(page.locator("[data-agency=northern-water-works-development-agency]").getByText("Showing all seven versions.")).toBeVisible();
+  // The route's counts, not the rows on screen; with every version shown, there is no line (ticket 126).
+  await expect(page.locator("[data-agency=northern-water-works-development-agency]").getByText("Showing 5 of 7 versions.")).toBeVisible();
+});
+
+// Ticket 133: P130164's plan writes its agency "Public Works Department" and its record "Rajasthan State Public Works
+// Department". The server's answers on a copy of the fixture that gives P130164 a plan (tests/india_agency.py).
+test("an agency the plan and the record write two ways is one heading under its longest name, with the other in its window", async ({ page }) => {
+  await open(page, "/projects/P130164/procurement", {
+    "/api/projects/P130164": { body: await recorded("project-p130164-one-agency.json") },
+    "/api/projects/P130164/packages": { body: await recorded("packages-p130164-one-agency.json") },
+  });
+  await expect(page.locator("section[data-agency]")).toHaveCount(1);
+  const agency = page.locator("section[data-agency=public-works-department]");
+  const heading = agency.getByRole("heading", { level: 3 });
+  await expect(heading).toHaveText("Rajasthan State Public Works Department");
+  // The plan's versions sit under the one heading, and link to its plan check by the agency's one id.
+  await expect(agency.getByRole("link", { name: "Plan of Aug 17, 2026" })).toHaveAttribute("href", "/projects/P130164/procurement/public-works-department/2026-08-17");
+  await expect(agency.getByText(copy.procurement.agencyEmpty)).toHaveCount(0);
+
+  const opener = heading.getByRole("button", { name: "Rajasthan State Public Works Department" });
+  await opener.click();
+  const window = page.getByRole("dialog", { name: "Rajasthan State Public Works Department" });
+  await expect(window).toContainText("Also written as Public Works Department.");
+  expect(await axe(page), "the window open").toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(window).toHaveCount(0);
+  await expect(opener).toBeFocused();
+});
+
+// P127203 on the paid workspace on October 29, 2026 (ticket 134): one plan, of September 17, 2019, read with no activities.
+async function onePlanRead(plansUnread: number, read: boolean) {
+  const body = JSON.parse(await recorded("project-p156634.json"));
+  const kilifi = body.agencies.find((agency: { agency_id: string }) => agency.agency_id === "kilifi-mariakani-water-and-sewerage-company-ltd");
+  kilifi.versions = [{ ...kilifi.versions[0], plan_date: "2019-09-17", disclosed_on: "2019-09-17", read, activities: read ? 0 : null }];
+  body.agencies = [kilifi];
+  body.plans_unread = plansUnread;
+  const packages = JSON.parse(await recorded("packages-p156634-no-match.json"));
+  packages.query = "";
+  packages.plans_read = read ? [{ implementing_agency: kilifi.implementing_agency, agency_id: kilifi.agency_id, plan_date: "2019-09-17", activities: 0 }] : [];
+  return {
+    "/api/projects/P156634": { body: JSON.stringify(body) },
+    "/api/projects/P156634/summary": { body: await recorded("summary-p156634.json") },
+    "/api/projects/P156634/packages": { body: JSON.stringify(packages) },
+  };
+}
+
+test("a plan I read with no activities says so, and the haven't-read line shows only when I read no plan", async ({ page }) => {
+  await open(page, "/projects/P156634/procurement", await onePlanRead(0, true));
+  const packages = page.locator("[data-packages=ready]");
+  await expect(packages).toContainText("I read the plan of September 17, 2019 and found no activities in it.");
+  await expect(packages).not.toContainText("I haven't read");
+  // With no other plan listed, the agency's sentence links nowhere.
+  const sentence = page.locator("[data-agency] [data-changes-sentence]");
+  await expect(sentence).toHaveText("The only plan I have read from this agency is the plan of September 17, 2019, so I can't compare it with an earlier version.");
+  await expect(sentence.getByRole("link")).toHaveCount(0);
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await open(page, "/projects/P156634/procurement", await onePlanRead(4, false));
+  await expect(page.locator("[data-packages=ready]")).toContainText("I haven't read a Procurement Plan for this project yet, so I can't list its packages.");
+  await expect(page.locator("[data-packages=ready]")).not.toContainText("found no activities");
+  // A plan only listed is no plan I have read, so the agency has no sentence about it; its row says Not read.
+  await expect(page.locator("[data-agency] [data-changes-sentence]")).toHaveCount(0);
+  await expect(page.getByRole("table", { name: /^Kilifi/ }).getByText("Not read", { exact: true })).toBeVisible();
 });
 
 test("a project with no plans says so, and a project with no record is not found", async ({ page }) => {

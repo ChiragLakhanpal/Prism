@@ -20,6 +20,7 @@ import { useStore } from "../lib/store";
 import { allows, appliedView } from "../lib/view";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
+import { Feedforward } from "./Feedforward";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { TaskZone, ZoneBlock } from "./TaskZone";
@@ -160,17 +161,21 @@ export function BaselinePanel({
   const idle = mode.kind === "idle" || mode.kind === "undone" || mode.kind === "busy" || mode.kind === "failed" || mode.kind === "beaten";
   if (staff && idle) {
     if (!baseline) {
+      // What saving does next, "Later checks of this agency's plans then also measure delay from its dates.", is the
+      // button's tooltip and description (ticket 126, pattern 5), not a third sentence in the row.
       controls = (
-        <Button
-          variant="secondary"
-          loading={busy === "save" || busy === "undo"}
-          busyLabel={words.saving}
-          onClick={() =>
-            run("save", () => save(planDate), unlessBeaten(() => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) })))
-          }
-        >
-          {words.save}
-        </Button>
+        <Feedforward sentence={words.saveNext}>
+          <Button
+            variant="secondary"
+            loading={busy === "save" || busy === "undo"}
+            busyLabel={words.saving}
+            onClick={() =>
+              run("save", () => save(planDate), unlessBeaten(() => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) })))
+            }
+          >
+            {words.save}
+          </Button>
+        </Feedforward>
       );
     } else if (isThis) {
       controls = (
@@ -208,7 +213,8 @@ export function BaselinePanel({
   }
 
   return (
-    <TaskZone name={words.label} sectionKey="baseline" marks={{ "data-baseline": mode.kind === "idle" ? (baseline ? (isThis ? "this" : "another") : "none") : mode.kind }}>
+    // Its heading's id is the address "How I checked" links to with "Go to Baseline for delay" (ticket 130).
+    <TaskZone name={words.label} headingId="baseline" sectionKey="baseline" marks={{ "data-baseline": mode.kind === "idle" ? (baseline ? (isThis ? "this" : "another") : "none") : mode.kind }}>
       <ZoneBlock>
       {/* A sentence on a wide page keeps to the prose measure (DESIGN.md section 4, Page layouts; ticket 100's design
           review, item 8). */}

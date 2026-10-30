@@ -16,20 +16,20 @@ import { EmptyState } from "../components/Card";
 import { TextLink } from "../components/TextLink";
 import { EightColumns } from "../components/EightColumns";
 import { TaskZone } from "../components/TaskZone";
-import { Fill, Unbroken } from "../components/Fill";
+import { Fill } from "../components/Fill";
+import { Feedforward } from "../components/Feedforward";
 import { Tag } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
 import { PageAlert } from "../components/PageAlert";
 import { BaselinePanel, useBaselineView } from "../components/BaselinePanel";
 import { ChangeTables, changedRows } from "../components/ChangeTables";
-import { Num } from "../components/Num";
-import { wholeDate } from "../components/NumFrom";
+import { HowIChecked } from "../components/HowIChecked";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, type CheckedPlan } from "../components/PlanCheck";
 import { ProjectIdText } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonWords } from "../components/Skeleton";
 import { copy } from "../copy";
 import { ApiError, getJson, type CheckPlanResult, type PlanChanges } from "../lib/api";
-import { changed, changeList } from "../lib/changes";
+import { changed } from "../lib/changes";
 import { draftHref, newKey, startWriting, stopped, writingHref, type Existing, type ExistingDraft } from "../lib/drafts";
 import { ProjectPaperPanel } from "../components/ProjectPaperPanel";
 import { PROJECT_PAPER_STOPPED } from "../lib/drafts";
@@ -117,20 +117,6 @@ function usePlanChanges(pid: string, agencyId: string, planDate: string | null, 
   };
 }
 
-// The change line when only the comparison failed: it says so and links the section below, which holds
-// the alert and Try again.
-export function ChangeLineError() {
-  const line = words.changes;
-  return (
-    <p className="mt-2 text-body text-ink" data-change-line>
-      {line.error}{" "}
-      <TextLink href="#changes" className="whitespace-nowrap">
-        {line.errorLink}
-      </TextLink>
-    </p>
-  );
-}
-
 // The change section when only the comparison failed: the error takes the zone body's place under its heading (the
 // 21 brief, section 5.4; DESIGN.md section 5, Task zone's error state), with the request's reference when the server
 // gave one.
@@ -154,51 +140,6 @@ export function ChangesError({
       error={<LoadError error={error} message={copy.changes.error} permission={copy.changes.error} onRetry={onRetry} retrying={false} attempt={attempt} />}
       marks={{ "data-changes": "error" }}
     />
-  );
-}
-
-// The change line under the method sentence, with its link to the change list below (#changes).
-function ChangeLine({ changes, onSee }: { changes: PlanChanges; onSee: () => void }) {
-  const line = words.changes;
-  const prev = changes.previous ? <Num date={changes.previous.plan_date} /> : null;
-  let text: ReactNode;
-  let link = false;
-  if (changes.state === "earliest") text = line.earliest;
-  else if (changes.state === "previous_not_read") text = <Fill template={line.prevUnread} slots={{ prev_date: prev }} />;
-  else if (!changed(changes.counts)) text = <Fill template={line.same} slots={{ prev_date: prev }} />;
-  else {
-    text = <Fill template={line.line} slots={{ prev_date: prev, change_list: <Unbroken text={changeList(changes.counts!)} /> }} />;
-    link = true;
-  }
-  return (
-    <p className="mt-2 text-body text-ink" data-change-line>
-      {text}
-      {link && (
-        <>
-          {" "}
-          <TextLink href="#changes" className="whitespace-nowrap" onClick={onSee}>
-            {line.link}
-          </TextLink>
-        </>
-      )}
-    </p>
-  );
-}
-
-// While what changed has not answered, its line's place: a typical change line from the copy file's own template,
-// "Compared with the plan of March 5, 2026, this version re-estimated two activities. See what changed", held as
-// skeleton words, unseen and unheard, so the activities panel starts where it will (ticket 59; the critique of round 1).
-// An agency's plan almost always has a change line: one that answers with none moves the panel up by its lines.
-export function HeldChangeLine() {
-  const line = words.changes;
-  const typical = `${fill(line.line, {
-    prev_date: wholeDate(formatDate("2026-03-05", { style: "sentence" })),
-    change_list: changeList({ added: 0, dropped: 0, redated: 0, reestimated: 2 }),
-  })} ${line.link}`;
-  return (
-    <p className="mt-2 text-body" data-change-line-held>
-      <SkeletonWords text={typical} />
-    </p>
   );
 }
 
@@ -349,29 +290,15 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           }
           plan={<SkeletonLine width="w-60" />}
           pill={<Skeleton className="h-[30px] w-[181px] rounded-pill" />}
-          // The draft action's places, so the rows stay put when the check arrives (ticket 35). Its caption is the
-          // copy file's own sentence, held as skeleton words, so it takes the lines it will (ticket 59).
+          // The draft action's place, so the rows stay put when the check arrives (ticket 35). Its feedforward is the
+          // button's tooltip (ticket 126), so it holds no line under it.
           action={slotShown ? <Skeleton className="h-11 w-58 rounded-sm" /> : undefined}
-          feedforward={
-            slotShown ? (
-              <p className="text-caption @lg/page:text-right">
-                <SkeletonWords text={words.draftAction.feedforward} />
-              </p>
-            ) : undefined
-          }
           sticky={false}
         />
         <PlanCheckSkeleton
           slow={load.status === "loading" && load.slow}
-          afterNarration={
-            changes ? (
-              <ChangeLine changes={changes} onSee={seeChanges} />
-            ) : planChanges.failed ? (
-              <ChangeLineError />
-            ) : planChanges.settled ? null : (
-              <HeldChangeLine />
-            )
-          }
+          // The comparison is in "How I checked" since ticket 130, so no change line holds a place under the narration.
+          howChecked
         />
       </>
     );
@@ -415,7 +342,17 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
           findingRef={finding}
           reveal={reveal}
           changed={changedRows(changes)}
-          afterMethod={changes ? <ChangeLine changes={changes} onSee={seeChanges} /> : planChanges.failed && <ChangeLineError />}
+          // Ticket 130: the method, the comparison with the version before and the baseline, each with its source,
+          // beside the finding; the change line that sat under the finding is its comparison now.
+          howChecked={
+            <HowIChecked
+              result={checked}
+              comparison={{ changes, failed: planChanges.failed }}
+              baselineView={baselineView}
+              baselineRow={baselineView !== "public" && !(asOf !== null && !checked.baseline)}
+              onSeeChanges={seeChanges}
+            />
+          }
           // After the activities: "What changed" as a closed row, then the baseline as a row with its action, which the
           // public view does not show (ticket 100; the shell redesign plan, 8.4).
           after={
@@ -541,22 +478,20 @@ export function CheckPlanPage({ pid, agencyId, version }: { pid: string; agencyI
       startWriting(request, result, rows);
       navigate(writingHref(result.plan.project_id, result.plan.agency_id, result.plan.plan_date));
     };
+    // "The draft waits in Drafts for you to check. I send nothing." is the button's tooltip and description, not a
+    // caption under it (ticket 126, pattern 5).
     return {
       action: (
-        <Button variant="primary" aria-describedby={`${slotId}-description ${slotId}-feedforward`} onClick={start}
-          className="w-full xs:w-auto" data-draft-action>
-          {action.button(count, whole(count))}
-        </Button>
+        <Feedforward sentence={action.feedforward}>
+          <Button variant="primary" aria-describedby={`${slotId}-description`} onClick={start} className="w-full xs:w-auto" data-draft-action>
+            {action.button(count, whole(count))}
+          </Button>
+        </Feedforward>
       ),
       feedforward: (
-        <>
-          <p id={`${slotId}-feedforward`} className="text-caption text-ink-muted @lg/page:text-right" data-draft-slot="feedforward">
-            {action.feedforward}
-          </p>
-          <span id={`${slotId}-description`} className="sr-only">
-            {action.description}
-          </span>
-        </>
+        <span id={`${slotId}-description`} className="sr-only">
+          {action.description}
+        </span>
       ),
     };
   }

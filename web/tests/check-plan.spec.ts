@@ -4,7 +4,10 @@
 // copied here so the test checks the copy file against an independent source.
 //
 // The plan lists nine activities. The wireframe draws eight and leaves out KE-NWWDA-207796-CS-INDV,
-// which has no signals, so the screen shows six marked activities and folds three.
+// which has no signals, so the screen shows six marked activities and folds three. Ticket 132: the wireframe's Needs a
+// look (KE-NWWDA-541055-CW-RFB) and one of its two Watch rows (KE-NWWDA-541062-CW-RFQ) are moved on since the plan,
+// since the contract awards say both contracts were signed before the plan's date (values.toml, award-541055-signed
+// and award-541062-signed). Marked rows come by their strongest mark: Watch, then Moved on, then Data note.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, mockApi, openSidebar, recorded, test, viewAnswers, windowBeside } from "./mocked";
@@ -14,15 +17,15 @@ import { animationsDone } from "./settled";
 const PLAN = "/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09";
 const API = `/api${PLAN}`;
 const MARKED = [
-  "KE-NWWDA-541055-CW-RFB",
   "KE-NWWDA-229129-CW-RFB",
+  "KE-NWWDA-541055-CW-RFB",
   "KE-NWWDA-541062-CW-RFQ",
   "KE-NWWDA-503455-CW-RFQ",
   "KE-NWWDA-541061-CW-RFQ",
   "KE-NWWDA-199461-GO-RFB",
 ];
 const FOLDED = ["KE-NWWDA-199471-GO-RFQ", "NWWDA-WSDP-03-2019-2020", "KE-NWWDA-207796-CS-INDV"];
-const FINDING = "One activity needs a look and two are worth watching; three have data notes.";
+const FINDING = "No activity needs a look, but one is worth watching; two have moved on since the plan; three have data notes.";
 // Ticket 111's narration, word for word: the step, how I check, and why it can take longer.
 const NARRATION = {
   running: "I'm checking the plan.",
@@ -87,7 +90,8 @@ test("the plan check finds every activity, states the finding, and folds the act
   await expect(main.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
   await expect(main.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(main.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
-  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities.");
+  // Ticket 126: no count line, since the fold row below says which activities it hides.
+  await expect(main.locator("[data-count-line]")).toHaveCount(0);
   await expect(view(page, "table")).toBeVisible();
   expect(await refsIn(page, "table")).toEqual(MARKED);
   const fold = view(page, "table").locator("[data-fold]:visible");
@@ -97,14 +101,30 @@ test("the plan check finds every activity, states the finding, and folds the act
 
   // The visible badges of each kind equal the counts in the finding.
   const table = view(page, "table");
-  await expect(table.locator("[data-badge=needs-a-look]:visible")).toHaveCount(1);
-  await expect(table.locator("[data-badge=watch]:visible")).toHaveCount(2);
+  await expect(table.locator("[data-badge=needs-a-look]:visible")).toHaveCount(0);
+  await expect(table.locator("[data-badge=watch]:visible")).toHaveCount(1);
+  await expect(table.locator("[data-badge=moved-on]:visible")).toHaveCount(2);
   await expect(table.locator("[data-badge=data-note]:visible")).toHaveCount(3);
   // The crumb names the project as its page header does, by the server's rule (the 21 critique, round 3).
   await expect(page.getByRole("link", { name: "Water and Sanitation Development (P156634)" }).first()).toHaveAttribute(
     "href",
     "/projects/P156634",
   );
+});
+
+// Ticket 131: on the workspace the layout parser read KE-NWWDA-199461-GO-RFB as KE-NWWDA-193461-90-RF8, which no one
+// look-alike swap makes whole, so the plan reader kept it as read and check_plan flags it (reference_as_read).
+test("a reference the plan reader kept as it read it says so under the reference, and no other row does", async ({ page }) => {
+  const result = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
+  const flagged = result.rows.find((row: { activity_reference_no: string }) => row.activity_reference_no === "KE-NWWDA-229129-CW-RFB");
+  Object.assign(flagged, { activity_reference_no: "KE-NWWDA-193461-90-RF8", reference_as_read: true });
+  await openPlan(page, 1440, { body: JSON.stringify(result) });
+
+  const table = view(page, "table");
+  await expect(table.locator("tr", { has: page.getByRole("button", { name: "KE-NWWDA-193461-90-RF8" }) })).toContainText(
+    "As I read it from the plan",
+  );
+  await expect(table.getByText("As I read it from the plan", { exact: true })).toHaveCount(1);
 });
 
 // Ticket 100: the plan check belongs to the Packages section, though its address stays under /projects/, and in a view
@@ -152,8 +172,10 @@ test("in the public preview the plan check is lit as Projects, its breadcrumb st
   await expect(page.locator("[data-finding]")).toHaveText(
     "I don't show signals on active projects in this view, so a procurement still under way isn't prejudged; three have data notes.",
   );
-  // The finding holds the signals back, so its byline says so (DESIGN.md section 5, Byline).
-  await expect(page.locator("[data-finding-block] [data-byline]")).toHaveText("Strata held back");
+  // The finding holds the signals back, so its block's byline kind says so, with no visible words (DESIGN.md section 5,
+  // Byline; ticket 126).
+  await expect(page.locator("[data-finding-block]")).toHaveAttribute("data-byline", "heldBack");
+  await expect(page.locator("[data-finding-block]")).not.toContainText("Strata held back");
   const head = page.locator("[data-plan-header]");
   await expect(head.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(head.getByRole("button")).toHaveCount(0);
@@ -187,7 +209,7 @@ test("Show them opens the folded activities by mouse, and Hide them folds them a
   await expect(hide).toHaveAttribute("aria-expanded", "true");
   await expect(hide).toBeFocused();
   expect(await refsIn(page, "table")).toEqual([...MARKED, ...FOLDED]);
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing all nine activities.");
+  await expect(page.locator("[data-count-line]")).toHaveCount(0);
   for (const ref of FOLDED) {
     await expect(view(page, "table").locator(`tr[id="${ref}"]`)).toContainText("No signals.");
   }
@@ -215,21 +237,43 @@ test("each reason is built from the copy file's sentence and the tool's values, 
   await openPlan(page);
   const row = (ref: string) => view(page, "table").locator(`tr[id="${ref}"]`);
 
+  // Ticket 132: the plan still says pending, and the record says what happened, with the record cited.
   await expect(row("KE-NWWDA-541055-CW-RFB")).toContainText(
-    "Planned completion July 31, 2026 passed with no signed contract. The project closes October 31, 2026.",
+    "The plan still says pending, but the contract awards say the contract was signed on June 22, 2026.",
   );
+  await expect(row("KE-NWWDA-541055-CW-RFB")).not.toContainText("passed with no signed contract");
+  await expect(row("KE-NWWDA-541055-CW-RFB").getByRole("link", { name: /Where the records disagree: this plan row and the contract awards/ })).toHaveCount(1);
   // A date in a sentence never breaks across lines.
-  const date = row("KE-NWWDA-541055-CW-RFB").locator("[data-num]").filter({ hasText: "October 31, 2026" });
+  const date = row("KE-NWWDA-541055-CW-RFB").locator("[data-num]").filter({ hasText: "June 22, 2026" });
   expect(await date.evaluate((element) => getComputedStyle(element).whiteSpace)).toBe("nowrap");
   await expect(row("KE-NWWDA-229129-CW-RFB")).toContainText(
     "Signed January 3, 2022, 186 days after its planned date, at US$1,245,092.76, about 4 times its estimate.",
   );
-  await expect(row("KE-NWWDA-541062-CW-RFQ")).toContainText("Still pending, 9 days before the project closes.");
+  await expect(row("KE-NWWDA-541062-CW-RFQ")).toContainText(
+    "The plan still says pending, but the contract awards say the contract was signed on May 11, 2026.",
+  );
+  await expect(row("KE-NWWDA-541062-CW-RFQ")).not.toContainText("Still pending");
   await expect(row("KE-NWWDA-199461-GO-RFB")).toContainText(
     "The reference ends in RFB (Request for Bids), but the Method column says Request for Quotations. I use the Method column.",
   );
   await expect(row("KE-NWWDA-503455-CW-RFQ")).toContainText("Signed, but Actual Amount reads 0.00.");
   await expect(row("KE-NWWDA-541061-CW-RFQ")).toContainText("Completed, but Actual Amount reads 0.00.");
+});
+
+test("a moved-on row whose plan says another status before signing names STEP's value word for word", async ({ page }) => {
+  // Ticket 132's review round 1, F4: "pending" stands for Pending Implementation only. A made-up answer gives
+  // KE-NWWDA-541062-CW-RFQ the Process Status Under Implementation, which some Kenya plans hold (KE-CWSB-565568-GO-RFQ).
+  const answer = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
+  const changed = answer.rows.find((one: { activity_reference_no: string }) => one.activity_reference_no === "KE-NWWDA-541062-CW-RFQ");
+  changed.process_status = "Under Implementation";
+  for (const mark of changed.marks) for (const reason of mark.reasons) reason.process_status = "Under Implementation";
+  await openPlan(page, 1440, { body: JSON.stringify(answer) });
+  const row = (ref: string) => view(page, "table").locator(`tr[id="${ref}"]`);
+
+  await expect(row("KE-NWWDA-541062-CW-RFQ")).toContainText(
+    "The plan still says Under Implementation, but the contract awards say the contract was signed on May 11, 2026.",
+  );
+  await expect(row("KE-NWWDA-541055-CW-RFB")).toContainText("The plan still says pending, but");
 });
 
 test("column names and values are STEP's, word for word", async ({ page }) => {
@@ -258,10 +302,11 @@ test("the table follows DESIGN.md: title sentence, count line, surface-2 header,
 
   const header = await table.locator("thead").evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(header).toBe("rgb(231, 237, 243)");
-  // The header band sits 16 px under the panel's name and its count line, never touching them (the critique of
-  // ticket 100, round 1).
+  // The header band sits 16 px under the panel's name, never touching it (the critique of ticket 100, round 1; the
+  // panel has no count line since ticket 126).
   const bottom = (selector: string) => page.locator(selector).evaluate((el) => el.getBoundingClientRect().bottom);
-  const nameFoot = Math.max(await bottom("[data-section=activities] [data-zone-name]"), await bottom("[data-section=activities] [data-zone-tag]"));
+  await expect(page.locator("[data-section=activities] [data-zone-tag]")).toHaveCount(0);
+  const nameFoot = await bottom("[data-section=activities] [data-zone-name]");
   expect(Math.round((await table.locator("thead").evaluate((el) => el.getBoundingClientRect().top)) - nameFoot)).toBeGreaterThanOrEqual(16);
   const amountHead = table.locator("thead th").nth(3);
   const amount = table.locator('tr[id="KE-NWWDA-541055-CW-RFB"] td').nth(2);
@@ -272,7 +317,8 @@ test("the table follows DESIGN.md: title sentence, count line, surface-2 header,
   const ref = table.locator('[data-activity="KE-NWWDA-541055-CW-RFB"] span').first();
   expect(await ref.evaluate((el) => getComputedStyle(el).fontFamily.split(",")[0])).toBe('"Roboto Mono"');
 
-  const source = page.locator("[data-plan-check] [data-source]");
+  // The activities panel's own source line; "How I checked" beside the finding has its own (ticket 130).
+  const source = page.locator("[data-plan-check] [data-section=activities] [data-source]");
   await expect(source).toContainText(
     "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, disclosed October 9, 2026.",
   );
@@ -292,7 +338,7 @@ test("marks are status badges with an icon and their name; Data note is neutral 
 
   for (const badge of await badges.all()) {
     await expect(badge.locator("svg[aria-hidden=true]")).toHaveCount(1);
-    await expect(badge).toHaveText(/^(Needs a look|Watch|Data note)$/);
+    await expect(badge).toHaveText(/^(Needs a look|Watch|Moved on|Data note)$/);
   }
   const note = view(page, "table").locator("[data-badge=data-note]").first();
   expect(await note.evaluate((el) => [getComputedStyle(el).borderStyle, getComputedStyle(el).backgroundColor])).toEqual([
@@ -346,11 +392,12 @@ test("tabbing onto a number opens its tooltip, which stays open while it has foc
   await page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Water and Sanitation Development (P156634)" }).focus();
 
   await page.keyboard.press("Tab");
-  await expect(page.getByRole("button", { name: "Draft review notes (3 rows)" })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Draft review notes (1 row)" })).toBeFocused();
   await page.keyboard.press("Tab");
 
-  await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "One" })).toBeFocused();
-  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activity that needs a look: KE-NWWDA-541055-CW-RFB.");
+  // No activity needs a look (ticket 132), so the first count word is the one activity worth watching.
+  await expect(page.getByRole("heading", { level: 2 }).getByRole("button", { name: "one", exact: true })).toBeFocused();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("The activity worth watching: KE-NWWDA-229129-CW-RFB.");
 });
 
 test("a link whose hash names a folded activity opens the fold and focuses that activity", async ({ page }) => {
@@ -380,13 +427,16 @@ test("below a table frame of 34rem the cards open the What Strata found definiti
 
   await term.click();
 
-  await expect(page.getByRole("dialog", { name: "What Strata found" })).toContainText("It gives a reason to look, never a finding.");
+  const definition = page.getByRole("dialog", { name: "What Strata found" });
+  await expect(definition).toContainText("It gives a reason to look, never a finding.");
+  // Ticket 126: the window opens on how I checked and how I measure delay, which sat under the finding until then.
+  await expect(definition.locator("[data-method-sentence]")).toContainText(
+    "I measure delay from the first published planned date, because each plan update can move the planned dates.",
+  );
   await page.keyboard.press("Escape");
 
-  // At 320 px the two don't fit side by side, so the definition takes a line of its own and
-  // neither breaks.
+  // At 320 px the definition's word never breaks.
   await page.setViewportSize({ width: 320, height: 900 });
-  expect(await page.locator("[data-count-line]").evaluate(textLines)).toBe(1);
   expect(await term.evaluate(textLines)).toBe(1);
 });
 
@@ -404,7 +454,7 @@ test("below a table frame of 34rem the activities are cards, each headed by its 
     await expect(view(page, "table")).toBeHidden();
     expect(await refsIn(page, "cards"), `${width} px`).toEqual(MARKED);
   }
-  await expect(page.getByRole("heading", { level: 3, name: "Needs a look KE-NWWDA-541055-CW-RFB" })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 3, name: "Moved on KE-NWWDA-541055-CW-RFB" })).toBeVisible();
   await view(page, "cards").getByRole("button", { name: "Show them" }).click();
   expect(await refsIn(page, "cards")).toEqual([...MARKED, ...FOLDED]);
   // Below 768 px the breadcrumb shows only its parent, the project (ticket 100).
@@ -631,7 +681,7 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
     ["Actual divided by estimated", "about 4"],
   ]);
   expect(await pairs("plan")).toEqual([
-    ["Description", "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty"],
+    ["Description", "Drilling of 4 Number Exploratory Boreholes In Wajir County"],
     ["Method", "Request for Bids"],
     ["Market Approach", "Open - National"],
     ["Review Type", "Post"],
@@ -660,20 +710,26 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
   await expect(row).not.toHaveAttribute("data-row-mark", /./);
   await expect(view(page, "table").locator("thead th:visible")).toHaveCount(6);
 
-  // "two" in the finding marks the two Watch rows and moves focus to the first one's reference.
+  // "two" in the finding marks the two rows moved on since the plan (ticket 132) and moves focus to the first one's
+  // reference.
   const two = page.locator("[data-finding]").getByRole("button", { name: "two" });
   await two.focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
+    "The activities the records have moved past since the plan: KE-NWWDA-541055-CW-RFB and KE-NWWDA-541062-CW-RFQ.",
+  );
   await expect(page.getByRole("tooltip").locator("[data-num-act]")).toHaveText("Select to mark them below.");
   await page.keyboard.press("Enter");
-  await expect(reference).toBeFocused();
+  const first = view(page, "table").getByRole("button", { name: "KE-NWWDA-541055-CW-RFB", exact: true });
+  await expect(first).toBeFocused();
   await expect(view(page, "table").locator("tbody tr[data-row-mark=counted]")).toHaveCount(2);
   expect(await view(page, "table").locator("tbody tr[data-row-mark=counted]").evaluateAll((rows) => rows.map((row) => row.id))).toEqual([
-    "KE-NWWDA-229129-CW-RFB",
+    "KE-NWWDA-541055-CW-RFB",
     "KE-NWWDA-541062-CW-RFQ",
   ]);
   // A counted row takes tint alone; only the row whose records are open keeps the bar, so the two never look alike.
-  await expect(row).toHaveCSS("background-color", "rgb(233, 247, 253)");
-  await expect(row.locator("th")).toHaveCSS("box-shadow", "none");
+  const counted = view(page, "table").locator('tr[id="KE-NWWDA-541055-CW-RFB"]');
+  await expect(counted).toHaveCSS("background-color", "rgb(233, 247, 253)");
+  await expect(counted.locator("th")).toHaveCSS("box-shadow", "none");
 });
 
 // Ticket 100 (ticket 59's landing item, with the bar's offset): a link that lands on any row brings it into view with
@@ -748,7 +804,7 @@ test("the head keeps the check pill and Draft review notes on one row, their cen
   for (const width of [1440, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     const pill = page.locator("[data-plan-header] [data-check-pill]");
-    const action = page.getByRole("button", { name: "Draft review notes (3 rows)" });
+    const action = page.getByRole("button", { name: "Draft review notes (1 row)" });
     expect(Math.abs((await centre(pill)) - (await centre(action))), `${width} px`).toBeLessThanOrEqual(2);
   }
 });
@@ -857,10 +913,12 @@ for (const width of [1440, 390]) {
     release();
     await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
     await expect(narration).toHaveCount(0);
-    // The finding takes the narration's place, its byline on the narration's top line, and no other part of the page,
-    // its rows and source line included, has a byline.
-    await expect(page.locator("[data-byline]")).toHaveText(["Strata found"]);
-    await expect(page.locator("[data-plan-check] [data-byline] + h2")).toHaveText(FINDING);
+    // The finding takes the narration's place, on the narration's top line. Its block carries the byline's kind as
+    // data, with no visible words (ticket 126), and no other part of the page, its rows and source line included, has
+    // a byline.
+    await expect(page.locator("[data-byline]")).toHaveCount(1);
+    await expect(page.locator("[data-plan-check] [data-byline]")).toHaveAttribute("data-byline", "found");
+    await expect(page.locator("[data-plan-check] [data-byline] > h2")).toHaveText(FINDING);
     // The status said the step once, then how many activities were checked.
     await expect.poll(async () => (await seen()).said).toEqual([NARRATION.running, "Checked nine activities."]);
     // The narration showed for more than 400 ms, so the finding entered: opacity and a 4 px rise over 200 ms.
@@ -1199,4 +1257,127 @@ test("at 1024 px with the evidence drawer open, the plan check shows its cards a
   expect(await left(view(page, "cards").locator("p").first())).toBe(edge);
   expect(await left(view(page, "cards").locator("ul > li").first())).toBe(edge);
   await expect(view(page, "cards").getByRole("list").first()).toHaveAccessibleName("Activities in this plan");
+});
+
+// Ticket 130, the design lead's Option W2 of October 29, 2026: "How I checked" fills the block beside the finding with
+// the method, the comparison with the version before and the baseline, each with its source line. The dates are the
+// fixture's: the plan of October 9, 2026 and the one before it of March 5, 2026, whose two versions differ only in two
+// estimates (values.toml, plan-541055-estimated and plan-541062-estimated with their 2026-03-05 entries), the project
+// record of April 24, 2024, the page read as of October 22, 2026, and the saved baseline, the plan of July 21, 2025,
+// saved by Ana Example on October 23, 2026 (tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09-baseline.json). The
+// method's sentence and the source lines are the copy file's, checked here word for word.
+async function openWithChanges(page: Page, width: number, height: number, check = "check-plan-p156634-nwwda-2026-10-09.json") {
+  await page.setViewportSize({ width, height });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [API]: { body: await recorded(check) },
+    [`${API}/changes`]: { body: await recorded("changes-nwwda-2026-10-09.json") },
+  });
+  await page.goto(PLAN);
+  await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
+}
+const howChecked = (page: Page) => page.getByRole("region", { name: "How I checked" });
+const checkedFact = (page: Page, label: string) => howChecked(page).locator("[data-side-fact]", { has: page.getByText(label, { exact: true }) });
+const HOW_CHECKED = {
+  method: [
+    "I checked every activity against its own dates, its estimate and the project's closing date, and I measure delay from the first published planned date.",
+    "Source: The plan of October 9, 2026 and the projects API record of April 24, 2024.",
+  ],
+  compared: ["The plan of March 5, 2026. This version re-estimated two activities. See what changed", "Source: The two plans, compared row by row on their STEP references."],
+  baseline: ["No plan is saved as the baseline yet. Go to Baseline for delay", "Source: Strata's saved baselines, as of October 22, 2026."],
+};
+const factText = (page: Page, label: string) =>
+  checkedFact(page, label)
+    .locator("dd > p")
+    .evaluateAll((all) => all.map((p) => (p as HTMLElement).innerText.replace(/\s+/g, " ").trim()));
+
+test("at 1440 and 1280 px How I checked sits beside the finding with the method, the comparison with the plan of March 5, 2026 and the baseline, each with its source", async ({ page }) => {
+  for (const [width, height] of [
+    [1440, 900],
+    [1280, 800],
+  ] as const) {
+    await openWithChanges(page, width, height);
+    const panel = howChecked(page);
+    await expect(panel, `${width} px`).toBeVisible();
+    const finding = (await page.locator("[data-finding-block]").boundingBox())!;
+    const box = (await panel.boundingBox())!;
+    const activities = (await page.locator("[data-section=activities]").boundingBox())!;
+    // Beside the finding, on its top line, in columns 9 to 12: its right edge is the activities panel's, above it.
+    expect(box.x, `${width} px`).toBeGreaterThan(finding.x + finding.width);
+    expect(Math.abs(box.y - finding.y), `${width} px`).toBeLessThanOrEqual(1);
+    expect(Math.round(box.x + box.width), `${width} px`).toBe(Math.round(activities.x + activities.width));
+    expect(box.y + box.height, `${width} px`).toBeLessThanOrEqual(activities.y);
+    // A screen reader hears the finding, then how it was checked, then the activities.
+    const order = await page.evaluate(() => {
+      const [finding, panel, table] = ["[data-finding]", "[data-how-checked]", "[data-section=activities]"].map((s) => document.querySelector(s)!);
+      return [finding.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING, panel.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING];
+    });
+    expect(order.every(Boolean), `${width} px`).toBe(true);
+    // Each fact ends with its source line.
+    expect(await factText(page, "Method"), `${width} px`).toEqual(HOW_CHECKED.method);
+    expect(await factText(page, "Compared with"), `${width} px`).toEqual(HOW_CHECKED.compared);
+    expect(await factText(page, "Baseline"), `${width} px`).toEqual(HOW_CHECKED.baseline);
+    // At 1440 by 900 the first marked row is still in the first screen.
+    await page.evaluate(() => document.fonts.ready);
+    if (width === 1440) expect(await page.locator(`tr[id="${MARKED[0]}"]`).evaluate((el) => el.getBoundingClientRect().top)).toBeLessThan(height);
+    await page.unrouteAll();
+  }
+  // See what changed opens What changed in place and moves focus to its heading.
+  await openWithChanges(page, 1440, 900);
+  await checkedFact(page, "Compared with").getByRole("link", { name: "See what changed" }).click();
+  await expect(page.locator("[data-changes]").getByRole("heading", { level: 2 })).toBeFocused();
+  await expect(page.locator("[data-changes] [data-change-kind]")).toHaveCount(1);
+  await page.unrouteAll();
+
+  // A saved baseline: the method measures delay from it too, and the panel names it with its saver.
+  await openWithChanges(page, 1440, 900, "check-plan-p156634-nwwda-2026-10-09-baseline.json");
+  expect(await factText(page, "Method")).toEqual([
+    "I checked every activity against its own dates, its estimate and the project's closing date, and I measure delay from the first published planned date and from the baseline.",
+    HOW_CHECKED.method[1],
+  ]);
+  // That check was recorded as of October 23, 2026, the day the baseline was saved.
+  expect(await factText(page, "Baseline")).toEqual([
+    "The plan of July 21, 2025, saved by Ana Example on October 23, 2026. Go to Baseline for delay",
+    "Source: Strata's saved baselines, as of October 23, 2026.",
+  ]);
+  // Go to Baseline for delay lands on that row's heading, where its controls are, and focus goes with it: the browser
+  // focuses a link's target that can take focus (the heading's tabIndex -1), so a screen reader lands where See what
+  // changed lands (the round 1 review's follow-up 3).
+  await checkedFact(page, "Baseline").getByRole("link", { name: "Go to Baseline for delay" }).click();
+  await expect(page).toHaveURL(/#baseline$/);
+  const baselineHeading = page.getByRole("region", { name: "Baseline for delay" }).getByRole("heading", { level: 2 });
+  await expect(baselineHeading).toBeFocused();
+  await expect(baselineHeading).toBeInViewport();
+});
+
+test("at 1024 and 390 px How I checked follows the activities, so the first marked row stays in the first screen, and axe is clean at 1440, 1280, 1024 and 390 px", async ({ page }) => {
+  for (const [width, height] of [
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    await openWithChanges(page, width, height);
+    const order = await page.evaluate(() => {
+      const [table, panel] = ["[data-section=activities]", "[data-how-checked]"].map((s) => document.querySelector(s)!);
+      return Boolean(table.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+    expect(order, `${width} px`).toBe(true);
+    expect(await factText(page, "Compared with"), `${width} px`).toEqual(HOW_CHECKED.compared);
+    if (width === 1024) {
+      await page.evaluate(() => document.fonts.ready);
+      expect(await page.locator(`tr[id="${MARKED[0]}"]`).evaluate((el) => el.getBoundingClientRect().top)).toBeLessThan(height);
+    }
+    await page.unrouteAll();
+  }
+  await openWithChanges(page, 1440, 900);
+  for (const [width, height] of [
+    [1440, 900],
+    [1280, 800],
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect(howChecked(page)).toBeVisible();
+    expect(await axe(page), `${width} px`).toEqual([]);
+  }
 });

@@ -110,7 +110,7 @@ export function RoutePage({ match, search = "", hiddenIn = null, pending = false
 }
 
 function PlaceholderPage({ match }: { match: Match }) {
-  const words: { title: string; purpose: string; emptyTitle?: string; emptyBody?: string; link?: string } = copy.pages[match.key];
+  const words: { title: string; purpose?: string; emptyTitle?: string; emptyBody?: string; link?: string } = copy.pages[match.key];
   const link = words.link && match.linkHref ? { href: match.linkHref, text: <WithIds template={words.link} values={match.values} /> } : undefined;
   return (
     <>

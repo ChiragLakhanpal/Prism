@@ -15,9 +15,15 @@ timeline() gives GET /api/projects/{pid}/timeline everything the Timeline tab dr
     which reads the award notice when no awards dataset covers the year, as strata.gold.package does). Above
     timeline.what_lane_group_above contracts (config/thresholds.toml), a year with two or more becomes one group.
   - bands: the ISRs' runs of equal ratings of progress towards the PDO, from get_disagreements' trajectories.
-  - disagreements: get_disagreements' rows whose two sides are both reports on the chart, each with its sides
-    in the order they were written and the side Strata leans on.
-- table: the same items with every contract on its own row, for "Show the table".
+  - disagreements: one dashed line for each of get_disagreements' groups (ticket 136), the pairs about one fact
+    that share a report, from those of its rows whose two sides are both reports on the chart. The line joins the
+    group's one report (its anchor) to the nearest of the others and names them all (group), so the PAD against
+    13 ISRs is one line, not 13 lines on top of one another. Each line keeps its drawn pair's sides in the order
+    they were written and the side Strata leans on.
+- records_disagree: get_disagreements' rows about a package whose two sides are both records (a plan row, a
+  contract record, an award notice), which no dashed line can join, listed under the chart (ticket 132).
+- table: the same items with every contract on its own row and every pair of reports that disagree on its own
+  row, for "Show the table".
 - ratings: the series the bands draw, with its first and last ratings and which way it moved.
 - finding and alt: the chart's title and its alt text as segments, written from copy templates
   (timeline_copy.json, which web/lint/server-copy.ts writes from web/src/copy.ts) and the values above, with
@@ -44,13 +50,17 @@ from pathlib import Path
 from strata.agent.verifier import sentence_of
 from strata.config import KEY_DATE, ConfigError, TimelineSettings, load_ladder, load_project_page, load_thresholds
 from strata.dbx import Viewer
-from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES
+from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES, STATUS
 from strata.lakehouse.engine import Engine
+from strata.server import contracts as project_contracts
 from strata.server.projects import display_name
 from strata.server.viewer_sql import DAILY, data_through
 from strata.server.viewer_sql import query as viewer_query
 from strata.tools import registry
+from strata.tools.check_plan import RECORD_WORDS
+from strata.tools.get_disagreements import lean, written
 from strata.tools.get_disagreements import reads as disagreement_reads
+from strata.tools.get_disagreements import replaced as replaced_disagreement
 from strata.tools.withheld import WITHHELD, withheld_in
 
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
@@ -267,6 +277,52 @@ def _bands(trajectory: dict, project_id: str, scale: list[str]) -> dict:
             "first_rating": first, "last_rating": last, "direction": direction, "isr_count": len(points)}
 
 
+def _kinds(documents: list[dict]) -> list[dict]:
+    """The reports on one side of a group, by kind in the order written: [{"type": "isr", "count": 13, ...}], with an
+    ISR's number when its kind has one report."""
+    found: dict[str, list[dict]] = {}
+    for document in documents:
+        found.setdefault(GROUPS.get(document["document_type"] or "", "other"), []).append(document)
+    return [{"type": kind, "count": len(held), "sequence": held[0]["sequence"] if len(held) == 1 else None}
+            for kind, held in found.items()]
+
+
+def _line(drawn: list[dict], items: dict[str, dict], anchor: str) -> dict:
+    """One group's dashed line: the pair that joins its anchor, the one report the group's pairs share, to the nearest
+    report on the other side, with the group's counts of pairs and reports and the side it leans on."""
+    side = {"earlier": 0, "later": 1}
+    documents = {name: written(list({one["sides"][at]["document_id"]: one["sides"][at] for one in drawn}.values()))
+                 for name, at in side.items()}
+    other = "later" if anchor == "earlier" else "earlier"
+
+    def apart(one: dict) -> int:
+        first, second = (dt.date.fromisoformat(held["made_at"]) for held in one["sides"])
+        return abs((second - first).days)
+
+    line = _disagreement(min(drawn, key=apart), items)
+    leaned = lean(drawn)
+    line["group"] = {
+        "count": len(drawn), "disagreement_ids": [one["disagreement_id"] for one in drawn],
+        "anchor_side": anchor, "anchor_item_id": line["sides"][side[anchor]]["item_id"],
+        "anchor_reports": _kinds(documents[anchor]), "other_reports": _kinds(documents[other]),
+        "reports": len({one["document_id"] for one in documents[anchor] + documents[other]}),
+        "lean": None if leaned is None else "anchor" if leaned == anchor else "others"}
+    return line
+
+
+def lines(found: dict, items: dict[str, dict]) -> tuple[list[dict], list[dict]]:
+    """The chart's dashed lines, one per group of pairs about one fact, and every pair the table lists: each of the
+    tool's rows whose two sides are both reports on the chart."""
+    pairs = {row["disagreement_id"]: one for row in found["rows"] if (one := _disagreement(row, items)) is not None}
+    rows = {row["disagreement_id"]: row for row in found["rows"]}
+    drawn = []
+    for group in found.get("groups") or []:
+        held = [rows[key] for key in group["disagreement_ids"] if key in pairs]
+        if held:
+            drawn.append(_line(held, items, group["anchor"]["side"]))
+    return drawn, list(pairs.values())
+
+
 def _disagreement(row: dict, items: dict[str, dict]) -> dict | None:
     """A disagreement the chart can draw: both sides are reports on it. None otherwise."""
     sides = []
@@ -286,19 +342,55 @@ def _disagreement(row: dict, items: dict[str, dict]) -> dict | None:
             "rule_id": row["rule_id"], "sides": sides, "after": later["item_id"]}
 
 
+# Each record a package's disagreement can rest on, in the step tracker's and the plan check's words for it.
+RECORD_NAMES = {"plan_row": "plan", **RECORD_WORDS}
+
+
+def records_disagree(rows: list[dict]) -> list[dict]:
+    """Where the records disagree (ticket 132): get_disagreements' rows about a package whose two sides are both
+    records, such as a plan row that still says pending and the contract awards that say the contract was signed,
+    which no dashed line on the chart joins. Each gives its STEP reference, its attribute and both sides in the order
+    they were written, with each side's record, field name, value, date and evidence id, and the side Strata leans
+    on: a plan that still says pending first, then the newest first. The plan check cites the same disagreement by
+    its id, so both pages name one fact (CLAUDE.md rule 4)."""
+    found = []
+    for row in rows:
+        if row["subject_kind"] != "package" or any(side["form"] not in RECORD_NAMES for side in row["sides"]):
+            continue
+        sides = [{"record": RECORD_NAMES[side["form"]], "form": side["form"], "field_name": side["field_name"],
+                  "value": side["value"], "value_form": side["value_form"], "made_at": side["made_at"],
+                  "public_from": side["public_from"], "evidence_id": side["evidence_id"],
+                  "leaned": side["assertion_id"] == row["lean_assertion_id"]} for side in row["sides"]]
+        key = f"{DISAGREEMENT}:{row['disagreement_id']}"
+        found.append({"id": key, "evidence_id": key, "disagreement_id": row["disagreement_id"],
+                      "step_reference": row["subject_id"], "attribute": row["attribute"], "rule_id": row["rule_id"],
+                      "date": max(side["made_at"] for side in sides), "public_from": row["public_from"], "sides": sides})
+    # A plan that still says pending first, since the plan check names those rows moved on since the plan; then the
+    # newest first, since the latest plan's are the ones a reader acts on; then by reference.
+    found.sort(key=lambda one: (one["step_reference"], one["disagreement_id"]))
+    found.sort(key=lambda one: one["date"], reverse=True)
+    return sorted(found, key=lambda one: not any(side["value_form"] == STATUS for side in one["sides"]))
+
+
 LANE_ORDER = {lane: at for at, lane in enumerate(LANES)}
 KIND_ORDER = {"report": 0, "event": 0, "record": 0, "group": 0, "band": 1}
 
 
 def ordered(marks: list[dict], disagreements: list[dict]) -> list[dict]:
     """Date order across the lanes; ties go Why, How, What, with marks before bands; each disagreement right
-    after its later side (the 23 brief, section 8.2)."""
+    after its later side (the 23 brief, section 8.2). A pair in the table whose later side has no mark of its own,
+    such as an ISR only the band row shows, comes after every mark of its date."""
     out = []
+    shown = {item["id"] for item in marks}
+    alone = sorted((found for found in disagreements if found["after"] not in shown),
+                   key=lambda found: (found["date"], found["id"]))
     for item in sorted(marks, key=lambda item: (item["date"], LANE_ORDER[item["lane"]], KIND_ORDER[item["kind"]],
                                                 item["id"])):
+        while alone and alone[0]["date"] < item["date"]:
+            out.append(alone.pop(0))
         out.append(item)
         out.extend(found for found in disagreements if found["after"] == item["id"])
-    return out
+    return out + alone
 
 
 # ── The finding and the alt text ──────────────────────────────────────────
@@ -306,6 +398,19 @@ def ordered(marks: list[dict], disagreements: list[dict]) -> list[dict]:
 def _side_name(side: dict) -> str:
     template = words()["short"].get(side["type"], words()["short"]["other"])
     return template.replace("{sequence}", str(side.get("sequence") or ""))
+
+
+def _reports(kinds: list[dict]) -> list[dict]:
+    """One side of a line's reports in a sentence: "the PAD", "ISR 7", "13 ISRs", "the ICR and two ICR Reviews"."""
+    short, plural = words()["short"], words()["plural"]
+    parts = [fill(short.get(kind["type"], short["other"]), {"sequence": kind["sequence"] or ""}) if kind["count"] == 1
+             else fill(plural.get(kind["type"], plural["other"]), {"n": _count(kind["count"])}) for kind in kinds]
+    out: list[dict] = []
+    for at, part in enumerate(parts):
+        if at:
+            out.append({"text": " and " if at == len(parts) - 1 else ", "})
+        out.extend(part)
+    return out
 
 
 def _ratings_clause(ratings: dict | None) -> list[dict] | None:
@@ -317,16 +422,28 @@ def _ratings_clause(ratings: dict | None) -> list[dict] | None:
     return fill(finding[ratings["direction"]], {"first": ratings["first_rating"], "last": ratings["last_rating"]})
 
 
+def _lead(disagreements: list[dict]) -> list[dict]:
+    """The title's count of dashed lines: two reports, or so many pairs; and where one line stands for several
+    pairs, the points the reports disagree on, one a line (ticket 136)."""
+    templates = words()["finding"]
+    if any(found["group"]["count"] > 1 for found in disagreements):
+        if len(disagreements) == 1:
+            return fill(templates["leadPoint"], {})
+        return fill(templates["leadPoints"], {"count": _count(len(disagreements))})
+    if len(disagreements) == 1:
+        return fill(templates["leadOne"], {})
+    return fill(templates["leadSeveral"], {"count": _count(len(disagreements), capital=True)})
+
+
 def finding(ratings: dict | None, disagreements: list[dict], status: str) -> list[dict]:
-    """The chart's title (the 23 brief, section 7.2)."""
+    """The chart's title (the 23 brief, section 7.2), counting its dashed lines."""
     templates = words()["finding"]
     if status == "failed":
         return fill(templates["failed"], {})
     clause = _ratings_clause(ratings)
     if status == "hidden":
         return fill(templates["hiddenRatings"], {"ratings": clause}) if clause else fill(templates["hiddenNone"], {})
-    lead = (fill(templates["leadOne"], {}) if len(disagreements) == 1
-            else fill(templates["leadSeveral"], {"count": _count(len(disagreements), capital=True)}))
+    lead = _lead(disagreements) if disagreements else []
     if disagreements and clause:
         return fill(templates["disagreeRatings"], {"lead": lead, "ratings": clause})
     if clause:
@@ -363,11 +480,50 @@ def alt_text(project_id: str, dated: list[dict], ratings: dict | None, disagreem
     if status == "ok":
         for found in disagreements:
             out.append({"text": " "})
+            group = found["group"]
+            if group["count"] > 1:
+                out.extend(fill(alt["lineGroup"], {"anchor": _reports(group["anchor_reports"]),
+                                                   "others": _reports(group["other_reports"])}))
+                continue
             out.extend(fill(alt["line"], {"side1": _side_name(found["sides"][0]), "side2": _side_name(found["sides"][1])}))
         if not disagreements:
             out.append({"text": " "})
             out.extend(fill(alt["noLines"], {}))
     return out + as_of
+
+
+def _from_sources(found: list[dict]) -> list[dict]:
+    """"seven from the contract awards for fiscal 2001 to 2016 and one from award notices", each count a segment."""
+    names = words()["records"]
+    out: list[dict] = []
+    for at, one in enumerate(found):
+        if at:
+            out.append({"text": names["and"] if at == len(found) - 1 else names["comma"]})
+        out.extend(fill(names["from"], {"n": _count(one["count"]), "source": names["sources"][one["source"]]}))
+    return out
+
+
+def records_note(held: dict) -> list[dict] | None:
+    """The note under the chart that names the contracts the Records lane leaves out, by source and why (ticket 138),
+    after the count of the project's contracts the Connections tab names too. None when the lane leaves none out."""
+    left = held["left_out"]
+    if not left["count"]:
+        return None
+    templates = words()["records"]
+
+    def form(forms: dict, n: int) -> str:
+        return forms["one"] if n == 1 else forms["many"]
+
+    out = fill(form(templates["held"], held["count"]), {"n": _count(held["count"])})
+    no_reference, no_date = left[project_contracts.NO_STEP_REFERENCE], left[project_contracts.NO_SIGNING_DATE]
+    if no_reference:
+        n = sum(one["count"] for one in no_reference)
+        out += [{"text": " "}, *fill(form(templates["noReference"], n), {"sources": _from_sources(no_reference)})]
+    if no_date:
+        n = sum(one["count"] for one in no_date)
+        out += [{"text": " "}, *fill(form(templates["noDateAlso" if no_reference else "noDate"], n),
+                                     {"sources": _from_sources(no_date)})]
+    return out
 
 
 # ── The timeline ─────────────────────────────────────────────────────────
@@ -382,6 +538,7 @@ def reads(project_id: str, as_of: dt.date, view: str = "staff") -> list[tuple[st
             (_query("reports"), {**each, "language": LANGUAGE}),
             *[(_query("events"), {**each, "words": words}) for kind in EVENTS for words, _, _ in EVENTS[kind]],
             (_query("signings"), {**each, **SIGNINGS}),
+            project_contracts.statement(pid, as_of),
             (viewer_query("data_through"), {"cadence": DAILY})]
 
 
@@ -420,20 +577,24 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
     versions = {(row["report_number"], row["version"] or 1): row for row in rows if row["report_number"]}
     every = {f"{DOC}:{document_id}": _report(row, versions, as_of, sequences, rated) for document_id, row in reports.items()}
 
-    shown_rows = [] if status != "ok" else found["rows"]
-    disagreements = [one for row in shown_rows if (one := _disagreement(row, every)) is not None]
+    disagreements, pairs = lines(found, every) if status == "ok" else ([], [])
+    listed = records_disagree(found["rows"] if status == "ok" else [])
     sides = {side["item_id"].removeprefix(f"{DOC}:") for found_one in disagreements for side in found_one["sides"]}
     isrs = [item for item in every.values() if item["type"] == "isr"]
     marked = isr_marks(ratings["points"] if ratings else [], isrs, sides, lambda rating: ladder.side(BANDED, rating))
     report_items = [item for item in every.values() if item["type"] != "isr" or item["document_id"] in marked]
     events = [event for kind in EVENTS if (event := _event(engine, pid, as_of, kind, reports, sequences)) is not None]
     signings = [_record(row, pid) for row in _rows(engine, "signings", project_id=pid, as_of=as_of, **SIGNINGS)]
-    above = int(load_thresholds().value("timeline.what_lane_group_above"))
+    # The project's contracts as the Connections tab counts them too, and those the lane cannot place (ticket 138).
+    found_contracts = project_contracts.of_project(engine, pid, as_of)
+    held = {**project_contracts.held(found_contracts),
+            "left_out": project_contracts.left_out(found_contracts, {record["step_reference"] for record in signings})}
+    above =int(load_thresholds().value("timeline.what_lane_group_above"))
     bands = ratings["bands"] if ratings else []
     marks = [*report_items, *events, *_grouped(signings, pid, above), *bands]
     items = ordered(marks, disagreements)
     dated = [*report_items, *events, *signings]  # every dated item, each contract on its own
-    table = ordered([*dated, *bands], disagreements)
+    table = ordered([*dated, *bands], pairs)
     for found_one in disagreements:
         for side in found_one["sides"]:
             item = every[side["item_id"]]
@@ -443,12 +604,17 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
                     "display_name": display_name(project["project_name"]), "status": project["status"]},
         "as_of": as_of.isoformat(), "asked_as_of": _iso(asked), "view": view,
         "items": items, "table": table, "ratings": ratings,
-        "disagreements": {"status": status, "count": len(disagreements)},
+        "disagreements": {"status": status, "count": len(disagreements), "pairs": len(pairs)},
+        # The disagreements between a package's records, listed under the chart, and how many there are, which the
+        # list's count line and its Show all state (ticket 132; CLAUDE.md rule 1).
+        "records_disagree": listed,
+        "records_disagree_count": len(listed),
         # The state a dashed line takes when no answer or draft open on the page depends on it (config).
         "disagreement_line_state": PAGE.timeline.disagreement_line_state,
         "rejected": {"count": int((found.get("rejected") or {}).get("count") or 0)} if status != "failed" else None,
         "counts": {lane: sum(item["lane"] == lane for item in dated) for lane in LANES},
-        "finding": finding(ratings, disagreements, status),
+        "contracts": held, "records_note": records_note(held),
+        "finding":finding(ratings, disagreements, status),
         "alt": alt_text(pid, dated, ratings, disagreements, status, asked),
         "sources": ["documents", "notices", "awards"],
         # The data-freshness stamp's day, which the source line ends with ("through October 23, 2026").
@@ -567,6 +733,8 @@ def disagreement_row(row: dict) -> dict:
             "disagreement_id": row["disagreement_id"], "project_id": row["project_id"], "attribute": row["attribute"],
             "period": row["period"], "rule_id": row["rule_id"], "lean_assertion_id": row["lean_assertion_id"],
             "other_assertion_id": row["other_assertion_id"], "if_you_keep": row["if_you_keep"], "sides": sides,
+            # The day a later version replaced a side, only for a disagreement a replaced plan's check cites (ticket 132).
+            **({"replaced_on": row["replaced_on"]} if row.get("replaced_on") else {}),
             "source": {"table": row["source"]["table"], "project_id": row["project_id"]}}
 
 
@@ -576,13 +744,19 @@ def read_disagreement(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     found = _rows(engine, "disagreement", disagreement_id=key, as_of=as_of)
     if not found:
         return None
-    row = next((one for one in _tool(engine, found[0]["project_id"], as_of)["rows"] if one["disagreement_id"] == key),
-               None)
+    pid = found[0]["project_id"]
+    row = next((one for one in _tool(engine, pid, as_of)["rows"] if one["disagreement_id"] == key), None)
+    if row is None:
+        # A disagreement a later version replaced, such as a replaced plan's row that the contract awards moved past:
+        # current answers leave it out, but that plan's check still cites it (ticket 132's review round 1, B1).
+        row = replaced_disagreement(registry.Call(engine, Viewer(), "staff", as_of, load_thresholds()), pid, key)
     if row is None:
         return None
     sides = {_stratum(GROUPS.get(side["document_type"] or "", "other")) for side in row["sides"]}
-    return {"kind": "disagreement", "stratum": "Why" if sides == {"Why"} else None, "short_name": None,
-            "row": disagreement_row(row)}
+    # Two records about a package (ticket 132) are the What lane's, as a contract mark is; two reports keep their own.
+    records = all(side["evidence_tier"] == "record" for side in row["sides"])
+    stratum = "What" if records else "Why" if sides == {"Why"} else None
+    return {"kind": "disagreement", "stratum": stratum, "short_name": None, "row": disagreement_row(row)}
 
 
 def read_signing(engine: Engine, key: str, as_of: dt.date) -> dict | None:

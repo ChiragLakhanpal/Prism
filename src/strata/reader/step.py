@@ -117,8 +117,15 @@ def _known(text: str, known) -> str:
     return match if match is not None else tidy(text)
 
 
+def column_label(text: str) -> str:
+    """A column's label by its letters and digits alone, in lower case. ai_parse_document can drop a mark from a label
+    as well as a space: on the workspace it read P155350's June 10, 2024 plan's "Actual Amount (US$)" as "Actual Am
+    ount (US$", and the reader wrote no amount for any row (ticket 141)."""
+    return re.sub(r"[^a-z0-9]", "", text.lower())
+
+
 STEP_NAMES = {squash(name): name for name in STEPS} | {squash(old): new for old, new in STEP_ALIASES.items()}
-COLUMN_NAMES = {squash(name): key for name, key in COLUMNS.items()}
+COLUMN_NAMES = {column_label(name): key for name, key in COLUMNS.items()}
 SECTION_NAMES = {squash(name): name for name in SECTIONS}
 
 
@@ -181,6 +188,19 @@ class PlanRow:
     pdf_page: int
     fields: dict = field(default_factory=dict)  # silver column -> value, for the STEP columns the table has
     steps: list[StepDates] = field(default_factory=list)
+    # The reference and description as the layout parser read them, and what the repair made of them before the row
+    # is written (strata.reader.repair; ticket 131). activity_reference_no and description hold the repaired values.
+    activity_reference_no_as_read: str | None = None
+    reference_repair: str | None = None  # why the reference differs from the reading, or why it is flagged
+    reference_carried_by: str | None = None  # the evidence id of the record that carries the reference kept
+    description_as_read: str | None = None
+    description_joins: tuple = ()  # each strata.reader.repair.Join the repair made
+
+    def __post_init__(self):
+        if self.activity_reference_no_as_read is None:
+            self.activity_reference_no_as_read = self.activity_reference_no
+        if self.description_as_read is None:
+            self.description_as_read = self.description
 
 
 def _date(text: str) -> dt.date | None:
@@ -283,6 +303,25 @@ def _settle(rows: list[PlanRow], listed: Sequence[str], most: int) -> list[tuple
     return settled
 
 
+def _starts_with_reference(cell: str) -> bool:
+    return bool(REFERENCE.fullmatch(re.sub(r"\s+", "", cell.partition("/")[0])))
+
+
+def _unfolded(cells: tuple[str, ...], described: tuple[str, ...], activity: int) -> tuple[str, ...]:
+    """A table row as its own cells, where ai_parse_document folded it into a second copy of the header.
+
+    On the workspace, ai_parse_document read the WORKS table of P155350's June 10, 2024 plan with its first row,
+    PK-SID-2961-CW-RFP, after a copy of the header's twelve labels in one row, so each of the row's cells sat twelve
+    columns to the right of its own and the reader found no reference in it (ticket 141). A row whose cells start with
+    every label of the columns before the dates, word for word, and go on with a reference is read from that
+    reference; any other row is read as it is."""
+    width = len(described)
+    if not any(described) or tuple(cells[:width]) != tuple(described) or len(cells) <= width + activity:
+        return cells
+    rest = (*cells[width:], *("",) * width)
+    return rest if _starts_with_reference(rest[activity]) else cells
+
+
 def _read_table(table: Table, pdf_page: int, reading: Reading) -> None:
     labels, heads = table.rows[0], table.rows[1]
     section = SECTION_NAMES.get(squash(table.title), tidy(table.title))
@@ -295,14 +334,16 @@ def _read_table(table: Table, pdf_page: int, reading: Reading) -> None:
                 steps.append((name, None, None))
             step, planned, actual = steps[-1]
             steps[-1] = (step, index, actual) if head == "Planned" else (step, planned, index)
-        elif squash(label) in COLUMN_NAMES:
-            keys[index] = COLUMN_NAMES[squash(label)]
+        elif column_label(label) in COLUMN_NAMES:
+            keys[index] = COLUMN_NAMES[column_label(label)]
         elif label.strip():
             reading.unknown_columns.add(tidy(label))
     activity = next((i for i, key in keys.items() if key == "activity"), None)
     if activity is None:
         return
+    described = min((index for index, head in enumerate(heads) if head in ("Planned", "Actual")), default=len(labels))
     for cells in table.rows[table.header_rows:]:
+        cells = _unfolded(cells, labels[:described], activity)
         reference, _, description = cells[activity].partition("/")
         reference = re.sub(r"\s+", "", reference)
         if not REFERENCE.fullmatch(reference):

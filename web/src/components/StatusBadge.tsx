@@ -3,14 +3,15 @@
 // mark exceptions; the icon is hidden from screen readers because the word carries the state.
 //
 // Signals: Needs a look, Watch, No signals, and Not checked (ticket 37). Data readiness: Partial, Gap. Plan checks: Data
-// note. A dashed border marks the ones that mean something is missing from the record. Lessons (ticket
+// note, and Moved on (ticket 132), with a history icon and a dashed border, since the plan is missing the signing a
+// later record shows. A dashed border marks the ones that mean something is missing from the record. Lessons (ticket
 // 29): the four evidence badges (Restated by IEG, IEG's lesson, Awaiting IEG review, Rests on the ICR
 // alone), May repeat a lesson, Being re-checked, and Overdue, amber because a late decision is stale work.
 // Rebidding risk (ticket 28): Experimental, neutral with a flask, no visible border and an 8 px icon gap, the one
 // quiet mark of an estimate the blueprint labels experimental (the 28 brief, section 4.2). Designed, not built (ticket
 // 46): Experimental's quiet look with drafting-compass, the mark of a part the proposal describes but the app does
 // not have yet (the 46 brief, section 12.2); DesignedNotBuilt sets it beside what Strata does instead.
-import { Circle, CircleDashed, DraftingCompass, FlaskConical, Info, TriangleAlert, type LucideIcon } from "lucide-react";
+import { Circle, CircleDashed, DraftingCompass, FlaskConical, History, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { STATES, type State } from "./state";
@@ -23,6 +24,7 @@ export type BadgeKind =
   | "partial"
   | "gap"
   | "data-note"
+  | "moved-on"
   | "restated"
   | "ieg-lesson"
   | "awaiting"
@@ -57,6 +59,7 @@ const KINDS: Record<BadgeKind, Kind> = {
   partial: { state: "warning", Icon: TriangleAlert, dashed: false, text: copy.badge.partial },
   gap: { state: "neutral", Icon: CircleDashed, dashed: true, text: copy.badge.gap },
   "data-note": { state: "neutral", Icon: CircleDashed, dashed: true, text: copy.badge.dataNote },
+  "moved-on": { state: "neutral", Icon: History, dashed: true, text: copy.badge.movedOn },
   restated: { state: "info", Icon: Info, dashed: false, text: lessons.restated },
   "ieg-lesson": { state: "info", Icon: Info, dashed: false, text: lessons.ieg_lesson },
   awaiting: { state: "neutral", Icon: CircleDashed, dashed: true, text: lessons.awaiting },
@@ -87,8 +90,11 @@ const KINDS: Record<BadgeKind, Kind> = {
   "designed-not-built": { state: "neutral", Icon: DraftingCompass, dashed: false, text: copy.badge.designedNotBuilt, quiet: true },
 };
 
-export function StatusBadge({ kind, className, describedBy }: { kind: BadgeKind; className?: string; describedBy?: string }) {
-  const { state, Icon, dashed, text, quiet = false } = KINDS[kind];
+// text: a badge whose words carry a count from the payload, such as a disagreement's "14 reports disagree" (ticket
+// 136), in place of its kind's own words.
+export function StatusBadge({ kind, className, describedBy, text: words }: { kind: BadgeKind; className?: string; describedBy?: string; text?: string }) {
+  const { state, Icon, dashed, text: own, quiet = false } = KINDS[kind];
+  const text = words ?? own;
   const look = STATES[state];
   return (
     <span

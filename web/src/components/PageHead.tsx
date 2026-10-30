@@ -39,6 +39,7 @@ export function PageHead({
   titleRef,
   loading = false,
   narrowLines = 2,
+  narrowestLines,
   id,
   idAction,
   meta,
@@ -66,6 +67,9 @@ export function PageHead({
   // How many h1 lines the skeleton holds below a 48rem page area, where a long title wraps more, such as a package's
   // Description (3; ticket 101's design review). From 48rem it holds two.
   narrowLines?: number;
+  // How many it holds below a 21rem page area, where the breadcrumb's link back holds two lines too (holdBack), when
+  // that differs: a package's Description whose words the plan reader joined wraps once more there (ticket 131).
+  narrowestLines?: number;
   // An object's ID, such as its STEP reference.
   id?: string;
   // What follows the ID on its line, such as the copy key that copies it (ticket 112; the package page, ticket 101).
@@ -98,7 +102,18 @@ export function PageHead({
             },
             loading ? (
               <>
-                <SkeletonText className="text-h1 @md/page:hidden" widths={[...Array.from({ length: narrowLines - 1 }, () => "w-full"), "w-3/5"]} />
+                {/* Below 48rem the title holds narrowLines lines, and from 28rem one fewer: with no purpose under it
+                    since ticket 126, the zones under a two-line title showed the extra line as a jump. Below 21rem it
+                    holds narrowestLines when a page gives it (ticket 131). */}
+                <span aria-hidden="true" className="flex flex-col text-h1 @md/page:hidden">
+                  {Array.from({ length: narrowLines - 1 }, (_, index) => (
+                    <SkeletonLine key={index} width="w-full" className={index > 0 ? "@[28rem]/page:hidden" : undefined} />
+                  ))}
+                  {Array.from({ length: Math.max(0, (narrowestLines ?? narrowLines) - narrowLines) }, (_, index) => (
+                    <SkeletonLine key={`narrowest-${index}`} width="w-full" className="hidden @max-[21rem]/page:flex" />
+                  ))}
+                  <SkeletonLine width="w-3/5" />
+                </span>
                 <SkeletonText className="hidden text-h1 @md/page:flex" widths={["w-full", "w-3/5"]} />
                 <LoadingLabel />
               </>
@@ -120,11 +135,14 @@ export function PageHead({
             </div>
           )}
           {purpose != null && <p className="mt-3 max-w-prose text-body text-pretty text-ink-muted">{purpose}</p>}
-          {/* The facts line's place: below a 48rem page area its two lines over "Show the plan row"'s 44 px row, from
-              48rem one row (ticket 101's design review). */}
+          {/* The facts line's place: below a 48rem page area its two lines (one from 34rem, ticket 126) over "Show the
+              plan row"'s 44 px row, from 48rem one row (ticket 101's design review). */}
           {facts && loading && (
             <div data-facts-line aria-hidden="true" className="mt-3">
-              <SkeletonText className="text-small @md/page:hidden" widths={["w-full", "w-2/5"]} />
+              <span aria-hidden="true" className="flex flex-col text-small @md/page:hidden">
+                <SkeletonLine width="w-full" />
+                <SkeletonLine width="w-2/5" className="@[34rem]/page:hidden" />
+              </span>
               <div className="flex min-h-11 items-center">
                 <SkeletonLine className="hidden text-small @md/page:flex" width="w-4/5" />
               </div>

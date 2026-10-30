@@ -22,7 +22,7 @@ import { NoteSentences } from "../components/DraftNotes";
 import { highlighted } from "../components/Document";
 import { Fill } from "../components/Fill";
 import { LessonCard, LessonSources } from "../components/LessonCard";
-import { EvidenceBadge, fillText, Tag } from "../components/LessonParts";
+import { actorText, EvidenceBadge, fillText, Tag } from "../components/LessonParts";
 import { ProjectId } from "../components/ProjectId";
 import { ClockLine, HistoryList, OutcomePanel, statusOf } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
@@ -72,8 +72,11 @@ export function EvidenceCardFull({ evidence, n, open, visited }: { evidence: Les
   const excerpt = evidence.excerpt;
   return (
     <article aria-labelledby={titleId} data-lesson-evidence={evidence.evidence_id} className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6">
+      {/* No stratum eyebrow (ticket 126): the title names the report, with the marker at its right. */}
       <div className="flex items-start justify-between gap-3">
-        <p className="text-label text-ink-muted">{r.eyebrow}</p>
+        <h3 id={titleId} className="text-h2 text-ink-heading wrap-anywhere">
+          {cardTitle(evidence)}
+        </h3>
         <CitationMarker
           n={n}
           evidenceId={evidence.evidence_id}
@@ -85,9 +88,6 @@ export function EvidenceCardFull({ evidence, n, open, visited }: { evidence: Les
           onOpen={(marker) => openEvidence(evidence.evidence_id, { serial: null, sentence: null, marker, runId: null, highlight: evidence.highlight ?? null })}
         />
       </div>
-      <h3 id={titleId} className="-mt-1 text-h2 text-ink-heading wrap-anywhere">
-        {cardTitle(evidence)}
-      </h3>
       {evidence.role === "restatement" && <p className="text-caption text-ink-muted">{r.restatedCaption}</p>}
       <p className="max-w-prose text-body text-ink" lang={evidence.language && evidence.language !== "en" ? evidence.language : undefined} data-excerpt>
         {copy.evidence.quoteOpen}
@@ -344,6 +344,7 @@ function recordPanel(item: ReviewItem): Panel | null {
     target: outcome.target ?? "",
     version: outcome.version ? <Num value={outcome.version} /> : "",
     region: item.region,
+    actor: actorText(outcome.actor),
   };
   const state: State = outcome.outcome === "rejected" || outcome.outcome.startsWith("retired") ? "neutral" : outcome.outcome === "agree" || outcome.outcome === "disagree" ? "info" : "success";
   return { state, lead: <Fill template={words_.lead} slots={slots} />, body: <Fill template={words_.body} slots={slots} />, links: [] };
@@ -354,7 +355,8 @@ function staleSlots(item: ReviewItem): Record<string, ReactNode> {
   const acts: Record<string, string> = { recommended: "recommend", decided: "decide", cross_checked: "cross_check" };
   const last = [...item.history].reverse().find((event) => event.event in acts);
   return {
-    name: last?.name ?? "",
+    // Inside the sentence: "While you had this lesson open, an accredited procurement specialist for South Asia ..."
+    actor: actorText(last?.actor, true),
     act: words.form.staleActs[last ? acts[last.event] : "recommend"],
     date: last?.on ? <Num date={last.on} /> : "",
   };
@@ -568,23 +570,22 @@ export function ReviewView({ item: loaded, initial }: { item: ReviewItem; initia
   );
 }
 
-// One evidence card's frame, block for block, as tall as an ICR card at each width: the eyebrow and marker,
-// the title, the quote, the source line and the check line.
+// One evidence card's frame, block for block, as tall as an ICR card at each width: the title and marker, the quote,
+// the source line and the check line (ticket 126 dropped the eyebrow).
 function EvidenceFrame() {
   return (
     <div className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6" data-skeleton-card>
-      <div className="flex items-start justify-between gap-3">
-        <SkeletonLine className="text-label" width="w-1/4" />
-        <Skeleton className="size-5" radius="rounded-pill" />
-      </div>
       {/* The title and the quote take more lines as the page area narrows, as the fixture's ICR card does at 320 to
           1440 px (ticket 59): the title a second line below 26rem and a third below 22.5rem; the quote a line more
           below 40rem, 31rem and 26rem, and two more below 22.5rem. */}
-      <span className="-mt-1 flex flex-col text-h2">
-        <SkeletonLine width="w-3/4" />
-        <SkeletonLine width="w-1/3" className="@[26rem]/page:hidden" />
-        <SkeletonLine width="w-1/4" className="@[22.5rem]/page:hidden" />
-      </span>
+      <div className="flex items-start justify-between gap-3">
+        <span className="flex flex-1 flex-col text-h2">
+          <SkeletonLine width="w-3/4" />
+          <SkeletonLine width="w-1/3" className="@[26rem]/page:hidden" />
+          <SkeletonLine width="w-1/4" className="@[22.5rem]/page:hidden" />
+        </span>
+        <Skeleton className="size-5" radius="rounded-pill" />
+      </div>
       <span className="flex max-w-prose flex-col text-body">
         <SkeletonLine width="w-full" />
         <SkeletonLine width="w-full" />
@@ -664,7 +665,6 @@ export function ReviewPage({ itemId }: { itemId: string }) {
       body = (
         <>
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">{copy.pages.lessons.title}</h1>
-          <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{copy.pages.lessons.purpose}</p>
           <div className="mt-8">
             <EmptyState title={words.queue.noAccessTitle} body={words.queue.noAccessBody} link={{ href: LESSONS_HREF, text: words.queue.noAccessLink }} />
           </div>

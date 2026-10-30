@@ -6,7 +6,7 @@ Read first: `docs/design/notes-2026-10-29/ask-bar-and-width-proposal.md` (Option
 
 **Blocked by:** 127 (the box on the grid first)
 
-**Status:** ready
+**Status:** done
 **Area:** web
 **Phase:** P4
 **Design review:** no
@@ -22,3 +22,34 @@ Read first: `docs/design/notes-2026-10-29/ask-bar-and-width-proposal.md` (Option
 - October 29, 2026, orchestrator: parked at 12:49 PDT at the owner's word ("parking the design related stuff so that the lead can use mobbin's mcp for inspo and the build"); the lead's proposal moved to docs/design/notes-2026-10-29/ so a builder in a worktree can read it.
 
 - October 29, 2026, orchestrator: opened at 12:40 PDT from the design lead's proposal of the same day.
+
+- October 30, 2026, merger: merged strata/130-the-package-workspace-uses-its-right-column (head f2a54271: the work in d3fd349d and round 1's fix f518e356, with two merges of build/strata) into build/strata as merge commit 3d848ce1, with history, since the history scan found no key-shaped line in the branch's commits. The worktree that built it was `.claude/worktrees/wf_9527f252-a36-1`; I remove it right after this commit and keep the branch. The merge changes 16 files (669 lines in, 93 out), all under `web/` plus `DESIGN.md`, and went in on d5e1575e, after tickets 137 and 140 had landed. Git merged `DESIGN.md` and `web/src/copy.ts` on its own, beside ticket 140's changes to both. Before the commit, on the merged tree, the type check (`tsc --noEmit`) and the copy and component lint (`node web/lint/run.ts`) passed. No install file changed; I ran `scripts/install` anyway.
+  - The gate: I committed through the orchestrator's quiet-window script.
+    - Its first try, at 00:10 PDT at a one-minute load of 14, failed after 148.1 seconds on one timing test outside this ticket: `tests/test_estimate_time.py::test_the_stored_what_if_grid_is_read_within_100_ms` read the stored grid in 111 ms against its 100 ms limit, and 2,444 other tests in that half passed. Ticket 137's merger saw the same test fail once under load. The merge stayed in place, as the script asks.
+    - Its second try, at 00:23 PDT at a load of 33, passed in 135.0 seconds and made 3d848ce1. The fixture database was kept as it was, the Python halves took 129.7 s each, and Playwright 114.9 s and 117.2 s. `git log --parents -1` shows the two parents d5e1575e and f2a54271.
+  - By hand on build/strata: `.githooks/pre-commit` passed in 135.7 seconds, from 00:26:15 to 00:28:31 PDT, at 3d848ce1, at a one-minute load of about 20, once no other gate, test run or headless browser was running. The secret and history scan took 3.7 s, so the history scan has read the merged history. The Python halves took 130.6 s and 129.3 s, and Playwright 114.6 s and 117.0 s.
+  - Notes that passed, at f2a54271:
+    - The code review approved round 2 with nothing blocking and three follow-ups (`.notes/130-review-r2.md`). Round 1's two blocking findings, focus that left a step out of view and a card that stuck when the window could not show all of it, are fixed and tested.
+    - Design review and critique: none, since the ticket says "Design review: no" and the user's rule of October 25 holds them for the end.
+  - Verify (`.notes/130-verify-r2.md`): pass, with no failing criteria and nothing parked for the workspace. The worktree's gate passed in 137.8 seconds.
+    - Criterion 1: at 1440 by 900 and 1280 by 800 the side column holds the facts, then the tracker as a list with one left edge, and the tracker stays whole in view at y 80 with zone 3 scrolled under the bar. At 1024 and 390 px the tracker follows "How long it took" inside the zones, a row of six at 1024 px. Every fact in the panel matches KE-NWWDA-541055-CW-RFB's latest row in `silver.plan_rows` (Request for Bids, Open - National, Post, 1,230,000.00, Pending Implementation, page 3, plan of October 9, 2026). The nine-step card (815 px) sticks at 1440 by 900 and turns static at 1280 by 800 and at 1440 by 820, as the rule says.
+    - Criterion 2: `package.spec.ts` measured every zone and stage label the same before, during and after the drawer at 1440 and 1280 px, and the tracker came back at the same x and width. Ticket 115's done ticks and dates, the filled next step, "Late by 21 days", the word-for-word source line, the keyboard rules and reduced motion all held in the list.
+    - Criterion 3: at 1440 and 1280 px "How I checked" sits right of the finding within 1 px of its top, with Method, Compared with and Baseline each ending in a Source line; at 1024 and 390 px it follows the activities; axe found no violations at all four widths. "The plan of March 5, 2026" and "re-estimated two activities" match the two versions in `silver.plan_versions` (KE-NWWDA-541055-CW-RFB 1,200,000.00 to 1,230,000.00 and KE-NWWDA-541062-CW-RFQ 280,000.00 to 295,000.00, as `values.toml` says). The baseline is the July 21, 2025 version (document 40031468). The PIU view showed no saver's name (rule 8).
+    - Probes: the as-of rules, the ten must-refuse questions, the injected number and check_plan's ground truth all passed.
+  - Deferred to the design pass:
+    - At 1440 by 900 on Check a plan, the column under the finding is empty for about 400 px, and the first marked row sits just inside the window, under the ask box (`.notes/130-verify-r2-shots/plan-check-1440x900.png`).
+    - Captures at 1280, 1024 and 390 px were not taken; the specs measure those widths.
+  - Workspace results: the builder named no workspace step, so I ran none and parked none. Every key is set (`guard.py --env-keys`), but mergers run no workspace step. The change is in the web app only, so the App shows it after its next redeploy: ticket 137's step 1 in `docs/workspace-catchup.md` (`ops/app/deploy_app.py --keep-secrets`) carries it when the second session or the orchestrator runs it from a snapshot at or after 3d848ce1.
+  - Follow-ups from the review and the verify (none blocks):
+    - F1: `--frame-top` is read in four places (`web/src/components/Workspace.tsx:29`, `web/src/components/StepTracker.tsx:173`, `web/src/lib/sticky.ts:70`, `web/src/pages/JudgingPages.tsx:491`). Add one `frameTop()` in `lib/sticky.ts` and use it at all four.
+    - F2: the 24 px the card sticks under is written twice (`app.css:453` and `Workspace.tsx:30`). Move `top` into a plain `[data-side-sticky]` rule and have `SideSticky` read the computed `top`.
+    - F3: the 1440 by 900 assertion in `web/tests/package-tracker.spec.ts:310` has 5 px to spare (80 + 815 of 900). Measure the card after the resize and assert sticky only when it fits, or name the margin in a comment.
+    - F4 (verify): when a package has no step dates, `PackagePage.tsx` still passes the tracker as `sideSticky`, so the facts panel no longer sticks and an empty 0 px `[data-side-sticky]` div remains. Pass `sideSticky` only when the steps answer has step dates, is loading or failed.
+    - Outside this ticket: `tests/test_estimate_time.py::test_the_stored_what_if_grid_is_read_within_100_ms` has now failed under merge-gate load twice (ticket 137 and this merge) and passes otherwise. It needs a ticket of its own if the gate keeps tripping on it.
+  - Decisions parked for the user:
+    - A window too short for the whole card. Criterion 1 says the list "stays in view under the top bar", and the design lead's W2 rule says it "sticks only when the window can show all of it". The branch follows the lead's rule, so in a short window (nine steps at 1280 by 800 or 1366 by 768, or six steps under about 700 px tall) the tracker scrolls with the page and its Source line is never held out of view. A card that always stays in view would need to scroll inside itself, which is its own ticket and a design decision.
+    - The lead's W2 file list also names `pages/PlannedPackagePage.tsx`, but the criteria name only the package workspace, so the planned package page is unchanged. W2 there would be its own ticket.
+    - The task named `docs/agents/areas/web.md` as the area brief, but no such file exists; the reviewer worked from the ticket, the lead's Option W2 and the task's facts.
+  - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. When I started, the main checkout held ticket 140's merge in progress; I waited for it, its done commit and the status update to land, and started this merge only on a clean checkout. No other merge ran in it while mine was in progress.
+  - Unblocks: none. No ticket lists 130 under "Blocked by".
+- October 30, 2026, orchestrator (02:17 PDT): the App redeploy ran from 97fb5bcb (the catch-up block "Tickets 130, 135, 137, 139 and 140, the App redeploy ran"); the page's check by eye is the owner's.

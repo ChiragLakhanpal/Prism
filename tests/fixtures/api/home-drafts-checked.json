@@ -53,9 +53,9 @@
         {
           "count": 1,
           "word": "One",
-          "kind": "look",
+          "kind": "watch",
           "ids": [
-            "line-activity-KE-NWWDA-541055-CW-RFB"
+            "line-activity-KE-NWWDA-229129-CW-RFB"
           ]
         },
         {
@@ -68,25 +68,7 @@
           "text": " activities "
         },
         {
-          "text": "needs"
-        },
-        {
-          "text": " a look and "
-        },
-        {
-          "count": 2,
-          "word": "two",
-          "kind": "watch",
-          "ids": [
-            "line-activity-KE-NWWDA-229129-CW-RFB",
-            "line-activity-KE-NWWDA-541062-CW-RFQ"
-          ]
-        },
-        {
-          "text": " "
-        },
-        {
-          "text": "are"
+          "text": "is"
         },
         {
           "text": " worth watching."
@@ -103,11 +85,6 @@
         },
         {
           "text": " lesson cited in your drafts changed."
-        }
-      ],
-      [
-        {
-          "text": "No draft is waiting for you to check."
         }
       ]
     ],
@@ -163,26 +140,25 @@
     "lines": [
       {
         "kind": "activity",
-        "id": "line-activity-KE-NWWDA-541055-CW-RFB",
-        "key": "KE-NWWDA-541055-CW-RFB",
-        "status": "needs_a_look",
-        "reason": "completion_passed_no_contract",
+        "id": "line-activity-KE-NWWDA-229129-CW-RFB",
+        "key": "KE-NWWDA-229129-CW-RFB",
+        "status": "watch",
+        "reason": "signed_late_over_estimate",
         "example": false,
         "plan": "40132287",
         "segments": [
           {
-            "ref": "KE-NWWDA-541055-CW-RFB"
+            "ref": "KE-NWWDA-229129-CW-RFB"
           },
           {
             "text": ", US$"
           },
           {
-            "written": "1.23",
-            "what": "millions",
-            "exact": "1,230,000.00"
+            "written": "300,000",
+            "what": "estimated"
           },
           {
-            "text": " million of "
+            "text": " of "
           },
           {
             "text": "works"
@@ -201,54 +177,6 @@
           },
           {
             "text": "),"
-          },
-          {
-            "text": " passed its planned completion date of "
-          },
-          {
-            "date": "2026-07-31"
-          },
-          {
-            "text": " with no signed contract in the plan."
-          },
-          {
-            "text": " The project closes "
-          },
-          {
-            "date": "2026-10-31"
-          },
-          {
-            "text": "."
-          }
-        ],
-        "source": {
-          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-          "kind": "plan",
-          "date": "2026-10-09",
-          "agency": "Northern Water Works Development Agency",
-          "pid": "P156634"
-        },
-        "action": {
-          "key": "openActivity",
-          "href": "/projects/P156634/packages/KE-NWWDA-541055-CW-RFB",
-          "hidden": "KE-NWWDA-541055-CW-RFB"
-        },
-        "differs": null
-      },
-      {
-        "kind": "activity",
-        "id": "line-activity-KE-NWWDA-229129-CW-RFB",
-        "key": "KE-NWWDA-229129-CW-RFB",
-        "status": "watch",
-        "reason": "signed_late_over_estimate",
-        "example": false,
-        "plan": "40132287",
-        "segments": [
-          {
-            "text": "In the same plan, "
-          },
-          {
-            "ref": "KE-NWWDA-229129-CW-RFB"
           },
           {
             "text": " was signed at US$"
@@ -283,52 +211,6 @@
         "differs": null
       },
       {
-        "kind": "activity",
-        "id": "line-activity-KE-NWWDA-541062-CW-RFQ",
-        "key": "KE-NWWDA-541062-CW-RFQ",
-        "status": "watch",
-        "reason": "pending_near_closing",
-        "example": false,
-        "plan": "40132287",
-        "segments": [
-          {
-            "text": "In the same plan, "
-          },
-          {
-            "ref": "KE-NWWDA-541062-CW-RFQ"
-          },
-          {
-            "text": " is still pending in the plan, "
-          },
-          {
-            "number": 3,
-            "what": "daysToClose"
-          },
-          {
-            "text": " days before the project closes on "
-          },
-          {
-            "date": "2026-10-31"
-          },
-          {
-            "text": "."
-          }
-        ],
-        "source": {
-          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
-          "kind": "plan",
-          "date": "2026-10-09",
-          "agency": "Northern Water Works Development Agency",
-          "pid": "P156634"
-        },
-        "action": {
-          "key": "openActivity",
-          "href": "/projects/P156634/packages/KE-NWWDA-541062-CW-RFQ",
-          "hidden": "KE-NWWDA-541062-CW-RFQ"
-        },
-        "differs": null
-      },
-      {
         "kind": "lesson",
         "id": "line-lesson-lesson-e903b07ad1-v1",
         "key": "lesson-e903b07ad1/v1",
@@ -355,7 +237,7 @@
             "text": "Your suggested PPSD risk rows for "
           },
           {
-            "text": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply"
+            "text": "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply"
           },
           {
             "text": " cite"

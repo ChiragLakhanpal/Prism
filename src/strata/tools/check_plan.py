@@ -20,12 +20,20 @@ The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAU
   gives how many days after its first published planned date the contract was signed.
 - Data note: each note the plan reader wrote, and a check the tool could not run because the plan
   gives no planned completion date or no estimate (the activity then counts as not fully checked).
+- Moved on since the plan (ticket 132): the plan still says the contract is not signed (a Process Status
+  before signing and no Signed Contract date), and a contract record or an award notice says it was signed
+  before a later plan of the agency replaced this version (at any time, for the agency's latest plan). That is a disagreement between the two records, defined once
+  by the nightly job's detect_disagreements task (strata.knowledge.assertions), and the tool reads it
+  (moved_on.sql) rather than working it out again. The row then gets none of the pending checks above, whose
+  "no signed contract" the record contradicts; its reason gives the record's signing date and which record it
+  is, and cites the plan row, the disagreement and the record. It is not a signal, and the counts give it
+  apart (moved_on), so it is never counted as still pending.
 
 A reason that measures from a first published planned date cites the plan row that gave it, beside
 the row checked, so a later plan that moves the date never leaves the delay without its source.
 
 The counts give every number the Check a plan screen states about the whole plan: the activities,
-how many were checked fully and how many not, how many carry each mark, how many carry a signal
+how many were checked fully and how many not, how many carry each mark (moved_on among them), how many carry a signal
 (needs a look or watch, the rows a draft of review notes covers), and how many carry any mark or
 none, so the screen never counts rows itself.
 
@@ -60,23 +68,24 @@ from functools import cache
 from importlib import resources
 
 from strata.config import load_views
+from strata.lakehouse.clean import Agencies, agency_id
+from strata.reader.repair import AS_READ as REFERENCE_AS_READ
 from strata.tools.registry import Call
 
 CONTRACT_STATUSES = ("Signed", "Completed")  # STEP's Process Status once a contract is signed
 PENDING_STATUSES = ("Pending Implementation", "Under Implementation", "Under Review", "Draft")
 CHECKS = ("own_dates", "estimate", "closing_date")  # what the screen's method sentence names
 SIGNALS = ("needs_a_look", "watch")  # the marks that are signals; a data note describes the record
+MOVED_ON = "moved_on"  # the mark of an activity the records have moved past (ticket 132); not a signal
+# The record that says a moved-on activity's contract was signed, in the step tracker's words for the same records
+# (src/strata/server/tracker.py, actual_source), by the form of its assertion.
+RECORD_WORDS = {"contract_record": "contract_awards", "award_notice": "award_notice"}
 SIGNING, COMPLETION = "Signed Contract", "Contract Completion"  # STEP's steps the delay reasons measure
 CENTS, WHOLE = Decimal("0.01"), Decimal("1")
 
 
 def _sql(name: str) -> str:
     return (resources.files("strata.tools") / "sql" / "check_plan" / name).read_text()
-
-
-def agency_id(name: str) -> str:
-    """An implementing agency's id in links: its name in lower case, with hyphens between words."""
-    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
 def implementing_agencies(text: str | None) -> list[str]:
@@ -194,36 +203,55 @@ def _version(row: dict) -> dict:
             "public_from": _date(row["public_from"]), "text_url": row["text_url"], "pdf_url": row["pdf_url"]}
 
 
+def _versions(call: Call, project_id: str) -> list[dict]:
+    """Every version of the project's plans that names its agency, oldest first, so the latest is last even when an
+    agency's name is written two ways."""
+    versions = [_version(row) for row in _rows(call, "versions.sql", project_id=project_id)
+                if row["implementing_agency"]]
+    versions.sort(key=lambda version: (version["plan_date"], version["public_from"], version["document_id"]))
+    return versions
+
+
+def agencies(call: Call, project_id: str, record_agencies=(), versions: list[dict] | None = None) -> Agencies:
+    """The project's agencies as of call.as_of by the one pairing rule (strata.lakehouse.clean; ticket 133), from
+    every version of its plans and then the agencies its record names, so a plan and the record that write one agency
+    two ways are one agency, whose id is its newest public plan's spelling. A tool that lists a project's agencies
+    reads them here, so its ids are the plan check's."""
+    return Agencies.of_project(_versions(call, project_id) if versions is None else versions, record_agencies,
+                               call.as_of)
+
+
 def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
             record_agencies: list[str]) -> tuple[dict | None, dict | None]:
     """The plan version to check, or the abstention that says why there is none. record_agencies
     is the agencies the project record names, so an agency with no plan can still be named in full."""
-    versions = [_version(row) for row in _rows(call, "versions.sql", project_id=project_id)
-                if row["implementing_agency"]]
-    # By date, so the latest is last even when an agency's name is spelled two ways.
-    versions.sort(key=lambda version: (version["plan_date"], version["public_from"], version["document_id"]))
+    versions = _versions(call, project_id)
     public = [version for version in versions if version["public_from"] <= call.as_of]
-    wanted = asked.strip().lower()
-    mine = [v for v in versions if v["implementing_agency"].lower() == wanted or agency_id(v["implementing_agency"]) == wanted]
+    grouped = agencies(call, project_id, record_agencies, versions)
+    found = grouped.find(asked)
+    mine = [version for version in versions if found and found.holds(version["implementing_agency"])]
     if not mine:
-        # The latest public version of each agency, by its id, so an agency whose name is spelled two ways is listed
-        # once, as its latest plan spells it.
-        agencies = {agency_id(version["implementing_agency"]): version for version in public}
-        record = [name for name in record_agencies if name.lower() == wanted or agency_id(name) == wanted]
+        # The latest public version of each agency, so an agency whose name is written two ways is listed once, as
+        # its latest plan spells it.
+        listed = {}
+        for agency in grouped:
+            its = [version for version in public if agency.holds(version["implementing_agency"])]
+            if its:
+                listed[agency.agency_id] = its[-1]
         return None, {"reason": "no_plan_from_agency", "implementing_agency": asked,
-                      "agency_name": record[0] if record else None,
+                      "agency_name": found.name if found else None,
                       "agencies": [{"implementing_agency": version["implementing_agency"], "agency_id": key,
                                     "latest_plan_date": _iso(version["plan_date"])}
-                                   for key, version in sorted(agencies.items())]}
+                                   for key, version in sorted(listed.items())]}
     mine_public = [version for version in mine if version["public_from"] <= call.as_of]
     latest = mine_public[-1] if mine_public else None
     name = (latest or mine[-1])["implementing_agency"]  # as its latest plan spells it
-    agency = {"implementing_agency": name, "agency_id": agency_id(name),
+    agency = {"implementing_agency": name, "agency_id": found.agency_id,
               "latest_plan_date": _iso(latest["plan_date"]) if latest else None}
     if plan_date is None:
         if latest is None:
             return None, {"reason": "no_plan_as_of", **agency}
-        return {**latest, "is_latest": True}, None
+        return {**latest, "is_latest": True, "agency_id": found.agency_id}, None
     named = [version for version in mine if version["plan_date"] == plan_date]
     if not named:
         return None, {"reason": "version_not_found", "plan_date": _iso(plan_date), **agency}
@@ -233,17 +261,18 @@ def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
     if not named_public:
         return None, {"reason": "version_not_public", "plan_date": _iso(plan_date),
                       "public_from": _iso(named[0]["public_from"]), **agency}
-    return {**named_public[-1], "is_latest": named_public[-1] is latest}, None
+    return {**named_public[-1], "is_latest": named_public[-1] is latest, "agency_id": found.agency_id}, None
 
 
 def _plan(version: dict, project_id: str) -> dict:
+    """The plan a result names. Its agency_id is the agency's, which _choose gives with the version."""
     return {
         "evidence_id": f"strata.silver.plan_versions:{version['document_id']}",
         "public_from": _iso(version["public_from"]),
         "document_id": version["document_id"],
         "project_id": project_id,
         "implementing_agency": version["implementing_agency"],
-        "agency_id": agency_id(version["implementing_agency"]),
+        "agency_id": version["agency_id"],
         "plan_date": _iso(version["plan_date"]),
         "disclosed_on": _iso(version["disclosed_on"]),
         "is_latest": version["is_latest"],
@@ -412,6 +441,39 @@ def _signals(row: dict, cite: list[str], project: dict, limits: Thresholds,
     return signals, notes
 
 
+def moved_on_reads(document_id: str, as_of: dt.date) -> tuple[str, dict]:
+    """The statement that reads the disagreements of one version's rows that say the records moved past them."""
+    from strata.knowledge.assertions import PLAN_ROW, STATUS
+
+    return _sql("moved_on.sql"), {"document_id": document_id, "as_of": as_of, "plan_row": PLAN_ROW, "status": STATUS,
+                                  "package": "package"}
+
+
+def _moved_on(call: Call, document_id: str) -> dict[str, dict]:
+    """Each activity of the version the records moved past, by its reference: the disagreement to cite, a contract
+    record's before an award notice's, then the earliest signing."""
+    sql, params = moved_on_reads(document_id, call.as_of)
+    result = call.engine.run(sql, params)
+    found: dict[str, dict] = {}
+    for row in sorted((dict(zip(result.columns, values)) for values in result.rows),
+                      key=lambda row: (row["record_form"] != "contract_record", str(row["signed_on"]),
+                                       row["disagreement_id"])):
+        if row["record_form"] in RECORD_WORDS:
+            found.setdefault(row["activity_reference_no"], row)
+    return found
+
+
+def _moved_on_reason(found: dict, activity: dict, cite: list[str]) -> dict:
+    """The reason of an activity the records moved past: the record's signing date, which record it is, and the
+    plan's own Process Status, citing the plan row, the disagreement and the record."""
+    from strata.tools.get_disagreements import TABLE
+
+    return _reason("moved_on_since_plan", MOVED_ON,
+                   [*cite, f"{TABLE}:{found['disagreement_id']}", found["record_evidence_id"]],
+                   process_status=activity["process_status"], signed_on=_iso(_date(found["signed_on"])),
+                   record=RECORD_WORDS[found["record_form"]], disagreement_id=found["disagreement_id"])
+
+
 def _note(note: dict, cite: list[str]) -> dict:
     """A data note the plan reader wrote (silver.plan_data_notes), with the values its sentence needs."""
     if note["note"] == "method_differs_from_reference":
@@ -434,6 +496,8 @@ def _row(activity: dict, evidence_id: str, plan: dict, marks: list[dict]) -> dic
                    "document_id": plan["document_id"], "pdf_page": activity["pdf_page"]},
         **{key: activity[key] for key in ("activity_reference_no", "section", "description", "review_type",
                                           "method", "market_approach")},
+        # A reference that breaks STEP's grammar and stays as the plan gives it (strata.reader.repair; ticket 131).
+        "reference_as_read": activity.get("reference_repair") == REFERENCE_AS_READ,
         "estimated_amount_usd": _text(estimated),
         "estimated_millions": millions(estimated),
         "actual_amount_usd": _text(actual),
@@ -574,7 +638,8 @@ def _result(activities: list[dict], not_used: dict, plan: dict, project: dict, l
         "withheld": withheld,
         "counts": {"activities": len(activities), "checked": len(activities) - len(partly),
                    "not_fully_checked": len(partly),
-                   "needs_a_look": count("needs_a_look"), "watch": count("watch"), "data_note": count("data_note"),
+                   "needs_a_look": count("needs_a_look"), "watch": count("watch"), "moved_on": count(MOVED_ON),
+                   "data_note": count("data_note"),
                    "signal": sum(1 for row in activities if any(m["mark"] in SIGNALS for m in row["marks"])),
                    "marked": sum(1 for row in activities if row["marks"]),
                    "unmarked": sum(1 for row in activities if not row["marks"])},
@@ -592,9 +657,8 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
         # The same answer for an upload that does not exist, belongs to another team, or is of another project or
         # agency, so a call reveals nothing about another team's uploads.
         upload = call.uploads(upload_id) if call.uploads is not None else None
-        wanted = implementing_agency.strip().lower()
         if (upload is None or project is None or upload["project_id"] != project_id
-                or wanted not in (upload["implementing_agency"].lower(), agency_id(upload["implementing_agency"]))):
+                or Agencies([upload["implementing_agency"]]).find(implementing_agency) is None):
             return {**empty, "project": None, "abstention": {"reason": "unknown_upload"}}
         return check_upload(call, upload, project, limits)
     if project is None:
@@ -618,16 +682,26 @@ def check_plan(call: Call, project_id: str, implementing_agency: str, plan_date:
     # published record, not the progress of a live process (the roles file's [views], ticket 40; the 10 brief, 6).
     from strata.tools.withheld import WITHHELD, withheld
     hidden = withheld(call, "signals_on_active_projects", project_id)
+    # An activity the records moved past is a disagreement between two records, which the same view holds back on a
+    # project still under way; its pending checks stay off, since the records say its contract was signed.
+    moved = _moved_on(call, version["document_id"])
+    disagreements_hidden = bool(moved) and withheld(call, "disagreements_on_active_projects", project_id)
     activities, not_used = [], {}
     for activity in found:
         evidence_id = f"strata.silver.plan_rows:{plan['document_id']}/{activity['activity_reference_no']}"
-        signals, unchecked = _signals(activity, [evidence_id], project, limits, call.as_of)
-        signals = [] if hidden else _with_baseline(signals, activity, baseline, call.as_of)
+        passed = moved.get(activity["activity_reference_no"])
+        if passed is None:
+            signals, unchecked = _signals(activity, [evidence_id], project, limits, call.as_of)
+            signals = [] if hidden else _with_baseline(signals, activity, baseline, call.as_of)
+        else:
+            signals, unchecked = [], []
         written = [_note(note, [evidence_id]) for note in notes.get(activity["activity_reference_no"], [])]
         marks = []
         if signals:
             strongest = "needs_a_look" if any(s["mark"] == "needs_a_look" for s in signals) else "watch"
             marks.append({"mark": strongest, "reasons": signals})
+        if passed is not None and not disagreements_hidden:
+            marks.append({"mark": MOVED_ON, "reasons": [_moved_on_reason(passed, activity, [evidence_id])]})
         if written or unchecked:
             marks.append({"mark": "data_note", "reasons": written + unchecked})
         for note in unchecked:

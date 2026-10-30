@@ -14,6 +14,11 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
   from period_from to the plan's date. Market approach, review type and size band stay open unless
   given, because a package still open has no review type or signed amount in any record. "any"
   leaves a criterion open. A criterion matches whatever its case, since the agent writes it.
+- The period never ends before it starts (ticket 137). A plan older than its start, such as a plan of 2018
+  against the contract awards data since FY2020, which start on July 1, 2019, runs it to the as-of date
+  instead. A period that still ends before it starts, as when the as-of date comes before the period's start,
+  matches no package, so the tool abstains (no_comparables). period() is the one place this is decided, and
+  criteria.period names the case, so the screen's note says why instead of naming a range.
 - A package with a Method in no_notice_methods, or a Market Approach that starts with a word in
   no_notice_market_approaches, has no specific procurement notice, so the tool abstains
   (no_public_notice).
@@ -27,7 +32,10 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
   quarter, half, three quarters and 8 in 10 were signed. Below min_comparables the tool returns no
   range and no share, abstains (too_few_comparables) and still returns every comparable. Above
   quantile_dots_above it also returns quantile_dots dots.
-- The plan's months run from the plan row's planned notice date to its planned signing date. The
+- The plan's months run from the plan row's planned notice date to its planned signing date: the bid invitation's
+  and the signed contract's planned dates in its newest plan version, read through strata.estimates.step_dates as the
+  step tracker reads every step's (step_dates.plan_line; ticket 139), so section 1 draws its plan line exactly when
+  the tracker shows both dates. The
   result gives how many comparables were signed within them, and, from min_comparables up, about how
   many in 10, so the screen states counts and never works one out.
 - From min_comparables up, frequencies holds the two numbers each frequency phrase states, so the agent
@@ -50,8 +58,10 @@ from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
 from strata.config import load_sources, load_thresholds, load_tools
+from strata.estimates import step_dates
 from strata.estimates.past_range import QUARTERS, Observation, dot_packages, months, quantile_dots, quartiles
-from strata.tools.check_plan import agency_id
+from strata.reader.repair import AS_READ as REFERENCE_AS_READ
+from strata.lakehouse.clean import agency_id
 from strata.tools.registry import Call
 
 TOOL = "find_comparables"
@@ -127,8 +137,22 @@ class Limits:
 # ── The package ──────────────────────────────────────────────────────────
 
 def package_reads(step_reference: str, as_of: dt.date) -> list[tuple[str, dict]]:
-    """The statement read_package runs, for a page that sends its reads as one batch (ticket 125)."""
-    return [(_sql("package.sql"), {"step_reference": step_reference.strip(), "as_of": as_of})]
+    """The statements read_package runs, for a page that sends its reads as one batch (ticket 125): its plan row, and
+    its steps' dates as the step tracker reads them."""
+    reference = step_reference.strip()
+    return [(_sql("package.sql"), {"step_reference": reference, "as_of": as_of}),
+            (step_dates.sql("steps.sql"), {"references": reference, "as_of": as_of})]
+
+
+def _plan_line(engine, reference: str, as_of: dt.date) -> tuple[dt.date | None, dt.date | None]:
+    """The plan's planned notice and signing dates: the bid invitation's and the signed contract's planned dates, read
+    through step_dates.activities as the step tracker reads every step's (ticket 139), so section 1 draws its plan line
+    exactly when the tracker shows both."""
+    def rows(sql: str, **params) -> list[dict]:
+        result = engine.run(sql, {**params, "as_of": as_of})
+        return [dict(zip(result.columns, values)) for values in result.rows]
+
+    return step_dates.plan_line(step_dates.activities(rows, [reference]).get(reference))
 
 
 def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
@@ -138,11 +162,14 @@ def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
     if not found:
         return None
     row = found[0]
+    notice_on, signing_on = _plan_line(engine, step_reference.strip(), as_of)
     estimated = _money(row["estimated_amount_usd"])
     return {
         "evidence_id": f"strata.silver.plan_rows:{row['document_id']}/{row['activity_reference_no']}",
         "public_from": _iso(_date(row["public_from"])),
         "step_reference": row["activity_reference_no"],
+        # A reference that breaks STEP's grammar and stays as the plan gives it (strata.reader.repair; ticket 131).
+        "reference_as_read": row["reference_repair"] == REFERENCE_AS_READ,
         "description": row["description"],
         "project_id": row["project_id"],
         "project_name": row["project_name"],
@@ -155,8 +182,8 @@ def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
         "review_type": row["review_type"],
         "estimated_amount_usd": str(estimated) if estimated is not None else None,
         "process_status": row["process_status"],
-        "planned_notice_on": _iso(_date(row["planned_notice_on"])),
-        "planned_signing_on": _iso(_date(row["planned_signing_on"])),
+        "planned_notice_on": _iso(notice_on),
+        "planned_signing_on": _iso(signing_on),
         "plan": {"document_id": row["document_id"], "implementing_agency": row["implementing_agency"],
                  "agency_id": agency_id(row["implementing_agency"] or ""), "plan_date": _iso(_date(row["plan_date"])),
                  "disclosed_on": _iso(_date(row["disclosed_on"])), "pdf_page": row["pdf_page"]},
@@ -168,14 +195,46 @@ def _open(value: str | None) -> str | None:
     return None if value is None or value.strip().lower() == ANY else value.strip()
 
 
+# How the period of notices ends, as criteria.period names it; section 1's note on what "comparable" meant picks its
+# words for each (web/src/lib/period.ts). A period that runs forward ends on the plan's date
+# (plan_date), on the as-of date for a package with no plan row (as_of), or on the date the call gave (asked). A plan
+# older than the period's start would end it before it starts, so the period runs to the as-of date instead:
+# plan_before_data when it starts with the awards data (past_range.period_from), plan_before_start when the call gave
+# the start. Ticket 137.
+FORWARD = ("plan_date", "as_of", "asked", "plan_before_data", "plan_before_start")
+# A period that still ends before it starts matches no package: before_data when the as-of date comes before the
+# awards data, ends_before_start when a date the call gave makes it so.
+EMPTY = ("before_data", "ends_before_start")
+
+
+def period(plan_date: dt.date | None, as_of: dt.date, period_from: dt.date, notice_from: dt.date | None = None,
+           notice_to: dt.date | None = None) -> tuple[dt.date, dt.date, str]:
+    """The period of notices the comparables come from, as its start, its end and the case of FORWARD or EMPTY it is:
+    from the date the call gave or period_from, to the date the call gave, or else the plan's date (none for a package
+    with no plan row), or the as-of date when there is no plan's date or it falls before the start."""
+    start = notice_from or period_from
+    if notice_to is not None:
+        end, case = notice_to, "asked"
+    elif plan_date is None:
+        end, case = as_of, "as_of"
+    elif plan_date >= start:
+        end, case = plan_date, "plan_date"
+    else:
+        end, case = as_of, "plan_before_start" if notice_from else "plan_before_data"
+    if end < start:
+        case = "ends_before_start" if notice_from or notice_to else "before_data"
+    return start, end, case
+
+
 def _criteria(package: dict | None, limits: Limits, asked: dict, as_of: dt.date) -> dict:
     """The criteria the call gave, with the rest from the package's plan row. A package with no plan row yet
     gives none: its criteria stay open unless the call gives them, and its notices run to the as-of date."""
+    notice_from, notice_to, case = period(_date(package["plan"]["plan_date"]) if package else None, as_of,
+                                          limits.period_from, asked.get("notice_from"), asked.get("notice_to"))
     if package is None:
-        defaults = {"notice_from": limits.period_from, "notice_to": as_of}
+        defaults = {}
     else:
-        defaults = {"method": package["method"], "category": package["category"], "country": package["country_code"],
-                    "notice_from": limits.period_from, "notice_to": _date(package["plan"]["plan_date"])}
+        defaults = {"method": package["method"], "category": package["category"], "country": package["country_code"]}
     criteria, from_package = {}, []
     for name in ("method", "category", "market_approach", "review_type", "country"):
         given = asked.get(name)
@@ -187,13 +246,13 @@ def _criteria(package: dict | None, limits: Limits, asked: dict, as_of: dt.date)
                 from_package.append(name)
         else:
             criteria[name] = _open(given)
-    for name in ("notice_from", "notice_to"):
-        criteria[name] = asked.get(name) or defaults[name]
-        if asked.get(name) is None and name == "notice_to" and package is not None:
-            from_package.append(name)
+    criteria["notice_from"], criteria["notice_to"] = notice_from, notice_to
+    if case == "plan_date":
+        from_package.append("notice_to")
     criteria["size_from_usd"] = asked.get("size_from_usd")
     criteria["size_to_usd"] = asked.get("size_to_usd")
     criteria["from_package"] = from_package
+    criteria["period"] = case
     return criteria
 
 

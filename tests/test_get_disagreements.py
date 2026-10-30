@@ -289,9 +289,11 @@ def test_a_tie_between_records_goes_to_the_more_specific_source(engine):
         assert row["subject_kind"] == "package"
     plan_side = next(side for side in next(iter(found.values()))["sides"] if side["form"] == "plan_row")
     assert plan_side["evidence_id"].startswith("strata.silver.plan_rows:") and plan_side["made_at"] == "2026-10-09"
-    # The earlier plan versions dated the signing the same way, and a later version replaced each of them.
+    # The earlier plan versions dated the signing the same way, and a later version replaced each of them. The plan
+    # of April 21, 2021 still said Pending Implementation after the July 9, 2021 signing (ticket 132), against the
+    # contract record and the award notice, until the plan of July 21, 2025 replaced it: two more.
     [not_used] = result["coverage"]["not_used"]
-    assert (not_used["reason"], not_used["count"]) == ("replaced_by_later_version", 4)
+    assert (not_used["reason"], not_used["count"]) == ("replaced_by_later_version", 6)
 
 
 def test_a_tie_between_equally_specific_records_goes_to_the_more_recent_one(engine):
@@ -309,6 +311,113 @@ def test_a_tie_between_equally_specific_records_goes_to_the_more_recent_one(engi
     assert notice["evidence_id"] == "strata.gold.notice:OP00216847"
     assert row["sides"][0]["evidence_id"] == "strata.gold.contract:1729599"
     assert (notice["paragraph"], notice["doc_key"]) == (None, None)  # a record has no paragraph
+
+
+# ── One disagreement group per fact (ticket 136) ─────────────────────────
+
+# The ISRs of P130164 by documents API id, as the fixture's recorded documents list gives them.
+ISRS = {1: "19095337", 2: "19901331", 3: "23868309", 4: "24589049", 5: "25481343", 6: "25814564", 7: "26733307",
+        8: "27243340", 9: "27490469", 10: "27853466", 11: "29280184"}
+PAD, ICR = "18381488", "31525018"
+
+
+@pytest.fixture(scope="module")
+def planted(fixture_db, tmp_path_factory):
+    """P130164 as the workspace's assertions pass read it (tests/planted_groups.py): 16 pairs about three facts."""
+    from planted_groups import plant
+
+    with DuckDBEngine.open(plant(fixture_db, tmp_path_factory.mktemp("groups") / "planted.duckdb"),
+                           read_only=True) as engine:
+        yield engine
+
+
+def documents(side: list[dict]) -> list[str]:
+    return [document["document_id"] for document in side]
+
+
+def test_pairs_that_share_the_rule_the_attribute_and_a_report_are_one_group_with_their_count(planted):
+    """Ticket 136, criterion 1: the PAD's overall risk against four ISRs is one group that shares its earlier side,
+    and ISRs 1 to 11 against the ICR's progress towards the PDO is one group that shares its later side. The rows
+    keep every pair, for the table."""
+    result = get_disagreements(planted, subject_id="P130164")
+
+    assert len(result["rows"]) == 16
+    found = {(group["attribute"], group["rule_id"]): group for group in result["groups"]}
+    assert set(found) == {("overall_risk", "moment"), ("pdo_progress", "outcome"), ("efficiency", "outcome")}
+    risk, progress, efficiency = found["overall_risk", "moment"], found["pdo_progress", "outcome"], found[
+        "efficiency", "outcome"]
+    assert (risk["count"], documents(risk["earlier"]), documents(risk["later"])) == (
+        4, [PAD], [ISRS[8], ISRS[9], ISRS[10], ISRS[11]])
+    assert (progress["count"], documents(progress["earlier"]), documents(progress["later"])) == (
+        11, [ISRS[n] for n in range(1, 12)], [ICR])
+    assert (efficiency["count"], documents(efficiency["earlier"])) == (1, [ICR])
+    # Each later side names its report as the timeline does: its type and, for an ISR, its number.
+    assert [(side["document_type"], side["sequence"]) for side in risk["later"]][0] == (
+        "Implementation Status and Results Report", 8)
+    # Every pair is in exactly one group, by its row's id.
+    ids = [disagreement for group in result["groups"] for disagreement in group["disagreement_ids"]]
+    assert sorted(ids) == sorted(row["disagreement_id"] for row in result["rows"])
+    # The moment rule leaned on each ISR, at the moment of its own period; the outcome rule on the later ICR.
+    assert (risk["lean"], progress["lean"]) == ("later", "later")
+
+
+def test_the_summary_counts_three_disagreement_groups_over_16_pairs(planted):
+    """Ticket 136, criterion 1: the summary record an answer cites counts groups and pairs, so the agent can say
+    "three facts told 16 times" from a tool's numbers (CLAUDE.md rule 1)."""
+    result = get_disagreements(planted, subject_id="P130164")
+
+    assert result["summary"]["counts"] == {"groups": 3, "disagreements": 16}
+    assert result["summary"]["groups"] == result["groups"]
+
+
+def test_on_the_fixture_each_of_p130164_s_two_pairs_is_a_group_of_its_own(engine):
+    """Ticket 136, criterion 1, on the fixture as built: ISR 7 against the ICR's paragraph 78, and the ICR's
+    paragraph 44 against the re-issued ICR Review, are about two facts."""
+    result = get_disagreements(engine, subject_id="P130164")
+
+    assert sorted((group["attribute"], group["count"]) for group in result["groups"]) == [
+        ("efficiency", 1), ("pdo_progress", 1)]
+    assert result["counts"] == {"groups": 2, "disagreements": 2}
+
+
+def pair(key: str, earlier: tuple[str, int, str], later: tuple[str, int, str], lean: str = "later") -> dict:
+    """A disagreement row about P130164's overall risk under the moment rule, between two ISRs given as (documents
+    API id, ISR number, date written)."""
+    sides = [{"assertion_id": f"{document}#risk", "document_id": document, "sequence": sequence, "made_at": made_at,
+              "document_type": "Implementation Status and Results Report", "evidence_tier": "isr"}
+             for document, sequence, made_at in (earlier, later)]
+    return {"disagreement_id": key, "subject_kind": "project", "subject_id": "P130164", "rule_id": "moment",
+            "attribute": "overall_risk", "sides": sides,
+            "lean_assertion_id": sides[0 if lean == "earlier" else 1]["assertion_id"]}
+
+
+def test_a_chain_of_pairs_is_split_so_no_report_is_named_on_both_sides_of_a_group():
+    """Code review round 1, F1: ISR 3 against ISR 5, ISR 3 against ISR 7 and ISR 5 against ISR 7 share reports in a
+    chain. A group is a star: one report, its anchor, against every report that disagrees with it, so ISR 5 is never
+    on both sides of one group. The report most pairs share is the anchor first."""
+    from strata.tools.get_disagreements import groups
+
+    isr_3, isr_5, isr_7 = ("23868309", 3, "2015-06-01"), ("25481343", 5, "2016-01-01"), ("26733307", 7, "2016-08-26")
+    found = groups([pair("a", isr_3, isr_5), pair("b", isr_3, isr_7), pair("c", isr_5, isr_7)])
+
+    for group in found:
+        assert not set(documents(group["earlier"])) & set(documents(group["later"])), group
+    assert [(group["anchor"], group["disagreement_ids"]) for group in found] == [
+        ({"side": "earlier", "document_id": "23868309"}, ["a", "b"]),
+        ({"side": "earlier", "document_id": "25481343"}, ["c"])]
+    assert [(documents(group["earlier"]), documents(group["later"])) for group in found] == [
+        (["23868309"], ["25481343", "26733307"]), (["25481343"], ["26733307"])]
+    # Every pair is in exactly one group.
+    assert sorted(key for group in found for key in group["disagreement_ids"]) == ["a", "b", "c"]
+
+
+def test_a_group_s_anchor_is_the_report_its_pairs_share(planted):
+    """The PAD is the overall risk group's anchor, on its earlier side, and the ICR the progress group's, on its later
+    side, so the timeline's line starts from the right report."""
+    found = {group["attribute"]: group for group in get_disagreements(planted, subject_id="P130164")["groups"]}
+
+    assert found["overall_risk"]["anchor"] == {"side": "earlier", "document_id": PAD}
+    assert found["pdo_progress"]["anchor"] == {"side": "later", "document_id": ICR}
 
 
 # ── The words the screens write from the result ─────────────────────────

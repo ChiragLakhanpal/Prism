@@ -26,7 +26,9 @@ from pathlib import Path
 from strata.dbx import Viewer
 from strata.lakehouse.engine import Engine
 from strata.server.summary import iso_day, record_event
-from strata.tools.check_plan import agency_id, read_baseline
+from strata.lakehouse.clean import Agency
+from strata.server import changes
+from strata.tools.check_plan import read_baseline
 
 SQL = Path(__file__).resolve().parent / "sql" / "baseline"
 TABLE = "strata.ops.plan_baselines"  # before the colon in a baseline's evidence id
@@ -48,17 +50,24 @@ def _remove(engine: Engine, project_id: str, agency: str) -> None:
         engine.run(_query(name), {"project_id": project_id, "agency_id": agency})
 
 
+def _agency(engine: Engine, project_id: str, asked: str, today: dt.date) -> Agency | None:
+    """The agency an id in a link stands for, by the one pairing rule (strata.lakehouse.clean; ticket 133): the id
+    of any of its names finds it, and its own id, the one check_plan reads its baseline by, is what a write keys."""
+    return changes.agencies(changes.versions(engine, project_id), today).find(asked)
+
+
 def save(engine: Engine, project_id: str, agency: str, plan_date: dt.date, viewer: Viewer,
          now: dt.datetime) -> dict | None:
     """Save the agency's version of this date as the baseline, in place of any other, and return the
     baseline as check_plan gives it; or None when the agency has no read version of that date."""
     today = now.astimezone(dt.UTC).date()
-    found = [row for row in _rows(engine, "version", project_id=project_id, plan_date=plan_date, today=today)
-             if row["implementing_agency"] and agency_id(row["implementing_agency"]) == agency and row["activities"]]
+    asked = _agency(engine, project_id, agency, today)
+    dated = _rows(engine, "version", project_id=project_id, plan_date=plan_date, today=today)
+    found = [row for row in dated if asked and asked.holds(row["implementing_agency"]) and row["activities"]]
     if not found:
         return None
     version = found[-1]
-    values = {"project_id": project_id, "agency_id": agency, "document_id": version["document_id"],
+    values = {"project_id": project_id, "agency_id": asked.agency_id, "document_id": version["document_id"],
               "public_from": today, "saved_at": now}
     engine.run(_query("save_steps"), values)
     engine.run(_query("save"), {**values, "implementing_agency": version["implementing_agency"],
@@ -66,14 +75,15 @@ def save(engine: Engine, project_id: str, agency: str, plan_date: dt.date, viewe
     # A later save that landed first keeps the row (save.sql), so this save's steps would wait for the next save to
     # leave: they leave now, and the statement itself checks the row (ticket 60).
     for name in ("remove_older_steps", "remove_lost_steps"):
-        engine.run(_query(name), {"project_id": project_id, "agency_id": agency, "saved_at": now})
-    saved = read_baseline(engine, project_id, agency, today, "staff")
+        engine.run(_query(name), {"project_id": project_id, "agency_id": asked.agency_id, "saved_at": now})
+    saved = read_baseline(engine, project_id, asked.agency_id, today, "staff")
     return saved.record if saved else None
 
 
-def remove(engine: Engine, project_id: str, agency: str) -> None:
-    """Remove the agency's baseline for this project, if there is one."""
-    _remove(engine, project_id, agency)
+def remove(engine: Engine, project_id: str, agency: str, today: dt.date) -> None:
+    """Remove the agency's baseline for this project, if there is one, by its own id when the rule finds it."""
+    asked = _agency(engine, project_id, agency, today)
+    _remove(engine, project_id, asked.agency_id if asked else agency)
 
 
 def read_record(engine: Engine, key: str, as_of: dt.date) -> dict | None:

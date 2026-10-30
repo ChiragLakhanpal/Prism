@@ -78,16 +78,14 @@ const PASSAGE_TABLE = "strata.gold.passage:";
 // The plans' rows' table, before the colon of a plan row's evidence id.
 const PLAN_ROWS_TABLE = "strata.silver.plan_rows";
 
-// The drawer head's caption for a passage, a record, a timeline view or a section 5 view (ticket 58): what kind of source
-// is open. A report is named by its type, and only a source with no type falls back to its stratum (the 58 design
-// review, B2). A plan row and a comparable package have their own, above; a list of packages, a dot or a lesson has none.
+// The drawer head's caption for a record, a timeline view or a section 5 view (ticket 58): what kind of view is open.
+// Since ticket 126 a report's passage or document view and a record have none, since the title names the report type
+// and the meta line gives its date ("A status report, written during the project" said it again). A plan row keeps the
+// caption that names the plan it came from; a comparable package has its own, above; a list of packages, a dot or a
+// lesson has none.
 function kindCaption(evidence: EvidenceEvent): ReactNode {
   const captions = copy.evidence.captions;
-  const byType = (type: unknown) => (typeof type === "string" ? captions.documentType[type] : undefined);
-  if (evidence.kind === "passage") {
-    if (evidence.row?.kind === "notice_text") return captions.notice;
-    return byType(passageFields(evidence).docType) ?? (evidence.stratum ? (captions.stratum[evidence.stratum] ?? null) : null);
-  }
+  if (evidence.kind === "passage" || evidence.kind === "document") return null;
   if (evidence.kind === "record") {
     if (lessonOf(evidence)) return null;
     // A plan row records a plan, not what happened: "Activity in the {agency} plan of {date}", as the plan check's
@@ -96,9 +94,8 @@ function kindCaption(evidence: EvidenceEvent): ReactNode {
     if (evidence.id.split(":")[0] === PLAN_ROWS_TABLE && typeof source.implementing_agency === "string" && typeof source.document_date === "string") {
       return <Fill template={copy.evidence.planRowCaption} slots={{ agency: source.implementing_agency, date: <Num date={source.document_date} /> }} />;
     }
-    return captions.stratum[evidence.stratum ?? "What"] ?? null;
+    return null;
   }
-  if (evidence.kind === "document") return byType(evidence.row?.document_type) ?? captions.document;
   const byKind: Record<string, string> = {
     ratings: captions.ratings,
     contracts: captions.contracts,
@@ -348,9 +345,9 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
         ? null
         : fields.scanned
           ? copy.evidence.wholeScanned
-          : section
-            ? copy.evidence.wholeSection
-            : copy.evidence.whole;
+          : // The quoted box is the paragraph, and "Open at page N" checks it, so a paragraph read word for word needs no
+            // note (ticket 126); each note left warns of something.
+            null;
   return (
     <>
       <div data-passage-block className="rounded-md border border-line">
@@ -373,13 +370,13 @@ function PassageView({ evidence, sentence, fromAnswer, given = null }: { evidenc
           </Lang>
         )}
       </div>
-      {note && (
+      {(note || (fields.lang && fields.lang !== working)) && (
         <p className="text-caption text-ink-muted">
           {note}
           {/* A passage in another language than yours: I never translate a source (the 42 brief, section 5.7). */}
           {fields.lang && fields.lang !== working && (
             <>
-              {" "}
+              {note && " "}
               {copy.evidence.ownLanguage}
             </>
           )}

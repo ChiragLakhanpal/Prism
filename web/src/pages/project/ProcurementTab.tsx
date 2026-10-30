@@ -17,10 +17,12 @@ import { Num } from "../../components/Num";
 import { SkeletonLine } from "../../components/Skeleton";
 import { Table, type Column, type Row } from "../../components/Table";
 import { TextLink } from "../../components/TextLink";
+import { DefinitionWindow } from "../../components/Term";
 import { copy } from "../../copy";
 import type { Agency, ProjectPage as Page } from "../../lib/api";
 import { changed, changeList } from "../../lib/changes";
 import { formatDate, formatNumber } from "../../lib/format";
+import { joinNames } from "../../lib/timeline";
 import { TAB_PATH } from "../../routes";
 import type { Load } from "../../lib/load";
 import { Packages } from "./Packages";
@@ -36,18 +38,26 @@ const columns: Column[] = [
   { key: "activities", header: plans.columns.activities, numeric: true },
 ];
 
-// One sentence on what changed in the agency's latest plan, and its link to the full list.
-function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
+// One sentence on what changed in the agency's latest plan, and its link to the full list. A latest plan I haven't read
+// has none, since I can say nothing about it; its row says Not read (ticket 134). plansUnread is the route's count of
+// the plans the project's documents list that I haven't read: the earliest sentence then links to the Documents tab.
+function ChangesSentence({ agency, pid, plansUnread }: { agency: Agency; pid: string; plansUnread: number }) {
   const found = agency.changes;
   const latest = agency.versions[0];
-  if (!found || !latest) return null;
+  if (!found || !latest || !latest.read) return null;
   const words = plans.changes;
   let sentence: ReactNode;
   let link: string | null = null;
+  let linkText: string = words.link;
   // Dates in a sentence are long (DESIGN.md section 7 rule 13); the version table keeps "Plan of Oct 9, 2026".
   const long = (iso: string | null | undefined) => (iso ? formatDate(iso) : "");
-  if (found.state === "earliest") sentence = <Fill template={words.earliest} slots={{ plan_date: long(latest.plan_date) }} />;
-  else if (found.state === "previous_not_read") sentence = <Fill template={words.prevUnread} slots={{ prev_date: long(found.previous_plan_date) }} />;
+  if (found.state === "earliest") {
+    sentence = <Fill template={words.earliest} slots={{ plan_date: long(latest.plan_date) }} />;
+    if (plansUnread > 0) {
+      link = `/projects/${pid}${TAB_PATH.documents}`;
+      linkText = words.unreadLink;
+    }
+  } else if (found.state === "previous_not_read") sentence = <Fill template={words.prevUnread} slots={{ prev_date: long(found.previous_plan_date) }} />;
   else if (!changed(found.counts)) {
     sentence = <Fill template={words.same} slots={{ plan_date: long(latest.plan_date), prev_date: long(found.previous_plan_date) }} />;
   } else {
@@ -66,7 +76,7 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
         <>
           {" "}
           <TextLink href={link} className="whitespace-nowrap">
-            {words.link}
+            {linkText}
           </TextLink>
         </>
       )}
@@ -74,9 +84,33 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
   );
 }
 
+// An agency's name as its heading shows it: the longest way the project writes it. When its plans and the record
+// write it more than one way (ticket 133), the name opens a window that lists the others.
+function AgencyName({ agency }: { agency: Agency }) {
+  const others = agency.also_written_as ?? [];
+  if (others.length === 0) return <>{agency.implementing_agency}</>;
+  return (
+    <DefinitionWindow label={agency.implementing_agency} title={agency.implementing_agency}>
+      {plans.alsoWrittenAs(joinNames(others))}
+    </DefinitionWindow>
+  );
+}
+
 // last: the last agency with a table, whose table alone ends with the source line, since every agency's plans come from
 // the same documents (ticket 58; the 10 critique, round 5).
-function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: string; through: string | null; last: boolean }) {
+function AgencyPlans({
+  agency,
+  pid,
+  through,
+  plansUnread,
+  last,
+}: {
+  agency: Agency;
+  pid: string;
+  through: string | null;
+  plansUnread: number;
+  last: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [opened, setOpened] = useState(false);
   const tableId = useId();
@@ -84,7 +118,7 @@ function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: stri
   if (agency.version_count === 0) {
     return (
       <section data-agency={agency.agency_id}>
-        <h3 className="text-h3 text-ink-heading">{agency.implementing_agency}</h3>
+        <h3 className="text-h3 text-ink-heading"><AgencyName agency={agency} /></h3>
         <p className="mt-2 text-small text-ink-muted">{plans.agencyEmpty}</p>
       </section>
     );
@@ -124,9 +158,9 @@ function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: stri
   return (
     <section data-agency={agency.agency_id} className="flex flex-col gap-2">
       <h3 id={headingId} className="text-h3 text-ink-heading">
-        {agency.implementing_agency}
+        <AgencyName agency={agency} />
       </h3>
-      <ChangesSentence agency={agency} pid={pid} />
+      <ChangesSentence agency={agency} pid={pid} plansUnread={plansUnread} />
       <div id={tableId} className="mt-2">
         <Table
           title={agency.implementing_agency}
@@ -177,7 +211,7 @@ function OtherAgencies({ agencies }: { agencies: Agency[] }) {
       <ul className="mt-2 list-disc pl-6 text-small text-ink">
         {agencies.map((agency) => (
           <li key={agency.agency_id} data-agency={agency.agency_id}>
-            {agency.implementing_agency}
+            <AgencyName agency={agency} />
           </li>
         ))}
       </ul>
@@ -236,6 +270,7 @@ export function ProcurementTab({ pid, load, retry }: { pid: string; load: Load<P
               agency={agency}
               pid={pid}
               through={load.data.documents_through}
+              plansUnread={load.data.plans_unread ?? 0}
               last={agency.agency_id === shown.filter((one) => one.version_count > 0).at(-1)?.agency_id}
             />
           ))}
@@ -249,7 +284,6 @@ export function ProcurementTab({ pid, load, retry }: { pid: string; load: Load<P
     <div data-procurement-tab={load.status}>
       <EightColumns prose>
         <h2 className="text-h2 text-ink-heading">{plans.title}</h2>
-        <p className="mt-2 text-body text-ink">{plans.purpose}</p>
       </EightColumns>
       <div className="mt-8">{plansBody}</div>
       {load.status !== "error" && (

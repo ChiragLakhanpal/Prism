@@ -342,6 +342,12 @@ class Page:
         age = (self.call.as_of - as_of).days
         return age - allowed if age >= allowed + int(self.value("late_grace_days")) else None
 
+    def paused_since(self) -> dt.date | None:
+        """The day the owner paused the nightly refresh (config/thresholds.toml's ingestion.paused_since, empty while it
+        runs), when the page's as-of date is on or after it; a page as of an earlier day shows the refresh as it ran."""
+        since = _date(self.call.thresholds.value("ingestion.paused_since"))
+        return since if since and since <= self.call.as_of else None
+
     def cell(self, source: Source, row: ReadinessRow, name: str) -> dict:
         column: ReadinessColumn | None = getattr(row, name)
         declared = [limit for limit in source.declared if limit.row == row.id and limit.column == name]
@@ -374,6 +380,7 @@ class Page:
         if name == "fresh":
             cell["schedule"] = schedule
             cell["late_days"] = None
+            cell["paused_since"] = None
         if index is None:
             return cell
         measured = self.measures.rows[index]
@@ -390,7 +397,14 @@ class Page:
                      slots=self.shortfall(index, column, form), form=form, **base)
         elif name == "fresh":
             late = self.late_days(source, schedule, _date(measured["as_of"]))
-            if late is not None:
+            paused = self.paused_since()
+            if late is not None and paused is not None:
+                # A source due for a fetch while the refresh is paused: since when, never how late (ticket 134).
+                cell["status"], cell["paused_since"] = "partial", paused.isoformat()
+                self.gap(id=f"{row.id}/{name}", type="paused", status="partial", words="paused", slots={
+                    "sourceNoun": row.noun, "date": _date_text(_date(measured["as_of"]), self.call.as_of),
+                    "pausedDate": _date_text(paused, self.call.as_of)}, **base)
+            elif late is not None:
                 cell["status"], cell["late_days"] = "partial", late
                 fetched = _date(measured["as_of"])
                 self.gap(id=f"{row.id}/{name}", type="late", status="partial",
@@ -678,16 +692,15 @@ def _kinds(page: Page, ranked: list[Gap], in_view: set[str], from_tool: str | No
             status = "gap"
         else:
             status = "partial" if mine else "ready"
-        held = [found.holds for found in mine[:2]]
+        # The Sources table's Fresh column gives a source's lateness once, so a kind names it only when nothing else
+        # holds it back, and it never ends on how many more gaps the Sources table lists: that table is the next block
+        # (ticket 126). A paused refresh is given there the same way (ticket 134).
+        named = [found for found in mine if found.type not in ("late", "paused")] or mine
+        held = [found.holds for found in named[:2]]
         # A hard document whose part I couldn't read: after the top two, outside their ranking.
         gapped = [entry for row in kind.draws_on for entry in (shelf_gaps or {}).get(row, [])]
         if gapped:
             held.append(_shelf_sentence(gapped))
-        more = len(mine) - len(mine[:2])
-        if more == 1:
-            held.append([{"text": words()["moreOne"]}])
-        elif more > 1:
-            held.append(fill(words()["more"], {"n": number(more)}))
         if not mine:
             held.append([{"text": words()["nothingHolds"]}])
         out.append({"kind": kind.kind, "tool": tool.name, "status": status, "ready_for": ready_for,

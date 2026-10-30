@@ -18,7 +18,8 @@ import type { LessonCard as Card, LessonEvidence } from "../lib/lessons";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
-import { EvidenceBadge, fillText, SourceChip, Tag } from "./LessonParts";
+import { DefinitionWindow } from "./Term";
+import { actorText, EvidenceBadge, fillText, SourceChip, Tag } from "./LessonParts";
 import { ProjectId } from "./ProjectId";
 import { Num } from "./Num";
 import { ReasonField } from "./DecisionForm";
@@ -246,6 +247,29 @@ export function LessonCard({
         {retired && <StatusBadge kind={retired.as === "retired_wrong" ? "retired-wrong" : "retired-outdated"} />}
         <EvidenceBadge status={card.ieg_status} />
         {rechecking && <StatusBadge kind="rechecking" />}
+        {/* Who decided the version, by role, is in the version's window beside the badge (ticket 126; rules 20 and
+            21): governance a lesson's reader rarely needs. */}
+        {!compact && (
+          <DefinitionWindow
+            openOnHover
+            inText={false}
+            label={<Fill template={words.card.versionLabel} slots={{ version: <Num value={card.version} /> }} />}
+            title={<Fill template={words.card.versionLabel} slots={{ version: <Num value={card.version} /> }} />}
+            triggerClassName="inline-flex min-h-6 items-center text-small"
+          >
+            <span data-lesson-decided>
+              <Fill
+                template={words.card.decided}
+                slots={{
+                  decider: actorText(card.decided_by),
+                  recommender: actorText(card.recommended_by, true),
+                  version: <Num value={card.version} />,
+                  date: <Num date={card.decided_on} />,
+                }}
+              />
+            </span>
+          </DefinitionWindow>
+        )}
       </div>
       {!compact && (
         <ul className="flex flex-wrap gap-2" aria-label={words.card.tags}>
@@ -273,9 +297,6 @@ export function LessonCard({
           </p>
         ) : (
           <>
-            <p>
-              <Fill template={words.card.decided} slots={{ version: <Num value={card.version} />, date: <Num date={card.decided_on} /> }} />
-            </p>
             {rechecking && (
               <p>
                 <Fill template={words.card.rechecking} slots={{ date: <Num date={rechecking} /> }} />
@@ -284,7 +305,11 @@ export function LessonCard({
             <p>{card.edition ? fillText(words.card.rules, { edition: card.edition.name }) : words.card.rulesUnknown}</p>
             {retired && (
               <p data-retired-line>
-                <Fill template={copy.lessonsPage.retiredLine} slots={{ date: <Num date={retired.on} />, reason: retired.reason }} />
+                {/* The retired version's decided_by is the lead who retired it (ticket 140). */}
+                <Fill
+                  template={card.decided_by?.who === "you" ? copy.lessonsPage.retiredLineYou : copy.lessonsPage.retiredLine}
+                  slots={{ actor: actorText(card.decided_by), date: <Num date={retired.on} />, reason: retired.reason }}
+                />
               </p>
             )}
           </>

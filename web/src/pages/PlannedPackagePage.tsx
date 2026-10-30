@@ -47,12 +47,14 @@ import { useAnswerInPage } from "../components/AnswerSlot";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
+import { DefinitionWindow } from "../components/Term";
 import { copy } from "../copy";
 import { ApiError, getJson, type ComparablesResult, type EstimateResult } from "../lib/api";
 import { usePlanDateChoice } from "../lib/estimates";
 import { useLoad } from "../lib/load";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatYear } from "../lib/format";
+import { periodRuns } from "../lib/period";
 import {
   comparablesPath,
   enterBoxMode,
@@ -1067,9 +1069,12 @@ function CriteriaLine({ result }: { result: ComparablesResult }) {
   const s = words.section;
   const parts = [criteria.category, criteria.method, criteria.market_approach, criteria.review_type ? s.review(criteria.review_type) : null, criteria.country_name]
     .filter((part): part is string => Boolean(part));
-  const from = formatYear(Number(criteria.notice_from.slice(0, 4)));
-  const to = formatYear(Number(criteria.notice_to.slice(0, 4)));
-  parts.push(s.notices(from, to));
+  // A period that would end before it starts names no years (ticket 137): section 1's sentence says why instead.
+  if (periodRuns(criteria)) {
+    const from = formatYear(Number(criteria.notice_from.slice(0, 4)));
+    const to = formatYear(Number(criteria.notice_to.slice(0, 4)));
+    parts.push(s.notices(from, to));
+  }
   return (
     <p className="text-small text-ink-muted" data-criteria-line>
       <Fill template={s.criteria} slots={{ list: parts.join(copy.list.comma) }} />
@@ -1114,7 +1119,12 @@ export function PlanPrompt({
     // As tall as its words and controls: the chart comes only after your press, so no blank is held for it (ticket
     // 101's design review, round 2).
     <div className="mt-4 flex flex-col gap-3" data-plan-prompt>
-      <p className="max-w-prose text-body text-ink">{words.section.promptQuestion}</p>
+      {/* Why I ask first is in the question's window (ticket 126): the question is what matters. */}
+      <p className="max-w-prose text-body text-ink">
+        <DefinitionWindow openOnHover inText label={words.section.promptQuestion} title={words.section.promptQuestion}>
+          {words.section.promptWhy}
+        </DefinitionWindow>
+      </p>
       <p className="text-body text-ink" data-found>
         <Fill template={words.section.promptFound(count, "{n}")} slots={{ n: <Num count={count} /> }} />
       </p>

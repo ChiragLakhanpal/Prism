@@ -54,13 +54,16 @@ import {
 import { ExternalLink } from "../components/ExternalLink";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { CheckPill } from "../components/CheckPill";
-import { Fill } from "../components/Fill";
+import { Fill, Joined } from "../components/Fill";
+import { Abbr } from "../components/Abbreviations";
+import { Disclosure } from "../components/Disclosure";
+import { Feedforward } from "../components/Feedforward";
+import { MadeBy } from "../components/MadeBy";
 import { checkPill, PlanCheck, PlanCheckHeader, PlanCheckSkeleton, planSubtitle, rowRecords, type CheckedPlan } from "../components/PlanCheck";
 import { Alert } from "../components/Alert";
 import { ViewBanner } from "../components/ViewBanner";
 import { FreshnessStamp, OneBox, type Freshness } from "../components/OneBox";
 import { Button } from "../components/Button";
-import { Byline } from "../components/Byline";
 import { Card, EmptyState } from "../components/Card";
 import { CheckLine, CoverageLine, RemovedBox } from "../components/Checks";
 import { CitationMarker } from "../components/CitationMarker";
@@ -86,7 +89,6 @@ import { copy } from "../copy";
 import type { Readiness, ReadinessState, RegistryState, Segment, ShelfEntry } from "../lib/dataPages";
 import type { Comparable, ComparablesResult, PackageFacts } from "../lib/api";
 import { formatDate } from "../lib/format";
-import { HeldChangeLine } from "../pages/CheckPlanPage";
 import { ReadinessView } from "../pages/data/DataReadiness";
 import { HardestDocuments } from "../pages/data/HardestDocuments";
 import { RefusalWindow, WhatIDontDo } from "../components/WhatIDontDo";
@@ -163,7 +165,8 @@ function sampleResult(signed: readonly number[], open: readonly number[], option
       ],
     },
     abstention: options.abstain ? { reason: "too_few_comparables", count: total, min_comparables: 20 } : null,
-    package: samplePackage,
+    // With no plan, the plan's step dates give neither of the plan line's two ends, as the server answers (ticket 139).
+    package: options.plan === false ? { ...samplePackage, planned_notice_on: null, planned_signing_on: null } : samplePackage,
     criteria: {
       method: pr.method,
       category: pr.category,
@@ -176,6 +179,7 @@ function sampleResult(signed: readonly number[], open: readonly number[], option
       size_from_usd: null,
       size_to_usd: null,
       from_package: ["method", "category", "country", "notice_to"],
+      period: "plan_date",
     },
     counts: { comparables: total, signed: done.length, still_open: open.length, canceled: 0, canceled_as_still_open: false },
     past_range: options.abstain ? null : { q25: at(1 / 4), q50: at(1 / 2), q75: at(3 / 4), q80: at(4 / 5) },
@@ -522,6 +526,7 @@ function BoxSample({
   scopeKind = "project",
   lookups = LOOKUPS,
   narrow = false,
+  work = false,
 }: {
   text: string;
   hint?: boolean;
@@ -530,11 +535,13 @@ function BoxSample({
   lookups?: Record<string, Lookup>;
   // A box about as narrow as the band's at 390 px, at every width of the gallery.
   narrow?: boolean;
+  // A box as wide as the work's columns at 1440 px, 743 px, where the box sits on a workspace page (ticket 127).
+  work?: boolean;
 }) {
   const [value, setValue] = useState(text);
   const { options, notes } = boxList(value, scope, lookups);
   return (
-    <div className={cx("min-h-[15rem]", narrow ? "max-w-[20rem]" : "max-w-prose")}>
+    <div className={cx("min-h-[15rem]", narrow ? "max-w-[20rem]" : work ? "max-w-[46.5rem]" : "max-w-prose")}>
       <OneBox value={value} onChange={setValue} options={options} notes={notes} open active={0} scope={scope} scopeKind={scopeKind} focusedHint={hint} shortcut={false} />
     </div>
   );
@@ -643,7 +650,6 @@ export const PAGES: GalleryPage[] = [
             <PageHeader
               level={2}
               title={<WithIds template={copy.pages.activity.title} values={{ stepRef: sample.tableRows[0][0] }} />}
-              purpose={copy.pages.activity.purpose}
             />
             <EmptyState
               level={3}
@@ -866,6 +872,48 @@ export const PAGES: GalleryPage[] = [
         title: s.withoutLink,
         body: <EmptyState level={3} title={sample.emptyTitle} body={sample.emptyBody} />,
       },
+      // Ticket 126: the four patterns that tuck a sentence away, one press from the thing it explains.
+      {
+        id: "made-by",
+        title: t.madeBy,
+        body: (
+          <p className="max-w-[22.5em] text-finding text-balance text-ink-heading">
+            {sample.madeByLead}
+            <MadeBy name={sample.madeByName}>
+              <Fill template={sample.madeBy} slots={{ date: <Num date="2026-10-23" /> }} />
+            </MadeBy>
+          </p>
+        ),
+      },
+      {
+        id: "feedforward",
+        title: t.feedforward,
+        body: (
+          <Feedforward sentence={sample.feedforward}>
+            <Button variant="primary">{sample.feedforwardButton}</Button>
+          </Feedforward>
+        ),
+      },
+      {
+        id: "disclosure",
+        title: t.disclosure,
+        body: (
+          <Disclosure label={sample.disclosureLabel}>
+            <p className="text-body text-ink">{sample.disclosureBody}</p>
+          </Disclosure>
+        ),
+      },
+      {
+        id: "abbreviations",
+        title: t.abbreviations,
+        body: (
+          <p className="max-w-prose text-caption text-ink-muted">
+            <span className="font-bold">{sample.abbreviationsLead}</span>{" "}
+            <Joined items={sample.abbreviations.map(([short, spelled]) => <Abbr key={short} short={short} spelled={spelled} />)} />
+            {sample.abbreviationsEnd}
+          </p>
+        ),
+      },
     ],
   },
   {
@@ -1049,18 +1097,8 @@ export const PAGES: GalleryPage[] = [
           </div>
         ),
       },
-      {
-        // Ticket 111: the byline over Strata's own words, in its three kinds.
-        id: "byline",
-        title: t.byline,
-        body: (
-          <div className="flex max-w-prose flex-col gap-6">
-            <Byline kind="inShort" />
-            <Byline kind="found" />
-            <Byline kind="heldBack" />
-          </div>
-        ),
-      },
+      // Ticket 126: the byline shows no words, so it has no state of its own here; the answer states carry its
+      // screen-reader-only h3.
     ],
   },
   {
@@ -1174,6 +1212,8 @@ export const PAGES: GalleryPage[] = [
     // the same intent rules and the lookups the server recorded.
     slug: "box",
     sections: [
+      // Ticket 127: the box at rest, as a package page's ask bar draws it at 1440 px.
+      { id: "rest", title: s.rest, body: <BoxSample text="" scope={STEP_REF} scopeKind="package" work /> },
       { id: "hint", title: s.hint, body: <BoxSample text="" hint /> },
       { id: "project", title: s.project, body: <BoxSample text={sample.boxProject} /> },
       { id: "loan", title: s.loan, body: <BoxSample text={sample.boxLoan} /> },
@@ -1422,8 +1462,6 @@ export const PAGES: GalleryPage[] = [
       { id: "open", title: t.planOpen, body: <PlanCheck result={planSample} defaultOpen /> },
       { id: "partial", title: t.planPartial, body: <PlanCheck result={partialSample} /> },
       { id: "loading", title: s.loading, body: <PlanCheckSkeleton /> },
-      // Ticket 59, round 2: what changed has not answered either, so its line's place is held under the narration.
-      { id: "loading-change-line", title: s.loadingChangeLine, body: <PlanCheckSkeleton afterNarration={<HeldChangeLine />} /> },
       { id: "slow", title: s.slowTwo, body: <PlanCheckSkeleton slow /> },
     ],
   },
@@ -1452,7 +1490,6 @@ export const PAGES: GalleryPage[] = [
               level={2}
               title={pr.description}
               id={pr.reference}
-              purpose={copy.pages.package.purpose}
               facts={{ line: factsLine(samplePackage), show: copy.packagePage.factsShow, onShow: () => {} }}
             />
             <div className="max-w-[22.5rem]">

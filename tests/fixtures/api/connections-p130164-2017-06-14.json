@@ -601,6 +601,15 @@
       }
     ]
   },
+  "contracts": {
+    "count": 7,
+    "sources": [
+      {
+        "source": "awards_fy2001_2016",
+        "count": 7
+      }
+    ]
+  },
   "shown": 11,
   "total": 36,
   "threshold": "0.50",

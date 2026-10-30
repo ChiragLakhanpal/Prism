@@ -412,6 +412,37 @@ def test_packages_list_every_activity_in_each_agency_s_latest_plan_a_page_at_a_t
     assert get(hub, "/api/projects/P156634/packages?q=atlantis").json()["total"] == 0
 
 
+def one_plan_each(tmp_path):
+    """P127203's one plan as the paid workspace held it on October 29, 2026 (ticket 134): the Haiti agency's plan of
+    September 17, 2019, read (a parse_reason) with no STEP rows; and a made-up P000002 whose one plan is only listed."""
+    database = tmp_path / "one-plan.duckdb"
+    with DuckDBEngine.open(database) as engine:
+        catalog.build(engine)
+        engine.insert_rows(
+            "strata.silver.plan_versions",
+            ("document_id", "project_id", "implementing_agency", "plan_date", "disclosed_on", "series_order",
+             "previous_document_id", "is_latest", "pdf_pages", "route_b_pages", "parse_reason", "text_url", "pdf_url",
+             "public_from"),
+            [(doc, project, "Electricite d'Haiti", "2019-09-17", "2019-09-17", 1, None, True, 2, 0, reason,
+              f"https://t/{doc}.txt", f"https://t/{doc}.pdf", "2019-09-17")
+             for doc, project, reason in (("D1", "P127203", "the agency's latest version"), ("D2", "P000002", None))])
+    return database
+
+
+def test_packages_say_which_plan_i_read_when_it_lists_no_activities_and_none_when_i_read_no_plan(tmp_path):
+    """Ticket 134: a plan I read that holds no rows is a plan I read, so Packages names it rather than say I haven't
+    read a Procurement Plan; a plan only listed is not read."""
+    app = app_on(one_plan_each(tmp_path))
+
+    read = get(app, "/api/projects/P127203/packages?asof=2026-10-29").json()
+    assert (read["total"], read["plans_read"]) == (0, [{
+        "implementing_agency": "Electricite d'Haiti", "agency_id": "electricite-d-haiti", "plan_date": "2019-09-17",
+        "activities": 0}])
+    assert get(app, "/api/projects/P127203/packages?asof=2019-09-16").json()["plans_read"] == []
+    listed = get(app, "/api/projects/P000002/packages?asof=2026-10-29").json()
+    assert (listed["total"], listed["plans_read"]) == (0, [])
+
+
 # ── Documents and the source view ────────────────────────────────────────
 
 def test_p130164_s_documents_list_each_type_in_project_cycle_order_with_its_dates(hub):
@@ -643,7 +674,8 @@ def test_the_earliest_version_and_a_version_after_one_not_read_say_why_they_list
 # ── The baseline ─────────────────────────────────────────────────────────
 
 NWWDA = "/api/projects/P156634/procurement/northern-water-works-development-agency"
-REASONS = {"KE-NWWDA-229129-CW-RFB": "signed_late_over_estimate", "KE-NWWDA-541055-CW-RFB": "completion_passed_no_contract"}
+# KE-NWWDA-541055-CW-RFB's reason is moved_on_since_plan since ticket 132, which states no delay.
+REASONS = {"KE-NWWDA-229129-CW-RFB": "signed_late_over_estimate", "KE-NWWDA-541055-CW-RFB": "moved_on_since_plan"}
 
 
 @pytest.fixture
@@ -683,9 +715,16 @@ def test_a_check_after_saving_the_baseline_gives_delay_from_the_baseline_and_fro
     # from August 1, 2021, the baseline's date, to the signing on January 3, 2022 (plan-229129-signed).
     assert signed["days_late"] == 186
     assert signed["baseline"] == {"state": "late", "planned_on": "2021-08-01", "days": 155, "plan_date": "2025-07-21"}
-    # The plan of March 5, 2026 first listed KE-NWWDA-541055-CW-RFB, after the baseline.
-    assert found["KE-NWWDA-541055-CW-RFB"]["baseline"] == {
-        "state": "not_in_baseline", "planned_on": None, "days": None, "plan_date": "2025-07-21"}
+    # KE-NWWDA-541055-CW-RFB, which the plan of March 5, 2026 first listed after the baseline, has moved on since the
+    # plan (ticket 132): the contract awards say it was signed, so no reason measures its delay from any plan.
+    assert "baseline" not in found["KE-NWWDA-541055-CW-RFB"] and found["KE-NWWDA-541055-CW-RFB"]["mark"] == "moved_on"
+    # The plan of April 21, 2021 first listed KE-NWWDA-229129-CW-RFB, after the plan of December 7, 2020: with that
+    # one as the baseline, the signing's delay is measured only from its first published planned date.
+    call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2020-12-07"})
+    earlier = reasons(get(writable, f"{NWWDA}/2026-10-09?asof=2026-10-23").json())
+    assert earlier["KE-NWWDA-229129-CW-RFB"]["baseline"] == {
+        "state": "not_in_baseline", "planned_on": None, "days": None, "plan_date": "2020-12-07"}
+    call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2025-07-21"})
 
     # The Procurement tab marks the baseline among the agency's versions.
     page = get(writable, "/api/projects/P156634?asof=2026-10-23").json()

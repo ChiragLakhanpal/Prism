@@ -122,13 +122,16 @@ test("Passage reports lists the groups waiting, oldest first, and the decisions 
   await expect(page.locator("[data-reports-lead]")).toHaveText("Reports on one passage are waiting for you. The oldest came in on October 23, 2026.");
   // The sidebar's badge counts what the lead says is waiting for you.
   await expect(page.locator("[data-sub-item=lessonsReports] [data-sub-count]")).toHaveText("1");
-  await expect(page.getByText("Ranking a paragraph lower changes only questions like the ones in its reports. I never hide a paragraph, and I still show it when it is the only source.")).toBeVisible();
+  // The decision form's feedforward says what ranking lower changes, where it matters; the page's caption went in
+  // ticket 126 (R51).
+  await expect(page.getByText("Ranking a paragraph lower changes only questions like the ones in its reports.")).toHaveCount(0);
   const row = page.locator("[data-report-row]").first();
   await expect(row).toContainText("Wrong passage · needs your review");
   await expect(row.getByRole("heading", { level: 3 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 55");
   await expect(page.getByRole("heading", { name: "Decided in the last 90 days" })).toBeVisible();
   await expect(page.locator("[data-reports-decided]")).toContainText("Ranked lower");
-  await expect(page.locator("[data-reports-decided]")).toContainText("Showing the one decision, newest first.");
+  // Every row shows, and the count line stays because it says the list's order (ticket 126; DESIGN.md section 5, Tables).
+  await expect(page.locator("[data-reports-decided] [data-count-row] p[data-numbers]")).toHaveText("Showing the one decision, newest first.");
   expect(await axe(page)).toEqual([]);
 });
 

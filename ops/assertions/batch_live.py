@@ -21,6 +21,17 @@ It exits 0 when they do, 1 when the run finished but they did not, or the batch 
 run stopped waiting (run it again later: it waits for the same batch, and answers already held are not
 asked for again), and 2 when it could not run. Then check the ground-truth queries on both engines:
 
+The run is the nightly's, over every project with documents or records, unless --projects names the projects to
+run it for, joined by commas, such as the five demo projects (ticket 135):
+
+    uv run --script ops/assertions/batch_live.py --env-file .env --projects P156634,P130164,P161305,P155350,P113151
+
+For each project it prints what became assertions (from the ISRs' ratings tables, the records, the IEG ratings
+dataset and the reports the batch model read) and what went to the batch model. The run reads the warehouse
+within its limit on one statement's result (config/thresholds.toml, warehouse.statement_result_bytes): on
+October 29, 2026 it read every project's records in one statement, and the warehouse refused it with "Inline byte
+limit exceeded".
+
     uv run --script ops/bundle/check.py same-rows --env-file .env
 
 The recording. With --record, it asks the live batch model the requests the gate's recording answers
@@ -93,8 +104,30 @@ def record(model: batch.AzureOpenAIBatch, resume: str | None = None) -> int:
     return 0
 
 
-def run_live(env: dict, model: batch.AzureOpenAIBatch) -> int:
-    """The detect_disagreements work on the warehouse, then get_disagreements' benchmark question."""
+def counted(number: int, word: str) -> str:
+    return f"{number} {word}" if number == 1 else f"{number} {word}s"
+
+
+def what_it_became(each: assertions.ProjectReport) -> str:
+    """One project's line: what became assertions, and what went to the batch model."""
+    line = (f"{each.project_id}: {counted(each.assertions, 'assertion')} ({each.isr_ratings} from ISR ratings, "
+            f"{each.records} from records, {each.ieg_ratings} from the IEG ratings dataset, {each.from_reports} read "
+            f"from reports), and the check rejected {counted(each.rejected, 'assertion')} read from reports.")
+    if not each.reports:
+        return f"{line} {each.project_id} has no report for the batch model."
+    return (f"{line} Of {each.project_id}'s {counted(each.reports, 'report')}, the batch model had answered "
+            f"{each.answered_before} before, {each.sent} went to it in this run, and {each.waiting} "
+            f"{'is' if each.waiting == 1 else 'are'} still in a running batch.")
+
+
+def projects_named(given: str) -> list[str]:
+    """The projects --projects names, joined by commas, each once, in the order given."""
+    return list(dict.fromkeys(one.strip() for one in given.split(",") if one.strip()))
+
+
+def run_live(env: dict, model: batch.AzureOpenAIBatch, projects: list[str] | None = None) -> int:
+    """The detect_disagreements work on the warehouse, for the projects named or else the nightly's, then
+    get_disagreements' benchmark question."""
     from bundle_live import LiveWorkspace  # the Databricks SDK, which only the live run needs
 
     from strata.dbx import Viewer
@@ -103,12 +136,18 @@ def run_live(env: dict, model: batch.AzureOpenAIBatch) -> int:
     engine = LiveWorkspace(env).engine()
     run_id = f"live-{dt.datetime.now(dt.UTC):%Y%m%dT%H%M%S}"
     try:
-        report = assertions.run(engine, assertions.default_projects(engine), model=model, run_id=run_id)
+        report = assertions.run(engine, projects or assertions.default_projects(engine), model=model, run_id=run_id)
     except (EngineError, batch.BatchError) as error:
         print(f"The run stopped: {error}")
         return 2
     print(f"Run {run_id} holds {report.assertions} assertions and {report.disagreements} disagreements, and "
           f"rejected {report.rejected} assertions read from text.")
+    for each in report.projects:
+        print(f"  {what_it_became(each)}")
+    if report.left_out:
+        print(f"I left out {', '.join(report.left_out)}: each project's own rows pass the warehouse's limit on one "
+              "statement's result (config/thresholds.toml, warehouse.statement_result_bytes), so it keeps the "
+              "assertions the tables held.")
     if report.pending:
         print(f"The answers about {report.pending} reports are still in a running batch. Run this again later: "
               "it waits for the same batch, and the answers already held are not asked for again.")
@@ -144,7 +183,15 @@ def main(argv=None) -> int:
                         help="write the live answers to the gate's recording instead of running on the warehouse")
     parser.add_argument("--batch", help="with --record: the id of a batch an earlier recording left running, to "
                                         "wait for it instead of asking again")
+    parser.add_argument("--projects", help="the live run's projects, joined by commas, such as P156634,P130164; "
+                                           "without it the run is the nightly's, over every project with documents "
+                                           "or records")
     args = parser.parse_args(argv)
+    projects = projects_named(args.projects) if args.projects is not None else None
+    if projects is not None and (args.record or not projects):
+        print("--projects names the live run's projects, joined by commas, such as P156634,P130164. "
+              "The recording asks about the requests it holds, so it takes no --projects.")
+        return 2
     try:
         env = load_workspace_env(Path(args.env_file) if args.env_file else None)
     except WorkspaceEnvError as error:
@@ -156,7 +203,7 @@ def main(argv=None) -> int:
               "(ops/wizard/strata-setup.sh).")
         return 2
     model = batch.from_environment(env)
-    return record(model, args.batch) if args.record else run_live(env, model)
+    return record(model, args.batch) if args.record else run_live(env, model, projects)
 
 
 if __name__ == "__main__":

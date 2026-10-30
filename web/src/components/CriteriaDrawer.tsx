@@ -169,9 +169,9 @@ function CostRecords({ evidence }: { evidence: EvidenceEvent }) {
           }}
         />
       </p>
+      {/* No stratum eyebrows on the records (ticket 126): each heading names its record. */}
       <section className="rounded-md border border-line p-4" aria-labelledby="cost-plan-row">
-        <p className="text-label text-ink-muted">{cost.eyebrow}</p>
-        <h3 id="cost-plan-row" className="mt-1 text-small font-bold text-ink-heading">
+        <h3 id="cost-plan-row" className="text-small font-bold text-ink-heading">
           <Fill template={cost.planRow} slots={{ ref: <MonoWords text={row.step_reference} /> }} />
         </h3>
         <dl className="mt-2 flex items-baseline justify-between gap-4 text-small">
@@ -191,8 +191,7 @@ function CostRecords({ evidence }: { evidence: EvidenceEvent }) {
       </section>
       {row.contracts.map((contract) => (
         <section key={contract.contract_id} className="rounded-md border border-line p-4" aria-label={cost.contract.replace("{id}", contract.contract_id)}>
-          <p className="text-label text-ink-muted">{copy.evidence.eyebrow.What}</p>
-          <h3 className="mt-1 text-small font-bold text-ink-heading">
+          <h3 className="text-small font-bold text-ink-heading">
             <Fill template={cost.contract} slots={{ id: <span className="font-mono">{contract.contract_id}</span> }} />
           </h3>
           <dl className="mt-2 flex flex-col gap-1 text-small">

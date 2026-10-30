@@ -92,7 +92,7 @@ test("collapsed, zone 5 reads the ticket's words with N from the tool, after the
   await expect(section(page).getByRole("heading", { level: 2 })).toHaveText("5 Check your criteria");
   await expect(section(page).getByRole("heading", { level: 2 })).toHaveAccessibleName("Check your criteria");
   await expect(section(page).locator("[data-summary-text]")).toContainText(
-    `optional. Paste your qualification criteria to compare them with ${summary.public_criteria_count} packages whose criteria are public.`,
+    `Paste your qualification criteria to compare them with ${summary.public_criteria_count} packages whose criteria are public.`,
   );
   await expect(toggle(page)).toHaveAttribute("aria-expanded", "false");
   // Nothing in the section runs before it opens.
@@ -105,9 +105,10 @@ test("when no comparable package published its criteria, the summary says so and
   await expect(section(page).locator("[data-section-summary]")).toHaveText(
     `${copy.criteria.summaryNonePublic.replace("{total}", "49")} ${copy.criteria.summaryAlsoNonePublic}`,
   );
-  // Opened, the body does not say it a second time.
+  // Opened, the body does not say it a second time: only the link to the notices' readiness (ticket 126).
   await openSection(page);
-  await expect(section(page).locator("[data-criteria-intro]")).toHaveText(copy.criteria.introNonePublic);
+  await expect(section(page).locator("[data-criteria-intro]")).toHaveCount(0);
+  await expect(section(page).locator("[data-section-body]").getByRole("link", { name: copy.criteria.introNonePublicLink })).toBeVisible();
 });
 
 test("pasted criteria asking for similar experience of two contracts of US$10 million are compared, each count from the tool", async ({ page }) => {
@@ -128,8 +129,11 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
     "I count it as asking for more when none of its parts is lower or left out and at least one is higher.",
   );
   await expect(section(page)).not.toContainText("the other way round");
-  // The column's definition keeps its noun (ticket 58; the 31 review, round 3, F7).
-  await expect(section(page).locator("table thead")).toContainText(`Of ${result.coverage.n} notices with public criteria`);
+  // The column's definition keeps its noun (ticket 58; the 31 review, round 3, F7), in its head's window since ticket 126
+  // (pattern 3).
+  await section(page).locator("table thead").getByRole("button", { name: "Asked for it", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Asked for it" })).toContainText(`Of ${result.coverage.n} notices with public criteria`);
+  await page.keyboard.press("Escape");
   await expect(row).toContainText(`"${similar.your_excerpt.text}"`);
   await expect(row).toContainText(similar.reading);
   await expect(section(page).locator("table [data-item=turnover]")).toContainText(copy.criteria.items.noneToCompare);
@@ -155,7 +159,8 @@ test("pasted criteria asking for similar experience of two contracts of US$10 mi
     return { heading: size(element.querySelector("h3")), title: size(element.querySelector("caption span")) };
   });
   expect(sizes.title).toBeLessThan(sizes.heading);
-  await expect(part.locator("caption")).toContainText(copy.criteria.items.countBoth);
+  // Every item shows, so no count line follows the title (ticket 126).
+  await expect(part.locator("caption")).not.toContainText("Showing");
   // The text never goes in an address, and the comparison's request carries it only in its body.
   expect(page.url()).not.toContain("similar");
   const compare = asked.find((request) => request.url().endsWith("/criteria/compare"))!;
@@ -443,8 +448,8 @@ test("every disagreement check 6 attached to a lesson's quote shows under it, as
   await openSection(page);
 
   const card = section(page).locator("[data-criteria-part=lessons] [data-lesson-card]").first();
-  // Its label is the drawer card's one word, with no middle dot (ticket 101's design review, item 12).
-  await expect(card.locator("p").first()).toHaveText("Why");
+  // No stratum label over the card since ticket 126 (R25): it opens on the lesson's quote.
+  await expect(card.locator("p").first()).not.toHaveText("Why");
   const cards = card.locator("[data-criteria-disagreement]");
   await expect(cards).toHaveCount(2);
   await expect(cards.first()).toContainText("ICR");

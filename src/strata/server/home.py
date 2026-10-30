@@ -47,7 +47,7 @@ from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
 from strata.server.viewer_sql import data_through
 from strata.tools import registry
-from strata.tools.check_plan import agency_id as agency_key
+from strata.lakehouse.clean import agency_id as agency_key
 from strata.tools.data_readiness_for import fill
 
 log = logging.getLogger("strata.server.home")
@@ -366,11 +366,13 @@ def window_phrase(days: int, as_of: dt.date | None) -> list[dict]:
     return fill(found["window"], {"window": count(days)})
 
 
-def drafts_sentence(rows: list[dict]) -> list[dict]:
+def drafts_sentence(rows: list[dict]) -> list[dict] | None:
+    """The drafts waiting to be checked, or None when none waits: Waiting for you says so beside the briefing, so the
+    briefing says nothing about drafts then (ticket 126)."""
     forms = words()["drafts"]
     total = len(rows)
     if total == 0:
-        return fill(forms["none"], {})
+        return None
     return fill(form(forms, total), {"count": count(total, "drafts", [row["draft_id"] for row in rows], capital=True)})
 
 
@@ -427,8 +429,9 @@ def staff_briefing(plans: list[dict], lines: list[dict], public_follows: int, al
     if retired:
         sentences.append(fill(form(found["lessonsRetired"], len(retired)), {
             "count": count(len(retired), "lessonsRetired", [line["id"] for line in retired], capital=True)}))
-    if waiting is not None:
-        sentences.append(drafts_sentence(waiting))
+    drafts = drafts_sentence(waiting) if waiting is not None else None
+    if drafts is not None:
+        sentences.append(drafts)
     return sentences
 
 
@@ -644,7 +647,9 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
             reason = "asof"
         else:
             waiting = waiting_rows(viewer, own_drafts(viewer), set())
-            sentences.append(drafts_sentence(waiting))
+            drafts = drafts_sentence(waiting)
+            if drafts is not None:
+                sentences.append(drafts)
         through = as_of or data_through(engine) or day
         return {
             "view": PIU, "preview": preview, "today": day.isoformat(), "as_of": _iso(as_of),

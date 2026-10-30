@@ -47,10 +47,10 @@ test("the check line reads the verifier's counts in the ticket's form, in the ne
 
   // The answer names its comparables by STEP reference with no quote marks (ticket 58), so it quotes nothing. The
   // sentence that states no number went to the judge; the past range's and the newest comparable's needed no model.
+  // Since ticket 126 the line holds what was checked and what a model judged; the sentences that needed no model and
+  // what was not checked are in "How was that checked?".
   const line = panel(page).locator("[data-check-line]");
-  await expect(line).toHaveText(
-    "Checked: 5 of 5 numbers match records. Judged by a model: 1 of 1 sentence follows from its sources. The other two needed no model, because every number, date and quote in them matched a record or a page. Not checked: whether these are the right comparables.",
-  );
+  await expect(line).toHaveText("Checked: 5 of 5 numbers match records. Judged by a model: 1 of 1 sentence follows from its sources.");
   await expect(line.locator("[data-check-part=judged]")).toHaveCount(1);
   // A part of a whole never breaks across a line: "5 of 5" and "1 of 1" are joined by no-break spaces (the 58
   // critique, round 2, "The one change").
@@ -110,7 +110,8 @@ test("How was that checked? opens How I checked this answer with the six checks 
 // same text edge, the removed box after a 1 px line.
 for (const width of [1440, 390]) {
   test(`at ${width} px the check line starts on its panel's text edge, with the removed box in its block`, async ({ page }) => {
-    await answered(page, "ask-ke-nwwda-541055-past-range.sse", width);
+    // An answer that removed a sentence: since ticket 126 the box shows only then.
+    await answered(page, "ask-p130164-removed-number.sse", width);
     const box = (selector: string) => panel(page).locator(selector).first().evaluate((element) => {
       const { left, right, top, bottom } = element.getBoundingClientRect();
       return { left, right, top, bottom };
@@ -131,9 +132,8 @@ for (const width of [1440, 390]) {
 test("a judged sentence adds the model's part, and the steps list all six checks under the verifier's step", async ({ page }) => {
   await answered(page, "ask-ke-nwwda-541055-advice.sse");
 
-  await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 2 of 2 sentences follow from their sources. The other two needed no model, because every number, date and quote in them matched a record or a page.",
-  );
+  // The sentences that needed no model are the steps' fourth check, below, not the line's, since ticket 126 (T28).
+  await expect(panel(page).locator("[data-check-part=judged]")).toHaveText("Judged by a model: 2 of 2 sentences follow from their sources.");
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
   await expect(verifier).toContainText("I ran six checks on the four sentences I wrote and removed none.");
@@ -153,8 +153,9 @@ test("a judged sentence adds the model's part, and the steps list all six checks
 test("an answer whose kept sentence cites nothing says there was nothing to match and what the model judged it against", async ({ page }) => {
   await answered(page, "ask-p156634-plan-not-yet-public.sse");
 
+  // What was not checked is in "How was that checked?" since ticket 126.
   await expect(panel(page).locator("[data-check-line]")).toHaveText(
-    "Checked: the sentence I kept cites no source, so there was nothing to match. Judged by a model: 1 of 1 sentence says no more than my tools reported. Not checked: whether the plan's published records are complete.",
+    "Checked: the sentence I kept cites no source, so there was nothing to match. Judged by a model: 1 of 1 sentence says no more than my tools reported.",
   );
   await expect(panel(page).locator("[data-check-line]")).not.toContainText("came back from this search");
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
@@ -232,9 +233,8 @@ test("a mixed answer keeps the usual check line and judged step", async ({ page 
     (data.judge as Record<string, unknown>).on_abstention = 1;
   });
 
-  await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 2 of 2 sentences follow from their sources. The other two needed no model, because every number, date and quote in them matched a record or a page.",
-  );
+  // The sentences that needed no model are the window's fourth check since ticket 126, not the line's.
+  await expect(panel(page).locator("[data-check-part=judged]")).toHaveText("Judged by a model: 2 of 2 sentences follow from their sources.");
   await panel(page).getByRole("button", { name: /^Show the .* steps I took$/ }).click();
   const verifier = panel(page).locator("[data-steps] > ol > li").filter({ hasText: "I ran six checks" });
   await expect(verifier.locator("[data-step-items] li").nth(3)).toHaveText(
@@ -242,14 +242,18 @@ test("a mixed answer keeps the usual check line and judged step", async ({ page 
   );
 });
 
-// Ticket 58: the bold "Not checked:" never breaks between its words, so it never reads as two bold words. Each part
-// starts its own line, and the labels never wrap, whatever the line around them does.
+// Ticket 58: a bold label never breaks between its words, so it never reads as two bold words. Each part starts its own
+// line, and the labels never wrap, whatever the line around them does. Since ticket 126 the answer's line holds Checked
+// and Judged by a model, and "Not checked:" keeps the same rule in "How was that checked?".
 for (const width of [1440, 390]) {
   test(`at ${width} px each label of the check line stays on one line`, async ({ page }) => {
     await answered(page, "ask-ke-nwwda-541055-advice.sse", width);
     const labels = panel(page).locator("[data-check-line] strong");
-    await expect(labels).toHaveText(["Checked:", "Judged by a model:", "Not checked:"]);
-    expect(await labels.evaluateAll((all) => all.map((label) => [label.getClientRects().length, getComputedStyle(label).whiteSpace]))).toEqual([
+    await expect(labels).toHaveText(["Checked:", "Judged by a model:"]);
+    await panel(page).getByRole("button", { name: "How was that checked?" }).click();
+    const notChecked = page.getByRole("dialog").locator("[data-how-not-checked] strong");
+    await expect(notChecked).toHaveText("Not checked:");
+    expect(await [...(await labels.all()), notChecked].reduce(async (all, label) => [...(await all), await label.evaluate((element) => [element.getClientRects().length, getComputedStyle(element).whiteSpace])], Promise.resolve([] as unknown[]))).toEqual([
       [1, "nowrap"],
       [1, "nowrap"],
       [1, "nowrap"],
@@ -445,8 +449,9 @@ test("a partial refusal whose other sentences could not be checked keeps its ref
   await answered(page, "ask-refuses-part-supplier-scores-disagreements-unavailable.sse");
 
   const refusal = panel(page).locator("[data-answer=error] [data-refusal]");
+  // Since ticket 126 the why is in "See everything I turn down", so the paragraph is the lead and what became of the rest.
   await expect(refusal).toContainText(
-    "I don't score or rank suppliers. The public records show which contracts a supplier signed. They don't show how well it did the work.",
+    "I don't score or rank suppliers. I wrote an answer to the rest of your question, but I couldn't show any of it.",
   );
   await expect(panel(page).getByRole("alert")).toContainText(
     "I couldn't check my answer, because I couldn't find out whether other reports disagree with its sources.",
@@ -498,9 +503,12 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   expect(looks[0]).toEqual(looks[1]);
   // The sentence's own source keeps number 1, and the other side gets the next.
   await expect(card.locator("[data-citation]")).toHaveText(["[1]", "[2]"]);
-  await expect(card).toContainText(
+  // Why I lean on the ICR is in the tag's window since ticket 126.
+  await card.getByRole("button", { name: "Strata leans on this" }).click();
+  await expect(page.locator("[data-disagreement-rule]")).toHaveText(
     "For a judgment of how a project went, I lean on the later, more independent report, here the ICR, and I keep ISR 7 as the record of the earlier view.",
   );
+  await page.keyboard.press("Escape");
   await expect(card).toContainText('If you keep ISR 7 instead, I treat "Progress towards achievement of PDO" as Satisfactory.');
   // The stream names the sentence keeping the other report would change (ticket 23).
   await expect(card).toContainText("That changes one sentence in this answer.");
@@ -572,15 +580,15 @@ test("a disagreement the draft already showed is the same card, as an info note"
   await expectCurrentRatingMarked(page);
 });
 
-// Ticket 97: the refusal says why in place, and "See everything I turn down" opens the window that lists every
-// refusal, which How Strata works' "What I don't do" did before. The words are the copy file's refusal keys, written
-// out here from the 24 brief so the test checks the copy file against its source.
-test("a refusal says what I don't do, what I can do instead and why, and See everything I turn down opens a window of every refusal", async ({ page }) => {
+// Ticket 97: "See everything I turn down" opens the window that lists every refusal with its reason, which How Strata
+// works' "What I don't do" did before. Since ticket 126 the refusal itself says what I don't do and what I can do
+// instead, and its reason is one click away in that window. The words are the copy file's refusal keys, written out
+// here from the 24 brief so the test checks the copy file against its source.
+test("a refusal says what I don't do and what I can do instead, and See everything I turn down opens a window of every refusal with its reason", async ({ page }) => {
   for (const width of [1440, 1024, 390]) {
     await answered(page, "ask-refuses-supplier-scores.sse", width);
     await expect(panel(page).locator("[data-in-short]")).toHaveText(
-      "I don't score or rank suppliers. I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice. " +
-        "The public records show which contracts a supplier signed. They don't show how well it did the work.",
+      "I don't score or rank suppliers. I can list the contracts a supplier signed on World Bank-financed projects, each with its award notice.",
     );
     await expect(panel(page).locator("[role=alert], [data-check-line], [data-removed-box]")).toHaveCount(0);
     expect(await axe(page)).toEqual([]);
@@ -618,11 +626,8 @@ test("a partial refusal opens In short, says the rest was answered, and the chec
   await answered(page, "ask-refuses-part-supplier-scores.sse");
 
   const inShort = panel(page).locator("[data-in-short]");
-  // Ticket 97: the reason follows the lead here too, before the answer.
-  await expect(inShort.locator("p").first()).toHaveText(
-    "I don't score or rank suppliers. The public records show which contracts a supplier signed. They don't show how well it did the work. " +
-      "I answered the rest of your question.",
-  );
+  // Ticket 126: the lead, then that I answered the rest; the reason is in the refusal window.
+  await expect(inShort.locator("p").first()).toHaveText("I don't score or rank suppliers. I answered the rest of your question.");
   await expect(panel(page).getByRole("button", { name: "See everything I turn down" })).toHaveAttribute("aria-haspopup", "dialog");
   await expect(inShort).toContainText("108 of 328 cases had to go through rebidding");
   await expect(panel(page).locator("[data-check-line]")).toBeVisible();

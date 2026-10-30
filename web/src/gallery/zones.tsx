@@ -214,7 +214,7 @@ export function Sequence() {
 function Unnumbered() {
   return (
     <div>
-      <TaskZone name={z.activities.name} tag={z.activities.tag} panel sectionKey="activities">
+      <TaskZone name={z.activities.name} panel sectionKey="activities">
         <ZoneBlock
           foot={
             <FootStrip>
@@ -397,7 +397,6 @@ function Head({ level, facts }: { level: 1 | 2; facts: boolean }) {
       held
       title={z.head.description}
       id={z.head.reference}
-      purpose={copy.pages.package.purpose}
       facts={facts ? factsLine(open) : undefined}
       action={facts ? undefined : <Button variant="primary">{z.head.action}</Button>}
     />

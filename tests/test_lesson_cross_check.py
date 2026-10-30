@@ -104,3 +104,11 @@ def test_only_the_assigned_region_cross_checks_and_a_disagreement_starts_a_re_ch
     # The quarter's fixed draw is IEG's own lesson (lesson-cfdf000a46 in the recorded answers), which was added, so
     # the disagreement re-checks that lesson rather than queueing a proposal again.
     assert (kind, lesson_id, proposal_id) == ("recheck", "lesson-cfdf000a46", None)
+    # Ticket 140: the cross-check's record names Wanjiru as you to her, and by role and region to South Asia, and the
+    # re-check her disagreement started names her the same way.
+    assert saved["item"]["outcome"]["actor"] == {"who": "you"}
+    with DuckDBEngine.open(decided, read_only=True) as engine:
+        checked = review.item(engine, scenario.ASHA, item["item_id"])
+        [recheck] = [row for row in review.queue(engine, scenario.ASHA)["groups"]["you"] if row["kind"] == "recheck"]
+    lead_esa = {"who": "role", "role": "lead procurement specialist", "region": "Eastern and Southern Africa"}
+    assert checked["outcome"]["actor"] == recheck["origin"]["actor"] == lead_esa

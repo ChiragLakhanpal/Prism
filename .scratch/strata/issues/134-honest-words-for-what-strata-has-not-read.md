@@ -6,7 +6,7 @@ Read first: `web/src/copy.ts` (the three keys), the Procurement tab's route in `
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** web
 **Phase:** P4
 **Design review:** no
@@ -18,3 +18,19 @@ Read first: `web/src/copy.ts` (the three keys), the Procurement tab's route in `
 ## Comments
 
 - October 29, 2026, orchestrator: opened from the walkthrough draft's findings; the paused nightly is the owner's decision of October 29.
+- October 29, 2026, merger: merged into build/strata as de8e6a06 (a merge with history of strata/134-honest-words-for-what-strata-has-not-read at a6c6c1ec; the history scan found no key-shaped line). Built in the worktree .claude/worktrees/wf_67f02a42-1ac-15, which is now removed; the branch stays.
+  - The gate on the merge commit passed in 139.9 seconds; by hand on build/strata afterwards it passed in 144.5 seconds at 23:41 PDT.
+  - Conflicts, kept both sides: `packages_reads` sends ticket 133's plan versions and this ticket's `plans_read` in one batch; `packages()` keeps ticket 133's grouped agencies, and `plans_read` now takes its `agency_id` from the same grouping, because ticket 133 removed the bare `agency_id` from projects.py; web/tests/projects.spec.ts keeps ticket 133's one-heading test and this ticket's no-activities test. Ticket 133's two recorded answers for P130164 (project-p130164-one-agency.json, packages-p130164-one-agency.json) were recorded again with tests/record_agency_names_api.py, so they carry `plans_unread` (15) and `plans_read` as the server now answers; tests/test_agency_names.py compares them with the server.
+  - Evidence (.notes/134-verify.md, round 1, pass): criterion 1 passed. P156634 lists 240 Procurement Plan documents and 11 are read, so `plans_unread` is 229, equal to the Documents tab's Not read count; the sentence reads "The only plan I have read from this agency is the plan of ..." with "See the plans I haven't read" linking to /projects/P156634/documents. A plan read with no rows says "I read the plan of September 17, 2019 and found no activities in it.", and "I haven't read a Procurement Plan" shows only when no plan was read (a throwaway database test and projects.spec.ts). Criterion 2 passed: `ingestion.paused_since = "2026-10-29"` in config/thresholds.toml; from October 29 the Fresh cell says "Refresh paused since Oct 29" and no "late", and before that day "late" still shows (three tool tests and data.spec.ts). Criterion 3: the config value is set in this change; the workspace half is parked.
+  - Workspace results: none run. Every key is set, but mergers run no workspace step. The App redeploy and the three-sentence check are parked in docs/workspace-catchup.md as "Ticket 134, step 1 of 2" and "step 2 of 2", for the second session (strata-58) or the orchestrator to run from a snapshot at or after de8e6a06. The builder named the Free Edition App; the blocks point at the paid workspace's App.
+  - Review follow-ups (not blocking, from .notes/134-review.md): (1) `changes.compare()` in src/strata/server/changes.py says `previous_not_read` when the version before was read but held no rows; decide on `parse_reason`, not the row count. (2) Packages.tsx's `readEmpty` should keep only plans with no activities and pass the count for the singular form. (3) Move `display_name` into a shared module so projects.py can import documents at the top. (4) One `DOCUMENT_READS` constant for the query names `_Documents` and `plans_unread_reads` both use.
+  - Verifier notes (not blocking): the agent cannot say the refresh is paused, because the pause date comes from config, not a row, so the verifier removes it; the Lakeview snapshot's `days_late` column is empty while the refresh is paused.
+
+  **Deferred to the design pass**
+
+  - None. The verifier reviewed no visual craft, following the function-first rule (one capture at 1440 px per screen).
+
+  **Decisions parked for the user**
+
+  - None from the builder, the reviewer or the verifier.
+- October 30, 2026, orchestrator (00:31 PDT): the App redeploy ran from de8e6a06 (the catch-up block "Tickets 127, 138, 133, 136 and 134, the App redeploy ran"); the page's check by eye is the owner's.

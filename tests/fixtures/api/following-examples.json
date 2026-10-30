@@ -20,75 +20,6 @@
       "status": "needs_a_look",
       "rows": [
         {
-          "evidence_id": "strata.tools.project_signals:P156634/completion_passed@2026-10-28",
-          "public_from": "2026-10-09",
-          "source": {
-            "source_key": "plans",
-            "project_id": "P156634",
-            "document_id": "40132287",
-            "date": "2026-10-09",
-            "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
-          },
-          "check": "completion_passed",
-          "strong": false,
-          "count": 1,
-          "values": {},
-          "items": [
-            {
-              "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-              "public_from": "2026-10-09",
-              "source": {
-                "document_type": "Procurement Plan",
-                "project_id": "P156634",
-                "implementing_agency": "Northern Water Works Development Agency",
-                "plan_date": "2026-10-09",
-                "document_id": "40132287",
-                "pdf_page": 3
-              },
-              "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
-              "section": "WORKS",
-              "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
-              "review_type": "Post",
-              "method": "Request for Bids",
-              "market_approach": "Open - National",
-              "estimated_amount_usd": "1230000.00",
-              "estimated_millions": "1.23",
-              "actual_amount_usd": "0.00",
-              "process_status": "Pending Implementation",
-              "signed_on": null,
-              "planned_signing_on": "2026-04-24",
-              "planned_signing_plan_date": "2026-03-05",
-              "days_late": null,
-              "planned_completion_on": "2026-07-31",
-              "planned_completion_plan_date": "2026-03-05",
-              "first_listing_confirmed": false,
-              "actual_to_estimate": null,
-              "marks": [
-                {
-                  "mark": "needs_a_look",
-                  "reasons": [
-                    {
-                      "code": "completion_passed_no_contract",
-                      "mark": "needs_a_look",
-                      "planned_completion_on": "2026-07-31",
-                      "planned_completion_plan_date": "2026-03-05",
-                      "closing_date": "2026-10-31",
-                      "days_to_close": 3,
-                      "evidence_ids": [
-                        "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-                        "strata.silver.plan_rows:40090127/KE-NWWDA-541055-CW-RFB",
-                        "strata.gold.project:P156634"
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "position": null,
-              "listed": null
-            }
-          ]
-        },
-        {
           "evidence_id": "strata.tools.project_signals:P156634/above_estimate@2026-10-28",
           "public_from": "2026-10-09",
           "source": {
@@ -119,10 +50,11 @@
               },
               "activity_reference_no": "KE-NWWDA-229129-CW-RFB",
               "section": "WORKS",
-              "description": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+              "description": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
               "review_type": "Post",
               "method": "Request for Bids",
               "market_approach": "Open - National",
+              "reference_as_read": false,
               "estimated_amount_usd": "300000.00",
               "estimated_millions": "0.3",
               "actual_amount_usd": "1245092.76",
@@ -199,6 +131,7 @@
               "review_type": "Post",
               "method": "Direct Selection",
               "market_approach": "Direct - National",
+              "reference_as_read": false,
               "estimated_amount_usd": "2600000.00",
               "estimated_millions": "2.6",
               "actual_amount_usd": "0.00",
@@ -213,16 +146,19 @@
               "actual_to_estimate": null,
               "marks": [
                 {
-                  "mark": "watch",
+                  "mark": "moved_on",
                   "reasons": [
                     {
-                      "code": "pending_near_closing",
-                      "mark": "watch",
-                      "closing_date": "2026-10-31",
-                      "days_to_close": 3,
+                      "code": "moved_on_since_plan",
+                      "mark": "moved_on",
+                      "process_status": "Pending Implementation",
+                      "signed_on": "2026-08-28",
+                      "record": "contract_awards",
+                      "disagreement_id": "83eeb55bf1335b4c",
                       "evidence_ids": [
                         "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
-                        "strata.gold.project:P156634"
+                        "strata.gold.disagreement:83eeb55bf1335b4c",
+                        "strata.gold.contract:1901323"
                       ]
                     }
                   ]
@@ -282,7 +218,7 @@
           "key": "completion_passed",
           "ran": true,
           "missing": null,
-          "fired": true,
+          "fired": false,
           "strong": false
         },
         {
@@ -329,7 +265,7 @@
         }
       ],
       "counts": {
-        "signals": 4,
+        "signals": 3,
         "strong": 0,
         "ran": 7,
         "checks": 7,
@@ -428,70 +364,6 @@
   "missing": [],
   "evidence": [
     {
-      "id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-      "kind": "record",
-      "tool": null,
-      "stratum": "What",
-      "short_name": null,
-      "row": {
-        "reference": "KE-NWWDA-541055-CW-RFB",
-        "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
-        "fields": [
-          {
-            "key": "description",
-            "value": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
-            "kind": "text"
-          },
-          {
-            "key": "method",
-            "value": "Request for Bids",
-            "kind": "text"
-          },
-          {
-            "key": "market_approach",
-            "value": "Open - National",
-            "kind": "text"
-          },
-          {
-            "key": "review_type",
-            "value": "Post",
-            "kind": "text"
-          },
-          {
-            "key": "estimated_amount_usd",
-            "value": "1230000.00",
-            "kind": "usd"
-          },
-          {
-            "key": "process_status",
-            "value": "Pending Implementation",
-            "kind": "text"
-          },
-          {
-            "key": "planned_completion_on",
-            "value": "2026-07-31",
-            "kind": "date",
-            "highlight": true
-          },
-          {
-            "key": "planned_completion_plan_date",
-            "value": "2026-03-05",
-            "kind": "date"
-          }
-        ],
-        "public_from": "2026-10-09",
-        "source": {
-          "document_type": "Procurement Plan",
-          "project_id": "P156634",
-          "implementing_agency": "Northern Water Works Development Agency",
-          "plan_date": "2026-10-09",
-          "document_id": "40132287",
-          "pdf_page": 3
-        }
-      },
-      "highlights": []
-    },
-    {
       "id": "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB",
       "kind": "record",
       "tool": null,
@@ -503,7 +375,7 @@
         "fields": [
           {
             "key": "description",
-            "value": "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty",
+            "value": "Drilling of 4 Number Exploratory Boreholes In Wajir County",
             "kind": "text"
           },
           {
