@@ -4371,3 +4371,47 @@ Parked on October 29, 2026 with ticket 128 (merge 92a3171b). Run after step 1. S
 It worked if the route answers 200 with JSON (not the error page), and https://strata-7405609289499029.9.azure.databricksapps.com/projects/P156634/timeline renders its three lanes. Record the status, the time and the three lanes here under ticket 128; this is criterion 3's live proof.
 
 While the session is on the workspace, it may also save the warehouse's real replies (the Statement Execution API's JSON, manifest and all) to the timeline's `reports.sql` statement for P156634 and to the statement in `tests/fixtures/warehouse/every_type.json`. Those would replace the replay rows and manifest that the builder wrote by hand in the API's documented shape (a decision parked for the user under ticket 128). Saving them changes fixture files, so it lands through a ticket, not through this block.
+
+## Ticket 125, step 1 of 5: redeploy the App, so a page's reads go as one batch and the App keeps pages
+
+Parked on October 29, 2026 with ticket 125, which merged into build/strata as 362a2266 (branch `strata/125-every-page-answers-in-under-two-seconds-on-the-workspace` at da8f71d5). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs these five steps, one at a time and in this order, from a snapshot that includes this merge (362a2266, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`).
+
+What ticket 125 changes on the App: `WarehouseEngine.run_many` in `src/strata/lakehouse/engine.py` posts a page's statements at once, up to `warehouse.statements_at_once` (12) at a time, and the statements API's waits come from `config/thresholds.toml` [warehouse] (`wait_seconds = 30`, `poll_seconds = 0.25`, `poll_max_seconds = 2`). The Summary, Timeline, Packages and the package and project headers each read through one batch. The App keeps each page per as-of day and view for `app.page_cache_seconds` (`src/strata/server/page_cache.py`) and sends `Cache-Control: private, max-age=...`. At startup and every `app.warm_every_seconds` it reads the demo's pages in `config/demo.toml` (P130164, P156634 and KE-NWWDA-541055-CW-RFB) ahead, as the App's own service principal (`src/strata/server/warm.py`). No table, grant or secret changed, and no SQL that writes; one read-only SQL file is new (`src/strata/server/sql/nightly_finished.sql`, which reads `strata.ops.pipeline_runs`). Run from the snapshot:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if it exits 0 and its last line is `Strata is running at https://...`. Record the exit code, the commit the App runs, and any secret its step 3 names here under ticket 125.
+
+## Ticket 125, step 2 of 5: the App read the demo's pages ahead at startup (criterion 3)
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). Run after step 1. Read the App's log from its start, on the Apps page's Logs tab.
+
+It worked if the log holds `I read 9 of the demo's 9 pages ahead, as the App`. A line with `did not keep it`, or `could not read` with 403, means the App's service principal lacks SELECT on a table the page reads through `account users`; record the table it names. Record the line and its time here under ticket 125.
+
+## Ticket 125, step 3 of 5: the Summary's composed cited_query() runs on the SQL warehouse
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). This is the composed `cited_query()` statement's first run on the warehouse (`passages.sql` with its id filter replaced by an `IN` over `isr_ratings.sql` and `icr_rating.sql`); it has run only on DuckDB. Signed in to the App as a staff viewer:
+
+    GET https://strata-7405609289499029.9.azure.databricksapps.com/api/projects/P156634/summary?asof=2026-10-22
+
+It worked if the route answers 200 with the same citations as the fixture's answer to the same request (start the local copy from the snapshot with `scripts/dev` and ask it the same path to compare). A 503 with `data_service` names the statement in the App's log; record that line here under ticket 125.
+
+## Ticket 125, step 4 of 5: the four routes answer in under two seconds on a second read and under five seconds cold (criteria 1 and 3)
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). Read-only; run after step 3. Ask each route twice as a signed-in viewer, with a viewer's OAuth token for the workspace in `$TOKEN` (never printed, never written to a file):
+
+    for path in /api/projects/P156634/summary /api/projects/P156634/timeline /api/projects/P156634/packages /api/packages/KE-NWWDA-541055-CW-RFB; do
+      for read in first second; do
+        curl -s -o /dev/null -D - -H "Authorization: Bearer $TOKEN" \
+          -w "$path $read %{http_code} %{time_total}s\n" \
+          "https://strata-7405609289499029.9.azure.databricksapps.com$path" | grep -iE "^cache-control|^/api"
+      done
+    done
+
+A first read is cold only when the warehouse has stopped (after ten idle minutes) and the page is not kept (the App has just started before its warm, or the page is past its window); note which. It worked if each second read answers 200 in under 2 s with `Cache-Control: private, max-age=...` kept through the Databricks Apps proxy, and each cold read in under 5 s. Record the eight timings, the status codes and the `Cache-Control` lines here under ticket 125; this is criteria 1 and 3's live proof. The verifier also asks for the public Timeline (`/api/projects/P156634/timeline?view=public`) and the project header (`/api/projects/P156634`) to be timed the same way: the public Timeline sends 13 statements with 12 at once, and the header sends two batches, one after the other.
+
+## Ticket 125, step 5 of 5: in Application Insights, a page's warehouse calls sit under its request
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). Run after step 4. In the Application Insights resource that `APPLICATIONINSIGHTS_CONNECTION_STRING` names, open Transaction search, pick one `GET /api/projects/P156634/timeline` request from step 4 that read the warehouse (a first read), and open its end-to-end transaction.
+
+It worked if each statement of the page's batch (11 for the staff Timeline) shows as a dependency under that request, not as an orphan span. Record the request's operation id and the dependency count here under ticket 125.
