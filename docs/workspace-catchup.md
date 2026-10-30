@@ -4371,3 +4371,123 @@ Parked on October 29, 2026 with ticket 128 (merge 92a3171b). Run after step 1. S
 It worked if the route answers 200 with JSON (not the error page), and https://strata-7405609289499029.9.azure.databricksapps.com/projects/P156634/timeline renders its three lanes. Record the status, the time and the three lanes here under ticket 128; this is criterion 3's live proof.
 
 While the session is on the workspace, it may also save the warehouse's real replies (the Statement Execution API's JSON, manifest and all) to the timeline's `reports.sql` statement for P156634 and to the statement in `tests/fixtures/warehouse/every_type.json`. Those would replace the replay rows and manifest that the builder wrote by hand in the API's documented shape (a decision parked for the user under ticket 128). Saving them changes fixture files, so it lands through a ticket, not through this block.
+
+## Ticket 125, step 1 of 5: redeploy the App, so a page's reads go as one batch and the App keeps pages
+
+Parked on October 29, 2026 with ticket 125, which merged into build/strata as 362a2266 (branch `strata/125-every-page-answers-in-under-two-seconds-on-the-workspace` at da8f71d5). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs these five steps, one at a time and in this order, from a snapshot that includes this merge (362a2266, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`).
+
+What ticket 125 changes on the App: `WarehouseEngine.run_many` in `src/strata/lakehouse/engine.py` posts a page's statements at once, up to `warehouse.statements_at_once` (12) at a time, and the statements API's waits come from `config/thresholds.toml` [warehouse] (`wait_seconds = 30`, `poll_seconds = 0.25`, `poll_max_seconds = 2`). The Summary, Timeline, Packages and the package and project headers each read through one batch. The App keeps each page per as-of day and view for `app.page_cache_seconds` (`src/strata/server/page_cache.py`) and sends `Cache-Control: private, max-age=...`. At startup and every `app.warm_every_seconds` it reads the demo's pages in `config/demo.toml` (P130164, P156634 and KE-NWWDA-541055-CW-RFB) ahead, as the App's own service principal (`src/strata/server/warm.py`). No table, grant or secret changed, and no SQL that writes; one read-only SQL file is new (`src/strata/server/sql/nightly_finished.sql`, which reads `strata.ops.pipeline_runs`). Run from the snapshot:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if it exits 0 and its last line is `Strata is running at https://...`. Record the exit code, the commit the App runs, and any secret its step 3 names here under ticket 125.
+
+## Ticket 125, step 2 of 5: the App read the demo's pages ahead at startup (criterion 3)
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). Run after step 1. Read the App's log from its start, on the Apps page's Logs tab.
+
+It worked if the log holds `I read 9 of the demo's 9 pages ahead, as the App`. A line with `did not keep it`, or `could not read` with 403, means the App's service principal lacks SELECT on a table the page reads through `account users`; record the table it names. Record the line and its time here under ticket 125.
+
+## Ticket 125, step 3 of 5: the Summary's composed cited_query() runs on the SQL warehouse
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). This is the composed `cited_query()` statement's first run on the warehouse (`passages.sql` with its id filter replaced by an `IN` over `isr_ratings.sql` and `icr_rating.sql`); it has run only on DuckDB. Signed in to the App as a staff viewer:
+
+    GET https://strata-7405609289499029.9.azure.databricksapps.com/api/projects/P156634/summary?asof=2026-10-22
+
+It worked if the route answers 200 with the same citations as the fixture's answer to the same request (start the local copy from the snapshot with `scripts/dev` and ask it the same path to compare). A 503 with `data_service` names the statement in the App's log; record that line here under ticket 125.
+
+## Ticket 125, step 4 of 5: the four routes answer in under two seconds on a second read and under five seconds cold (criteria 1 and 3)
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). Read-only; run after step 3. Ask each route twice as a signed-in viewer, with a viewer's OAuth token for the workspace in `$TOKEN` (never printed, never written to a file):
+
+    for path in /api/projects/P156634/summary /api/projects/P156634/timeline /api/projects/P156634/packages /api/packages/KE-NWWDA-541055-CW-RFB; do
+      for read in first second; do
+        curl -s -o /dev/null -D - -H "Authorization: Bearer $TOKEN" \
+          -w "$path $read %{http_code} %{time_total}s\n" \
+          "https://strata-7405609289499029.9.azure.databricksapps.com$path" | grep -iE "^cache-control|^/api"
+      done
+    done
+
+A first read is cold only when the warehouse has stopped (after ten idle minutes) and the page is not kept (the App has just started before its warm, or the page is past its window); note which. It worked if each second read answers 200 in under 2 s with `Cache-Control: private, max-age=...` kept through the Databricks Apps proxy, and each cold read in under 5 s. Record the eight timings, the status codes and the `Cache-Control` lines here under ticket 125; this is criteria 1 and 3's live proof. The verifier also asks for the public Timeline (`/api/projects/P156634/timeline?view=public`) and the project header (`/api/projects/P156634`) to be timed the same way: the public Timeline sends 13 statements with 12 at once, and the header sends two batches, one after the other.
+
+## Ticket 125, step 5 of 5: in Application Insights, a page's warehouse calls sit under its request
+
+Parked on October 29, 2026 with ticket 125 (merge 362a2266). Run after step 4. In the Application Insights resource that `APPLICATIONINSIGHTS_CONNECTION_STRING` names, open Transaction search, pick one `GET /api/projects/P156634/timeline` request from step 4 that read the warehouse (a first read), and open its end-to-end transaction.
+
+It worked if each statement of the page's batch (11 for the staff Timeline) shows as a dependency under that request, not as an orphan span. Record the request's operation id and the dependency count here under ticket 125.
+
+## Tickets 128, the App redeploy ran: the App runs 92a3171b
+
+**Ran on October 29, 2026 (orchestrator), from a snapshot of 92a3171b.** The App redeployed from 92a3171b at 00:25 UTC on October 30 and GET /api/projects/P156634/timeline answers 200 (89,683 bytes, 31.1 s on a cold warehouse); GET /api/projects/P130164/timeline answers 200 (17,176 bytes, 12.4 s). The page the owner reported (reference 4ea75fa73165f2f36e32f9eadbb1c79c) loads; the cause was the statements API's text values compared with numbers. The local copy moved to the same build at http://127.0.0.1:50647. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Tickets 125, the App redeploy ran: the App runs 362a2266
+
+**Ran on October 29, 2026 (orchestrator), from a snapshot of 362a2266.** Step 1: the App redeployed from 362a2266 at 00:41 UTC on October 30 (exit 0). Step 4, at 17:41 PDT with a viewer's OAuth token, each route read twice: /api/projects/P156634/summary 0.45 s then 0.40 s, /timeline 0.57 s then 0.58 s, /packages 0.38 s then 0.42 s, /api/packages/KE-NWWDA-541055-CW-RFB 0.46 s then 0.40 s, all 200 with Cache-Control private, max-age about 7165; the first reads were warm because the App read the demo's pages ahead at startup (step 2 holds by these timings; the /logz stream showed no matching line within 25 seconds). Step 3: /api/projects/P156634/summary?asof=2026-10-22 answered 200 in 4.8 s but with two ratings from the projects API where the fixture gives four, because strata.silver.isr_ratings was empty in the workspace (0 rows for every project); the orchestrator rebuilt it from the stored ISR pages with src/strata/lakehouse/isr_ratings.py for P156634, P130164, P161305, P155350, P127203 and P113151 (180 rows, 22 s, no model), after which the summary as of 2026-10-21 on the App gives the same four ratings with the same evidence ids as the local copy (passage 40114539/v1/s3 for PDO and implementation). Step 5 not done: Application Insights returned no request or dependency rows for the last two hours at 17:55 PDT although the App binds the appinsights secret; check later. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 129, step 1 of 1: after a platform restart, the demo-ready command's Home step writes as the owner (criterion 3)
+
+Parked on October 29, 2026 with ticket 129, which merged into build/strata as e2dcb2f1 (branch `strata/129-the-scripts-that-act-as-the-app-fall-back-to-the-owner-s-token` at 29effe96). Every key is set, but mergers run no workspace step: the orchestrator runs this one.
+
+What ticket 129 changes: when the workspace's token endpoint answers 401 to the App's client secret, `src/strata/server/settings.py`'s `_the_app_s_engine` switches once to the owner's token (DATABRICKS_TOKEN in the env file) and prints one line. The seed command (`strata.seed_examples`) and the demo-ready command's Home step use it. The App itself never falls back: with DATABRICKS_APP_PORT set, no owner's token is passed. `settings.py` ships with the App, but on the App it works as before, and the seed runs on this machine, so this step needs no redeploy. No table, grant, secret or SQL file changed. The owner owns the catalog, so no new grant is needed either.
+
+Run it only after the platform has restarted the App since DATABRICKS_CLIENT_SECRET was last pasted into the env file, and do not paste a new secret first. If the App has not restarted since then, the Home step passes without the fallback line, and this block stays open until the next restart. Run it from the main checkout, not from a snapshot, because the command reads `data/out/fixture.duckdb` (`docs/paid-workspace.md`, command 16):
+
+    uv run --with databricks-sdk==0.156.0 python ops/demo/ready.py --env-file .env
+
+It worked if step 5 (Home) passes, prints "The App's secret is gone since the platform restarted the App; writing as the owner instead." once, and its summary reads "The examples are seeded, as the owner, and the window is checked." This is criterion 3's live proof, and it asks only about the Home step; a different step that fails (the smoke question, say) does not fail this block. If the Home step instead fails with `EngineError: The workspace gave the app no token: HTTP Error 401: Unauthorized` and prints no fallback line, the env file's DATABRICKS_TOKEN is empty or no longer valid. Record the exit code, the Home step's lines, the time, and when the App last restarted here under ticket 129.
+
+## Tickets 126 and 129, the App redeploy ran: the App runs cbd7e47d
+
+**Ran on October 29, 2026 (orchestrator), from a snapshot of cbd7e47d.** The App redeployed from cbd7e47d at 02:40 UTC on October 30 (exit 0), with tickets 126 (the tucked-away lines) and 129 (the fallback to the owner's token). Ticket 129, criterion 3: the demo-ready command ran once from a snapshot of cbd7e47d at 02:44 UTC with the App principal's secret still dead in the environment file (the platform rotated it at 14:46 UTC on October 29) and every step passed; its Home step printed 'passed. The examples are seeded, as the owner, and the window is checked.', so the seed wrote as the owner through the fallback with no new secret pasted. The other steps: the App's health in 2 s, Genie after 20 s warm, the smoke question's cited answer passed the six checks (strata.gold.passage:31525018/v1/54), the P156634 recheck on watch with four changes since the fixture, the workspace listing with seven changes. Ticket 126 on the App: the walkthrough's screens are being captured again from this build for the demo document. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 131, step 1 of 4: add the five as-read columns to silver.plan_rows, before any deploy
+
+Parked on October 29, 2026 with ticket 131, which merged into build/strata as a8fb048d (branch `strata/131-plan-text-read-from-a-pdf-is-repaired` at 246c3dcc). Every key is set, but mergers run no workspace step: the orchestrator or the second session (strata-58) runs these four steps, one at a time and in this order, from a snapshot that includes this merge (a8fb048d, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). The steps are the builder's, in the builder's order.
+
+What ticket 131 changes: the plan reader repairs each plan row after it reads the row and before it writes it (`src/strata/reader/repair.py`, called once in `plans.write_rows`). A word split by a space in a description is joined when a notice title or another plan row holds the joined word. A reference that breaks STEP's grammar is swapped once over the look-alike pairs (0 and O, 8 and B, 1 and I, 5 and S) when a notice or another plan version carries the result; otherwise it stays as read, with `reference_repair` set to `reference_as_read`. The kinds, the methods, the pairs and the join guard are in `config/references.toml`. `strata.silver.plan_rows` gains five columns that keep the text as read, and the plan check, the package page, the source view and the evidence drawer read them.
+
+Run this once on the paid workspace's SQL warehouse, before any bundle or App deploy from a commit that holds this merge, and before step 3's rewrite. CREATE TABLE IF NOT EXISTS adds no column to a table that exists. Without these columns, the plan check, the package page, the source view and the evidence drawer answer 500, and `parse_and_embed` and the rewrite fail on INSERT.
+
+    ALTER TABLE strata.silver.plan_rows ADD COLUMNS (activity_reference_no_as_read STRING, reference_repair STRING, reference_carried_by STRING, description_as_read STRING, description_joins STRING)
+
+It worked if the statement ends SUCCEEDED and `DESCRIBE TABLE strata.silver.plan_rows` lists the five columns last, in that order. `src/strata/lakehouse/tables/silver/plan_rows.sql` gives the same statement. If it says a column already exists, go on. Record the statement's state and the DESCRIBE lines here under ticket 131.
+
+## Ticket 131, step 2 of 4: deploy the bundle and redeploy the App
+
+Run after step 1, from the same snapshot. The bundle deploy carries the reader and `plans.py` to the nightly job. The App redeploy carries the server SQL, the tools and `web/`. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The builder wrote the first command without `--env-file`. A snapshot holds no `.env`, so it names the main checkout's, as ticket 122's block does.
+
+It worked if both exit 0, and the App deploy's last line is `Strata is running at https://...`. Record both exit codes, the bundle deploy's "3. What changed:" lines, the commit the App runs, and any secret the App deploy's step 3 names here under ticket 131.
+
+## Ticket 131, step 3 of 4: write P156634's plan rows again from bronze, then rebuild gold
+
+Run after step 2, from the same snapshot. This is ticket 122's rewrite path for one project: it fetches and parses no document.
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P156634
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+It worked if `run_live.py` exits 0, fetches and parses nothing, and prints P156634's row count, and `bronze_to_gold` ends SUCCESS. Then:
+
+    SELECT activity_reference_no, activity_reference_no_as_read, reference_repair, description FROM strata.silver.plan_rows WHERE document_id = '40132287'
+
+It shows the joined descriptions (Boreholes, Sarman where a notice writes it, Nairobi). It also shows the row read as KE-NWWDA-193461-90-RF8 with `reference_repair` `reference_as_read`, and, if the parser read -RFQ, KE-NWWDA-229129-CW-RFB with `reference_repair` `plan_text`. Record the script's lines, the job run id and its result, and the query's rows here under ticket 131.
+
+## Ticket 131, step 4 of 4: the repaired text on the App (criterion 3)
+
+Run after step 3. Signed in to the App as a staff viewer:
+
+    GET https://strata-7405609289499029.9.azure.databricksapps.com/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
+
+It worked if all of these hold:
+
+- The route gives the repaired descriptions, and `reference_as_read` true for KE-NWWDA-193461-90-RF8 alone.
+- The plan check at `/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09` shows "As I read it from the plan" under that row.
+- `/packages/KE-NWWDA-193461-90-RF8` shows "as I read it from the plan" on its ID line.
+- The plan check and `/packages/KE-NWWDA-541055-CW-RFB` read "Boreholes" and "Sarman".
+- The source view of the plan's page 3 (document 40132287), `GET /api/projects/P156634/documents/procurement-plan-northern-water-works-development-agency-2026-10-09?page=3`, lists KE-NWWDA-229129-CW-RFB in its `plan_rows`, not -RFQ.
+
+Look for the builder's words, "As I read it from the plan", not the ticket's "as the plan prints it" (a decision parked for the user under ticket 131). The walkthrough's row stays KE-NWWDA-193461-90-RF8 with the note, because no single look-alike swap reaches a valid reference; that is expected, not a failure. Record the status, the time and what each page shows here under ticket 131. This is criterion 3's live proof.

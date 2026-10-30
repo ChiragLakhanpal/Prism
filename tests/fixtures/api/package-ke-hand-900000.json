@@ -4,6 +4,7 @@
     "evidence_id": "strata.silver.plan_rows:910000002/KE-HAND-900000-CW-RFB",
     "public_from": "2020-12-15",
     "step_reference": "KE-HAND-900000-CW-RFB",
+    "reference_as_read": false,
     "description": "Hand-made works",
     "project_id": "P900002",
     "project_name": "Hand-made roads project",

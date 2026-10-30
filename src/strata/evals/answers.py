@@ -75,6 +75,9 @@ def marked(result, question) -> dict[str, list[str]]:
                                          if {"needs_a_look", "watch"} & {mark["mark"] for mark in row["marks"]})
     # Ticket 38: the rows that came from an upload, by their place in its file.
     found["upload_positions"] = sorted(row["position"] for row in result["rows"] if row.get("position") is not None)
+    # Ticket 131: the activities whose reference breaks STEP's grammar and stays as the plan gives it.
+    found["reference_as_read"] = sorted(row["activity_reference_no"] for row in result["rows"]
+                                        if row.get("reference_as_read"))
     return found
 
 

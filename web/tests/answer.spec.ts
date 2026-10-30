@@ -16,10 +16,9 @@ const META =
   "Implementation Completion and Results Report · Rajasthan Road Sector Modernization (P130164) · October 10, 2019 · Section III.B · ¶54 · PDF page 23 of 66";
 const REMOVED = "I removed one sentence. It said bids were usually opened within 45 days, and no record supports that number.";
 // The check line counts the sentences on screen, and since ticket 24 every answer runs the fourth check, so
-// "whether each sentence follows from its sources" is no longer a gap (the 24 brief, section 4.1).
-const CHECK_LINE =
-  "Checked: 2 of 2 numbers match records; 1 of 1 date matches records; 2 of 2 quotes are on their pages. " +
-  "Not checked: whether I found every passage that matters.";
+// "whether each sentence follows from its sources" is no longer a gap (the 24 brief, section 4.1). Since ticket 126
+// what was not checked ("whether I found every passage that matters") is in "How was that checked?".
+const CHECK_LINE = "Checked: 2 of 2 numbers match records; 1 of 1 date matches records; 2 of 2 quotes are on their pages.";
 
 test("Ask this streams the answer into the panel under the band: steps one at a time, then In short, the check line and the removed box", async ({ page }) => {
   const seen = await open(page);
@@ -32,10 +31,11 @@ test("Ask this streams the answer into the panel under the band: steps one at a 
   // Focus stays in the box, where people refine a question.
   await expect(box(page)).toBeFocused();
   await expect(panel(page).getByRole("heading", { level: 2 })).toHaveText(QUESTION);
-  await expect(panel(page).getByText("Asked within P130164.")).toBeVisible();
-  // Ticket 111: Strata's own words open with its byline, which is the answer's h3. The project page's records, the
-  // steps, the check line and the removed box have none.
-  await expect(panel(page).getByRole("heading", { level: 3, name: "Strata, in short" })).toBeVisible();
+  // Ticket 126: "Asked within P130164." said what the question names, so there is no Asked line.
+  await expect(panel(page).locator("[data-asked]")).toHaveCount(0);
+  // Ticket 111: the answer's h3 is its byline, for a screen reader only since ticket 126. The project page's records,
+  // the steps, the check line and the removed box have none.
+  await expect(panel(page).getByRole("heading", { level: 3, name: "Strata, in short" })).toHaveClass(/sr-only/);
   await expect(page.locator("[data-byline]")).toHaveText(["Strata, in short"]);
   await expect(panel(page).locator("[data-in-short]")).toContainText("108 of 328 cases had to go through rebidding");
   await expect(marker(page, 1)).toHaveAccessibleName("Source 1: Implementation Completion and Results Report, October 10, 2019, paragraph 54");
@@ -95,18 +95,13 @@ test("the panel sits at the top of the page column under the bar, on columns 1 t
   // At 1440 px the page area is 1376 px beside the rail, where the sidebar rests (ticket 110). The window's 40 px margins
   // leave 1296 px (ticket 94), so columns 1 to 8 are 8 columns of 78.67 px and 7 gutters of 32 px.
   expect(Math.round(card.width)).toBe(853);
-  // The byline in label (13/16, 600, ink-muted), with "Strata" in the wordmark's weight (700) in ink-heading, 8 px
-  // above its sentences in lead (18/28, 400), DESIGN.md sections 3 and 5 (ticket 111).
+  // The sentences in lead (18/28, 400), DESIGN.md sections 3 and 5. Since ticket 126 the byline over them is the
+  // answer's h3 for a screen reader only, a 1 px box that takes no room (ticket 111's label line went).
   const style = (element: Element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight];
   const byline = panel(page).getByRole("heading", { level: 3, name: "Strata, in short" });
-  expect(await byline.evaluate(style)).toEqual(["13px", "16px", "600"]);
-  expect(await byline.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(75, 94, 113)");
-  const name = byline.getByText("Strata", { exact: true });
-  expect(await name.evaluate(style)).toEqual(["13px", "16px", "700"]);
-  expect(await name.evaluate((element) => getComputedStyle(element).color)).toBe("rgb(1, 39, 64)");
+  const box = (await byline.boundingBox())!;
+  expect(box.width * box.height).toBeLessThanOrEqual(1);
   expect(await panel(page).locator("[data-in-short]").evaluate(style)).toEqual(["18px", "28px", "400"]);
-  const [over, under] = [(await byline.boundingBox())!, (await panel(page).locator("[data-in-short]").boundingBox())!];
-  expect(Math.round(under.y - (over.y + over.height))).toBe(8);
 });
 
 test("the steps still to come are listed in muted text while the answer streams", async ({ page }) => {
@@ -121,8 +116,9 @@ test("the steps still to come are listed in muted text while the answer streams"
   await expect(panel(page).locator("[data-check-line]")).toHaveCount(0);
 });
 
-// DESIGN.md section 3: Roboto Mono for IDs, so the P-code keeps one face from the Asked line to the steps.
-test("the folded steps set the project ID in Roboto Mono, as the Asked line does", async ({ page }) => {
+// DESIGN.md section 3: Roboto Mono for IDs, so the P-code keeps one face in the steps (the Asked line shows only for a
+// past date, a preview or another language since ticket 126).
+test("the folded steps set the project ID in Roboto Mono", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);
   await landed(page);
@@ -135,7 +131,7 @@ test("the folded steps set the project ID in Roboto Mono, as the Asked line does
       .filter((child) => child.children.length === 0 && child.textContent === "P130164")
       .map((child) => getComputedStyle(child).fontFamily.split(",")[0].replaceAll('"', "")),
   );
-  expect(faces).toEqual(["Roboto Mono", "Roboto Mono"]);
+  expect(faces).toEqual(["Roboto Mono"]);
 
   // The answer ID under the opened steps starts on the steps' text edge, under the button's label.
   const textLeft = (element: Element) => {
@@ -147,7 +143,7 @@ test("the folded steps set the project ID in Roboto Mono, as the Asked line does
   expect(await panel(page).locator("[data-steps] + p").evaluate(textLeft)).toBe(stepLeft);
 });
 
-test("hovering or focusing a marker shows the evidence card: stratum, title, highlighted excerpt and source line", async ({ page }) => {
+test("hovering or focusing a marker shows the evidence card: title, highlighted excerpt and source line", async ({ page }) => {
   await open(page);
   await askFromTheBox(page);
   await landed(page);
@@ -155,7 +151,7 @@ test("hovering or focusing a marker shows the evidence card: stratum, title, hig
   await marker(page, 1).hover();
   const card = page.locator("[data-evidence-card]");
   await expect(card).toBeVisible();
-  await expect(card).toContainText("Why · evaluation");
+  await expect(card).not.toContainText("Why · evaluation"); // no stratum eyebrow since ticket 126 (R25)
   await expect(card).toContainText("ICR, Rajasthan Road Sector Modernization, paragraph 54");
   await expect(card.locator("mark")).toHaveText("Highlight starts. 108 of 328 cases had to go through rebidding Highlight ends.");
   await expect(card.locator("[data-source]")).toHaveText(
@@ -178,7 +174,7 @@ test("clicking a marker opens the drawer beside the page at ICR paragraph 54, an
   await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
   // One caption under the title says what kind of source it is, by the report's type, and a hairline closes the head
   // at rest (ticket 58; the 58 design review, B2).
-  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveCount(0); // the title names the report (ticket 126, R29)
   expect(await drawer(page).locator("[data-drawer-header]").evaluate((head) => getComputedStyle(head).borderBottomColor)).not.toBe("rgba(0, 0, 0, 0)");
   await expect(drawer(page)).toHaveAttribute("aria-modal", "false");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
@@ -260,7 +256,7 @@ test("reloading with the evidence parameter reopens the drawer at that source, w
   await expect(drawer(page)).toHaveAccessibleName("ICR, Rajasthan Road Sector Modernization, paragraph 54");
   // One caption under the title says what kind of source it is, by the report's type, and a hairline closes the head
   // at rest (ticket 58; the 58 design review, B2).
-  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("The completion report, written after the project closed");
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveCount(0);
   expect(await drawer(page).locator("[data-drawer-header]").evaluate((head) => getComputedStyle(head).borderBottomColor)).not.toBe("rgba(0, 0, 0, 0)");
   await expect(drawer(page).locator("[data-meta-line]")).toHaveText(META);
   await expect(drawer(page).locator("[data-claim]")).toHaveCount(0);
@@ -654,7 +650,7 @@ test("a sentence that quotes an ISR section names the section, never a paragraph
   const mark = drawer(page).locator("[data-passage] mark");
   await expect(mark).toHaveText(marked(ISR_QUOTE));
   await expect(mark).toBeInViewport();
-  await expect(drawer(page)).toContainText("The whole section, word for word.");
+  await expect(drawer(page)).not.toContainText("word for word"); // ticket 126, R28
   for (const text of [cardText, await tabs.first().textContent(), await drawer(page).locator("[data-meta-line]").textContent()]) {
     expect(text).not.toMatch(/\bs4\b|¶/);
   }

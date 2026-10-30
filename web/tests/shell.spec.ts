@@ -869,7 +869,7 @@ for (const width of [390, 320]) {
 
     const sentence = page.locator("[data-worth] [data-section-summary] p").first();
     await expect(sentence).toHaveText(
-      "I brief you on the projects you follow. Follow a project from its page, and each day I list its changed plans and new signals here.",
+      "Follow a project from its page, and each day I list its changed plans and new signals here.",
     );
     expect((await sentence.evaluate(lastLine)).words).toBeGreaterThan(1);
 
@@ -1021,39 +1021,49 @@ for (const [name, path, serve] of MARGIN_PAGES) {
   });
 }
 
-// Ticket 110, for someone dropped into the app: each section's page says in one sentence what the tab is for and what
-// to do there, in at most two lines at 1440 px. Home has none, because its date line and briefing say what it is. The
-// sentences are the ticket's, copied here so the test checks the copy file against an independent source.
-const TAB_PURPOSES: [string, string, string][] = [
-  ["Packages", "/packages", "Check a published Procurement Plan or plan a new package, and find the ones you worked on here."],
-  ["Projects", "/projects", "Find a World Bank-financed project by name, project ID or country, then open it to see its plans and documents."],
-  // World Bank staff open Projects at Following, whose sentence also says what to do there.
-  ["Following, under Projects", "/projects/following", "Follow the projects you work on, or find any World Bank-financed project by its name, project ID or country."],
-  // The ticket's proposal, reordered so it keeps to two lines at 1440 px.
-  ["Lessons", "/lessons", "These are lessons quoted from completion reports on finished World Bank projects, and I also show them on a package's page where they apply."],
-  ["Drafts", "/drafts", "These are the drafts I wrote for you to check and export, and exporting sends nothing."],
-  ["Data", "/data", "See how far each source can support an answer and where each dataset comes from."],
+// Ticket 126 (the tuck-away inventory, R9, R12, R14 and R15): a specialist knows what each tab is for, so the sidebar
+// sections' pages and a project's Procurement, Documents and Timeline tabs have no purpose under their titles; the title
+// and the first block say the rest. The sentences are the ones ticket 110 and the tabs wrote, copied here so the test
+// checks the screens against an independent source. (The package workspace, the activity page and the Lessons reviewer
+// pages are checked by their own tests.)
+const PURPOSES_GONE: [string, string, string][] = [
+  ["Packages", "/packages", "Check a published Procurement Plan or plan a new package"],
+  ["Projects", "/projects", "Find a World Bank-financed project by name, project ID or country"],
+  ["Following, under Projects", "/projects/following", "Follow the projects you work on"],
+  ["Lessons", "/lessons", "These are lessons quoted from completion reports"],
+  ["Drafts", "/drafts", "These are the drafts I wrote for you to check and export"],
+  ["Data readiness", "/data", "See how far each source can support an answer"],
+  ["Sources and licenses", "/data/sources", "See how far each source can support an answer"],
+  ["Procurement", "/projects/P156634/procurement", "Each implementing agency keeps its own Procurement Plan"],
+  ["Documents", "/projects/P130164/documents", "These are the documents the World Bank published for this project"],
+  ["Timeline", "/projects/P130164/timeline", "This timeline puts the project's evaluations"],
 ];
-test("Packages, Projects, Lessons, Drafts and Data each say what the tab is for in one sentence of at most two lines at 1440 px", async ({ page }) => {
-  await mockApi(page, {
-    ...(await hubApi()),
-    "/api/planned-packages": { body: await recorded("planned-packages-empty.json") },
-    "/api/projects": { body: await recorded("projects.json") },
-    "/api/following": { body: await recorded("following-examples.json") },
-    "/api/lessons/me": { body: await recorded("lessons-me-viewer.json") },
-    "/api/lessons/page": { body: await recorded("lessons-page-empty.json") },
-    "/api/drafts": { body: await recorded("drafts-list-empty.json") },
+for (const width of [1440, 390]) {
+  test(`at ${width} px the sidebar's sections and a project's tabs have no purpose under their titles`, async ({ page }) => {
+    await mockApi(page, {
+      ...(await hubApi()),
+      "/api/planned-packages": { body: await recorded("planned-packages-empty.json") },
+      "/api/projects": { body: await recorded("projects.json") },
+      "/api/following": { body: await recorded("following-examples.json") },
+      "/api/lessons/me": { body: await recorded("lessons-me-viewer.json") },
+      "/api/lessons/page": { body: await recorded("lessons-page-empty.json") },
+      "/api/drafts": { body: await recorded("drafts-list-empty.json") },
+      "/api/data/readiness": { body: await recorded("data-readiness.json") },
+      "/api/data/sources": { body: await recorded("data-sources.json") },
+      "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+      "/api/projects/P156634/packages": { body: await recorded("packages-p156634.json") },
+      "/api/projects/P130164/timeline": { body: await recorded("timeline-p130164.json") },
+    });
+    await page.setViewportSize({ width, height: 900 });
+    for (const [name, path, sentence] of PURPOSES_GONE) {
+      await page.goto(path);
+      await expect(page.locator("main h1"), name).toBeVisible();
+      // A project's head has its ID line under the h1; a section's page has nothing under its title.
+      if (!path.startsWith("/projects/P")) await expect(page.locator("main h1 + p"), name).toHaveCount(0);
+      await expect(page.locator("main"), name).not.toContainText(sentence);
+    }
   });
-  await page.setViewportSize({ width: 1440, height: 900 });
-  for (const [name, path, sentence] of TAB_PURPOSES) {
-    await page.goto(path);
-    const purpose = page.locator("main h1 + p");
-    await expect(purpose, name).toHaveText(sentence);
-    await page.evaluate(() => document.fonts.ready);
-    const lines = await purpose.evaluate((el) => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight)));
-    expect(lines, `${name}: lines at 1440 px`).toBeLessThanOrEqual(2);
-  }
-});
+}
 
 // Round 1's design review: the page's bottom scroll padding counts the box only while focus is in main, so focus on
 // the sidebar's foot, or low in the evidence drawer, which both stick at the window's foot, never scrolls the page.

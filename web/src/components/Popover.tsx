@@ -132,6 +132,7 @@ export function Tooltip({
   side = "bottom",
   pressKeepsOpen = false,
   card = false,
+  keepDescription = false,
 }: {
   // One element that can take focus, such as a link or a button.
   trigger: ReactNode;
@@ -146,6 +147,9 @@ export function Tooltip({
   pressKeepsOpen?: boolean;
   // An evidence card, a container with 8 px corners, rather than a tooltip's 4 px.
   card?: boolean;
+  // The trigger's own description already holds the tooltip's words, as Feedforward's hidden sentence does, so it stays
+  // while the tooltip shows and the tooltip adds nothing to it (the 126 review, follow-up 1).
+  keepDescription?: boolean;
 }) {
   const [shown, setShown] = useState(false);
   // Opened at once, with no movement: by keyboard focus, or while or right after another card was open.
@@ -205,7 +209,7 @@ export function Tooltip({
       if (typeof ref === "function") ref(node);
       else if (ref) (ref as { current: HTMLElement | null }).current = node;
     },
-    "aria-describedby": shown ? id : own["aria-describedby"],
+    "aria-describedby": shown && !keepDescription ? id : own["aria-describedby"],
     onPointerDown: both(own.onPointerDown, (event) => {
       pressed.current = event.nativeEvent;
     }),

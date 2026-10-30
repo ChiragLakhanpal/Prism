@@ -40,6 +40,7 @@ import { excerpt } from "../lib/sources";
 import { useShows } from "../lib/view";
 import { dataReadinessHref } from "../routes";
 import { Button } from "./Button";
+import { DefinitionWindow } from "./Term";
 import { CitationMarker } from "./CitationMarker";
 import { highlighted } from "./Document";
 import { ExternalLink } from "./ExternalLink";
@@ -223,11 +224,6 @@ function PlanStage({ record, n, pid, stepRef }: { record: PlanRecord; n: number;
               </li>
             ))}
           </ul>
-          {record.first_plan_date && (
-            <p className="mt-2 text-caption text-ink-muted">
-              <Fill template={words.plan.datesNote} slots={{ first_plan_date: sentence(record.first_plan_date) }} />
-            </p>
-          )}
         </div>
       )}
       <p className="flex flex-wrap gap-x-4 gap-y-1 text-small">
@@ -251,6 +247,13 @@ function PlanStage({ record, n, pid, stepRef }: { record: PlanRecord; n: number;
             disclosed: sentence(String(record.source.disclosed_on ?? record.public_from)),
           }}
         />
+        {/* The planned dates' source joins the block's source line (ticket 126): which plan first published them. */}
+        {record.first_plan_date && (
+          <>
+            {" "}
+            <Fill template={words.plan.datesNote} slots={{ first_plan_date: sentence(record.first_plan_date) }} />
+          </>
+        )}
       </Source>
     </StageCard>
   );
@@ -349,7 +352,7 @@ function BidsTable({ record }: { record: AwardRecord }) {
   };
   return (
     <div data-bids={record.notice_id}>
-      <p className="text-caption text-ink-muted">{words.bids.count(record.bid_count, formatCount(record.bid_count), record.proposals)}</p>
+      {/* No count line: every bid shows (ticket 126). */}
       <table className="mt-2 hidden w-full table-fixed text-small @md/page:table">
         <caption className="clip-visually">
           <Fill template={words.bids.caption} slots={{ id: record.notice_id }} />
@@ -563,9 +566,9 @@ function ParagraphCard({ record, n, many, focusRef }: { record: ParagraphRecord;
   return (
     <article data-paragraph-card={record.passage_id} className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <div className="flex items-start justify-between gap-3">
+        {/* No stratum eyebrow (ticket 126): the title names the paragraph and the pill names its report. */}
         <div className="min-w-0">
-          <p className="text-label text-ink-muted">{copy.evidence.eyebrow[record.stratum]}</p>
-          <h4 className="mt-1 text-h2 text-ink-heading">{cardTitle(record)}</h4>
+          <h4 className="text-h2 text-ink-heading">{cardTitle(record)}</h4>
         </div>
         <span ref={focusRef}>
           <Pill id={record.evidence_id} n={n} kind={record.short_name ?? doc} reference={numbered ? words.paraShort(record.paragraph) : record.section_path} date={date} />
@@ -614,7 +617,7 @@ function ReportGroup({ group, records, numbers, many }: { group: ParagraphGroup;
       <h3 id={id} className="text-small font-bold text-ink-heading">
         <Fill template={words.together.reportTitle} slots={{ doc: group.document_type, date }} />
       </h3>
-      <p className="text-caption text-ink-muted">{words.together.reportCount(group.count, formatCount(group.count))}</p>
+      {/* No count line under the report: the cards and "Show all six paragraphs ..." show the count (ticket 126). */}
       <ul className="mt-3 flex flex-col gap-4">
         {shown.map((record, index) => (
           <li key={record.evidence_id}>
@@ -653,8 +656,13 @@ function ReportGroup({ group, records, numbers, many }: { group: ParagraphGroup;
 function ParagraphsStage({ found, numbers, many }: { found: Extract<Stage, { stage: "paragraphs" }>; numbers: Map<string, number>; many: boolean }) {
   return (
     <section data-paragraphs aria-labelledby="trail-together">
-      <h2 id="trail-together" className="text-h2 text-ink-heading">{words.together.title}</h2>
-      <p className="mt-2 max-w-prose text-body text-ink">{words.together.intro}</p>
+      {/* How I link a contract to a paragraph is in the heading's window (ticket 126), for the reader who asks; the
+          window keeps "appeared together" and no word of cause (rule 34). */}
+      <h2 id="trail-together" className="text-h2 text-ink-heading">
+        <DefinitionWindow openOnHover inText={false} label={words.together.title} title={words.together.title}>
+          {words.together.intro}
+        </DefinitionWindow>
+      </h2>
       <ul className="mt-4 flex flex-col gap-6">
         {found.groups.map((group) => (
           <ReportGroup

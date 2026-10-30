@@ -61,7 +61,7 @@ from strata.config import ConfigError, Thresholds, load_sources, load_thresholds
 from strata.lakehouse import clean, contacts
 from strata.lakehouse.clean import public_from  # ADR 0002's rule, defined once for every source
 from strata.lakehouse.engine import Engine, RowTooLarge, WarehouseEngine
-from strata.reader import step
+from strata.reader import repair, step
 from strata.reader.documents import Documents, NotFetched, StopReading, list_url
 from strata.reader.layout import LayoutParser, Page, ParseFailed, Table, https, tables_from_json, tables_to_json
 
@@ -763,6 +763,20 @@ class RowsRead:
     settled: tuple[tuple[str, str, str], ...] = ()  # (document_id, as the parser read it, as the text writes it)
 
 
+# What the repair kept beside each row (strata.reader.repair; ticket 131): the reference and description as read, why
+# the reference differs or is flagged, the record that carries it, and each split word joined.
+REPAIR_COLUMNS = ("activity_reference_no_as_read", "reference_repair", "reference_carried_by", "description_as_read",
+                  "description_joins")
+
+
+def project_notices(engine: Engine, project_id: str) -> list[repair.Notice]:
+    """The project's notices as silver holds them, each with its reference and title: the repair's dictionary. The
+    nightly job's bronze_to_gold fills strata.silver.notices before parse_and_embed reads the plans, and a rewrite
+    reads it as it stands (ticket 131)."""
+    return [repair.Notice(str(notice_id), reference, title)
+            for notice_id, reference, title in engine.run(_sql("notices.sql"), {"project_id": project_id}).rows]
+
+
 def plain_words(table: Table) -> Table:
     """A parsed table with its title and every cell in plain words (strata.lakehouse.clean.plain_text), the one place
     the plan reader takes markup out of what the layout parser wrote. On the workspace, ai_parse_document wrote each
@@ -790,6 +804,7 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
         engine.run(f"DELETE FROM strata.silver.{table} WHERE project_id = :project_id",  # sql-lint: names only
                    {"project_id": project_id})
     rows, steps, read, without_reference, unknown, settled = [], [], set(), 0, set(), []
+    readings: list[tuple[Version, step.Reading, str]] = []
     for version in versions:
         pages = version.table_pages
         found = [parsed.get((version.document_id, number)) for number, _ in pages]
@@ -797,7 +812,7 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
             continue
         reading = step.plan_rows([(number, [plain_words(table) for table in tables_from_json(page[2])])
                                   for (number, _), page in zip(pages, found)], version.listings, misread_characters)
-        parser = found[0][1]
+        readings.append((version, reading, found[0][1]))
         read.add(version.document_id)
         without_reference += reading.rows_without_reference
         unknown |= reading.unknown_columns
@@ -805,15 +820,22 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
             log.warning("The layout parser read %s in document %s of %s, which the plan's text writes as %s, so I "
                         "wrote %s.", misread, version.document_id, project_id, written, written)
             settled.append((version.document_id, misread, written))
+    # Each row repaired after it is read and before it is written, with the project's notices and its other plan
+    # versions as the dictionary (strata.reader.repair; ticket 131).
+    repair.plan([repair.VersionRows(version.document_id, version.listings, reading.rows)
+                 for version, reading, _ in readings], project_notices(engine, project_id))
+    for version, reading, parser in readings:
         for row in reading.rows:
+            joins = json.dumps([join.as_dict() for join in row.description_joins]) if row.description_joins else None
             rows.append((version.document_id, project_id, row.section, row.activity_reference_no,
                          row.description or None, *(row.fields.get(column) for column in ROW_COLUMNS),
-                         row.pdf_page, parser, version.public_from))
+                         row.activity_reference_no_as_read, row.reference_repair, row.reference_carried_by,
+                         row.description_as_read or None, joins, row.pdf_page, parser, version.public_from))
             steps += [(version.document_id, project_id, row.activity_reference_no, s.step, s.step_order,
                        s.planned_on, s.actual_on, version.public_from) for s in row.steps]
     insert(engine, "strata.silver.plan_rows",
            ("document_id", "project_id", "section", "activity_reference_no", "description", *ROW_COLUMNS,
-            "pdf_page", "parser", "public_from"), rows)
+            *REPAIR_COLUMNS, "pdf_page", "parser", "public_from"), rows)
     insert(engine, "strata.silver.plan_steps",
            ("document_id", "project_id", "activity_reference_no", "step", "step_order", "planned_on", "actual_on",
             "public_from"), steps)

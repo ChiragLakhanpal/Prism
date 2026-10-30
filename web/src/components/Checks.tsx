@@ -88,7 +88,11 @@ export function CheckLine({
   how,
   removed,
   sources,
+  tuck = false,
 }: {
+  // The answer panel's line: what was not checked, and the sentences that needed no model, move into "How was that
+  // checked?" (ticket 126).
+  tuck?: boolean;
   numbers?: { matched: number; total: number };
   dates?: { matched: number; total: number };
   quotes?: { found: number; total: number };
@@ -128,6 +132,12 @@ export function CheckLine({
   const nothing = sources && sources.total === 0 ? (sources.uncited === 1 ? words.noneCited.one : words.noneCited.many) : words.sourcesOnly;
   const checked = (clauses.length ? clauses : [nothing]).join(words.clauseJoin);
   const judgedWords = judged && sources && sources.uncited === judged.judged ? words.judgedUncited : words.judgedSentences;
+  const notCheckedWords = unchecked.length ? joinClauses(unchecked) : words.notCheckedFallback;
+  // In the answer panel (tuck), with "How was that checked?" beside it, the line shows only what was checked and what a
+  // model judged. What was not checked moves into that window, and the sentences that needed no model are already its
+  // fourth check (ticket 126, the tuck-away inventory's T27 and T28): the limits stay one click away, beside the line.
+  // A draft keeps the whole line, which its evidence pack writes word for word.
+  const tucked = tuck && Boolean(how);
   return (
     // The surface-2 block starts on the text edge of the panel it sits in, with no indent and 12 px padding (DESIGN.md
     // section 5, Check line; ticket 100 settles ticket 59's indent item). The line, "How was that checked?" and the
@@ -146,7 +156,7 @@ export function CheckLine({
           <span data-check-part="judged" className="block">
             <strong className="font-semibold whitespace-nowrap">{words.judged}</strong> {ratio(judgedWords, judged.judged, judged.judged)}
             {words.end}
-            {judged.proven > 0 && (
+            {judged.proven > 0 && !tucked && (
               <>
                 {" "}
                 {(judged.proven === 1 ? words.provenOthers.one : words.provenOthers.many).replace("{count}", formatCount(judged.proven))}
@@ -166,13 +176,19 @@ export function CheckLine({
           </span>{" "}
         </>
       )}
-      <span data-check-part="not-checked" className="block">
-        {/* The label never breaks between its two words, so it never reads as two bold words (ticket 58). */}
-        <strong data-check-label className="font-semibold whitespace-nowrap">{words.notChecked}</strong> {unchecked.length ? joinClauses(unchecked) : words.notCheckedFallback}
-        {words.end}
-      </span>
+      {!tucked && (
+        <span data-check-part="not-checked" className="block">
+          {/* The label never breaks between its two words, so it never reads as two bold words (ticket 58). */}
+          <strong data-check-label className="font-semibold whitespace-nowrap">{words.notChecked}</strong> {notCheckedWords}
+          {words.end}
+        </span>
+      )}
     </p>
-      {how && <div className="mt-1">{how}</div>}
+      {how && (
+        <NotCheckedInWindow.Provider value={tucked ? notCheckedWords : null}>
+          <div className="mt-1">{how}</div>
+        </NotCheckedInWindow.Provider>
+      )}
       {removed && (
         <InCheckBlock.Provider value={true}>
           <div className="mt-3 border-t border-line pt-3">{removed}</div>
@@ -184,6 +200,9 @@ export function CheckLine({
 
 // A removed box under a check line drops its own frame, since the block around both is its frame.
 const InCheckBlock = createContext(false);
+
+// What the check line did not check, in words, for "How was that checked?" to say once it moved off the line (ticket 126).
+const NotCheckedInWindow = createContext<string | null>(null);
 
 // The six checks, each in the past tense, with its counts over every sentence the agent wrote (the 24 brief, section
 // 5.1): the answer's steps list them under the verifier's step, and How I checked lists them for an answer or a draft,
@@ -239,6 +258,7 @@ export function HowChecked({ checks, id }: { checks: ChecksEvent; id: CheckedId 
   const button = useRef<HTMLButtonElement>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const titleId = useId();
+  const notChecked = useContext(NotCheckedInWindow);
   if (!checks.judge) return null;
   const words = copy.checkLine;
   const draft = "draft" in id;
@@ -294,6 +314,13 @@ export function HowChecked({ checks, id }: { checks: ChecksEvent; id: CheckedId 
                   <li key={index}>{item}</li>
                 ))}
               </ol>
+              {/* What the line no longer says on first sight: the limit of the checks (ticket 126). */}
+              {notChecked && (
+                <p data-how-not-checked>
+                  <strong className="font-semibold whitespace-nowrap">{words.notChecked}</strong> {notChecked}
+                  {words.end}
+                </p>
+              )}
               {/* Only when check 1 counted a number, so an answer that stated none is not told how a number passes. */}
               {checks.numbers.total > 0 && <p data-how-rounding>{words.rounding}</p>}
               <p data-how-id className="text-caption text-ink-muted">

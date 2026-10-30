@@ -8,9 +8,7 @@ import { useEffect } from "react";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";
-import { Num } from "../../components/Num";
 import { SkeletonText } from "../../components/Skeleton";
-import { Template } from "../../components/Template";
 import { TextLink } from "../../components/TextLink";
 import { copy } from "../../copy";
 import { readRegistry, registry } from "../../lib/dataPages";
@@ -27,15 +25,10 @@ export function SourcesAndLicenses() {
 
   return (
     <div data-sources-page={state.status} className="flex max-w-prose flex-col">
-      {/* With no datasets, the empty-state card stands alone, and takes the lead's focus, rather than
-          sit under "Here is every dataset". */}
-      {!empty && (
-        <p tabIndex={-1} data-lead className="mb-12 text-body outline-none">
-          {words.lead}
-        </p>
-      )}
+      {/* The page opens on its first heading (ticket 126): the two headings and the credit lines say what it holds,
+          so it has no lead sentence. With no datasets, the empty-state card takes the lead's focus instead. */}
       <section aria-labelledby="data-datasets">
-        <h2 id="data-datasets" className="text-h2 text-ink-heading">
+        <h2 id="data-datasets" tabIndex={empty ? undefined : -1} data-lead={empty ? undefined : ""} className="text-h2 text-ink-heading outline-none">
           {words.datasets}
         </h2>
         {state.status === "loading" && (
@@ -65,9 +58,7 @@ export function SourcesAndLicenses() {
         )}
         {state.status === "ready" && state.registry.datasets.length > 0 && (
           <>
-            <p className="mt-1 text-caption text-ink-muted">
-              <Template text={words.datasetCount} values={{ count: <Num count={state.registry.datasets.length} /> }} />
-            </p>
+            {/* The list is short enough to count, so it has no count line (ticket 126). */}
             <ul className="mt-3 flex flex-col gap-3">
               {state.registry.datasets.map((dataset) => (
                 <li key={dataset.key} data-dataset={dataset.key} className="text-body wrap-anywhere">

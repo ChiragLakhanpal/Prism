@@ -22,7 +22,8 @@ export function ListSearch({
   className,
 }: {
   label: string;
-  hint: string;
+  // Since ticket 126 the two searches have none: the label says what the field searches.
+  hint?: string;
   // The query the page shows rows for.
   value: string;
   onSearch: (query: string) => void;
@@ -63,9 +64,11 @@ export function ListSearch({
       <label htmlFor={inputId} className="text-small font-bold text-ink-heading">
         {label}
       </label>
-      <p id={hintId} className="text-caption text-ink-muted">
-        {hint}
-      </p>
+      {hint && (
+        <p id={hintId} className="text-caption text-ink-muted">
+          {hint}
+        </p>
+      )}
       <div className="relative mt-2">
         <Search aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-4 -translate-y-1/2 text-ink-muted" />
         <input
@@ -73,7 +76,7 @@ export function ListSearch({
           id={inputId}
           type="search"
           value={text}
-          aria-describedby={hintId}
+          aria-describedby={hint ? hintId : undefined}
           autoComplete="off"
           spellCheck={false}
           onChange={(event) => {

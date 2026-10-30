@@ -8,7 +8,8 @@ every run's lineage was lost until the user granted the table by hand.
 So these tests read the tables the app writes as itself from the code, not from a list kept by hand:
 
 1. The entry points that build the app's writers (ENTRY_POINTS) take the app's own engine from _the_app_s_engine(),
-   or from a name that falls back on it (state = the_app or state_file). Every class built on one of those engines is
+   in a statement that calls it (the_app = the_app or _the_app_s_engine(environ)), or from a name that falls back on
+   it (state = the_app or state_file). Every class built on one of those engines is
    a writer, found in its module through the file's imports. Lakebase (app_state) is left out: its grants are the
    database's own (ADR 0005), not Unity Catalog's.
 2. A keyword that gets the engine itself (lesson_record=the_app) hands it to the modules ENGINE_USERS names.
@@ -41,6 +42,8 @@ ENGINE_USERS = {
     "lesson_record": ("strata.knowledge.lessons.review", "strata.knowledge.lessons.writer"),
     # The retrieval loop (ticket 32): passage reports, the decisions on them, and the judges' queries and grades.
     "feedback_record": ("strata.knowledge.retrieval.reports", "strata.knowledge.retrieval.judging"),
+    # The seed command hands the engine it opened to app_from_env (ticket 129), an entry point read on its own.
+    "the_app": (),
 }
 # Tables a writer's module names that the app never writes: the weekly retrieval job writes them as the user who
 # deploys (src/strata/knowledge/retrieval/weekly.py calls judging.load, reports.measure and judging.measure with its
@@ -74,7 +77,10 @@ def _engines(function: ast.FunctionDef) -> set[str]:
                 and isinstance(statement.targets[0], ast.Name)):
             continue
         value = statement.value
-        opened = isinstance(value, ast.Call) and getattr(value.func, "id", None) == THE_APP_S_ENGINE
+        # Such as the_app = _the_app_s_engine(environ), or the_app = the_app or _the_app_s_engine(environ) when a
+        # command such as the seed gives the engine it opened (ticket 129).
+        opened = any(isinstance(node, ast.Call) and getattr(node.func, "id", None) == THE_APP_S_ENGINE
+                     for node in ast.walk(value))
         falls_back = (isinstance(value, ast.BoolOp) and isinstance(value.values[0], ast.Name)
                       and value.values[0].id in names)
         if opened or falls_back:
@@ -163,6 +169,6 @@ def test_the_writers_are_read_from_the_code_including_the_run_log_and_the_seed_c
 
     assert {"strata.agent.runs", "strata.estimates.exposures", "strata.server.usage", "strata.drafts.store",
             "strata.server.home"} <= modules
-    assert bare == {"lesson_record", "feedback_record"}
+    assert bare == {"lesson_record", "feedback_record", "the_app"}
     assert {"strata.ops.agent_runs", "strata.ops.tool_calls", "strata.ops.tool_call_reads",
             "strata.ops.answer_removals"} <= tables_written_by("strata.agent.runs")

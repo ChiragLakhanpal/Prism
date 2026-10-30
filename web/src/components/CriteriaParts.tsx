@@ -28,6 +28,7 @@ import { fromLine, toolFrom } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
 import { ReasonGroup } from "./ReasonsList";
 import { Source } from "./Source";
+import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 
 const words = copy.criteria;
@@ -169,8 +170,13 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
     ) : (
       <Fill template={words.items.caption} slots={{ count: formatCount(items.length), n: <Num value={total} /> }} />
     );
-  const count =
-    items.length === 1 ? words.items.countOne : items.length === 2 ? words.items.countBoth : <Fill template={words.items.count} slots={{ count: formatCount(items.length) }} />;
+  // No count line: every item shows (ticket 126). Each column's definition is in its head's window, never a second line
+  // under it, and the rule for "asked for less" and "for more" opens with the head it explains (pattern 3).
+  const head = (label: string, definition: ReactNode) => (
+    <DefinitionWindow label={label} title={label} inText={false} triggerClassName="inline-flex min-h-6 items-center text-balance">
+      {definition}
+    </DefinitionWindow>
+  );
   const open = useOpenId();
   const isOpen = (item: ComparedItem) => open === itemListId(comparison.check_id, item.item_key);
   return (
@@ -179,8 +185,7 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
       <div className="hidden @md/page:block">
         <table className="w-full table-fixed border-collapse text-left">
           <caption className="text-left">
-            <span className="block text-body font-semibold text-ink">{caption}</span>
-            <span className="mt-1 mb-3 block text-caption text-ink-muted">{count}</span>
+            <span className="mb-3 block text-body font-semibold text-ink">{caption}</span>
           </caption>
           <colgroup>
             <col className="w-[22%]" />
@@ -190,23 +195,23 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
           </colgroup>
           <thead className="bg-surface-2">
             <tr>
-              <th scope="col" className="p-3 align-bottom">
-                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.item}</span>
-                <span className="block text-caption font-normal text-ink-muted">{words.items.columns.itemDefinition}</span>
+              <th scope="col" className="p-3 align-bottom text-small font-semibold text-ink">
+                {head(words.items.columns.item, words.items.columns.itemDefinition)}
               </th>
-              <th scope="col" className="p-3 align-bottom">
-                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.words}</span>
-                <span className="block text-caption font-normal text-ink-muted">{words.items.columns.wordsDefinition}</span>
+              <th scope="col" className="p-3 align-bottom text-small font-semibold text-ink">
+                {head(words.items.columns.words, words.items.columns.wordsDefinition)}
               </th>
-              <th scope="col" className="p-3 text-right align-bottom">
-                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.asked}</span>
-                <span className="block text-caption font-normal text-ink-muted">
-                  <Fill template={words.items.columns.askedDefinition} slots={{ n: String(total) }} />
-                </span>
+              <th scope="col" className="p-3 text-right align-bottom text-small font-semibold text-ink [&_[data-term]]:text-right">
+                {head(words.items.columns.asked, <Fill template={words.items.columns.askedDefinition} slots={{ n: <Num value={total} /> }} />)}
               </th>
-              <th scope="col" className="p-3 text-right align-bottom">
-                <span className="block text-small font-semibold text-balance text-ink">{words.items.columns.sameOrLess}</span>
-                <span className="block text-caption font-normal text-ink-muted">{words.items.columns.sameOrLessDefinition}</span>
+              <th scope="col" className="p-3 text-right align-bottom text-small font-semibold text-ink [&_[data-term]]:text-right">
+                {head(
+                  words.items.columns.sameOrLess,
+                  <>
+                    {words.items.columns.sameOrLessDefinition}
+                    {words.items.columns.definitionEnd} {words.items.order}
+                  </>,
+                )}
               </th>
             </tr>
           </thead>
@@ -245,7 +250,6 @@ export function CriteriaTable({ comparison }: { comparison: Comparison }) {
       {/* A list below a 768 px page area. */}
       <div className="@md/page:hidden">
         <p id={captionId} className="text-body font-semibold text-ink">{caption}</p>
-        <p className="mt-1 text-caption text-ink-muted">{count}</p>
         <ol aria-labelledby={captionId} className="mt-3 flex flex-col">
           {items.map((item) => {
             const cells = cellsOf(item, comparison);
@@ -312,7 +316,9 @@ export function CriteriaNotes({ comparison, readinessHref, asOf = null }: { comp
           </ul>
         </div>
       )}
-      <p>{words.items.order}</p>
+      {/* From 768 px the rule is in the "Asked for the same or less" head's window (ticket 126); the cards below that
+          have no heads, so it stays here for them. */}
+      <p className="@md/page:hidden">{words.items.order}</p>
       {coverage && (
         <p data-coverage-line>
           {coverage.missing + coverage.open === 0 ? (
@@ -538,16 +544,14 @@ export function RejectedBids({ rejected, numbers, yourItems, perGroup, readiness
           <Fill template={words.rejected.denominator} slots={{ m: <Num value={m} />, total: <Num value={total} /> }} />
         </p>
       )}
+      {/* With none rejected, the link to the award notices' readiness stays and the coverage line says what is missing
+          (ticket 126); with some, how I quoted them is in the title's window. */}
       {n === 0 ? (
-        <>
-          <p className="text-caption text-ink-muted">{words.rejected.noneNext}</p>
-          <p className="text-caption">
-            <TextLink href={readinessHref}>{words.rejected.noneLink}</TextLink>
-          </p>
-        </>
+        <p className="text-caption">
+          <TextLink href={readinessHref}>{words.rejected.noneLink}</TextLink>
+        </p>
       ) : (
         <>
-          <p className="text-caption text-ink-muted">{words.rejected.intro}</p>
           <div className="mt-2 flex flex-col gap-6">
             {rejected.groups.map((group) => (
               <Group key={group.item_key} rejected={rejected} groupKey={group.item_key} numbers={numbers}
@@ -591,8 +595,8 @@ function LessonCardView({ lesson, n, firstIcr, firstIeg }: { lesson: LessonEntry
   const shown = lesson.excerpt && lesson.excerpt.range ? excerpt(lesson.excerpt.text, lesson.excerpt.range as [number, number]) : null;
   return (
     <article aria-labelledby={titleId} className="relative rounded-md border border-line bg-surface p-4 @md/page:p-6" data-lesson-card={lesson.lesson_id}>
-      <p className="pr-8 text-label text-ink-muted">{lessonWords.eyebrow}</p>
-      <h4 id={titleId} className="mt-1 pr-8 text-h2 text-ink-heading">
+      {/* No stratum eyebrow (ticket 126): the statement is the card's title. */}
+      <h4 id={titleId} className="pr-8 text-h2 text-ink-heading">
         {lesson.statement}
       </h4>
       {/* The citation number sits top right, after the title in the DOM, so the card's name is its title alone. */}

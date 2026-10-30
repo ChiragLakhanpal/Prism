@@ -332,6 +332,8 @@ export type Activity = {
   public_from: string;
   // An upload's row may have no reference yet (ticket 38); a published plan's always has one.
   activity_reference_no: string;
+  // True when the reference breaks STEP's form and the plan reader kept it as it read it (ticket 131).
+  reference_as_read?: boolean;
   // An upload's row: its place in the officer's file, and whether a published plan of the project lists it.
   position?: number | null;
   listed?: boolean | null;
@@ -411,6 +413,8 @@ export type PackageFacts = {
   evidence_id: string;
   public_from: string;
   step_reference: string;
+  // True when the reference breaks STEP's form and the plan reader kept it as it read it (ticket 131).
+  reference_as_read?: boolean;
   description: string | null;
   project_id: string;
   project_name: string | null;

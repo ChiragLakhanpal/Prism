@@ -51,6 +51,7 @@ from importlib import resources
 
 from strata.config import load_sources, load_thresholds, load_tools
 from strata.estimates.past_range import QUARTERS, Observation, dot_packages, months, quantile_dots, quartiles
+from strata.reader.repair import AS_READ as REFERENCE_AS_READ
 from strata.tools.check_plan import agency_id
 from strata.tools.registry import Call
 
@@ -143,6 +144,8 @@ def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
         "evidence_id": f"strata.silver.plan_rows:{row['document_id']}/{row['activity_reference_no']}",
         "public_from": _iso(_date(row["public_from"])),
         "step_reference": row["activity_reference_no"],
+        # A reference that breaks STEP's grammar and stays as the plan gives it (strata.reader.repair; ticket 131).
+        "reference_as_read": row["reference_repair"] == REFERENCE_AS_READ,
         "description": row["description"],
         "project_id": row["project_id"],
         "project_name": row["project_name"],

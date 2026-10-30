@@ -15,7 +15,10 @@ import { Breadcrumb } from "../components/Breadcrumb";
 import { Button, PRIMARY_LINK } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { PassageBlock } from "../components/EvidenceDrawer";
+import { Disclosure } from "../components/Disclosure";
 import { Fill } from "../components/Fill";
+import { InfoWindow } from "../components/MadeBy";
+import { DefinitionWindow } from "../components/Term";
 import { GradeBar, PassageMap, ProgressMeter } from "../components/Judging";
 import { fillText } from "../components/LessonParts";
 import { OutcomePanel } from "../components/LessonReview";
@@ -103,12 +106,16 @@ function Agreement({ list }: { list: JudgingList }) {
           slots={{
             agree: <Num value={a.agree} options={{ compact: false }} check={{ tooltip: pairsTip }} />,
             pairs: <Num value={a.pairs} options={{ compact: false }} check={{ tooltip: pairsTip }} />,
-            kappaName: w.kappaName,
+            // What Cohen's kappa counts is in its name's window (ticket 126), a Term-like window on the statistic.
+            kappaName: (
+              <DefinitionWindow openOnHover inText label={w.kappaName} title={w.kappaName}>
+                {fillText(w.agreeCaption, { kappaName: w.kappaName })}
+              </DefinitionWindow>
+            ),
             kappa: <Num value={a.kappa} options={{ decimals: 2, compact: false }} check={{ tooltip: fillText(w.tooltipKappa, { pairs: a.pairs }) }} />,
           }}
         />
       </p>
-      <p className="max-w-prose text-caption text-ink-muted">{fillText(w.agreeCaption, { kappaName: w.kappaName })}</p>
     </div>
   );
 }
@@ -207,7 +214,11 @@ export function JudgingBody({ list, onShow, busy = false }: { list: JudgingList;
   }));
   return (
     <div data-judging="ready" className="flex flex-col">
-      <p className="max-w-prose text-body text-ink-muted">{w.purpose}</p>
+      <Disclosure label={w.how}>
+        <p className="text-body text-ink" data-judging-purpose>
+          {w.purpose}
+        </p>
+      </Disclosure>
       {list.total > 0 && (
         <>
           <p tabIndex={-1} data-lead className="mt-6 max-w-prose text-lead text-pretty text-ink-heading outline-none" data-judging-lead>
@@ -276,7 +287,11 @@ export function JudgingSkeleton() {
       <p role="status" className="clip-visually">
         {w.loading}
       </p>
-      <p className="max-w-prose text-body text-ink-muted">{w.purpose}</p>
+      <Disclosure label={w.how}>
+        <p className="text-body text-ink" data-judging-purpose>
+          {w.purpose}
+        </p>
+      </Disclosure>
       <SkeletonLine className="mt-6 max-w-prose text-lead" width="w-[60%]" />
       <SkeletonLine className="mt-2 text-caption" width="w-[40%]" />
       <Skeleton className="mt-4 h-11 w-full @md/page:w-50" radius="rounded-sm" />
@@ -471,7 +486,10 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
   useEffect(() => {
     const element = top.current;
     if (!element || sample) return;
-    const watch = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting));
+    // The header sticks under the bar, so it is stuck once the line above it passes under the bar, not the window's
+    // top edge: a page short enough to scroll only a little left it stuck with no line (ticket 126 shortened the desk).
+    const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--frame-top")) || 0;
+    const watch = new IntersectionObserver(([entry]) => setStuck(!entry.isIntersecting), { rootMargin: `-${bar}px 0px 0px 0px` });
     watch.observe(element);
     return () => watch.disconnect();
   }, [sample]);
@@ -583,6 +601,10 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
             date: <Num date={query.notice_date} />,
           }}
         />
+        {/* Which passages I show, and in what order, is in the header's window (ticket 126): a judge reads it once. */}
+        <InfoWindow name={w.poolName} kind="note">
+          <Fill template={w.poolNote} slots={{ date: <Num date={query.query_date} /> }} />
+        </InfoWindow>
       </p>
       <Title ref={h1} tabIndex={-1} className="text-h3 text-balance text-ink-heading focus:outline-none">
         {query.query_text}
@@ -637,9 +659,6 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
     );
     main = (
       <>
-        <p className="text-caption text-ink-muted">
-          <Fill template={w.poolNote} slots={{ date: <Num date={query.query_date} /> }} />
-        </p>
         <PassageMap open={mapOpen} onToggle={() => setMapOpen(!mapOpen)} count={pool} current={at} graded={graded} href={(n) => queryHref(query.query_id, n)} onChoose={(n) => show(n)} />
         {finished && !query.locked ? (
           <div className="flex flex-col gap-4" data-judging-finished="mine">
@@ -684,8 +703,7 @@ export function JudgingDesk({ query: loaded, initial, sample = false }: {
               ))}
             </dl>
             <p className="text-caption text-ink-muted">{w.guidance}</p>
-            {/* Locked, the keys grade nothing, so the line that names them goes. */}
-            {!query.locked && <p className="hidden text-caption text-ink-muted @md/page:block">{w.keysNote}</p>}
+            {/* The grade buttons carry their keys as hints, so no line names them (ticket 126). */}
             <div className="flex justify-between gap-4 text-small">
               {at > 1 ? (
                 <TextLink href={queryHref(query.query_id, at - 1)} onClick={(event) => { event.preventDefault(); show(at - 1); }}>
@@ -795,7 +813,6 @@ export function JudgingQueryPage({ queryId, search }: { queryId: string; search:
       body = (
         <div className="min-h-svh">
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">{copy.pages.lessons.title}</h1>
-          <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{copy.pages.lessons.purpose}</p>
           <div className="mt-8">
             <NoAccess />
           </div>

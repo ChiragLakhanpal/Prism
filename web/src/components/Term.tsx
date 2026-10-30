@@ -83,7 +83,21 @@ type DefinitionWindowProps = {
   // its line taller, as a number's does (Num), so it never pushes the lines of "In short" apart (ticket 59's item,
   // settled by ticket 105). A label that stands on its own line, such as a card's or a column's, keeps its 24 px box.
   inText?: boolean;
+  // The trigger is an icon button, such as the made-by window's lucide info icon (ticket 126; MadeBy.tsx): label is the
+  // icon, and this is the button's accessible name, which says what it opens ("How I built this summary"). It keeps a
+  // 24 px target in ink-muted, with no dotted underline, since it is not a word.
+  iconLabel?: string;
 };
+
+// A word's trigger carries the dotted underline; an icon's is a 24 px square (WCAG 2.5.8) in ink-muted.
+function triggerClass({ inText, triggerClassName, iconLabel }: { inText?: boolean; triggerClassName?: string; iconLabel?: string }) {
+  return iconLabel
+    ? cx(
+        "inline-flex size-6 cursor-pointer items-center justify-center rounded-sm align-middle text-ink-muted hover:bg-tint-hover hover:text-ink",
+        triggerClassName,
+      )
+    : cx("inline cursor-pointer py-0.5 text-left", inLine(inText), DOTTED_UNDERLINE, triggerClassName);
+}
 
 export function DefinitionWindow({ openOnHover = false, ...props }: DefinitionWindowProps) {
   return openOnHover ? <HoverDefinitionWindow {...props} /> : <ClickDefinitionWindow {...props} />;
@@ -91,7 +105,7 @@ export function DefinitionWindow({ openOnHover = false, ...props }: DefinitionWi
 
 const inLine = (inText = false) => (inText ? "-my-0.5" : undefined);
 
-function ClickDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy, inText }: Omit<DefinitionWindowProps, "openOnHover">) {
+function ClickDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy, inText, iconLabel }: Omit<DefinitionWindowProps, "openOnHover">) {
   const titleId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   return (
@@ -99,9 +113,10 @@ function ClickDefinitionWindow({ label, title, children, rows, triggerClassName,
       <RadixPopover.Trigger asChild>
         <button
           type="button"
-          data-term
+          data-term={iconLabel ? undefined : true}
+          aria-label={iconLabel}
           aria-describedby={describedBy}
-          className={cx("inline cursor-pointer py-0.5 text-left", inLine(inText), DOTTED_UNDERLINE, triggerClassName)}
+          className={triggerClass({ inText, triggerClassName, iconLabel })}
         >
           {label}
         </button>
@@ -133,7 +148,7 @@ function ClickDefinitionWindow({ label, title, children, rows, triggerClassName,
 // from a click, Enter or a tap, with focus on its title.
 type Shown = "closed" | "peek" | "pinned";
 
-function HoverDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy, inText }: Omit<DefinitionWindowProps, "openOnHover">) {
+function HoverDefinitionWindow({ label, title, children, rows, triggerClassName, describedBy, inText, iconLabel }: Omit<DefinitionWindowProps, "openOnHover">) {
   const titleId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const [shown, setShown] = useState<Shown>("closed");
@@ -182,9 +197,10 @@ function HoverDefinitionWindow({ label, title, children, rows, triggerClassName,
       <RadixPopover.Trigger asChild>
         <button
           type="button"
-          data-term
+          data-term={iconLabel ? undefined : true}
+          aria-label={iconLabel}
           aria-describedby={describedBy}
-          className={cx("inline cursor-pointer py-0.5 text-left", inLine(inText), DOTTED_UNDERLINE, triggerClassName)}
+          className={triggerClass({ inText, triggerClassName, iconLabel })}
           // A click, Enter or a tap pins the window, or closes a pinned one; Radix's own toggle would close a peek.
           onClick={(event) => {
             event.preventDefault();

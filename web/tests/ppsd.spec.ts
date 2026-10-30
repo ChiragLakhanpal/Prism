@@ -92,7 +92,11 @@ test("the workspace's one solid button suggests a row for each risk you selected
   const action = page.locator("section#risks [data-ppsd-action][data-placement=zone]");
   await expect(action.getByRole("button")).toHaveText("Suggest 1 PPSD risk row");
   await expect(action.getByRole("button")).toHaveAttribute("data-button", "primary");
-  await expect(action).toContainText("The draft waits in Drafts for you to check. I send nothing.");
+  // The feedforward is the button's description and its tooltip, not a caption you see at first (ticket 126).
+  await expect(action.getByRole("button")).toHaveAccessibleDescription(
+    "I write a Risk Description and a Description of mitigation for each risk you selected, for the borrower's Project Procurement Strategy for Development (PPSD). The draft waits in Drafts for you to check. I send nothing.",
+  );
+  await expect(action.getByText("The draft waits in Drafts for you to check. I send nothing.")).toBeHidden();
   await expect(page.locator("[data-ppsd-action]")).toHaveCount(1);
   await expect(page.locator("[data-page-head] [data-ppsd-action]")).toHaveCount(0);
   // The check line touches the risks it checks, and the zone ends on its action (ticket 101's design review).
