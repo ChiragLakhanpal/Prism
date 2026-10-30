@@ -36,6 +36,7 @@ import { useStore } from "../lib/store";
 import { currentLanguage, ENGLISH, languageName, workingLanguage } from "../lib/lang";
 import { OneBox, type BoxOption } from "./OneBox";
 import { Fill } from "./Fill";
+import { fillText } from "./LessonParts";
 import { MonoWords } from "./MonoWords";
 import { wholeDate } from "./NumFrom";
 import { RETURNING } from "./Popover";
@@ -53,6 +54,14 @@ function idLabel(intent: Intent): ReactNode {
   if (intent.kind === "project") return <Fill template={words.project} slots={{ pcode: mono(intent.id) }} />;
   if (intent.kind === "loan") return <Fill template={words.loan} slots={{ loan: mono(intent.id) }} />;
   return <Fill template={words.activity} slots={{ step_ref: mono(intent.id) }} />;
+}
+
+// The same label as plain words, for the Enter button's name (ticket 127).
+function idName(intent: Intent): string {
+  const words = copy.box.option;
+  if (intent.kind === "project") return fillText(words.project, { pcode: intent.id });
+  if (intent.kind === "loan") return fillText(words.loan, { loan: intent.id });
+  return fillText(words.activity, { step_ref: intent.id });
 }
 
 function foundLine(found: Found): ReactNode {
@@ -88,6 +97,7 @@ export function boxList(
         key: `check:${plan.agencyId}`,
         icon: Table2,
         label: copy.box.option.checkPlan(plan.agency, wholeDate(formatDate(plan.planDate))),
+        name: copy.box.option.checkPlan(plan.agency, formatDate(plan.planDate)),
         line: <Fill template={copy.box.option.checkPlanLine} slots={{ pcode: mono(project.id) }} />,
       }));
       const choices: Choice[] = plans.map((plan) => ({ kind: "go", href: `/projects/${project.id}/procurement/${plan.agencyId}` }));
@@ -104,6 +114,7 @@ export function boxList(
     key: "plan",
     icon: PackagePlus,
     label: copy.box.option.plan,
+    name: copy.box.option.plan,
     line: held ? copy.box.option.planPreviewOff : copy.box.option.planLine,
     disabled: held,
   };
@@ -138,6 +149,7 @@ function boxListOf(value: string, chip: string | null, lookups: Record<string, L
         key: intentKey(intent),
         icon: ICONS[intent.kind],
         label: idLabel(shown),
+        name: idName(shown),
         line: found ? foundLine(found) : <Fill template={words.option.lookingUp} slots={{ id: mono(intent.id) }} />,
       },
     });
@@ -146,6 +158,7 @@ function boxListOf(value: string, chip: string | null, lookups: Record<string, L
     key: "ask",
     icon: MessageSquareText,
     label: copy.box.option.ask,
+    name: copy.box.option.ask,
     line: (
       <>
         {chip ? <Fill template={copy.box.option.askWithin} slots={{ id: mono(chip) }} /> : copy.box.option.askAcross}
@@ -317,9 +330,17 @@ export function IntentBox({
     input.current?.focus({ preventScroll: true });
   };
 
+  const listShown = open && value.trim().length > 0 && options.length > 0;
+  // What Enter does, and the Enter button with it (ticket 127): the suggestion moved to, or else the option chosen in the
+  // list, or the first option when the list is shut.
+  const enterIndex = listShown ? current : 0;
+  const doEnter = () => {
+    if (suggesting && suggestion >= 0) chooseSuggestion(suggestion);
+    else void choose(enterIndex);
+  };
+
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
     event.currentTarget.removeAttribute(RETURNING);
-    const listShown = open && value.trim().length > 0 && options.length > 0;
     if ((event.key === "ArrowDown" || event.key === "ArrowUp") && value === "" && !mode && suggested.items.length > 0) {
       event.preventDefault();
       if (!suggesting) {
@@ -341,8 +362,7 @@ export function IntentBox({
     } else if (event.key === "Enter") {
       event.preventDefault();
       if (event.nativeEvent.isComposing) return;
-      if (suggesting && suggestion >= 0) chooseSuggestion(suggestion);
-      else void choose(listShown ? current : 0);
+      doEnter();
     } else if (event.key === "Escape") {
       // Innermost first: the list, then the text. With both gone, Escape reaches the drawer.
       if (listShown || suggesting) {
@@ -417,6 +437,12 @@ export function IntentBox({
       modePlaceholder={mode === "plan" ? copy.box.mode.planPlaceholder : mode === "check" ? copy.box.mode.checkPlaceholder : undefined}
       modePlaceholderShort={mode === "plan" ? copy.box.mode.planPlaceholderShort : undefined}
       modeHelp={mode === "plan" ? copy.box.mode.planHelp : undefined}
+      enterName={options[enterIndex]?.name}
+      onEnter={() => {
+        // A press from the keyboard leaves focus on the button; Enter keeps it in the box, and so does this.
+        input.current?.focus({ preventScroll: true });
+        doEnter();
+      }}
     >
       <p role="status" className="sr-only">
         {said}

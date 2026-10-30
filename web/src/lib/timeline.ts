@@ -99,11 +99,19 @@ export type Timeline = {
   disagreement_line_state: "info" | "warning";
   rejected: { count: number } | null;
   counts: Record<Lane, number>;
+  // The project's contracts, as the Connections tab counts them too, and those the Records lane leaves out (ticket
+  // 138; src/strata/server/contracts.py). records_note names them by source, or is null when the lane leaves none out.
+  contracts: ContractsHeld & { left_out: { count: number; no_step_reference: SourceCount[]; no_signing_date: SourceCount[] } };
+  records_note: Segment[] | null;
   finding: Segment[];
   alt: Segment[];
   sources: string[];
   data_through: string | null;
 };
+
+export type SourceCount = { source: string; count: number };
+// A project's contracts by src/strata/server/contracts.py's one definition, which both tabs read.
+export type ContractsHeld = { count: number; sources: SourceCount[] };
 
 export const LANES: Lane[] = ["why", "how", "what"];
 

@@ -414,12 +414,23 @@ function Finding({ data }: { data: Neighbourhood }) {
       ))}
     </ul>
   );
-  const template = f.documents === 1 ? words.findingOneReport(f.contracts, f.paragraphs) : words.finding(f.contracts, f.paragraphs, f.documents);
+  // When only some of the project's contracts appeared together, the finding names all of them too: the count the
+  // Timeline tab's note names (ticket 138).
+  const held = data.contracts.count;
+  const some = f.contracts < held;
+  const template = some
+    ? f.documents === 1
+      ? words.findingOfOneReport(f.paragraphs)
+      : words.findingOf(f.paragraphs, f.documents)
+    : f.documents === 1
+      ? words.findingOneReport(f.contracts, f.paragraphs)
+      : words.finding(f.contracts, f.paragraphs, f.documents);
   return (
     <Fill
       template={template}
       slots={{
         contracts: <Num count={f.contracts} check={{ tooltip: lines(f.contract_items) }} />,
+        held: <Num count={held} check={{ tooltip: lines(data.contracts.sources.map((one) => words.heldFrom(formatCount(one.count, { capital: true }), one.source))) }} />,
         paragraphs: (
           <Num
             count={f.paragraphs}

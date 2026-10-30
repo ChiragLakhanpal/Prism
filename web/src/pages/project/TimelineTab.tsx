@@ -463,6 +463,13 @@ export function TimelineCard({
       </div>
       <div className="mt-4 flex flex-col gap-2">
         <Note data={data} codes={chart ? codes : []} chart={chart} />
+        {/* The contracts the Records lane leaves out, by source, after the count the Connections tab names too
+            (ticket 138). The server writes it from copy templates, as it writes the title. */}
+        {data.records_note && (
+          <p data-timeline-records-note className="max-w-prose text-caption text-ink-muted">
+            <SegmentText segments={data.records_note} />
+          </p>
+        )}
         {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} data={data} />}
         <SourceLine data={data} />
       </div>

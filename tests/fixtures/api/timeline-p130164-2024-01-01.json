@@ -741,6 +741,58 @@
     "how": 4,
     "what": 1
   },
+  "contracts": {
+    "count": 8,
+    "sources": [
+      {
+        "source": "awards_fy2001_2016",
+        "count": 7
+      },
+      {
+        "source": "notices",
+        "count": 1
+      }
+    ],
+    "left_out": {
+      "count": 7,
+      "no_step_reference": [
+        {
+          "source": "awards_fy2001_2016",
+          "count": 7
+        }
+      ],
+      "no_signing_date": []
+    }
+  },
+  "records_note": [
+    {
+      "text": "I hold "
+    },
+    {
+      "number": 8
+    },
+    {
+      "text": " contracts for this project."
+    },
+    {
+      "text": " "
+    },
+    {
+      "text": "The Records lane finds each contract's package by its STEP reference, so it leaves out "
+    },
+    {
+      "number": 7
+    },
+    {
+      "text": " from "
+    },
+    {
+      "text": "the contract awards for fiscal 2001 to 2016"
+    },
+    {
+      "text": ", which have none."
+    }
+  ],
   "finding": [
     {
       "number": 2,

@@ -168,6 +168,11 @@ test("P130164's timeline places each report, event and record at its date, names
   await page.keyboard.press("Escape");
   // It spells out only the codes a band shows: the first band names Satisfactory in full.
   await expect(abbreviations.getByRole("button", { name: "S", exact: true })).toHaveCount(0);
+  // The Records lane draws the one package with a STEP reference, and names the seven older awards it leaves out after
+  // the eight contracts the Connections tab counts too (ticket 138; values.toml, counts.p130164_trail).
+  await expect(page.locator("[data-timeline-records-note]")).toHaveText(
+    "I hold eight contracts for this project. The Records lane finds each contract's package by its STEP reference, so it leaves out seven from the contract awards for fiscal 2001 to 2016, which have none.",
+  );
   // The ISR series is bands, never a dashed line: each line joins two reports of different kinds.
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(2);
   // role img with the alt text as its name; a time axis with no title and five ticks, on whole years.
@@ -377,6 +382,12 @@ test("below 768 px the chart is a list in date order, and as of August 26, 2016 
   await expect(page.locator("main [data-view-banner=asof]")).toContainText("I'm showing this page as of August 26, 2016.");
   await expect(page.locator("main [data-alert]")).toHaveCount(1);
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(0);
+  // The award notice was not public yet, so the Records lane is empty, and it says it left the older awards out rather
+  // than that it has no contract records (ticket 138).
+  await expect(chart(page).locator("[data-lane-empty=what]")).toHaveText("I can't place this project's contracts in this lane. The note under the chart says why.");
+  await expect(page.locator("[data-timeline-records-note]")).toHaveText(
+    "I hold seven contracts for this project. The Records lane finds each contract's package by its STEP reference, so it leaves out seven from the contract awards for fiscal 2001 to 2016, which have none.",
+  );
 });
 
 test("a link whose date I can't read shows today's timeline and says so, as other pages do", async ({ page }) => {
@@ -525,6 +536,10 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
       view: "staff",
     },
   ]);
+  // The scan checks the card's targets where they rest, not where a click left the page scrolled: the taller box of
+  // ticket 127 grew the bottom scroll padding, so the last click left the card's first link partly under the sticky
+  // navy bar, which axe counts against its target size.
+  await card.evaluate((element) => element.scrollIntoView({ block: "center" }));
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
 
   // Going back to Strata's choice that fails to save keeps the choice and says so to a screen reader too.
