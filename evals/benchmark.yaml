@@ -377,6 +377,11 @@ questions:
         - [Moderately Satisfactory, 10, 11]
         - [Moderately Unsatisfactory, 12, 13]
       rejected: [1]
+      # The disagreements about one fact are one group with its count (ticket 136): here one pair about one fact,
+      # as [attribute, rule, count], and the summary's count of groups over disagreements.
+      groups:
+        - [pdo_progress, outcome, 1]
+      counts: [1, 1]
     # A disagreement shows both sides (the verifier's check 6), so the answer cites both.
     cites: [strata.gold.passage:26733307/v1/s4, strata.gold.passage:31525018/v1/78]
     ground_truth: tests/ground_truth/p130164_isr_7_against_icr_paragraph_78.sql
@@ -388,7 +393,8 @@ questions:
       on the ICR. The ISRs' ratings are a trajectory (tests/ground_truth/values.toml, isr-1-rating to
       isr-13-rating). The recording plants one rating whose quote is not on paragraph 45's page, which
       the run left out and counts. Prompt Shields screened both sides' passages and found no attack in
-      either, so both keep their words and none is left out.
+      either, so both keep their words and none is left out. ISR 7 and paragraph 78 are the only pair about
+      progress towards the PDO in the fixture, so they are one group of one.
   - id: get-lessons-cost-estimates
     kind: documents
     tool: get_lessons

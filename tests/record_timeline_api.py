@@ -17,6 +17,8 @@ date its address names:
   timeline-p156634-public.json, its public view, which shows no disagreement on a project still under way.
 - timeline-p130164-failed.json: the showcase's timeline when get_disagreements does not answer (FAILED): the marks,
   with no rating bands and no dashed lines, and the newest ISR as the How lane's one ISR mark.
+- timeline-p130164-grouped.json: the showcase's timeline on the planted copy of tests/planted_groups.py (GROUPED),
+  as the workspace's assertions pass read it: 16 pairs about three facts, drawn as three dashed lines (ticket 136).
 - evidence-*.json: what each kind of mark opens in the evidence drawer, from a link: a report's document view (ISR 7,
   the ICR, the replaced ICR Review and the PAD), a band's ratings, a disagreement's two sides with each side's
   passage, an event's passage, the contract's signing and a year of contracts.
@@ -80,6 +82,20 @@ FAILED = {
 }
 
 
+# The answers recorded on the planted copy (tests/planted_groups.py), whose pairs share a report (ticket 136).
+GROUPED = {
+    "timeline-p130164-grouped.json": "/api/projects/P130164/timeline",
+}
+
+
+def planted(folder: Path) -> Path:
+    """The planted copy of the fixture database, in folder."""
+    sys.path.insert(0, str(ROOT / "tests"))
+    from planted_groups import plant
+
+    return plant(FIXTURE_DB, folder / "planted.duckdb")
+
+
 def failing_get_disagreements(call):
     """The tool registry's call, except that get_disagreements raises, as when its tables cannot be read."""
     def failing(name, arguments, context):
@@ -108,8 +124,8 @@ def answer(database: Path, path: str) -> dict:
     return asyncio.run(go())
 
 
-def write(name: str, path: str) -> None:
-    (OUT / name).write_text(json.dumps(answer(FIXTURE_DB, path), indent=2, ensure_ascii=False) + "\n")
+def write(name: str, path: str, database: Path = FIXTURE_DB) -> None:
+    (OUT / name).write_text(json.dumps(answer(database, path), indent=2, ensure_ascii=False) + "\n")
     print(f"Wrote tests/fixtures/api/{name}.")
 
 
@@ -125,6 +141,12 @@ def main() -> None:
             write(name, path)
     finally:
         timeline.registry.call = call
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as folder:
+        database = planted(Path(folder))
+        for name, path in GROUPED.items():
+            write(name, path, database)
 
 
 if __name__ == "__main__":

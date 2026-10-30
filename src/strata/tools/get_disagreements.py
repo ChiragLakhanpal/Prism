@@ -23,7 +23,13 @@ A subject is a project, with its packages, or one package by its STEP reference.
   ratings in order and its runs of equal ratings. A trajectory is never a disagreement.
 - rejected: how many assertions read from the project's reports the run left out, by reason, such as a
   quote that was not word for word on its cited page.
-The registry returns the trajectories and the rejected count as one more citable record, the summary.
+- groups and counts (ticket 136): the disagreements about one fact, one group each. Pairs about the same subject,
+  under the same ladder rule and attribute, that share the document on their earlier side or on their later side
+  are one group: the PAD's overall risk against each ISR's, or ISRs 1 to 11 against the ICR's progress towards the
+  PDO. A group gives its count of pairs, their ids, the documents on each side and the side every pair leans on;
+  counts says how many groups over how many disagreements. The rows keep every pair, for a table.
+The registry returns the trajectories, the rejected count, the groups and their counts as one more citable record,
+the summary.
 
 A report re-issued under the same number replaces its earlier version from the day the re-issue became
 public: a disagreement with a replaced side is left out of current answers, and the coverage line counts it.
@@ -175,6 +181,66 @@ def _row(found: dict, sides: tuple[Assertion, Assertion], passages: dict[str, di
     }
 
 
+def _document(side: dict) -> dict:
+    return {key: side[key] for key in ("document_id", "document_type", "sequence", "made_at", "evidence_tier")}
+
+
+def _lean(rows: list[dict]) -> str | None:
+    """The side every pair of a group leans on, earlier or later, or None when the pairs lean different ways or the
+    ladder ranked both sides the same."""
+    leaned = {"earlier" if row["lean_assertion_id"] == row["sides"][0]["assertion_id"] else "later"
+              if row["lean_assertion_id"] else None for row in rows}
+    return leaned.pop() if len(leaned) == 1 else None
+
+
+def groups(rows: list[dict]) -> list[dict]:
+    """The disagreements about one fact, as one group each (ticket 136): pairs about the same subject, under the same
+    ladder rule and attribute, that share their earlier side's document, or their later side's. The PAD's overall
+    risk against each ISR's is one group, and so are ISRs 1 to 11 against the ICR's progress towards the PDO. Each
+    group gives its count of pairs, their ids, the documents on each side in the order written, and the side every
+    pair leans on, if one. The rows keep every pair; a group adds no figure the rows do not hold."""
+    by_fact: dict[tuple, list[dict]] = {}
+    for row in rows:
+        by_fact.setdefault((row["subject_kind"], row["subject_id"], row["rule_id"], row["attribute"]), []).append(row)
+    found = []
+    for members in by_fact.values():
+        parent = list(range(len(members)))
+
+        def root(at: int) -> int:
+            while parent[at] != at:
+                at = parent[at]
+            return at
+
+        first: dict[tuple[str, str], int] = {}
+        for at, row in enumerate(members):
+            for side, held in zip(("earlier", "later"), row["sides"]):
+                parent[root(at)] = root(first.setdefault((side, held["document_id"]), at))
+        joined: dict[int, list[dict]] = {}
+        for at, row in enumerate(members):
+            joined.setdefault(root(at), []).append(row)
+        for together in sorted(joined.values(), key=lambda one: members.index(one[0])):
+            sides: dict[str, dict[str, dict]] = {"earlier": {}, "later": {}}
+            for row in together:
+                for side, held in zip(("earlier", "later"), row["sides"]):
+                    sides[side].setdefault(held["document_id"], _document(held))
+            head = together[0]
+
+            def written(side: str) -> list[dict]:
+                return sorted(sides[side].values(), key=lambda one: (one["made_at"] or "", one["document_id"]))
+
+            found.append({"subject_kind": head["subject_kind"], "subject_id": head["subject_id"],
+                          "attribute": head["attribute"], "rule_id": head["rule_id"], "count": len(together),
+                          "disagreement_ids": [row["disagreement_id"] for row in together],
+                          "earlier": written("earlier"), "later": written("later"), "lean": _lean(together)})
+    return found
+
+
+def _grouped(rows: list[dict]) -> dict:
+    """The groups of the rows and their counts: how many facts the reports disagree about, over how many pairs."""
+    found = groups(rows)
+    return {"groups": found, "counts": {"groups": len(found), "disagreements": len(rows)}}
+
+
 def trajectories(held: list[Assertion]) -> list[dict]:
     """Each series of ratings of successive periods from one tier of source, such as the ISRs, with at least two
     ratings and no two of its periods overlapping, in date order, with its runs of equal ratings."""
@@ -223,7 +289,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
     """The disagreements and trajectories about the subject, as of call.as_of."""
     subject_id = subject_id.strip()
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "trajectories": [],
-             "rejected": {"count": 0, "reasons": []}}
+             "rejected": {"count": 0, "reasons": []}, **_grouped([])}
     # A project ID or a STEP reference in any case, named from here on as Strata holds it (ticket 20's verification
     # round 3, V2).
     held = _rows(call, "subject.sql", project="project", package="package", subject_id=subject_id)
@@ -266,7 +332,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
         # ratings of successive reports are records, not disagreements, so the trajectories stay.
         return {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []},
                 "abstention": {"reason": WITHHELD, "subject_id": subject_id}, "subject": subject,
-                "trajectories": trajectories(current), "rejected": rejected}
+                "trajectories": trajectories(current), "rejected": rejected, **_grouped([])}
     return {"rows": rows, "coverage": {"matched": len(found), "used": len(rows), "not_used": not_used},
             "abstention": abstention, "subject": subject, "trajectories": [] if abstention else trajectories(current),
-            "rejected": rejected}
+            "rejected": rejected, **_grouped(rows)}

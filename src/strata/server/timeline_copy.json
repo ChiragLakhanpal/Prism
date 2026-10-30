@@ -9,6 +9,8 @@
     "failed": "I couldn't read this project's ISR ratings or check its reports for disagreements just now.",
     "leadOne": "Two reports disagree",
     "leadSeveral": "{count} pairs of reports disagree",
+    "leadPoint": "Reports disagree on one point",
+    "leadPoints": "Reports disagree on {count} points",
     "fell": "ISR ratings of progress fell from {first} to {last}",
     "rose": "ISR ratings of progress rose from {first} to {last}",
     "same": "ISR ratings of progress were {rating} at the first ISR and at the last"
@@ -36,6 +38,7 @@
     "noRatings": "I have no ISR ratings for this project.",
     "ratingsFailed": "I couldn't read this project's ISR ratings just now.",
     "line": "A dashed line joins {side1} and {side2}, which disagree.",
+    "lineGroup": "A dashed line marks where {anchor} and {others} disagree.",
     "noLines": "No reports disagree.",
     "asOf": "It shows what was public on {date}."
   },
@@ -46,6 +49,14 @@
     "icr_review": "the ICR Review",
     "ppar": "the PPAR",
     "other": "the report"
+  },
+  "plural": {
+    "pad": "{n} PADs",
+    "isr": "{n} ISRs",
+    "icr": "{n} ICRs",
+    "icr_review": "{n} ICR Reviews",
+    "ppar": "{n} PPARs",
+    "other": "{n} reports"
   },
   "numberWords": [
     "one",

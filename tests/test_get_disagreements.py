@@ -311,6 +311,73 @@ def test_a_tie_between_equally_specific_records_goes_to_the_more_recent_one(engi
     assert (notice["paragraph"], notice["doc_key"]) == (None, None)  # a record has no paragraph
 
 
+# ── One disagreement group per fact (ticket 136) ─────────────────────────
+
+# The ISRs of P130164 by documents API id, as the fixture's recorded documents list gives them.
+ISRS = {1: "19095337", 2: "19901331", 3: "23868309", 4: "24589049", 5: "25481343", 6: "25814564", 7: "26733307",
+        8: "27243340", 9: "27490469", 10: "27853466", 11: "29280184"}
+PAD, ICR = "18381488", "31525018"
+
+
+@pytest.fixture(scope="module")
+def planted(fixture_db, tmp_path_factory):
+    """P130164 as the workspace's assertions pass read it (tests/planted_groups.py): 16 pairs about three facts."""
+    from planted_groups import plant
+
+    with DuckDBEngine.open(plant(fixture_db, tmp_path_factory.mktemp("groups") / "planted.duckdb"),
+                           read_only=True) as engine:
+        yield engine
+
+
+def documents(side: list[dict]) -> list[str]:
+    return [document["document_id"] for document in side]
+
+
+def test_pairs_that_share_the_rule_the_attribute_and_a_report_are_one_group_with_their_count(planted):
+    """Ticket 136, criterion 1: the PAD's overall risk against four ISRs is one group that shares its earlier side,
+    and ISRs 1 to 11 against the ICR's progress towards the PDO is one group that shares its later side. The rows
+    keep every pair, for the table."""
+    result = get_disagreements(planted, subject_id="P130164")
+
+    assert len(result["rows"]) == 16
+    found = {(group["attribute"], group["rule_id"]): group for group in result["groups"]}
+    assert set(found) == {("overall_risk", "moment"), ("pdo_progress", "outcome"), ("efficiency", "outcome")}
+    risk, progress, efficiency = found["overall_risk", "moment"], found["pdo_progress", "outcome"], found[
+        "efficiency", "outcome"]
+    assert (risk["count"], documents(risk["earlier"]), documents(risk["later"])) == (
+        4, [PAD], [ISRS[8], ISRS[9], ISRS[10], ISRS[11]])
+    assert (progress["count"], documents(progress["earlier"]), documents(progress["later"])) == (
+        11, [ISRS[n] for n in range(1, 12)], [ICR])
+    assert (efficiency["count"], documents(efficiency["earlier"])) == (1, [ICR])
+    # Each later side names its report as the timeline does: its type and, for an ISR, its number.
+    assert [(side["document_type"], side["sequence"]) for side in risk["later"]][0] == (
+        "Implementation Status and Results Report", 8)
+    # Every pair is in exactly one group, by its row's id.
+    ids = [disagreement for group in result["groups"] for disagreement in group["disagreement_ids"]]
+    assert sorted(ids) == sorted(row["disagreement_id"] for row in result["rows"])
+    # The moment rule leaned on each ISR, at the moment of its own period; the outcome rule on the later ICR.
+    assert (risk["lean"], progress["lean"]) == ("later", "later")
+
+
+def test_the_summary_counts_three_disagreement_groups_over_16_pairs(planted):
+    """Ticket 136, criterion 1: the summary record an answer cites counts groups and pairs, so the agent can say
+    "three facts told 16 times" from a tool's numbers (CLAUDE.md rule 1)."""
+    result = get_disagreements(planted, subject_id="P130164")
+
+    assert result["summary"]["counts"] == {"groups": 3, "disagreements": 16}
+    assert result["summary"]["groups"] == result["groups"]
+
+
+def test_on_the_fixture_each_of_p130164_s_two_pairs_is_a_group_of_its_own(engine):
+    """Ticket 136, criterion 1, on the fixture as built: ISR 7 against the ICR's paragraph 78, and the ICR's
+    paragraph 44 against the re-issued ICR Review, are about two facts."""
+    result = get_disagreements(engine, subject_id="P130164")
+
+    assert sorted((group["attribute"], group["count"]) for group in result["groups"]) == [
+        ("efficiency", 1), ("pdo_progress", 1)]
+    assert result["counts"] == {"groups": 2, "disagreements": 2}
+
+
 # ── The words the screens write from the result ─────────────────────────
 
 def copy_keys(group: str) -> set[str]:

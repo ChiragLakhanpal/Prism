@@ -7,7 +7,9 @@ tests/ground_truth/values.toml, which quotes each ISR, the ICR and the ICR Revie
 never from the code.
 """
 
+import dataclasses
 import datetime as dt
+import json
 import shutil
 import tomllib
 from pathlib import Path
@@ -100,6 +102,36 @@ def test_the_pads_overall_risk_is_an_assertion_about_the_appraisal_in_the_pad_ti
     assert risk["public_from"].isoformat() == shelf["pad_disclosed"]["value"][:10]
     assert risk["evidence_id"] == f"strata.gold.passage:18381488/v1/{TRUTH['pad-overall-risk']['paragraph']}"
     assert (risk["pdf_page"], risk["quote"]) == (TRUTH["pad-overall-risk"]["pdf_page"], value("pad-overall-risk"))
+
+
+def test_two_cells_of_one_page_that_rate_the_same_thing_the_same_way_are_one_assertion(engine):
+    """Ticket 136: on the workspace the layout parser read the PAD's risk table twice, as table65.1 and table65b.1,
+    and the batch model rated the overall risk from both cells, so the PAD told one rating twice and every ISR that
+    rated otherwise disagreed with it twice. Here the PAD's Overall Implementation Risk row on PDF page 70 is read
+    twice the same way: the run keeps one assertion, from the cell that comes first on the page."""
+    ladder = assertions.load_ladder()
+    [pad] = [report for report in assertions.reports(engine, "P130164", ladder) if report.document_id == "18381488"]
+    cell = pad.passages["18381488/v1/table65.8"]
+    twice = {**pad.passages, "18381488/v1/table65b.8": {**cell, "passage_id": "18381488/v1/table65b.8"}}
+    pad = dataclasses.replace(pad, passages=twice)
+    rated = {"pdf_page": cell["pdf_page"], "quote": "Rating: Substantial", "attribute": "overall_risk",
+             "field_name": "Overall Implementation Risk", "value": "Substantial", "form": "rating_field",
+             "period": "appraisal"}
+    answer = batch.Answer(pad.custom_id, json.dumps({"assertions": [
+        {**rated, "passage_id": "18381488/v1/table65b.8"}, {**rated, "passage_id": "18381488/v1/table65.8"}]}))
+    dates = assertions.periods(engine, "P130164", ladder=ladder)
+
+    kept, rejected = assertions.read_answer(pad, answer, ladder, dates, "recorded", "run", dt.datetime(2026, 10, 29))
+
+    assert rejected == []
+    assert [(one.evidence_id, one.value, one.pdf_page) for one in kept] == [
+        ("strata.gold.passage:18381488/v1/table65.8", "Substantial", 70)]
+    # A different rating on the same page, or the same rating on another page, stays its own assertion.
+    other = {**rated, "passage_id": "18381488/v1/table65.4", "pdf_page": 68, "field_name": "Design"}
+    answer = batch.Answer(pad.custom_id, json.dumps({"assertions": [{**rated, "passage_id": "18381488/v1/table65.8"},
+                                                                    other]}))
+    kept, _ = assertions.read_answer(pad, answer, ladder, dates, "recorded", "run", dt.datetime(2026, 10, 29))
+    assert len(kept) == 2
 
 
 def test_an_extracted_assertion_whose_quote_is_not_on_its_cited_page_is_rejected_and_counted(engine):
