@@ -43,11 +43,6 @@ export const deckCopy = {
     next: "Next",
     showTable: "Show the table",
     showChart: "Show the chart",
-    readAsPage: "Read as a page",
-    notes: "Speaker notes",
-    notesName: "Speaker notes (opens in a new window)",
-    fullScreen: "Full screen",
-    leaveFullScreen: "Leave full screen",
   },
 
   states: {
@@ -145,15 +140,16 @@ export const deckCopy = {
       line: "Built for the World Bank Group's procurement intelligence assessment.",
       figure: "A core sample with its layers one under the other, for the three strata of evidence.",
       notes:
-        "Strata is a working demo built only on World Bank open data, and I built it for this assessment. Every " +
-        "number on these slides comes from a measured run or a setting, and you can point at any of them to see " +
-        "which. Stop me anywhere.",
+        "Strata is a working demo built only on World Bank open data, and I built it for this assessment. One rule " +
+        "holds everywhere. Every number comes from a measured run or a setting, and you can point at any number to " +
+        "see which. Stop me anywhere. I'd rather take a question than finish a slide.",
     },
     agenda: {
       title: "The problem, a live demo, then how Strata is built, answers and grows",
       notes:
-        "Here's the plan, a part per press. I show Strata live early, then how it's built, how it checks its " +
-        "answers, and how it would grow. Questions any time.",
+        "One real case runs through the whole talk: a water works package in Kenya whose planned date passed with no " +
+        "signed contract. You'll see Strata check its plan live. Then I open the hood, the tables, the tools and the " +
+        "checks behind every answer, and end with how it grows. A press per part.",
     },
 
     // ── Three strata ──
@@ -161,9 +157,10 @@ export const deckCopy = {
       title: "A procurement plan needs three strata of evidence, and today they sit apart",
       source: "the assessment brief, section 1.",
       notes:
-        "The assessment describes the three strata, and Strata is named for them. A press each. What happened sits " +
-        "in records like contract awards. How it was done sits in Procurement Plans and status reports. Why it " +
-        "worked or not sits in completion reports. The last press shows that today a specialist joins them by hand.",
+        "Strata is named for the assessment's three strata, a press each. What happened lives in records like " +
+        "contract awards. How it was done lives in Procurement Plans and status reports. Why it worked, or didn't, " +
+        "lives in completion reports. Last press: today a specialist joins these by hand, one project at a time. " +
+        "That's the job Strata takes on.",
     },
     cost: {
       title: "Today the evidence reaches a plan too late to change it",
@@ -176,9 +173,9 @@ export const deckCopy = {
       ask: "How does your team find what a completion report said about packages like this one?",
       source: "the assessment brief, section 1.",
       notes:
-        "These restate the assessment's own list, a press each: schedules that aren't realistic, packages advertised " +
-        "again or canceled, specifications that miss, and lessons nobody finds in time. Last press, ask the room " +
-        "how they find a completion report's lesson today.",
+        "These are the assessment's own pains, a press each. Schedules that aren't realistic. Packages advertised " +
+        "again or canceled. Specifications that miss. Lessons nobody finds in time. On the last press, ask the room " +
+        "how they find a completion report's lesson today, and let the pause do the work.",
     },
     who: {
       title: "The borrower owns the plan, and Strata helps both sides check it",
@@ -198,21 +195,24 @@ export const deckCopy = {
       ],
       closing: "Strata drafts, and people decide. Exporting sends nothing, and nothing Strata writes is a World Bank decision.",
       notes:
-        "Strata follows who owns what. The borrower prepares the plan, and World Bank staff review it. A press per " +
-        "view, then the rule under all of them. Strata never takes part in bid evaluation, awards or complaints, and " +
-        "it turns those questions down.",
+        "Strata respects who owns what, a press per view. The borrower prepares the plan, and World Bank staff review" +
+        " it. Then the rule under all of them. Strata never takes part in bid evaluation, awards or complaints. Ask " +
+        "it about one, and it turns the question down and says why.",
     },
     idea: {
       title: "Strata joins the three strata once, so one question gets one cited answer",
       notes:
-        "Here's the idea in one picture, a press each. Ask about a new rural roads package in Kenya. Records give " +
-        "comparable packages. Plans give each step's planned and actual dates. Completion reports give what went " +
-        "wrong and what helped. The last press brings them into one answer, and every sentence names its source.",
+        "The whole idea in one picture, a press each. Take the Kenya water package. Records give its comparable " +
+        "packages and how long each took. Plans give each step's planned and actual dates. Completion reports give " +
+        "what went wrong and what helped, quoted with paragraph and page. Last press, one answer, and every sentence " +
+        "names its source. Everything after this slide is that picture, made real.",
     },
 
     // ── Strata at work ──
     workOpener: {
-      notes: "Now Strata live, on real World Bank records. Let it play a few seconds, then the plan check.",
+      notes:
+        "Strata at work, on live World Bank records. Let the figure play for a few seconds, then go to the plan " +
+        "check.",
     },
     demoPlan: {
       title: "Checking a borrower's Procurement Plan, row by row",
@@ -224,63 +224,73 @@ export const deckCopy = {
       ],
       source: "the Procurement Plan of {date} for {project}, as published in Systematic Tracking of Exchanges in Procurement (STEP).",
       notes:
-        "Open the plan check. {step} needs a look, because its planned completion passed with no signed contract in " +
-        "the plan. Click its signal to show the record behind it. If the awards data already show it signed, say so. " +
-        "Strata shows that disagreement instead of hiding it. Then the package workspace.",
+        "Open the plan check in the new tab. Strata reads the agency's Procurement Plan row by row. Find {step}. It " +
+        "needs a look, because its planned completion passed with no signed contract in the plan. Click its signal to" +
+        " open the record behind it. If the awards data already show it signed, say so out loud, because Strata shows" +
+        " that kind of disagreement instead of hiding it. If asked, the rows come from strata.silver.plan_rows, read " +
+        "from STEP.",
     },
     demoPackage: {
-      title: "Planning a new package from the packages that came before it",
-      action: "Plan this package",
+      title: "Comparing the package that needs a look with the packages that came before it",
+      box: "Package {step}, which the plan check says needs a look",
+      action: "Open the package",
       lines: [
-        "Strata reads the sentence into STEP's fields, such as the method and the market approach.",
-        "Each comparable package is a dot on a month axis, and the plan is a line through them.",
-        "Each STEP step gets its own planned date.",
+        "Each comparable package is a dot on a month axis, from its notice to its signed contract.",
+        "Hollow dots are still open, and the range counts them, so the slow cases stay in.",
+        "The time estimate dates each STEP step, with its track record from years it had not seen.",
       ],
       note: "STEP is Systematic Tracking of Exchanges in Procurement, where Procurement Plans are kept.",
       notes:
-        "Press the button. It fills the box with a rural roads package in Kenya. Show the dots, the hollow ones " +
-        "still open, and the plan line. Drag the plan line once, and the count changes with it. Then the evidence " +
-        "behind an answer.",
+        "Open the package the plan check said needs a look. Each dot is a comparable package with the same method, " +
+        "category, market approach, review type, size, region and period. When there are many, each dot stands for an" +
+        " equal share of them. Hollow dots were still open, and the range counts them, so the slowest cases don't " +
+        "quietly drop out. Below it, the time estimate dates each STEP step, with a track record from years the model" +
+        " never saw. If asked, the comparables come from strata.gold.package, notice and contract.",
       // The recorded answer (ticket 116): the comparable packages Strata found for the demo plan's package, recorded
       // on the workspace. This line goes first under its chart, before the package workspace's own lines.
       recorded: "Recorded on {date}, for {step}, a package in the Procurement Plan Strata checked.",
       notesRecorded:
-        "If the App is down, press Show the recorded answer. It shows the comparable packages for {step}, the " +
-        "package from the plan check, as Strata recorded them on {date}. The next press moves on.",
+        "If the App is down, press Show the recorded answer. It's the same chart for {step}, recorded on {date}. The " +
+        "next press moves on.",
     },
     demoAnswer: {
-      title: "Opening the paragraph behind an answer about rebidding",
-      action: "Open {project} in Strata",
+      title: "Asking about the package, with every number checked against the records",
+      question: "How long did comparable packages take from notice to signed contract?",
+      action: "Open the package",
       lines: [
-        "Every sentence names its source: a record, or a numbered paragraph with its page.",
-        "One click opens the completion report's paragraph 54, on page 23, beside the answer.",
-        "The verifier checks every quote against its page before the answer shows.",
+        "Every sentence names its source, and one click opens the record behind it.",
+        "The verifier checks every number against the records before the answer shows.",
+        "A sentence it cannot back is removed and shown, with the reason.",
       ],
-      source: "Implementation Completion and Results Report, {project}, October 10, 2019, paragraph 54, page 23.",
+      note: "the verifier runs on every answer and is never bypassed.",
       notes:
-        "Copy the question, open the project and ask it in the box. While it runs, the steps show which tools it " +
-        "called. Open the citation, paragraph 54 on page 23 of the completion report. If it stalls past a minute, " +
-        "open the timeline instead. Then how it's built.",
+        "Click Ask Strata about this package at the foot of the page. The chip keeps the answer inside this package. " +
+        "Copy the question here, paste it and press Enter. While it runs, the steps show which tools it called. Under" +
+        " the answer, the check line counts the numbers that matched a record. If the verifier removed a sentence, " +
+        "open it and read the reason aloud. That's the product working, not failing. If the App stalls, go back one " +
+        "slide and show the recorded answer.",
     },
 
     // ── How it is built ──
     builtOpener: {
-      notes: "Now how it's built, from the data up. Let it play a few seconds, then the layers one at a time.",
+      notes:
+        "That was the surface. Here's what sits under it, from the data up. Let the figure play for a few seconds.",
     },
     layers: {
       title: "The data, search and tools run on Databricks, and the agent and its models run in Microsoft Foundry",
       notes:
         "A press per layer, from the bottom. The data, the knowledge model and the tools stay on Databricks, under " +
-        "Unity Catalog. The agent runs in Microsoft Foundry and only picks the tools. The app runs each tool with " +
-        "the viewer's own permissions and keeps the rows, and the verifier checks every sentence against those rows. " +
-        "The last press shows where each layer runs.",
+        "Unity Catalog. The agent runs in Microsoft Foundry, and all it does is pick tools and write claims. The app " +
+        "runs each tool with the viewer's own permissions and keeps the rows, and the verifier checks every sentence " +
+        "against them. Last press, where each layer runs. The model never queries the warehouse itself.",
     },
     pipeline: {
       title: "Every night, World Bank open data become one dated knowledge model",
       notes:
-        "A press each. The nightly job reads each source from where it stopped. Bronze keeps what arrived, silver " +
-        "strips contact details and matches keys, and gold is the knowledge model everything reads. The last press " +
-        "shows that every row keeps the date it became public, so any answer can be replayed as of its date.",
+        "A press each. A nightly job reads every source from where it stopped. Bronze keeps each page as it arrived, " +
+        "in strata.bronze.api_pages. Silver types and cleans, strips contact details and matches keys, in tables like" +
+        " strata.silver.plan_rows. Gold is the knowledge model everything reads, like strata.gold.package. Last " +
+        "press, every row keeps the date it became public, so any answer can be replayed as of its date.",
     },
     reading: {
       title: "Every document becomes numbered passages, each with its paragraph and page",
@@ -292,18 +302,20 @@ export const deckCopy = {
       bothNone: "Strata has not counted its passages or measured how well it read its pages yet.",
       source: "Strata's data readiness measures, taken {date}.",
       notes:
-        "A press each. The page router sends each page down one of two roads. Clean pages use the text the World " +
-        "Bank already publishes, which costs nothing and keeps the exact words. Scans and tables go to the layout " +
-        "parser. Either way, Strata cites the numbered paragraph and its page, the way the Independent Evaluation " +
-        "Group cites a report.",
+        "A press each. A page router sends each page down one of two roads. Clean pages use the text the World Bank " +
+        "already publishes, which costs nothing and keeps the exact words. Scans and tables go to the layout parser. " +
+        "Either way, Strata cites the numbered paragraph and its page, the way the Independent Evaluation Group cites" +
+        " a report. The passages land in strata.gold.passage.",
     },
     knowledge: {
       title: "Records and documents meet at the passage, joined on STEP's keys",
       note: "STEP is Systematic Tracking of Exchanges in Procurement, where Procurement Plans are kept.",
       notes:
-        "This is the knowledge model, a press each. It is Unity Catalog tables with an edge table, not a separate " +
-        "graph database, so search and SQL read the same rows under one set of permissions. The dashed line is the " +
-        "link the assessment asks for. It joins a contract and a completion report paragraph that appeared together.",
+        "The knowledge model, a press each, and every box names its table. It's Unity Catalog tables plus an edge " +
+        "table, not a separate graph database, so search and SQL read the same rows under one set of permissions. The" +
+        " dashed line is the link the assessment asks for: a contract and a completion report paragraph that appeared" +
+        " together, kept in strata.gold.edge. If asked why not a graph database, the answer is one copy of the data, " +
+        "one set of permissions and one place to audit.",
     },
     gap: {
       title: "No dataset publishes contract awards for fiscal {start} to {end}",
@@ -324,31 +336,35 @@ export const deckCopy = {
       keyName: (source: string, first: string, last: string) => `${source}, ${first} to ${last}`,
       table: { year: "Fiscal year", rows: "Contract award rows", from: "From" },
       notes:
-        "This is a gap Strata states instead of hiding. Neither contract awards dataset covers fiscal {start} to " +
-        "{end}. Award notices cover those years, but in local currency, so Strata keeps them apart and says " +
-        "so whenever an answer leans on them. Only {ratio} recent award rows share their STEP reference with a notice.",
+        "I'd rather show you a gap than hide it. Neither contract awards dataset covers fiscal {start} to {end}. " +
+        "Award notices cover those years, but in local currency, so Strata keeps them apart and says so whenever an " +
+        "answer leans on them. And only {ratio} recent award rows share their STEP reference with a notice. That " +
+        "ratio is why every answer carries a coverage line.",
       notesGap:
-        "This is a gap Strata states instead of hiding. Neither contract awards dataset covers fiscal {start} to " +
-        "{end}. Award notices cover those years, but in local currency, so Strata keeps them apart and says " +
-        "so whenever an answer leans on them. The workspace job counts the rows themselves.",
+        "I'd rather show you a gap than hide it. Neither contract awards dataset covers fiscal {start} to {end}. " +
+        "Award notices cover those years, but in local currency, so Strata keeps them apart and says so whenever an " +
+        "answer leans on them. The workspace job counts the rows themselves.",
       notesNone:
         "This slide shows the contract award rows for each fiscal year, and the years no awards dataset covers. " +
-        "Strata has not measured them yet, so I'll show the Data readiness page instead.",
+        "Strata hasn't measured them yet, so open the Data readiness page instead.",
     },
 
     // ── How it answers ──
     answersOpener: {
-      notes: "Now how Strata answers, and how it checks itself. Let it play a few seconds.",
+      notes:
+        "Next, how Strata answers, and how it checks itself before you see anything. Let the figure play for a few " +
+        "seconds.",
     },
     retrieval: {
       title: "The agent picks the tools, and the app runs them as the person asking",
       notes:
-        "A press each, with the Kenya water package from the demo. The agent in Foundry picks the tools: " +
-        "find_comparables and estimate_time run fixed SQL on strata.gold.package, notice and contract, " +
+        "Back to the Kenya water answer, under the hood, a press each. The agent in Foundry picks the tools. " +
+        "find_comparables and estimate_time run fixed SQL on strata.gold.package, notice and contract. " +
         "search_passages asks AI Search over strata.gold.passage, and get_disagreements reads strata.gold.assertion. " +
-        "The app runs every call with the viewer's own token, so Unity Catalog decides what each person can see, and " +
-        "it keeps every row with its evidence ID. The agent writes claims that cite those IDs, and the verifier, in " +
-        "plain code, checks each one before anything reaches the screen. Each run is kept in strata.ops.agent_runs.",
+        "The app runs every call with the viewer's own token, so Unity Catalog decides what each person sees, and it " +
+        "keeps every row with its evidence ID. The agent writes claims that cite those IDs, and the verifier checks " +
+        "each one before anything reaches the screen. Every run lands in strata.ops.agent_runs, so anyone can trace " +
+        "an answer afterward.",
     },
     estimate: {
       title: "A time estimate starts from comparable packages, and gives no range when there are too few",
@@ -357,10 +373,11 @@ export const deckCopy = {
       backtestNone: "The backtest has not run on the workspace yet, so the model's track record is not shown here.",
       source: "Strata's backtest, measured {date}.",
       notes:
-        "A press each. Stated criteria choose the comparable packages. Under {min}, Strata shows them all and gives " +
-        "no range. Otherwise the past range keeps packages still open, so the slow cases count. A survival model " +
-        "gives the time estimate, tested on years it had not seen. Then Strata counts how many were signed by the " +
-        "plan's date.",
+        "Same package, now the model behind its estimate, a press each. Stated criteria choose the comparable " +
+        "packages. Under {min}, Strata shows every one and gives no range, because that's too few to trust. Otherwise" +
+        " the past range keeps the packages still open, so the slow cases count. A survival model gives the time " +
+        "estimate, tested on years it had not seen. Then Strata counts how many were signed by the plan's date. If " +
+        "asked, the model and its scores live in strata.gold.time_estimate_model and time_estimate_score.",
     },
     checks: {
       title: "Every sentence meets {checks} checks before anyone sees it",
@@ -370,9 +387,10 @@ export const deckCopy = {
       none: "The benchmark has not run with all {checks} checks yet, so there are no results to show.",
       source: "Strata's benchmark run of {date}.",
       notes:
-        "The verifier is plain code, and it runs on every answer. A press each. For a number it looks for the row; " +
-        "it never asks a model. Only the check that a sentence follows from its passages uses a model as a judge, " +
-        "and the answer says so. The removed sentence stays in view under the answer.",
+        "The verifier is plain code, and it runs on every answer, a press per check. For a number, it looks for the " +
+        "row and never asks a model. Only one check, whether a sentence follows from its passages, uses a model as a " +
+        "judge, and the answer says so on screen. A removed sentence stays in view under the answer, like any you saw" +
+        " on the Kenya package. Strata would rather say less than say something it can't back.",
     },
     ladder: {
       title: "When reports disagree, both stay on screen, and Strata says which it leans on",
@@ -389,10 +407,11 @@ export const deckCopy = {
         "Implementation Status and Results Report 7, {project}, August 26, 2016; Implementation Completion and " +
         "Results Report, {project}, October 10, 2019, paragraph 78, page 27.",
       notes:
-        "The assessment asks what to do when a completion report and the supervision ratings disagree. A press per rung, " +
-        "then the example. Strata keeps both. The card turns amber only when the disagreement changes a number or a " +
-        "claim in the answer, because constant warnings get ignored. A rating that moves over time is a trajectory, " +
-        "not a disagreement.",
+        "The assessment asks what to do when a completion report and the supervision ratings disagree. Kenya water is" +
+        " still running, so this example is a closed roads project, P130164. A press per rung, then the example. " +
+        "Strata keeps both reports. The card turns amber only when the disagreement changes a number or a claim in " +
+        "the answer, because constant warnings get ignored. A rating that moves over time is a trajectory, not a " +
+        "disagreement.",
     },
     hindsight: {
       title: "Strata showed {ratio} risks that completion reports later blamed",
@@ -410,22 +429,24 @@ export const deckCopy = {
       none: "The test runs on the workspace. Until it has, there is no result to show.",
       source: "Strata's hindsight test of {date}.",
       notes:
-        "The hindsight test is the gate for every release. It freezes Strata at a project's approval date, Strata " +
-        "builds its risk table, and {coders} people compare it with what the completion report blamed. A plain checklist " +
-        "of the sector's commonest risks is the baseline any new version must beat.",
+        "This is the test I'd trust over any demo. Freeze Strata at a project's approval date, let it build its risk " +
+        "table, and {coders} people compare it with what the completion report later blamed. The baseline is a plain " +
+        "checklist of the sector's commonest risks, and every new version has to beat it before it ships.",
       notesInterval: "With {level} confidence, the share it caught lies between {low} and {high} percent.",
     },
 
     // ── How it grows ──
     growsOpener: {
-      notes: "The last part is how Strata learns and grows. Let it play a few seconds.",
+      notes:
+        "Last part, how Strata learns and grows without drifting. Let the figure play for a few seconds.",
     },
     loops: {
       title: "{loops} loops learn on their own schedules, and people decide each change",
       notes:
-        "Documents arrive every night, people decide weekly, and models change at most every quarter, a press each. " +
-        "A lesson needs its quote found word for word on the cited page, then a specialist and a lead both decide. A " +
-        "new model must win its backtest and a quarter in shadow. Strata keeps every version, so any answer can be replayed.",
+        "Each loop runs on its own clock, a press each. Documents arrive every night. People decide every week. " +
+        "Models change at most once a quarter. A lesson needs its quote found word for word on the cited page, then a" +
+        " specialist and a lead both decide. A new model has to win its backtest and spend a quarter in shadow. " +
+        "Strata keeps every version, so any old answer can be replayed exactly.",
     },
     rollout: {
       title: "The pilot grows in {phases} phases, each measured before the next",
@@ -452,8 +473,8 @@ export const deckCopy = {
       notes:
         "The rollout follows who carries the risk of a wrong answer, a phase per press. World Bank staff come first, " +
         "in {countries} countries, because they can judge a wrong answer. Agencies come next, once the drafts hold " +
-        "up. The public comes last, read-only. When a plan copies Strata's range, Strata marks it and reports plan " +
-        "accuracy for it apart.",
+        "up. The public comes last, and read-only. When a plan copies Strata's range, Strata marks it and reports " +
+        "plan accuracy for those plans apart, so it never grades its own homework.",
     },
     spend: {
       title: "Hard caps limit the cost, because a budget only sends alerts",
@@ -466,9 +487,9 @@ export const deckCopy = {
       ],
       source: "Azure cost records to {date}.",
       notes:
-        "Budgets only send alerts, and cost data arrive up to a day late, so hard caps stop the spending. A press " +
-        "each: a token limit on every model deployment, a daily page cap when reading documents, and a replica " +
-        "limit on the app.",
+        "Budgets only send alerts, and cost data can arrive a day late, so hard caps do the stopping. A press each: a" +
+        " token limit on every model deployment, a daily page cap on document reading, and a replica limit on the " +
+        "app. If asked about the bill, the number on the slide is measured, from strata.ops.azure_costs.",
     },
     change: {
       title: "A change request touches one file, and the gate checks it before every commit",
@@ -479,8 +500,9 @@ export const deckCopy = {
       ],
       ask: "What change would you like to see made, live?",
       notes:
-        "This is where you test me. Each kind of change lives in one file, and I rehearsed the likely ones. Pick " +
-        "one, and I'll make it with the gate running, then show it in the app.",
+        "This is where you test me. Each kind of change lives in one file, and I've rehearsed the likely ones. Pick " +
+        "one, and I'll make it with the gate running, then show it in the app. Good ones to offer are a new " +
+        "threshold, a new example question or a model swap.",
     },
     rubric: {
       title: "Where Strata earns each point of the rubric",
@@ -502,15 +524,16 @@ export const deckCopy = {
       source: "the assessment brief, section 5, for the dimensions and points. STEP is Systematic Tracking of Exchanges in Procurement.",
       notes:
         "This maps the rubric to what you can open. Each link goes to the screen in Strata where that part of the " +
-        "work shows. The proposal follows the assessment's modules, with every number linked to its measured result.",
+        "work shows. The proposal follows the assessment's modules, and every number in it links to its measured " +
+        "result.",
     },
     limits: {
       title: "What is designed but not built yet",
       empty: "Everything in this deck is built and runs in the app.",
       itemAt: "{name}, labeled at {route}",
       notes:
-        "Here is what I designed but didn't build, so nothing in the demo pretends otherwise. The same list is in " +
-        "the proposal, and the app labels each one where it would appear.",
+        "Here's what I designed but didn't build, so nothing in the demo pretends otherwise. The same list is in the " +
+        "proposal, and the app labels each one where it would appear. Saying so up front is part of the design.",
       notesEmpty: "Everything on these slides is built and runs in the app, and you can open any of it now.",
     },
     thanks: {
@@ -519,9 +542,10 @@ export const deckCopy = {
       ask: "What would you like to ask?",
       links: { app: "Open Strata", proposal: "Read the proposal", dashboard: "Open the dashboard", repo: "Read the code" },
       notes:
-        "Thank you. Everything on these slides is built and runs in the app, and you can open any of it now. I'm " +
-        "glad to take questions, or to make a change live, here in the room.",
-      notesAfterLimits: "Thank you. I'm glad to take questions, or to make a change live, here in the room.",
+        "Thank you. Everything on these slides is built and runs in the app, and you can open any of it right now. " +
+        "Ask me anything, or hand me a change to make live, here in the room.",
+      notesAfterLimits:
+        "Thank you. Ask me anything, or hand me a change to make live, here in the room.",
     },
   },
 };

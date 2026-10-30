@@ -11,7 +11,7 @@
 //
 // The deck reads its numbers from /deck/data.json (web/src/deck/data.ts), the measures snapshot the proposal cites.
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, ExternalLink as ExternalIcon, Maximize, Minimize, Table2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Table2 } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { Footer } from "../components/Frame";
@@ -30,7 +30,7 @@ import { CHART_WIDTH } from "./AwardChart";
 import { FOOTER, type, type Mode } from "./ramp";
 import { RecordedAnswer, RecordedSlide } from "./Recorded";
 import { buildSlides, figureStepText, TITLE_ID, type Slide } from "./slides";
-import { arrive, moved, moveFor, segments, TOPIC_ORDER, type Move, type Place } from "./talk";
+import { arrive, fullScreenKey, moved, moveFor, segments, TOPIC_ORDER, type Move, type Place } from "./talk";
 import { slideInAddress, type DeckView } from "./view";
 import "./deck.css";
 
@@ -475,10 +475,10 @@ function useFullScreen(): { able: boolean; on: boolean; toggle: () => void } {
     document.addEventListener("fullscreenchange", update);
     return () => document.removeEventListener("fullscreenchange", update);
   }, []);
-  const toggle = () => {
+  const toggle = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen();
-    else void document.documentElement.requestFullscreen();
-  };
+    else void document.documentElement.requestFullscreen?.();
+  }, []);
   return { able, on, toggle };
 }
 
@@ -573,6 +573,7 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
   const [recorded, setRecorded] = useState(false);
   const [announce, setAnnounce] = useState("");
   const full = useFullScreen();
+  const toggleFull = full.toggle;
   const scale = useScale(full.on);
   const awake = useBarAwake(full.on);
   const stage = useRef<HTMLDivElement>(null);
@@ -660,6 +661,12 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      // F toggles full screen, as in most slide tools; the control bar holds only the moves and the table.
+      if (fullScreenKey(event)) {
+        event.preventDefault();
+        toggleFull();
+        return;
+      }
       const move = moveFor(event);
       if (move === null) return;
       event.preventDefault();
@@ -668,7 +675,7 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [go, slides]);
+  }, [go, slides, toggleFull]);
 
   const press = (move: Move) => go(moved(at.current, move, slides));
   const width = CANVAS.width * scale;
@@ -737,19 +744,6 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
             <button type="button" onClick={() => setTwin((now) => !now)} className={cx(GHOST, "text-primary hover:bg-tint-hover")} data-table-toggle>
               <Table2 aria-hidden="true" className="size-4" />
               {twin ? deckCopy.bar.showChart : deckCopy.bar.showTable}
-            </button>
-          )}
-          <a href={`/present/page#slide-${place.n}`} className={cx(GHOST, "text-primary hover:bg-tint-hover")} data-read-as-page>
-            {deckCopy.bar.readAsPage}
-          </a>
-          <a href="/present/notes" target="_blank" rel="noopener" aria-label={deckCopy.bar.notesName} className={cx(GHOST, "text-primary hover:bg-tint-hover")} data-notes-link>
-            {deckCopy.bar.notes}
-            <ExternalIcon aria-hidden="true" className="size-4" />
-          </a>
-          {full.able && (
-            <button type="button" onClick={full.toggle} className={cx(GHOST, "text-primary hover:bg-tint-hover")} data-full-screen-toggle>
-              {full.on ? <Minimize aria-hidden="true" className="size-4" /> : <Maximize aria-hidden="true" className="size-4" />}
-              {full.on ? deckCopy.bar.leaveFullScreen : deckCopy.bar.fullScreen}
             </button>
           )}
         </div>
