@@ -112,6 +112,11 @@ def test_the_isr_series_shows_as_rating_bands_that_name_each_run_s_rating_never_
         assert [side["type"] for side in found["sides"]].count("isr") < 2
     assert p130164["ratings"]["first_rating"] == truth("isr-1-rating")
     assert p130164["ratings"]["last_rating"] == truth("isr-13-rating")
+    # The title's last rating is the last band's, and the band row ends at the ISR the title names (ticket 142).
+    assert (p130164["ratings"]["last_rating"], p130164["ratings"]["last_sequence"]) == (bands[-1]["rating"], 13)
+    assert bands[-1]["last"] == 13 and bands[-1]["end"] == p130164["ratings"]["last_date"] == truth("isr-13-date")
+    # Both sources hold ISRs 1 to 13 here, so the page keeps the assertions get_disagreements gives.
+    assert p130164["ratings"]["source"] == "strata.gold.assertion"
 
 
 def test_a_dashed_line_joins_isr_7_and_the_icr_in_the_order_written_and_strata_leans_on_the_icr(p130164):
@@ -187,7 +192,8 @@ def test_the_finding_counts_the_points_the_reports_disagree_on_and_the_alt_text_
 
     first, last = truth("isr-1-rating"), truth("isr-13-rating")
     assert text_of(grouped["finding"]) == (
-        f"Reports disagree on three points, and ISR ratings of progress fell from {first} to {last}.")
+        f"Reports disagree on three points, and ISR ratings of progress fell from {first} to {last}, "
+        "last rated in ISR 13.")
     assert {"number": 3} in grouped["finding"]
     alt = text_of(grouped["alt"])
     assert "A dashed line marks where the PAD and four ISRs disagree." in alt
@@ -222,7 +228,7 @@ def test_the_finding_and_the_alt_text_are_written_from_the_tool_s_values(p130164
 
     first, last = truth("isr-1-rating"), truth("isr-13-rating")
     assert text_of(p130164["finding"]) == (
-        f"Two pairs of reports disagree, and ISR ratings of progress fell from {first} to {last}.")
+        f"Two pairs of reports disagree, and ISR ratings of progress fell from {first} to {last}, last rated in ISR 13.")
     # The count is a number the page writes through Num.
     assert {"number": 2, "capital": True} in p130164["finding"]
     assert text_of(p130164["alt"]) == (

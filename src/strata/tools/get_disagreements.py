@@ -254,6 +254,21 @@ def _grouped(rows: list[dict]) -> dict:
     return {"groups": found, "counts": {"groups": len(found), "disagreements": len(rows)}}
 
 
+def runs_of(points: list[dict]) -> list[dict]:
+    """A series' runs of equal ratings, in the order of its points, each with its first and last ISR's sequence and
+    date and how many ratings it holds. Each point gives its value, its sequence and the date it was made (made_at).
+    The tool's trajectories and the timeline's band row both take their runs from here (ticket 142)."""
+    runs: list[dict] = []
+    for point in points:
+        if runs and runs[-1]["value"] == point["value"]:
+            runs[-1].update(last_sequence=point["sequence"], last_made_at=point["made_at"], count=runs[-1]["count"] + 1)
+        else:
+            runs.append({"value": point["value"], "first_sequence": point["sequence"],
+                         "last_sequence": point["sequence"], "first_made_at": point["made_at"],
+                         "last_made_at": point["made_at"], "count": 1})
+    return runs
+
+
 def trajectories(held: list[Assertion]) -> list[dict]:
     """Each series of ratings of successive periods from one tier of source, such as the ISRs, with at least two
     ratings and no two of its periods overlapping, in date order, with its runs of equal ratings."""
@@ -267,22 +282,13 @@ def trajectories(held: list[Assertion]) -> list[dict]:
         points.sort(key=lambda point: (point.period_end, point.made_at, point.assertion_id))
         if len(points) < 2 or any(overlap(a, b) for at, a in enumerate(points) for b in points[at + 1:]):
             continue
-        runs: list[dict] = []
-        for point in points:
-            if runs and runs[-1]["value"] == point.value:
-                runs[-1].update(last_sequence=point.sequence, last_made_at=_iso(point.made_at),
-                                count=runs[-1]["count"] + 1)
-            else:
-                runs.append({"value": point.value, "first_sequence": point.sequence, "last_sequence": point.sequence,
-                             "first_made_at": _iso(point.made_at), "last_made_at": _iso(point.made_at), "count": 1})
+        listed = [{"assertion_id": point.assertion_id, "evidence_id": point.evidence_id,
+                   "document_id": point.document_id, "sequence": point.sequence, "value": point.value,
+                   "period_start": _iso(point.period_start), "period_end": _iso(point.period_end),
+                   "made_at": _iso(point.made_at)} for point in points]
         found.append({
             "subject_kind": kind, "subject_id": subject, "attribute": attribute, "evidence_tier": tier,
-            "field_name": points[-1].field_name,
-            "points": [{"assertion_id": point.assertion_id, "evidence_id": point.evidence_id,
-                        "document_id": point.document_id, "sequence": point.sequence, "value": point.value,
-                        "period_start": _iso(point.period_start), "period_end": _iso(point.period_end),
-                        "made_at": _iso(point.made_at)} for point in points],
-            "runs": runs,
+            "field_name": points[-1].field_name, "points": listed, "runs": runs_of(listed),
         })
     return found
 

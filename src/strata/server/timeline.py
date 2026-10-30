@@ -14,7 +14,7 @@ timeline() gives GET /api/projects/{pid}/timeline everything the Timeline tab dr
   - records (squares) in the What lane: each package's earliest signed contract (sql/timeline/signings.sql,
     which reads the award notice when no awards dataset covers the year, as strata.gold.package does). Above
     timeline.what_lane_group_above contracts (config/thresholds.toml), a year with two or more becomes one group.
-  - bands: the ISRs' runs of equal ratings of progress towards the PDO, from get_disagreements' trajectories.
+  - bands: the ISRs' runs of equal ratings of progress towards the PDO, from series() (ticket 142).
   - disagreements: one dashed line for each of get_disagreements' groups (ticket 136), the pairs about one fact
     that share a report, from those of its rows whose two sides are both reports on the chart. The line joins the
     group's one report (its anchor) to the nearest of the others and names them all (group), so the PAD against
@@ -24,7 +24,9 @@ timeline() gives GET /api/projects/{pid}/timeline everything the Timeline tab dr
   contract record, an award notice), which no dashed line can join, listed under the chart (ticket 132).
 - table: the same items with every contract on its own row and every pair of reports that disagree on its own
   row, for "Show the table".
-- ratings: the series the bands draw, with its first and last ratings and which way it moved.
+- ratings: the series the bands draw, with its first and last ratings, which way it moved, the ISR its last rating
+  comes from and the table it was read from. The bands and the title's rating clause are built from it in one place
+  (_bands), so the title's last rating is the last band's, and the band row ends at the ISR the title names.
 - finding and alt: the chart's title and its alt text as segments, written from copy templates
   (timeline_copy.json, which web/lint/server-copy.ts writes from web/src/copy.ts) and the values above, with
   each count a number segment the page writes through Num. The page computes no number.
@@ -61,6 +63,7 @@ from strata.tools.check_plan import RECORD_WORDS
 from strata.tools.get_disagreements import lean, written
 from strata.tools.get_disagreements import reads as disagreement_reads
 from strata.tools.get_disagreements import replaced as replaced_disagreement
+from strata.tools.get_disagreements import runs_of
 from strata.tools.withheld import WITHHELD, withheld_in
 
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
@@ -256,25 +259,81 @@ def _grouped(records: list[dict], project_id: str, above: int) -> list[dict]:
 
 # ── The ratings and the disagreements ─────────────────────────────────────
 
-def _bands(trajectory: dict, project_id: str, scale: list[str]) -> dict:
-    points = trajectory["points"]
+# Where a series of ISR ratings was read: the assertions get_disagreements gives, or each ISR's own ratings table.
+ASSERTIONS, ISR_RATINGS = "strata.gold.assertion", "strata.silver.isr_ratings"
+
+
+def _table_points(engine: Engine, project_id: str, as_of: dt.date, attribute: str) -> tuple[list[dict], str | None]:
+    """The ISRs' ratings of the attribute as each ISR's own ratings table printed them (sql/timeline/isr_ratings.sql),
+    oldest first, with the field name they were printed under. A rating of "--" or one off the scale is no point."""
+    ladder = load_ladder()
+    names = ladder.attribute(attribute).names
+    points, field_name = [], None
+    for row in _rows(engine, "isr_ratings", project_id=project_id, as_of=as_of, language=LANGUAGE):
+        value = ladder.rating(attribute, row["current_rating"]) if row["rating_name"] in names else None
+        if value is not None:
+            field_name = row["rating_name"]
+            points.append({"document_id": str(row["document_id"]), "sequence": row["sequence"], "value": value,
+                           "made_at": _iso(row["isr_date"])})
+    return points, field_name
+
+
+def _fullness(points: list[dict]) -> tuple:
+    """How far a series reaches: its last ISR's date, then that ISR's number, then how many ISRs it holds."""
+    return (points[-1]["made_at"], points[-1]["sequence"], len(points)) if points else ("", -1, 0)
+
+
+def series(engine: Engine, project_id: str, as_of: dt.date, found: dict, attribute: str = BANDED) -> dict | None:
+    """The one series of the ISRs' ratings of an attribute that the band row, the title's rating clause, the alt text,
+    the ISR marks and a band's evidence view all read (ticket 142), or None when it holds fewer than two ratings.
+
+    Two sources hold the series: get_disagreements' trajectory (found), from the assertions, and each ISR's own ratings
+    table (strata.silver.isr_ratings), from which the assertions pass makes them. The pass makes no assertion of a
+    rating whose page has no passage to cite, so on October 30, 2026 P161305's assertions stopped at ISR 12 while the
+    table and the Summary held ISR 13. The series is the fuller of the two: the one whose last ISR is later, then the
+    one with more ISRs, and the assertions on a tie; source names the table it came from. The band row names each ISR
+    by its number, so an ISR whose number Strata could not read is left out of both. Its runs come from the function
+    the tool's trajectories use (get_disagreements.runs_of)."""
+    trajectory = next((one for one in found.get("trajectories") or []
+                       if one["attribute"] == attribute and one["evidence_tier"] == BANDED_TIER
+                       and one["subject_kind"] == "project"), None)
+    table, printed = _table_points(engine, project_id, as_of, attribute)
+    held = {ASSERTIONS: [{key: point[key] for key in ("document_id", "sequence", "value", "made_at")}
+                         for point in (trajectory or {}).get("points") or []],
+            ISR_RATINGS: table}
+    held = {source: [point for point in points if point["sequence"] is not None] for source, points in held.items()}
+    source = max(held, key=lambda name: _fullness(held[name]))  # the assertions come first, so a tie keeps them
+    points = held[source]
+    if len(points) < 2:
+        return None
+    field_name = trajectory["field_name"] if source == ASSERTIONS else printed
+    return {"attribute": attribute, "field_name": field_name, "source": source, "points": points,
+            "runs": runs_of(points)}
+
+
+def _bands(found: dict, project_id: str, scale: list[str]) -> dict:
+    """The band row and the ratings the title and the alt text state, from one series: one band per run of equal
+    ratings, each from its first ISR to the next run's first ISR, and the last to its last ISR. The first and last
+    ratings and the ISR the last comes from are read off the band row itself, so the title cannot disagree with it."""
+    points, runs = found["points"], found["runs"]
     dates = {point["sequence"]: point["made_at"] for point in points}
-    runs = trajectory["runs"]
     bands = []
     for at, run in enumerate(runs):
         end = runs[at + 1]["first_made_at"] if at + 1 < len(runs) else run["last_made_at"]
-        key = f"{RATINGS}:{project_id}:{trajectory['attribute']}:{run['first_sequence']}-{run['last_sequence']}"
+        key = f"{RATINGS}:{project_id}:{found['attribute']}:{run['first_sequence']}-{run['last_sequence']}"
         bands.append({"id": key, "kind": "band", "lane": "how", "date": run["first_made_at"], "end": end,
                       "public_from": dates[run["last_sequence"]], "evidence_id": key, "rating": run["value"],
                       "first": run["first_sequence"], "last": run["last_sequence"], "count": run["count"]})
-    first, last = points[0]["value"], points[-1]["value"]
+    first, last = bands[0]["rating"], bands[-1]["rating"]
     rank = {rating: at for at, rating in enumerate(scale)}
     direction = "same" if first == last else "fell" if rank.get(last, 0) > rank.get(first, 0) else "rose"
-    return {"attribute": trajectory["attribute"], "field_name": trajectory["field_name"], "bands": bands,
+    return {"attribute": found["attribute"], "field_name": found["field_name"], "source": found["source"],
+            "bands": bands,
             "points": [{"sequence": point["sequence"], "date": point["made_at"], "rating": point["value"],
                         "document_id": point["document_id"], "evidence_id": f"{DOC}:{point['document_id']}"}
                        for point in points],
-            "first_rating": first, "last_rating": last, "direction": direction, "isr_count": len(points)}
+            "first_rating": first, "last_rating": last, "last_sequence": bands[-1]["last"],
+            "last_date": bands[-1]["end"], "direction": direction, "isr_count": len(points)}
 
 
 def _kinds(documents: list[dict]) -> list[dict]:
@@ -414,12 +473,16 @@ def _reports(kinds: list[dict]) -> list[dict]:
 
 
 def _ratings_clause(ratings: dict | None) -> list[dict] | None:
+    """The title's rating clause, which names the ISR its last rating comes from ("last rated in ISR 13"). An ISR's
+    number is its name, not a count, so it is text, as in "ISR 7"."""
     if ratings is None:
         return None
     finding = words()["finding"]
+    sequence = str(ratings["last_sequence"])
     if ratings["direction"] == "same":
-        return fill(finding["same"], {"rating": ratings["first_rating"]})
-    return fill(finding[ratings["direction"]], {"first": ratings["first_rating"], "last": ratings["last_rating"]})
+        return fill(finding["same"], {"rating": ratings["first_rating"], "sequence": sequence})
+    return fill(finding[ratings["direction"]], {"first": ratings["first_rating"], "last": ratings["last_rating"],
+                                                "sequence": sequence})
 
 
 def _lead(disagreements: list[dict]) -> list[dict]:
@@ -536,6 +599,7 @@ def reads(project_id: str, as_of: dt.date, view: str = "staff") -> list[tuple[st
     return [(_query("project"), each),
             *disagreement_reads(pid, as_of, view),
             (_query("reports"), {**each, "language": LANGUAGE}),
+            (_query("isr_ratings"), {**each, "language": LANGUAGE}),
             *[(_query("events"), {**each, "words": words}) for kind in EVENTS for words, _, _ in EVENTS[kind]],
             (_query("signings"), {**each, **SIGNINGS}),
             project_contracts.statement(pid, as_of),
@@ -561,11 +625,9 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         status = "hidden" if (found.get("abstention") or {}).get("reason") == WITHHELD else "ok"
     except Exception:  # the tool did not answer: the marks still draw, with no dashed lines and no bands
         found, status = {"rows": [], "trajectories": [], "rejected": {"count": 0}}, "failed"
-    trajectory = next((one for one in found.get("trajectories") or []
-                       if one["attribute"] == BANDED and one["evidence_tier"] == BANDED_TIER
-                       and one["subject_kind"] == "project"), None)
     scale = list(ladder.scales[ladder.attribute(BANDED).scale].ratings)
-    ratings = _bands(trajectory, pid, scale) if trajectory else None
+    held = series(engine, pid, as_of, found) if status != "failed" else None
+    ratings = _bands(held, pid, scale) if held else None
     rated = {point["document_id"]: point["rating"] for point in ratings["points"]} if ratings else {}
 
     rows = [row for row in _rows(engine, "reports", project_id=pid, as_of=as_of, language=LANGUAGE)
@@ -688,17 +750,19 @@ def read_ratings(engine: Engine, key: str, as_of: dt.date) -> dict | None:
         return None
     pid, attribute, span = parts
     first, last = (int(number) for number in span.split("-"))
-    trajectory = next((one for one in _tool(engine, pid, as_of).get("trajectories") or []
-                       if one["attribute"] == attribute and one["evidence_tier"] == BANDED_TIER), None)
-    if trajectory is None:
+    if attribute not in load_ladder().attributes:
         return None
-    run = next((one for one in trajectory["runs"] if (one["first_sequence"], one["last_sequence"]) == (first, last)), None)
+    # The series the timeline's band row draws, so every band opens its own run (ticket 142).
+    found = series(engine, pid, as_of, _tool(engine, pid, as_of), attribute)
+    if found is None:
+        return None
+    run = next((one for one in found["runs"] if (one["first_sequence"], one["last_sequence"]) == (first, last)), None)
     if run is None:
         return None
-    points = [point for point in trajectory["points"] if first <= point["sequence"] <= last]
+    points = [point for point in found["points"] if first <= point["sequence"] <= last]
     return {"kind": "ratings", "stratum": "How", "short_name": None, "row": {
         "evidence_id": f"{RATINGS}:{key}", "public_from": points[-1]["made_at"], "project_id": pid,
-        "attribute": attribute, "field_name": trajectory["field_name"], "rating": run["value"], "first": first,
+        "attribute": attribute, "field_name": found["field_name"], "rating": run["value"], "first": first,
         "last": last, "count": run["count"],
         "rows": [{"sequence": point["sequence"], "date": point["made_at"], "rating": point["value"],
                   "evidence_id": f"{DOC}:{point['document_id']}"} for point in points],

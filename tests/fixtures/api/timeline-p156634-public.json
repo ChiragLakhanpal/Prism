@@ -3770,6 +3770,7 @@
   "ratings": {
     "attribute": "pdo_progress",
     "field_name": "Progress towards achievement of PDO",
+    "source": "strata.gold.assertion",
     "bands": [
       {
         "id": "ratings:P156634:pdo_progress:1-1",
@@ -3961,6 +3962,8 @@
     ],
     "first_rating": "Satisfactory",
     "last_rating": "Moderately Satisfactory",
+    "last_sequence": 19,
+    "last_date": "2026-06-30",
     "direction": "fell",
     "isr_count": 19
   },
@@ -4060,6 +4063,12 @@
     },
     {
       "text": "Moderately Satisfactory"
+    },
+    {
+      "text": ", last rated in ISR "
+    },
+    {
+      "text": "19"
     },
     {
       "text": "."
