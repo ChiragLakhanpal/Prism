@@ -132,8 +132,8 @@ def lessons_answer(result, question) -> dict[str, list]:
 def past_range(result, question) -> dict[str, list]:
     """find_comparables' answer: the quartiles and 8-in-10 point in months, read from the summary record
     the agent cites them by, the packages still open, the canceled ones it left out, the packages
-    signed within the plan's months, and the numbers each "in 10" phrase states, with the words that go
-    with the plan's. A package with no plan row (ticket 15) has no plan, so its question asks nothing of one.
+    signed within the plan's months, the numbers each "in 10" phrase states, with the words that go
+    with the plan's, and how the period of notices ends (criteria.period). A package with no plan row (ticket 15) has no plan, so its question asks nothing of one.
     A question about the quantile dots (ticket 15) asks only how many there are and which packages the last
     one stands for. With too few comparables for a range (ticket 33), it gives the abstention's reason and how
     many comparables there were instead; for a STEP reference it does not know, counts is null, so none."""
@@ -151,6 +151,8 @@ def past_range(result, question) -> dict[str, list]:
         "canceled_left_out": sorted(reference for entry in result["coverage"]["not_used"]
                                     if entry["reason"] == "canceled" for reference in entry["step_references"]),
         "eight_in_ten": result["summary"]["frequencies"]["q80"],
+        # How the period of notices ends (ticket 137): on the plan's date, the as-of date, or a date the call gave.
+        "period": [result["criteria"]["period"]],
     }
     if result["plan"] is not None:
         plan_months = result["plan"]["months"]

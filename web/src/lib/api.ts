@@ -627,6 +627,19 @@ export type QuantileDot = {
   high_months: number;
 };
 
+// How find_comparables' period of notices ends (src/strata/tools/find_comparables.py, period; ticket 137): on the plan's
+// date, the as-of date, a date the call gave, or the as-of date because the plan is older than the period's start. The
+// last two never run forward, so no package can match: the as-of date comes before the awards data, or a date the call
+// gave ends the period before it starts.
+export type ComparablesPeriod =
+  | "plan_date"
+  | "as_of"
+  | "asked"
+  | "plan_before_data"
+  | "plan_before_start"
+  | "before_data"
+  | "ends_before_start";
+
 export type ComparablesResult = {
   tool: "find_comparables";
   as_of: string;
@@ -652,6 +665,7 @@ export type ComparablesResult = {
     size_from_usd: number | null;
     size_to_usd: number | null;
     from_package: string[];
+    period: ComparablesPeriod;
   } | null;
   counts: { comparables: number; signed: number; still_open: number; canceled: number; canceled_as_still_open: boolean } | null;
   past_range: { q25: number | null; q50: number | null; q75: number | null; q80: number | null } | null;

@@ -161,6 +161,9 @@ questions:
       eight_in_ten: [8, 10]
       plan_in_ten: [1, 10]
       plan_in_ten_words: [fewer_than]
+      # How the period of notices ends (ticket 137): on the plan's date, October 9, 2026, after the awards data's
+      # start, July 1, 2019.
+      period: [plan_date]
     ground_truth: tests/ground_truth/past_range_coverage_ke_works_rfb.sql
     source: >-
       The comparables and their Kaplan-Meier quantiles in tests/ground_truth/values.toml ([[comparable]]
@@ -191,6 +194,8 @@ questions:
                    KE-UASIN GISHU COUNTY-571338-CW-RFB]
       canceled_left_out: [KE-KIMAWASCO-149448-CW-RFB, KE-KIMAWASCO-157517-CW-RFB, KE-KIMAWASCO-377450-CW-RFB]
       eight_in_ten: [8, 10]
+      # With no plan row, the period of notices ends on the as-of date (ticket 137).
+      period: [as_of]
     ground_truth: tests/ground_truth/past_range_coverage_ke_works_rfb.sql
     source: >-
       The same 49 comparables as find-comparables-ke-nwwda-541055, since no Kenya works notice under

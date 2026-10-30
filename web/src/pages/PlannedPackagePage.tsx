@@ -52,6 +52,7 @@ import { usePlanDateChoice } from "../lib/estimates";
 import { useLoad } from "../lib/load";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatYear } from "../lib/format";
+import { periodRuns } from "../lib/period";
 import {
   comparablesPath,
   enterBoxMode,
@@ -1012,9 +1013,12 @@ function CriteriaLine({ result }: { result: ComparablesResult }) {
   const s = words.section;
   const parts = [criteria.category, criteria.method, criteria.market_approach, criteria.review_type ? s.review(criteria.review_type) : null, criteria.country_name]
     .filter((part): part is string => Boolean(part));
-  const from = formatYear(Number(criteria.notice_from.slice(0, 4)));
-  const to = formatYear(Number(criteria.notice_to.slice(0, 4)));
-  parts.push(s.notices(from, to));
+  // A period that would end before it starts names no years (ticket 137): section 1's sentence says why instead.
+  if (periodRuns(criteria)) {
+    const from = formatYear(Number(criteria.notice_from.slice(0, 4)));
+    const to = formatYear(Number(criteria.notice_to.slice(0, 4)));
+    parts.push(s.notices(from, to));
+  }
   return (
     <p className="text-small text-ink-muted" data-criteria-line>
       <Fill template={s.criteria} slots={{ list: parts.join(copy.list.comma) }} />

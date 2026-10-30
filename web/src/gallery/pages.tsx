@@ -178,6 +178,7 @@ function sampleResult(signed: readonly number[], open: readonly number[], option
       size_from_usd: null,
       size_to_usd: null,
       from_package: ["method", "category", "country", "notice_to"],
+      period: "plan_date",
     },
     counts: { comparables: total, signed: done.length, still_open: open.length, canceled: 0, canceled_as_still_open: false },
     past_range: options.abstain ? null : { q25: at(1 / 4), q50: at(1 / 2), q75: at(3 / 4), q80: at(4 / 5) },

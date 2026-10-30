@@ -1,0 +1,32 @@
+{
+  "as_of": "2026-10-30",
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:30152361/IN-RRSMP-7516-CW-RFB",
+    "public_from": "2018-06-20",
+    "step_reference": "IN-RRSMP-7516-CW-RFB",
+    "reference_as_read": false,
+    "description": null,
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "country_code": "IN",
+    "country_name": "India",
+    "section": "WORKS",
+    "category": "Works",
+    "method": "Request for Bids",
+    "market_approach": null,
+    "review_type": null,
+    "estimated_amount_usd": null,
+    "process_status": null,
+    "planned_notice_on": null,
+    "planned_signing_on": null,
+    "plan": {
+      "document_id": "30152361",
+      "implementing_agency": null,
+      "agency_id": "",
+      "plan_date": "2018-06-20",
+      "disclosed_on": "2018-06-20",
+      "pdf_page": 1
+    },
+    "display_name": "Rajasthan Road Sector Modernization"
+  }
+}

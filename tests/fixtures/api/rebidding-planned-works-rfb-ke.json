@@ -185,6 +185,7 @@
     "size_from_usd": null,
     "size_to_usd": null,
     "from_package": [],
+    "period": "as_of",
     "country_name": "Kenya"
   },
   "m": 52,

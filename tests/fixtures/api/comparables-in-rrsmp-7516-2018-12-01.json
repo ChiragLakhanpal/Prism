@@ -1,0 +1,126 @@
+{
+  "tool": "find_comparables",
+  "as_of": "2018-12-01",
+  "view": "staff",
+  "rows": [],
+  "coverage": {
+    "matched": 0,
+    "used": 0,
+    "not_used": []
+  },
+  "package": {
+    "evidence_id": "strata.silver.plan_rows:30152361/IN-RRSMP-7516-CW-RFB",
+    "public_from": "2018-06-20",
+    "step_reference": "IN-RRSMP-7516-CW-RFB",
+    "reference_as_read": false,
+    "description": null,
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "country_code": "IN",
+    "country_name": "India",
+    "section": "WORKS",
+    "category": "Works",
+    "method": "Request for Bids",
+    "market_approach": null,
+    "review_type": null,
+    "estimated_amount_usd": null,
+    "process_status": null,
+    "planned_notice_on": null,
+    "planned_signing_on": null,
+    "plan": {
+      "document_id": "30152361",
+      "implementing_agency": null,
+      "agency_id": "",
+      "plan_date": "2018-06-20",
+      "disclosed_on": "2018-06-20",
+      "pdf_page": 1
+    }
+  },
+  "criteria": {
+    "method": "Request for Bids",
+    "category": "Works",
+    "market_approach": null,
+    "review_type": null,
+    "country": "IN",
+    "notice_from": "2019-07-01",
+    "notice_to": "2018-12-01",
+    "size_from_usd": null,
+    "size_to_usd": null,
+    "from_package": [
+      "method",
+      "category",
+      "country"
+    ],
+    "period": "before_data",
+    "country_name": "India"
+  },
+  "counts": {
+    "comparables": 0,
+    "signed": 0,
+    "still_open": 0,
+    "canceled": 0,
+    "canceled_as_still_open": false
+  },
+  "past_range": null,
+  "plan": null,
+  "frequencies": null,
+  "quantile_dots": null,
+  "thresholds": {
+    "min_comparables": 20,
+    "quantile_dots_above": 60,
+    "quantile_dots": 20,
+    "max_plan_months": 60,
+    "canceled_as_still_open": false
+  },
+  "sources": [
+    {
+      "key": "notices",
+      "dataset_name": "Procurement Notices"
+    },
+    {
+      "key": "awards",
+      "dataset_name": "Contract Awards in Investment Project Financing (Since FY 2020)"
+    },
+    {
+      "key": "documents",
+      "dataset_name": "Documents & Reports: Documents API"
+    },
+    {
+      "key": "projects",
+      "dataset_name": "World Bank Projects & Operations"
+    }
+  ],
+  "records_through": "2018-11-19",
+  "abstention": {
+    "reason": "no_comparables",
+    "matched": 0
+  },
+  "summary": {
+    "evidence_id": "strata.tools.find_comparables:IN-RRSMP-7516-CW-RFB@2018-12-01",
+    "public_from": "2018-12-01",
+    "source": {
+      "tool": "find_comparables",
+      "sources": [
+        "notices",
+        "awards",
+        "documents",
+        "projects"
+      ]
+    },
+    "past_range": null,
+    "plan": null,
+    "frequencies": null,
+    "counts": {
+      "comparables": 0,
+      "signed": 0,
+      "still_open": 0,
+      "canceled": 0,
+      "canceled_as_still_open": false
+    },
+    "coverage": {
+      "matched": 0,
+      "used": 0,
+      "not_used": []
+    }
+  }
+}

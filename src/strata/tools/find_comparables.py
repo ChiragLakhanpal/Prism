@@ -14,6 +14,11 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
   from period_from to the plan's date. Market approach, review type and size band stay open unless
   given, because a package still open has no review type or signed amount in any record. "any"
   leaves a criterion open. A criterion matches whatever its case, since the agent writes it.
+- The period never ends before it starts (ticket 137). A plan older than its start, such as a plan of 2018
+  against awards data that starts on July 1, 2019, runs it to the as-of date instead. A period that still
+  ends before it starts, as when the as-of date comes before the awards data, matches no package, so the
+  tool abstains (no_comparables). period() is the one place this is decided, and criteria.period names
+  the case, so the screen's note says why instead of naming a range.
 - A package with a Method in no_notice_methods, or a Market Approach that starts with a word in
   no_notice_market_approaches, has no specific procurement notice, so the tool abstains
   (no_public_notice).
@@ -171,14 +176,46 @@ def _open(value: str | None) -> str | None:
     return None if value is None or value.strip().lower() == ANY else value.strip()
 
 
+# How the period of notices ends, as criteria.period names it; section 1's note on what "comparable" meant picks its
+# words for each (web/src/lib/period.ts). A period that runs forward ends on the plan's date
+# (plan_date), on the as-of date for a package with no plan row (as_of), or on the date the call gave (asked). A plan
+# older than the period's start would end it before it starts, so the period runs to the as-of date instead:
+# plan_before_data when it starts with the awards data (past_range.period_from), plan_before_start when the call gave
+# the start. Ticket 137.
+FORWARD = ("plan_date", "as_of", "asked", "plan_before_data", "plan_before_start")
+# A period that still ends before it starts matches no package: before_data when the as-of date comes before the
+# awards data, ends_before_start when a date the call gave makes it so.
+EMPTY = ("before_data", "ends_before_start")
+
+
+def period(plan_date: dt.date | None, as_of: dt.date, period_from: dt.date, notice_from: dt.date | None = None,
+           notice_to: dt.date | None = None) -> tuple[dt.date, dt.date, str]:
+    """The period of notices the comparables come from, as its start, its end and the case of FORWARD or EMPTY it is:
+    from the date the call gave or period_from, to the date the call gave, or else the plan's date (none for a package
+    with no plan row), or the as-of date when there is no plan's date or it falls before the start."""
+    start = notice_from or period_from
+    if notice_to is not None:
+        end, case = notice_to, "asked"
+    elif plan_date is None:
+        end, case = as_of, "as_of"
+    elif plan_date >= start:
+        end, case = plan_date, "plan_date"
+    else:
+        end, case = as_of, "plan_before_start" if notice_from else "plan_before_data"
+    if end < start:
+        case = "ends_before_start" if notice_from or notice_to else "before_data"
+    return start, end, case
+
+
 def _criteria(package: dict | None, limits: Limits, asked: dict, as_of: dt.date) -> dict:
     """The criteria the call gave, with the rest from the package's plan row. A package with no plan row yet
     gives none: its criteria stay open unless the call gives them, and its notices run to the as-of date."""
+    notice_from, notice_to, case = period(_date(package["plan"]["plan_date"]) if package else None, as_of,
+                                          limits.period_from, asked.get("notice_from"), asked.get("notice_to"))
     if package is None:
-        defaults = {"notice_from": limits.period_from, "notice_to": as_of}
+        defaults = {}
     else:
-        defaults = {"method": package["method"], "category": package["category"], "country": package["country_code"],
-                    "notice_from": limits.period_from, "notice_to": _date(package["plan"]["plan_date"])}
+        defaults = {"method": package["method"], "category": package["category"], "country": package["country_code"]}
     criteria, from_package = {}, []
     for name in ("method", "category", "market_approach", "review_type", "country"):
         given = asked.get(name)
@@ -190,13 +227,13 @@ def _criteria(package: dict | None, limits: Limits, asked: dict, as_of: dt.date)
                 from_package.append(name)
         else:
             criteria[name] = _open(given)
-    for name in ("notice_from", "notice_to"):
-        criteria[name] = asked.get(name) or defaults[name]
-        if asked.get(name) is None and name == "notice_to" and package is not None:
-            from_package.append(name)
+    criteria["notice_from"], criteria["notice_to"] = notice_from, notice_to
+    if case == "plan_date":
+        from_package.append("notice_to")
     criteria["size_from_usd"] = asked.get("size_from_usd")
     criteria["size_to_usd"] = asked.get("size_to_usd")
     criteria["from_package"] = from_package
+    criteria["period"] = case
     return criteria
 
 
