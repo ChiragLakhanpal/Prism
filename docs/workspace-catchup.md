@@ -4656,3 +4656,25 @@ It worked when all of these hold, at 1440 and 390 px:
 - "Show the table" lists every pair.
 
 Record the deploy's exit code, the commit the App runs, the pills word for word, the pair count and the time here under ticket 136. This is criterion 3's live proof.
+
+## Ticket 134, step 1 of 2: redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit de8e6a06. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after de8e6a06. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's server and web code and in `config/thresholds.toml` (`[ingestion] paused_since = "2026-10-29"`, which the App reads on each request). The new `src/strata/server/sql/projects/plans_read.sql` reads `strata.silver.plan_versions` and `strata.silver.plan_rows` as they stand. No table, job, tool description or agent prompt changed, so no bundle deploy and no agent sync is needed. If a later merge's redeploy already runs de8e6a06 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names de8e6a06 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 134.
+
+## Ticket 134, step 2 of 2: the three honest sentences on the App (criterion 3)
+
+Run after step 1, read-only. The builder named the Free Edition App (https://strata-7474658003099155.aws.databricksapps.com), which is history since October 26. Use the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, signed in as a viewer with a role. Open each page in a fresh browser context, so no answer kept from before the redeploy is shown.
+
+1. Open `/projects/P156634/procurement`. It worked if the Northern Water Works Development Agency's block reads "The only plan I have read from this agency is the plan of October 9, 2026, so I can't compare it with an earlier version. See the plans I haven't read", and the link opens `/projects/P156634/documents`. This proves part (a). If the date differs because the workspace holds a later plan, record the sentence as shown; it must start "The only plan I have read from this agency".
+2. Open `/projects/P127203/procurement`. It worked if Packages reads "I read the plan of September 17, 2019 and found no activities in it." and the page does not show "I haven't read a Procurement Plan for this project yet". This proves part (b).
+3. Open `/data`. It worked if the project records row's Fresh cell reads "Oct 26 · daily" and then "Refresh paused since Oct 29", with no "days late" anywhere on the page, and What holds it back reads "Refresh paused since October 29; project records as of October 26." wherever the late sentence used to appear. This proves part (c).
+
+While on P156634's and P127203's Procurement tabs, also note any agency that says "I haven't read the plan of ..., the version before the latest". The verifier flagged that a previous plan that was read but held no rows still gets that sentence (review follow-up 1, outside this ticket's criteria); a note here helps the follow-up ticket.
+
+Record the three sentences word for word, the link's target, the commit the App runs and the time here under ticket 134. This is criterion 3's live proof.
