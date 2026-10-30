@@ -1070,6 +1070,19 @@ test("a package with no public notice quotes its Market Approach and offers the 
   );
 });
 
+// Ticket 131: a reference that breaks STEP's form, which the plan reader kept as it read it, says so on its ID line; the
+// demo package's reference, which follows STEP's form, says nothing.
+test("a reference the plan reader kept as it read it says so on the ID line, and a whole one does not", async ({ page }) => {
+  await openPackage(page);
+  await expect(page.locator("[data-page-head] [data-id-line]")).toContainText(REF);
+  await expect(page.locator("[data-page-head] [data-id-line]")).not.toContainText("as I read it from the plan");
+
+  const flagged = JSON.parse(await recorded("package-ke-nwwda-541055.json"));
+  flagged.package.reference_as_read = true;
+  await openPackage(page, { pkg: { body: JSON.stringify(flagged) } });
+  await expect(page.locator("[data-page-head] [data-id-line]")).toContainText("as I read it from the plan");
+});
+
 test("when the whole page fails, the reference is the heading and is not repeated under it", async ({ page }) => {
   await openPackage(page, { pkg: { status: 503, body: SERVICE_DOWN } });
   await expect(page.locator("main h1")).toHaveText(REF);

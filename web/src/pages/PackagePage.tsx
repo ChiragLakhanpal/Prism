@@ -115,6 +115,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         id={stepRef}
         loading
         narrowLines={3}
+        narrowestLines={4}
         purpose={copy.pages.package.purpose}
         facts={{ line: null, show: words.factsShow, onShow: () => undefined }}
       />
@@ -173,7 +174,13 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         title={facts.description ?? mono(facts.step_reference)}
         id={facts.step_reference}
         // Ticket 112: the copy key copies the STEP reference. The 24 px key keeps the 20 px line's height.
-        idAction={<CopyKey text={facts.step_reference} what={copy.copyKey.reference} className="-my-0.5 align-top" />}
+        idAction={
+          <>
+            <CopyKey text={facts.step_reference} what={copy.copyKey.reference} className="-my-0.5 align-top" />
+            {/* A reference that breaks STEP's form, kept as the plan reader read it (ticket 131). */}
+            {facts.reference_as_read && <span className="ml-2">{words.referenceAsRead}</span>}
+          </>
+        }
         purpose={copy.pages.package.purpose}
         facts={{ line: factsLine(facts), show: words.factsShow, onShow: planRowOf(facts), expanded: planRowOpen }}
       />

@@ -8,7 +8,7 @@ import { expect, recorded, test } from "./mocked";
 
 type Answer = { status?: number; body: string };
 const REBIDDING = "lesson-e903b07ad1";
-const DRAFT_TITLE = "Suggested PPSD risk rows for Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply";
+const DRAFT_TITLE = "Suggested PPSD risk rows for Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply";
 
 async function serve(page: Page, answers: Record<string, Answer>) {
   const asked: { call: string; search: string; body: unknown }[] = [];

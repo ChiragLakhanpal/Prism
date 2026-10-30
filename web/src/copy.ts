@@ -2810,6 +2810,9 @@ export const copy = {
     // "Request for Bids · Open - National", as STEP gives the two values. The dot is tied to the
     // Method with a no-break space, so a line never starts with it.
     methodDot: "\u00a0·",
+    // Under a reference that breaks STEP's form, which the plan reader kept as it read it, since no one look-alike
+    // swap and no notice or plan version settled it (ticket 131).
+    referenceAsRead: "As I read it from the plan",
     noSignals: "No signals.",
     foundDefinition:
       "Needs a look and Watch are signals. A signal is a fixed check on public records. It gives a reason to look, " +
@@ -3955,6 +3958,8 @@ export const copy = {
     },
     // The "In the plan" value, a link back to the plan check with this row in view.
     inPlan: "{agency} plan of {date}",
+    // Beside a reference that breaks STEP's form, kept as the plan reader read it (ticket 131), on the ID line.
+    referenceAsRead: "as I read it from the plan",
     missing: "Not in the plan row",
     loading: "Loading this package.",
     error: "I couldn't load this package.",

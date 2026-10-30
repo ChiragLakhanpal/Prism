@@ -85,7 +85,11 @@ def read_plan_row(engine, key: str, as_of: dt.date) -> dict | None:
         return None
     row = found[0]
     amount = row["estimated_amount_usd"]
-    fields = [{"key": "description", "value": row["description"], "kind": "text"},
+    # The page's words (ticket 131): the reference as read when the repair changed it, and the description as read.
+    as_read = row["activity_reference_no_as_read"]
+    fields = [*([{"key": "activity_reference_no", "value": as_read, "kind": "text"}]
+                if as_read and as_read != reference else []),
+              {"key": "description", "value": row["description"], "kind": "text"},
               {"key": "method", "value": row["method"], "kind": "text"},
               {"key": "market_approach", "value": row["market_approach"], "kind": "text"},
               {"key": "review_type", "value": row["review_type"], "kind": "text"},

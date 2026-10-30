@@ -938,13 +938,13 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   await expect(page).toHaveURL(/packages_page=2$/);
   await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing 21 to 40 of 46 packages.");
 
-  // The description reads "Exploratory Bo reholes" in the PDF, and the search still finds "boreholes".
+  // The PDF splits "Bo reholes", which the plan reader joins (ticket 131), and the search finds "boreholes".
   const field = page.getByRole("searchbox", { name: "Search packages" });
   await field.fill("boreholes");
   await expect(page).toHaveURL(/packages_q=boreholes$/);
   const found = page.locator("[data-packages=ready] [data-table-view=table] tbody tr");
   await expect(found).toHaveCount(5);
-  await expect(found.nth(2)).toContainText("Equipping of Exploratory Bo reholes Project-Lot 1");
+  await expect(found.nth(2)).toContainText("Equipping of Exploratory Boreholes Project-Lot 1");
   await field.fill("atlantis");
   await expect(page.locator("[data-packages] [data-empty-state]")).toContainText("I found no packages that match your search.");
   expect(unrecorded).toEqual([]);

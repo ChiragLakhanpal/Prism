@@ -1,0 +1,29 @@
+# The STEP reference registry (ticket 131; CLAUDE.md rules 4 and 9): the parts STEP writes an Activity Reference
+# No. with, and the characters a PDF's text can show one for another. strata.config.load_references() reads it, and
+# two places use it: strata.lakehouse.clean parses a reference into its parts (KE-NWWDA-541055-CW-RFB is Kenya, the
+# Northern Water Works Development Agency, activity 541055, Works, Request for Bids), and the plan reader's repair
+# (src/strata/reader/repair.py) checks each reference a plan row gives against those parts.
+#
+# A reference in STEP's form is a country code of two letters, the agency's letters (one part or more, as in
+# KE-SDOR-KIHBT-563865-CW-RFB), the activity's number, a kind and a method, and sometimes one more part after
+# them (KE-WSTF-430946-GO-RFB-NCWSC02). A reference a plan row gives that breaks this form, such as
+# KE-NWWDA-193461-90-RF8, is repaired only when one swap of a look-alike pair makes it whole and a notice or a
+# plan version of the project carries the repaired reference; otherwise the row keeps it as read and the page says
+# so. References in an older form, such as NWWDA-WSDP-03-2019-2020, are not in STEP's form and are kept as written.
+#
+# methods      the method codes STEP writes as a reference's method part, as the fixture's notices, awards and plans
+#              write them (data/fixture/recorded). FBS is STEP's code for Fixed Budget Selection, which no recorded
+#              reference uses yet.
+# look_alikes  pairs of characters a PDF's text or the layout parser can give one for the other: a digit and the
+#              letter it looks like. The repair tries each swap on its own, one character at a time.
+# [kinds]      each kind code a reference carries, with STEP's procurement category for it
+
+methods = ["RFB", "RFQ", "RFP", "DIR", "QCBS", "QBS", "FBS", "LCS", "CQS", "CDS", "INDV"]
+
+look_alikes = [["0", "O"], ["8", "B"], ["1", "I"], ["5", "S"]]
+
+[kinds]
+CW = "Works"
+GO = "Goods"
+CS = "Consultant Services"
+NC = "Non-consulting Services"

@@ -1,6 +1,9 @@
 -- rebidding_risk: one activity's row in one Procurement Plan version, public on or before the as-of date (ADR
--- 0002), in STEP's columns and values word for word, for the evidence drawer's view of a canceled plan row.
-SELECT r.document_id, r.activity_reference_no, r.description, r.review_type, r.method, r.market_approach,
+-- 0002), in STEP's columns and values word for word, for the evidence drawer's view of a canceled plan row. The
+-- drawer shows the page's words: the reference and description as the plan reader read them, before the repair
+-- joined a split word or swapped a look-alike character (ticket 131); a row written before the repair has none.
+SELECT r.document_id, r.activity_reference_no, r.activity_reference_no_as_read,
+  COALESCE(r.description_as_read, r.description) AS description, r.review_type, r.method, r.market_approach,
   r.estimated_amount_usd, r.process_status, r.pdf_page, v.project_id, v.implementing_agency, v.plan_date,
   v.public_from
 FROM strata.silver.plan_rows AS r

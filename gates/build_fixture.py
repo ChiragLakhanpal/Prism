@@ -23,7 +23,9 @@ It builds four things, with no network:
 - Bronze, silver, gold and the data readiness measures, made by the nightly job's own tasks
   (strata.lakehouse.nightly.run_locally) with the recorded pages in place of the live APIs, so
   the fixture can never drift from the code that makes the real tables. They run after the plan
-  reader, so gold can read the plan rows.
+  reader, so gold can read the plan rows. Then the plan rows are written again from bronze
+  (strata.lakehouse.plans.rewrite), with silver's notices as the repair's dictionary, and gold syncs
+  them (ticket 131).
 - The proposed lessons and the review queue, by the nightly job's propose_lessons task
   (strata.knowledge.lessons.propose) with the batch model's recorded answers, run again once the
   passage reader has read the documents it proposes from (ticket 29).
@@ -70,7 +72,7 @@ from strata.fixture import recorded as fmt
 from strata.knowledge import assertions, links
 from strata.knowledge.lessons import propose
 from strata.knowledge.retrieval import weekly
-from strata.lakehouse import catalog, nightly, pages, passages, plans, readers
+from strata.lakehouse import catalog, gold, nightly, pages, passages, plans, readers
 from strata.lakehouse.catalog import CatalogError
 from strata.lakehouse.engine import DuckDBEngine, EngineError
 from strata.reader.documents import NotFetched
@@ -155,6 +157,12 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
                 nightly.run_locally(engine, run_id=RUN_ID,
                                     fetch=lambda source, _engine: pages.recorded_pages(source, manifest), clock=clock,
                                     readers_for=nightly.no_documents)
+                # The plan rows written again now that silver.notices holds the projects' notices, as on the
+                # workspace, where bronze_to_gold runs before the plan reader: the repair takes the notices as its
+                # dictionary (strata.reader.repair; ticket 131). Gold syncs the rows that changed.
+                for project_id in ((plans_for,) if isinstance(plans_for, str) else plans_for or ()):
+                    plans.rewrite(engine, project_id, thresholds=every)
+                gold.build(engine)
                 passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID, clock=clock)
                 # The nightly job's propose_lessons task again, now that the passages are read (ticket 29):
                 # the batch model's recorded answers, the quote check and the review queue.

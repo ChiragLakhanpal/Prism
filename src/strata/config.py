@@ -31,6 +31,8 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
                      written in, and how Strata writes and checks the four working languages (ticket 42)
 - load_method_names() config/method_names.toml, the method-name registry: the current Procurement
                      Regulations' names and every other name a source writes for one (ticket 42)
+- load_references()  config/references.toml, the STEP reference registry: the kinds and method codes a
+                     reference is made of, and the look-alike pairs the plan reader's repair tries (ticket 131)
 - load_budget()      config/budget.toml, the Azure budget: the free credit, the day it ends and the
                      monthly budget after it, for the daily cost pull and the wizard (ticket 45)
 - load_kpis()        config/kpis.toml, the KPI registry: each KPI the dashboard shows, defined once by
@@ -2695,6 +2697,37 @@ def load_method_names(path: Path = CONFIG_DIR / "method_names.toml") -> MethodNa
         names.append(MethodName(entry.text("written"), language, method, entry.text("market_approach", required=False),
                                 source, entry.integer("pdf_page", required=False), checked is not False))
     return MethodNames(current, tuple(names))
+
+
+# ── The STEP reference registry ──────────────────────────────────────────
+
+@dataclass(frozen=True)
+class References:
+    kinds: dict[str, str]  # each kind code a reference carries, with STEP's procurement category for it
+    methods: tuple[str, ...]  # the method codes STEP writes as a reference's method part
+    look_alikes: tuple[tuple[str, str], ...]  # pairs of characters a PDF's text can give one for the other
+
+
+def load_references(path: Path = CONFIG_DIR / "references.toml") -> References:
+    """The parts STEP writes an Activity Reference No. with, and the look-alike pairs the plan reader's repair tries
+    (ticket 131). Each kind is two capital letters, each method code is capital letters, and each look-alike pair
+    is two different single characters."""
+    data = _read(path)
+    entry = _Entry(path, "the file", data)
+    entry.only({"kinds", "methods", "look_alikes"})
+    kinds = _Entry(path, "kinds", data.get("kinds", {})).table
+    if not kinds or not all(re.fullmatch(r"[A-Z]{2}", code) and isinstance(name, str) and name.strip()
+                            for code, name in kinds.items()):
+        raise ConfigError(f"In {path.name}, [kinds] must give each kind code, two capital letters, its category.")
+    methods = entry.texts("methods")
+    if not methods or not all(re.fullmatch(r"[A-Z]+", code) for code in methods):
+        raise ConfigError(f"In {path.name}, methods must list STEP's method codes in capital letters.")
+    pairs = data.get("look_alikes", [])
+    if not isinstance(pairs, list) or not all(
+            isinstance(pair, list) and len(pair) == 2 and all(isinstance(c, str) and len(c) == 1 for c in pair)
+            and pair[0] != pair[1] for pair in pairs):
+        raise ConfigError(f"In {path.name}, look_alikes must list pairs of two different single characters.")
+    return References(dict(kinds), methods, tuple((a, b) for a, b in pairs))
 
 
 # ── The nightly job's quality checks ─────────────────────────────────────
