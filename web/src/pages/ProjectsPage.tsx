@@ -71,13 +71,14 @@ export function ProjectsPage() {
   const [said, setSaid] = useState("");
   const settled = useRef<string | null>(null);
   // One page of more reads as a range in words ("Showing 1 to 20 of 93 projects"); all of them, as the Table says it.
+  // A search is a filter that leaves rows out, so its list keeps a count line even when every match shows ("Showing the
+  // one project."; ticket 126, the inventory's pattern 2).
   const count = (data: ProjectList): Count => {
     const range = data.first > 1 || data.last < data.total;
+    const all = { noun: words.noun, one: words.nounOne, total: data.total };
     return {
-      noun: words.noun,
-      one: words.nounOne,
-      total: data.total,
-      text: range ? words.countRange(whole(data.first), whole(data.last), whole(data.total)) : undefined,
+      ...all,
+      text: range ? words.countRange(whole(data.first), whole(data.last), whole(data.total)) : data.query ? countSaid(all) : undefined,
     };
   };
 

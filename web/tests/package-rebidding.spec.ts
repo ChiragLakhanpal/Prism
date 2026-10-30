@@ -265,10 +265,22 @@ test("a model that did no better than its baseline gives no estimate, and says s
   await openPackage(page, { rebidding: "rebidding-mock-not-better.json" });
   await ready(page);
 
+  // The tests' count opens nothing inside the window, so the window says where it came from (CLAUDE.md rule 2).
   expect(await inBadgeWindow(page, "[data-rebid-model-off]")).toBe(
-    "I'm not giving an estimate. In tests on 44 packages from 2025 that my model had not seen, it did no better than the rate among their comparable packages.",
+    "I'm not giving an estimate. In tests on 44 packages from 2025 that my model had not seen, it did no better than the rate among their comparable packages. From my model's saved test results of October 20, 2026.",
   );
   expect(await block(page).innerText()).not.toMatch(/ in 10/);
+});
+
+test("too few comparable packages for my model names the settings its smallest count came from (mock)", async ({ page }) => {
+  const prior = JSON.parse(await recorded("rebidding-ke-nwwda-541055-prior.json"));
+  prior.model.score_date = "2026-10-20";
+  await openPackage(page, { answer: { body: JSON.stringify(prior) }, comparables: "comparables-ke-nwwda-541055-prior.json" });
+  await expect(block(page)).toHaveAttribute("data-rebidding", "none");
+
+  expect(await inBadgeWindow(page, "[data-rebid-model-off]")).toBe(
+    "I'm not giving an estimate, because I give one only from 20 or more comparable packages. From the settings I used on October 20, 2026.",
+  );
 });
 
 test("a failed load says so with Try again and the code, and a route the server lacks hides the block", async ({ page }) => {

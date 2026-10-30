@@ -12,7 +12,9 @@ export function Feedforward({ sentence, children }: { sentence: ReactNode; child
   const button = cloneElement(children, { "aria-describedby": [own, id].filter(Boolean).join(" ") });
   return (
     <>
-      <Tooltip trigger={button}>{sentence}</Tooltip>
+      <Tooltip trigger={button} keepDescription>
+        {sentence}
+      </Tooltip>
       {/* Hidden, yet a description may name it: the button's accessible description reads it. */}
       <span id={id} hidden data-feedforward-description>
         {sentence}

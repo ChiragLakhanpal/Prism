@@ -180,6 +180,8 @@ test("the decided table keeps each date on one line, and each day count says wha
   await reviewer(page, { "/api/lessons/review": await file("lessons-queue-decided.json") });
   await page.goto("/lessons/review");
   const table = page.locator("[data-queue-decided=table]");
+  // Every decision shows, and the count line stays because it is where the list says its order (ticket 126).
+  await expect(table.locator("[data-count-row] p[data-numbers]")).toHaveText("Showing all three decisions, newest first.");
   const date = table.locator("tbody tr").first().locator("td").nth(1);
   await expect(date).toHaveText("Oct 27, 2026");
   const lines = await date.evaluate((cell) => Math.round(cell.querySelector("span")!.getBoundingClientRect().height / parseFloat(getComputedStyle(cell).lineHeight)));

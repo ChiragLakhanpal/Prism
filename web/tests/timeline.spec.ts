@@ -472,7 +472,8 @@ test("Show the table lists every item in arrow-key order, under its caption", as
   await expect(page.getByRole("button", { name: "Hide the table" })).toHaveAttribute("aria-expanded", "true");
   const table = page.locator("[data-timeline-table]");
   await expect(table).toContainText("Everything on the timeline of Rajasthan Road Sector Modernization, in date order.");
-  await expect(table).toContainText("Showing all 14 items.");
+  // Every item shows, so there is no count line (ticket 126, the inventory's pattern 2).
+  await expect(table).not.toContainText("Showing all");
   await expect(table.locator("tbody tr")).toHaveCount(14);
   await expect(table.locator("tbody tr").nth(3)).toContainText("Disagrees with the ICR.");
   await expect(table.locator("tbody tr").nth(9)).toContainText("Disagrees with ISR 7 and the ICR Review.");

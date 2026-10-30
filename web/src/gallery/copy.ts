@@ -1424,7 +1424,6 @@ export const galleryCopy = {
       kinds: [
         { kind: "plan_check", tool: "check_plan", status: "partial", ready_for: 0, spell_out: false, holds_back: [
           [{ text: "Of " }, { number: 1200, row: 2, noun: "sample contracts" }, { text: " sample contracts, " }, { number: 180, row: 2, noun: "sample contracts", role: "missing" }, { text: " lack a STEP reference." }],
-          [{ text: "I list one more gap under Sources." }],
         ] },
         { kind: "document_search", tool: "search_passages", status: "partial", ready_for: 11, spell_out: false, holds_back: [
           [{ text: "I couldn't read the risk annex in the Project Appraisal Document for " }, { mono: "P000001" }, { text: ", one of " }, { link: "the hardest documents I read", href: "#hardest-documents" }, { text: "." }],

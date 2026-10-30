@@ -129,7 +129,8 @@ test("Passage reports lists the groups waiting, oldest first, and the decisions 
   await expect(row.getByRole("heading", { level: 3 })).toHaveText("Rajasthan Road Sector Modernization, paragraph 55");
   await expect(page.getByRole("heading", { name: "Decided in the last 90 days" })).toBeVisible();
   await expect(page.locator("[data-reports-decided]")).toContainText("Ranked lower");
-  await expect(page.locator("[data-reports-decided]")).not.toContainText("Showing the one decision"); // every row shows (ticket 126)
+  // Every row shows, and the count line stays because it says the list's order (ticket 126; DESIGN.md section 5, Tables).
+  await expect(page.locator("[data-reports-decided] [data-count-row] p[data-numbers]")).toHaveText("Showing the one decision, newest first.");
   expect(await axe(page)).toEqual([]);
 });
 

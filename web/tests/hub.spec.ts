@@ -953,6 +953,8 @@ test("Packages lists every activity in each agency's latest plan by STEP referen
   await expect(page).toHaveURL(/packages_q=boreholes$/);
   const found = page.locator("[data-packages=ready] [data-table-view=table] tbody tr");
   await expect(found).toHaveCount(5);
+  // A search is a filter, so its count line stays with every match shown (ticket 126, the inventory's pattern 2).
+  await expect(page.locator("[data-packages] [data-page-lead]")).toHaveText("Showing all five packages.");
   await expect(found.nth(2)).toContainText("Equipping of Exploratory Bo reholes Project-Lot 1");
   await field.fill("atlantis");
   await expect(page.locator("[data-packages] [data-empty-state]")).toContainText("I found no packages that match your search.");

@@ -16,7 +16,7 @@ import { ListSearch } from "../../components/ListSearch";
 import { Pagination } from "../../components/Pagination";
 import { Source } from "../../components/Source";
 import { MethodText } from "../../components/PlanCheck";
-import { Table, type Column, type Row } from "../../components/Table";
+import { countSaid, Table, type Column, type Row } from "../../components/Table";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { TextLink } from "../../components/TextLink";
@@ -126,7 +126,14 @@ export function Packages({ pid, none }: { pid: string; none: boolean }) {
           title={words.title}
           labelledBy={headingId}
           level={2}
-          count={{ noun: words.noun, total: shown.total, from: shown.first, to: shown.last }}
+          // A search is a filter that leaves rows out, so it keeps its count line with every match shown (ticket 126).
+          count={{
+            noun: words.noun,
+            total: shown.total,
+            from: shown.first,
+            to: shown.last,
+            text: shown.query && shown.first <= 1 && shown.last >= shown.total ? countSaid({ noun: words.noun, one: words.nounOne, total: shown.total }) : undefined,
+          }}
           countLead
           busy={list.waiting && list.searching ? words.searching : undefined}
           columns={columns}

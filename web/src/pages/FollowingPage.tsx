@@ -189,11 +189,11 @@ export function FollowingBody({ data }: { data: Following }) {
   const counts = data.counts;
   const statusOfOne = counts.total === 1 ? data.projects[0].status : null;
   const madeBy = data.past ? (
-    <Fill template={words.madeByAsOf} slots={{ checks, date: formatDate(data.as_of) }} />
+    <Fill template={words.madeByAsOf} slots={{ checks, date: <Num date={data.as_of} /> }} />
   ) : data.data_through ? (
-    <Fill template={words.madeBy} slots={{ checks, checked: formatDate(data.checked_on), through: formatDate(data.data_through) }} />
+    <Fill template={words.madeBy} slots={{ checks, checked: <Num date={data.checked_on} />, through: <Num date={data.data_through} /> }} />
   ) : (
-    <Fill template={words.madeByUndated} slots={{ checks, checked: formatDate(data.checked_on) }} />
+    <Fill template={words.madeByUndated} slots={{ checks, checked: <Num date={data.checked_on} /> }} />
   );
   const shownCount = open ? counts.total : counts.shown;
   const row = (entry: FollowedProject) => ({ entry, numbers, events, seen, data, nextDefId });

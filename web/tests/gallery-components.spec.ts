@@ -533,6 +533,32 @@ test("the steps toggle lines up with the answer's text, and its fill and focus r
   }
 });
 
+// Ticket 126, criterion 1: an answer that held back keeps "Strata held back" as its h3, for a screen reader only. No
+// recorded stream abstains, so the gallery's abstained sample is the one place it is drawn.
+test("an answer that held back keeps Strata held back as a heading only a screen reader reads, at 1440 and 390 px", async ({ page }) => {
+  for (const width of [1440, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/answer");
+    const byline = page.locator("[data-answer=abstained]").getByRole("heading", { level: 3, name: "Strata held back" });
+    await expect(byline, `${width} px`).toHaveAttribute("data-byline", "heldBack");
+    const box = await byline.evaluate((element) => element.getBoundingClientRect());
+    expect(box.width, `${width} px`).toBeLessThanOrEqual(1);
+    expect(box.height, `${width} px`).toBeLessThanOrEqual(1);
+    // No text on the page that a sighted reader sees holds the byline's words.
+    const shown = await page.evaluate((words) => {
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        const element = node.parentElement;
+        if (!element || !(node.textContent ?? "").includes(words)) continue;
+        const rect = element.getBoundingClientRect();
+        if (rect.width > 1 && rect.height > 1 && getComputedStyle(element).visibility !== "hidden") return true;
+      }
+      return false;
+    }, "Strata held back");
+    expect(shown, `${width} px`).toBe(false);
+  }
+});
+
 // Ticket 115: the server's answer for KE-KURA-219079-CS-INDV on the fixture (tests/record_steps_api.py), whose plan
 // of September 24, 2026 gave its Process Status as Canceled (tests/ground_truth/values.toml, [step_tracker]).
 test("the step tracker marks no step of a canceled activity late, and keeps its card when the steps fail", async ({ page }) => {

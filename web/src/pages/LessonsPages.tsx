@@ -203,7 +203,7 @@ function Decided({ queue }: { queue: Queue }) {
       <Table
         level={2}
         title={title}
-        count={{ noun: q.decidedNoun, one: q.decidedNounOne, total: decided.total, from: decided.from, to: decided.to }}
+        count={{ noun: q.decidedNoun, one: q.decidedNounOne, total: decided.total, from: decided.from, to: decided.to, ordered: true }}
         rowHeader="lesson"
         // As cards, each card shows the days' column by its name alone, and the definition ends the count
         // line's row once (DESIGN.md section 5, Tables).

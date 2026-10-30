@@ -139,8 +139,9 @@ test("the list search filters on the server as you type, by name, project ID or 
 
   await field.pressSequentially("india");
 
-  // The one project shows, so there is no count line; the polite status still says what the search found.
-  await expect(main.locator("[data-page-lead]")).toHaveCount(0);
+  // A search is a filter, so its count line stays when the one match shows (ticket 126, the inventory's pattern 2), and
+  // the polite status says it too.
+  await expect(main.locator("[data-page-lead]")).toHaveText("Showing the one project.");
   await expect(page.getByRole("status").filter({ hasText: "Showing the one project." })).toHaveCount(1);
   await expect(main.locator("[data-table-view=table] tbody tr")).toHaveCount(1);
   await expect(main.locator("[data-table-view=table]").getByRole("link", { name: "P130164" })).toBeVisible();

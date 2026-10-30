@@ -2235,6 +2235,7 @@ export const copy = {
     title: "Packages",
     searchLabel: "Search packages",
     noun: "packages",
+    nounOne: "package",
     caption: "Packages in each agency's latest Procurement Plan",
     pages: "Pages of the package list",
     columns: {
@@ -7820,8 +7821,6 @@ export const copy = {
     show: "Show the table",
     hide: "Hide the table",
     caption: (name: string) => `Everything on the timeline of ${name}, in date order.`,
-    count: (n: number, text: string) => (n === 1 ? "Showing the one item." : n === 2 ? "Showing both items." : `Showing all ${text} items.`),
-    itemsNoun: "items",
     columns: { date: "Date", stratum: "Stratum", item: "Item", rating: "Rating", note: "Note" },
     // A mark's label on the chart.
     label: {
@@ -7970,7 +7969,6 @@ export const copy = {
         trajectory:
           "Ratings that change from one ISR to the next describe different periods. I show them as a trajectory, not a disagreement.",
         caption: "ISR ratings of progress towards achievement of PDO",
-        count: (n: number, text: string) => (n === 1 ? "Showing the one ISR." : n === 2 ? "Showing both ISRs." : `Showing all ${text} ISRs.`),
         columns: { isr: "ISR", date: "Date", rating: "Progress towards achievement of PDO" },
         isr: "ISR {sequence}",
         source: "World Bank documents and reports API, the ISRs of {pid}.",
@@ -7980,8 +7978,6 @@ export const copy = {
         heading: "Contracts signed in {year}",
         // The table under the heading, which says what each row is rather than repeating the heading.
         tableTitle: "Each contract signed in {year}, in date order.",
-        count: (n: number, text: string) =>
-          n === 1 ? "Showing the one contract." : n === 2 ? "Showing both contracts." : `Showing all ${text} contracts.`,
         columns: { contract: "Contract (STEP reference)", signed: "Signed", amount: "Signed amount (US$)" },
         notInRecord: "Not in the record",
         source: "World Bank contract awards and procurement notices, {pid}.",

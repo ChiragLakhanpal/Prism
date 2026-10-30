@@ -64,7 +64,9 @@ export type TableState =
 // one is the noun for a single row ("version"), so one row reads "Showing 1 version".
 // text: the count line in words of the screen's own, such as "Showing 6 of 61 versions" for rows that are
 // not one range (the five newest versions and the baseline, ticket 21).
-export type Count = { noun: string; one?: string; total: number; from?: number; to?: number; text?: string };
+// ordered: the noun holds the list's order ("decisions, newest first"), so the count line stays with every row shown,
+// because it is the one place the order is said (DESIGN.md section 5, Tables; the 126 review, follow-up 3).
+export type Count = { noun: string; one?: string; total: number; from?: number; to?: number; text?: string; ordered?: boolean };
 
 type Level = 2 | 3 | 4 | 5;
 
@@ -119,19 +121,26 @@ export function countLineOf(shown: number, total: number, noun: { one: string; m
 }
 
 // A table's count line: a page of more rows ("Showing 1 to 20 of 99 sources."), or the screen's own words (text). With
-// every row on one page it returns null, as countLineOf does (ticket 126).
+// every row on one page it returns null, as countLineOf does (ticket 126), unless the line holds the list's order: a
+// table with an order says it whenever it shows its rows, a single row included ("Showing the one decision, newest
+// first."; DESIGN.md section 5, Tables).
 export function countText(count: Count): string | null {
-  const { noun, total, from, to, text } = count;
+  const { noun, total, from, to, text, ordered } = count;
   if (text) return text;
-  return from !== undefined && to !== undefined && (from > 1 || to < total) ? copy.table.showing(n(from), n(to), n(total), noun) : null;
+  if (from !== undefined && to !== undefined && (from > 1 || to < total)) return copy.table.showing(n(from), n(to), n(total), noun);
+  return ordered && total > 0 ? allShown(count) : null;
+}
+
+// Every row in words: "Showing the one project.", "Showing both decisions, newest first.", "Showing all three projects.".
+function allShown({ noun, one, total }: Count): string {
+  return total === 1 && one ? copy.table.showingOne(one) : copy.table.showingAll(total, formatCount(total), noun);
 }
 
 // The count in words even when every row shows ("Showing all three projects."), for a status that tells a screen
 // reader what a search found, where nothing else on screen says it.
 export function countSaid(count: Count): string {
-  const { noun, one, total } = count;
-  if (total === 1 && one) return copy.table.showingOne(one);
-  return countText(count) ?? copy.table.showingAll(total, formatCount(total), noun);
+  if (count.total === 1 && count.one) return allShown(count);
+  return countText(count) ?? allShown(count);
 }
 
 export function Table({

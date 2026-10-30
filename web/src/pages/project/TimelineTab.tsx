@@ -30,7 +30,7 @@ import { copy } from "../../copy";
 import { answer, type Run } from "../../lib/answer";
 import { cx } from "../../lib/cx";
 import { evidenceHref, evidenceIn, openEvidence } from "../../lib/evidence";
-import { formatCount, formatDate } from "../../lib/format";
+import { formatDate } from "../../lib/format";
 import { useLoad } from "../../lib/load";
 import { address } from "../../lib/router";
 import { useStore } from "../../lib/store";
@@ -228,7 +228,6 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
     <div id={id} data-timeline-table className="mt-4">
       <Table
         title={words.caption(data.project.display_name ?? data.project.project_id)}
-        count={{ noun: words.itemsNoun, total: rows.length, text: words.count(rows.length, formatCount(rows.length)) }}
         columns={columns}
         state={{ status: "ready", rows }}
         rowHeader="item"

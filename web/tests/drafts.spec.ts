@@ -87,6 +87,12 @@ test("Check a plan offers to draft review notes on its three marked rows, and sa
   await expect(action).toHaveAccessibleDescription(
     "I write one note for each activity that needs a look or is worth watching. The draft waits in Drafts for you to check. I send nothing.",
   );
+  // On keyboard focus the feedforward shows as a tooltip, and the button keeps its whole description (ticket 126).
+  await action.focus();
+  await expect(page.getByRole("tooltip")).toHaveText("The draft waits in Drafts for you to check. I send nothing.");
+  await expect(action).toHaveAccessibleDescription(
+    "I write one note for each activity that needs a look or is worth watching. The draft waits in Drafts for you to check. I send nothing.",
+  );
 });
 
 test("Shift+Tab back to the draft action in Check a plan's stuck header does not scroll the page", async ({ page }) => {

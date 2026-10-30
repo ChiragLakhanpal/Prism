@@ -356,21 +356,35 @@ function ModelLines({ model }: { model: RebidModel }) {
 }
 
 // "I'm not giving an estimate, because ...": the first-person sentence the Experimental badge's window holds (ticket
-// 126; DESIGN.md section 7, rules 16 and 32). Its numbers stay numbers; inside the window they open nothing more.
+// 126; DESIGN.md section 7, rules 16 and 32). Its numbers stay numbers; inside the window they open nothing more, so
+// the window says where they came from in words after the sentence (CLAUDE.md rule 2): the saved test results for the
+// tests' count, and the settings the scored run used for the smallest count.
 function ModelOff({ model }: { model: RebidModel }) {
   const track = model.track_record;
   const baseline = track ? (words.baselines[track.baseline_code] ?? words.baselines.comparables_rate) : words.baselines.comparables_rate;
   const reason = model.not_shown_reason ?? "no_results";
+  const from =
+    reason === "not_better" && track ? testsFrom(track.run_date) : reason === "too_few" && model.score_date ? settingsFrom(model.score_date) : null;
   return (
-    <Fill
-      template={words.off[reason] ?? words.off.no_results}
-      slots={{
-        min: <Num value={model.min_comparables} options={{ compact: false }} />,
-        n: track ? <Num value={track.n_test} options={{ compact: false }} /> : "",
-        year: track ? <Num year={track.test_year} /> : "",
-        baseline,
-      }}
-    />
+    <>
+      <Fill
+        template={words.off[reason] ?? words.off.no_results}
+        slots={{
+          min: <Num value={model.min_comparables} options={{ compact: false }} />,
+          n: track ? <Num value={track.n_test} options={{ compact: false }} /> : "",
+          year: track ? <Num year={track.test_year} /> : "",
+          baseline,
+        }}
+      />
+      {from && (
+        <>
+          {" "}
+          <span data-rebid-model-off-from>
+            <FromLine words={from} />
+          </span>
+        </>
+      )}
+    </>
   );
 }
 

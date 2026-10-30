@@ -174,7 +174,7 @@ function Decided({ queue }: { queue: ReportsQueue }) {
       <Table
         level={2}
         title={<Fill template={w.decidedTitle} slots={{ days }} />}
-        count={{ noun: w.decidedNoun, one: w.decidedNounOne, total: decided.total, from: decided.from, to: decided.to }}
+        count={{ noun: w.decidedNoun, one: w.decidedNounOne, total: decided.total, from: decided.from, to: decided.to, ordered: true }}
         rowHeader="passage"
         columns={[
           { key: "passage", header: w.columns.passage, width: "w-[46%]" },

@@ -312,12 +312,15 @@ function TrackRecordLine({ result, onTestYears }: { result: EstimateResult; onTe
   if (track.year === null) return <>{t.notReadable}</>;
   if (track.abstention !== null) {
     // Why the second lane has no track record yet is one press away (ticket 126). The lane's label is drawn in the
-    // chart's picture, so its window opens from an info icon where the line was; the first-person sentence stays
-    // reachable (DESIGN.md section 7, rule 16).
+    // chart's picture, so its window opens from an info icon where the line was, after the line's own label, so the
+    // line is never a lone icon; the first-person sentence stays reachable (DESIGN.md section 7, rule 16).
     return (
-      <InfoWindow name={t.unavailableName} kind="note">
-        <Fill template={t.unavailable} slots={{ min: whole(track.abstention.min_unseen_packages), year: <Num year={track.year} /> }} />
-      </InfoWindow>
+      <>
+        <span className="font-bold text-chart-text">{t.label}</span>{" "}
+        <InfoWindow name={t.unavailableName} kind="note">
+          <Fill template={t.unavailable} slots={{ min: whole(track.abstention.min_unseen_packages), year: <Num year={track.year} /> }} />
+        </InfoWindow>
+      </>
     );
   }
   // Each number of the track record says what it is, from the backtest for its year, and opens every test year.
