@@ -60,7 +60,7 @@ function SearchSample() {
   const [query, setQuery] = useState("india");
   return (
     <div className="max-w-[36rem]">
-      <ListSearch label={copy.projectsPage.search.label} hint={copy.projectsPage.search.hint} value={query} onSearch={setQuery} />
+      <ListSearch label={copy.projectsPage.search.label} value={query} onSearch={setQuery} />
     </div>
   );
 }

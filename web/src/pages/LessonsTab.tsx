@@ -188,8 +188,10 @@ function digestPopover(digest: Digest, lastVisit: string | null, isReviewer: boo
 function StrengthenedLine({ strengthened }: { strengthened: Strengthened }) {
   const [open, setOpen] = useState(false);
   const many = strengthened.count === 1 ? "one" : "many";
+  // 24 px after the finding (DESIGN.md section 4, space roles): the sources note that stood between went to the page's
+  // foot in ticket 126.
   return (
-    <div className="mt-3 flex flex-col gap-2" data-strengthened={open ? "open" : "closed"}>
+    <div className="mt-6 flex flex-col gap-2" data-strengthened={open ? "open" : "closed"}>
       <p className="max-w-prose text-small text-ink-muted">
         <PageSentence segments={strengthened.segments} />{" "}
       </p>
@@ -249,8 +251,7 @@ function DigestBlock({ page, isReviewer }: { page: LessonsPageAnswer; isReviewer
         <PageSentence segments={digest.segments} popover={digestPopover(digest, page.visit?.last_visit_on ?? null, isReviewer)} />
       </p>
       {first && <p className="mt-2 max-w-prose text-caption text-ink-muted">{w.firstCaption}</p>}
-      {/* 24 px after a finding, 4 px between a status sentence's captions (DESIGN.md section 4, space roles). */}
-      <p className={cx("max-w-prose text-caption text-ink-muted", first ? "mt-1" : "mt-6")}>{copy.lessons.sourcesNote}</p>
+      {/* Where lessons come from is at the page's foot since ticket 126. */}
       {digest.strengthened && <StrengthenedLine strengthened={digest.strengthened} />}
     </div>
   );
@@ -273,15 +274,11 @@ function Reports({ feedback }: { feedback: Feedback }) {
     <TaskZone
       headingId="lessons-reports"
       name={w.reportsTitle}
-      marks={{ "data-reports": feedback.never ? "never" : "sentence" }}
+      marks={{ "data-reports": "sentence" }}
       summary={
-        feedback.never || !feedback.segments ? (
-          <p>{w.reportsNone}</p>
-        ) : (
-          <p data-feedback-line>
-            <PageSentence segments={feedback.segments} popover={popover} />
-          </p>
-        )
+        <p data-feedback-line>
+          <PageSentence segments={feedback.segments ?? []} popover={popover} />
+        </p>
       }
     />
   );
@@ -424,7 +421,6 @@ function LibrarySection({ initial, search, isReviewerWaiting }: { initial: Libra
         summary={
           <div className="flex flex-col gap-2" data-library-empty>
             <p>{copy.pages.lessons.emptyBody}</p>
-            <p>{copy.pages.lessons.emptyMore}</p>
             <p>
               <TextLink href={link.href}>{link.text}</TextLink>
             </p>
@@ -521,7 +517,6 @@ function PageSkeleton() {
         {w.loading}
       </p>
       <SkeletonText className="max-w-[22.5em] text-finding" widths={["w-full", "w-full", "w-[70%]"]} />
-      <p className="mt-6 max-w-prose text-caption text-ink-muted">{copy.lessons.sourcesNote}</p>
       <div className="mt-8 @md/page:mt-12">
         <TaskZone panel name={w.libraryTitle}>
           <ZoneBlock>
@@ -585,9 +580,14 @@ export function LessonsBody({ page, search, isReviewer, isReviewerWaiting = fals
             </ZoneBlock>
           </TaskZone>
         )}
-        {page.feedback && <Reports feedback={page.feedback} />}
+        {/* "Your reports" shows only once you have sent one (ticket 126): before that it was a tour sentence. */}
+        {page.feedback && !page.feedback.never && page.feedback.segments && <Reports feedback={page.feedback} />}
         <LibrarySection initial={page.library} search={search} isReviewerWaiting={isReviewerWaiting} />
       </div>
+      {/* Where lessons come from, with ICR, PPAR and IEG spelled out, at the page's foot (ticket 126; rule 22). */}
+      <p className="mt-6 max-w-prose text-caption text-ink-muted" data-lessons-sources>
+        {copy.lessons.sourcesNote}
+      </p>
     </div>
   );
 }

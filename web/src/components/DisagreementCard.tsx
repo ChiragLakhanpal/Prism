@@ -25,6 +25,7 @@ import { address } from "../lib/router";
 import { previewReason, viewOf } from "../lib/view";
 import { withAbbreviations } from "./Abbreviations";
 import { Button } from "./Button";
+import { DefinitionWindow } from "./Term";
 import { ReasonField } from "./DecisionForm";
 import { Source } from "./Source";
 import { SourceTag } from "./SourceTag";
@@ -130,7 +131,12 @@ export function DisagreementCard({
               </div>
               <p className="mt-1 text-caption text-ink-muted">{side.meta}</p>
               <div data-tag-row className={cx("mt-2 min-h-6 flex-wrap gap-2", tags ? "flex" : "hidden @min-[35rem]/disagreement:flex")}>
-                {side.leaned && <SourceTag>{leanTag}</SourceTag>}
+                {/* The tag says which report I lean on; its window says why (ticket 126; rule 35 keeps the tag's words). */}
+                {side.leaned && (
+                  <DefinitionWindow openOnHover inText={false} label={<SourceTag>{leanTag}</SourceTag>} title={leanTag} triggerClassName="no-underline">
+                    <span data-disagreement-rule>{rule}</span>
+                  </DefinitionWindow>
+                )}
                 {keptThis && <SourceTag className="animate-fade-in">{words.kept}</SourceTag>}
               </div>
               <div className="mt-2">{side.said}</div>
@@ -156,9 +162,8 @@ export function DisagreementCard({
           );
         })}
       </ul>
-      <p className="mt-4 text-small text-ink">{rule}</p>
       {whatChanges && (
-        <p className="mt-2 text-small text-ink">
+        <p className="mt-4 text-small text-ink">
           {whatChanges}
           {changes && <> {changes}</>}
         </p>

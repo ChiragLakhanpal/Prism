@@ -249,7 +249,6 @@ export function ProcurementTab({ pid, load, retry }: { pid: string; load: Load<P
     <div data-procurement-tab={load.status}>
       <EightColumns prose>
         <h2 className="text-h2 text-ink-heading">{plans.title}</h2>
-        <p className="mt-2 text-body text-ink">{plans.purpose}</p>
       </EightColumns>
       <div className="mt-8">{plansBody}</div>
       {load.status !== "error" && (

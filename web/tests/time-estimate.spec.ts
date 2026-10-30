@@ -173,8 +173,8 @@ test("pressing a Compare with segment lights the dots that went with it, counts 
   await expect(section(page)).not.toContainText(/\b(caused|split|splitting)\b/i);
   await expect(page.locator("[data-chart-alt]")).toContainText(`Compared with prequalification: ${preq.k} of ${n} comparable packages went with it`);
   await expect(page.locator("[data-chart-alt]")).toContainText(`A dashed outline shows the time estimate as described: middle half ${one(e.q25)} to ${one(e.q75)} months`);
-  // "Advertised again" says the comparison leaves its count alone (the 28 brief, section 6.5).
-  await expect(page.locator("[data-rebid-compare]")).toHaveText("The comparison above doesn't change this count. It is for this package's own criteria.");
+  // "Advertised again" no longer says the comparison leaves its count alone (ticket 126, R43): few readers ask.
+  await expect(page.locator("[data-rebid-compare]")).toHaveCount(0);
 
   // Pressing it again stops comparing.
   await segment.click();

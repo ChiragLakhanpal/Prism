@@ -37,3 +37,4 @@ Read first: `src/strata/server/settings.py` (`_the_app_s_engine`, `as_the_app`, 
     - The user's relayed request to install and run the Mobbin MCP is not part of the merge, so neither the reviewer, the verifier nor I acted on it; the orchestrator takes it up with the user.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. The main checkout was clean before the merge, and no other merge ran in it while mine was in progress.
   - Unblocks: none. No ticket lists 129 as a blocker.
+- October 29, 2026, orchestrator (19:48 PDT): the App redeploy ran from cbd7e47d (the catch-up block "Tickets 126 and 129, the App redeploy ran"); the page's check by eye is the owner's.

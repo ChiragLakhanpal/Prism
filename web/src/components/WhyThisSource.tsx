@@ -100,7 +100,7 @@ export function WhyThisSource({ why }: { why: Why }) {
         )}
         {time && <> {time}</>}
       </p>
-      <p className="text-caption text-ink-muted">{words.only}</p>
+      {/* The sentence above says "appeared together" and names no cause, so no line repeats it (ticket 126; rule 34). */}
       {why.activity_href && !here && (
         <p>
           <TextLink href={why.activity_href} className="inline-flex min-h-6 items-center text-small" data-why-activity>

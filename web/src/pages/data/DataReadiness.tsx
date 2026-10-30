@@ -18,6 +18,7 @@ import { TaskZone } from "../../components/TaskZone";
 import { Alert } from "../../components/Alert";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";
+import { MadeBy } from "../../components/MadeBy";
 import { MeasureNum } from "../../components/MeasureNum";
 import { FromLine, measuresFrom } from "../../components/NumFrom";
 import { DefinitionWindow } from "../../components/Term";
@@ -400,7 +401,6 @@ function columnHead(column: Column): ReadinessColumn {
         {words.sources.definitions[column]}
       </DefinitionWindow>
     ),
-    about: head.about,
     numeric: true,
     width: "w-[18%]",
   };
@@ -415,7 +415,6 @@ const KIND_COLUMNS: ReadinessColumn[] = [
         {words.kinds.readyForDefinition}
       </DefinitionWindow>
     ),
-    about: words.kinds.readyForAbout,
     numeric: true,
     width: "w-[22%]",
   },
@@ -427,7 +426,6 @@ const KIND_COLUMNS: ReadinessColumn[] = [
         {words.kinds.holdsDefinition}
       </DefinitionWindow>
     ),
-    about: words.kinds.holdsAbout,
     width: "w-[50%]",
     // 48 px from the right-aligned numbers before it, so the two columns never read as one line.
     className: "pl-8",
@@ -449,20 +447,32 @@ function Abstention({ unmeasured, sources }: { unmeasured: number; sources: numb
   );
 }
 
-function Provenance({ result }: { result: Readiness }) {
+// How I built the headline, with the dates the measures were taken, in the made-by window at the headline's end
+// (ticket 126): the table's source line already gives the date on first sight.
+function MadeByHeadline({ result }: { result: Readiness }) {
   if (!result.measured) return null;
   const { first, last } = result.measured;
-  // Under a headline Strata doesn't give, the caption says when the measures were taken, and no "this".
-  const built = result.headline !== null;
+  return (
+    <MadeBy name={words.provenanceName}>
+      {first === last ? (
+        <Template text={words.provenance} values={{ date: day(last, result.as_of) }} />
+      ) : (
+        <Template text={words.provenanceRange} values={{ from: day(first, result.as_of), to: day(last, result.as_of) }} />
+      )}
+    </MadeBy>
+  );
+}
+
+// Under a headline Strata doesn't give, the caption says when the measures were taken, and no "this".
+function Provenance({ result }: { result: Readiness }) {
+  if (!result.measured || result.headline !== null) return null;
+  const { first, last } = result.measured;
   return (
     <p className="mt-2 text-caption text-ink-muted" data-numbers>
       {first === last ? (
-        <Template text={built ? words.provenance : words.provenanceAbstained} values={{ date: day(last, result.as_of) }} />
+        <Template text={words.provenanceAbstained} values={{ date: day(last, result.as_of) }} />
       ) : (
-        <Template
-          text={built ? words.provenanceRange : words.provenanceAbstainedRange}
-          values={{ from: day(first, result.as_of), to: day(last, result.as_of) }}
-        />
+        <Template text={words.provenanceAbstainedRange} values={{ from: day(first, result.as_of), to: day(last, result.as_of) }} />
       )}
     </p>
   );
@@ -559,10 +569,19 @@ function Fixes({ fixes, measures, shortfalls, shown, zones }: { fixes: Fix[]; me
       headingId="data-fixes"
       sectionKey="fixes"
       marks={{ "data-fixes": "" }}
-      summary={fixes.length === 0 ? none : words.fixes.summary}
+      // With fixes to rank, the row shows its name only and its sentence opens with the list (ticket 126): a
+      // specialist rarely opens this engineering view. With none, the row says why.
+      summary={fixes.length === 0 ? none : null}
       toggle={fixes.length === 0 ? undefined : toggleOf(zones, "fixes", words.fixes.show, words.fixes.hide)}
     >
-      {fixes.length > 0 && <FixList fixes={fixes} measures={measures} />}
+      {fixes.length > 0 && (
+        <>
+          <p className="max-w-prose pt-2 text-body text-ink" data-fixes-summary>
+            {words.fixes.summary}
+          </p>
+          <FixList fixes={fixes} measures={measures} />
+        </>
+      )}
     </TaskZone>
   );
 }
@@ -628,7 +647,6 @@ function Tables({ result, zones }: { result: Readiness; zones: Zones }) {
           id="kinds"
           skeletonRows="kinds"
           title={words.kinds.title}
-          lines={words.kinds.caption}
           head={{ label: words.kinds.kind, width: "w-[28%]" }}
           columns={KIND_COLUMNS}
           state={{ status: "ready", rows: kindRows(result.kinds, measures) }}
@@ -814,9 +832,10 @@ function render(
               ))}
             </span>
           </div>
-          {/* As tall as the caption it stands for: two lines below a 34rem page area, one from it (ticket 59). */}
-          <div role="status" className="mt-2 min-h-[2lh] text-caption text-ink-muted @[34rem]/page:min-h-lh">
-            {slow ? words.loading.slow : null}
+          {/* The headline has no caption under it since ticket 126 (its made-by line is in a window at its end), so the
+              status holds no place until the load is slow. */}
+          <div role="status" className="text-caption text-ink-muted">
+            {slow ? <p className="mt-2">{words.loading.slow}</p> : null}
           </div>
         </>
       ),
@@ -827,7 +846,6 @@ function render(
               id="kinds"
               skeletonRows="kinds"
               title={words.kinds.title}
-              lines={words.kinds.caption}
               head={{ label: words.kinds.kind, width: "w-[28%]" }}
               columns={KIND_COLUMNS}
               state={{ status: "loading", rows: kinds }}
@@ -863,14 +881,13 @@ function render(
               }
             />
           )}
-          {/* The fixes keep their sentence and their button while the measures load; opened, a skeleton line for each
-              fix the registry holds. */}
+          {/* The fixes keep their button while the measures load; opened, a skeleton line for each fix the registry
+              holds. */}
           <TaskZone
             name={words.fixes.title}
             headingId="data-fixes"
             sectionKey="fixes"
             busy
-            summary={words.fixes.summary}
             toggle={fixes > 0 ? toggleOf(zones, "fixes", words.fixes.show, words.fixes.hide) : undefined}
           >
             <ol aria-hidden="true" className="flex flex-col gap-3 pt-2">
@@ -972,6 +989,7 @@ function render(
           // number's tooltip opens under the whole of it (DESIGN.md, Number tooltip; ticket 96).
           <p className={FINDING} data-headline data-finding>
             <Sentence segments={result.headline.segments} measures={measures} about={result.filter.sources ? words.number.sources : undefined} inText />
+            <MadeByHeadline result={result} />
           </p>
         ) : result.headline_abstention ? (
           // When I hold the headline back, the sentence that says so is the page's answer, so it takes the finding style

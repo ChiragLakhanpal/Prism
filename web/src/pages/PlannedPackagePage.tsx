@@ -45,6 +45,7 @@ import { useAnswerInPage } from "../components/AnswerSlot";
 import { POPOVER } from "../components/Popover";
 import { SkeletonLine } from "../components/Skeleton";
 import { Steps, type Step } from "../components/Steps";
+import { DefinitionWindow } from "../components/Term";
 import { copy } from "../copy";
 import { ApiError, getJson, type ComparablesResult, type EstimateResult } from "../lib/api";
 import { usePlanDateChoice } from "../lib/estimates";
@@ -1058,7 +1059,12 @@ export function PlanPrompt({
     // As tall as its words and controls: the chart comes only after your press, so no blank is held for it (ticket
     // 101's design review, round 2).
     <div className="mt-4 flex flex-col gap-3" data-plan-prompt>
-      <p className="max-w-prose text-body text-ink">{words.section.promptQuestion}</p>
+      {/* Why I ask first is in the question's window (ticket 126): the question is what matters. */}
+      <p className="max-w-prose text-body text-ink">
+        <DefinitionWindow openOnHover inText label={words.section.promptQuestion} title={words.section.promptQuestion}>
+          {words.section.promptWhy}
+        </DefinitionWindow>
+      </p>
       <p className="text-body text-ink" data-found>
         <Fill template={words.section.promptFound(count, "{n}")} slots={{ n: <Num count={count} /> }} />
       </p>

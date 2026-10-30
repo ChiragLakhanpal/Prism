@@ -619,7 +619,8 @@ test("Down then Enter asks the first package suggestion within the package, a cl
   await expect(box(page)).toHaveValue(SUGGESTED.package[0]);
   await expect(box(page)).toBeFocused();
   await expect(answer).toContainText("The middle half of the 49 comparable packages took 3.3 to 7.9 months");
-  await expect(answer).toContainText(`Asked within ${PACKAGE}`);
+  // The question names the package, so the panel has no Asked line (ticket 126); the request still carries the scope.
+  await expect(answer.locator("[data-asked]")).toHaveCount(0);
   expect(asked.map((request) => [request.postDataJSON().question, request.postDataJSON().scope])).toEqual([[SUGGESTED.package[0], PACKAGE]]);
   // Ticket 101: the package page is a workspace page, so the answer takes the work's columns above the page head,
   // beside the side panel.

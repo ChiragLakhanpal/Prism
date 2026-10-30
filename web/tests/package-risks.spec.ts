@@ -106,10 +106,9 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   const all = await text(section(page));
   expect(all).not.toMatch(/%|percent| in 10/);
   await expect(section(page).locator("[data-check-line]")).toContainText("Not checked:");
-  // Ticket 58: the intro is true in every state, and the finding reads "in 1 of 1", never "in 1 of the 1".
-  await expect(section(page)).toContainText(
-    "This section lists the procurement risks that came up again and again in the completion reports of projects with comparable packages.",
-  );
+  // The zone's name says what it lists, so it has no intro since ticket 126 (R39); the finding reads "in 1 of 1", never
+  // "in 1 of the 1" (ticket 58).
+  await expect(section(page)).not.toContainText("This section lists the procurement risks");
   await expect(section(page)).not.toContainText("of the 1 completion");
   // The count opens one report, so its tooltip says "the report", never "the 1".
   await cost.locator("[data-count] button").focus();
@@ -118,7 +117,11 @@ test("zone 3 carries its PPSD tag and lists the cost estimates risk, what helped
   await section(page).locator("[data-finding] button").first().focus();
   await expect(page.getByRole("tooltip")).toContainText("Select to see it.");
   await expect(page.getByRole("tooltip")).not.toContainText("all 1");
-  await expect(section(page)).toContainText("An ICR Review is a review of it by the Independent Evaluation Group (IEG).");
+  // The foot's abbreviations each open a window that spells them out (ticket 126, T9; rule 22).
+  const abbreviations = section(page).locator("[data-risk-abbreviations]");
+  await abbreviations.getByRole("button", { name: "ICR Review" }).click();
+  await expect(page.getByRole("dialog", { name: "ICR Review" })).toContainText("An ICR Review is a review of it by the Independent Evaluation Group (IEG).");
+  await page.keyboard.press("Escape");
   await expect(section(page)).not.toContainText("(IEG's)");
   // The package page names Data readiness one way (the 58 critique, round 2, follow-up 4).
   await expect(section(page).locator("[data-coverage-line]")).toContainText("See Data readiness for these sources");
@@ -170,7 +173,7 @@ test("a source click opens the drawer at its paragraph with the row's claim, the
   await expect(drawer(page).locator("[data-meta-line]")).toContainText("Section 10.b");
   await expect(drawer(page).locator("[data-meta-line]")).not.toContainText("¶10.b");
   // IEG is spelled out with its short form after it, never a possessive in brackets (the 58 design review, round 2, 4).
-  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveText("A review of the completion report by the Independent Evaluation Group (IEG)");
+  await expect(drawer(page).locator("[data-drawer-caption]")).toHaveCount(0); // the heading names it (ticket 126, R29)
 
   await page.keyboard.press("Escape");
   await expect(drawer(page)).toHaveCount(0);

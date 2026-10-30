@@ -16,6 +16,7 @@ import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
 import { EmptyState } from "../components/Card";
 import { ReasonField } from "../components/DecisionForm";
+import { Disclosure } from "../components/Disclosure";
 import { PassageBlock } from "../components/EvidenceDrawer";
 import { Fill } from "../components/Fill";
 import { fillText } from "../components/LessonParts";
@@ -173,7 +174,7 @@ function Decided({ queue }: { queue: ReportsQueue }) {
       <Table
         level={2}
         title={<Fill template={w.decidedTitle} slots={{ days }} />}
-        count={{ noun: w.decidedNoun, one: w.decidedNounOne, total: decided.total, from: decided.from, to: decided.to }}
+        count={{ noun: w.decidedNoun, one: w.decidedNounOne, total: decided.total, from: decided.from, to: decided.to, ordered: true }}
         rowHeader="passage"
         columns={[
           { key: "passage", header: w.columns.passage, width: "w-[46%]" },
@@ -193,15 +194,19 @@ function Decided({ queue }: { queue: ReportsQueue }) {
   );
 }
 
+// How reports are handled, which a reviewer reads once, behind a closed disclosure (ticket 126). It keeps rule 29's
+// words: a reviewer ranks a passage lower, never hides it.
 function Purpose({ queue }: { queue?: ReportsQueue | null }) {
   return (
-    <p className="max-w-prose text-body text-ink-muted" data-reports-purpose>
-      {queue?.mode === "scale" ? (
-        <Fill template={w.purposeScale} slots={{ min: <Num count={queue.silver_min} />, every: <Num value={queue.audit_every} options={{ compact: false }} /> }} />
-      ) : (
-        w.purposePilot
-      )}
-    </p>
+    <Disclosure label={w.how}>
+      <p className="text-body text-ink" data-reports-purpose>
+        {queue?.mode === "scale" ? (
+          <Fill template={w.purposeScale} slots={{ min: <Num count={queue.silver_min} />, every: <Num value={queue.audit_every} options={{ compact: false }} /> }} />
+        ) : (
+          w.purposePilot
+        )}
+      </p>
+    </Disclosure>
   );
 }
 
@@ -221,7 +226,8 @@ export function ReportsBody({ queue }: { queue: ReportsQueue }) {
       <div className="mt-6">
         <Lead queue={queue} />
       </div>
-      <p className="mt-2 max-w-prose text-caption text-ink-muted">{w.caption}</p>
+      {/* No caption under the lead: the decision form's feedforward says what ranking lower does, where it matters
+          (ticket 126; rules 29 and 31). */}
       {!empty && (
         <div className="mt-8 flex flex-col gap-8 @md/page:mt-12 @md/page:gap-12">
           <Group groupKey="you" rows={queue.groups.you} />
@@ -245,7 +251,6 @@ export function ReportsSkeleton() {
       <span className="mt-6 flex max-w-prose flex-col text-lead">
         <SkeletonLine width="w-[70%]" />
       </span>
-      <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
       <div className="mt-8 @md/page:mt-12">
         {[0, 1, 2].map((index) => (
           <div key={index} className="flex flex-col gap-1 border-t-2 border-line py-4" data-skeleton-row>
@@ -340,7 +345,7 @@ function Reports({ group }: { group: ReportGroup }) {
       <h2 id={id} className="text-h2 text-ink-heading">
         {w.reportsTitle}
       </h2>
-      <p className="mt-1 text-caption text-ink-muted">{w.reportsCaption}</p>
+      {/* The rows show each sender's role, so no caption says it (ticket 126; rule 31). */}
       <ol className="mt-4">
         {shown.map((report) => (
           <ReportItem key={report.report_id} report={report} />
@@ -708,7 +713,6 @@ export function PassageReportPage({ groupId }: { groupId: string }) {
       body = (
         <>
           <h1 tabIndex={-1} className="text-h1 text-ink-heading focus:outline-none">{copy.pages.lessons.title}</h1>
-          <p className="mt-2 max-w-prose text-body text-pretty text-ink-muted">{copy.pages.lessons.purpose}</p>
           <div className="mt-8">
             <NoAccess />
           </div>

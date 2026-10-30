@@ -45,7 +45,9 @@ test("the briefing's counts equal the lines below it, kind by kind, and Home ask
   await open(page);
 
   const h1 = page.getByRole("heading", { level: 1 });
-  await expect(h1).toContainText("Your briefing for Wednesday, October 28");
+  // No eyebrow tells you today's date since ticket 126; a screen reader hears the briefing named first.
+  await expect(h1).toHaveAccessibleName(/^Your briefing\. One plan changed/);
+  await expect(h1.locator("[data-date-line]")).toHaveCount(0);
   // Ticket 132: the plan's two Pending Implementation activities have moved on since the plan, since the contract awards
   // say both were signed (values.toml, award-541055-signed and award-541062-signed), so one activity is left to watch.
   await expect(h1).toContainText(
@@ -79,13 +81,13 @@ const typeOf = (element: Locator) =>
 const bottomOf = (element: Locator) => element.evaluate((found) => found.getBoundingClientRect().bottom + window.scrollY);
 const boxTop = (page: Page) => page.locator("[data-box-slot] form").evaluate((form) => form.getBoundingClientRect().top + window.scrollY);
 
-test("the h1 is the date line in label over the briefing in the finding style, inside the first screen at 390 by 844 and 1024 by 768, and a first run's sentences are in lead", async ({ page }) => {
+test("the h1 is the briefing in the finding style, inside the first screen at 390 by 844 and 1024 by 768, and a first run's sentences are in lead", async ({ page }) => {
   for (const [width, height, finding] of [[390, 844, "24px/32px 300"], [1024, 768, "28px/36px 300"]] as const) {
     await open(page, "/", {}, width, height);
     const h1 = page.locator("main h1");
     const at = `${width} by ${height}`;
-    await expect(h1.locator("[data-date-line]"), at).toHaveText("Your briefing for Wednesday, October 28");
-    expect(await typeOf(h1.locator("[data-date-line]")), at).toBe("13px/16px 600");
+    // Today's date line went in ticket 126 (the inventory's R4); only a past date keeps one.
+    await expect(h1.locator("[data-date-line]"), at).toHaveCount(0);
     expect(await typeOf(h1.locator("[data-finding]")), at).toBe(finding);
     await expect(h1.locator("[data-status-lead]"), at).toHaveCount(0);
     const end = await bottomOf(h1);
@@ -98,7 +100,8 @@ test("the h1 is the date line in label over the briefing in the finding style, i
 
   await open(page, "/", { "/api/home": await file("home-first-run.json") });
   const lead = page.locator("main h1 [data-status-lead]");
-  await expect(lead).toHaveText("You don't follow any projects yet, so I have no plans to brief you on. No draft is waiting for you to check.");
+  // Waiting for you says no draft is waiting, so the lead does not (ticket 126, R5).
+  await expect(lead).toHaveText("You don't follow any projects yet, so I have no plans to brief you on.");
   expect(await typeOf(lead)).toBe("18px/28px 400");
   await expect(page.locator("main h1 [data-finding]")).toHaveCount(0);
 });
@@ -112,11 +115,16 @@ const tabStops = (page: Page) =>
   );
 const box = async (element: Locator) => (await element.boundingBox())!;
 
-test("Worth knowing is a panel with its tag, each line's verb at its first row's right; Start here's tag sits under its name; Waiting for you is the side panel from a frame of 75rem and follows Worth knowing, in one Tab order at every width", async ({ page }) => {
+test("Worth knowing is a panel with its made-by window, each line's verb at its first row's right; Start here has no tag; Waiting for you is the side panel from a frame of 75rem and follows Worth knowing, in one Tab order at every width", async ({ page }) => {
   await open(page);
   const worth = page.getByRole("region", { name: "Worth knowing", exact: true });
   await expect(worth).toHaveAttribute("data-zone", "panel");
-  await expect(worth.locator("[data-zone-tag]")).toHaveText("Fixed checks, no model");
+  // Ticket 126 (T4): how I wrote the lines is a whole sentence in the made-by window, not the tag "Fixed checks, no model".
+  await worth.locator("[data-made-by]").getByRole("button", { name: "How I wrote these lines" }).click();
+  await expect(page.getByRole("dialog", { name: "How I wrote these lines" })).toContainText(
+    "I wrote these lines from fixed checks on public records. No model wrote them.",
+  );
+  await page.keyboard.press("Escape");
   await expect(worth.getByRole("heading", { level: 2 })).toHaveText("Worth knowing");
   await expect(page.locator("main")).not.toContainText("·");
 
@@ -136,8 +144,8 @@ test("Worth knowing is a panel with its tag, each line's verb at its first row's
   }
 
   const name = page.locator("[data-start-here=shown] [data-zone-name]");
-  const tag = page.locator("[data-start-here=shown] [data-zone-tag]");
-  await expect(tag).toHaveText("Examples Strata set up for you");
+  // The zone's name and each row's Example badge say what Start here holds (ticket 126, R8).
+  await expect(page.locator("[data-start-here=shown] [data-zone-tag]")).toHaveCount(0);
   const waiting = page.getByRole("region", { name: "Waiting for you", exact: true });
   await expect(waiting).toHaveAttribute("data-side-panel", "panel");
   // Each zone's and the side panel's name is an h2 in h2 type, 18/24 600 (routed from ticket 91's critique).
@@ -157,11 +165,6 @@ test("Worth knowing is a panel with its tag, each line's verb at its first row's
       expect(s.y, `${width} px`).toBeGreaterThan(w.y + w.height);
       expect(Math.round(s.x), `${width} px`).toBe(Math.round(w.x));
     }
-    if (width === 1440 || width === 390) {
-      const [n, t] = [await box(name), await box(tag)];
-      expect(t.y, `${width} px: the tag under the name`).toBeGreaterThanOrEqual(n.y + n.height - 1);
-      expect(Math.round(t.x), `${width} px`).toBe(Math.round(n.x));
-    }
     const stops = await tabStops(page);
     if (order === null) order = stops;
     else expect(stops, `${width} px`).toEqual(order);
@@ -174,8 +177,8 @@ test("Worth knowing is a panel with its tag, each line's verb at its first row's
 });
 
 // Ticket 98 (fairshare's strip, the redesign plan's section 9, pattern 6): an answer asked from Home opens in columns 1
-// to 7 above the head, beside Waiting for you, and the briefing folds to its date line and first sentence in body.
-test("with an answer open on Home the briefing shows only its date line and first sentence, Show the briefing unfolds the rest in place, and closing the answer unfolds it", async ({ page }) => {
+// to 7 above the head, beside Waiting for you, and the briefing folds to its first sentence in body (no date line since ticket 126).
+test("with an answer open on Home the briefing shows only its first sentence, Show the briefing unfolds the rest in place, and closing the answer unfolds it", async ({ page }) => {
   await open(page, "/", { "/api/ask": await file("ask-p130164-rebidding.sse"), "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' } });
   const h1 = page.locator("main h1");
   const all =
@@ -195,12 +198,12 @@ test("with an answer open on Home the briefing shows only its date line and firs
   expect(waiting.x).toBeGreaterThan(panel.x + panel.width);
   expect(waiting.y).toBeLessThan(panel.y + panel.height);
 
-  await expect(h1).toHaveText("Your briefing for Wednesday, October 28. One plan changed in the past 15 days.");
+  await expect(h1).toHaveText("Your briefing. One plan changed in the past 15 days.");
   expect(await typeOf(h1.locator("[data-sentences]"))).toBe("16px/24px 400");
   const show = page.getByRole("button", { name: "Show the briefing" });
   await expect(show).toHaveAttribute("aria-expanded", "false");
   await show.click();
-  await expect(h1).toHaveText(`Your briefing for Wednesday, October 28. ${all}`);
+  await expect(h1).toHaveText(`Your briefing. ${all}`);
   const hide = page.getByRole("button", { name: "Hide the briefing" });
   await expect(hide).toHaveAttribute("aria-expanded", "true");
   await expect(hide).toBeFocused();
@@ -209,13 +212,13 @@ test("with an answer open on Home the briefing shows only its date line and firs
   await expect(page.getByRole("dialog", { name: "Drafts waiting for you to check" }).getByRole("link")).toHaveCount(2);
   await page.keyboard.press("Escape");
   await hide.click();
-  await expect(h1).toHaveText("Your briefing for Wednesday, October 28. One plan changed in the past 15 days.");
+  await expect(h1).toHaveText("Your briefing. One plan changed in the past 15 days.");
   expect((await scan(page, "[data-page-head]")).violations).toEqual([]);
 
   // Closing the answer unfolds the briefing, in the finding style again.
   await answer.getByRole("button", { name: "Close the answer" }).first().click();
   await expect(answer).toHaveCount(0);
-  await expect(h1).toHaveText(`Your briefing for Wednesday, October 28. ${all}`);
+  await expect(h1).toHaveText(`Your briefing. ${all}`);
   expect(await typeOf(h1.locator("[data-finding]"))).toBe("28px/36px 300");
   await expect(page.getByRole("button", { name: /the briefing$/ })).toHaveCount(0);
 });
@@ -238,7 +241,7 @@ test("a failed load puts the error alert in the alert slot with Home as the h1, 
   await page.locator("[data-alert-slot]").getByRole("button", { name: "Try again" }).click();
   await expect(page.locator("[data-home=ready]")).toBeVisible();
   await expect(page.locator("main h1")).toBeFocused();
-  await expect(page.locator("main h1 [data-date-line]")).toHaveText("Your briefing for Wednesday, October 28");
+  await expect(page.locator("main h1")).toHaveAccessibleName(/^Your briefing\. /);
   await expect(page.locator("[data-alert-slot]")).not.toContainText("I couldn't load your briefing");
 });
 
@@ -388,14 +391,14 @@ test("Waiting for you lists the drafts to check with their progress, and shows i
   await open(page, "/", { "/api/home": await file("home-drafts-checked.json") });
   await expect(page.locator("[data-waiting] [data-draft-row]")).toHaveCount(0);
   await expect(page.locator("[data-waiting-empty]")).toContainText("No draft is waiting for you to check.");
-  await expect(page.getByRole("heading", { level: 1 })).toContainText("No draft is waiting for you to check.");
+  await expect(page.getByRole("heading", { level: 1 })).not.toContainText("draft is waiting");
 });
 
 test("the agency preview and the public preview show the Home their column of the roles table describes", async ({ page }) => {
   await open(page, "/?view=piu");
   const h1 = page.getByRole("heading", { level: 1 });
-  // The same shape as staff's Home (ticket 98): the date line, then the team's plan sentence in the finding style.
-  await expect(h1.locator("[data-date-line]")).toHaveText("Your briefing for Wednesday, October 28");
+  // The same shape as staff's Home (ticket 98): the h1, then the team's plan sentence in the finding style.
+  await expect(h1.locator("[data-date-line]")).toHaveCount(0);
   const finding = h1.locator("[data-finding]");
   await expect(finding).toContainText("I checked your team's latest Procurement Plan, the plan of October 9, 2026 for the Water and Sanitation Development Project (P156634).");
   // Ticket 132: the plan's two Pending Implementation activities were signed, the contract awards say, so none is behind.
@@ -403,7 +406,7 @@ test("the agency preview and the public preview show the Home their column of th
   expect(await typeOf(finding)).toBe("28px/36px 300");
   await expect(page.locator("[data-count-kind=behind] button")).toHaveCount(0);
   const worth = page.getByRole("region", { name: "Worth knowing", exact: true });
-  await expect(worth.locator("[data-zone-tag]")).toHaveText("Fixed checks, no model");
+  await expect(worth.locator("[data-made-by]").getByRole("button", { name: "How I wrote these lines" })).toBeVisible();
   await expect(worth.locator("li[data-line-kind]")).toHaveCount(0);
   await expect(worth).toContainText("Your team's published Procurement Plans and project records from World Bank APIs");
   // Waiting for you holds only a sentence in a preview, so it is a row in the side column, after Worth knowing.
@@ -421,7 +424,7 @@ test("the agency preview and the public preview show the Home their column of th
   await expect(page.getByRole("link", { name: "Check my plan before you submit an update" })).toHaveAttribute("href", "/packages/check");
   await expect(page.locator("[data-start-here]")).toHaveCount(0);
 
-  // The public view (ticket 98): "Home" as the h1, its one sentence in lead, and "Closed projects" with its tag, no
+  // The public view (ticket 98): "Home" as the h1, its one sentence in lead, and "Closed projects" with its made-by window, no
   // middle dot and no side panel.
   await open(page, "/?view=public");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Home");
@@ -434,7 +437,7 @@ test("the agency preview and the public preview show the Home their column of th
   expect(await typeOf(lead)).toBe("18px/28px 400");
   const projects = page.getByRole("region", { name: "Closed projects", exact: true });
   await expect(projects.getByRole("heading", { level: 2 })).toHaveText("Closed projects");
-  await expect(projects.locator("[data-zone-tag]")).toHaveText("Contracts traced from public records");
+  await expect(projects.locator("[data-made-by]").getByRole("button", { name: "How I traced these contracts" })).toBeVisible();
   await expect(page.locator("main")).not.toContainText("·");
   await expect(page.locator("main [data-side-slot]")).toHaveCount(0);
   await expect(projects.getByRole("link", { name: "Find more projects" })).toHaveAttribute("href", "/projects");

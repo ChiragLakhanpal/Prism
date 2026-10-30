@@ -111,7 +111,9 @@ test("in English, the French answer offers to ask again in English and the drawe
   await expect(panel(page).locator("[data-asked]")).toHaveText("Asked within P130164, for an answer in French.");
   await expect(panel(page).getByRole("button", { name: "Ask again in English" })).toBeVisible();
   await marker(page, 1).click();
-  await expect(drawer(page)).toContainText("The whole paragraph, word for word. I quote sources only in the language they were written in.");
+  // The drawer says why it shows no translation; "The whole paragraph, word for word." went in ticket 126.
+  await expect(drawer(page)).toContainText("I quote sources only in the language they were written in.");
+  await expect(drawer(page)).not.toContainText("word for word");
 });
 
 test("the source view of the French completion report marks every paragraph as French and names its language", async ({ page }) => {
@@ -229,8 +231,9 @@ test("an English answer keeps the French words it quotes in French, and its chec
   const quoted = panel(page).locator("[data-sentence-text] [lang=fr]");
   await expect(quoted).toHaveText("des retards ont eu lieu dans la préparation des documents d’appels d’offres et des processus de passations des marchés");
   expect(await readIn(page, "[data-sentence-text='0']")).toBe("en");
+  // The sentences that needed no model are the fourth check in "How was that checked?" since ticket 126 (T28).
   await expect(panel(page).locator("[data-check-part=judged]")).toHaveText(
-    "Judged by a model: 1 of 1 sentence follows from its sources. The other two needed no model, because every number, date and quote in them matched a record or a page. It cites a source written in another language.",
+    "Judged by a model: 1 of 1 sentence follows from its sources. It cites a source written in another language.",
   );
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
 });

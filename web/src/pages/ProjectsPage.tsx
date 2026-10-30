@@ -25,7 +25,7 @@ import { Pagination } from "../components/Pagination";
 import { ProjectId } from "../components/ProjectId";
 import { Skeleton, SkeletonLine, SkeletonText } from "../components/Skeleton";
 import { Source } from "../components/Source";
-import { countText, Table, type Column, type Count, type Row } from "../components/Table";
+import { countSaid, Table, type Column, type Count, type Row } from "../components/Table";
 import { TaskZone } from "../components/TaskZone";
 import { TextLink } from "../components/TextLink";
 import { copy } from "../copy";
@@ -71,24 +71,25 @@ export function ProjectsPage() {
   const [said, setSaid] = useState("");
   const settled = useRef<string | null>(null);
   // One page of more reads as a range in words ("Showing 1 to 20 of 93 projects"); all of them, as the Table says it.
+  // A search is a filter that leaves rows out, so its list keeps a count line even when every match shows ("Showing the
+  // one project."; ticket 126, the inventory's pattern 2).
   const count = (data: ProjectList): Count => {
     const range = data.first > 1 || data.last < data.total;
+    const all = { noun: words.noun, one: words.nounOne, total: data.total };
     return {
-      noun: words.noun,
-      one: words.nounOne,
-      total: data.total,
-      text: range ? words.countRange(whole(data.first), whole(data.last), whole(data.total)) : undefined,
+      ...all,
+      text: range ? words.countRange(whole(data.first), whole(data.last), whole(data.total)) : data.query ? countSaid(all) : undefined,
     };
   };
 
   useEffect(() => {
     if (load.status !== "ready") return;
     const key = `${load.data.query}|${load.data.page}`;
-    if (settled.current !== null && settled.current !== key) setSaid(load.data.total === 0 ? words.noMatchTitle : countText(count(load.data)));
+    if (settled.current !== null && settled.current !== key) setSaid(load.data.total === 0 ? words.noMatchTitle : countSaid(count(load.data)));
     settled.current = key;
   }, [load]);
 
-  const search = <ListSearch className="@md/page:w-1/2" label={words.search.label} hint={words.search.hint} value={query} onSearch={list.search} />;
+  const search = <ListSearch className="@md/page:w-1/2" label={words.search.label} value={query} onSearch={list.search} />;
   const source = (through: string | null) => (
     <FootStrip>
       <Source>{through ? <Fill template={words.source} slots={{ date: formatDate(through) }} /> : words.sourceUndated}</Source>
@@ -131,7 +132,9 @@ export function ProjectsPage() {
           title={words.tableTitle}
           labelledBy={headingId}
           level={2}
-          count={{ noun: words.noun, total: 0 }}
+          // All projects is a paged list, so its first page's count line holds its place while it loads (ticket 126:
+          // a list that shows every row has none).
+          count={{ noun: words.noun, total: 0, from: 1, to: 1 }}
           columns={columns}
           rowHeader="project"
           cardsBelow="list"
@@ -213,7 +216,7 @@ export function ProjectsPage() {
     <div className="layout-grid">
       <div className="col-span-12">
         <div className="@md/page:w-2/3">
-          <PageHeader title={copy.pages.projects.title} purpose={copy.pages.projects.purpose} />
+          <PageHeader title={copy.pages.projects.title} />
         </div>
       </div>
       {/* Your agency's projects, in the implementing agency view (ticket 40): an officer's own, and the staff preview's. */}

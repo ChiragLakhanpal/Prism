@@ -58,7 +58,7 @@ test("KE-NWWDA-229129-CW-RFB's trail shows its plan row, notice, bids and contra
   // The bids, in the award notice's order, with their prices in STEP's form with their cents, and their results.
   const rows = stage(page, "bids").locator("tbody tr");
   await expect(rows).toHaveCount(11);
-  await expect(stage(page, "bids")).toContainText("Showing all 11 bids");
+  await expect(stage(page, "bids")).not.toContainText("Showing all"); // every bid shows, so no count line (ticket 126, R55)
   await expect(rows.first().locator("th, td")).toHaveText(["OSB AFRICA LIMITED", "61,503,269.60", "61,503,269.60", "Awarded"]);
   await expect(rows.nth(3).locator("th, td")).toHaveText(["HYDRO WATER WELL (K) LIMITED", "69,346,168.80", "Not in the notice", "Not awarded"]);
   await expect(rows.nth(10).locator("th, td")).toHaveText(["BITAT LIMITED", "54,770,811.00", "54,770,811.00", 'Rejected. The award notice gives the reason "Non Responsive".']);
@@ -69,7 +69,7 @@ test("KE-NWWDA-229129-CW-RFB's trail shows its plan row, notice, bids and contra
   // The paragraphs come grouped by report: the PAD's first three of its six, then each ISR's.
   await expect(page.locator("[data-report]")).toHaveCount(13);
   await expect(page.locator("[data-report]").first().getByRole("heading", { level: 3 })).toHaveText("Project Appraisal Document, Apr 5, 2017");
-  await expect(page.locator("[data-report]").first()).toContainText("Six paragraphs");
+  await expect(page.locator("[data-report]").first()).not.toContainText("Six paragraphs"); // the cards and Show all say it (ticket 126, R62)
   await expect(page.locator("[data-paragraph-card] [data-source]")).toHaveCount(18);
 
   const { callsAModel } = await modelRoutes();
@@ -153,7 +153,7 @@ test("the showcase trail states its two missing stages, takes its contract from 
   await expect(why.locator("[data-why-sentence]")).toHaveText(
     "This paragraph appeared together with award notice IN-RRSMP-7431-CW-RFB, signed June 15, 2017. Both concern works contracts and roads, in a project that has closed. The ICR is dated October 10, 2019, 28 months after the signing.",
   );
-  await expect(why).toContainText("A link means only that they appeared together.");
+  await expect(why).not.toContainText("A link means only"); // the sentence above says "appeared together" (ticket 126, R31)
   // On the activity page it names, the block does not link to the page you are on.
   await expect(why.getByRole("link", { name: `Open the activity ${SHOWCASE}` })).toHaveCount(0);
   await expect(page.getByRole("dialog").locator("[data-passage] mark, [data-passage] [data-highlight]").first()).toContainText("works contract");
@@ -226,7 +226,7 @@ test("Connections draws at most 20 nodes, counts the rest by kind, and joins pac
 
   // The finding counts every linked contract, those with no STEP reference too, and each paragraph once.
   await expect(page.locator("#connections-finding")).toHaveText("In this project, seven contracts appeared together with 89 paragraphs from 12 of its reports.");
-  await expect(page.locator("[data-connections]")).toContainText("Showing 19 of 64 packages and documents");
+  await expect(page.locator("[data-connections]")).not.toContainText("Showing 19 of"); // the "more" links say it (ticket 126, R59)
   const nodes = page.locator("[data-node]");
   expect(await nodes.count()).toBeLessThanOrEqual(20);
   await expect(page.locator("[data-diagram]").getByRole("link", { name: "and 15 more Procurement Plans I haven't read" })).toHaveAttribute("href", "/projects/P130164/documents");
@@ -296,13 +296,13 @@ test("below 768 px Connections is a list, and from 768 px a toggle shows the lis
 
 test("Connections caps a large project at 20 nodes and counts its packages, and shows its no-links, empty and error states", async ({ page }) => {
   await open(page, "/projects/P156634/connections", 1024);
-  await expect(page.locator("[data-connections]")).toContainText("Showing 19 of 627 packages and documents");
+  await expect(page.locator("[data-connections]")).not.toContainText("Showing 19 of");
   await expect(page.getByRole("link", { name: "and 265 more packages" })).toHaveAttribute("href", "/projects/P156634/procurement");
   expect(await page.locator("[data-node]").count()).toBeLessThanOrEqual(20);
   // Past 12 curves, only the first linked package's are drawn at rest, and a caption says how to see the rest.
   const atRest = JSON.parse(await recorded("connections-p156634.json")).lines.filter((line: { at_rest: boolean }) => line.at_rest).length;
   await expect(page.locator("[data-diagram] > svg path[stroke-dasharray]")).toHaveCount(atRest);
-  await expect(page.getByText("Hover over or focus a package to see its links.")).toBeVisible();
+  await expect(page.getByText("Hover over or focus a package to see its links.")).toHaveCount(0); // ticket 126, R22
   await page.locator("[data-package=KE-NWWDA-229129-CW-RFB] a[data-node-link]").hover();
   expect(await page.locator("[data-diagram] > svg path.stroke-primary").count()).toBeGreaterThan(0);
   // A paragraph read in parts is one chip, and no two chips on one document have the same name.
@@ -331,14 +331,16 @@ test("Connections caps a large project at 20 nodes and counts its packages, and 
   expect(await axe(page)).toEqual([]);
 });
 
-// The count line follows DESIGN.md's one rule: a project whose every package and document shows says "all" (the 58
-// design review, round 2, follow-up 6). No recording shows every item, so the count is set in memory.
-test("Connections says all when it shows every package and document", async ({ page }) => {
+// Connections has no count line since ticket 126 (R59): the "and N more" links say what the diagram leaves out, and a
+// project whose every package and document shows says nothing more. No recording shows every item, so the count is set
+// in memory.
+test("Connections has no count line when it shows every package and document", async ({ page }) => {
   const every = JSON.parse(await recorded("connections-p130164.json"));
   Object.assign(every, { shown: every.total });
   await mockApi(page, { ...(await trailApi()), "/api/projects/P130164/connections": { body: JSON.stringify(every) } });
   await page.goto("/projects/P130164/connections");
-  await expect(page.locator("[data-connections]")).toContainText(`Showing all ${every.total} packages and documents.`);
+  await expect(page.locator("#connections-finding")).toBeVisible();
+  await expect(page.locator("[data-connections]")).not.toContainText("Showing");
 });
 
 // ── Round 2 ──────────────────────────────────────────────────────────────
@@ -371,7 +373,7 @@ test("with two award notices and two contracts, the lead counts each notice's bi
   );
   await expect(stage(page, "bids").locator("[data-stage-card]")).toHaveCount(1);
   await expect(stage(page, "bids").getByRole("heading", { level: 3 })).toHaveText(["Award notice OP00266922", "Award notice OP00266923"]);
-  await expect(stage(page, "bids")).toContainText("Showing all five bids");
+  await expect(stage(page, "bids")).not.toContainText("Showing all");
   // A Limited market approach invites firms directly, so its notice is never listed as missing.
   await expect(stage(page, "notice")).toContainText("This activity had no public notice. Its Market Approach,");
   expect(await axe(page)).toEqual([]);
@@ -381,7 +383,7 @@ test("a Limited market approach never lists the notice as missing, in the trail 
   await open(page, "/projects/P156634/packages/KE-NWWDA-503455-CW-RFQ");
   await expect(stage(page, "notice")).toContainText("This activity had no public notice. Its Market Approach, Limited - National, invites firms directly.");
   await expect(page.locator("[data-lead]")).not.toContainText("no notice");
-  await expect(stage(page, "bids")).toContainText("Showing the one bid");
+  await expect(stage(page, "bids")).not.toContainText("Showing the one bid");
 });
 
 test("a consultant award notice keeps a rejected firm's reason when its price is blank, and leaves its scores out", async ({ page }) => {

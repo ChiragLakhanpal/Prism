@@ -18,8 +18,6 @@
   "filteredOne": "One source is behind {fromNoun}.",
   "filteredFew": "{SourceCount} sources are behind {fromNoun}.",
   "filteredMany": "The {sourceCount} sources below are behind {fromNoun}.",
-  "moreOne": "I list one more gap under Sources.",
-  "more": "I list {n} more gaps under Sources.",
   "nothingHolds": "Nothing I measured holds it back.",
   "gap": {
     "published": "the {sourceNoun} for fiscal {fromYear} to {toYear}, which no World Bank dataset publishes",

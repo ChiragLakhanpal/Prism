@@ -203,14 +203,14 @@ def test_waiting_for_you_lists_the_viewers_drafts_to_check_with_their_progress_a
     answer = story.home().json()
 
     assert answer["waiting"]["rows"] == [] and answer["waiting"]["total"] == 0
-    assert sentences(answer)[-1] == "No draft is waiting for you to check."
+    # With nothing to check, the briefing says nothing about drafts waiting: Waiting for you says it (ticket 126).
+    assert not any("waiting for you to check" in sentence for sentence in sentences(answer))
 
 
 def test_a_teammate_sees_none_of_anas_drafts_and_a_first_run_briefing(story):
     answer = story.home(BEN).json()
 
-    assert sentences(answer) == ["You don't follow any projects yet, so I have no plans to brief you on.",
-                                 "No draft is waiting for you to check."]
+    assert sentences(answer) == ["You don't follow any projects yet, so I have no plans to brief you on."]
     assert answer["worth"]["empty"] == "first_run" and answer["waiting"]["rows"] == []
 
 
@@ -312,7 +312,7 @@ def test_an_officers_own_home_lists_their_plans_activities_behind_their_dates_an
     assert sentences(answer) == [
         f"I checked your team's latest Procurement Plan, the plan of October 9, 2026 for the "
         f"{value('project-name-p156634')} (P156634).",
-        "None of its activities is behind its planned dates.", "No draft is waiting for you to check."]
+        "None of its activities is behind its planned dates."]
     assert lines(answer) == []
     assert answer["waiting"]["reason"] is None and answer["start_here"] == {"visible": False, "links": []}
     assert asyncio.run(get("/api/me")).json()["start_here_visible"] is False
