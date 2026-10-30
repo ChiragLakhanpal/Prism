@@ -2181,7 +2181,16 @@ for (const [width, open, least] of [
   });
 }
 
-test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones keep their left edge and width, and the opened dot keeps its ring", async ({ page }) => {
+// Each zone's box in the page, and the stage labels', so a test can say that nothing in the work moved.
+const zoneBoxes = (page: Page) =>
+  page.locator("[data-zones] > *").evaluateAll((all) =>
+    all.map((el) => {
+      const box = el.getBoundingClientRect();
+      return [box.left, box.top + window.scrollY, box.width, box.height].map((n) => Math.round(n));
+    }),
+  );
+
+test("at 1440 and 1280 px a dot's drawer takes the side column's place, facts and step tracker both, every zone keeps its place and size, and the opened dot keeps its ring", async ({ page }) => {
   for (const width of [1440, 1280]) {
     await openPackage(page, { width, drawer: "evidence-package-ke-mowi-47509.json" });
     await ready(page);
@@ -2189,10 +2198,12 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     const before = (await zones.boundingBox())!;
     const zone1 = section(page);
     const zone1Height = (await zone1.boundingBox())!.height;
-    const tracker = page.locator("[data-step-tracker]");
+    // The step tracker is in the side column under the facts here (ticket 130).
+    const tracker = page.locator("[data-side-slot] [data-step-tracker]");
     await expect(tracker.locator("[data-step-state]").first()).toBeVisible();
-    const trackerHeight = (await tracker.boundingBox())!.height;
+    const trackerBox = (await tracker.boundingBox())!;
     await expect(page.getByRole("region", { name: "From the plan row" })).toBeVisible();
+    const boxes = await zoneBoxes(page);
     const dot = page.locator('[data-dot-target][aria-label^="KE-MOWI-47509-CW-RFB,"]');
     await dot.scrollIntoViewIfNeeded();
     const spot = (await dot.boundingBox())!;
@@ -2207,13 +2218,23 @@ test("at 1440 and 1280 px a dot's drawer takes the side panel's place, the zones
     // clicked stays where it was, beside its records (ticket 101's critique, round 1).
     expect(Math.round((await dot.boundingBox())!.y), `${width} px`).toBe(Math.round(spot.y));
     expect((await zone1.boundingBox())!.height, `${width} px`).toBeCloseTo(zone1Height, 0);
-    // The step tracker reads its own width, so it keeps its row of six too (ticket 101's critique, round 2).
-    expect((await tracker.boundingBox())!.height, `${width} px`).toBeCloseTo(trackerHeight, 0);
-    // The drawer sits where the side panel was, beside the zones.
+    // Every zone and stage label keeps its box, and the step tracker hides with the facts, since the drawer opens in
+    // the side column's place.
+    expect(await zoneBoxes(page), `${width} px`).toEqual(boxes);
+    await expect(tracker, `${width} px`).toBeHidden();
+    // The drawer sits where the side column was, beside the zones.
     expect((await drawer.boundingBox())!.x).toBeGreaterThan(after.x + after.width);
+    expect((await drawer.boundingBox())!.x, `${width} px`).toBeLessThanOrEqual(trackerBox.x);
     // The opened dot keeps its 2 px info-icon ring while the drawer shows it.
     const ring = page.locator("[data-opened-ring]");
     await expect(ring).toBeAttached();
     expect(await ring.evaluate((el) => [getComputedStyle(el).stroke, getComputedStyle(el).strokeWidth])).toEqual(["rgb(0, 113, 188)", "2px"]);
+    // Closed, the side column comes back as it was, and the zones still have not moved.
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+    await expect(tracker).toBeVisible();
+    const back = (await tracker.boundingBox())!;
+    expect([back.x, back.width], `${width} px`).toEqual([trackerBox.x, trackerBox.width]);
+    expect(await zoneBoxes(page), `${width} px`).toEqual(boxes);
   }
 });

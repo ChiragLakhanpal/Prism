@@ -200,7 +200,8 @@ export function BaselinePanel({
   }
 
   return (
-    <TaskZone name={words.label} sectionKey="baseline" marks={{ "data-baseline": mode.kind === "idle" ? (baseline ? (isThis ? "this" : "another") : "none") : mode.kind }}>
+    // Its heading's id is the address "How I checked" links to with "Go to Baseline for delay" (ticket 130).
+    <TaskZone name={words.label} headingId="baseline" sectionKey="baseline" marks={{ "data-baseline": mode.kind === "idle" ? (baseline ? (isThis ? "this" : "another") : "none") : mode.kind }}>
       <ZoneBlock>
       {/* A sentence on a wide page keeps to the prose measure (DESIGN.md section 4, Page layouts; ticket 100's design
           review, item 8). */}

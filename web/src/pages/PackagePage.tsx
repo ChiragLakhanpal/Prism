@@ -12,7 +12,10 @@
 // package's Description, wraps in full however long. Zone 1 is a panel that opens on its finding; zones 2 and 5 are
 // closed rows; zones 3 and 4 are rows while they hold only their sentence, panels when they have risks or options, and
 // zone 3 then holds "Suggest {n} PPSD risk rows", the page's one primary action for staff. The step tracker (ticket
-// 115) follows zone 1, so the finding leads inside the first screen at 390 by 844 and 1024 by 768.
+// 115) follows zone 1 below a frame of 75rem, so the finding leads inside the first screen at 390 by 844 and 1024 by
+// 768; from that frame it sits in the side column under "From the plan row" as a list, and sticks under the bar while
+// you read the zones (ticket 130, the design lead's Option W2). It renders in one place only, chosen by the frame's
+// width, so the reading order follows what the eye sees, and it hides with the side panel while the drawer is open.
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { type Crumb } from "../components/Breadcrumb";
 import { CopyKey } from "../components/CopyKey";
@@ -44,6 +47,7 @@ import { openPlanRow, useOpenComparable } from "../lib/packages";
 import { rebiddingPath } from "../lib/rebidding";
 import { address } from "../lib/router";
 import { useStore } from "../lib/store";
+import { useFrameAtLeast } from "../lib/useFrameAtLeast";
 import { staffRole } from "../lib/following";
 import { viewOf } from "../lib/view";
 
@@ -92,6 +96,9 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   const staff = useStore(staffRole) !== false;
   const asOf = new URLSearchParams(here.search).has("asof");
   const openId = evidenceIn(here.search);
+  // From a frame of 75rem the step tracker is in the side column; below it, after zone 1 (ticket 130).
+  const root = useRef<HTMLDivElement>(null);
+  const trackerBeside = useFrameAtLeast(root, 75);
 
   // After a "Try again" that works, the section's heading takes focus, so focus is not lost.
   useEffect(() => {
@@ -103,6 +110,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
 
   let head: ReactNode;
   let side: ReactNode = undefined;
+  // The step tracker, or its skeleton while the package loads, in the one place the frame's width gives it.
+  let tracker: ReactNode = null;
   let zones: ReactNode = null;
   if (load.status === "loading") {
     // The head holds the places of its ID line and its facts line, so nothing under it moves when the package arrives.
@@ -120,13 +129,12 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
       />
     );
     side = <FactsPanel pkg={null} />;
+    tracker = <TrackerSkeleton />;
     zones = (
       <>
         <StageLabel>{words.stages.planning}</StageLabel>
         <PastRange state={{ status: "loading" }} estimate={{ status: "loading" }} />
-        <div className="my-4">
-          <TrackerSkeleton />
-        </div>
+        {!trackerBeside && <div className="my-4">{tracker}</div>}
       </>
     );
   } else if (notFound) {
@@ -184,6 +192,7 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
       />
     );
     side = <FactsPanel pkg={facts} opened={planRowOpen} onOpen={planRowOf(facts)} />;
+    tracker = <StepTracker state={steps} />;
     const sectionState: PastRangeState =
       section.status === "loading"
         ? { status: "loading" }
@@ -210,10 +219,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
             />
           )}
         />
-        {/* Where each step stands in the plan (ticket 115), from zone 2's answer. */}
-        <div className="my-4">
-          <StepTracker state={steps} />
-        </div>
+        {/* Where each step stands in the plan (ticket 115), from zone 2's answer, here below a frame of 75rem. */}
+        {!trackerBeside && <div className="my-4">{tracker}</div>}
         {/* Zone 2, the planned date for each STEP step (ticket 27), closed until opened. */}
         <StepsSection packageKey={facts.step_reference} kind="step" criteria={criteria} onState={setSteps} />
         {/* Zone 3, procurement risks and what helped (ticket 30), with zone 1's default criteria; it tells the page
@@ -241,8 +248,8 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
   }
 
   return (
-    <div data-package-page={load.status}>
-      <Workspace answer={asked} head={head} side={side} fold="head">
+    <div ref={root} data-package-page={load.status}>
+      <Workspace answer={asked} head={head} side={side} sideSticky={side != null && trackerBeside ? tracker : undefined} fold="head">
         {zones}
       </Workspace>
       {load.status === "loading" && (
