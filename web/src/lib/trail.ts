@@ -3,6 +3,7 @@
 import { copy } from "../copy";
 import { stepFamilies } from "../steps";
 import { formatCount, formatNumber } from "./format";
+import type { ContractsHeld } from "./timeline";
 
 export type Field = { key: string; value: string; kind: string };
 export type SourceFields = Record<string, string | number | null>;
@@ -211,6 +212,9 @@ export type Neighbourhood = {
     paragraph_items: { short_name: string | null; document_type: string; paragraph: string; paragraph_numbered: boolean; section_path: string }[];
     document_items: { short_name: string | null; document_type: string; document_date: string | null }[];
   };
+  // The project's contracts, as the Timeline tab counts them too (ticket 138): the finding names how many of them
+  // appeared together with a paragraph.
+  contracts: ContractsHeld;
   shown: number;
   total: number;
   threshold: string;

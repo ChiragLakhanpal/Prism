@@ -2556,6 +2556,19 @@
       }
     ]
   },
+  "contracts": {
+    "count": 262,
+    "sources": [
+      {
+        "source": "awards",
+        "count": 256
+      },
+      {
+        "source": "notices",
+        "count": 6
+      }
+    ]
+  },
   "shown": 19,
   "total": 627,
   "threshold": "0.50",
