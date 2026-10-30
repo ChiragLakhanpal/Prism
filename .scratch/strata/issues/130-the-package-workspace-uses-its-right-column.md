@@ -52,3 +52,4 @@ Read first: `docs/design/notes-2026-10-29/ask-bar-and-width-proposal.md` (Option
     - The task named `docs/agents/areas/web.md` as the area brief, but no such file exists; the reviewer worked from the ticket, the lead's Option W2 and the task's facts.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. When I started, the main checkout held ticket 140's merge in progress; I waited for it, its done commit and the status update to land, and started this merge only on a clean checkout. No other merge ran in it while mine was in progress.
   - Unblocks: none. No ticket lists 130 under "Blocked by".
+- October 30, 2026, orchestrator (02:17 PDT): the App redeploy ran from 97fb5bcb (the catch-up block "Tickets 130, 135, 137, 139 and 140, the App redeploy ran"); the page's check by eye is the owner's.

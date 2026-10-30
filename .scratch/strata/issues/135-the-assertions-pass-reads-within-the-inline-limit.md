@@ -49,3 +49,4 @@ Read first: `ops/assertions/batch_live.py` (`run_live`, `main`), `src/strata/kno
   - Decisions parked for the user: none from the builder, the review or the verify.
   - Coordination: no session named strata-58 was listed when the merge started, so I sent no message about the index.
   - No ticket waits on 135.
+- October 30, 2026, orchestrator (02:17 PDT): the App redeploy ran from 97fb5bcb (the catch-up block "Tickets 130, 135, 137, 139 and 140, the App redeploy ran"); the page's check by eye is the owner's.
