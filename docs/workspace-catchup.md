@@ -4439,3 +4439,55 @@ It worked if step 5 (Home) passes, prints "The App's secret is gone since the pl
 ## Tickets 126 and 129, the App redeploy ran: the App runs cbd7e47d
 
 **Ran on October 29, 2026 (orchestrator), from a snapshot of cbd7e47d.** The App redeployed from cbd7e47d at 02:40 UTC on October 30 (exit 0), with tickets 126 (the tucked-away lines) and 129 (the fallback to the owner's token). Ticket 129, criterion 3: the demo-ready command ran once from a snapshot of cbd7e47d at 02:44 UTC with the App principal's secret still dead in the environment file (the platform rotated it at 14:46 UTC on October 29) and every step passed; its Home step printed 'passed. The examples are seeded, as the owner, and the window is checked.', so the seed wrote as the owner through the fallback with no new secret pasted. The other steps: the App's health in 2 s, Genie after 20 s warm, the smoke question's cited answer passed the six checks (strata.gold.passage:31525018/v1/54), the P156634 recheck on watch with four changes since the fixture, the workspace listing with seven changes. Ticket 126 on the App: the walkthrough's screens are being captured again from this build for the demo document. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 131, step 1 of 4: add the five as-read columns to silver.plan_rows, before any deploy
+
+Parked on October 29, 2026 with ticket 131, which merged into build/strata as a8fb048d (branch `strata/131-plan-text-read-from-a-pdf-is-repaired` at 246c3dcc). Every key is set, but mergers run no workspace step: the orchestrator or the second session (strata-58) runs these four steps, one at a time and in this order, from a snapshot that includes this merge (a8fb048d, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). The steps are the builder's, in the builder's order.
+
+What ticket 131 changes: the plan reader repairs each plan row after it reads the row and before it writes it (`src/strata/reader/repair.py`, called once in `plans.write_rows`). A word split by a space in a description is joined when a notice title or another plan row holds the joined word. A reference that breaks STEP's grammar is swapped once over the look-alike pairs (0 and O, 8 and B, 1 and I, 5 and S) when a notice or another plan version carries the result; otherwise it stays as read, with `reference_repair` set to `reference_as_read`. The kinds, the methods, the pairs and the join guard are in `config/references.toml`. `strata.silver.plan_rows` gains five columns that keep the text as read, and the plan check, the package page, the source view and the evidence drawer read them.
+
+Run this once on the paid workspace's SQL warehouse, before any bundle or App deploy from a commit that holds this merge, and before step 3's rewrite. CREATE TABLE IF NOT EXISTS adds no column to a table that exists. Without these columns, the plan check, the package page, the source view and the evidence drawer answer 500, and `parse_and_embed` and the rewrite fail on INSERT.
+
+    ALTER TABLE strata.silver.plan_rows ADD COLUMNS (activity_reference_no_as_read STRING, reference_repair STRING, reference_carried_by STRING, description_as_read STRING, description_joins STRING)
+
+It worked if the statement ends SUCCEEDED and `DESCRIBE TABLE strata.silver.plan_rows` lists the five columns last, in that order. `src/strata/lakehouse/tables/silver/plan_rows.sql` gives the same statement. If it says a column already exists, go on. Record the statement's state and the DESCRIBE lines here under ticket 131.
+
+## Ticket 131, step 2 of 4: deploy the bundle and redeploy the App
+
+Run after step 1, from the same snapshot. The bundle deploy carries the reader and `plans.py` to the nightly job. The App redeploy carries the server SQL, the tools and `web/`. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The builder wrote the first command without `--env-file`. A snapshot holds no `.env`, so it names the main checkout's, as ticket 122's block does.
+
+It worked if both exit 0, and the App deploy's last line is `Strata is running at https://...`. Record both exit codes, the bundle deploy's "3. What changed:" lines, the commit the App runs, and any secret the App deploy's step 3 names here under ticket 131.
+
+## Ticket 131, step 3 of 4: write P156634's plan rows again from bronze, then rebuild gold
+
+Run after step 2, from the same snapshot. This is ticket 122's rewrite path for one project: it fetches and parses no document.
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P156634
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+It worked if `run_live.py` exits 0, fetches and parses nothing, and prints P156634's row count, and `bronze_to_gold` ends SUCCESS. Then:
+
+    SELECT activity_reference_no, activity_reference_no_as_read, reference_repair, description FROM strata.silver.plan_rows WHERE document_id = '40132287'
+
+It shows the joined descriptions (Boreholes, Sarman where a notice writes it, Nairobi). It also shows the row read as KE-NWWDA-193461-90-RF8 with `reference_repair` `reference_as_read`, and, if the parser read -RFQ, KE-NWWDA-229129-CW-RFB with `reference_repair` `plan_text`. Record the script's lines, the job run id and its result, and the query's rows here under ticket 131.
+
+## Ticket 131, step 4 of 4: the repaired text on the App (criterion 3)
+
+Run after step 3. Signed in to the App as a staff viewer:
+
+    GET https://strata-7405609289499029.9.azure.databricksapps.com/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
+
+It worked if all of these hold:
+
+- The route gives the repaired descriptions, and `reference_as_read` true for KE-NWWDA-193461-90-RF8 alone.
+- The plan check at `/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09` shows "As I read it from the plan" under that row.
+- `/packages/KE-NWWDA-193461-90-RF8` shows "as I read it from the plan" on its ID line.
+- The plan check and `/packages/KE-NWWDA-541055-CW-RFB` read "Boreholes" and "Sarman".
+- The source view of the plan's page 3 (document 40132287), `GET /api/projects/P156634/documents/procurement-plan-northern-water-works-development-agency-2026-10-09?page=3`, lists KE-NWWDA-229129-CW-RFB in its `plan_rows`, not -RFQ.
+
+Look for the builder's words, "As I read it from the plan", not the ticket's "as the plan prints it" (a decision parked for the user under ticket 131). The walkthrough's row stays KE-NWWDA-193461-90-RF8 with the note, because no single look-alike swap reaches a valid reference; that is expected, not a failure. Record the status, the time and what each page shows here under ticket 131. This is criterion 3's live proof.
