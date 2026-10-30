@@ -242,17 +242,20 @@ def test_a_service_principal_keeps_the_default_path_and_its_secret_off_every_com
     assert CLIENT_SECRET not in shown
 
 
-def test_the_service_principal_step_says_the_app_s_secret_lives_until_the_next_restart_and_the_fallback_covers_it(
+def test_the_service_principal_step_says_the_app_s_secret_lives_until_the_next_restart_and_when_the_fallback_covers_it(
         place):
     """Ticket 129: the platform makes the App's service principal a new secret each time it starts the App again, so
-    the wizard stops asking for that secret and says why."""
+    the wizard says how long that secret lives and what covers it. This path saves no personal access token, so the
+    fallback does not cover the person who reads it, and the wizard says that too."""
     done = run_wizard(place, SERVICE_PRINCIPAL_RUN)
     shown = " ".join(line.strip() for line in done.stdout.splitlines())
 
     assert ("A secret of the App's own service principal lives only until the platform next restarts the App, "
             "because the platform then makes it a new one.") in shown
-    assert ("You never need to paste the App's secret: when the workspace refuses it, the scripts that write as the "
-            "App, such as the seed command, write with your personal access token instead.") in shown
+    assert ("When the workspace refuses it, the scripts that write as the App, such as the seed command, write with "
+            "a personal access token in DATABRICKS_TOKEN instead.") in shown
+    assert "This path saves no token, so on it the seed command needs the App's new secret after each restart." in shown
+    assert "You never need to paste the App's secret" not in shown
 
 
 def test_the_wizard_records_tests_six_seven_eight_nine_and_the_pay_as_you_go_step(place):
