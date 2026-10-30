@@ -87,7 +87,9 @@ function riskShot(name: string, risks: Answer | null, rest: Partial<Shot> = {}):
   // Section 1 answers with the same criteria section 3 was read with (India from 2013, as tests/record_risks_api.py
   // reads India's risks), so the page pairs India's comparables with India's risks, as the app does, and Kenya's with
   // Kenya's. Sections 2 and 5 and lane 2 answer as they do on the package shots, so no section shows a load error
-  // the app does not (ticket 60 and its design review, B1).
+  // the app does not (ticket 60 and its design review, B1). Section 5's route reads only the package's own criteria,
+  // Kenya's 49 comparable packages, so beside India's section 1 it would count other packages than section 1's two:
+  // there it stays loading, a state the app shows, and no count on the page disagrees (round 2, the critic's item).
   const india = Boolean(risks?.recorded?.includes("-india"));
   const answers: Record<string, Answer> = {
     ...app(name, RISKS_PATH).api,
@@ -95,7 +97,7 @@ function riskShot(name: string, risks: Answer | null, rest: Partial<Shot> = {}):
     [`${RISKS_API}/comparables`]: { recorded: india ? "comparables-ke-nwwda-541055-india-2013.json" : "comparables-ke-nwwda-541055.json" },
     [`${RISKS_API}/steps`]: { recorded: "steps-ke-nwwda-541055.json" },
     [`${RISKS_API}/estimate`]: { recorded: "estimate-ke-nwwda-541055.json" },
-    [`${RISKS_API}/criteria`]: { recorded: "criteria-summary-ke-nwwda-541055.json" },
+    ...(india ? {} : { [`${RISKS_API}/criteria`]: { recorded: "criteria-summary-ke-nwwda-541055.json" } }),
     [`${RISKS_API}/criteria/run`]: { recorded: "criteria-run-ke-nwwda-541055.sse" },
     [`${RISKS_API}/risk-selection`]: { recorded: "risks-selection-saved.json" },
     "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
@@ -103,7 +105,8 @@ function riskShot(name: string, risks: Answer | null, rest: Partial<Shot> = {}):
     ...rest.api,
   };
   if (risks) answers[`${RISKS_API}/risks`] = risks;
-  return app(`risks--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending: risks ? rest.pending : [`${RISKS_API}/risks`] });
+  const pending = risks ? [...(rest.pending ?? []), ...(india ? [`${RISKS_API}/criteria`] : [])] : [`${RISKS_API}/risks`];
+  return app(`risks--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending });
 }
 const INDIA: Answer = { recorded: "risks-ke-nwwda-541055-india.json" };
 // Each shot that scrolls to section 3 is a whole-page shot, so it scrolls back to the top once the section has drawn,

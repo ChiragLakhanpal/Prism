@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { galleryCopy } from "../src/gallery/copy";
 import { SHOTS, WIDTHS } from "../capture/shots";
+import { mockApi, recorded } from "./mocked";
 
 test("the capture list photographs every gallery page at 1440, 1024 and 390 px", () => {
   expect(WIDTHS).toEqual([1440, 1024, 390]);
@@ -143,17 +144,23 @@ test("the risks shots pair section 1 and section 3 read with the same criteria, 
   for (const shot of shots) {
     const risks = recording(shot.api![`${api}/risks`].recorded!);
     const comparables = recording(shot.api![`${api}/comparables`].recorded!);
-    if (shot.api![`${api}/risks`].recorded!.includes("-india")) {
+    const india = shot.api![`${api}/risks`].recorded!.includes("-india");
+    if (india) {
       // tests/record_risks_api.py reads India's risks with these criteria.
       expect([comparables.criteria.country, comparables.criteria.notice_from], shot.name).toEqual(["IN", "2013-01-01"]);
     }
+    // Section 5's route reads only the package's own criteria, which are Kenya's, so it can't answer beside India's
+    // section 1: it stays loading there, and no count on the page disagrees with section 1's (its design review, round
+    // 2, the critic's item). Kenya's shots answer it.
+    expect(shot.pending ?? [], `${shot.name}: criteria pending`).toEqual(india ? [`${api}/criteria`] : []);
+    expect(Boolean(shot.api![`${api}/criteria`]), `${shot.name}: criteria answered`).toBe(!india);
     const matched = new Set<string>([
       ...comparables.rows.map((row: { step_reference: string }) => row.step_reference),
       ...comparables.coverage.not_used.flatMap((group: { step_references: string[] }) => group.step_references),
     ]);
     const counted = new URL(risks.counts_evidence_id.replace(/^[^?]*/, "http://strata.test/")).searchParams.get("packages")!.split(",");
     expect(counted.filter((reference) => !matched.has(reference)), shot.name).toEqual([]);
-    for (const route of ["steps", "estimate", "criteria", "criteria/run"]) expect(shot.api![`${api}/${route}`], `${shot.name}: ${route}`).toBeDefined();
+    for (const route of ["steps", "estimate", "criteria/run"]) expect(shot.api![`${api}/${route}`], `${shot.name}: ${route}`).toBeDefined();
   }
   expect(SHOTS.find((shot) => shot.name === "planned--missing")?.api?.["/api/planned-packages/pkg-000000000002/risks"]?.recorded).toBe("risks-planned-yourself.json");
   expect(SHOTS.find((shot) => shot.name === "planned--dividing")?.api?.["/api/planned-packages/pkg-000000000003/risks"]).toBeDefined();
@@ -163,6 +170,27 @@ test("the risks shots pair section 1 and section 3 read with the same criteria, 
     const api = SHOTS.find((shot) => shot.name === name)?.api ?? {};
     for (const route of ["steps", "criteria"]) expect(api[`/api/planned-packages/${id}/${route}`]?.recorded, `${name}: ${route}`).toBeDefined();
   }
+});
+
+// Ticket 60 (its design review, round 2, the critic's item): the whole-page India risks shot showed section 1's "Two
+// past packages matched" above section 5's "None of the 49 comparable packages", Kenya's count. The page is opened as
+// the capture opens it, and every section that counts comparable packages counts section 1's.
+test("the India risks shot shows no section that counts other comparable packages than section 1", async ({ page }) => {
+  const shot = SHOTS.find((candidate) => candidate.name === "risks--table")!;
+  const responses: Record<string, { status?: number; body: string }> = {};
+  for (const [path, answer] of Object.entries(shot.api ?? {})) {
+    responses[path] = { status: answer.status, body: answer.recorded ? await recorded(answer.recorded) : (answer.body ?? "") };
+  }
+  await mockApi(page, responses);
+  for (const path of shot.pending ?? []) await page.route((url) => url.pathname.endsWith(path), () => undefined);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(shot.path);
+  const matched = recording(shot.api!["/api/packages/KE-NWWDA-541055-CW-RFB/comparables"].recorded!).coverage.matched;
+  expect(matched).toBe(2);
+  await expect(page.locator("main")).toContainText("Two past packages matched this one");
+  await expect(page.locator("section#risks [data-risk-view]:visible")).toBeVisible();
+  await expect(page.locator("#check-criteria")).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(/\b(?!2\b)\d+ comparable packages/);
 });
 
 // Ticket 60 (ticket 29's design review, round 3, F8): a change or a retirement is decided on a lesson that already has a
