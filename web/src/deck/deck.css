@@ -1,6 +1,8 @@
 /* The deck's figures on a slide (Figure.tsx's Diagram, inside a [data-deck-figure] box): the drawing scales to fit its
-   box, and each part a press has not reached yet is hidden, then fades in over 200 ms (DESIGN.md section 10). Under
-   reduced motion it appears at once. */
+   box, and each part a press has not reached yet is hidden. A part a press brings in draws itself, on Emil Kowalski's
+   timings for something entering: one ease-out curve, and longer for a larger move. Its lines and outlines draw from
+   start to end over 500 ms, and its fills fade in over 200 ms. Its words fade in over 200 ms from 150 ms, once the
+   lines are under way. A part a press back takes away goes at once. Under reduced motion every part appears at once. */
 [data-deck-figure] > [data-figure],
 [data-deck-figure] svg {
   display: block;
@@ -8,17 +10,40 @@
   height: 100%;
 }
 
-[data-deck-figure] [data-motion-item] {
-  transition: opacity 200ms ease-out, visibility 200ms ease-out;
+[data-deck-figure] {
+  --draw-ease: cubic-bezier(0.165, 0.84, 0.44, 1);
 }
 
 [data-deck-figure] [data-motion-item][data-unreached] {
-  opacity: 0;
   visibility: hidden;
 }
 
+[data-deck-figure] [data-motion-item] [data-draw] {
+  stroke-dasharray: 1;
+  transition: stroke-dashoffset 500ms var(--draw-ease), fill-opacity 200ms var(--draw-ease);
+}
+
+[data-deck-figure] [data-motion-item] [data-fade] {
+  transition: opacity 200ms var(--draw-ease);
+}
+
+[data-deck-figure] [data-motion-item] text {
+  transition: opacity 200ms var(--draw-ease) 150ms;
+}
+
+[data-deck-figure] [data-motion-item][data-unreached] [data-draw] {
+  stroke-dashoffset: 1;
+  fill-opacity: 0;
+  transition: none;
+}
+
+[data-deck-figure] [data-motion-item][data-unreached] :is([data-fade], text) {
+  opacity: 0;
+  transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  [data-deck-figure] [data-motion-item] {
+  [data-deck-figure] [data-motion-item] :is([data-draw], [data-fade], text) {
     transition: none;
   }
 }

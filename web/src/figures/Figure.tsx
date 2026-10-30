@@ -178,6 +178,20 @@ export function Diagram({ id, step }: { id: FigureId; step?: number }) {
   const figure = FIGURES[id];
   const box = useRef<HTMLDivElement>(null);
   const markup = useMemo(() => (figure.svg ? inline(figure.svg) : ""), [figure.svg]);
+  // A part a press brings in draws itself (styles/deck.css). Each line or outline with a solid stroke gets pathLength
+  // 1, so a single dash as long as the stroke can draw it from its start. A fill with no stroke, or a dashed stroke,
+  // fades in instead.
+  useLayoutEffect(() => {
+    const root = box.current;
+    if (!root) return;
+    for (const shape of root.querySelectorAll<SVGElement>("[data-motion-item] :is(path, line, polyline, polygon, rect, circle, ellipse)")) {
+      const stroke = shape.getAttribute("stroke");
+      const solid = stroke !== null && stroke !== "none" && !shape.hasAttribute("stroke-dasharray");
+      if (solid) shape.setAttribute("pathLength", "1");
+      shape.toggleAttribute("data-draw", solid);
+      shape.toggleAttribute("data-fade", !solid);
+    }
+  }, [markup]);
   useLayoutEffect(() => {
     const root = box.current;
     if (!root) return;

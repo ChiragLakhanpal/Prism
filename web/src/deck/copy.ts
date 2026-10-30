@@ -343,10 +343,12 @@ export const deckCopy = {
     retrieval: {
       title: "The agent picks the tools, and the app runs them as the person asking",
       notes:
-        "A press each. The agent in Foundry decides which tools to call: SQL through the Genie Agent, hybrid search, " +
-        "or a walk over the edge table. The app runs each call with the viewer's own permissions and keeps the " +
-        "rows. The agent returns claims with their evidence IDs, and the verifier checks each one before anything " +
-        "reaches the screen.",
+        "A press each, with the Kenya water package from the demo. The agent in Foundry picks the tools: " +
+        "find_comparables and estimate_time run fixed SQL on strata.gold.package, notice and contract, " +
+        "search_passages asks AI Search over strata.gold.passage, and get_disagreements reads strata.gold.assertion. " +
+        "The app runs every call with the viewer's own token, so Unity Catalog decides what each person can see, and " +
+        "it keeps every row with its evidence ID. The agent writes claims that cite those IDs, and the verifier, in " +
+        "plain code, checks each one before anything reaches the screen. Each run is kept in strata.ops.agent_runs.",
     },
     estimate: {
       title: "A time estimate starts from comparable packages, and gives no range when there are too few",
@@ -629,11 +631,11 @@ export const figureCopy = {
     title: "Strata's knowledge model",
     heading: "How records and documents connect",
     steps: [
-      "A project has packages. Each package has its STEP reference and becomes contracts. Strata matches each contract's supplier on its STEP supplier ID.",
-      "Documents describe a project, and each document has numbered passages.",
-      "A lesson quotes a passage, word for word.",
-      "A passage can be the source of an assertion, such as a rating on a date. Two assertions about the same thing, for the same time, that cannot both be true make a disagreement.",
-      "A contract and a passage about the same work appeared together. The link never says one caused the other.",
+      "A project has packages. Each package has its STEP reference and becomes contracts. Strata matches each contract's supplier on its STEP supplier ID. They are strata.gold.project, package, contract and supplier.",
+      "Documents describe a project, and each document has numbered passages, in strata.silver.documents and strata.gold.passage.",
+      "A lesson quotes a passage, word for word. Its versions are in strata.ops.lesson_versions.",
+      "A passage can be the source of an assertion, such as a rating on a date. Two assertions about the same thing, for the same time, that cannot both be true make a disagreement. They are strata.gold.assertion and strata.gold.disagreement.",
+      "A contract and a passage about the same work appeared together, a row in strata.gold.edge. The link never says one caused the other.",
       "Every row keeps the date it became public.",
     ],
     caption:
@@ -648,10 +650,13 @@ export const figureCopy = {
     steps: [
       "The viewer asks a question in the app.",
       "The app passes it to the Strata agent in Microsoft Foundry, which picks the tools to call.",
-      "The app runs each tool with the viewer's own permissions and keeps every row and passage, each with its ID.",
+      "The app runs each tool with the viewer's own permissions: SQL on strata.gold.package, notice and contract, AI " +
+        "Search over strata.gold.passage, and the claims graph in strata.gold.assertion and disagreement. It keeps every " +
+        "row and passage, each with its ID.",
       "The agent writes its claims, each with the IDs of its evidence. It can go back for more, up to a fixed number of rounds.",
       "The verifier checks every sentence against the kept rows and passages.",
-      "The viewer reads the answer. Under it are any sentences the verifier removed, each with the reason.",
+      "The viewer reads the answer. Under it are any sentences the verifier removed, each with the reason. Strata keeps " +
+        "each run in strata.ops.agent_runs, with its tool calls and removed sentences.",
     ],
     caption:
       "I decide which records and passages to look up, and I write each claim with the source behind it. Then my " +
