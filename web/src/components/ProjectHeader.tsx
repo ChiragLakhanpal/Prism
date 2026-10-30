@@ -37,12 +37,14 @@ export function AgencyLine({ names }: { names: string[] }) {
       <p ref={line} id={id} className={cx("min-w-0 text-body text-ink-muted", open ? "max-w-prose" : "truncate")}>
         <Fill template={names.length > 1 ? words.agenciesLine : words.agencyLine} slots={{ agencies: names.join(words.agencyJoin) }} />
       </p>
+      {/* A compact flush button, 24 px tall, so its fill and focus ring keep to its own line and never cross the
+          agencies' lines above it when the list is open (ticket 60). */}
       {(hides || open) && (
-        <span className="shrink-0">
-          <Button variant="ghost" flush onPage aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
+        <div className={cx("flex shrink-0", open && "mt-1")}>
+          <Button variant="ghost" flush compact onPage aria-expanded={open} aria-controls={id} onClick={() => setOpen(!open)}>
             {open ? words.fewerAgencies : words.allAgencies}
           </Button>
-        </span>
+        </div>
       )}
     </div>
   );

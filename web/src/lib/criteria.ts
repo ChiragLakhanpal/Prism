@@ -298,6 +298,16 @@ export function forgetLessons() {
 
 // The one lesson whose paragraph this is, or null when none or more than one is.
 export function criteriaLessonOf(id: string, lessons: LessonEntry[] = pageLessons.get()): LessonEntry | null {
-  const holding = lessons.filter((lesson) => lesson.passage_evidence_id === id);
+  // Its paragraph, or IEG's words that restate it, which the drawer's second tab opens (ticket 60).
+  const holding = lessons.filter((lesson) => lesson.passage_evidence_id === id || lesson.ieg_quote?.evidence_id === id);
   return holding.length === 1 ? holding[0] : null;
+}
+
+// A lesson that IEG restated has two sources for the drawer's tabs: its paragraph, and IEG's words (ticket 60), as a
+// risk's row has its completion report and IEG's review (ticket 30's RowSwitcher).
+export function lessonSources(lesson: LessonEntry): { evidence_id: string; doc_short: string; locator: { kind: "paragraph" | "section"; text: string } }[] {
+  const paragraph = { evidence_id: lesson.passage_evidence_id, doc_short: lesson.doc_short, locator: { kind: lesson.locator, text: lesson.para ?? "" } };
+  if (!lesson.ieg_quote) return [paragraph];
+  const item = lesson.ieg_quote.evidence_id.split("/").pop() ?? "";
+  return [paragraph, { evidence_id: lesson.ieg_quote.evidence_id, doc_short: lesson.ieg_quote.doc_short, locator: { kind: "section", text: item } }];
 }

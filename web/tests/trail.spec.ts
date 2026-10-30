@@ -190,7 +190,7 @@ test("the activity page's loading, service error and permission states", async (
   await page.setViewportSize({ width: 1024, height: 900 });
   await mockApi(page, { ...(await trailApi()), [`/api${KENYA_PATH}`]: { status: 503, body: SERVICE_DOWN } });
   await page.goto(KENYA_PATH);
-  await expect(page.getByRole("alert")).toHaveText("I couldn't load this activity. The data service didn't answer.");
+  await expect(page.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load this activity. The data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   expect(await axe(page)).toEqual([]);
 
@@ -328,7 +328,7 @@ test("Connections caps a large project at 20 nodes and counts its packages, and 
 
   await mockApi(page, { ...(await trailApi()), "/api/projects/P130164/connections": { status: 503, body: SERVICE_DOWN } });
   await page.goto("/projects/P130164/connections");
-  await expect(page.getByRole("alert")).toHaveText("I couldn't load this project's connections. The data service didn't answer.");
+  await expect(page.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load this project's connections. The data service didn't answer.");
   expect(await axe(page)).toEqual([]);
 });
 

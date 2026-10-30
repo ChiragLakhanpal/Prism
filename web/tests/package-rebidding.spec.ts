@@ -246,6 +246,20 @@ test("my model's estimate shows as about k in 10 with its track record, a long g
   await expect(group.getByRole("button", { name: "Open the records for KE-SAMPLE-310001-CW-RFB" })).toBeFocused();
 });
 
+// Ticket 60 (ticket 28's review, follow-up 9): a denominator reason the copy file has no words for says no reason,
+// never a raw code. Since ticket 126 the reason is in the count's tooltip, so the tooltip is where it would show.
+test("a denominator reason with no words in the copy file says no reason in the count's tooltip", async ({ page }) => {
+  const body = JSON.parse(await recorded("rebidding-ke-nwwda-541055.json"));
+  await openPackage(page, { answer: { body: JSON.stringify({ ...body, denominator_reason: "a_reason_with_no_words" }) } });
+  await ready(page);
+  await expect(block(page).locator("[data-rebid-count]")).toBeVisible();
+  await block(page).locator("[data-rebid-count] [data-num]").nth(1).focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toBeVisible();
+  await expect(page.getByRole("tooltip")).not.toContainText("a_reason_with_no_words");
+  await expect(page.getByRole("tooltip")).not.toContainText("I counted 52 packages here");
+  await expect(block(page)).not.toContainText("a_reason_with_no_words");
+});
+
 test("an activity advertised twice opens the drawer with a tab for each notice (mock)", async ({ page }) => {
   await openPackage(page, { rebidding: "rebidding-mock-model-shown.json" });
   await ready(page);
@@ -256,6 +270,9 @@ test("an activity advertised twice opens the drawer with a tab for each notice (
   const tabs = page.getByRole("dialog").getByRole("tablist", { name: "Sources for this sentence" }).getByRole("tab");
   await expect(tabs).toHaveText(["Notice OP90000011", "Notice OP90000012"]);
   await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+  // Ticket 60 (ticket 28's critique, follow-up 5): the line is dated by the second notice, so the claim ends with both
+  // records' numbers, whichever tab is open.
+  await expect(page.getByRole("dialog").locator("[data-rebid-claim] [data-claim-numbers]")).toHaveText("78");
   await tabs.nth(1).click();
   await expect(page).toHaveURL(/evidence=strata\.silver\.notices%3AOP90000012/);
   await expect(page.getByRole("dialog").getByRole("heading", { level: 2 })).toHaveText("Notice OP90000012");
@@ -290,12 +307,24 @@ test("a failed load says so with Try again and the code, and a route the server 
   await expect(block(page).locator("[data-alert=error]")).toHaveText("I couldn't load the count of packages advertised again.");
   await expect(block(page)).toContainText("If it fails again, quote this code: 0af7651916cd43dd8448eb211c80319c.");
   await expect(block(page).locator("[data-rebid-why]")).toHaveCount(0);
+  // Zone 1 has one polite live region, and the block's failure is said there, not in a second region of its own
+  // (the 28 brief; ticket 60).
+  const zone = page.locator("section[data-section=took]");
+  await expect(zone.getByRole("status")).toHaveCount(1);
+  await expect(zone.getByRole("status")).toHaveText("I couldn't load the count of packages advertised again.");
+  await expect(block(page).getByRole("status")).toHaveCount(0);
 
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
   await page.route(`**${API}/rebidding`, async (route) => {
     calls += 1;
+    await held;
     await route.fulfill({ contentType: "application/json", body: await recorded("rebidding-ke-nwwda-541055.json") });
   });
   await block(page).getByRole("button", { name: "Try again" }).click();
+  // The region empties while the retry runs, so a second failure would be heard again (ticket 60's review, item 5).
+  await expect(zone.getByRole("status")).toHaveText("");
+  release();
   await expect(block(page)).toHaveAttribute("data-rebidding", "found");
   await expect(block(page).getByRole("heading", { level: 3 })).toBeFocused();
   expect(calls).toBe(1);

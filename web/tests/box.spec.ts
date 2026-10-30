@@ -328,11 +328,14 @@ const LONG_REF = "KE-NWWDA-541055-CW-RFB-LOT-0001-2026-ABC";
 
 async function openPackage(page: Page, ref: string, width: number) {
   await page.setViewportSize({ width, height: 900 });
-  const known = ref === "KE-NWWDA-541055-CW-RFB";
+  // Another reference answers with the same package under that reference: a package the page cannot find is no scope,
+  // so its box has no chip (ticket 60).
+  const found = JSON.parse(await recorded("package-ke-nwwda-541055.json"));
+  found.package.step_reference = ref;
   await mockApi(page, {
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
-    [`/api/packages/${ref}`]: known ? { body: await recorded("package-ke-nwwda-541055.json") } : { status: 404, body: '{"code":"unknown_package"}' },
+    [`/api/packages/${encodeURIComponent(ref)}`]: { body: JSON.stringify(found) },
     [`/api/packages/${ref}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
   });
   await page.goto(`/packages/${encodeURIComponent(ref)}`);
@@ -762,4 +765,14 @@ test("at 390 px the package's suggestions open above the box with no WCAG 2.2 AA
     .poll(() => list.evaluate((el) => ({ height: Math.round(el.getBoundingClientRect().height), scrolls: el.scrollHeight > el.clientHeight })))
     .toEqual({ height: 360 - 56 - 96, scrolls: true });
   await listAboveTheBox(page);
+
+  // Ticket 60 (ticket 93's review, F2): the active option scrolls into the list's view as the arrow keys move to it.
+  const options = group(page, "Ask about this package").getByRole("option");
+  for (let step = 0; step < 3; step++) await page.keyboard.press("ArrowDown");
+  await expect(options.last()).toHaveAttribute("aria-selected", "true");
+  const inside = async () => {
+    const [frame, option] = [(await list.boundingBox())!, (await options.last().boundingBox())!];
+    return option.y >= frame.y - 1 && option.y + option.height <= frame.y + frame.height + 1;
+  };
+  await expect.poll(inside).toBe(true);
 });

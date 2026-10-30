@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "@playwright/test";
 import { galleryCopy } from "../src/gallery/copy";
 import { SHOTS, WIDTHS } from "../capture/shots";
+import { mockApi, recorded } from "./mocked";
 
 test("the capture list photographs every gallery page at 1440, 1024 and 390 px", () => {
   expect(WIDTHS).toEqual([1440, 1024, 390]);
@@ -103,6 +104,107 @@ test("the capture list photographs the check windows and a drawer's landed row a
     expect(shot?.act, name).toBeDefined();
   }
   expect(SHOTS.find((shot) => shot.name === "checks--how-window-draft")?.api?.["/api/drafts/draft-0002"]?.recorded).toBe("drafts-review-notes-partial.json");
+});
+
+// Ticket 60: the outage states, the criteria with no judge, a draft another tab exported, and the view switch's shots,
+// which take 800 px since the switch sits in the bar from 768 px (ticket 93's design review, follow-up 7).
+test("the capture list photographs ticket 60's states at their widths", () => {
+  const widths = (name: string) => SHOTS.find((shot) => shot.name === name)?.widths ?? WIDTHS;
+  for (const name of [
+    "checks--judge-silent-some-failed",
+    "checks--removed-check-6-some-kept",
+    "checks--removed-check-6-mixed",
+    "checks--partial-refusal-unchecked",
+    "criteria--readings-unjudged",
+    "draft--conflict-exported",
+  ]) {
+    expect(SHOTS.some((shot) => shot.name === name), name).toBe(true);
+    expect(widths(name), name).toEqual([1440, 1024, 390]);
+  }
+  for (const name of ["navigation--hover-pill", "navigation--focus-pill", "navigation--view-open"]) expect(widths(name), name).toEqual([1440, 1024, 800]);
+});
+
+// Ticket 60 (ticket 21's review, round 4, follow-up 3): a source page's table and a plan's STEP rows show as a table in
+// its frame at 1024 px, so their shots take that width too, and the gallery shows both.
+test("the source page's table and plan rows are captured at 1440, 1024, 390 and 320 px", () => {
+  for (const name of ["source--table", "source--plan-rows"]) {
+    expect(SHOTS.find((shot) => shot.name === name)?.widths, name).toEqual([1440, 1024, 390, 320]);
+  }
+});
+
+// Ticket 60 (ticket 30's review, F12; its design review, B1): the risks shots pair section 1 and section 3 as the app
+// does. Section 1's answer was read with the criteria section 3 was read with, so every comparable package section 3
+// counted is one section 1 matched; the shots answer every route the package page reads; and the planned shots whose
+// packages lack criteria or divide a package answer section 3 too.
+const recording = (name: string) => JSON.parse(readFileSync(new URL(`../../tests/fixtures/api/${name}`, import.meta.url), "utf8"));
+test("the risks shots pair section 1 and section 3 read with the same criteria, and every planned shot answers sections 2, 3 and 5", () => {
+  const api = "/api/packages/KE-NWWDA-541055-CW-RFB";
+  const shots = SHOTS.filter((candidate) => candidate.name.startsWith("risks--") && candidate.api?.[`${api}/risks`]?.recorded);
+  expect(shots.map((shot) => shot.name)).toContain("risks--table");
+  for (const shot of shots) {
+    const risks = recording(shot.api![`${api}/risks`].recorded!);
+    const comparables = recording(shot.api![`${api}/comparables`].recorded!);
+    const india = shot.api![`${api}/risks`].recorded!.includes("-india");
+    if (india) {
+      // tests/record_risks_api.py reads India's risks with these criteria.
+      expect([comparables.criteria.country, comparables.criteria.notice_from], shot.name).toEqual(["IN", "2013-01-01"]);
+    }
+    // Section 5's route reads only the package's own criteria, which are Kenya's, so it can't answer beside India's
+    // section 1: it stays loading there, and no count on the page disagrees with section 1's (its design review, round
+    // 2, the critic's item). Kenya's shots answer it.
+    expect(shot.pending ?? [], `${shot.name}: criteria pending`).toEqual(india ? [`${api}/criteria`] : []);
+    expect(Boolean(shot.api![`${api}/criteria`]), `${shot.name}: criteria answered`).toBe(!india);
+    const matched = new Set<string>([
+      ...comparables.rows.map((row: { step_reference: string }) => row.step_reference),
+      ...comparables.coverage.not_used.flatMap((group: { step_references: string[] }) => group.step_references),
+    ]);
+    const counted = new URL(risks.counts_evidence_id.replace(/^[^?]*/, "http://strata.test/")).searchParams.get("packages")!.split(",");
+    expect(counted.filter((reference) => !matched.has(reference)), shot.name).toEqual([]);
+    for (const route of ["steps", "estimate", "criteria/run"]) expect(shot.api![`${api}/${route}`], `${shot.name}: ${route}`).toBeDefined();
+  }
+  expect(SHOTS.find((shot) => shot.name === "planned--missing")?.api?.["/api/planned-packages/pkg-000000000002/risks"]?.recorded).toBe("risks-planned-yourself.json");
+  expect(SHOTS.find((shot) => shot.name === "planned--dividing")?.api?.["/api/planned-packages/pkg-000000000003/risks"]).toBeDefined();
+  expect(recording("risks-planned-yourself.json").empty_reason).toBe("missing_criteria");
+  // Sections 2 and 5 answer for those packages too (its design review, F6).
+  for (const [name, id] of [["planned--missing", "pkg-000000000002"], ["planned--dividing", "pkg-000000000003"]]) {
+    const api = SHOTS.find((shot) => shot.name === name)?.api ?? {};
+    for (const route of ["steps", "criteria"]) expect(api[`/api/planned-packages/${id}/${route}`]?.recorded, `${name}: ${route}`).toBeDefined();
+  }
+});
+
+// Ticket 60 (its design review, round 2, the critic's item): the whole-page India risks shot showed section 1's "Two
+// past packages matched" above section 5's "None of the 49 comparable packages", Kenya's count. The page is opened as
+// the capture opens it, and every section that counts comparable packages counts section 1's.
+test("the India risks shot shows no section that counts other comparable packages than section 1", async ({ page }) => {
+  const shot = SHOTS.find((candidate) => candidate.name === "risks--table")!;
+  const responses: Record<string, { status?: number; body: string }> = {};
+  for (const [path, answer] of Object.entries(shot.api ?? {})) {
+    responses[path] = { status: answer.status, body: answer.recorded ? await recorded(answer.recorded) : (answer.body ?? "") };
+  }
+  await mockApi(page, responses);
+  for (const path of shot.pending ?? []) await page.route((url) => url.pathname.endsWith(path), () => undefined);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(shot.path);
+  const matched = recording(shot.api!["/api/packages/KE-NWWDA-541055-CW-RFB/comparables"].recorded!).coverage.matched;
+  expect(matched).toBe(2);
+  await expect(page.locator("main")).toContainText("Two past packages matched this one");
+  await expect(page.locator("section#risks [data-risk-view]:visible")).toBeVisible();
+  await expect(page.locator("#check-criteria")).toBeVisible();
+  await expect(page.locator("main")).not.toContainText(/\b(?!2\b)\d+ comparable packages/);
+});
+
+// Ticket 60 (ticket 29's design review, round 3, F8): a change or a retirement is decided on a lesson that already has a
+// version, and its record's history names the version its outcome names, so the panel and the history agree.
+test("a changed or retired lesson's captured record names the same version in its history and its outcome", () => {
+  for (const name of ["lessons--review--decided-changed", "lessons--review--decided-retired"]) {
+    const shot = SHOTS.find((candidate) => candidate.name === name)!;
+    expect(shot.path, name).toContain("/recheck-");
+    const [, answer] = Object.entries(shot.api ?? {}).find(([key]) => key.startsWith("/api/lessons/review/"))!;
+    const body = JSON.parse(answer.body!);
+    const decided = body.history.findLast((event: { event: string }) => event.event === "decided");
+    expect(decided.version, name).toBe(body.outcome.version);
+    expect(body.outcome.version, name).toBe(2);
+  }
 });
 
 test("the capture list has hover and keyboard-focus shots, and app shots against the recorded API", () => {

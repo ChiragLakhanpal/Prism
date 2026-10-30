@@ -70,7 +70,8 @@ function familySteps(family: "firms" | "individuals"): StepsResult {
       actual_date: null, actual_source: null, state: UNKNOWN, late_days: null,
     }),
   );
-  return changed(FIXTURE, { family, steps, longest: null });
+  // No comparable package, so the coverage line counts none and keeps only its link (ticket 60).
+  return changed(FIXTURE, { family, steps, longest: null, coverage: { ...FIXTURE.step_dates!.coverage, total: 0, used: 0, missing: 0, other_family: 0 } });
 }
 
 // A sample as wide as the workspace column at 1440 px (columns 1 to 7, 53.5rem with the card), which shows the table

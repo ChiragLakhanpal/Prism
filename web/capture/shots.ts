@@ -84,22 +84,37 @@ const ROUTES: [string, string][] = [
 const RISKS_PATH = "/packages/KE-NWWDA-541055-CW-RFB";
 const RISKS_API = "/api/packages/KE-NWWDA-541055-CW-RFB";
 function riskShot(name: string, risks: Answer | null, rest: Partial<Shot> = {}): Shot {
+  // Section 1 answers with the same criteria section 3 was read with (India from 2013, as tests/record_risks_api.py
+  // reads India's risks), so the page pairs India's comparables with India's risks, as the app does, and Kenya's with
+  // Kenya's. Sections 2 and 5 and lane 2 answer as they do on the package shots, so no section shows a load error
+  // the app does not (ticket 60 and its design review, B1). Section 5's route reads only the package's own criteria,
+  // Kenya's 49 comparable packages, so beside India's section 1 it would count other packages than section 1's two:
+  // there it stays loading, a state the app shows, and no count on the page disagrees (round 2, the critic's item).
+  const india = Boolean(risks?.recorded?.includes("-india"));
   const answers: Record<string, Answer> = {
     ...app(name, RISKS_PATH).api,
     [RISKS_API]: { recorded: "package-ke-nwwda-541055.json" },
-    [`${RISKS_API}/comparables`]: { recorded: "comparables-ke-nwwda-541055.json" },
+    [`${RISKS_API}/comparables`]: { recorded: india ? "comparables-ke-nwwda-541055-india-2013.json" : "comparables-ke-nwwda-541055.json" },
+    [`${RISKS_API}/steps`]: { recorded: "steps-ke-nwwda-541055.json" },
+    [`${RISKS_API}/estimate`]: { recorded: "estimate-ke-nwwda-541055.json" },
+    ...(india ? {} : { [`${RISKS_API}/criteria`]: { recorded: "criteria-summary-ke-nwwda-541055.json" } }),
+    [`${RISKS_API}/criteria/run`]: { recorded: "criteria-run-ke-nwwda-541055.sse" },
     [`${RISKS_API}/risk-selection`]: { recorded: "risks-selection-saved.json" },
     "/api/evidence": { recorded: "evidence-icr-p130164-54.json" },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
     ...rest.api,
   };
   if (risks) answers[`${RISKS_API}/risks`] = risks;
-  return app(`risks--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending: risks ? rest.pending : [`${RISKS_API}/risks`] });
+  const pending = risks ? [...(rest.pending ?? []), ...(india ? [`${RISKS_API}/criteria`] : [])] : [`${RISKS_API}/risks`];
+  return app(`risks--${name}`, RISKS_PATH, {}, { full: true, ...rest, api: answers, pending });
 }
 const INDIA: Answer = { recorded: "risks-ke-nwwda-541055-india.json" };
+// Each shot that scrolls to section 3 is a whole-page shot, so it scrolls back to the top once the section has drawn,
+// and the sticky bar sits over the page's start, not over its middle (ticket 60's design review, F4).
 const toRisks = async (page: Page) => {
   await page.locator("section#risks").scrollIntoViewIfNeeded();
   await page.waitForTimeout(250);
+  await page.evaluate(() => window.scrollTo(0, 0));
 };
 const openPill = click("section#risks [data-risk-view]:visible [data-source-pill]");
 const RISK_SHOTS: Shot[] = [
@@ -237,15 +252,25 @@ type Answer = { recorded?: string; body?: string; status?: number };
 // An app shot: the page, with /api/me and /api/freshness answered from the recordings unless
 // the shot says otherwise. A page under /lessons also gets who is viewing it and the Lessons page's one read, so the
 // shell's shots there show the page and never a load error (ticket 102; ticket 60's routed note).
+// Home's own read answers every shot at "/" the same way, so a shot of the shell or an answer there never shows Home's
+// load error behind it (ticket 60's design review, F5).
 function app(name: string, path: string, answers: { me?: Answer; freshness?: Answer } = {}, rest: Partial<Shot> = {}): Shot {
   const lessons: Shot["api"] = path.startsWith("/lessons")
     ? { "/api/lessons/me": { recorded: "lessons-me-viewer.json" }, "/api/lessons/page": { recorded: "lessons-page.json" } }
     : {};
+  const home: Shot["api"] =
+    path === "/" || path.startsWith("/?")
+      ? {
+          "/api/home": { recorded: "home.json" },
+          "/api/home?view=piu": { recorded: "home-preview-piu.json" },
+          "/api/home?view=public": { recorded: "home-preview-public.json" },
+        }
+      : {};
   return {
     name,
     path,
     server: "app",
-    api: { "/api/me": answers.me ?? { recorded: "me.json" }, "/api/freshness": answers.freshness ?? { recorded: "freshness.json" }, ...lessons },
+    api: { "/api/me": answers.me ?? { recorded: "me.json" }, "/api/freshness": answers.freshness ?? { recorded: "freshness.json" }, ...lessons, ...home },
     ...rest,
   };
 }
@@ -674,8 +699,9 @@ const HUB_SHOTS: Shot[] = [
   hubShot("source--reissue", "/projects/P130164/documents/icr-review-2023-05-04?page=1"),
   // A page with a table read into rows, and a plan's page of STEP rows: below 768 px each scrolls in a frame
   // that takes focus.
-  hubShot("source--table", "/projects/P130164/documents/pad-2013-10-01?page=65", { widths: [1440, 390, 320] }),
-  hubShot("source--plan-rows", "/projects/P161305/documents/procurement-plan-kenya-national-highways-authority-2026-09-24?page=3", { widths: [1440, 390, 320] }),
+  // At 1024 px the table shows in its frame (ticket 60).
+  hubShot("source--table", "/projects/P130164/documents/pad-2013-10-01?page=65", { widths: [1440, 1024, 390, 320] }),
+  hubShot("source--plan-rows", "/projects/P161305/documents/procurement-plan-kenya-national-highways-authority-2026-09-24?page=3", { widths: [1440, 1024, 390, 320] }),
   hubShot("source--error", `${SOURCE}?page=23&para=54`, {}, { [`/api${SOURCE}?page=23&para=54`]: { status: 503, body: SERVICE_DOWN } }),
   hubShot("source--focus-page-bar", `${SOURCE}?page=23&para=54`, { widths: [1440, 390], act: focus("[data-page-bar] a:visible >> nth=-1") }),
   hubShot("source--hover-page-bar", `${SOURCE}?page=23&para=54`, { widths: [1440], act: hover("[data-page-bar] a:visible >> nth=-1") }),
@@ -986,6 +1012,21 @@ const DRAFT_SHOTS: Shot[] = [
       await page.waitForTimeout(400);
     },
   }),
+  // Ticket 60: another tab exported the draft, so the export panel says so at its top.
+  draftShot("draft--conflict-exported", { recorded: "drafts-review-notes-exported.json" }, {
+    full: true,
+    api: { "/api/drafts/draft-0001/check": { status: 409, body: '{"code":"stale","error":"stale","state":"exported"}' } },
+    act: async (page) => {
+      // The page loaded the draft as it was, then another tab exported it.
+      await page.route("**/api/drafts/draft-0001", (route) => route.fulfill({ contentType: "application/json", body: readFileSync(new URL(DRAFT_FILE, RECORDED), "utf8") }), { times: 1 });
+      await page.reload();
+      await page.locator("[data-draft-bar] [data-button=primary]").first().click();
+      await page.waitForTimeout(400);
+      // The success heading took focus and scrolled; a whole-page shot starts at the top, so the sticky bar sits
+      // over the page's start, not over its middle (ticket 60's design review, F4).
+      await page.evaluate(() => window.scrollTo(0, 0));
+    },
+  }),
   draftShot("draft--not-found", { status: 404, body: '{"code":"unknown_draft"}' }, {}, "/drafts/draft-9999"),
   draftShot("draft--error", { status: 503, body: SERVICE_DOWN }),
   draftShot("draft--preview-piu", { recorded: DRAFT_FILE }, {}, `${DRAFT}?view=piu`),
@@ -1064,7 +1105,11 @@ const decidedAs = (outcome: string, version: number | null) => (body: Record<str
   // A change or a retirement leaves the version before it on record, as the server's outcome says.
   body.outcome = { ...body.outcome, outcome, version, previous_version: version && version > 1 ? version - 1 : null };
   const decided = body.history.findLast((event: { event: string }) => event.event === "decided");
-  if (decided) decided.outcome = { added: "add", merged: "repeat", rejected: "reject", changed: "change", retired_wrong: "retire_wrong", retired_outdated: "retire_outdated" }[outcome];
+  if (decided) {
+    decided.outcome = { added: "add", merged: "repeat", rejected: "reject", changed: "change", retired_wrong: "retire_wrong", retired_outdated: "retire_outdated" }[outcome];
+    // The history names the version the outcome names, so the record agrees with itself (ticket 60).
+    if (version !== null) decided.version = version;
+  }
 };
 const summaryAs = (status: string) => (body: Record<string, any>) => {
   body.summary = status === "nothing_survived"
@@ -1213,8 +1258,9 @@ const LESSON_SHOTS: Shot[] = [
   // A re-check that kept the lesson as it was: its record names the version it stayed at.
   review("decided-kept", RECHECK_ITEM, "lessons-item-decided-kept.json"),
   reviewWith("decided-rejected", REB, "lessons-item-decided-added.json", decidedAs("rejected", null)),
-  reviewWith("decided-changed", REB, "lessons-item-decided-added.json", decidedAs("changed", 2)),
-  reviewWith("decided-retired", REB, "lessons-item-decided-added.json", decidedAs("retired_wrong", 2)),
+  // A change or a retirement is decided on a lesson that already has a version: the kept re-check's record (ticket 60).
+  reviewWith("decided-changed", RECHECK_ITEM, "lessons-item-decided-kept.json", decidedAs("changed", 2)),
+  reviewWith("decided-retired", RECHECK_ITEM, "lessons-item-decided-kept.json", decidedAs("retired_wrong", 2)),
   // Loading, not found, errors and no access.
   review("loading", REB, "lessons-item-recommend.json", { pending: [itemApi(REB)] }),
   item("new-0000000000", refusal("lessons-item-not-found.json"), {}, {}, REVIEWER, "review--not-found"),
@@ -1371,6 +1417,8 @@ const CRITERIA_SHOTS: Shot[] = [
   criteriaShot("focus-intro-count", { act: then(openCheck, focus("#check-criteria [data-criteria-intro] [data-num]")) }),
   // A reading check 4's judge said does not follow: removed in its place, its reason in the box above.
   criteriaShot("reading-removed", { full: true, act: compareCriteria }, "criteria-compare-swapped-reading.sse"),
+  // Ticket 60: the judge did not respond, so the removed box says the cause once and offers Try again.
+  criteriaShot("readings-unjudged", { full: true, act: compareCriteria }, "criteria-compare-swapped-reading-no-judge.sse"),
   // View C with the requirement highlighted, and view F with the lesson's words highlighted and its IEG line.
   criteriaShot("drawer-notice", {
     api: { "/api/evidence": { recorded: "evidence-passage-op00077276-s3.json" } },
@@ -1578,10 +1626,20 @@ const PLANNED_ANSWERS: Shot["api"] = {
   "/api/evidence/opened": OPENED,
   "/api/planned-packages": { recorded: "planned-packages-list.json" },
   "/api/projects/P156634": { recorded: "project-p156634.json" },
-  // Section 3 (ticket 30): the rural roads package's Kenya comparables reach no completion report.
+  // Section 3 (ticket 30): the rural roads package's Kenya comparables reach no completion report. The package set up
+  // yourself lacks the criteria that pick comparables, and the dividing one has the rural roads package's criteria
+  // (ticket 60).
   "/api/planned-packages/pkg-000000000001/risks": { recorded: "risks-planned-rural-roads.json" },
+  "/api/planned-packages/pkg-000000000002/risks": { recorded: "risks-planned-yourself.json" },
+  "/api/planned-packages/pkg-000000000003/risks": { recorded: "risks-planned-rural-roads.json" },
   // Section 2 (ticket 27): the rural roads package asks for its first step's date.
   "/api/planned-packages/pkg-000000000001/steps": { recorded: "steps-planned-rural-roads.json" },
+  // Sections 2 and 5 of the package set up yourself and of the dividing one, as the server answered them (ticket 60's
+  // design review, F6), so planned--missing and planned--dividing show no load error the app does not show.
+  "/api/planned-packages/pkg-000000000002/steps": { recorded: "steps-planned-yourself.json" },
+  "/api/planned-packages/pkg-000000000002/criteria": { recorded: "criteria-summary-planned-yourself.json" },
+  "/api/planned-packages/pkg-000000000003/steps": { recorded: "steps-planned-dividing.json" },
+  "/api/planned-packages/pkg-000000000003/criteria": { recorded: "criteria-summary-planned-dividing.json" },
 };
 const plannedShot = (name: string, pkg: Answer = { recorded: PLANNED_FILE }, rest: Partial<Shot> = {}, path = PLANNED, read = PLANNED_API): Shot =>
   app(name, path, {}, { ...rest, api: { ...app(name, path).api, ...PLANNED_ANSWERS, [read]: pkg, ...rest.api } });
@@ -1840,6 +1898,12 @@ const CHECK_SHOTS: Shot[] = [
   answerShot("checks--removed-no-source", "ask-p130164-uncited-summary.sse", { act: then(askInBox(), click(steps)) }),
   answerShot("checks--judge-silent", "ask-p130164-judge-no-response.sse", { act: askInBox() }),
   answerShot("checks--judge-silent-nothing-kept", "ask-p130164-judge-no-response-none-kept.sse", { act: askInBox(SUMMARIES) }),
+  // Ticket 60: the outage states and a partial refusal whose other sentences lost check 6's service, each from its
+  // scripted case's recorded stream, at 1440, 1024 and 390 px (check 2's removal is checks--removed-no-source above).
+  answerShot("checks--judge-silent-some-failed", "ask-p130164-judge-no-response-some-failed.sse", { act: askInBox(SUMMARIES) }),
+  answerShot("checks--removed-check-6-some-kept", "ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--removed-check-6-mixed", "ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse", { act: askInBox(PAST_RANGE) }, "/"),
+  answerShot("checks--partial-refusal-unchecked", "ask-refuses-part-supplier-scores-disagreements-unavailable.sse", { act: askInBox(PARTIAL) }),
   answerShot("checks--focus-try-again", "ask-p130164-judge-no-response.sse", { full: false, act: then(askInBox(), focus("[data-removed-box] [data-button]")) }),
   answerShot("checks--disagreement-warning", "ask-p130164-isr-7-rating.sse", { act: askInBox(ISR_7) }),
   answerShot("checks--disagreement-info", "ask-p130164-both-sides.sse", { act: askInBox(BOTH_SIDES) }),
@@ -2025,9 +2089,10 @@ export const SHOTS: Shot[] = [
   { name: "navigation--public", path: "/gallery/navigation?pill=public", widths: WIDE },
   { name: "navigation--focus-wordmark", path: "/gallery/navigation", act: focus("[data-nav-bar] a[href='/']") },
   { name: "navigation--focus-skip-link", path: "/gallery/navigation", act: (page) => page.keyboard.press("Tab") },
-  { name: "navigation--hover-pill", path: "/gallery/navigation", widths: WIDE, act: hover("[aria-haspopup=dialog]") },
-  { name: "navigation--focus-pill", path: "/gallery/navigation", widths: WIDE, act: focus("[aria-haspopup=dialog]") },
-  { name: "navigation--view-open", path: "/gallery/navigation?view=open", widths: WIDE },
+  // From 768 px the view switch sits in the bar, so its shots take 800 px too (ticket 60).
+  { name: "navigation--hover-pill", path: "/gallery/navigation", widths: [1440, 1024, 800], act: hover("[aria-haspopup=dialog]") },
+  { name: "navigation--focus-pill", path: "/gallery/navigation", widths: [1440, 1024, 800], act: focus("[aria-haspopup=dialog]") },
+  { name: "navigation--view-open", path: "/gallery/navigation?view=open", widths: [1440, 1024, 800] },
   { name: "navigation--view-loading", path: "/gallery/navigation?view=open&viewer=loading", widths: WIDE },
   { name: "navigation--view-signed-out", path: "/gallery/navigation?view=open&viewer=signed-out", widths: WIDE },
   { name: "navigation--view-error", path: "/gallery/navigation?view=open&viewer=error", widths: WIDE },
@@ -2123,8 +2188,10 @@ export const SHOTS: Shot[] = [
   app("app--320", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB", {}, { widths: [320] }),
   app("app--hover-current-item", "/lessons", {}, { widths: WIDE, act: hover("[data-sidebar] [aria-current=page]") }),
   app("app--focus-wordmark", "/", {}, { act: focus("[data-nav-bar] a[href='/']") }),
-  app("app--focus-empty-link", "/", {}, { act: focus("[data-empty-state] a") }),
-  app("app--hover-empty-link", "/", {}, { act: hover("[data-empty-state] a") }),
+  // Home draws no empty state, so the empty card's link is shot on the Drafts list with no drafts (ticket 60's design
+  // review, F5).
+  app("app--focus-empty-link", "/drafts", {}, { api: { ...app("x", "/drafts").api, "/api/drafts": { recorded: "drafts-list-empty.json" } }, act: focus("[data-empty-state] a") }),
+  app("app--hover-empty-link", "/drafts", {}, { api: { ...app("x", "/drafts").api, "/api/drafts": { recorded: "drafts-list-empty.json" } }, act: hover("[data-empty-state] a") }),
   app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
 
   // The Data tab (ticket 16): every state of Data readiness and Sources and licenses, and its focus

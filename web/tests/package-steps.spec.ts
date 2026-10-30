@@ -98,6 +98,31 @@ test("collapsed by default, the summary takes its step count and ran-longest cou
   await expect(disclosure(page)).toHaveText("Show the steps");
 });
 
+// Ticket 60 (ticket 27's design review, R7): a load that fails leaves nothing stale in the zone's live region, where
+// "Loading the planned dates." stayed after the error alert had spoken.
+test("when the planned dates fail to load after the zone was opened, its live region no longer says it is loading", async ({ page }) => {
+  let fail!: () => void;
+  const failed = new Promise<void>((resolve) => (fail = resolve));
+  await serve(page, {
+    [API]: { body: await recorded("package-ke-hand-900000.json") },
+    [`${API}/comparables`]: { body: await recorded("comparables-ke-hand-900000.json") },
+    [`${API}/risks`]: { body: await recorded("risks-ke-hand-900000.json") },
+  });
+  await page.route(`**${API}/steps*`, async (route) => {
+    await failed;
+    await route.fulfill({ status: 503, json: { code: "data_service", trace_id: "0af7651916cd43dd8448eb211c80319c" } });
+  });
+  await page.goto(`/packages/${REF}`);
+  const live = section(page).getByRole("status");
+  await disclosure(page).click();
+  await expect(live).toHaveText("Loading the planned dates.");
+
+  fail();
+
+  await expect(section(page).getByRole("alert")).toBeVisible();
+  await expect(live).toHaveText("");
+});
+
 const FULL_NAME = 'STEP calls this step "Bid Evaluation Report and Recommendation for Award".';
 
 test("the steps carry the blueprint's labels for goods, works and non-consulting services, with STEP's full name on hover and on focus", async ({ page }) => {

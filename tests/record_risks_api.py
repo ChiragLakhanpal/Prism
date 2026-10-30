@@ -7,7 +7,7 @@ the fixture database first, then run:
     uv run --frozen python tests/record_risks_api.py
 
 One story makes them all, on a copy of the fixture database as of October 28, 2026, after two reviewers from
-tests/fixtures/roles.toml added the fixture's three proposed lessons to the library on October 27
+tests/fixtures/roles.toml added the fixture's three proposed lessons to the library on October 23
 (tests/lesson_scenario.py). The fixture's only completion reports are P130164's, and Kenya's comparable works
 packages belong to projects still active, so:
 
@@ -22,6 +22,8 @@ packages belong to projects still active, so:
   tests/record_packages_api.py records it), whose Kenya comparables reach no completion report either.
 - evidence-icr-review-p130164-10b.json: the ICR Review's section 10.b, the cost estimates row's second source,
   for the evidence drawer's switcher.
+- risks-planned-yourself.json: a package set up yourself (pkg-000000000002), which lacks the criteria that pick
+  comparables, so the section says what it lacks (ticket 60).
 """
 
 import asyncio
@@ -47,7 +49,7 @@ from strata.server.app import create_app  # noqa: E402
 
 FIXTURE_DB = ROOT / "data" / "out" / "fixture.duckdb"
 OUT = ROOT / "tests" / "fixtures" / "api"
-DECIDED, TODAY = dt.date(2026, 10, 27), dt.date(2026, 10, 28)
+DECIDED, TODAY = dt.date(2026, 10, 23), dt.date(2026, 10, 28)
 ANA = {"X-Forwarded-Email": "ana.example@worldbank.org", "X-Forwarded-Preferred-Username": "Ana Example",
        "X-Forwarded-User": "4021@1984", "X-Forwarded-Access-Token": "token-for-ana-only"}
 DEMO = "/api/packages/KE-NWWDA-541055-CW-RFB"
@@ -93,6 +95,11 @@ def answers(folder: Path) -> dict[str, str]:
             found["risks-planned-rural-roads.json"] = await get("/api/planned-packages/pkg-000000000001/risks")
             found["evidence-icr-review-p130164-10b.json"] = await get(
                 "/api/evidence", id="strata.gold.passage:34056616/v2/10.b", asof=TODAY.isoformat())
+            # Ticket 60: a package set up yourself (pkg-000000000002) lacks the criteria that pick comparables, so the
+            # section says what it lacks (empty_reason missing_criteria), as the capture's planned--missing shows it.
+            await client.post("/api/planned-packages", headers=ANA,
+                              json={"sentence": "rural roads, Kenya, about US$15 million", "read": False})
+            found["risks-planned-yourself.json"] = await get("/api/planned-packages/pkg-000000000002/risks")
         return found
 
     return asyncio.run(story())

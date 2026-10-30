@@ -476,7 +476,7 @@ test("Show the table lists every item in arrow-key order, under its caption", as
   // The count in the title opens the table and takes you to it.
   await page.locator("[data-timeline-finding]").getByRole("button", { name: "Two" }).click();
   await expect(page.locator("[data-timeline-table]")).toBeVisible();
-  await expect(page.locator("[data-timeline-table] [tabindex='0']").first()).toBeFocused();
+  await expect(page.locator("[data-timeline-table] [data-table-view=table]")).toBeFocused();
   await page.getByRole("button", { name: "Hide the table" }).click();
   const toggle = page.getByRole("button", { name: "Show the table" });
   await toggle.click();

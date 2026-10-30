@@ -133,7 +133,8 @@ function announcements(run: Run): string[] {
     const warned = run.checks?.disagreements?.warned ?? 0;
     // When nothing survived because a service did not answer, the error alert speaks (role="alert"), so the
     // status line says nothing more: "The answer is ready." after it would say the opposite.
-    if (!run.refusal && kept === 0 && unjudged + unasked > 0) return said;
+    // A partial refusal is no answer of its own, so it does not keep the line from stopping (ticket 60).
+    if (!(run.refusal && !run.refusal.partial) && kept === 0 && unjudged + unasked > 0) return said;
     said.push(
       run.refusal && !run.refusal.partial
         ? copy.answer.ready
@@ -151,16 +152,18 @@ function announcements(run: Run): string[] {
   return said;
 }
 
-function Announcer({ messages }: { messages: string[] }) {
+// stopped: the answer ended in an error alert, which speaks for itself (role="alert"), so the status line clears and
+// drops the steps still queued: a screen reader hears the alert, not progress after it (WCAG 4.1.3; ticket 60).
+function Announcer({ messages, stopped = false }: { messages: string[]; stopped?: boolean }) {
   const [shown, setShown] = useState(-1);
   useEffect(() => {
-    if (shown >= messages.length - 1) return;
+    if (stopped || shown >= messages.length - 1) return;
     const timer = setTimeout(() => setShown((index) => index + 1), shown < 0 ? 100 : ANNOUNCE_GAP_MS);
     return () => clearTimeout(timer);
-  }, [shown, messages.length]);
+  }, [shown, messages.length, stopped]);
   return (
     <p role="status" data-answer-status className="sr-only">
-      {shown >= 0 ? messages[shown] : ""}
+      {shown >= 0 && !stopped ? messages[shown] : ""}
     </p>
   );
 }
@@ -562,11 +565,13 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
     };
   }
   const outage = outages(run);
+  // A partial refusal says the rest was answered only when some of the rest is on screen (ticket 60's design review,
+  // F1); with every other sentence removed, it says the rest was written but none of it shows.
   const partial =
     refusal && run.refusal?.partial ? (
       <>
         <p>
-          {refusal.lead} {copy.answer.refusalPartial}
+          {refusal.lead} {checks.sentences.kept === 0 ? copy.answer.refusalPartialNone : copy.answer.refusalPartial}
         </p>
         <div className="mt-2">
           <RefusalWindow />
@@ -591,6 +596,8 @@ function stateOf(run: Run, opened: Opened, visited: ReadonlySet<string>, stillWo
       ),
       onRetry: askAgain,
       removed: removedItems(run, true),
+      // A partial refusal's paragraph stays above the alert (ticket 60).
+      refusal: partial,
     };
   }
   if (checks.sentences.kept === 0) {
@@ -725,6 +732,7 @@ export function AnswerPanel({
     // The box always shows, at the window's foot (ticket 113), so giving it focus scrolls nothing.
     box?.focus({ preventScroll: true });
   };
+  const state = stateOf(run, opened, visited, stillWorking);
 
   return (
     <section aria-label={copy.answer.panel} aria-busy={run.phase === "streaming"} data-answer-panel className="mb-8">
@@ -762,9 +770,9 @@ export function AnswerPanel({
           </div>
         </div>
         <div className="mt-6">
-          <Answer state={stateOf(run, opened, visited, stillWorking)} reveal={reveal} />
+          <Answer state={state} reveal={reveal} />
         </div>
-        <Announcer key={run.serial} messages={announcements(run)} />
+        <Announcer key={run.serial} messages={announcements(run)} stopped={state.status === "error"} />
       </div>
     </section>
   );

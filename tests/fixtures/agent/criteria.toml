@@ -73,3 +73,17 @@ question = """1. Similar experience: at least two contracts of similar works of 
 scope = "KE-CWSB-224323-CS-QCBS"
 as_of = 2026-10-22
 recording = "criteria-swapped-reading"
+
+# Ticket 60: the same reading when check 4's judge does not respond. Every reading needs the judge, so each is removed
+# with judge_unavailable, and the section's removed box says the cause once and offers Try again.
+[[cases]]
+id = "criteria-swapped-reading-no-judge"
+says = """The ticket's input, read back as in criteria-swapped-reading, and check 4's judge does not respond: both \
+readings it would judge are removed with judge_unavailable, and the items' counts stay."""
+question = """1. Similar experience: at least two contracts of similar works of US$10 million each.
+2. Average annual turnover: US$25 million over the last three years.
+3. The bid must be signed by a person with a power of attorney."""
+scope = "KE-CWSB-224323-CS-QCBS"
+as_of = 2026-10-22
+recording = "criteria-swapped-reading"
+judge = "no_response"

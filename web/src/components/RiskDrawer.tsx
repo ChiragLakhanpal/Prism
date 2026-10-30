@@ -66,7 +66,13 @@ export function IegLine({ status, quote, spelled = false }: { status: string; qu
 
 // One pill-shaped tab per source of the row, "ICR ¶54" and "ICR Review 10.b", heard with "paragraph" spelled
 // out. Left and Right move between them, Home and End jump to the ends, and selection follows focus.
-export function RowSwitcher({ row, current, panelId, onChoose }: { row: RiskRow; current: string; panelId: string; onChoose: (id: string) => void }) {
+// row: a risk's row, or any sources with the same tab words, such as a lesson IEG restated (ticket 60).
+export function RowSwitcher({ row, current, panelId, onChoose }: {
+  row: { sources: Pick<RiskRow["sources"][number], "evidence_id" | "doc_short" | "locator">[] };
+  current: string;
+  panelId: string;
+  onChoose: (id: string) => void;
+}) {
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const ids = row.sources.map((source) => source.evidence_id);
   const index = ids.indexOf(current);

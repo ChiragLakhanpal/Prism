@@ -4,6 +4,7 @@
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
 import { expect, openSidebar, recorded, recordingFor, test, windowBeside } from "./mocked";
+import { animationsDone } from "./settled";
 
 type Answer = { status?: number; body: string };
 
@@ -382,15 +383,31 @@ test("choosing another filter with the arrow keys keeps focus on the filter whil
   await serve(page, {
     "/api/lessons/me": await file("retrieval-me-judge-after.json"),
     "/api/judging/queries": await file("judging-queries.json"),
-    "/api/judging/queries?show=finished_by_both": await file("judging-queries-both.json"),
+  });
+  // Each other filter's queries wait until the test lets them through, so the check mark is read while they load.
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => (release = resolve));
+  const both = await file("judging-queries-both.json");
+  const mine = await file("judging-queries.json");
+  await page.route("**/api/judging/queries?show=*", async (route) => {
+    const show = new URL(route.request().url()).searchParams.get("show");
+    if (show === "to_judge") return route.fulfill({ contentType: "application/json", body: mine.body });
+    await held;
+    await route.fulfill({ contentType: "application/json", body: show === "finished_by_both" ? both.body : mine.body });
   });
   await page.goto("/lessons/judging");
   await page.getByRole("radio", { name: "To judge (2)" }).focus();
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("ArrowRight");
   await expect(page).toHaveURL(/show=finished_by_both/);
+  // While its queries load, the check mark is on the filter you chose, where focus is (ticket 60).
+  await expect(page.locator("[data-judging=ready] [aria-busy]")).toHaveCount(1);
+  await expect(page.getByRole("radio", { name: /^Finished by both/ })).toBeFocused();
+  await expect(page.getByRole("radio", { name: /^Finished by both/ })).toBeChecked();
+  release();
   await expect(page.locator("[data-judging=ready] [aria-busy]")).toHaveCount(0);
   await expect(page.getByRole("radio", { name: "Finished by both (1)" })).toBeFocused();
+  await expect(page.getByRole("radio", { name: "Finished by both (1)" })).toBeChecked();
 });
 
 // The focused heading clears the stuck header: its top is at or below the header's bottom (DESIGN.md section 10).
@@ -448,6 +465,61 @@ test("once you finish a query, the grade bar stays so you can change a grade unt
   await expect.poll(() => sent.filter((call) => call.method === "PUT").map((call) => call.body)).toEqual([{ grade: "not_relevant" }, { grade: "partly" }]);
 });
 
+// Ticket 60 (ticket 32's critique, round 3): after a click grades a passage, the next passage's buttons all look
+// unpressed alike until the pointer moves; the button under the resting pointer takes no hover fill.
+test("after a click on a grade, the next passage's three buttons share one background until the pointer moves", async ({ page }) => {
+  await serve(page, { "/api/judging/queries/nq-rural-works-delays": await file("judging-query.json") });
+  const saved = await file("judging-grade-saved.json");
+  await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", (route) => route.fulfill({ contentType: "application/json", body: saved.body }));
+  await page.goto("/lessons/judging/nq-rural-works-delays");
+  const bar = page.locator("[data-grade-bar=ready]");
+  await bar.getByRole("button", { name: /Not relevant/ }).click();
+  await expect(page.locator("[data-judging-panel] h2")).toHaveText("Passage 2 of 40");
+  await animationsDone(page);
+
+  const buttons = bar.locator("[data-grade]");
+  await expect(buttons).toHaveCount(3);
+  for (const pressed of await buttons.evaluateAll((all) => all.map((button) => button.getAttribute("aria-pressed")))) expect(pressed).toBe("false");
+  const fills = await buttons.evaluateAll((all) => all.map((button) => getComputedStyle(button).backgroundColor));
+  expect(new Set(fills).size).toBe(1);
+
+  // A move of the pointer brings the hover fill back.
+  const box = (await bar.getByRole("button", { name: /Not relevant/ }).boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2 + 2, box.y + box.height / 2);
+  await expect.poll(() => buttons.evaluateAll((all) => new Set(all.map((button) => getComputedStyle(button).backgroundColor)).size)).toBe(2);
+});
+
+// Ticket 60 (ticket 32's design review, round 3, F1; WCAG 3.2.2): a grade changed after you finished keeps the
+// finished panel in place while it saves, and focus and the scroll stay where you are.
+for (const width of [1440, 390]) {
+  test(`at ${width} px changing a grade after you finish keeps focus on the grade and the page where it was`, async ({ page }) => {
+    const query = JSON.parse((await file("judging-query.json")).body);
+    query.passages = query.passages.map((passage: { my_grade: string | null }) => ({ ...passage, my_grade: "partly" }));
+    await serve(page, { "/api/judging/queries/nq-rural-works-delays": { body: JSON.stringify(query) } }, width);
+    const saved = await file("judging-grade-saved.json");
+    await page.route("**/api/judging/queries/nq-rural-works-delays/passages/**", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await route.fulfill({ contentType: "application/json", body: saved.body });
+    });
+    await page.goto("/lessons/judging/nq-rural-works-delays");
+    const finished = page.locator("[data-judging-finished=mine]");
+    await expect(finished).toBeVisible();
+    const button = page.locator("[data-grade-bar]").getByRole("button", { name: /Not relevant/ });
+    await button.scrollIntoViewIfNeeded();
+    const before = await page.evaluate(() => window.scrollY);
+
+    await button.click();
+
+    // While the change saves (300 ms), the finished panel stays: nothing blinks.
+    await expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(await finished.count()).toBe(1);
+    await page.waitForTimeout(500);
+    await expect(button).toBeFocused();
+    await expect(finished).toBeVisible();
+    expect(await page.evaluate(() => window.scrollY)).toBe(before);
+  });
+}
+
 test("on a query both judges finished, the two grades sit in the page, not in a bar stuck to the window", async ({ page }) => {
   await serve(page, { "/api/judging/queries/nq-water-works-readiness": await file("judging-query-locked.json") });
   await page.goto("/lessons/judging/nq-water-works-readiness");
@@ -458,10 +530,19 @@ test("on a query both judges finished, the two grades sit in the page, not in a 
   // "Judge the next query" is never under a stuck bar.
   await page.locator("[data-judging-finished=both]").getByRole("button", { name: /Show where you differed/ }).click();
   const next = page.locator("[data-judging-finished=both]").getByRole("link", { name: "Judge the next query" });
+  // In a 700 px window the link starts below the window, so focusing it scrolls it in, and the gap below proves the
+  // scroll padding (ticket 60's review, item 4).
+  await page.setViewportSize({ width: page.viewportSize()!.width, height: 700 });
+  await page.evaluate(() => window.scrollTo(0, 0));
+  expect(await next.evaluate((link) => link.getBoundingClientRect().top > window.innerHeight)).toBe(true);
   await next.focus();
   const box = (await next.boundingBox())!;
   const bar = (await page.locator("[data-grade-bar=locked]").boundingBox())!;
   expect(box.y + box.height <= bar.y || box.y >= bar.y + bar.height).toBe(true);
+  // Ticket 60 (ticket 32's critique, round 3, follow-up 5): with nothing of the page stuck at the foot, the focused link
+  // still sits at least 8 px clear of the Ask bar at the window's foot, never flush on it.
+  const ask = (await page.locator("[data-box-slot]").boundingBox())!;
+  expect(box.y + box.height).toBeLessThanOrEqual(ask.y - 8 + 0.5);
 });
 
 test("closing the award notice's record puts focus back on its link", async ({ page }) => {

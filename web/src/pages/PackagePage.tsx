@@ -17,6 +17,7 @@
 // you read the zones (ticket 130, the design lead's Option W2). It renders in one place only, chosen by the frame's
 // width, so the reading order follows what the eye sees, and it hides with the side panel while the drawer is open.
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { missingScope } from "../lib/answer";
 import { type Crumb } from "../components/Breadcrumb";
 import { CopyKey } from "../components/CopyKey";
 import { ExistingPpsdNotice } from "../components/ExistingDraftNotice";
@@ -107,6 +108,12 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
 
   const packagesCrumb: Crumb = { text: words.breadcrumbPackages, href: "/packages" };
   const notFound = load.status === "error" && load.error?.status === 404;
+  // The box offers nothing about a package the page says does not exist (ticket 60).
+  useEffect(() => {
+    if (!notFound) return;
+    missingScope.set(stepRef);
+    return () => missingScope.set(null);
+  }, [notFound, stepRef]);
 
   let head: ReactNode;
   let side: ReactNode = undefined;
@@ -209,13 +216,14 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
           open={opening}
           estimate={estimate}
           planDate={planDate}
-          after={(comparing) => (
+          after={(comparing, say) => (
             <Rebidding
               path={rebiddingPath(base)}
               section={section.status === "ready" ? section.data : null}
               sectionFailed={section.status === "error"}
               sectionLoading={section.status === "loading"}
               comparing={comparing}
+              onStatus={say}
             />
           )}
         />

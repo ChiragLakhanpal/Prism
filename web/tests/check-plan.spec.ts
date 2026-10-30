@@ -618,6 +618,24 @@ test("the table draws six columns at 1280 and 1440 px and three at 1024 px with 
   }
 });
 
+// Ticket 60 (ticket 10's design review, round 5): with WCAG 1.4.12's text spacing, no cell's text runs past its cell,
+// "1,230,000.00" and "Pending Implementation" included, and the page never scrolls sideways.
+test("with WCAG 1.4.12's text spacing at 1024 and 1440 px, every cell's text stays inside its cell", async ({ page }) => {
+  await openPlan(page, 1440);
+  await view(page, "table").getByRole("button", { name: "Show them" }).click();
+  await page.addStyleTag({
+    content: "* { letter-spacing: 0.12em !important; word-spacing: 0.16em !important; line-height: 1.5 !important; } p { margin-bottom: 2em !important; }",
+  });
+  await page.evaluate(() => document.fonts.ready);
+  for (const width of [1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expect(view(page, "table").locator("thead th:visible").first()).toBeVisible();
+    const { overflow } = await page.evaluate(measureTable);
+    expect(overflow, `${width} px`).toEqual([]);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${width} px`).toBe(true);
+  }
+});
+
 // Ticket 100: a row's reference opens the row's records in the evidence drawer, beside the page. The values are the
 // recorded check's for KE-NWWDA-229129-CW-RFB, which tests/ground_truth/values.toml quotes from the plan's page 3.
 test("a row's reference opens its records in the drawer, the row keeps the current mark, Escape returns focus, and a count word marks the rows it counts", async ({ page }) => {
@@ -1010,6 +1028,9 @@ test("opening a plan from the Procurement tab keeps focus on the page's h1 while
   await page.locator("[data-agency=northern-water-works-development-agency] [data-table-view=table]").getByRole("link", { name: "Plan of Oct 9, 2026" }).click();
   const h1 = page.getByRole("main").getByRole("heading", { level: 1 });
   await expect(h1).toBeFocused();
+  // While the check loads, the focused h1 names the plan the address gives, never "Checking this plan.", which is no
+  // heading (WCAG 2.4.6; ticket 60). The status says what I'm doing.
+  await expect(h1).toHaveAccessibleName("Procurement Plan of October 9, 2026");
 
   release();
 
@@ -1120,8 +1141,11 @@ test("a service that didn't answer gives Try again and a reference; Try again th
   });
   await page.goto(PLAN);
 
-  await expect(page.getByRole("alert")).toHaveText("I couldn't load this plan's check because the data service didn't answer.");
+  await expect(page.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load this plan's check because the data service didn't answer.");
   await expect(page.getByText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.")).toBeVisible();
+  // Ticket 60 (ticket 94's critique; plan 8.5): one block, with Try again and the reference inside the alert.
+  await expect(page.getByRole("alert").getByRole("button", { name: "Try again" })).toBeVisible();
+  await expect(page.getByRole("alert")).toContainText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.");
   // The h1 names the page, "Procurement Plan", and nothing else draws under it (ticket 100; plan 8.5). The status no
   // longer says it is checking.
   await expect(page.getByRole("main").getByRole("heading", { level: 1 })).toHaveText("Procurement Plan");

@@ -153,10 +153,6 @@ export function RebiddingView({
         </div>
       )}
       {state.status === "error" && <RebidError state={state} />}
-      {/* A failed load is said once, politely; the Alert itself is no alert, so it is not heard twice. */}
-      <p role="status" className="sr-only">
-        {state.status === "error" ? words.error : ""}
-      </p>
       {result && !updating && (
         <div ref={readyBlock} className="flow-root">
           <Ready
@@ -234,19 +230,22 @@ function Ready({ result, numbers, asOf, comparing, openId, visited, handlers, op
     setFocusFirst(true);
   };
   const different = result.denominator_reason !== null;
+  // Why the count differs from the past range's, said only when the copy file has words for its reason, never with a
+  // raw code (ticket 60).
+  const denominatorReason = result.denominator_reason ? words.denominatorReasons[result.denominator_reason] : undefined;
   // Each count comes from every record set the tool read (a package canceled in the Procurement Plan comes from the
   // plan's rows, in Documents & Reports) and, when any was advertised again, opens the list below (ticket 96).
   const records = recordsFrom(result.sources, result.records_through, result.sources.map((source) => source.key));
   // A count standing alone is one to nine in words; "{n} of the {m}" keeps its numerals (DESIGN.md section 7, rule 12).
   // A count of a different whole than the past range's says why in its tooltip (ticket 126): "I counted 51 packages
   // here and 48 in the past range, because ...", which was a caption under the count until then.
-  const why = different ? (
+  const why = denominatorReason ? (
     <Fill
       template={words.denominator}
       slots={{
         m: <Num value={m} options={{ compact: false }} />,
         total: <Num value={result.past_range_total} options={{ compact: false }} />,
-        reason: words.denominatorReasons[result.denominator_reason!] ?? result.denominator_reason!,
+        reason: denominatorReason,
       }}
     />
   ) : null;
@@ -507,7 +506,7 @@ function RebidError({ state }: { state: Extract<RebidState, { status: "error" }>
 
 // ── The block on a page: it reads, reruns and opens ──────────────────────
 
-export function Rebidding({ path, section, sectionFailed = false, sectionLoading = false, comparing = false }: {
+export function Rebidding({ path, section, sectionFailed = false, sectionLoading = false, comparing = false, onStatus }: {
   // GET .../rebidding with section 1's criteria, or null while the package has none.
   path: string | null;
   // Section 1's result, when it has loaded: the block counts the same comparable packages.
@@ -519,6 +518,9 @@ export function Rebidding({ path, section, sectionFailed = false, sectionLoading
   // Section 1's own request failed: the block comes from its own tool, so it still shows under the error (ticket 101).
   sectionFailed?: boolean;
   comparing?: boolean;
+  // Says a failed load once, politely, in zone 1's one live region (PastRange's after), so the card has no second
+  // status region; the block's Alert is no alert, so it is not heard twice (the 28 brief; ticket 60).
+  onStatus?: (text: string) => void;
 }) {
   const here = useStore(address);
   const seen = useStore(visitedStore);
@@ -564,11 +566,14 @@ export function Rebidding({ path, section, sectionFailed = false, sectionLoading
             return;
           }
           retried.current = false;
+          onStatus?.(words.error);
           setState({
             status: "error",
             requestId: error instanceof ApiError ? (error.body.trace_id ?? null) : null,
             onRetry: () => {
               retried.current = true;
+              // The zone's live region empties first, so a second failure is heard again (ticket 60's review, item 5).
+              onStatus?.("");
               setAttempt((count) => count + 1);
             },
           });

@@ -16,6 +16,7 @@ import liveTender from "../../../tests/fixtures/api/criteria-compare-live-tender
 import partial from "../../../tests/fixtures/api/criteria-compare-partial-refusal.sse?raw";
 import noneFound from "../../../tests/fixtures/api/criteria-compare-none-found.sse?raw";
 import swapped from "../../../tests/fixtures/api/criteria-compare-swapped-reading.sse?raw";
+import noJudge from "../../../tests/fixtures/api/criteria-compare-swapped-reading-no-judge.sse?raw";
 // A mock above 60 packages, whose lane draws quantile dots (ticket 59): made up, as the file says.
 import quantileCost from "../../../tests/fixtures/api/criteria-cost-mock-quantile-dots.json";
 import { useId, type ReactNode } from "react";
@@ -60,6 +61,8 @@ const LIVE = eventOf<Comparison>(liveTender, "comparison");
 const PARTIAL = eventOf<Comparison>(partial, "comparison");
 const NONE = eventOf<Comparison>(noneFound, "comparison");
 const SWAPPED = eventOf<Comparison>(swapped, "comparison");
+// The same reading when check 4's judge did not respond (ticket 60): both readings removed, Try again in the box.
+const NO_JUDGE = eventOf<Comparison>(noJudge, "comparison");
 const PASTED =
   "1. Similar experience: at least two contracts of similar works of US$10 million each.\n" +
   "2. Average annual turnover: US$25 million over the last three years.\n" +
@@ -272,6 +275,8 @@ export function criteriaPage(): GalleryPage {
               comparison: { status: "error", code: "agent_unavailable", requestId: "4bf92f3577b34da6a3ce929d0e0e4736", previous: null } })} />
             <Sample label={cs.readingRemoved} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(SWAPPED), text: PASTED,
               checks: SWAPPED.section_checks ?? SWAPPED.checks })} />
+            <Sample label={cs.readingsUnjudged} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(NO_JUDGE), text: PASTED,
+              checks: NO_JUDGE.section_checks ?? NO_JUDGE.checks })} />
             <Sample label={cs.stale} props={view({ ...open, run: ranRun(CONSULTANT_RUN), comparison: compared(SIMILAR, true) })} />
           </div>
         ),

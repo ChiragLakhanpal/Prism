@@ -40,6 +40,24 @@ const p156634 = async () => ({
   "/api/projects/P156634/packages": { body: await recorded("packages-p156634.json") },
 });
 
+// Ticket 60 (ticket 10's design review, round 2, P14): a table's frame is a tab stop only while it scrolls sideways, so
+// the first Tab into All projects goes to the first project, never to a frame that scrolls nothing.
+test("All projects' table frame is a tab stop only while its table is wider than the frame", async ({ page }) => {
+  await open(page, "/projects", await projects());
+  const frame = listZone(page).locator("[data-table-view=table]");
+  await expect(frame).toBeVisible();
+  // It can still take focus from a link that lands on the table, but it is no tab stop.
+  await expect(frame).toHaveAttribute("tabindex", "-1");
+  await listZone(page).locator("[data-list-search] input").focus();
+  const before = await page.evaluate(() => window.scrollY);
+  await page.keyboard.press("Tab");
+  await expect(frame.locator("tbody a").first()).toBeFocused();
+  expect(await page.evaluate(() => window.scrollY)).toBeLessThanOrEqual(before + 400);
+  // Narrowed so the table scrolls inside it, the frame becomes a tab stop, so a keyboard can scroll it.
+  await frame.evaluate((element) => ((element as HTMLElement).style.width = "300px"));
+  await expect(frame).toHaveAttribute("tabindex", "0");
+});
+
 test("All projects shows 20 projects a page with the range it shows, sets project IDs in Roboto Mono as links, and pages by address", async ({ page }) => {
   const unrecorded = await open(page, "/projects", {
     ...(await projects()),
@@ -269,7 +287,7 @@ test("All projects says when it holds no records, and when the data service didn
   const panel = listZone(page);
   await expect(panel).toHaveAttribute("data-zone", "panel");
   await expect(panel.getByRole("searchbox", { name: "Search projects" })).toBeVisible();
-  await expect(panel.getByRole("alert")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
+  await expect(panel.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load the list of projects because the data service didn't answer.");
   await expect(panel.getByRole("button", { name: "Try again" })).toBeVisible();
   await expect(panel.locator("[data-table], [data-page-lead], [data-pagination], [data-foot-strip]")).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 900 });
@@ -407,6 +425,25 @@ test("a long list of implementing agencies keeps to one line until you show them
   expect(await agencies.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
   expect((await fewer.boundingBox())!.y).toBeGreaterThanOrEqual((await agencies.boundingBox())!.y + (await agencies.boundingBox())!.height - 1);
 
+  // Ticket 60 (ticket 21's design review, round 4, F1): the button is a compact flush one, 24 px tall, so its focus ring
+  // (2 px out past a 2 px offset) keeps clear of the agencies' last line above it and of the h1 and the tabs.
+  const ring = async (locator: import("@playwright/test").Locator) => {
+    const box = (await locator.boundingBox())!;
+    return { top: box.y - 4, bottom: box.y + box.height + 4, height: box.height };
+  };
+  await expect(fewer).toBeFocused();
+  const opened = await ring(fewer);
+  expect(opened.height).toBe(24);
+  const list = (await agencies.boundingBox())!;
+  expect(opened.top).toBeGreaterThanOrEqual(list.y + list.height - 0.5);
+  await fewer.click();
+  await expect(show).toBeFocused();
+  const closed = await ring(show);
+  const h1 = (await page.locator("main h1").boundingBox())!;
+  const tabs = (await page.getByRole("navigation", { name: "Project sections" }).boundingBox())!;
+  expect(closed.top).toBeGreaterThanOrEqual(h1.y + h1.height - 0.5);
+  expect(closed.bottom).toBeLessThanOrEqual(tabs.y + 0.5);
+
   // One agency fits on a line, so there is nothing to show.
   await open(page, "/projects/P130164", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });
   await expect(page.locator("[data-project-page=ready]")).toBeVisible();
@@ -416,12 +453,18 @@ test("a long list of implementing agencies keeps to one line until you show them
 test("a project's page says when the data service didn't answer, and when your account can't read Strata's tables", async ({ page }) => {
   const api = (answer: Answer) => ({ "/api/projects/P156634": answer });
   await open(page, "/projects/P156634", api({ status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }), windowBeside(1100));
-  await expect(page.getByRole("alert")).toHaveText("I couldn't load this project because the data service didn't answer.");
+  await expect(page.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load this project because the data service didn't answer.");
   await expect(page.getByRole("button", { name: "Try again" })).toBeVisible();
   // From a 1024 px page area the alert holds columns 1 to 8, as on every other page: in a 1100 px page area (the
   // window less the rail, ticket 92) with the 1164 px window's 32 px margins (ticket 94), 8 columns of 57 px and 7
   // gutters of 32 px.
   expect(Math.round((await page.getByRole("alert").boundingBox())!.width)).toBe(680);
+  // Ticket 60's review, B1: a retry that fails again keeps focus on "Try again", never on the page's body.
+  const retry = page.getByRole("button", { name: "Try again" });
+  await retry.focus();
+  await Promise.all([page.waitForResponse("**/api/projects/P156634"), page.keyboard.press("Enter")]);
+  await expect(retry).not.toHaveAttribute("aria-busy");
+  await expect(retry).toBeFocused();
   await page.setViewportSize({ width: 390, height: 900 });
   expect(await axe(page), "error at 390 px").toEqual([]);
 

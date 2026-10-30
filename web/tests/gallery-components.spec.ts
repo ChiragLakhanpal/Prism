@@ -382,6 +382,8 @@ test("a table shows its title and source lines only with its rows, and no count 
   await expect(ready.getByRole("heading")).toHaveText("Three of the four sample activities were signed after their planned date.");
   await expect(ready).not.toContainText("Showing all four activities.");
   await expect(ready).toContainText("Source: Sample rows made for the gallery, in STEP's columns.");
+  // A STEP amount keeps STEP's form with its cents (DESIGN.md section 6; ticket 60).
+  await expect(ready.locator("tbody tr").first()).toContainText("1,230,000.00");
 
   for (const state of ["loading", "empty", "error"]) {
     const section = page.locator(`[data-state-section=${state}]`);
@@ -533,6 +535,18 @@ test("the steps toggle lines up with the answer's text, and its fill and focus r
   }
 });
 
+// Ticket 60 (ticket 02's review, round 12, P1): in forced-colors mode the browser draws every border, so a flush button's
+// side borders come back and it keeps its outline as every other ghost button does; outside it they stay at 0.
+test("in forced-colors mode the flush steps toggle keeps its side borders, and outside it has none", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/answer");
+  const toggle = page.locator("[data-answer=ready]").getByRole("button", { name: /\bsteps?\b/ });
+  const sides = () => toggle.evaluate((element) => [getComputedStyle(element).borderLeftWidth, getComputedStyle(element).borderRightWidth]);
+  expect(await sides()).toEqual(["0px", "0px"]);
+  await page.emulateMedia({ forcedColors: "active" });
+  expect(await sides()).toEqual(["2px", "2px"]);
+});
+
 // Ticket 126, criterion 1: an answer that held back keeps "Strata held back" as its h3, for a screen reader only. No
 // recorded stream abstains, so the gallery's abstained sample is the one place it is drawn.
 test("an answer that held back keeps Strata held back as a heading only a screen reader reads, at 1440 and 390 px", async ({ page }) => {
@@ -629,8 +643,8 @@ test("the steps list starts its text under the toggle's text, on one inner edge"
     await page.goto("/gallery/answer");
     for (const state of ["ready", "abstained"]) {
       const answer = page.locator(`[data-answer=${state}]`);
-      // Found by place, not by name: its name changes to "Hide the steps" once it opens.
-      const toggle = answer.locator(":scope > div > button[aria-expanded]");
+      // Found by its name, which says steps whether it shows or hides them (ticket 60).
+      const toggle = answer.getByRole("button", { name: /\bsteps?\b/ });
       await toggle.click();
       await expect(toggle).toHaveAttribute("aria-expanded", "true");
       const label = (await toggle.locator("span").boundingBox())!;
@@ -1336,6 +1350,67 @@ test("buttons have 4 px corners, badges and citation markers keep the pill, and 
       await page.mouse.up();
     }
   }
+});
+
+// Ticket 60 (ticket 27's design review, round 2, R8): the other families' samples, whose steps have no comparable
+// package, say so in their coverage line, never "Based on 7 of 49".
+test("the planned dates' firms and individuals samples count no comparable package in their coverage line", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/steps");
+  for (const id of ["firms", "individuals"]) {
+    const line = page.locator(`[data-state-section=${id}] [data-coverage-line]`);
+    await expect(line, id).toBeVisible();
+    await expect(line, id).not.toContainText("Based on");
+  }
+});
+
+// Ticket 60 (ticket 30's critique, follow-up 16): the gallery's row removed for a number no record holds counts that
+// number as unmatched, so its check line and its removed box agree.
+test("the risks sample with a row removed for its number counts that number as unmatched", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/risks");
+  const sample = page.locator("[data-state-section=removed]");
+  await expect(sample.locator("[data-check-line]")).toContainText("3 of 4 numbers match records");
+  await expect(sample.locator("[data-removed-box] [data-removed-lead]")).toHaveText(/one/i);
+});
+
+// Ticket 60 (ticket 21's review, round 4, follow-up 3): the gallery shows a source page's table and a plan's STEP rows
+// as the source view draws them: a table in its frame at 1024 px, and cards at 390 px.
+test("the gallery's source page samples show a table at 1024 px and cards at 390 px", async ({ page }) => {
+  for (const [width, view] of [[1024, "table"], [390, "cards"]] as const) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/gallery/hub");
+    for (const id of ["source-table", "source-plan-rows"]) {
+      const section = page.locator(`[data-state-section=${id}]`);
+      await expect(section.locator(`[data-table-view=${view}]`).first(), `${id} at ${width} px`).toBeVisible();
+    }
+  }
+});
+
+// Ticket 60 (ticket 12's design review, round 3): a text link that wraps draws its focus ring around each of its lines,
+// as a 2 px focus shadow cloned onto each line, so the ring never runs through the line above it; a transparent 2 px
+// outline stays for forced-colors mode, which drops shadows and draws the outline.
+test("a text link that wraps draws its focus ring around each line, never through the line above", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/gallery/links");
+  const link = page.locator("[data-state-section=text-link] a").first();
+  // Narrow the link's paragraph so the link wraps onto a second line.
+  await link.evaluate((element) => {
+    const block = element.parentElement as HTMLElement;
+    block.style.width = `${Math.ceil(element.getBoundingClientRect().width / 2) + 20}px`;
+  });
+  expect(await link.evaluate((element) => element.getClientRects().length)).toBeGreaterThan(1);
+  await link.focus();
+  await page.keyboard.press("Shift+Tab");
+  await page.keyboard.press("Tab");
+  await expect(link).toBeFocused();
+  const ring = await link.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return { clone: style.boxDecorationBreak || style.getPropertyValue("-webkit-box-decoration-break"), shadow: style.boxShadow, outline: [style.outlineStyle, style.outlineWidth, style.outlineColor] };
+  });
+  expect(ring.clone).toBe("clone");
+  expect(ring.shadow).toBe("rgb(182, 73, 12) 0px 0px 0px 2px");
+  expect(ring.outline).toEqual(["solid", "2px", "rgba(0, 0, 0, 0)"]);
 });
 
 test("a list search, a key hint and a toggle button have a control's 4 px corners", async ({ page }) => {

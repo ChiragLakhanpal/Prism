@@ -24,12 +24,13 @@ type Answer = { status?: number; body: string };
 
 async function openPackage(
   page: Page,
-  { width = 1440, risks = "risks-ke-nwwda-541055-india.json", save, evidence, risksBody }: { width?: number; risks?: string; save?: Answer; evidence?: string; risksBody?: string } = {},
+  { width = 1440, risks = "risks-ke-nwwda-541055-india.json", save, evidence, risksBody, me = "me.json", query = "" }:
+    { width?: number; risks?: string; save?: Answer; evidence?: string; risksBody?: string; me?: string; query?: string } = {},
 ) {
   await page.setViewportSize({ width, height: 900 });
   const puts: Request[] = [];
   const answers: Record<string, Answer> = {
-    "/api/me": { body: await recorded("me.json") },
+    "/api/me": { body: await recorded(me) },
     "/api/freshness": { body: await recorded("freshness.json") },
     [API]: { body: await recorded("package-ke-nwwda-541055.json") },
     [`${API}/comparables`]: { body: await recorded("comparables-ke-nwwda-541055.json") },
@@ -53,7 +54,7 @@ async function openPackage(
     if (!answer) return route.fulfill({ status: 404, json: { detail: "Not Found" } });
     return route.fulfill({ status: answer.status ?? 200, contentType: "application/json", body: answer.body });
   });
-  await page.goto(evidence ? `${PATH}?evidence=${encodeURIComponent(evidence)}` : PATH);
+  await page.goto(evidence ? `${PATH}?evidence=${encodeURIComponent(evidence)}` : `${PATH}${query}`);
   await expect(section(page).locator("[data-finding], [data-no-risks]").first()).toBeVisible();
   return puts;
 }
@@ -219,6 +220,15 @@ test("row selections save at once and persist when the package is reopened", asy
   await expect(section(page).locator("[data-selection-status]")).toHaveText("You selected 1 of the 2 risks for the PPSD.");
 });
 
+// Ticket 60 (ticket 30's design review, F5): the section reads a preview from the view the server applied, so an
+// implementing agency officer's own ?view=piu is no preview and the section takes changes.
+test("an officer's own ?view=piu is no preview: the section takes changes and never says they are off", async ({ page }) => {
+  const puts = await openPackage(page, { me: "me-officer.json", query: "?view=piu" });
+  await expect(section(page)).not.toContainText("Changes are off in a preview.");
+  await view(page).getByRole("checkbox", { name: `Select ${RISK} for the PPSD` }).check();
+  await expect.poll(() => puts.length).toBe(1);
+});
+
 test("a failed save keeps the selection on the page and offers Try again", async ({ page }) => {
   await openPackage(page, { save: { status: 503, body: '{"code":"not_saved","trace_id":"0af7651916cd43dd8448eb211c80319c"}' } });
 
@@ -270,6 +280,24 @@ test("the rural roads package from a sentence reaches no completion report on th
 
   await expect(section(page).locator("[data-zone-tag]")).toHaveText("PPSD section 3");
   await expect(section(page).locator("[data-no-risks] [data-no-risks-title]")).toHaveText("None of the three projects with comparable packages has a completion report I could read.");
+  // Ticket 60 (ticket 30's design review, F9): the count explains itself, as every count in the section does.
+  const count = section(page).locator("[data-no-risks-title] [data-num]");
+  await count.focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText(
+    "All projects with comparable packages, whether or not I could read a completion report for them.",
+  );
+});
+
+// Ticket 60 (ticket 30's design review, F9): with reports read but no lesson that fits, the count of reports explains
+// itself too.
+test("with no lesson that fits, the count of completion reports I read explains itself", async ({ page }) => {
+  const body = JSON.parse(await recorded("risks-ke-nwwda-541055-india.json"));
+  await openPlanned(page, { body: JSON.stringify({ ...body, empty_reason: "no_lessons", m: 4, rows: [] }) });
+  await expect(section(page).locator("[data-no-risks-title]")).toHaveText(
+    "I found four completion reports for projects with comparable packages, but no lesson in the library fits this package yet.",
+  );
+  await section(page).locator("[data-no-risks-title] [data-num]").focus();
+  await expect(page.getByRole("tooltip").locator("[data-num-what]")).toHaveText("Completion reports of projects with comparable packages that I read.");
 });
 
 test("on a package from a sentence, a selection saves with the package under the saved stamp", async ({ page }) => {
@@ -280,6 +308,85 @@ test("on a package from a sentence, a selection saves with the package under the
 
   await expect(page.locator("[data-saved-stamp]")).toHaveText("Saved just now");
   expect(puts.map((request) => request.postDataJSON())).toEqual([{ changes: { cost_estimates: true } }]);
+});
+
+// Ticket 60 (ticket 30's review, F5): a read that never answers ends in the error state after 20 seconds (brief 6.4).
+test("a read of the risks that never answers turns into the error state after 20 seconds", async ({ page }) => {
+  await page.clock.install();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route("**/api/**", async (route) => {
+    const url = new URL(route.request().url());
+    if (url.pathname === `${API}/risks`) return; // never answered
+    const files: Record<string, string> = {
+      "/api/me": "me.json",
+      "/api/freshness": "freshness.json",
+      [API]: "package-ke-nwwda-541055.json",
+      [`${API}/comparables`]: "comparables-ke-nwwda-541055.json",
+      [`${API}/steps`]: "steps-ke-nwwda-541055.json",
+    };
+    const file = files[url.pathname];
+    return file ? route.fulfill({ contentType: "application/json", body: await recorded(file) }) : route.fulfill({ status: 404, json: { detail: "Not Found" } });
+  });
+  await page.goto(PATH);
+  await expect(section(page).getByRole("heading", { level: 2 })).toBeVisible();
+  await page.clock.fastForward(19_000);
+  await expect(section(page).getByRole("alert")).toHaveCount(0);
+  await page.clock.fastForward(1_500);
+  await expect(section(page).locator("[role=alert], [data-alert=error]").first()).toBeVisible();
+  await expect(section(page).getByRole("button", { name: "Try again" })).toBeVisible();
+});
+
+// Ticket 60 (ticket 30's review, F7): saves go out one at a time, and toggles made while one is out go together in the
+// next, so they can never land out of order.
+test("two quick toggles save one after the other, the second once the first has answered", async ({ page }) => {
+  let release!: () => void;
+  const first = new Promise<void>((resolve) => (release = resolve));
+  await openPackage(page);
+  const saved = await recorded("risks-selection-saved.json");
+  const puts: { postDataJSON: () => unknown }[] = [];
+  await page.route(`**${API}/risk-selection`, async (route) => {
+    puts.push(route.request());
+    if (puts.length <= 1) await first;
+    await route.fulfill({ contentType: "application/json", body: saved });
+  });
+  await view(page).getByRole("checkbox", { name: `Select ${RISK} for the PPSD` }).check();
+  await view(page).getByRole("checkbox", { name: /^Select Land, forest and other permits/ }).check();
+  await expect.poll(() => puts.length).toBe(1);
+  expect(puts[0].postDataJSON()).toEqual({ changes: { cost_estimates: true } });
+  await page.waitForTimeout(300);
+  expect(puts.length).toBe(1);
+
+  release();
+
+  await expect.poll(() => puts.length).toBe(2);
+  expect(puts[1].postDataJSON()).toEqual({ changes: { permits_before_award: true } });
+});
+
+// Ticket 60 (ticket 30's review, F8): when a change of the package and a risk selection both failed, the saved stamp's
+// one Try again sends both again.
+test("on a package from a sentence, one Try again sends again both a failed change and a failed selection", async ({ page }) => {
+  const puts = await openPlanned(page, { body: await recorded("risks-ke-nwwda-541055-india.json") }, { status: 503, body: '{"code":"not_saved"}' });
+  const posts: string[] = [];
+  let fail = true;
+  await page.route("**/api/planned-packages/pkg-000000000001", async (route) => {
+    if (route.request().method() !== "POST") return route.fallback();
+    posts.push(route.request().postData() ?? "");
+    if (fail) return route.fulfill({ status: 503, json: { code: "data_service" } });
+    return route.fulfill({ contentType: "application/json", body: await recorded("planned-package-change-description.json") });
+  });
+  await page.locator('[data-chip="description"]').click();
+  await page.getByRole("dialog", { name: "Description" }).getByRole("textbox").fill("Rural feeder roads");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("[data-saved-stamp]")).toHaveText(/^Not saved/);
+  await view(page).getByRole("checkbox", { name: `Select ${RISK} for the PPSD` }).check();
+  await expect.poll(() => puts.length).toBe(1);
+  await expect(page.locator("[data-saved-stamp]")).toHaveText(/^Not saved/);
+
+  fail = false;
+  await page.locator("[data-saved-stamp]").getByRole("button", { name: "Try again" }).click();
+
+  await expect.poll(() => posts.length).toBe(2);
+  await expect.poll(() => puts.length).toBe(2);
 });
 
 // Ticket 59 (the 30 design review, F2 to F4 and F13; the 30 critique, follow-ups 2, 3, 9 and 10). At 1024 px the

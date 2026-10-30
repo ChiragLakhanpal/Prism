@@ -15,7 +15,7 @@ import httpx
 import pytest
 
 from strata.lakehouse import catalog
-from strata.lakehouse.engine import DuckDBEngine
+from strata.lakehouse.engine import DuckDBEngine, Result
 from strata.server.app import create_app
 
 ANA = {
@@ -855,7 +855,41 @@ def test_a_save_that_lands_after_a_later_one_never_replaces_it(writable, tmp_pat
         kept = engine.run("SELECT count(*) FROM strata.ops.plan_baseline_steps AS s JOIN strata.ops.plan_baselines AS b "
                           "ON s.project_id = b.project_id AND s.agency_id = b.agency_id AND s.saved_at = b.saved_at "
                           "WHERE b.project_id = :pid", {"pid": "P156634"})
+        # Ticket 60 (the 21 review, round 4, follow-up 1): the losing save takes its own steps back at once, so only
+        # the winning save's steps stay.
+        saves = engine.run("SELECT DISTINCT saved_at FROM strata.ops.plan_baseline_steps WHERE project_id = :pid",
+                           {"pid": "P156634"})
     assert kept.rows[0][0] > 0
+    assert saves.rows == ((SAVED_AT + dt.timedelta(minutes=1),),)
+
+
+class TextRows:
+    """The engine, except that every row comes back as text, as the Databricks App's WarehouseEngine gives it."""
+
+    def __init__(self, engine):
+        self.engine = engine
+
+    def run(self, sql, params=None):
+        result = self.engine.run(sql, params)
+        return Result(result.columns, tuple(result.as_text()))
+
+    def __getattr__(self, name):
+        return getattr(self.engine, name)
+
+
+def test_saving_the_baseline_works_on_an_engine_whose_rows_are_text(writable, tmp_path):
+    # Ticket 60's review, B2: the save compares save times in SQL, where both engines agree, so the warehouse's text
+    # rows never reach a Python comparison of moments.
+    database = tmp_path / "fixture.duckdb"
+
+    @contextmanager
+    def engine_for(_viewer):
+        with DuckDBEngine.open(database) as engine:
+            yield TextRows(engine)
+    saved = call(create_app(engine_for=engine_for, now=lambda: SAVED_AT), "PUT", f"{NWWDA}/baseline",
+                 body={"plan_date": "2025-07-21"})
+
+    assert (saved.status_code, saved.json()["baseline"]["plan_date"]) == (200, "2025-07-21")
 
 
 def test_the_baseline_s_record_does_not_open_in_the_public_view(writable):

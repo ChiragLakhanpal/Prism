@@ -304,9 +304,12 @@ export type SuccessProps = {
   revisitTeammate?: (author: string, date: string, count: number, countText: string) => string;
   date: (iso: string) => string;
   className?: string;
+  // An info line at the panel's top, such as "This draft changed in another tab or window, so I reloaded it." when the
+  // export came from elsewhere, so the panel never reads as the result of your own press (ticket 60).
+  notice?: ReactNode;
 };
 
-export function ExportSuccess({ draft, fresh, headingRef, date, className }: SuccessProps) {
+export function ExportSuccess({ draft, fresh, headingRef, date, className, notice }: SuccessProps) {
   const headingId = useId();
   const words = copy.draft.exported;
   const record = draft.export!;
@@ -328,41 +331,51 @@ export function ExportSuccess({ draft, fresh, headingRef, date, className }: Suc
     <section
       aria-labelledby={headingId}
       data-export-success={fresh ? "fresh" : "revisit"}
-      className={cx("flex gap-3 rounded-r-md border-l-4 border-success bg-success-bg p-4 md:p-6", fresh && "animate-[fade-in_200ms_ease-out]", className)}
+      className={cx("rounded-r-md border-l-4 border-success bg-success-bg p-4 md:p-6", fresh && "animate-[fade-in_200ms_ease-out]", className)}
     >
-      <Check aria-hidden="true" className="size-5 shrink-0 text-success" />
-      <div className="min-w-0">
-        <h2 id={headingId} ref={headingRef} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none" data-numbers>
-          {title}
-        </h2>
-        {/* The bar's fixed sentence already says exporting sends nothing (rule 19), so a revisit with its files says
-            nothing more here (ticket 126). */}
-        {(!record.files_available || fresh) && (
-          <p className="mt-2 max-w-[72ch] text-body text-ink">
-            {!record.files_available ? words.revisitBodyMissing : words.body(record.sources, whole(record.sources), record.disagreements > 0)}
-          </p>
-        )}
-        {record.files_available ? (
-          <ul aria-label={words.filesLabel} className="mt-4 flex flex-col gap-2">
-            {files.map((file) => (
-              <li key={file.name} className="text-small">
-                <TextLink
-                  href={fileHref(draft.draft_id, file.name)}
-                  download={file.name}
-                  aria-label={words.fileName(file.name, captions[extension(file.name)])}
-                  className="block w-fit max-w-full font-mono wrap-anywhere"
-                >
-                  {file.name}
-                </TextLink>
-                <span className="mt-0.5 block text-caption text-ink-muted">{captions[extension(file.name)]}</span>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-4 text-body text-ink">
-            <Fill template={words.filesMissing} slots={{ id: <span className="font-mono">{draft.draft_id}</span> }} />
-          </p>
-        )}
+      {/* A change made elsewhere is said on its own line with its own icon, above the success row, so the check
+          marks the heading it belongs to (ticket 60's design review, F3). */}
+      {notice && (
+        <p className="mb-2 flex max-w-[72ch] gap-2 text-small text-ink" data-export-notice>
+          <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-info-icon" />
+          <span>{notice}</span>
+        </p>
+      )}
+      <div className="flex gap-3">
+        <Check aria-hidden="true" className="size-5 shrink-0 text-success" />
+        <div className="min-w-0">
+          <h2 id={headingId} ref={headingRef} tabIndex={-1} className="text-h2 text-ink-heading focus:outline-none" data-numbers>
+            {title}
+          </h2>
+          {/* The bar's fixed sentence already says exporting sends nothing (rule 19), so a revisit with its files says
+              nothing more here (ticket 126). */}
+          {(!record.files_available || fresh) && (
+            <p className="mt-2 max-w-[72ch] text-body text-ink">
+              {!record.files_available ? words.revisitBodyMissing : words.body(record.sources, whole(record.sources), record.disagreements > 0)}
+            </p>
+          )}
+          {record.files_available ? (
+            <ul aria-label={words.filesLabel} className="mt-4 flex flex-col gap-2">
+              {files.map((file) => (
+                <li key={file.name} className="text-small">
+                  <TextLink
+                    href={fileHref(draft.draft_id, file.name)}
+                    download={file.name}
+                    aria-label={words.fileName(file.name, captions[extension(file.name)])}
+                    className="block w-fit max-w-full font-mono wrap-anywhere"
+                  >
+                    {file.name}
+                  </TextLink>
+                  <span className="mt-0.5 block text-caption text-ink-muted">{captions[extension(file.name)]}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-body text-ink">
+              <Fill template={words.filesMissing} slots={{ id: <span className="font-mono">{draft.draft_id}</span> }} />
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );

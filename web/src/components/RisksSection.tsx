@@ -30,6 +30,7 @@ import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
 import { evidenceIn, openEvidence, origin, visited as visitedStore } from "../lib/evidence";
 import { address } from "../lib/router";
+import { appliedView, previewOf } from "../lib/view";
 import { dataReadinessHref, fill } from "../routes";
 import {
   allReportsId,
@@ -64,6 +65,8 @@ import { TextLink } from "./TextLink";
 
 const words = copy.packageRisks;
 const SKELETON_AFTER_MS = 400;
+// A read that has not answered by then turns into the error state, with Try again (brief 6.4; ticket 60).
+const GIVE_UP_AFTER_MS = 20_000;
 
 export type RisksState =
   | { status: "loading" }
@@ -642,6 +645,8 @@ function EmptyCard({ title, children }: { title: ReactNode; children?: ReactNode
 function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step" | "planned"; missingList?: string }) {
   const e = words.empty;
   const readiness = dataReadinessHref(result.coverage.sources, "package_risks");
+  // The counts here say what they count and where they came from, as every count in the section does (ticket 60).
+  const from = risksFrom(result);
   switch (result.empty_reason) {
     case "missing_criteria":
       return <EmptyCard title={<Fill template={e.missing} slots={{ list: missingList ?? "" }} />} />;
@@ -659,8 +664,12 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
     case "no_reports":
       return (
         // The first sentence and its link stay; why a project has no report yet is something a specialist knows
-        // (ticket 126).
-        <EmptyCard title={result.p === 1 ? e.noReportsOne : <Fill template={e.noReports} slots={{ p: <Num count={result.p ?? 0} /> }} />}>
+        // (ticket 126). Its count can be checked (ticket 60).
+        <EmptyCard
+          title={
+            result.p === 1 ? e.noReportsOne : <Fill template={e.noReports} slots={{ p: <Num count={result.p ?? 0} check={{ tooltip: words.numTips.coverageP, from }} /> }} />
+          }
+        >
           <p className="mt-2">
             <TextLink href={readiness}>{e.noReportsLink}</TextLink>
           </p>
@@ -668,7 +677,15 @@ function Empty({ result, kind, missingList }: { result: RisksResult; kind: "step
       );
     case "no_lessons":
       return (
-        <EmptyCard title={result.m === 1 ? e.noLessonsOne : <Fill template={e.noLessons} slots={{ m: <Num count={result.m ?? 0} /> }} />} />
+        <EmptyCard
+          title={
+            result.m === 1 ? (
+              e.noLessonsOne
+            ) : (
+              <Fill template={e.noLessons} slots={{ m: <Num count={result.m ?? 0} check={{ tooltip: words.numTips.m, from }} /> }} />
+            )
+          }
+        />
       );
     default: {
       const written = result.written ?? result.verifier?.removed.length ?? 0;
@@ -816,8 +833,10 @@ export function RisksSection({
   const params = new URLSearchParams(here.search);
   const asOf = params.get("asof");
   const view = params.get("view");
-  // A preview of another view reads the table and changes nothing.
-  const previewing = preview || (view !== null && view !== "staff");
+  // A preview of another view reads the table and changes nothing. The preview is the one the server applied (GET
+  // /api/me), so an officer's own ?view=piu is none (ticket 60).
+  useStore(appliedView);
+  const previewing = preview || previewOf(here.search) !== null;
   const [state, setState] = useState<RisksState>({ status: "loading" });
   const [updating, setUpdating] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
@@ -841,6 +860,11 @@ export function RisksSection({
     if (asOf) query.set("asof", asOf);
     if (view && view !== "staff") query.set("view", view);
     const path = `${risksPath(base)}${query.size ? `?${query.toString()}` : ""}`;
+    let gaveUp = false;
+    const giveUp = setTimeout(() => {
+      gaveUp = true;
+      controller.abort();
+    }, GIVE_UP_AFTER_MS);
     getJson<RisksResult>(path, { signal: controller.signal })
       .then(
         (result) => {
@@ -864,18 +888,20 @@ export function RisksSection({
           setState({ status: "ready", result });
         },
         (error: unknown) => {
-          if (controller.signal.aborted) return;
+          if (controller.signal.aborted && !gaveUp) return;
           setState({ status: "error", error: error instanceof ApiError ? error : null, onRetry: () => setAttempt((n) => n + 1) });
           setAnnounce(words.error);
         },
       )
       .finally(() => {
         clearTimeout(timer);
-        if (!controller.signal.aborted) setUpdating(false);
+        clearTimeout(giveUp);
+        if (!controller.signal.aborted || gaveUp) setUpdating(false);
       });
     return () => {
       controller.abort();
       clearTimeout(timer);
+      clearTimeout(giveUp);
     };
   }, [base, rerunKey, asOf, view, attempt]);
 
@@ -899,17 +925,25 @@ export function RisksSection({
     if (focusInside.current && zone && !zone.contains(document.activeElement)) heading.current?.focus();
   }, [state]);
 
+  // One save at a time: toggles made while one is out wait, and go together in the next, so saves never land out of
+  // order (ticket 60).
+  const inFlight = useRef(false);
   const save = () => {
+    if (inFlight.current) return;
     const changes = { ...pending.current };
     if (Object.keys(changes).length === 0) return;
+    inFlight.current = true;
     onSaveState?.("saving", save);
     putJson<{ selected: string[] }>(selectionPath(base), { changes }).then(
       () => {
+        inFlight.current = false;
         for (const [key, on] of Object.entries(changes)) if (pending.current[key] === on) delete pending.current[key];
+        if (Object.keys(pending.current).length > 0) return save();
         setSaveFailed(false);
         onSaveState?.("saved", save);
       },
       () => {
+        inFlight.current = false;
         if (kind === "step") setSaveFailed(true);
         setAnnounce(kind === "step" ? words.saveFailedSpoken : copy.packageWorkspace.saveFailed);
         onSaveState?.("failed", save);

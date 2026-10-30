@@ -47,10 +47,20 @@ const removedCount = {
   reason_code: "number_not_in_records",
 };
 const removedHelped = { ...removedCount, risk_key: COST.risk_key, risk_label: COST.risk_label, claim_kind: "helped" as const, lesson_text: COST.lesson.text, check: 2, reason_code: "id_not_returned" };
+// The permits row's count failed check 1, so its number is the one of four that matched no record and its sentence the
+// one of four removed: the check line agrees with the removed box (ticket 60).
 const withRemoved = changed({
   rows: [COST],
   most_common: { risk_keys: [COST.risk_key], k_max: COST.k },
-  verifier: { ...READY.verifier!, removed: [removedCount] },
+  verifier: {
+    ...READY.verifier!,
+    counts: {
+      ...READY.verifier!.counts,
+      sentences: { written: 4, kept: 3, removed: 1 },
+      numbers: { total: READY.verifier!.counts.numbers.total, matched: READY.verifier!.counts.numbers.matched - 1 },
+    },
+    removed: [removedCount],
+  },
 });
 const allRemoved = changed({ rows: [], most_common: null, empty_reason: "all_removed", written: 2, verifier: { ...READY.verifier!, removed: [removedHelped, removedCount] } });
 const empty = (edit: Partial<RisksResult>) => changed({ rows: [], most_common: null, verifier: null, ...edit });

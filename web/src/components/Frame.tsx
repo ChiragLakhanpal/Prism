@@ -81,33 +81,46 @@ export function Frame({
   const [menuOpen, setMenuOpenNow] = useState(menuOpenAtStart);
   const button = useRef<HTMLButtonElement>(null);
   const sheetId = useId();
-  const returnFocus = useRef(false);
+  // Where focus goes once the sheet has closed and the bar is no longer inert: the Menu button, or the view pill when a
+  // widened window hid the sheet's head and foot with focus on them (ticket 60).
+  const returnTo = useRef<"button" | "pill" | null>(null);
   const openNow = useRef(menuOpen);
   openNow.current = menuOpen;
 
   const setOpen = useCallback((open: boolean, back = true) => {
-    returnFocus.current = !open && back;
+    returnTo.current = !open && back ? "button" : null;
     setMenuOpenNow(open);
   }, []);
 
-  // Focus goes back to the Menu button once the bar is no longer inert.
   useEffect(() => {
-    if (menuOpen || !returnFocus.current) return;
-    returnFocus.current = false;
-    button.current?.focus();
+    if (menuOpen || !returnTo.current) return;
+    const target = returnTo.current === "pill" ? document.querySelector<HTMLElement>("[data-view-pill]") : button.current;
+    returnTo.current = null;
+    target?.focus();
   }, [menuOpen]);
 
   useEffect(() => {
     const wide = window.matchMedia(WIDE);
-    // Widening the window to 1024 px closes the sheet; its items are the sidebar now, so focus stays on them.
-    const widened = () => wide.matches && setOpen(false, false);
-    // Escape closes the sheet. "/" closes it before the box takes focus, so the box is no longer inert when it does:
-    // this listens in the capture phase, ahead of the box's own listener.
+    // Widening the window to 1024 px closes the sheet; its items are the sidebar now, so focus stays on them. Focus on
+    // "Close the menu" or on a view line at the sheet's foot, which hide from 1024 px, goes to the view pill, which
+    // holds the view lines now (DESIGN.md section 10; ticket 60).
+    const widened = () => {
+      if (!wide.matches || !openNow.current) return;
+      const active = document.activeElement;
+      const offNav = active === document.body || (active instanceof HTMLElement && active.closest("[data-sidebar]") !== null && active.closest("nav") === null);
+      returnTo.current = offNav ? "pill" : null;
+      setMenuOpenNow(false);
+    };
+    // Escape closes the sheet, and only the sheet: the evidence drawer behind it stays open (ticket 60). "/" closes it
+    // before the box takes focus, so the box is no longer inert when it does: this listens in the capture phase, ahead
+    // of the box's own listener.
     // A layer open inside the sheet, such as the view switch's popover (ticket 59), takes Escape first and closes alone.
     const onKey = (event: KeyboardEvent) => {
       if (!openNow.current) return;
       if (event.key === "Escape") {
-        if (!document.getElementById(sheetId)?.querySelector("[data-sheet-layer]")) setOpen(false);
+        if (document.getElementById(sheetId)?.querySelector("[data-sheet-layer]")) return;
+        event.preventDefault();
+        setOpen(false);
       } else if (isBoxShortcut(event)) flushSync(() => setOpen(false, false));
     };
     wide.addEventListener("change", widened);

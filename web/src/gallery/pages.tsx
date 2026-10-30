@@ -1601,7 +1601,9 @@ function sixChecksSections(): GalleryPage["sections"] {
   const words = galleryCopy.sixChecks;
   const titles = words.sections;
   const label = words.labels;
-  const panels = (Object.keys(CHECK_RUNS) as (keyof typeof CHECK_RUNS)[]).filter((key) => key !== "partial" && key !== "judging");
+  const panels = (Object.keys(CHECK_RUNS) as (keyof typeof CHECK_RUNS)[]).filter(
+    (key) => key !== "partial" && key !== "partialUnchecked" && key !== "judging",
+  );
   return [
     {
       id: "check-line",
@@ -1668,6 +1670,7 @@ function sixChecksSections(): GalleryPage["sections"] {
       ),
     },
     { id: "partial", title: titles.partial, body: <PanelSample run={CHECK_RUNS.partial} /> },
+    { id: "partial-unchecked", title: titles.partialUnchecked, body: <PanelSample run={CHECK_RUNS.partialUnchecked} /> },
   ];
 }
 

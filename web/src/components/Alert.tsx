@@ -28,7 +28,9 @@ export function Alert({
     >
       <look.Icon aria-hidden="true" className={cx("mt-1 size-4 shrink-0", look.icon)} />
       <div className="min-w-0 flex-1">
-        <p className={cx("text-body", look.text)}>{children}</p>
+        <p className={cx("text-body", look.text)} data-alert-text>
+          {children}
+        </p>
         {action && <div className="mt-3">{action}</div>}
       </div>
     </div>

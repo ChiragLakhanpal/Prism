@@ -1059,10 +1059,9 @@ test("when only the comparison fails, the change line says so and links the sect
   await expect(line.getByRole("link", { name: "Go to that section" })).toHaveAttribute("href", "#changes");
   const section = page.locator("[data-changes=error]");
   await expect(section.getByRole("heading", { level: 2 })).toHaveText("What changed in this plan");
-  await expect(section.getByRole("alert")).toHaveText("I couldn't load what changed in this plan because the data service didn't answer.");
-  // Try again sits 16 px under the alert, as on every other load error.
-  const [alert, retry] = await Promise.all([section.getByRole("alert").boundingBox(), section.getByRole("button", { name: "Try again" }).boundingBox()]);
-  expect(Math.round(retry!.y - (alert!.y + alert!.height))).toBe(16);
+  await expect(section.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load what changed in this plan because the data service didn't answer.");
+  // Try again sits inside the alert, under its sentence, as on every other load error (ticket 60; plan 8.5).
+  await expect(section.getByRole("alert").getByRole("button", { name: "Try again" })).toBeVisible();
   // As on the Summary's error, the reference to send the data team (the 21 critique, round 3, item 8).
   await expect(section).toContainText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.");
   // The crumb names the project as its tabs do, and the window names the agency's plan.
@@ -1150,6 +1149,38 @@ test("a write that fails reads the check again, so the panel says what the basel
   await expect(panel.getByRole("status")).toContainText("The baseline is the plan of July 21, 2025");
 });
 
+// Ticket 60 (ticket 21's review, round 4, follow-up 1): a save that loses a race answers with the plan that won as the
+// baseline, so the panel names that plan and never claims it saved the one you pressed.
+test("a save that another save beat names the plan that won, and never says it saved yours", async ({ page }) => {
+  const check = `/api${NWWDA}/2026-10-09`;
+  let saved = false;
+  await open(page, `${NWWDA}/2026-10-09`, 1440, await p156634());
+  const won = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09-baseline.json")).baseline;
+  await page.route(`**${check}`, async (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: await recorded(saved ? "check-plan-p156634-nwwda-2026-10-09-baseline.json" : "check-plan-p156634-nwwda-2026-10-09.json") }),
+  );
+  await page.route(`**/api${NWWDA}/baseline`, async (route) => {
+    saved = true;
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ baseline: won }) });
+  });
+  await page.reload();
+  const panel = page.getByRole("region", { name: "Baseline for delay" });
+  await panel.getByRole("button", { name: "Save as the baseline" }).click();
+
+  // Its design review, F2: the panel says the save you pressed did not take, then the baseline as it stands, and you can
+  // still make this plan the baseline.
+  await expect(panel.getByRole("status")).toHaveText(
+    "Ana Example saved the plan of July 21, 2025 as the baseline first, so I didn't save this plan. You can still make this plan the baseline.",
+  );
+  await expect(panel.getByRole("status")).toBeFocused();
+  await expect(panel).toContainText(
+    "The baseline is the plan of July 21, 2025, saved by Ana Example on October 23, 2026. I measure delay from its dates as well as from the first published planned dates.",
+  );
+  await expect(panel).not.toContainText("I saved the plan of October 9, 2026");
+  await expect(panel.getByRole("button", { name: "Undo" })).toHaveCount(0);
+  await expect(panel.getByRole("button", { name: "Make this plan the baseline" })).toBeVisible();
+});
+
 test("a reason whose activity the baseline did not list says it measures delay only from the first published date", async ({ page }) => {
   // Made up from the recorded baseline check: KE-NWWDA-229129-CW-RFB's signing reason as a baseline that did not list
   // the activity gives it, as tests/test_project_hub.py's baseline of December 7, 2020 does on the server.
@@ -1213,6 +1244,38 @@ test("the implementing agency view reads the baseline without its saver and offe
   await open(page, `${NWWDA}/2026-10-09?view=public`, 1440, { ...(await p156634()), [`/api${NWWDA}/2026-10-09?view=public`]: { body: JSON.stringify(open_) } });
   await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
   await expect(page.getByRole("region", { name: "Baseline for delay" })).toHaveCount(0);
+  // Ticket 60 (ticket 21's critique, round 4): the public preview's alert says only what the page does. It names the
+  // preview, and never claims the staff view while the page leaves out the baseline the staff view shows.
+  await expect(page.getByRole("region", { name: "Preview" })).toContainText("Preview of what the public sees.");
+  await expect(page.locator("[data-alert-slot]")).not.toContainText("World Bank staff view");
+  await expect(page.locator("[data-alert-slot]")).not.toContainText("can't show the public preview");
+});
+
+// Ticket 60 (ticket 21's verify, round 4, finding 1): the hub's pages apply a typed ?asof=, so no alert says they show
+// today's data while the Summary says it was built as of that date.
+test("a project page opened with ?asof= shows the past-date banner and no alert that says it shows today's data", async ({ page }) => {
+  await open(page, "/projects/P130164?asof=2019-10-15");
+  await expect(page.locator("[data-summary=ready]")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Past date" })).toContainText("I'm showing this page as of October 15, 2019.");
+  await expect(page.getByText("today's data")).toHaveCount(0);
+});
+
+// Ticket 60 (ticket 21's review, round 4, follow-up 2): the drawer reads a record with the page's view, so the public
+// preview cannot open the baseline's record, which the server keeps from that view.
+test("in the public preview the drawer asks for the baseline's record with the view, and says it has no such source", async ({ page }) => {
+  const id = "strata.ops.plan_baselines:P156634/northern-water-works-development-agency";
+  const asked: URL[] = [];
+  await open(page, `${NWWDA}/2026-10-09?view=public`, 1440, await p156634());
+  await page.route("**/api/evidence?**", async (route) => {
+    const url = new URL(route.request().url());
+    asked.push(url);
+    if (url.searchParams.get("view") === "public") return route.fulfill({ status: 404, contentType: "application/json", body: '{"code":"unknown_evidence"}' });
+    return route.fulfill({ status: 200, contentType: "application/json", body: await recorded("baseline-saved.json") });
+  });
+  await page.goto(`${NWWDA}/2026-10-09?view=public&evidence=${encodeURIComponent(id)}`);
+
+  await expect(page.getByRole("dialog")).toContainText("I have no source with this ID. The link may be incomplete.");
+  expect(asked.map((url) => [url.searchParams.get("id"), url.searchParams.get("view")])).toEqual([[id, "public"]]);
 });
 
 // ── The Summary's budget on a throttled 3G profile ──────────────────────

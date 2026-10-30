@@ -305,13 +305,16 @@ function Lane({ cost, onOpen, onTable, title, width }: {
               onBlur={() => setShown(null)}
               // Each dot's target is 8 px wider than the dot, so in a cluster the pointer is over whichever is on top: the
               // dot nearest the pointer shows its tooltip, and a press opens it (the 31 design review, F6; ticket 59, the
-              // design review of round 2, follow-up 2, where at 320 px a hover on dot 10 showed dot 11's value).
+              // design review of round 2, follow-up 2, where at 320 px a hover on dot 10 showed dot 11's value). A tap opens
+              // at once (parked decision 4), so a touch shows no tooltip over the tap (ticket 60).
               onPointerEnter={(event) => {
+                if (event.pointerType === "touch") return;
                 hovered.current = nearestTo(event, index);
                 setShown(hovered.current);
                 setHidden(false);
               }}
               onPointerMove={(event) => {
+                if (event.pointerType === "touch") return;
                 const near = nearestTo(event, index);
                 if (near === hovered.current) return;
                 hovered.current = near;
@@ -333,7 +336,8 @@ function Lane({ cost, onOpen, onTable, title, width }: {
         <div
           aria-hidden="true"
           data-cost-tooltip
-          className="absolute z-10 w-max max-w-[240px] rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
+          // It never takes a press, so a tap or click under it reaches the dot (ticket 60).
+          className="pointer-events-none absolute z-10 w-max max-w-[240px] rounded-sm border-[0.5px] border-chart-grey200 bg-surface px-3 py-2 shadow-popover"
           style={{
             left: Math.min(Math.max(0, x(tip.diff) - 120), Math.max(0, width - 240)),
             // Below 400 px of chart width it opens under the dot, so it never covers the subtitle or the line's

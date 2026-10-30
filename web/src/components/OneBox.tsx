@@ -193,6 +193,11 @@ export function OneBox({
   const optionId = (index: number) => `${listId}-${index}`;
   const suggestionId = (index: number) => `${listId}-s${index}`;
   const activeId = showList ? optionId(active) : showSuggestions && suggestionActive >= 0 ? suggestionId(suggestionActive) : undefined;
+  // The list scrolls inside a short window, so the active option scrolls into its view as the arrow keys move to it
+  // (ticket 60).
+  useEffect(() => {
+    if (activeId) document.getElementById(activeId)?.scrollIntoView({ block: "nearest" });
+  }, [activeId]);
   // One option row: an icon, the label with any ID in mono, a second line where there is one, and the "Enter" key hint
   // on the option Enter does.
   const optionRow = (option: BoxOption, id: string, selected: boolean, choose: () => void) => (

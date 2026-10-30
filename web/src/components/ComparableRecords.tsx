@@ -17,7 +17,8 @@ import type { EvidenceEvent } from "../lib/answer";
 import type { QuantileDot } from "../lib/api";
 import { cx } from "../lib/cx";
 import { formatCount, formatNumber } from "../lib/format";
-import type { DotEntry } from "../lib/packages";
+import { rangeCriteria, type DotEntry } from "../lib/packages";
+import { useStore } from "../lib/store";
 import { ExternalLink } from "./ExternalLink";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
@@ -140,13 +141,17 @@ export function ComparableRecords({ evidence }: { evidence: EvidenceEvent }) {
   const row = evidence.row;
   const months = <Num value={Number(row.months)} options={{ decimals: 1, compact: false }} />;
   const notice = <Num date={String(row.notice_date)} />;
-  const why: [string, ReactNode][] = [
-    [words.why.method, row.method],
-    [words.why.category, row.category],
-    [words.why.marketApproach, row.market_approach],
-    [words.why.reviewType, row.review_type],
-    [words.why.country, row.country_name],
+  // Only the criteria find_comparables used for the past range on this page, each with this package's own value; with
+  // no past range on the page, all five (ticket 60).
+  const criteria = useStore(rangeCriteria);
+  const all: [keyof NonNullable<typeof criteria>, string, ReactNode][] = [
+    ["method", words.why.method, row.method],
+    ["category", words.why.category, row.category],
+    ["market_approach", words.why.marketApproach, row.market_approach],
+    ["review_type", words.why.reviewType, row.review_type],
+    ["country", words.why.country, row.country_name],
   ];
+  const why = all.filter(([key]) => !criteria || criteria[key] !== null).map(([, label, value]): [string, ReactNode] => [label, value]);
   const datasets = (row.datasets ?? {}) as { notices?: Dataset; awards?: Dataset };
   return (
     <div data-comparable={row.canceled ? "canceled" : row.still_open ? "open" : "signed"} className="flex flex-col gap-4">

@@ -166,9 +166,9 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
               <AgencyLine names={data.project.implementing_agencies} />
             ) : (
               // The agency line and the place of "Show all agencies" beside it, as a project with many agencies has
-              // them, so the tabs below never move down when the project arrives; with one agency they move up 20 px
-              // (ticket 99's rule, kept by ticket 59, whose skeleton test allows 48).
-              <div aria-hidden="true" className="mt-2 flex h-11 items-center">
+              // them, so the tabs below never move down when the project arrives; with one agency they keep their place,
+              // since "Show all agencies" is a compact 24 px button on the agency line's row (ticket 60).
+              <div aria-hidden="true" className="mt-2 flex h-6 items-center">
                 <Skeleton className="h-[1em] w-3/5 max-w-[480px]" />
               </div>
             )}

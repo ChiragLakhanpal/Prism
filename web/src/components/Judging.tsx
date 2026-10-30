@@ -13,7 +13,7 @@
 //   line, its buttons stacked full width (the 32 brief, section 2.9). From 1024 px an alert about the grades sits at
 //   its top, so it sticks with it. The page's bottom scroll padding follows its height while it sticks (DESIGN.md
 //   section 10): the frame's one hook sets it from data-sticky="bottom" (lib/sticky.ts; ticket 94).
-import { useId, type ReactNode } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";
@@ -113,9 +113,20 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
   const id = useId();
   const labelId = `${id}-label`;
   const noteId = `${id}-note`;
+  // A grade moves to the next passage under a pointer that has not moved, so the button it rests on would take the
+  // hover fill while every button reads unpressed. The fill waits for the pointer's first move over the bar after each
+  // grade (ticket 60).
+  const [hoverArmed, setHoverArmed] = useState(true);
+  const shown = useRef(n);
+  useEffect(() => {
+    if (shown.current === n) return;
+    shown.current = n;
+    setHoverArmed(false);
+  }, [n]);
   return (
     <div
       data-grade-bar={locked ? "locked" : "ready"}
+      onPointerMove={hoverArmed ? undefined : () => setHoverArmed(true)}
       data-sticky={sample ? undefined : "bottom"}
       className={cx("border-t border-line py-4", sample ? "bg-surface" : "@lg/page:bg-surface", !sample && !locked && "@lg/page:sticky @lg/page:bottom-0 @lg/page:z-10")}
     >
@@ -153,7 +164,11 @@ export function GradeBar({ n, chosen, locked, onGrade, disabled = false, mine, t
                 disabled={disabled}
                 hint={words.keys[grade]}
                 aria-keyshortcuts={words.keys[grade]}
-                onClick={() => onGrade(grade)}
+                onClick={() => {
+                  setHoverArmed(false);
+                  onGrade(grade);
+                }}
+                hoverable={hoverArmed}
                 data-grade={grade}
                 inText
                 className="w-full whitespace-nowrap"

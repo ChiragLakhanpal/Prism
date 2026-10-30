@@ -330,7 +330,7 @@ test("when the page's one read fails, its error alert is in the alert slot with 
   await page.route("**/api/lessons/page", (route) => (fail ? route.fallback() : route.fulfill({ contentType: "application/json", body: ready.body })));
   await page.goto("/lessons");
   const slot = page.locator("[data-alert-slot]");
-  await expect(slot.locator("[role=alert]")).toHaveText("I couldn't load the lessons because the data service didn't answer.");
+  await expect(slot.locator("[role=alert] [data-alert-text]")).toHaveText("I couldn't load the lessons because the data service didn't answer.");
   await expect(page.locator("main h1")).toHaveText("Lessons");
   await expect(page.locator("main [data-zone], main [data-finding], main [data-status-lead]")).toHaveCount(0);
   await expect(page.locator("main")).not.toContainText("These are lessons quoted from completion reports");

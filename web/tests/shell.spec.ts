@@ -280,6 +280,89 @@ test("Expand the sidebar opens the rail to 224 px at once, Collapse the sidebar 
   expect((await column.boundingBox())!.width).toBe(64);
 });
 
+// Ticket 60 (ticket 93's review, F1): on a preview link with /api/me failing, the sidebar keeps its loading bars, and
+// shows the data stamp all the same, open at 1440 px and in the Menu sheet.
+test("on a preview link with who is viewing unread, the sidebar and the Menu sheet still show the data stamp", async ({ page }) => {
+  await openSidebar(page);
+  await mockShell(page, { me: { status: 503, body: '{"code":"data_service"}' } });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/?view=public");
+  await expect(page.locator("[data-sidebar] [data-sidebar-stamp]")).toContainText("Data updated Oct 23");
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "Menu", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Menu" }).locator("[data-sidebar-stamp]")).toContainText("Data updated Oct 23");
+});
+
+// Ticket 60 (ticket 92's review, follow-up 3): choosing the page you are on in the Menu sheet opens nothing new, so the
+// sheet closes and focus goes back to the Menu button, never to the page's body.
+test("choosing the page you are on in the Menu sheet closes it and gives focus back to the Menu button", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/");
+  const menu = page.getByRole("button", { name: "Menu", exact: true });
+  await menu.click();
+  const sheet = page.getByRole("dialog", { name: "Menu" });
+  await sheet.getByRole("link", { name: "Home", exact: true }).click();
+  await expect(sheet).toBeHidden();
+  await expect(menu).toBeFocused();
+});
+
+// Ticket 60 (ticket 92's design review, follow-up 1; WCAG 1.4.13): the pointer can move onto a rail item's tooltip and
+// keep it, the tooltip hides 100 ms after the pointer leaves both, and Escape hides it while the pointer rests on its
+// item, wherever focus is.
+test("a rail item's tooltip stays while the pointer is on it, and Escape hides it with the pointer still on the item", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto("/");
+  const lessons = page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Lessons" });
+  const tip = page.locator("[data-rail-tip]");
+  await lessons.hover();
+  await expect(tip).toHaveText("Lessons");
+  const box = (await tip.boundingBox())!;
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2, { steps: 4 });
+  await page.waitForTimeout(250);
+  await expect(tip).toHaveText("Lessons");
+
+  await lessons.hover();
+  await expect(tip).toHaveText("Lessons");
+  await page.keyboard.press("Escape");
+  await expect(tip).toHaveCount(0);
+});
+
+// Ticket 60 (ticket 92's design review, follow-up 4): with WCAG 1.4.12's text spacing, the open sidebar's labels wrap
+// rather than cut off.
+test("with text spacing the open sidebar's labels wrap and none is cut off", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1920, height: 900 });
+  await page.goto("/");
+  // The sidebar rests as a rail; opened, it shows its labels.
+  await page.locator("[data-sidebar-toggle]").click();
+  await expect(page.locator("[data-sidebar-toggle]")).toHaveAccessibleName("Collapse the sidebar");
+  await page.addStyleTag({
+    content: "* { letter-spacing: 0.12em !important; word-spacing: 0.16em !important; line-height: 1.5 !important; } p { margin-bottom: 2em !important; }",
+  });
+  const cut = await page.locator("[data-sidebar] nav a span, [data-sidebar] nav button span").evaluateAll((spans) =>
+    spans.filter((span) => span.getClientRects().length > 0 && span.scrollWidth > span.clientWidth + 1).map((span) => span.textContent),
+  );
+  expect(cut).toEqual([]);
+});
+
+// Ticket 60 (ticket 92's verify): narrowing the window across 1024 px with the Menu sheet closed hides the sidebar at
+// once, with no exit motion, so the Main navigation leaves the accessibility tree with it.
+test("narrowing across 1024 px with the Menu sheet closed hides the sidebar at once", async ({ page }) => {
+  await mockShell(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/");
+  await expect(page.getByRole("navigation", { name: "Main" })).toBeVisible();
+  await page.setViewportSize({ width: 900, height: 900 });
+  const state = await page.locator("[data-sidebar]").evaluate((element) => ({
+    visibility: getComputedStyle(element).visibility,
+    running: element.getAnimations().length,
+  }));
+  expect(state).toEqual({ visibility: "hidden", running: 0 });
+  await expect(page.getByRole("navigation", { name: "Main" })).toHaveCount(0);
+});
+
 // A rail item's label shows in a tooltip on hover and on keyboard focus; the name stays in the link, so the tooltip
 // is hidden from screen readers. The open sidebar shows its labels and no tooltip.
 test("each rail item's tooltip shows its label on hover and on keyboard focus", async ({ page }) => {

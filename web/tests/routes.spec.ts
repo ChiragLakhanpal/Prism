@@ -148,6 +148,33 @@ test("IDs from the address render in Roboto Mono", async ({ page }) => {
   ]);
 });
 
+// Ticket 60 (ticket 06's design review, round 3, P1): an ID in a heading, or in the ID line under it, moves to a line of
+// its own whole when it fits there, so it never takes two lines, and at 320 px nothing scrolls sideways.
+test("an ID in a page's heading keeps to one line of it at 1024 and 390 px, and the page never scrolls sideways at 320 px", async ({ page }) => {
+  for (const path of ["/packages/KE-NWWDA-541055-CW-RFB", "/projects/P130164/packages/IN-RRSMP-7431-CW-RFB"]) {
+    for (const width of [1024, 390]) {
+      await open(page, path, width);
+      // The ID in the heading, or in the page head's ID line under it.
+      const ids = page.locator("main :is(h1, h2, h3, [data-id-line]) .font-mono");
+      expect(await ids.count(), `${path} at ${width} px`).toBeGreaterThan(0);
+      // An inline span has one client rectangle per line it sits on (a link's padding makes no second one); an
+      // inline-block one, which moves to its own line whole, is as tall as its lines.
+      const tall = await ids.evaluateAll((spans) =>
+        spans
+          .filter((span) =>
+            getComputedStyle(span).display === "inline-block"
+              ? span.getBoundingClientRect().height > parseFloat(getComputedStyle(span).lineHeight) + 1
+              : span.getClientRects().length > 1,
+          )
+          .map((span) => span.textContent),
+      );
+      expect(tall, `${path} at ${width} px`).toEqual([]);
+    }
+    await open(page, path, 320);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), `${path} at 320 px`).toBe(true);
+  }
+});
+
 test("a lowercase p in a project ID is read as P, and the address is rewritten in place", async ({ page }) => {
   await open(page, "/projects/p130164/packages/IN-RRSMP-7431-CW-RFB");
 
@@ -317,22 +344,24 @@ async function answer(name: string): Promise<Answer> {
 const NO_PACKAGE = "KE-NWWDA-000000-CW-RFB";
 const NO_ITEM = "new-0000000000";
 const NO_GROUP = "grp-000000000000";
-const SHORT_STATES: [string, string, () => Promise<Record<string, Answer>>][] = [
-  ["All projects, no match", "/projects?q=atlantis", async () => ({ "/api/projects": await answer("projects-no-match.json") })],
-  ["All projects, error", "/projects", async () => ({ "/api/projects": SERVICE_DOWN })],
-  ["the package page, not found", `/packages/${NO_PACKAGE}`, async () => ({ [`/api/packages/${NO_PACKAGE}`]: { status: 404, body: '{"code":"unknown_package"}' } })],
-  ["the package page, error", "/packages/KE-NWWDA-541055-CW-RFB", async () => ({ "/api/packages/KE-NWWDA-541055-CW-RFB": SERVICE_DOWN })],
-  ["Lessons, empty", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": await answer("lessons-page-empty.json") })],
-  ["Lessons, error", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": SERVICE_DOWN })],
-  ["Lessons, no access", "/lessons/review", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/review": await answer("lessons-queue-no-access.json") })],
-  ["Passage reports, no access", "/lessons/reports", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/passage-reports": await answer("passage-reports-no-access.json") })],
-  ["Passage reports, error", "/lessons/reports", async () => ({ "/api/lessons/me": await answer("retrieval-me-passage-reviewer-waiting.json"), "/api/passage-reports": SERVICE_DOWN })],
+// Each state with words only it shows, read before the footer is measured, so a mock that missed would fail under its
+// own name rather than pass as another state (ticket 60).
+const SHORT_STATES: [string, string, () => Promise<Record<string, Answer>>, string][] = [
+  ["All projects, no match", "/projects?q=atlantis", async () => ({ "/api/projects": await answer("projects-no-match.json") }), "I found no projects that match your search."],
+  ["All projects, error", "/projects", async () => ({ "/api/projects": SERVICE_DOWN }), "I couldn't load the list of projects because the data service didn't answer."],
+  ["the package page, not found", `/packages/${NO_PACKAGE}`, async () => ({ [`/api/packages/${NO_PACKAGE}`]: { status: 404, body: '{"code":"unknown_package"}' } }), "No package in Strata has the reference"],
+  ["the package page, error", "/packages/KE-NWWDA-541055-CW-RFB", async () => ({ "/api/packages/KE-NWWDA-541055-CW-RFB": SERVICE_DOWN }), "I couldn't load this package."],
+  ["Lessons, empty", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": await answer("lessons-page-empty.json") }), "The library has no lessons yet."],
+  ["Lessons, error", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": SERVICE_DOWN }), "I couldn't load the lessons because the data service didn't answer."],
+  ["Lessons, no access", "/lessons/review", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/review": await answer("lessons-queue-no-access.json") }), "I show this page only to lesson reviewers."],
+  ["Passage reports, no access", "/lessons/reports", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/passage-reports": await answer("passage-reports-no-access.json") }), "I show this page only to passage reviewers."],
+  ["Passage reports, error", "/lessons/reports", async () => ({ "/api/lessons/me": await answer("retrieval-me-passage-reviewer-waiting.json"), "/api/passage-reports": SERVICE_DOWN }), "I couldn't load the passage reports because the data service didn't answer."],
   ["Passage reports, not found", `/lessons/reports/${NO_GROUP}`, async () => ({
     "/api/lessons/me": await answer("retrieval-me-passage-reviewer-waiting.json"),
     [`/api/passage-reports/${NO_GROUP}`]: await answer("passage-report-not-found.json"),
-  })],
-  ["the review page, not found", `/lessons/review/${NO_ITEM}`, async () => ({ "/api/lessons/me": await answer("lessons-me-reviewer.json"), [`/api/lessons/review/${NO_ITEM}`]: await answer("lessons-item-not-found.json") })],
-  ["the review page, no access", `/lessons/review/${NO_ITEM}`, async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), [`/api/lessons/review/${NO_ITEM}`]: await answer("lessons-item-no-access.json") })],
+  }), "I have no passage report with the ID grp-000000000000."],
+  ["the review page, not found", `/lessons/review/${NO_ITEM}`, async () => ({ "/api/lessons/me": await answer("lessons-me-reviewer.json"), [`/api/lessons/review/${NO_ITEM}`]: await answer("lessons-item-not-found.json") }), "I have no lesson review with the ID new-0000000000."],
+  ["the review page, no access", `/lessons/review/${NO_ITEM}`, async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), [`/api/lessons/review/${NO_ITEM}`]: await answer("lessons-item-no-access.json") }), "I show this page only to lesson reviewers."],
 ];
 const LOADING = [
   "main [aria-busy=true]",
@@ -342,13 +371,14 @@ const LOADING = [
   "main [data-report-page=loading]",
   "main [data-review-page=loading]",
 ].join(", ");
-for (const [name, path, api] of SHORT_STATES) {
+for (const [name, path, api, words] of SHORT_STATES) {
   test(`${name} keeps the footer out of the first screen at 1440, 1024 and 390 px`, async ({ page }) => {
     await mockApi(page, { "/api/me": { body: await recorded("me.json") }, "/api/freshness": { body: await recorded("freshness.json") }, ...(await api()) });
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(path);
     await expect(page.locator("main h1")).toBeVisible();
     await expect(page.locator(LOADING)).toHaveCount(0);
+    await expect(page.locator("main").getByText(words, { exact: false }).first(), name).toBeVisible();
     for (const width of [1440, 1024, 390]) {
       await page.setViewportSize({ width, height: 900 });
       const [top, ask, short] = await page.evaluate(() => {

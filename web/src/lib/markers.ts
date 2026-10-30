@@ -36,8 +36,10 @@ export function usePageNumbers(place: number, ids: string[]): Map<string, number
   return useMemo(() => numbersFrom({ ...parts, [place]: key ? key.split("\n") : [] }), [parts, place, key]);
 }
 
-// The page's numbers as they stand, for the drawer's claim.
-export function useMarkerNumber(id: string): number | null {
+// The page's numbers of the drawer claim's sources as they stand, in their order, leaving out any the page has not
+// numbered (ticket 60: a claim with two records ends with both numbers).
+export function useMarkerNumbers(ids: string[]): number[] {
   const parts = useStore(registered);
-  return numbersFrom(parts).get(id) ?? null;
+  const numbers = numbersFrom(parts);
+  return ids.map((id) => numbers.get(id)).filter((n): n is number => n !== undefined);
 }

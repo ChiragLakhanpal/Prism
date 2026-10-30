@@ -64,6 +64,7 @@ async function open(
     if (id.startsWith("strata.gold.notice:OP00125282")) return recorded("evidence-award-notice-op00125282.json").then((body) => ({ body }));
     if (id === "strata.gold.passage:OP00077276/v1/s3") return recorded("evidence-passage-op00077276-s3.json").then((body) => ({ body }));
     if (id === "strata.gold.passage:31525018/v1/54") return recorded("evidence-icr-p130164-54.json").then((body) => ({ body }));
+    if (id === "strata.gold.passage:34056616/v2/10.b") return recorded("evidence-icr-review-p130164-10b.json").then((body) => ({ body }));
     return undefined;
   }
 }
@@ -202,6 +203,26 @@ test("a reading the judge said does not follow from your words is removed in its
   // The box quotes the reading whole, so "I" is plainly Strata's, then the reason about your words (ticket 58).
   await expect(section(page).locator("[data-section-checks]")).toContainText(`It said "${similar.reading}" Your words do not say this.`);
   await expect(section(page).locator("table [data-item=turnover]")).not.toContainText(copy.criteria.removedInPlace);
+});
+
+// Ticket 60 (ticket 31's design review, round 3, P4): when the judge did not respond, the removed box says the cause
+// once, in its lead, each other reading reads "I couldn't check it.", and Try again compares again (the 24 brief, 5.4
+// and 5.5). The answer is the server's for the scripted case criteria-swapped-reading-no-judge.
+test("with no judge, the removed box says the cause once and Try again compares again", async ({ page }) => {
+  const asked = await open(page, CONSULTANT, { compare: "criteria-compare-swapped-reading-no-judge.sse" });
+  await openSection(page);
+  await section(page).getByLabel(copy.criteria.field.label).fill(PASTED);
+  await section(page).getByRole("button", { name: copy.criteria.compare }).click();
+
+  const box = section(page).locator("[data-section-checks] [data-removed-box]");
+  await expect(box.locator("[data-removed-lead]")).toHaveText("I removed two sentences.");
+  await expect(box.locator("li")).toHaveCount(1);
+  await expect(box.locator("li")).toHaveText(/" I couldn't check it\.$/);
+  expect((await box.innerText()).split("the model that judges sentences did not respond").length - 1).toBe(1);
+  const compares = () => asked.filter((request) => new URL(request.url()).pathname.endsWith("/criteria/compare")).length;
+  const before = compares();
+  await box.getByRole("button", { name: "Try again" }).click();
+  await expect.poll(compares).toBe(before + 1);
 });
 
 test("a request to judge a live tender's bids is refused in the first person from the copy file", async ({ page }) => {
@@ -467,6 +488,16 @@ test("lessons on cost estimates appear with their citations, including ICR P1301
   await expect(drawer.locator("[data-lesson-claim]")).toContainText(await card.getByRole("heading", { level: 4 }).innerText());
   // View F can stand alone as a full-screen sheet, so IEG is spelled out there (ticket 58; DESIGN.md section 7, rule 22).
   await expect(drawer.locator("[data-ieg-line=restated]")).toContainText("The Independent Evaluation Group (IEG) wrote in its ICR Review");
+  // Ticket 60 (ticket 31's design review, round 3, P6): IEG's words open too, from a tab beside the paragraph's, and
+  // the lesson and its IEG line stay over either.
+  const tabs = drawer.getByRole("tablist").getByRole("tab");
+  await expect(tabs).toHaveText(["ICR ¶paragraph 54", "ICR Review 10.b"]);
+  await expect(tabs.first()).toHaveAttribute("aria-selected", "true");
+  await tabs.nth(1).click();
+  await expect(page).toHaveURL(/evidence=strata\.gold\.passage%3A34056616%2Fv2%2F10\.b/);
+  await expect(drawer.getByRole("tablist").getByRole("tab").nth(1)).toHaveAttribute("aria-selected", "true");
+  await expect(drawer.locator("[data-lesson-claim]")).toContainText(await card.getByRole("heading", { level: 4 }).innerText());
+  await expect(drawer).toContainText("The works contract estimates were not based on market rate.");
 });
 
 test("every lesson factor in the thresholds file has its group's name in the copy file", async () => {
@@ -496,6 +527,28 @@ test.describe("on a touch screen", () => {
       // The plan row is an Activity, as every drawer names it (the 58 design review, follow-up 11).
       await expect(drawer.locator("#cost-plan-row")).toContainText(/^Activity /);
       await expect(drawer.locator("#cost-plan-row")).toContainText(reference!);
+      await page.keyboard.press("Escape");
+      await expect(drawer).toHaveCount(0);
+    }
+  });
+
+  // Ticket 60 (ticket 31's design review, round 3, P5): at 320 px a tap shows no neighbour's tooltip, which used to sit
+  // over the tap and open nothing; each dot tapped opens its own records.
+  test("at 320 px a tap on each cost dot opens that dot's package and shows no other dot's tooltip", async ({ page }) => {
+    await open(page, WORKS, { width: 320 });
+    await openSection(page);
+    const dots = section(page).locator("[data-cost-dot]");
+    await expect(dots.first()).toBeAttached();
+    const count = await dots.count();
+    for (let index = 0; index < count; index++) {
+      const dot = dots.nth(index);
+      const reference = (await dot.getAttribute("data-cost-dot"))!;
+      await dot.scrollIntoViewIfNeeded();
+      const box = (await dot.boundingBox())!;
+      await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
+      const drawer = page.getByRole("dialog");
+      await expect(drawer.getByRole("heading", { level: 2 }), `dot ${index + 1} of ${count}`).toContainText(reference);
+      for (const shown of await section(page).locator("[data-cost-tooltip]").allTextContents()) expect(shown).toContain(reference);
       await page.keyboard.press("Escape");
       await expect(drawer).toHaveCount(0);
     }

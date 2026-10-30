@@ -45,6 +45,7 @@ type Mode =
   | { kind: "busy"; action: Action }
   | { kind: "done"; message: ReactNode; undo: () => Promise<void> }
   | { kind: "undone"; message: ReactNode }
+  | { kind: "beaten"; winner: Baseline }
   | { kind: "failed"; again: () => void }
   | { kind: "permission" };
 
@@ -93,14 +94,14 @@ export function BaselinePanel({
   // Runs one write, reads the check again, then shows the message. A failure says why, and the check is read
   // again anyway, so the panel's sentence says what the baseline is now (the server writes in an order that a
   // failure part way leaves safe).
-  const run = (action: Action, write: () => Promise<unknown>, after: () => Mode) => {
+  const run = <T,>(action: Action, write: () => Promise<T>, after: (result: T) => Mode) => {
     const attempt = async () => {
       setMode({ kind: "busy", action });
       try {
-        await write();
+        const result = await write();
         await refresh();
         focusAfter.current = "status";
-        setMode(after());
+        setMode(after(result));
       } catch (error) {
         await refresh().catch(() => undefined);
         focusAfter.current = "status";
@@ -116,6 +117,11 @@ export function BaselinePanel({
   });
   const undoTo = (to: string | null) => async () =>
     run("undo", () => (to ? save(to) : remove()), () => undone(to));
+  // A save that another save beat answers with the plan that won as the baseline: the panel then says your save did not
+  // take and who saved which plan first, never that it saved yours, and the baseline as it stands follows (ticket 60 and
+  // its design review, F2).
+  const unlessBeaten = (made: () => Mode) => (result: { baseline: Baseline | null }): Mode =>
+    result.baseline && result.baseline.plan_date !== planDate ? { kind: "beaten", winner: result.baseline } : made();
 
   const isThis = baseline?.plan_date === planDate;
   const savedOn = baseline ? date(baseline.saved_on) : null;
@@ -147,8 +153,13 @@ export function BaselinePanel({
     message = text;
   } else if (mode.kind === "undone") {
     message = mode.message;
+  } else if (mode.kind === "beaten") {
+    message = (
+      <Fill template={words.beaten} slots={{ saved_by: mode.winner.saved_by ?? "", baseline_date: date(mode.winner.plan_date) }} />
+    );
   }
-  if (staff && (mode.kind === "idle" || mode.kind === "undone" || mode.kind === "busy" || mode.kind === "failed")) {
+  const idle = mode.kind === "idle" || mode.kind === "undone" || mode.kind === "busy" || mode.kind === "failed" || mode.kind === "beaten";
+  if (staff && idle) {
     if (!baseline) {
       // What saving does next, "Later checks of this agency's plans then also measure delay from its dates.", is the
       // button's tooltip and description (ticket 126, pattern 5), not a third sentence in the row.
@@ -158,7 +169,9 @@ export function BaselinePanel({
             variant="secondary"
             loading={busy === "save" || busy === "undo"}
             busyLabel={words.saving}
-            onClick={() => run("save", () => save(planDate), () => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) }))}
+            onClick={() =>
+              run("save", () => save(planDate), unlessBeaten(() => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) })))
+            }
           >
             {words.save}
           </Button>
@@ -208,6 +221,7 @@ export function BaselinePanel({
       <p ref={status} role="status" tabIndex={-1} className="max-w-prose text-body text-ink focus:outline-none">
         {message}
       </p>
+      {mode.kind === "beaten" && <p className="mt-2 max-w-prose text-body text-ink">{text}</p>}
       {mode.kind === "failed" && (
         <div className="mt-3">
           <Alert
@@ -250,11 +264,11 @@ export function BaselinePanel({
               variant="secondary"
               onClick={() => {
                 const old = baseline.plan_date;
-                run("replace", () => save(planDate), () => ({
+                run("replace", () => save(planDate), unlessBeaten(() => ({
                   kind: "done",
                   message: <Fill template={words.justReplaced} slots={{ plan_date: date(planDate), old_date: date(old) }} />,
                   undo: undoTo(old),
-                }));
+                })));
               }}
             >
               {words.replace}

@@ -593,6 +593,13 @@ test("the dots are one tab stop with arrow keys between them, each names its pac
   await page.keyboard.press("ArrowRight");
   const fourth = group.getByRole("img").nth(3);
   await expect(fourth).toBeFocused();
+  // Ticket 60: the focused dot sits whole in the window and in its chart, its 2 px ring at a 2 px offset included.
+  const [dotBox, chartBox] = [(await fourth.boundingBox())!, (await page.locator("[data-range-chart]").boundingBox())!];
+  const ring = { top: dotBox.y - 4, bottom: dotBox.y + dotBox.height + 4, left: dotBox.x - 4, right: dotBox.x + dotBox.width + 4 };
+  expect(ring.top).toBeGreaterThanOrEqual(Math.max(0, chartBox.y) - 0.5);
+  expect(ring.bottom).toBeLessThanOrEqual(Math.min(900, chartBox.y + chartBox.height) + 0.5);
+  expect(ring.left).toBeGreaterThanOrEqual(chartBox.x - 0.5);
+  expect(ring.right).toBeLessThanOrEqual(chartBox.x + chartBox.width + 0.5);
   await expect(fourth).toHaveAccessibleName(
     "KE-WAJWASCO-372776-CW-RFB, 1.1 months. Kenya. Its notice was published September 2, 2023, and its contract was signed " +
       `October 6, 2023. ${from} Select to see its records. Dot 4 of 49.`,
@@ -794,6 +801,33 @@ test("the pointer can cross the dots above a dot to reach its tooltip, and a dot
     await page.clock.runFor(150);
     await expect(tip, `${width} px, after Escape`).toHaveCount(0);
   }
+});
+
+// Ticket 60 (ticket 12's critique, rounds 5 and 6): a pointer that crawls, slower than 0.1 px per ms, is resting, as
+// Floating UI's safePolygon has it, so the band toward the tooltip no longer holds the last dot and the dot under the
+// pointer takes the tooltip as the pointer reaches it, with no 100 ms wait.
+test("a pointer crawling up from a dot onto the dot above shows the dot above as it arrives", async ({ page }) => {
+  await page.clock.install();
+  await openPackage(page, { width: 1440 });
+  await ready(page);
+  await page.locator("[data-range-chart]").scrollIntoViewIfNeeded();
+  await stopTheClock(page);
+  const column = await tallestColumn(page);
+  const [bottom, upper] = [column[column.length - 1], column[column.length - 2]];
+  const name = async (index: number) => (await page.locator(`[data-dot-target='${index}']`).getAttribute("aria-label"))!.split(",")[0];
+  const tip = page.locator("[data-dot-tooltip]");
+  const from = await centre(page, `[data-dot-target='${bottom}']`);
+  const to = await centre(page, `[data-dot-target='${upper}']`);
+  await page.mouse.move(from.x, from.y);
+  await expect(tip).toContainText(await name(bottom));
+
+  // 1 px every 16 ms, about 0.06 px per ms.
+  const steps = Math.ceil(Math.hypot(to.x - from.x, to.y - from.y));
+  for (let step = 1; step <= steps; step++) {
+    await page.clock.runFor(16);
+    await page.mouse.move(from.x + ((to.x - from.x) * step) / steps, from.y + ((to.y - from.y) * step) / steps);
+  }
+  await expect(tip).toContainText(await name(upper));
 });
 
 // Every dot's centre and reference in the viewport, and the lane's centre line, which the middle
@@ -1127,6 +1161,20 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
   await expect(page.locator("main p", { hasText: "No package in Strata has the reference" })).toContainText(
     "Check the reference in STEP, or find its project in the box at the bottom of the page.",
   );
+});
+
+// Ticket 60 (ticket 12's critique, round 6): a package the page just said does not exist is no scope for a question,
+// so the box draws no chip for it and does not offer to ask about it.
+test("the not-found package page's box has no scope chip and offers nothing about the package", async ({ page }) => {
+  await openPackage(page, { pkg: { status: 404, body: '{"code":"unknown_package"}' } });
+  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" })).toBeVisible();
+
+  const box = page.locator("[data-box-slot]");
+  await expect(box.locator("[data-scope-chip]")).toHaveCount(0);
+  await expect(box.getByRole("combobox")).not.toHaveAttribute("placeholder", "Ask about this package");
+  await page.keyboard.press("/");
+  await page.keyboard.type("Why was it advertised again?");
+  await expect(page.getByRole("listbox", { name: "What Enter will do" })).not.toContainText(REF);
 });
 
 test("a reference too long for the line breaks after a hyphen, so the not-found page never scrolls sideways at 320 px", async ({ page }) => {

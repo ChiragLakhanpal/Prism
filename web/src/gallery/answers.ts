@@ -26,6 +26,11 @@ import refusesPart from "../../../tests/fixtures/api/ask-refuses-part-supplier-s
 import planNotYetPublic from "../../../tests/fixtures/api/ask-p156634-plan-not-yet-public.sse?raw";
 import uncitedBlame from "../../../tests/fixtures/api/ask-p156634-uncited-blame.sse?raw";
 import uncitedSummary from "../../../tests/fixtures/api/ask-p130164-uncited-summary.sse?raw";
+// Ticket 60: the outage states, and a partial refusal whose other sentences lost check 6's service.
+import judgeSilentSomeFailed from "../../../tests/fixtures/api/ask-p130164-judge-no-response-some-failed.sse?raw";
+import disagreementsSomeKept from "../../../tests/fixtures/api/ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse?raw";
+import disagreementsMixed from "../../../tests/fixtures/api/ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse?raw";
+import refusesPartUnchecked from "../../../tests/fixtures/api/ask-refuses-part-supplier-scores-disagreements-unavailable.sse?raw";
 import refusesSupplierScores from "../../../tests/fixtures/api/ask-refuses-supplier-scores.sse?raw";
 import refusesFraudAndRedactions from "../../../tests/fixtures/api/ask-refuses-fraud-and-redactions.sse?raw";
 import refusesLiveTenders from "../../../tests/fixtures/api/ask-refuses-live-tenders.sse?raw";
@@ -132,7 +137,12 @@ export const CHECK_RUNS = {
   planNotYetPublic: played(planNotYetPublic, asked(checked.planNotYetPublic, "P156634", { asOf: "2026-10-01" })),
   uncitedBlame: played(uncitedBlame, asked(checked.planNotYetPublic, "P156634", { asOf: "2026-10-01" })),
   uncitedSummary: played(uncitedSummary, showcase),
+  // Ticket 60: the outage states.
+  judgeSilentSomeFailed: played(judgeSilentSomeFailed, asked(checked.summaries, "P130164")),
+  disagreementsSomeKept: played(disagreementsSomeKept, asked(checked.pastRange, "KE-NWWDA-541055-CW-RFB")),
+  disagreementsMixed: played(disagreementsMixed, asked(checked.pastRange, "KE-NWWDA-541055-CW-RFB")),
   partial: played(refusesPart, asked(refusalQuestions.partial, "P130164")),
+  partialUnchecked: played(refusesPartUnchecked, asked(refusalQuestions.partial, "P130164")),
 };
 export const REFUSAL_RUNS = {
     supplier_scores: played(refusesSupplierScores, asked(refusalQuestions.supplier_scores, null)),

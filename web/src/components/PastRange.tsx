@@ -31,7 +31,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type 
 import { CircleDashed } from "lucide-react";
 import { copy } from "../copy";
 import type { ApiError, Comparable, ComparablesResult, Comparison } from "../lib/api";
-import { forgetDotList, openPlanRow, openWentWith, rangeIds, rememberDots, type OpenComparable } from "../lib/packages";
+import { forgetDotList, openPlanRow, openWentWith, rangeCriteria, rangeIds, rememberDots, type OpenComparable } from "../lib/packages";
 import {
   CompareControl,
   dotComparisonName,
@@ -190,8 +190,8 @@ export function PastRange({
   // A block at the end of the card that counts the same comparable packages, such as "Advertised again" (ticket
   // 28), drawn after the result and never in place of a body such as the plan prompt. As a function it learns
   // whether a "Compare with" segment is pressed (ticket 26), so "Advertised again" can say the comparison leaves
-  // its count alone.
-  after?: ReactNode | ((comparing: boolean) => ReactNode);
+  // its count alone, and is given the zone's one polite live region to say its own failure in (ticket 60).
+  after?: ReactNode | ((comparing: boolean, say: (text: string) => void) => ReactNode);
   // A number already pressed, so the table opens filtered to the rows it counts, as the design gallery shows it
   // (ticket 101's design review, round 2). On a page a person presses the number.
   pressedNumber?: RowFilter["key"];
@@ -206,7 +206,11 @@ export function PastRange({
     if (result.quantile_dots) rememberDots(result);
     else forgetDotList();
     rangeIds.set(result.rows.map((row) => row.evidence_id));
-    return () => rangeIds.set([]);
+    rangeCriteria.set(result.criteria);
+    return () => {
+      rangeIds.set([]);
+      rangeCriteria.set(null);
+    };
   }, [canOpen, result]);
 
   // The section's one polite live region, which says steps and results (the 12 brief), the comparisons too.
@@ -294,12 +298,13 @@ export function PastRange({
       }}
       live={
         <>
-          {loading && !quiet && (
+          {/* One polite region for the whole zone, its second block's failure included, which may come while the
+              section still loads (ticket 60). */}
+          {loading && !quiet ? (
             <p role="status" className="sr-only">
               {words.loading}
             </p>
-          )}
-          {populated && (
+          ) : (
             <p role="status" className="sr-only" data-live>
               {announce}
             </p>
@@ -345,8 +350,9 @@ export function PastRange({
       )}
       {/* The block after the result is drawn in every state but a body, the loading one too: it decides itself what
           stands in its place while the section loads, its own skeleton or nothing, so the card ends where it will and
-          a rerun keeps it (ticket 59; the 28 review, follow-up 2; the critique of round 1). */}
-      {!body && (typeof after === "function" ? after(comparison !== null) : after)}
+          a rerun keeps it (ticket 59; the 28 review, follow-up 2; the critique of round 1). It says its own failure in
+          the zone's one live region (ticket 60). */}
+      {!body && (typeof after === "function" ? after(comparison !== null, setAnnounce) : after)}
     </TaskZone>
   );
 }

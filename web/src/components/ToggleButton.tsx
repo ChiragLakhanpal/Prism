@@ -17,6 +17,7 @@ export function ToggleButton({
   disabled = false,
   hint,
   inText = false,
+  hoverable = true,
   className,
   children,
   onClick,
@@ -30,6 +31,9 @@ export function ToggleButton({
   hint?: ReactNode;
   // A ghost in a column of text: 16 px of padding instead of 24.
   inText?: boolean;
+  // False while the pointer rests where a press left it, so an unpressed button under it takes no hover fill until the
+  // pointer moves (ticket 60's grade bar).
+  hoverable?: boolean;
 }) {
   return (
     <button
@@ -51,10 +55,10 @@ export function ToggleButton({
           : variant === "ghost"
             ? pressed
               ? "border-primary bg-tint text-primary"
-              : "border-transparent bg-transparent text-primary hover:bg-tint-hover"
+              : cx("border-transparent bg-transparent text-primary", hoverable && "hover:bg-tint-hover")
             : pressed
               ? "border-primary bg-tint text-primary shadow-[inset_0_0_0_2px_var(--color-primary)]"
-              : "border-primary bg-surface text-primary hover:bg-tint",
+              : cx("border-primary bg-surface text-primary", hoverable && "hover:bg-tint"),
         className,
       )}
     >

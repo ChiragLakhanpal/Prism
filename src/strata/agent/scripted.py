@@ -253,6 +253,11 @@ RECORDED_STREAMS = {
     "p156634-uncited-blame": "ask-p156634-uncited-blame.sse",
     # And check 2's removal of a sentence that cites nothing when no tool held back, which its step counts.
     "p130164-uncited-summary": "ask-p130164-uncited-summary.sse",
+    # Ticket 60: the outage states, and a partial refusal whose other sentences all lost check 6's service.
+    "p130164-summaries-judge-no-response-number": "ask-p130164-judge-no-response-some-failed.sse",
+    "ke-nwwda-541055-disagreements-unavailable": "ask-ke-nwwda-541055-disagreements-unavailable-some-kept.sse",
+    "ke-nwwda-541055-disagreements-unavailable-number": "ask-ke-nwwda-541055-disagreements-unavailable-mixed.sse",
+    "refuses-part-supplier-scores-disagreements-unavailable": "ask-refuses-part-supplier-scores-disagreements-unavailable.sse",
     # Ticket 42: an answer asked for in French.
     "p127203-fr-procurement-delays": "ask-p127203-fr.sse",
     "p127203-en-procurement-delays": "ask-p127203-en-cites-french.sse",

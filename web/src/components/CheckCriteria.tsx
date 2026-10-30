@@ -179,24 +179,36 @@ function summaryKey(summary: CriteriaSummary): string {
 // The words for a removed sentence follow what the server says it was (entry.source): an award notice is a record
 // with no pages, so a reason quoted from it and not found is "not in the record it cites", and a reading is about
 // your own words.
-function toRemoved(entries: RemovedEntry[]): Removed[] {
-  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string }>;
-  return entries.map((entry) => {
+// unjudged: every entry lost the judge, so the lead says the cause once and each other item reads "I couldn't check
+// it." (the 24 brief, 5.4 and 5.5; ticket 60).
+function toRemoved(entries: RemovedEntry[], unjudged = false): Removed[] {
+  const reasons = copy.removed.reasons as Record<string, { item: string; joined: string; underAlert?: string }>;
+  return entries.map((entry, index) => {
     const onRecord = entry.reason === "quote_not_on_page" && entry.source === "record_quote";
     // A reading is about your own words, whatever check removed it (ticket 58), and it is quoted whole, so the box
-    // never reads "It said I read this as ...".
+    // never reads "It said I read this as ...". A reading the judge could not check says so (ticket 60).
     const reading = entry.source === "reading";
-    const reason = onRecord
+    const reason: { item: string; joined: string; underAlert?: string } = onRecord
       ? words.quoteNotInSource
       : reading
-        ? (words.readingReasons[entry.reason] ?? words.readingNotSupported)
+        ? (words.readingReasons[entry.reason] ?? reasons[entry.reason] ?? words.readingNotSupported)
         : (reasons[entry.reason] ?? copy.removed.unknownReason);
-    return { sentence: entry.sentence, reason: reason.item, reasonJoined: reason.joined, quoted: reading };
+    // The first entry says the cause in the lead, quoted or not; the others say only "I couldn't check it."
+    const item = unjudged && index > 0 && reason.underAlert ? reason.underAlert : reason.item;
+    return { sentence: entry.sentence, reason: item, reasonJoined: reason.joined, quoted: reading };
   });
 }
 
-function SectionChecks({ checks, removed, compared, lessons }: { checks: Checks | null; removed: RemovedEntry[]; compared: boolean; lessons: boolean }) {
+function SectionChecks({ checks, removed, compared, lessons, onRetry }: {
+  checks: Checks | null;
+  removed: RemovedEntry[];
+  compared: boolean;
+  lessons: boolean;
+  onRetry: () => void;
+}) {
   if (!checks) return null;
+  // The model that judges sentences did not respond for any of them: Try again compares again (ticket 60).
+  const unjudged = removed.length > 0 && removed.every((entry) => entry.reason === "judge_unavailable");
   const noPages = checks.quotes_without_pages > 0;
   // The line counts what is on screen, as the answer panel's does (ticket 24), with check 4's judged part.
   const shown = checks.shown ?? checks;
@@ -214,7 +226,7 @@ function SectionChecks({ checks, removed, compared, lessons }: { checks: Checks 
         // A lesson card below leaves its gap too (ticket 58; config/tools.toml, get_lessons' not_checked_when).
         notChecked={[...(checks.checks_run.includes(4) ? [] : (["sentences"] as const)), "find_comparables", ...(lessons ? (["get_lessons"] as const) : [])]}
         notCheckedText={compared ? [words.notCheckedItems] : []}
-        removed={removed.length > 0 && <RemovedBox removed={toRemoved(removed)} />}
+        removed={removed.length > 0 && <RemovedBox removed={toRemoved(removed, unjudged)} retry={unjudged ? { onRetry } : undefined} />}
       />
     </div>
   );
@@ -424,7 +436,13 @@ export function CheckCriteriaView(props: ViewProps) {
           edited={props.edited} comparing={comparison.status === "running"} preview={preview} saveFailed={props.saveFailed} />
       )}
       {run.status === "running" && <Skeleton className="mt-6 h-9 w-full" />}
-      <SectionChecks checks={props.checks} removed={removed} compared={Boolean(compared && compared.items.length)} lessons={Boolean(result?.lessons.groups.length)} />
+      <SectionChecks
+        checks={props.checks}
+        removed={removed}
+        compared={Boolean(compared && compared.items.length)}
+        lessons={Boolean(result?.lessons.groups.length)}
+        onRetry={props.onCompare}
+      />
       {runSteps}
       <PartOne comparison={comparison} readinessHref={readiness("compare_criteria", compared?.sources.map((source) => source.key) ?? publicKeys)}
         steps={compareSteps} onRetry={props.onCompare} asOf={props.asOf ?? null} />

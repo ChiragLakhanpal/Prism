@@ -35,6 +35,10 @@ ROUTES = [
     ("/api/packages/KE-NWWDA-541055-CW-RFB/comparables?category=any", "comparables-ke-nwwda-541055-any-category.json"),
     # No comparable package matched, and packages matched that could not be measured.
     ("/api/packages/KE-NWWDA-541055-CW-RFB/comparables?country=IN", "comparables-ke-nwwda-541055-india.json"),
+    # India from 2013, the criteria tests/record_risks_api.py reads India's risks with, so the risks captures pair
+    # section 1 with section 3 as the app does (ticket 60's design review, B1): two matched, none measured.
+    ("/api/packages/KE-NWWDA-541055-CW-RFB/comparables?country=IN&notice_from=2013-01-01",
+     "comparables-ke-nwwda-541055-india-2013.json"),
     ("/api/packages/KE-NWWDA-541055-CW-RFB/comparables?category=Non-consulting%20Services",
      "comparables-ke-nwwda-541055-non-consulting.json"),
     # A Request for Quotations with a Limited market approach: no public notice to measure from.
