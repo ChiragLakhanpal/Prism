@@ -58,6 +58,10 @@ _Avoid_: Source rank
 Two assertions about the same thing, for the same period, that cannot both be true. A rating that changes over time is a trajectory, not a disagreement.
 _Avoid_: Conflict (reads as conflict of interest), contradiction, discrepancy
 
+**Moved on since the plan**:
+A plan check's state for an activity whose plan row still says its contract is not signed, while the contract awards or an award notice say it was signed when that plan was the agency's latest. The two records are a disagreement, and the plan check counts the activity apart from the ones still pending. It is not a signal.
+_Avoid_: Stale, overdue (each says the agency failed; the records only show the plan has not caught up)
+
 **Evidence pack**:
 Everything an answer or a draft may cite. For an exported draft, the PDF and CSV that list those sources, where each is cited, and whether its author opened it.
 _Avoid_: Context
