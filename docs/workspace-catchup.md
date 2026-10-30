@@ -4862,3 +4862,38 @@ Then sign in to https://strata-7405609289499029.9.azure.databricksapps.com as a 
 ## Tickets 141, the App redeploy ran: the App runs a5d002c7
 
 **Ran on October 30, 2026 (orchestrator), from a snapshot of a5d002c7.** Ticket 141's live steps ran from a snapshot of a5d002c7 (the App already runs that build, deployed 03:02 PDT). Step 1 at 03:17 PDT: the fingerprints before the rewrite were P130164 document 30152361, 13 rows, 3529711288 and P156634 document 40132287, 8 rows, -1429671582, with no row for IN-RRSMP-7431-CW-RFB or NWWDA-WSDP-03-2019-2020; the plan rewrites for P155350, P156634 and P130164 fetched and parsed nothing and settled the references from each plan's text (PK-SID-2961, 2963, 2964 and 2965-CW-RFB read as -RFP; KE-NWWDA-229129 and 541055 -RFQ as -RFB; 193471-9O-RFQ as 199471-GO-RFQ; NWWDA-WSDP-03-2013-2020 as -2019-2020; IN-RRSMP-1948LCW-RFB as 19481-CW-RFB); P130164 now holds 14 rows; bronze_to_gold alone on the nightly job followed. Step 2 at 03:20 PDT: document 34337516 holds 16 rows, all on PDF page 4, every method Request for Bids, every estimated_amount_usd NULL; PK-SID-2961-CW-RFP reads Request for Bids, 5024100.36, Signed; PK-SID-20260-CW-RFB reads 3557787.46; the method notes list the eight -RFP rows (2961 to 2965, 2967, 2968, 2969) with RFP, Request for Proposals and Request for Bids; PK-SID-29086-CW-RFB still reads 4324242.94 (the review's follow-up 1). Step 3: the fingerprints after the rewrite are unchanged (13 rows, 3529711288; 8 rows, -1429671582) and the two recovered rows are present (IN-RRSMP-7431-CW-RFB on page 5 of 30152361; NWWDA-WSDP-03-2019-2020 on page 3 of 40132287). Step 4: the bundle deploy still waits for the owner's --force; the App's Procurement tab for P155350 shows the rows once its kept page expires or the App restarts. bronze_to_gold alone on the nightly job ended SUCCESS at about 03:40 PDT. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 142, step 1 of 1: P161305's Timeline tab reads one series (criterion 3)
+
+The merger parked this on October 30, 2026, after merge commit ad9f5af6 (branch `strata/142-the-timeline-s-rating-sentence-and-its-bands-come-from-one-series` at 90935835). Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs this block from a snapshot at or after ad9f5af6, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Link the main checkout's `web/node_modules` into the snapshot before the App deploy.
+
+What ticket 142 changes: the Timeline tab's title and its band row come from one series, built in one place (`timeline.series` in `src/strata/server/timeline.py`). That series is the fuller of two sources: get_disagreements' ISR trajectory (`strata.gold.assertion`) and the ISR ratings table (`strata.silver.isr_ratings`, read by the new `src/strata/server/sql/timeline/isr_ratings.sql`). The title now names the ISR its last rating comes from ("last rated in ISR 13"). No table changed.
+
+First, read-only, check that no ISR is listed twice for P161305 (the verifier's probe 6 and the review's follow-up F1):
+
+    SELECT sequence, count(*) AS rows FROM strata.silver.isr_ratings WHERE project_id = 'P161305' AND rating_name = 'Progress towards achievement of PDO' GROUP BY sequence HAVING count(*) > 1
+
+Then redeploy the App. If a later merge's redeploy already runs ad9f5af6 or a later commit, record that run here instead of deploying again.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then sign in to https://strata-7405609289499029.9.azure.databricksapps.com as a viewer with a role. Open `/projects/P161305/timeline` in a fresh browser context, because the timeline answer is a kept page for up to two hours. Capture it at 1440 px.
+
+It worked if all of these hold:
+
+- The query returns no rows. If it returns any, record them and stop: the review's follow-up F1 (one point per ISR, and count distinct ISRs) must land before criterion 3 is recorded as passed.
+- The title ends "fell from Satisfactory to Moderately Satisfactory, last rated in ISR 13."
+- The band row's last band is the Moderately Satisfactory run (the builder expects "MS, ISRs 12 to 13"). It does not end at "MU, ISRs 10 to 11".
+- The last band's drawer ends at ISR 13.
+- `GET /api/projects/P161305/timeline`'s `ratings` block gives `last_sequence` 13 with `source` `strata.silver.isr_ratings`, or `strata.gold.assertion` if the assertions pass has since reached ISR 13.
+- The Summary tab's "Moderately Satisfactory from ISR 13" matches the title.
+
+Record these here under ticket 142, with the time:
+
+- the query's answer
+- the deploy's exit code, the commit the App runs, and any secret the deploy's step 3 names
+- the title word for word
+- the last band, and the ISR its drawer ends at
+- the `ratings` block's `last_sequence` and `source`
+
+This is criterion 3's live proof. Nothing is written to the workspace beyond the App deploy.
