@@ -13,8 +13,8 @@ import { expect, recorded, test } from "./mocked";
 
 type Answer = { status?: number; body: string };
 
-async function serve(page: Page, answers: Record<string, Answer>) {
-  await page.setViewportSize({ width: 1440, height: 900 });
+async function serve(page: Page, answers: Record<string, Answer>, size = { width: 1440, height: 900 }) {
+  await page.setViewportSize(size);
   const all: Record<string, Answer> = {
     "/api/me": { body: await recorded("me.json") },
     "/api/freshness": { body: await recorded("freshness.json") },
@@ -27,13 +27,17 @@ async function serve(page: Page, answers: Record<string, Answer>) {
   });
 }
 
-async function openStepRow(page: Page, ref: string, files: { pkg: string; comparables: string; steps: string }) {
+async function openStepRow(page: Page, ref: string, files: { pkg: string; comparables: string; steps: string }, size?: { width: number; height: number }) {
   const api = `/api/packages/${ref}`;
-  await serve(page, {
-    [api]: { body: await recorded(files.pkg) },
-    [`${api}/comparables`]: { body: await recorded(files.comparables) },
-    [`${api}/steps`]: { body: await recorded(files.steps) },
-  });
+  await serve(
+    page,
+    {
+      [api]: { body: await recorded(files.pkg) },
+      [`${api}/comparables`]: { body: await recorded(files.comparables) },
+      [`${api}/steps`]: { body: await recorded(files.steps) },
+    },
+    size,
+  );
   await page.goto(`/packages/${ref}`);
   await expect(tracker(page).getByRole("listitem")).toHaveCount(6);
 }
@@ -42,6 +46,7 @@ const tracker = (page: Page) => page.locator("[data-step-tracker]");
 const items = (page: Page) => tracker(page).getByRole("listitem");
 const words = async (locator: Locator) => (await locator.allInnerTexts()).map((text) => text.replace(/\s+/g, " ").trim());
 const states = (page: Page) => items(page).evaluateAll((all) => all.map((item) => item.getAttribute("data-step-state")));
+const tops = (page: Page) => items(page).evaluateAll((all) => all.map((item) => Math.round(item.getBoundingClientRect().top)));
 const lefts = (page: Page) => items(page).evaluateAll((all) => all.map((item) => Math.round(item.getBoundingClientRect().left)));
 
 // Each line of text inside a step, as the browser laid it out, that leaves its step's box (the design review's R2-B1).
@@ -116,11 +121,15 @@ test("on the fixture's showcase package the signing is done on the contract awar
   expect([Math.round(strip.x - card.x), Math.round(card.x + card.width - strip.x - strip.width)]).toEqual([1, 1]);
   expect(Math.round(card.y + card.height - strip.y - strip.height)).toBe(1);
   await expect(tracker(page).locator("[data-tracker-status]")).toHaveCount(0);
-  // At 1024 px the page area still holds the six steps in a row, and no step's words reach into the next.
+  // At 1440 px the tracker is a list in the side column (ticket 130). At 1024 px it moves after zone 1, where the page
+  // area still holds the six steps in a row, and no step's words reach into the next.
+  expect(new Set(await lefts(page)).size).toBe(1);
   await page.setViewportSize({ width: 1024, height: 768 });
+  await expect(page.locator("[data-zones] [data-step-tracker]")).toHaveCount(1);
   expect(await spills(page)).toEqual([]);
   expect(new Set(await lefts(page)).size).toBe(6);
   await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(page.locator("[data-side-slot] [data-step-tracker]")).toHaveCount(1);
   // Section 2's list stays where it was, under "Show the steps".
   await expect(page.locator("section#planned-dates [data-section-toggle]")).toHaveText("Show the steps");
   await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
@@ -199,4 +208,62 @@ test("done steps carry a tick and their actual dates, the next step is filled, a
   await expect(fill).toBeVisible();
   expect(await fill.evaluate((el) => getComputedStyle(el).transitionDuration.split(",").every((part) => parseFloat(part) === 0))).toBe(true);
   expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+});
+
+// Ticket 130, the design lead's Option W2 of October 29, 2026: from a frame of 75rem the right column holds the plan
+// row's facts and then the tracker, which reads its own width there (under its 36rem row), so it is a list, and which
+// sticks 24 px under the 56 px bar while you read the zones. Below that frame the page is one column and the tracker
+// follows zone 1, a row at 1024 px as ticket 115 drew it.
+const SHOWCASE = { pkg: "package-ke-nwwda-541055.json", comparables: "comparables-ke-nwwda-541055.json", steps: "steps-ke-nwwda-541055.json" };
+
+test("at 1440 and 1280 px the tracker is a list in the right column under the plan row's facts, in view under the bar while you read the zones; at 1024 and 390 px it follows zone 1", async ({ page }) => {
+  for (const [width, height] of [
+    [1440, 900],
+    [1280, 800],
+  ] as const) {
+    await openStepRow(page, "KE-NWWDA-541055-CW-RFB", SHOWCASE, { width, height });
+    const side = page.locator("[data-side-slot]");
+    await expect(side.locator("[data-step-tracker]"), `${width} px`).toHaveCount(1);
+    await expect(page.locator("[data-zones] [data-step-tracker]")).toHaveCount(0);
+    const facts = (await side.getByRole("region", { name: "From the plan row" }).boundingBox())!;
+    const card = (await tracker(page).boundingBox())!;
+    const zones = (await page.locator("[data-zones]").boundingBox())!;
+    // Under the facts, 16 px down, in the facts' column, right of the zones.
+    expect(Math.round(card.y - facts.y - facts.height), `${width} px`).toBe(16);
+    expect([Math.round(card.x), Math.round(card.width)]).toEqual([Math.round(facts.x), Math.round(facts.width)]);
+    expect(card.x).toBeGreaterThan(zones.x + zones.width);
+    // A list: every step at one left edge, each under the one before.
+    expect(new Set(await lefts(page)).size, `${width} px`).toBe(1);
+    const down = await tops(page);
+    expect(down.every((top, index) => index === 0 || top > down[index - 1]), `${width} px`).toBe(true);
+    expect(await spills(page)).toEqual([]);
+    // Scrolled a screen and more down, to zone 3 under the bar, the tracker is still whole on screen, 24 px under it.
+    await page.locator("[data-zones] > [data-zone]").nth(2).evaluate((zone) => zone.scrollIntoView({ block: "start" }));
+    expect(await page.evaluate(() => window.scrollY), `${width} px`).toBeGreaterThan(height);
+    await expect(tracker(page)).toBeInViewport({ ratio: 1 });
+    expect(Math.round((await tracker(page).boundingBox())!.y), `${width} px`).toBe(56 + 24);
+    // The whole page passes axe with the tracker beside the zones (package.spec.ts scans 1440, 1024 and 390 px).
+    if (width === 1280) {
+      await page.waitForFunction(() => document.getAnimations().every((animation) => animation.playState !== "running"));
+      const results = await scan(page);
+      expect(results.violations.map((v) => `${v.id}: ${v.nodes.map((node) => node.target.join(" ")).join(", ")}`)).toEqual([]);
+    }
+    await page.unrouteAll();
+  }
+  for (const [width, height] of [
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    await openStepRow(page, "KE-NWWDA-541055-CW-RFB", SHOWCASE, { width, height });
+    // One column: the tracker follows zone 1, inside the work, and the facts are the head's line.
+    await expect(page.locator("[data-side-slot] [data-step-tracker]"), `${width} px`).toHaveCount(0);
+    const order = await page
+      .locator("[data-zones] > *")
+      .evaluateAll((all) => all.map((el) => (el.hasAttribute("data-zone") ? el.querySelector("h2")?.textContent : el.querySelector("[data-step-tracker]") ? "tracker" : null)));
+    const named = order.filter(Boolean);
+    expect(named.slice(0, 3), `${width} px`).toEqual([expect.stringContaining("How long it took"), "tracker", expect.stringContaining("Planned date for each step")]);
+    // A row of six at 1024 px, as ticket 115 drew it; a list at 390.
+    expect(new Set(await lefts(page)).size, `${width} px`).toBe(width === 1024 ? 6 : 1);
+    await page.unrouteAll();
+  }
 });

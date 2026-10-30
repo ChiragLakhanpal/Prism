@@ -3,10 +3,11 @@
 //
 // - PlanCheckHeader: the agency's name (the h1, wrapping in full), the plan's date, the check pill and the page's one
 //   action. It sticks under the bar from a 1024 px window 50rem tall, and only while it holds that action.
-// - PlanCheck: the finding in the finding style with the method and change lines, then the activities panel: its
-//   name and count line, the rows in STEP's columns with each mark's badge and reason, the activities with no
-//   signals folded behind "Show them", and a foot strip with the source line and what Strata cannot see. Then the
-//   zones the page passes: "What changed" as a closed row and the baseline as a row.
+// - PlanCheck: the finding in the finding style, with "How I checked" beside it from a 75rem page area (ticket 130),
+//   then the activities panel: its name and count line, the rows in STEP's columns with each mark's badge and reason,
+//   the activities with no signals folded behind "Show them", and a foot strip with the source line and what Strata
+//   cannot see. Below that page area "How I checked" follows the activities. Then the zones the page passes: "What
+//   changed" as a closed row and the baseline as a row.
 // - PlanCheckSkeleton: the same places while the check loads, under the real panel name and column heads.
 //
 // A row's reference is a button that opens the row's records in the evidence drawer (PlanRowRecords.tsx), and the
@@ -19,7 +20,8 @@
 // in data-activity, and an address whose hash names a reference opens the fold if it must, brings
 // that activity into view with nothing cut at the top edge, and focuses it (ticket 14 links to plan
 // rows this way).
-import { createElement, Fragment, useEffect, useId, useState, type ReactNode, type Ref } from "react";
+import { createElement, Fragment, useEffect, useId, useRef, useState, type ReactNode, type Ref } from "react";
+import { usePageAtLeast } from "../lib/usePageAtLeast";
 import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
@@ -34,7 +36,6 @@ import { useStore } from "../lib/store";
 import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
 import { CitationMarker } from "./CitationMarker";
-import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
 import { FootStrip } from "./FootStrip";
 import { useShows } from "../lib/view";
@@ -42,6 +43,7 @@ import { ListedRefs, MonoWords } from "./MonoWords";
 import { Num, type NumCheck } from "./Num";
 import { checkFrom, FromLine, planFrom } from "./NumFrom";
 import { ProjectId } from "./ProjectId";
+import { SidePanel } from "./SidePanel";
 import { Skeleton, SkeletonLine, SkeletonText } from "./Skeleton";
 import { Source } from "./Source";
 import { StatusBadge, type BadgeKind } from "./StatusBadge";
@@ -810,8 +812,12 @@ function ActivitiesZone({ id, tag, busy, children }: { id?: string; tag?: ReactN
   );
 }
 
-export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source, reveal = false }: {
+export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod, changed = {}, after, method, source, reveal = false, howChecked }: {
   result: CheckedPlan;
+  // Ticket 130: "How I checked" (HowIChecked.tsx), beside the finding in columns 9 to 12 from a page area of 75rem, and
+  // after the activities below it, so the first marked row stays in the first screen at 1024 by 768. It renders in one
+  // place only, so the reading order is the finding, how it was checked, then the activities, or the rows first.
+  howChecked?: ReactNode;
   // Ticket 111: the finding replaces a narration that showed for at least 400 ms, so its byline, the finding and the
   // method sentence enter, once: opacity and a 4 px rise over 200 ms.
   reveal?: boolean;
@@ -920,10 +926,16 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
 
   // An upload's own method sentence (ticket 38), or the notes that change what the finding covers.
   const notes = method ?? (methodNotes(result) ? <Method result={result} /> : null);
+  const root = useRef<HTMLElement>(null);
+  const wide = usePageAtLeast(root, 75);
+  const beside = howChecked != null && wide;
 
   return (
-    <section aria-labelledby={findingId} data-plan-check>
-      <EightColumns prose className="mt-6">
+    <section ref={root} aria-labelledby={findingId} data-plan-check>
+      {/* Columns 1 to 8 as EightColumns draws them, or 1 to 7 with "How I checked" in 9 to 12 beside them; the row holds
+          at least the panel's height, as the skeleton's does, so the activities stay put when the check arrives. */}
+      <div className={cx("layout-grid mt-6", beside && HOW_CHECKED_ROW)}>
+        <div className={cx("min-w-0 max-w-[72ch]", beside ? "col-span-7" : "col-span-12 @lg/page:col-span-8")}>
         {/* The finding's block keeps its byline's kind as data only: "found", or "heldBack" over the public view's
             finding, which holds the signals back (tickets 111 and 126; DESIGN.md section 5, Byline). Its 16 px foot is
             the room the narration's slow line takes while the check runs, so the panel under it never moves. */}
@@ -936,7 +948,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
           {notes && <div className="mt-4">{notes}</div>}
         </div>
         {afterMethod}
-      </EightColumns>
+        </div>
+        {beside && <div className="col-span-4 col-start-9 min-w-0">{howChecked}</div>}
+      </div>
 
       <div className="mt-8">
         {/* No count line: the fold row "Three more activities have no signals: ... Show them" says what is hidden
@@ -1020,11 +1034,18 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
             </p>
           </FootStrip>
         </ActivitiesZone>
+        {howChecked != null && !beside && <div className="my-4 max-w-[72ch]">{howChecked}</div>}
         {after}
       </div>
     </section>
   );
 }
+
+// The least height of the finding's row while "How I checked" sits beside it, which the skeleton's row holds too, so
+// the activities under it never move when the check arrives (ticket 130). It is the panel's height with its three facts
+// and a saved baseline at 1280 px (494 px), the narrowest window where it sits beside the finding, and it keeps the
+// first marked row in a 1440 by 900 window's first screen; a longer panel grows the row.
+const HOW_CHECKED_ROW = "min-h-[31rem]";
 
 // The plan's source line: under the activities, and in a row's records in the drawer.
 export function PlanSource({ result }: { result: CheckedPlan }) {
@@ -1081,11 +1102,15 @@ function typicalFinding(): string {
 // finding and the method sentence (ticket 111), then the activities panel with its real name and column heads over
 // five skeleton rows, or three skeleton cards below a frame of 34rem. Nothing moves when the rows arrive, and nothing
 // shimmers.
-export function PlanCheckSkeleton({ slow, afterNarration }: {
+export function PlanCheckSkeleton({ slow, afterNarration, howChecked = false }: {
   slow?: boolean;
   // The change line under the narration (ticket 59; the critique of round 1): the line itself once what changed has
   // answered, which needs nothing from the check, or its held lines until then, so the panel below stays put.
   afterNarration?: ReactNode;
+  // Ticket 130: the page draws "How I checked", so from a page area of 75rem the narration keeps to columns 1 to 7 and
+  // the row holds the panel's place in 9 to 12, its labels over value bars; below that the panel follows the activities,
+  // so the skeleton holds nothing for it.
+  howChecked?: boolean;
 }) {
   const rows = [0, 1, 2, 3, 4];
   // The narration (ticket 111): the answer panel's own steps, with one running step and how I check under it, then,
@@ -1099,7 +1124,10 @@ export function PlanCheckSkeleton({ slow, afterNarration }: {
   };
   return (
     <div data-plan-skeleton>
-      <EightColumns prose className="mt-6">
+      {/* EightColumns' columns 1 to 8, or 1 to 7 beside "How I checked"'s place from a page area of 75rem, which holds
+          the row's least height as the populated row does (HOW_CHECKED_ROW). */}
+      <div className={cx("layout-grid mt-6", howChecked && "@xl/page:min-h-[31rem]")}>
+        <div className={cx("col-span-12 min-w-0 max-w-[72ch] @lg/page:col-span-8", howChecked && "@xl/page:col-span-7")}>
         {/* The narration and the place it holds share one grid cell, so it is exactly as tall as the finding it stands
             for. The place is a typical finding, written from the copy file's templates in the finding's own style and
             never seen or heard, so it takes the lines the real one takes at every width (ticket 59). Its count words
@@ -1115,7 +1143,21 @@ export function PlanCheckSkeleton({ slow, afterNarration }: {
           </div>
         </div>
         {afterNarration}
-      </EightColumns>
+        </div>
+        {howChecked && (
+          <div aria-hidden="true" className="hidden min-w-0 @xl/page:col-span-4 @xl/page:col-start-9 @xl/page:block">
+            <SidePanel
+              title={copy.checkPlan.howChecked.title}
+              loading
+              facts={[copy.checkPlan.howChecked.method, copy.checkPlan.howChecked.compared, copy.checkPlan.howChecked.baseline].map((label) => ({
+                label,
+                value: null,
+                wide: true,
+              }))}
+            />
+          </div>
+        )}
+      </div>
       <div className="mt-8">
         <ActivitiesZone busy>
           <div data-zone-table className="@container/plan">

@@ -317,7 +317,8 @@ test("the table follows DESIGN.md: title sentence, count line, surface-2 header,
   const ref = table.locator('[data-activity="KE-NWWDA-541055-CW-RFB"] span').first();
   expect(await ref.evaluate((el) => getComputedStyle(el).fontFamily.split(",")[0])).toBe('"Roboto Mono"');
 
-  const source = page.locator("[data-plan-check] [data-source]");
+  // The activities panel's own source line; "How I checked" beside the finding has its own (ticket 130).
+  const source = page.locator("[data-plan-check] [data-section=activities] [data-source]");
   await expect(source).toContainText(
     "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, disclosed October 9, 2026.",
   );
@@ -1232,4 +1233,123 @@ test("at 1024 px with the evidence drawer open, the plan check shows its cards a
   expect(await left(view(page, "cards").locator("p").first())).toBe(edge);
   expect(await left(view(page, "cards").locator("ul > li").first())).toBe(edge);
   await expect(view(page, "cards").getByRole("list").first()).toHaveAccessibleName("Activities in this plan");
+});
+
+// Ticket 130, the design lead's Option W2 of October 29, 2026: "How I checked" fills the block beside the finding with
+// the method, the comparison with the version before and the baseline, each with its source line. The dates are the
+// fixture's: the plan of October 9, 2026 and the one before it of March 5, 2026, whose two versions differ only in two
+// estimates (values.toml, plan-541055-estimated and plan-541062-estimated with their 2026-03-05 entries), the project
+// record of April 24, 2024, the page read as of October 22, 2026, and the saved baseline, the plan of July 21, 2025,
+// saved by Ana Example on October 23, 2026 (tests/fixtures/api/check-plan-p156634-nwwda-2026-10-09-baseline.json). The
+// method's sentence and the source lines are the copy file's, checked here word for word.
+async function openWithChanges(page: Page, width: number, height: number, check = "check-plan-p156634-nwwda-2026-10-09.json") {
+  await page.setViewportSize({ width, height });
+  await mockApi(page, {
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    [API]: { body: await recorded(check) },
+    [`${API}/changes`]: { body: await recorded("changes-nwwda-2026-10-09.json") },
+  });
+  await page.goto(PLAN);
+  await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
+}
+const howChecked = (page: Page) => page.getByRole("region", { name: "How I checked" });
+const checkedFact = (page: Page, label: string) => howChecked(page).locator("[data-side-fact]", { has: page.getByText(label, { exact: true }) });
+const HOW_CHECKED = {
+  method: [
+    "I checked every activity against its own dates, its estimate and the project's closing date, and I measure delay from the first published planned date.",
+    "Source: The plan of October 9, 2026 and the projects API record of April 24, 2024.",
+  ],
+  compared: ["The plan of March 5, 2026. This version re-estimated two activities. See what changed", "Source: The two plans, compared row by row on their STEP references."],
+  baseline: ["No plan is saved as the baseline yet. Go to Baseline for delay", "Source: Strata's saved baselines, as of October 22, 2026."],
+};
+const factText = (page: Page, label: string) =>
+  checkedFact(page, label)
+    .locator("dd > p")
+    .evaluateAll((all) => all.map((p) => (p as HTMLElement).innerText.replace(/\s+/g, " ").trim()));
+
+test("at 1440 and 1280 px How I checked sits beside the finding with the method, the comparison with the plan of March 5, 2026 and the baseline, each with its source", async ({ page }) => {
+  for (const [width, height] of [
+    [1440, 900],
+    [1280, 800],
+  ] as const) {
+    await openWithChanges(page, width, height);
+    const panel = howChecked(page);
+    await expect(panel, `${width} px`).toBeVisible();
+    const finding = (await page.locator("[data-finding-block]").boundingBox())!;
+    const box = (await panel.boundingBox())!;
+    const activities = (await page.locator("[data-section=activities]").boundingBox())!;
+    // Beside the finding, on its top line, in columns 9 to 12: its right edge is the activities panel's, above it.
+    expect(box.x, `${width} px`).toBeGreaterThan(finding.x + finding.width);
+    expect(Math.abs(box.y - finding.y), `${width} px`).toBeLessThanOrEqual(1);
+    expect(Math.round(box.x + box.width), `${width} px`).toBe(Math.round(activities.x + activities.width));
+    expect(box.y + box.height, `${width} px`).toBeLessThanOrEqual(activities.y);
+    // A screen reader hears the finding, then how it was checked, then the activities.
+    const order = await page.evaluate(() => {
+      const [finding, panel, table] = ["[data-finding]", "[data-how-checked]", "[data-section=activities]"].map((s) => document.querySelector(s)!);
+      return [finding.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING, panel.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING];
+    });
+    expect(order.every(Boolean), `${width} px`).toBe(true);
+    // Each fact ends with its source line.
+    expect(await factText(page, "Method"), `${width} px`).toEqual(HOW_CHECKED.method);
+    expect(await factText(page, "Compared with"), `${width} px`).toEqual(HOW_CHECKED.compared);
+    expect(await factText(page, "Baseline"), `${width} px`).toEqual(HOW_CHECKED.baseline);
+    // At 1440 by 900 the first marked row is still in the first screen.
+    await page.evaluate(() => document.fonts.ready);
+    if (width === 1440) expect(await page.locator(`tr[id="${MARKED[0]}"]`).evaluate((el) => el.getBoundingClientRect().top)).toBeLessThan(height);
+    await page.unrouteAll();
+  }
+  // See what changed opens What changed in place and moves focus to its heading.
+  await openWithChanges(page, 1440, 900);
+  await checkedFact(page, "Compared with").getByRole("link", { name: "See what changed" }).click();
+  await expect(page.locator("[data-changes]").getByRole("heading", { level: 2 })).toBeFocused();
+  await expect(page.locator("[data-changes] [data-change-kind]")).toHaveCount(1);
+  await page.unrouteAll();
+
+  // A saved baseline: the method measures delay from it too, and the panel names it with its saver.
+  await openWithChanges(page, 1440, 900, "check-plan-p156634-nwwda-2026-10-09-baseline.json");
+  expect(await factText(page, "Method")).toEqual([
+    "I checked every activity against its own dates, its estimate and the project's closing date, and I measure delay from the first published planned date and from the baseline.",
+    HOW_CHECKED.method[1],
+  ]);
+  // That check was recorded as of October 23, 2026, the day the baseline was saved.
+  expect(await factText(page, "Baseline")).toEqual([
+    "The plan of July 21, 2025, saved by Ana Example on October 23, 2026. Go to Baseline for delay",
+    "Source: Strata's saved baselines, as of October 23, 2026.",
+  ]);
+  // Go to Baseline for delay lands on that row's heading, where its controls are.
+  await checkedFact(page, "Baseline").getByRole("link", { name: "Go to Baseline for delay" }).click();
+  await expect(page).toHaveURL(/#baseline$/);
+  await expect(page.getByRole("region", { name: "Baseline for delay" }).getByRole("heading", { level: 2 })).toBeInViewport();
+});
+
+test("at 1024 and 390 px How I checked follows the activities, so the first marked row stays in the first screen, and axe is clean at 1440, 1280, 1024 and 390 px", async ({ page }) => {
+  for (const [width, height] of [
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    await openWithChanges(page, width, height);
+    const order = await page.evaluate(() => {
+      const [table, panel] = ["[data-section=activities]", "[data-how-checked]"].map((s) => document.querySelector(s)!);
+      return Boolean(table.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+    expect(order, `${width} px`).toBe(true);
+    expect(await factText(page, "Compared with"), `${width} px`).toEqual(HOW_CHECKED.compared);
+    if (width === 1024) {
+      await page.evaluate(() => document.fonts.ready);
+      expect(await page.locator(`tr[id="${MARKED[0]}"]`).evaluate((el) => el.getBoundingClientRect().top)).toBeLessThan(height);
+    }
+    await page.unrouteAll();
+  }
+  await openWithChanges(page, 1440, 900);
+  for (const [width, height] of [
+    [1440, 900],
+    [1280, 800],
+    [1024, 768],
+    [390, 844],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect(howChecked(page)).toBeVisible();
+    expect(await axe(page), `${width} px`).toEqual([]);
+  }
 });

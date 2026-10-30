@@ -164,7 +164,11 @@ export function StepTracker({ state }: { state: StepsState }) {
     event.preventDefault();
     const index = to(stop, steps.length - 1);
     setFocused(index);
-    list.current?.querySelectorAll<HTMLElement>("[data-step-state]")[index]?.focus();
+    // In the side column the card sticks under the bar and stays whole on screen, so focus moves along it without
+    // scrolling the page (DESIGN.md section 10's rule for sticky parts; ticket 130).
+    const sticky = list.current?.closest<HTMLElement>("[data-side-sticky]");
+    const still = sticky != null && getComputedStyle(sticky).position === "sticky";
+    list.current?.querySelectorAll<HTMLElement>("[data-step-state]")[index]?.focus(still ? { preventScroll: true } : undefined);
   };
 
   return (
