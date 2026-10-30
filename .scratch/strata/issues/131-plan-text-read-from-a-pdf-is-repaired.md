@@ -47,3 +47,4 @@ Read first: `src/strata/reader/step.py`, `src/strata/reader/layout.py` (lines 46
     - The task named `docs/agents/areas/reader.md` as the area brief, but no such file exists; the builder, the reviewer and the verifier used the ticket, the spec, CLAUDE.md and the build's standing rules.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. The main checkout was clean before the merge, and no other merge ran in it while mine was in progress.
   - Unblocks: none. No ticket lists 131 as a blocker.
+- October 29, 2026, orchestrator (21:46 PDT): the App redeploy ran from 3a016534 (the catch-up block "Tickets 131 and 132, the App redeploy ran"); the page's check by eye is the owner's.
