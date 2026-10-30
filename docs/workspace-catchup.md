@@ -4577,3 +4577,42 @@ It worked if all of these hold:
 - On the Connections tab (`/projects/P130164/connections`), the finding names the same N: "In this project, M of its N contracts appeared together with ..." when some have no link, or "In this project, N contracts appeared together with ..." when all do.
 
 Record both counts, the Timeline note and the Connections finding word for word, the commit the App runs and the time here under ticket 138. This is criterion 3's live proof.
+
+## Ticket 133, step 1 of 2: note the three Kenya projects' headings, then redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit 9dee397f. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after 9dee397f. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+Before the deploy, signed in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role, save the agency headings the App gives now, so step 2 can compare them:
+
+    GET /api/projects/P156634
+    GET /api/projects/P161305
+    GET /api/projects/P155350
+
+Keep each answer's agency headings (each heading's `implementing_agency` and `agency_id`, in order). Then redeploy:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's server and tool code only (`src/strata/lakehouse/clean.py`'s pairing rule and its callers). No table, job, tool description or agent prompt changed, so no bundle deploy and no agent sync is needed. If a later merge's redeploy already runs 9dee397f or a later commit, record that run here instead of deploying again, and take the headings from the answers you or the owner saved before that deploy, or say that none were saved.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 9dee397f or a later commit. Record the exit code, the commit the App runs, any secret step 3 names, and the three projects' headings from before the deploy here under ticket 133.
+
+## Ticket 133, step 2 of 2: P130164's plan and notices meet on one heading (criterion 3)
+
+Run after step 1, read-only. Signed in to the App as a viewer with a role, call:
+
+    GET /api/projects/P130164
+
+It worked if the answer holds one agency heading for the Public Works Department, with `implementing_agency` "Rajasthan State Public Works Department", with `also_written_as` ["Public Works Department"] and the plan of June 20, 2018 among its versions, and no second heading whose `implementing_agency` is "Public Works Department". Note that heading's `agency_id` (on the fixture copy it is `public-works-department`, the plan's spelling). Then call:
+
+    GET /api/projects/P130164/procurement/<that agency_id>
+    GET /api/projects/P130164/procurement/rajasthan-state-public-works-department
+
+It worked if both open the same plan with the same `agency_id`, `abstention` is null, and the plan's rows pair with the notices (the check marks rows from the records, not "I don't have a Procurement Plan from this agency yet"). Then call:
+
+    GET /api/projects/P156634
+    GET /api/projects/P161305
+    GET /api/projects/P155350
+
+It worked if each gives the same headings as step 1 saved, in the same order, each with `also_written_as` []. P161305 keeps two headings, "Kenya National Highways Authority" and "Kenya National Highways Authority (KeNHA)"; that is expected (a decision parked for the user under ticket 133). Coast and Northern Water Works Development Agency on P156634 stay two headings.
+
+In the browser, `/projects/P130164/procurement` shows one section headed "Rajasthan State Public Works Department" with the June 20, 2018 plan, and its window reads "Rajasthan State Public Works Department. Also written as Public Works Department." Record the heading, its `agency_id`, both plan check answers' plan dates and abstention, the three projects' headings, the commit the App runs and the time here under ticket 133. This is criterion 3's live proof.
