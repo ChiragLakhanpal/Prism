@@ -29,6 +29,17 @@ Each rule is defined once here, and every silver transform uses it:
   IBRD-2075S).
 - Method names from before the 2016 Procurement Regulations map to the current names, with the
   market approach the old name implies. The old wording is kept in its own column.
+- One project's plans and record can write one implementing agency two ways ("Public Works Department" in
+  P130164's plan, "Rajasthan State Public Works Department" in its record). Two of a project's names are one
+  agency when they are the same after the words "the", "Government of" and "State" are dropped, or when one
+  ends with the whole of the other, at least two words of it (ticket 133). So a leading place name on one of
+  the two drops away, and two names that differ only by their places ("Kwale Water and Sewerage Company Ltd",
+  "Wajir Water and Sewerage Company Ltd") stay two agencies. Agencies groups a project's names by this rule, and
+  Agencies.of_project takes them in one order, so every caller gives an agency the same id. Every module of the
+  server and the tools that names an agency in a link, or pairs two of its names, goes through it
+  (tests/test_agency_names.py lists them). The plan reader's series in strata.lakehouse.plans still pairs a
+  project's plan versions by the exact name each plan writes, so what changed between two plans that write one
+  agency's name two ways is a follow-up.
 """
 
 from __future__ import annotations
@@ -405,3 +416,117 @@ def read_method(text: str) -> MethodReading:
     if found is not None:
         return MethodReading(found.method, written, found.language, True)
     return MethodReading(written, written, None, None)
+
+
+# ── Implementing agencies ────────────────────────────────────────────────
+
+# The words two names of one implementing agency may differ by, wherever they stand (ticket 133). A leading place
+# name needs no list of places: the name that has it ends with the whole of the name that does not.
+AGENCY_DROPPED_WORDS = (("government", "of"), ("state",), ("the",))
+# The fewest words the shorter name must have for a name that ends with it to be the same agency, so a name that is
+# one type word ("Agency", "Treasury") never takes in every name that ends with that word.
+AGENCY_SHORTEST_END = 2
+
+
+def agency_id(name: str) -> str:
+    """An implementing agency's name as an id in links: in lower case, with hyphens between its words."""
+    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+
+
+def _agency_words(name: str) -> tuple[str, ...]:
+    """A name's words in lower case, without the words AGENCY_DROPPED_WORDS lists. An id's words are its name's."""
+    words, kept, i = re.findall(r"[a-z0-9]+", name.lower()), [], 0
+    while i < len(words):
+        dropped = next((drop for drop in AGENCY_DROPPED_WORDS if tuple(words[i:i + len(drop)]) == drop), None)
+        if dropped:
+            i += len(dropped)
+        else:
+            kept.append(words[i])
+            i += 1
+    return tuple(kept)
+
+
+def same_agency(one: str, other: str) -> bool:
+    """Whether two of one project's names are one implementing agency: the same words once AGENCY_DROPPED_WORDS are
+    dropped, or one ends with the whole of the other, which has at least AGENCY_SHORTEST_END words."""
+    first, second = _agency_words(one), _agency_words(other)
+    if not first or not second:
+        return False
+    shorter, longer = sorted((first, second), key=len)
+    return shorter == longer or (len(shorter) >= AGENCY_SHORTEST_END and longer[-len(shorter):] == shorter)
+
+
+@dataclass(frozen=True)
+class Agency:
+    """One implementing agency of a project, with every way the project writes its name."""
+
+    agency_id: str  # its id in links: its first name's, the newest plan's spelling when the caller lists plans first
+    name: str  # the longest of its names, which its heading shows
+    names: tuple[str, ...]  # each way the project writes it, once, in the order the caller gave them
+
+    @property
+    def also_written_as(self) -> tuple[str, ...]:
+        """Its other names, which the heading's window lists ("Also written as Public Works Department")."""
+        return tuple(name for name in self.names if name.lower() != self.name.lower())
+
+    def holds(self, name: str | None) -> bool:
+        """Whether the name is one of the ways it is written, in any case: a plan version's own name, say."""
+        return (name or "").strip().lower() in {written.lower() for written in self.names}
+
+
+class Agencies:
+    """One project's implementing agencies, grouped by same_agency from the names its plans and its record give.
+
+    Callers build it with of_project, which orders the names one way for all of them: the plan versions public by
+    the as-of date, newest first, then those public only later, then the names the project record gives. So every
+    caller gives an agency the same id, its newest public plan's spelling, the one each of its plan rows links with
+    (agency_id of the row's own name), and an agency with no plan takes its record's. A name that pairs with two
+    agencies joins neither and stands alone, so a bare type name ("Water Works Development Agency") never makes
+    Coast and Northern one agency, and find, which calls such a name ambiguous, agrees."""
+
+    def __init__(self, names):
+        groups: list[list[str]] = []
+        for raw in names:
+            name = (raw or "").strip()
+            if not name:
+                continue
+            joined = [group for group in groups if any(same_agency(name, other) for other in group)]
+            if len(joined) == 1:
+                if name.lower() not in {other.lower() for other in joined[0]}:
+                    joined[0].append(name)
+            elif not any(name.lower() in {other.lower() for other in group} for group in joined):
+                groups.append([name])
+        self._agencies = tuple(Agency(agency_id(group[0]), max(group, key=len), tuple(group)) for group in groups)
+
+    @classmethod
+    def of_project(cls, versions, record_names=(), as_of: dt.date | None = None) -> Agencies:
+        """A project's agencies from its plan versions (each a mapping with implementing_agency, plan_date,
+        public_from and document_id) and the names its record gives, in the one order every caller uses: the
+        versions public by as_of newest first, by plan date, then the day each became public, then document id;
+        then those public only later, newest first; then the record's names. Every version when as_of is None."""
+        def newest(version) -> tuple:
+            return (version["plan_date"] or dt.date.min, version["public_from"] or dt.date.min,
+                    str(version["document_id"]))
+
+        named = [version for version in versions if (version["implementing_agency"] or "").strip()]
+        public = [version for version in named if as_of is None or version["public_from"] <= as_of]
+        later = [version for version in named if as_of is not None and version["public_from"] > as_of]
+        ordered = [*sorted(public, key=newest, reverse=True), *sorted(later, key=newest, reverse=True)]
+        return cls([version["implementing_agency"] for version in ordered] + list(record_names))
+
+    def __iter__(self):
+        return iter(self._agencies)
+
+    def __len__(self) -> int:
+        return len(self._agencies)
+
+    def find(self, asked: str) -> Agency | None:
+        """The agency a name or an id stands for, in any case: one of its own names or their ids first, then the one
+        agency whose names the rule pairs it with, so a link written with another of the agency's names still opens
+        it. None when no agency, or more than one, pairs with it."""
+        wanted = asked.strip().lower()
+        for agency in self._agencies:
+            if any(wanted in (name.lower(), agency_id(name)) for name in agency.names):
+                return agency
+        paired = [agency for agency in self._agencies if any(same_agency(asked, name) for name in agency.names)]
+        return paired[0] if len(paired) == 1 else None

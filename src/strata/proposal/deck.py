@@ -129,7 +129,7 @@ def _demo_links(agency: str, examples: config.Examples | None = None) -> dict:
 
 
 def _demo(answers: dict | None) -> dict:
-    from strata.tools.check_plan import agency_id
+    from strata.lakehouse.clean import agency_id
 
     plan = config.load_slice().demo_plan
     package = plan.package

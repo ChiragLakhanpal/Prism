@@ -21,7 +21,7 @@ from pathlib import Path
 
 from strata.lakehouse.clean import LENDERS, loan_number, step_reference
 from strata.lakehouse.engine import Engine
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 
 SQL = Path(__file__).resolve().parent / "sql" / "lookup"
 

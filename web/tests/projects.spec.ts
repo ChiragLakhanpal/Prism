@@ -4,6 +4,7 @@
 // Procurement Plans; the words are the 10 design brief's.
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
+import { copy } from "../src/copy";
 import { expect, mockApi, recorded, test, windowBeside } from "./mocked";
 
 type Answer = { status?: number; body: string };
@@ -440,6 +441,31 @@ test("an agency's count line states the route's count of its versions while some
 
   // The route's counts, not the rows on screen; with every version shown, there is no line (ticket 126).
   await expect(page.locator("[data-agency=northern-water-works-development-agency]").getByText("Showing 5 of 7 versions.")).toBeVisible();
+});
+
+// Ticket 133: P130164's plan writes its agency "Public Works Department" and its record "Rajasthan State Public Works
+// Department". The server's answers on a copy of the fixture that gives P130164 a plan (tests/india_agency.py).
+test("an agency the plan and the record write two ways is one heading under its longest name, with the other in its window", async ({ page }) => {
+  await open(page, "/projects/P130164/procurement", {
+    "/api/projects/P130164": { body: await recorded("project-p130164-one-agency.json") },
+    "/api/projects/P130164/packages": { body: await recorded("packages-p130164-one-agency.json") },
+  });
+  await expect(page.locator("section[data-agency]")).toHaveCount(1);
+  const agency = page.locator("section[data-agency=public-works-department]");
+  const heading = agency.getByRole("heading", { level: 3 });
+  await expect(heading).toHaveText("Rajasthan State Public Works Department");
+  // The plan's versions sit under the one heading, and link to its plan check by the agency's one id.
+  await expect(agency.getByRole("link", { name: "Plan of Aug 17, 2026" })).toHaveAttribute("href", "/projects/P130164/procurement/public-works-department/2026-08-17");
+  await expect(agency.getByText(copy.procurement.agencyEmpty)).toHaveCount(0);
+
+  const opener = heading.getByRole("button", { name: "Rajasthan State Public Works Department" });
+  await opener.click();
+  const window = page.getByRole("dialog", { name: "Rajasthan State Public Works Department" });
+  await expect(window).toContainText("Also written as Public Works Department.");
+  expect(await axe(page), "the window open").toEqual([]);
+  await page.keyboard.press("Escape");
+  await expect(window).toHaveCount(0);
+  await expect(opener).toBeFocused();
 });
 
 test("a project with no plans says so, and a project with no record is not found", async ({ page }) => {

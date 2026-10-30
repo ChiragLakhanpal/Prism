@@ -47,6 +47,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
 from strata.config import load_project_page
+from strata.lakehouse.clean import Agencies, agency_id
 from strata.tools import check_plan as plan_check
 from strata.tools.registry import Call
 from strata.tools.withheld import WITHHELD, status_as_of, withheld
@@ -209,15 +210,34 @@ def _project(call: Call, project_id: str, history: list[dict]) -> dict | None:
 
 # ── The plan checks ──────────────────────────────────────────────────────
 
+def latest_plans(call: Call, project_id: str, grouped: Agencies | None = None) -> list[dict]:
+    """Each implementing agency's latest Procurement Plan public by call.as_of, newest first, with the agency's id.
+    latest_plans.sql finds the latest plan of each name the plans write; an agency whose plans write its name two
+    ways (strata.lakehouse.clean's rule; ticket 133) keeps only its latest, the one check_plan checks, under check_plan's
+    id, so no tool lists one agency's plan, or its rows, twice. grouped is the project's agencies (check_plan.agencies)."""
+    grouped = grouped if grouped is not None else plan_check.agencies(call, project_id)
+
+    def newest(row: dict) -> tuple:
+        return _date(row["plan_date"]), _date(row["public_from"]), str(row["document_id"])
+
+    chosen: dict[str, dict] = {}  # in the order each agency first appears, so the newest plan stays first
+    for row in _rows(call, "latest_plans.sql", project_id=project_id):
+        agency = grouped.find(row["implementing_agency"])
+        key = agency.agency_id if agency else agency_id(row["implementing_agency"])
+        if key not in chosen or newest(row) > newest(chosen[key]):
+            chosen[key] = {**row, "agency_id": key}
+    return list(chosen.values())
+
+
 def _plan_checks(call: Call, project: dict, limits: Limits) -> tuple[dict[str, list[dict]] | None, str | None, list[dict]]:
     """What the three plan checks found on each agency's latest plan dated within plan_months, the reason none
     could run (no_plans, no_recent_plans), and the plans read."""
-    latest = _rows(call, "latest_plans.sql", project_id=project["project_id"])
+    latest = latest_plans(call, project["project_id"])
     if not latest:
         return None, NOT_RUN["plans"], []
     since = months_before(call.as_of, limits.plan_months)
     recent = [row for row in latest if _date(row["plan_date"]) >= since]
-    plans = [{"implementing_agency": row["implementing_agency"], "agency_id": plan_check.agency_id(row["implementing_agency"]),
+    plans = [{"implementing_agency": row["implementing_agency"], "agency_id": row["agency_id"],
               "document_id": row["document_id"], "plan_date": _iso(row["plan_date"]),
               "in_scope": _date(row["plan_date"]) >= since} for row in latest]
     if not recent:
