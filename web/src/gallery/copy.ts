@@ -356,7 +356,7 @@ export const galleryCopy = {
     currentPage: "On the project's own page",
     otherPage: "On another page",
     french: "A passage in French",
-    rest: "At rest on a package page, at the work's width: the / hint ends the row",
+    rest: "At rest on a package page, at the work's width: the placeholder names Strata, and the / hint ends the row",
     hint: "Focused and empty: the hint, and the keys in the list's foot",
     project: "A project ID",
     loan: "A loan number",

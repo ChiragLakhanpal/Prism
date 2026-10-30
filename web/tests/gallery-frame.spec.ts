@@ -128,8 +128,8 @@ test("the box floats on columns 3 to 10 at the page column's foot, the stamp sit
   expect(await box.evaluate((el) => [getComputedStyle(el).outlineStyle, getComputedStyle(el).outlineColor])).toEqual(["solid", "rgb(182, 73, 12)"]);
 });
 
-// Ticket 93: on a package page the box keeps one row from 1024 px, with the chip's reference and "Ask about this package"
-// uncut, and the page never scrolls sideways.
+// Ticket 93: on a package page the box keeps one row from 1024 px, with the chip's reference and its placeholder,
+// "Ask Strata about this package" since ticket 127, uncut, and the page never scrolls sideways.
 test("on a package page the box keeps one row from 1024 px, with the chip's reference and its placeholder uncut", async ({ page }) => {
   await mockApi(page, {
     "/api/me": { body: await recorded("me.json") },
@@ -146,8 +146,8 @@ test("on a package page the box keeps one row from 1024 px, with the chip's refe
     const chip = page.locator("[data-box-slot] [data-scope-chip]");
     await expect(chip, `${width} px`).toContainText(PACKAGE);
     expect((await chip.boundingBox())!.height, `${width} px: the reference on one line`).toBe(32);
-    const placeholder = page.locator("[data-box-slot] [data-placeholder]");
-    await expect(placeholder).toHaveText("Ask about this package");
+    const placeholder = page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true });
+    await expect(placeholder).toHaveText("Ask Strata about this package");
     expect(await placeholder.evaluate((el) => el.scrollWidth <= el.clientWidth), `${width} px: the placeholder is cut`).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
   }

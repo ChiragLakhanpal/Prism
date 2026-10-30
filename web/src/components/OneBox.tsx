@@ -2,8 +2,9 @@
 // data-freshness stamp. The box floats at the foot of the page column (Frame.tsx's ask bar; ticket 113, which moved it
 // out of the navy bar), on the grid from a frame of 75rem (ticket 127). It has presence (ticket 127, the design lead's
 // Option A after the Mobbin pass): white, a 1 px primary edge drawn inside it, 4 px corners and shadow-float; one row of
-// 56 px from 1024 px, led by the search icon in primary and its visible name, "Ask Strata". The stamp sits at the
-// sidebar's foot, under Data (Sidebar.tsx).
+// 56 px from 1024 px, led by the search icon in primary. Its field is named "Ask Strata" without printing it, and the
+// placeholder says the word (the owner's call of October 29, 2026). The stamp sits at the sidebar's foot, under Data
+// (Sidebar.tsx).
 //
 // The box is a combobox (WAI-ARIA's list autocomplete with automatic selection): as you type, a
 // list above it says what Enter will do, laid over the page so the ask bar never grows. Its options
@@ -45,8 +46,7 @@ export type BoxOption = {
 };
 
 // The scope chip inside the box, on a project or package page: "Within P130164" with a 24 px remove
-// button. It shows the ID only below 768 px, and whenever the box is narrower than 42rem, since the box's name takes
-// about 100 px of its row (ticket 127; it was 35rem). From 1024 px the box keeps
+// button. It shows the ID only below 768 px, and whenever the box is narrower than 35rem. From 1024 px the box keeps
 // one row. Below 1024 px a STEP reference is far longer than a P-code, so when the chip and a text field you can type
 // in do not fit on one line, the chip takes a row of its own above the text (OneBox wraps). A reference wider than
 // that row stays whole and readable as one ID (MonoWords): each part between spaces moves to the next line whole when
@@ -66,7 +66,7 @@ function ScopeChip({ scope, onRemove }: { scope: string; onRemove: () => void })
       <span className="min-w-0 py-1 text-small">
         {/* A reference that holds a space, such as KE-UASIN GISHU COUNTY-571338-CW-RFB, is long enough without "Within",
             which would cut the placeholder beside it (ticket 59; DESIGN.md section 5, Scope chip). */}
-        <span className={cx("mr-2 hidden text-ink-muted", !scope.includes(" ") && "md:@min-[42rem]/box:inline")}>{copy.box.chipWithin}</span>
+        <span className={cx("mr-2 hidden text-ink-muted", !scope.includes(" ") && "md:@min-[35rem]/box:inline")}>{copy.box.chipWithin}</span>
         <MonoWords text={scope} className="align-top text-ink" />
       </span>
       {/* Its own focus ring, inside the box's, 4 px clear of the ID. */}
@@ -159,7 +159,6 @@ export function OneBox({
   const scopedId = useId();
   const notesId = useId();
   const sentenceId = useId();
-  const inputId = useId();
   const [focused, setFocused] = useState(false);
 
   // Attached as the box mounts, before the page can take a key, so a "/" pressed as soon as the page loads lands here.
@@ -182,8 +181,8 @@ export function OneBox({
   const showList = open && value.trim().length > 0 && options.length > 0;
   const showNotes = open && value.trim().length > 0 && notes.length > 0;
   const showSuggestions = Boolean(showHint && suggestions && suggestions.options.length > 0);
-  // The field's name is its visible label, "Ask Strata" (ticket 127). The sentence that was its name describes it
-  // wherever the hint or a mode's help line does not, last.
+  // The field's name is "Ask Strata", not printed (ticket 127). The sentence that was its name describes it wherever
+  // the hint or a mode's help line does not, last.
   const described = [(showHint || modeHelp) && hintId, scope && scopedId, showNotes && notesId, !(showHint || modeHelp) && sentenceId]
     .filter(Boolean)
     .join(" ");
@@ -225,8 +224,19 @@ export function OneBox({
       )}
     </li>
   );
+  // From 768 px the placeholder says "Strata" (ticket 127); below it the short form, so it is never cut. A mode's
+  // placeholder may have no short form.
   const placeholder =
-    modePlaceholder ?? (scope ? (scopeKind === "package" ? copy.box.placeholderPackage : copy.box.placeholderProject) : null);
+    modePlaceholder ??
+    (scope ? (scopeKind === "package" ? copy.box.placeholderPackage : copy.box.placeholderProject) : copy.box.placeholderWide);
+  const spaced = Boolean(scope?.includes(" ") && !modePlaceholder);
+  const placeholderShort = modePlaceholder
+    ? modePlaceholderShort
+    : scope
+      ? scopeKind === "package"
+        ? copy.box.placeholderPackageShort
+        : copy.box.placeholderProjectShort
+      : copy.box.placeholderShort;
 
   return (
     <form
@@ -252,8 +262,8 @@ export function OneBox({
           corners. Its 1 px primary edge is drawn inside it, so the edge moves nothing in it, with shadow-float under it
           (ticket 127). In the ask bar from 1024 px it keeps one row (app.css). While anything inside it has focus, its
           focus ring shows around it. The box shows the text cursor, so a press anywhere in it outside the field, a
-          button or the chip, such as the rest of the chip's row, the search icon, the name or the "/" hint, acts as a
-          press on the field. */}
+          button or the chip, such as the rest of the chip's row, the search icon or the "/" hint, acts as a press on
+          the field. */}
       <div
         data-focus-ring
         onPointerDown={(event) => {
@@ -271,32 +281,20 @@ export function OneBox({
         {/* The 20 px search icon in primary. With a chip below 1024 px the icon hides, so the chip and the text share one
             left edge; below 360 px it always hides, for the field's room. */}
         <Search aria-hidden="true" className={cx("size-5 shrink-0 text-primary", scope ? "max-lg:hidden" : "max-xs:hidden")} />
-        {/* The box's name, its field's visible label (WCAG 3.3.2), 12 px before what follows (ticket 127). It leaves the
-            row where the icon does with a chip, and below 768 px, and stays the field's name there. A reference that
-            holds a space, such as KE-UASIN GISHU COUNTY-571338-CW-RFB, makes the chip so long that in a box under 42rem
-            the name leaves the row too, so the placeholder is never cut, as "Within" does for the same chip. */}
-        <label
-          htmlFor={inputId}
-          className={cx(
-            "mr-1 shrink-0 text-button whitespace-nowrap text-ink-heading",
-            scope ? "max-lg:sr-only" : "max-md:sr-only",
-            scope?.includes(" ") && "@max-[42rem]/box:sr-only",
-          )}
-        >
-          {copy.box.name}
-        </label>
         {scope && <ScopeChip scope={scope} onRemove={() => onRemoveScope?.()} />}
         {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. Below 1024 px the
             field goes under the chip when less than 176 px is left beside it, the width of a package page's whole
             placeholder, so "Ask about this package" is never cut; from 768 px, where the "/" hint shows after the
-            field, less than 210 px, the placeholder and the hint (ticket 113, since the box is at most 640 px wide). */}
-        <div className="flex min-h-10 min-w-0 flex-[1_1_176px] items-center gap-2 md:flex-[1_1_210px]">
+            field, less than 254 px, "Ask Strata about this package" and the hint (tickets 113 and 127, since the box
+            is at most 640 px wide). */}
+        <div className="flex min-h-10 min-w-0 flex-[1_1_176px] items-center gap-2 md:flex-[1_1_254px]">
           <div className="relative min-w-0 flex-1">
             <input
               ref={input}
-              id={inputId}
               type="text"
               role="combobox"
+              // Its name, never printed in the row; the placeholder says it from 768 px (ticket 127).
+              aria-label={copy.box.name}
               value={value}
               placeholder=" "
               autoComplete="off"
@@ -324,30 +322,23 @@ export function OneBox({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 hidden items-center truncate text-body text-ink-muted peer-placeholder-shown:flex"
             >
-              {placeholder && modePlaceholder && modePlaceholderShort ? (
-                // A mode's placeholder has a short form below 768 px too (ticket 58).
+              {placeholderShort ? (
+                // Below 768 px the short form, so it is never cut (tickets 58 and 93); the field's description keeps the
+                // whole sentence. A reference that holds a space, such as KE-UASIN GISHU COUNTY-571338-CW-RFB, makes the
+                // chip so long that from 1024 px, where the box keeps one row, the short form shows in a box under
+                // 42rem too (ticket 127).
                 <>
-                  <span className="truncate md:hidden" data-placeholder>
-                    {modePlaceholderShort}
+                  <span className={cx("truncate md:hidden", spaced && "lg:@max-[42rem]/box:inline")} data-placeholder>
+                    {placeholderShort}
                   </span>
-                  <span className="hidden truncate md:inline" data-placeholder>
+                  <span className={cx("hidden truncate md:inline", spaced && "lg:@max-[42rem]/box:hidden")} data-placeholder>
                     {placeholder}
                   </span>
                 </>
-              ) : placeholder ? (
+              ) : (
                 <span className="truncate" data-placeholder>
                   {placeholder}
                 </span>
-              ) : (
-                // Below 768 px the short form, so it is never cut; the field's name keeps the whole sentence.
-                <>
-                  <span className="truncate md:hidden" data-placeholder>
-                    {copy.box.placeholderShort}
-                  </span>
-                  <span className="hidden truncate md:inline" data-placeholder>
-                    {copy.box.placeholderWide}
-                  </span>
-                </>
               )}
             </span>
           </div>
