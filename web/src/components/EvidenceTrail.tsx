@@ -27,6 +27,7 @@ import {
   PAD,
   ROWS,
   axisFor,
+  bandEdges,
   bandLabelFits,
   bandLabels,
   capitalize,
@@ -260,10 +261,10 @@ export function EvidenceTrail({
     const whole = laid(true);
     const counted = whole.dropped > 0 ? laid(false) : whole;
     const { lines, texts, placed } = counted.dropped < whole.dropped ? counted : whole;
-    const bands = items.filter((item): item is BandItem => item.kind === "band").map((band) => {
-      const x0 = x(band.date);
-      const x1 = Math.max(x(band.end), x0 + 8);
+    const banded = items.filter((item): item is BandItem => item.kind === "band");
+    const bands = banded.map((band, at) => {
       const forms = bandLabels(band);
+      const { x0, x1 } = bandEdges(band, x, at === banded.length - 1, measure(forms[forms.length - 1], type.s));
       const form = forms.findIndex((text) => bandLabelFits(text, measure(text, type.s), x1 - x0));
       // The last two forms name the rating by its code, which the Note spells out.
       return { band, x0, x1, label: form >= 0 ? forms[form] : null, coded: form >= 2 };

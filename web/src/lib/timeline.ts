@@ -103,7 +103,18 @@ export type Timeline = {
   view: string;
   items: Item[];
   table: Item[];
-  ratings: { attribute: string; field_name: string; first_rating: string; last_rating: string; direction: string; isr_count: number } | null;
+  // Ticket 142: the series the bands draw, the ISR its last rating comes from and the table it was read from.
+  ratings: {
+    attribute: string;
+    field_name: string;
+    source: string;
+    first_rating: string;
+    last_rating: string;
+    last_sequence: number;
+    last_date: string;
+    direction: string;
+    isr_count: number;
+  } | null;
   // count: the dashed lines; pairs: the pairs of reports the table lists (ticket 136).
   disagreements: { status: "ok" | "hidden" | "failed"; count: number; pairs: number };
   // Ticket 132: where a package's records disagree (a plan row, the contract awards, an award notice), which no dashed
@@ -227,6 +238,16 @@ export function bandLabels(band: BandItem): string[] {
 export function bandLabelFits(text: string, textWidth: number, bandWidth: number): boolean {
   const pad = Object.values(words.codes).includes(text) ? 4 : 8;
   return textWidth <= bandWidth - 2 * pad;
+}
+
+// A band's left and right edges: from its first ISR's date to its end, at least 8 px wide. The last band, whose
+// rating the chart's title names, is at least wide enough to name it by its code with 4 px a side (codeWidth is the
+// code's measured width), so a run of one ISR at the end of the row, which starts and ends on one day, still shows
+// which rating it is (ticket 142).
+export function bandEdges(band: BandItem, x: Scale, last: boolean, codeWidth: number): { x0: number; x1: number } {
+  const x0 = x(band.date);
+  const least = last ? Math.max(8, codeWidth + 2 * 4 + 1) : 8;
+  return { x0, x1: Math.max(x(band.end), x0 + least) };
 }
 
 // A side's short name in a sentence: "ISR 7", "the ICR".

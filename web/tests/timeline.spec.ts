@@ -132,7 +132,7 @@ test("P130164's timeline places each report, event and record at its date, names
   const { requests, unrecorded } = await open(page);
 
   await expect(page.locator("[data-timeline-finding]")).toHaveText(
-    "Two pairs of reports disagree, and ISR ratings of progress fell from Satisfactory to Moderately Unsatisfactory.",
+    "Two pairs of reports disagree, and ISR ratings of progress fell from Satisfactory to Moderately Unsatisfactory, last rated in ISR 13.",
   );
   // Every item, in arrow-key order, named with its date (values.toml).
   await expect(items(page)).toHaveCount(14);
@@ -696,7 +696,7 @@ test("each dashed line's pill names the fact and the reports, and no two pills o
 test("16 pairs about three facts are three lines with three pills that count their reports, and the table lists all 16", async ({ page }) => {
   await open(page, "/projects/P130164/timeline", 1440, await grouped());
   await expect(page.locator("[data-timeline-finding]")).toHaveText(
-    "Reports disagree on three points, and ISR ratings of progress fell from Satisfactory to Moderately Unsatisfactory.",
+    "Reports disagree on three points, and ISR ratings of progress fell from Satisfactory to Moderately Unsatisfactory, last rated in ISR 13.",
   );
   await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(3);
   const { texts, overlaps } = await pills(page);

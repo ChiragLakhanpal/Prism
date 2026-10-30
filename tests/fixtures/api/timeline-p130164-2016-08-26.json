@@ -141,6 +141,7 @@
   "ratings": {
     "attribute": "pdo_progress",
     "field_name": "Progress towards achievement of PDO",
+    "source": "strata.gold.assertion",
     "bands": [
       {
         "id": "ratings:P130164:pdo_progress:1-7",
@@ -209,6 +210,8 @@
     ],
     "first_rating": "Satisfactory",
     "last_rating": "Satisfactory",
+    "last_sequence": 7,
+    "last_date": "2016-08-26",
     "direction": "same",
     "isr_count": 7
   },
@@ -284,7 +287,10 @@
       "text": "Satisfactory"
     },
     {
-      "text": " at the first ISR and at the last"
+      "text": " at the first ISR and at the last, ISR "
+    },
+    {
+      "text": "7"
     },
     {
       "text": ", and I found no reports that disagree."

@@ -8249,9 +8249,10 @@ export const copy = {
         // Where one report disagrees with several others about one fact, the title counts the facts (ticket 136).
         leadPoint: "Reports disagree on one point",
         leadPoints: "Reports disagree on {count} points",
-        fell: "ISR ratings of progress fell from {first} to {last}",
-        rose: "ISR ratings of progress rose from {first} to {last}",
-        same: "ISR ratings of progress were {rating} at the first ISR and at the last",
+        // Each names the ISR the last rating comes from, the last band's last ISR (ticket 142).
+        fell: "ISR ratings of progress fell from {first} to {last}, last rated in ISR {sequence}",
+        rose: "ISR ratings of progress rose from {first} to {last}, last rated in ISR {sequence}",
+        same: "ISR ratings of progress were {rating} at the first ISR and at the last, ISR {sequence}",
       },
       alt: {
         populated: "Timeline of {pid} from {first} to {last} in three lanes: {why}, {how} and {what}.",
