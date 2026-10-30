@@ -2224,7 +2224,10 @@ export const copy = {
       // sentence says only what the comparison checks (ticket 21's verify, finding 4).
       same: "The latest plan is the plan of {plan_date}. It lists the same activities as the plan of {prev_date}, with no planned date moved and no estimate changed.",
       link: "See what changed",
-      earliest: "The only plan I have from this agency is the plan of {plan_date}, so I can't compare it with an earlier version.",
+      // "Read", since the project's documents can list plans I haven't read: P156634 lists 240 (ticket 134).
+      earliest: "The only plan I have read from this agency is the plan of {plan_date}, so I can't compare it with an earlier version.",
+      // After the earliest sentence when the project's documents list Procurement Plans I haven't read: the Documents tab.
+      unreadLink: "See the plans I haven't read",
       prevUnread: "I haven't read the plan of {prev_date}, the version before the latest, so I can't say what changed.",
     },
     baselineMark: "Baseline",
@@ -2262,6 +2265,11 @@ export const copy = {
       "description.",
     noMatchLink: "Show all packages",
     none: "I haven't read a Procurement Plan for this project yet, so I can't list its packages.",
+    // The plans I read list no activity (ticket 134: P127203's plan of September 17, 2019), so "none" would be untrue.
+    readEmpty: (dates: string[]) =>
+      dates.length === 1
+        ? `I read the plan of ${dates[0]} and found no activities in it.`
+        : `I read the plans of ${dates.slice(0, -1).join(", ")} and ${dates.at(-1)} and found no activities in them.`,
     error: "I couldn't load this project's packages because the data service didn't answer.",
     searching: "Searching packages.",
   },
@@ -5877,6 +5885,8 @@ export const copy = {
       fresh: "{date}\u00a0· {schedule}",
       late: "{days} days late",
       lateOne: "{days} day late",
+      // In place of the days late while the refresh is paused (config/thresholds.toml's ingestion.paused_since).
+      paused: "Refresh paused since {date}",
     },
     // The stress shelf (the 18 design brief, section 4): "The hardest documents I read". The screen
     // never says "stress shelf", our own name for it; the code and the slice file keep it.
@@ -6259,6 +6269,9 @@ export const copy = {
         readWell: "the {missing} of {total} {noun} I couldn't read without errors",
         late: "the {sourceNoun}, last fetched {date}, {days} days behind their {schedule} update",
         lateOneDay: "the {sourceNoun}, last fetched {date}, one day behind their {schedule} update",
+        // Ticket 134: while the refresh is paused (config/thresholds.toml's ingestion.paused_since), a source due for a
+        // fetch says since when, never how many days late, since that number grows each day.
+        paused: "the {sourceNoun} as of {date}, with the refresh paused since {pausedDate}",
         declared: "the {sourceNoun}, which cover {note}",
         noRows: "the {sourceNoun}, of which I hold no rows yet",
       },
@@ -6280,6 +6293,7 @@ export const copy = {
         readWell: "I couldn't read {missing} of {total} {noun} without errors.",
         late: "I last fetched the {sourceNoun} on {date}, {days} days behind their {schedule} update.",
         lateOneDay: "I last fetched the {sourceNoun} on {date}, one day behind their {schedule} update.",
+        paused: "Refresh paused since {pausedDate}; {sourceNoun} as of {date}.",
         declared: "The {sourceNoun} cover {note}.",
         noRows: "I hold no rows of the {sourceNoun} yet.",
       },

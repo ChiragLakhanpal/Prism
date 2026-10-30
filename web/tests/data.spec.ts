@@ -271,6 +271,30 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 Â
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
 
+// Ticket 134: the owner paused the nightly refresh on October 29, 2026, so from that day a source due for a fetch says
+// since when, never how many days late, a number that grew each day; while the refresh runs, it says how late.
+test("a paused refresh says since when in the Fresh cell and never how late, and a running one says how late", async ({ page }) => {
+  const answer = await json("data-readiness.json");
+  answer.as_of = "2026-10-29";
+  const [projects] = answer.sources.filter((row: { id: string }) => row.id === "projects");
+  const fresh = projects.cells.fresh;
+  let given = { ...answer, sources: answer.sources.map((row: { id: string }) => (row.id === "projects" ? { ...projects, cells: { ...projects.cells, fresh: { ...fresh, status: "partial", late_days: null, paused_since: "2026-10-29" } } } : row)) };
+  await mockShell(page);
+  await page.route("**/api/data/sources", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("data-sources.json") }));
+  await page.route("**/api/data/readiness*", (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(given) }));
+  await open(page);
+
+  await expect(cell(page, "projects:fresh")).toContainText("Oct 23 Â· daily");
+  await expect(cell(page, "projects:fresh")).toContainText("Refresh paused since Oct 29");
+  await expect(cell(page, "projects:fresh")).not.toContainText("late");
+  await expect(cell(page, "projects:fresh").locator("[data-badge=partial]")).toHaveText("Partial");
+
+  given = { ...answer, sources: answer.sources.map((row: { id: string }) => (row.id === "projects" ? { ...projects, cells: { ...projects.cells, fresh: { ...fresh, status: "partial", late_days: 2, paused_since: null } } } : row)) };
+  await page.reload();
+  await expect(cell(page, "projects:fresh")).toContainText("days late");
+  await expect(cell(page, "projects:fresh")).not.toContainText("paused");
+});
+
 // The places where a Sources row's cell text comes within 8 px of the next cell's on the same line.
 async function tightCells(page: Page) {
   await expect(table(page, "sources")).toBeVisible();

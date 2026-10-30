@@ -863,10 +863,13 @@ test("the Procurement tab says what changed in each agency's latest plan and lin
   await expect(page.locator("[data-agency=ministry-of-water-and-irrigation] [data-changes-sentence]")).toHaveText(
     "The latest plan is the plan of April 30, 2020. Compared with the plan of November 8, 2019, it added one activity and re-dated one. See what changed",
   );
-  // An agency with one plan says it has nothing to compare it with, and links nowhere.
+  // An agency with one plan says it has nothing to compare it with. P156634's documents list 240 Procurement Plans and I
+  // read 11, so it is the only plan I have read, and the sentence links to the others on the Documents tab (ticket 134).
   const kilifi = page.locator("[data-agency=kilifi-mariakani-water-and-sewerage-company-ltd] [data-changes-sentence]");
-  await expect(kilifi).toHaveText("The only plan I have from this agency is the plan of March 19, 2025, so I can't compare it with an earlier version.");
-  await expect(kilifi.getByRole("link")).toHaveCount(0);
+  await expect(kilifi).toHaveText(
+    "The only plan I have read from this agency is the plan of March 19, 2025, so I can't compare it with an earlier version. See the plans I haven't read",
+  );
+  await expect(kilifi.getByRole("link", { name: "See the plans I haven't read" })).toHaveAttribute("href", "/projects/P156634/documents");
 
   await sentence.getByRole("link", { name: "See what changed" }).click();
 

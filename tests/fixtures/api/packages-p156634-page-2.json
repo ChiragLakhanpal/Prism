@@ -229,5 +229,31 @@
       "process_status": "Pending Implementation"
     }
   ],
-  "read_through": "2026-10-23"
+  "read_through": "2026-10-23",
+  "plans_read": [
+    {
+      "implementing_agency": "Northern Water Works Development Agency",
+      "agency_id": "northern-water-works-development-agency",
+      "plan_date": "2026-10-09",
+      "activities": 9
+    },
+    {
+      "implementing_agency": "Coast Water Services Board",
+      "agency_id": "coast-water-services-board",
+      "plan_date": "2026-08-17",
+      "activities": 8
+    },
+    {
+      "implementing_agency": "Kilifi - Mariakani Water and Sewerage Company Ltd",
+      "agency_id": "kilifi-mariakani-water-and-sewerage-company-ltd",
+      "plan_date": "2025-03-19",
+      "activities": 22
+    },
+    {
+      "implementing_agency": "Ministry of Water and Irrigation",
+      "agency_id": "ministry-of-water-and-irrigation",
+      "plan_date": "2020-04-30",
+      "activities": 7
+    }
+  ]
 }

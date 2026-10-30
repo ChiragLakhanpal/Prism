@@ -166,13 +166,16 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
 def packages_reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
     """The statements packages() runs, for the route that sends them as one batch (ticket 125)."""
     return [(_query("packages"), {"project_id": project_id, "as_of": as_of}),
-            (_query("documents_through"), {"project_id": project_id})]
+            (_query("documents_through"), {"project_id": project_id}),
+            (_query("plans_read"), {"project_id": project_id, "as_of": as_of})]
 
 
 def packages(engine: Engine, project_id: str, as_of: dt.date, query: str = "", page: int = 1, size: int = 20) -> dict:
     """Every activity in each agency's latest read plan, a page at a time, found by part of its STEP
     reference or its description. A description keeps each place the PDF cell wrapped as a space
-    ("Exploratory Bo reholes"), so the search compares both with every space taken out."""
+    ("Exploratory Bo reholes"), so the search compares both with every space taken out. plans_read gives each
+    agency's latest plan I read, with how many activities it lists, so a project whose only plan I read holds no
+    rows says that plan's date, not that I haven't read a plan (ticket 134)."""
     rows = []
     for row in _rows(engine, "packages", project_id=project_id, as_of=as_of):
         amount = row["estimated_amount_usd"]
@@ -186,22 +189,33 @@ def packages(engine: Engine, project_id: str, as_of: dt.date, query: str = "", p
     if wanted:
         rows = [row for row in rows if wanted in folded(f"{row['activity_reference_no']}{row['description'] or ''}")
                 .replace(" ", "")]
+    plans_read = [{"implementing_agency": row["implementing_agency"], "agency_id": agency_id(row["implementing_agency"]),
+                   "plan_date": _iso(row["plan_date"]), "activities": int(row["activities"] or 0)}
+                  for row in _rows(engine, "plans_read", project_id=project_id, as_of=as_of)]
     return {"as_of": as_of.isoformat(), "query": query, **page_of(rows, page, size),
-            "read_through": _through(engine, "documents_through", as_of, project_id=project_id)}
+            "read_through": _through(engine, "documents_through", as_of, project_id=project_id),
+            "plans_read": plans_read}
 
 
 def project_page_reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
     """The statements project_page() runs before it knows the project's agencies, for the route that sends them as
     one batch (ticket 125). Each agency's baseline and changes follow in a second batch (_agencies)."""
+    from strata.server import documents  # documents reads display_name from this module
+
     return [(_query("project"), {"project_id": project_id, "as_of": as_of}),
             (_query("plan_versions"), {"project_id": project_id, "as_of": as_of}),
             *changes.versions_reads(project_id),
-            (_query("documents_through"), {"project_id": project_id})]
+            (_query("documents_through"), {"project_id": project_id}),
+            *documents.plans_unread_reads(project_id)]
 
 
 def project_page(engine: Engine, project_id: str, as_of: dt.date, view: str = "staff",
                  shown: int = 5) -> dict | None:
-    """The project page's header and Procurement tab, or None when there is no such project as of then."""
+    """The project page's header and Procurement tab, or None when there is no such project as of then. plans_unread
+    counts the Procurement Plans the project's documents list that I haven't read (src/strata/server/documents.py),
+    so an agency's only plan reads as the only one I have read, with a link to the rest (ticket 134)."""
+    from strata.server import documents  # documents reads display_name from this module
+
     found = _rows(engine, "project", project_id=project_id, as_of=as_of)
     if not found:
         return None
@@ -217,4 +231,5 @@ def project_page(engine: Engine, project_id: str, as_of: dt.date, view: str = "s
                     "implementing_agencies": named},
         "agencies": _agencies(engine, project_id, versions, named, as_of, view, shown),
         "documents_through": _through(engine, "documents_through", as_of, project_id=project_id),
+        "plans_unread": documents.plans_unread(engine, project_id, as_of),
     }

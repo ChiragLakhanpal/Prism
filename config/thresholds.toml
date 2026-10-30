@@ -12,6 +12,12 @@
 # ingestion holds Azure and workspace spend). 500 is a starting value for the owner to confirm;
 # ticket 18 sets it for the whole document slice.
 [ingestion]
+# The day the owner paused the nightly refresh, as YYYY-MM-DD, or "" while it runs. From that day the Data page says
+# "Refresh paused since October 29; project records as of October 26" for a source due for a fetch, never how many days
+# late it is, since that number grows each day (src/strata/tools/data_readiness_for.py, paused_since). A page as of an
+# earlier day shows the refresh as it ran. Source: the owner paused the nightly job on October 29, 2026, to stop
+# spending (ticket 134). Set it back to "" when the nightly job runs again.
+paused_since = "2026-10-29"
 # The most pages the layout parser (Route B) may try in one day, in UTC, across every project and both
 # readers, the plan reader and the passage reader (src/strata/lakehouse/plans.py, parse_pages). A page
 # it tried counts whether it read it or not. Source: docs/PLAN.md section 5. Ticket 18 keeps 500 for

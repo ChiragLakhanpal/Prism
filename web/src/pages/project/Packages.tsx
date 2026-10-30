@@ -91,7 +91,9 @@ export function Packages({ pid, none }: { pid: string; none: boolean }) {
       />
     );
   } else if (shown.total === 0 && !shown.query) {
-    body = <p className="max-w-prose text-body text-ink">{words.none}</p>;
+    // The plans I read list no activity, or I read none: the route's plans_read says which (ticket 134).
+    const read = [...new Set((shown.plans_read ?? []).map((plan) => formatDate(plan.plan_date)))];
+    body = <p className="max-w-prose text-body text-ink">{read.length ? words.readEmpty(read) : words.none}</p>;
   } else if (shown.total === 0) {
     body = (
       <EightColumns>

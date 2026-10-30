@@ -36,18 +36,26 @@ const columns: Column[] = [
   { key: "activities", header: plans.columns.activities, numeric: true },
 ];
 
-// One sentence on what changed in the agency's latest plan, and its link to the full list.
-function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
+// One sentence on what changed in the agency's latest plan, and its link to the full list. A latest plan I haven't read
+// has none, since I can say nothing about it; its row says Not read (ticket 134). plansUnread is the route's count of
+// the plans the project's documents list that I haven't read: the earliest sentence then links to the Documents tab.
+function ChangesSentence({ agency, pid, plansUnread }: { agency: Agency; pid: string; plansUnread: number }) {
   const found = agency.changes;
   const latest = agency.versions[0];
-  if (!found || !latest) return null;
+  if (!found || !latest || !latest.read) return null;
   const words = plans.changes;
   let sentence: ReactNode;
   let link: string | null = null;
+  let linkText: string = words.link;
   // Dates in a sentence are long (DESIGN.md section 7 rule 13); the version table keeps "Plan of Oct 9, 2026".
   const long = (iso: string | null | undefined) => (iso ? formatDate(iso) : "");
-  if (found.state === "earliest") sentence = <Fill template={words.earliest} slots={{ plan_date: long(latest.plan_date) }} />;
-  else if (found.state === "previous_not_read") sentence = <Fill template={words.prevUnread} slots={{ prev_date: long(found.previous_plan_date) }} />;
+  if (found.state === "earliest") {
+    sentence = <Fill template={words.earliest} slots={{ plan_date: long(latest.plan_date) }} />;
+    if (plansUnread > 0) {
+      link = `/projects/${pid}${TAB_PATH.documents}`;
+      linkText = words.unreadLink;
+    }
+  } else if (found.state === "previous_not_read") sentence = <Fill template={words.prevUnread} slots={{ prev_date: long(found.previous_plan_date) }} />;
   else if (!changed(found.counts)) {
     sentence = <Fill template={words.same} slots={{ plan_date: long(latest.plan_date), prev_date: long(found.previous_plan_date) }} />;
   } else {
@@ -66,7 +74,7 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
         <>
           {" "}
           <TextLink href={link} className="whitespace-nowrap">
-            {words.link}
+            {linkText}
           </TextLink>
         </>
       )}
@@ -76,7 +84,19 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
 
 // last: the last agency with a table, whose table alone ends with the source line, since every agency's plans come from
 // the same documents (ticket 58; the 10 critique, round 5).
-function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: string; through: string | null; last: boolean }) {
+function AgencyPlans({
+  agency,
+  pid,
+  through,
+  plansUnread,
+  last,
+}: {
+  agency: Agency;
+  pid: string;
+  through: string | null;
+  plansUnread: number;
+  last: boolean;
+}) {
   const [open, setOpen] = useState(false);
   const [opened, setOpened] = useState(false);
   const tableId = useId();
@@ -126,7 +146,7 @@ function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: stri
       <h3 id={headingId} className="text-h3 text-ink-heading">
         {agency.implementing_agency}
       </h3>
-      <ChangesSentence agency={agency} pid={pid} />
+      <ChangesSentence agency={agency} pid={pid} plansUnread={plansUnread} />
       <div id={tableId} className="mt-2">
         <Table
           title={agency.implementing_agency}
@@ -236,6 +256,7 @@ export function ProcurementTab({ pid, load, retry }: { pid: string; load: Load<P
               agency={agency}
               pid={pid}
               through={load.data.documents_through}
+              plansUnread={load.data.plans_unread ?? 0}
               last={agency.agency_id === shown.filter((one) => one.version_count > 0).at(-1)?.agency_id}
             />
           ))}
