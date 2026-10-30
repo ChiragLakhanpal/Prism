@@ -4769,3 +4769,33 @@ Run after step 1, read-only. The builder named the Free Edition App (https://str
 It worked if the Timeline tab shows grey ISR rating bands in the Operations lane, with labels in the form "ISRs 1 to 4 rated progress Satisfactory", and the Note line under the chart reads "The grey bands show each ISR's rating of progress towards the project development objective (PDO). Darker means a lower rating." It did not work if the band row reads "I have no ISR ratings for this project." or "I couldn't read this project's ISR ratings just now."
 
 Record the band labels word for word, the commit the App runs and the time here under ticket 135. With step 1, this is criterion 3's live proof.
+
+## Ticket 139, step 1 of 3: redeploy the App
+
+The merger parked this on October 30, 2026, after merge commit 97fb5bcb. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these three blocks one at a time and in order, from a snapshot at or after 97fb5bcb. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Only the App's tool, server and web code changed: section 1's plan dates now come from the step tracker's reader (`plan_line` in `src/strata/estimates/step_dates.py`, used by `src/strata/tools/find_comparables.py`, whose `package.sql` no longer joins `silver.plan_steps`), and section 1's sentences (`web/src/components/PastRange.tsx`, `web/src/copy.ts`). No table, job, tool description (`config/tools.toml`) or agent prompt changed, so no bundle deploy and no agent sync is needed. The App runs de8e6a06 today, which holds neither ticket 137's dc4ab518 nor ticket 140's 7a146529, so one deploy from a snapshot at or after 97fb5bcb also serves their parked redeploys. If a later merge's redeploy already runs 97fb5bcb or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 97fb5bcb or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 139.
+
+## Ticket 139, step 2 of 3: section 1 and the tracker name the same plan dates on KE-SDOR-KIHBT-563865-CW-RFB (criterion 3, as the review rewrote it)
+
+Run after step 1, read-only. Sign in to the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, as a viewer with a role, and open `/packages/KE-SDOR-KIHBT-563865-CW-RFB` in a fresh browser context, so no answer kept from before the redeploy is shown. From the same signed-in browser, also call `GET /api/packages/KE-SDOR-KIHBT-563865-CW-RFB/comparables` and `GET /api/packages/KE-SDOR-KIHBT-563865-CW-RFB/steps`.
+
+It worked if:
+
+- under Planned months, section 1 reads "The plan's step dates put the signed contract on November 7, 2029 but give no planned notice date, so there is no plan line yet. Type a number of months to compare." and draws no plan line;
+- the step tracker shows the bid invitation as "Bid invitation (SPN) No date Not in the plan" and the signed contract as "Contract signed Planned for Nov 7, 2029";
+- the comparables answer gives `package.planned_notice_on` null, `package.planned_signing_on` 2029-11-07 and `plan` null, and the steps answer gives `plan_latest_date` null for `step_key` `bid_invitation` and 2029-11-07 for `contract_signed`.
+
+It did not work if section 1 still reads "The plan row has no planned notice date or signing date, so there is no plan line yet." while the tracker shows a planned signing.
+
+Record section 1's sentence and the tracker's two lines word for word, the two answers' dates, the commit the App runs and the time here under ticket 139. This is criterion 3's live proof as the review and the verifier rewrote it ("section 1 and the tracker name the same plan dates"). The ticket's criterion as written ("draws the plan line") cannot pass until step 3: both found that the live plan reader places this row's dates one step late (a decision parked for the user).
+
+## Ticket 139, step 3 of 3: the plan line of 5.8 months, after the plan-reader follow-up (waits on a new ticket)
+
+Do not run this yet. It waits on a follow-up ticket, which the orchestrator opens, for the live layout parser's step columns on P161305's Procurement Plan of September 28, 2026, with this package as its test row. The verifier read the row's six dates ("2026-09-21 2026-10-06 2026-12-09 2027-01-28 2027-04-02 2029-11-0...") in the fixture parser's order and got a bid invitation on October 6, 2026 and a signing on April 2, 2027, where the live tracker puts December 9, 2026 under "Bidding document issued" and November 7, 2029 under the signing. Once that ticket has merged and that plan has been read again on the workspace, open `/packages/KE-SDOR-KIHBT-563865-CW-RFB` again, read-only, in a fresh browser context.
+
+It worked if section 1 draws a plan line of 5.8 months whose tooltip reads "From the plan's step dates: bid invitation October 6, 2026, contract signed April 2, 2027.", and the tracker shows the Bid invitation (SPN) with the planned date Oct 6, 2026 (late by then, since that date has passed) and the contract signed planned for Apr 2, 2027. Record the tooltip and the tracker's two lines word for word, the commit the App runs and the time here under ticket 139. This is the ticket's criterion 3 as first written.
