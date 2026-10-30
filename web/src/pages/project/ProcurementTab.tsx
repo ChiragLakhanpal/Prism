@@ -17,10 +17,12 @@ import { Num } from "../../components/Num";
 import { SkeletonLine } from "../../components/Skeleton";
 import { Table, type Column, type Row } from "../../components/Table";
 import { TextLink } from "../../components/TextLink";
+import { DefinitionWindow } from "../../components/Term";
 import { copy } from "../../copy";
 import type { Agency, ProjectPage as Page } from "../../lib/api";
 import { changed, changeList } from "../../lib/changes";
 import { formatDate, formatNumber } from "../../lib/format";
+import { joinNames } from "../../lib/timeline";
 import { TAB_PATH } from "../../routes";
 import type { Load } from "../../lib/load";
 import { Packages } from "./Packages";
@@ -74,6 +76,18 @@ function ChangesSentence({ agency, pid }: { agency: Agency; pid: string }) {
   );
 }
 
+// An agency's name as its heading shows it: the longest way the project writes it. When its plans and the record
+// write it more than one way (ticket 133), the name opens a window that lists the others.
+function AgencyName({ agency }: { agency: Agency }) {
+  const others = agency.also_written_as ?? [];
+  if (others.length === 0) return <>{agency.implementing_agency}</>;
+  return (
+    <DefinitionWindow label={agency.implementing_agency} title={agency.implementing_agency}>
+      {plans.alsoWrittenAs(joinNames(others))}
+    </DefinitionWindow>
+  );
+}
+
 // last: the last agency with a table, whose table alone ends with the source line, since every agency's plans come from
 // the same documents (ticket 58; the 10 critique, round 5).
 function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: string; through: string | null; last: boolean }) {
@@ -84,7 +98,7 @@ function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: stri
   if (agency.version_count === 0) {
     return (
       <section data-agency={agency.agency_id}>
-        <h3 className="text-h3 text-ink-heading">{agency.implementing_agency}</h3>
+        <h3 className="text-h3 text-ink-heading"><AgencyName agency={agency} /></h3>
         <p className="mt-2 text-small text-ink-muted">{plans.agencyEmpty}</p>
       </section>
     );
@@ -124,7 +138,7 @@ function AgencyPlans({ agency, pid, through, last }: { agency: Agency; pid: stri
   return (
     <section data-agency={agency.agency_id} className="flex flex-col gap-2">
       <h3 id={headingId} className="text-h3 text-ink-heading">
-        {agency.implementing_agency}
+        <AgencyName agency={agency} />
       </h3>
       <ChangesSentence agency={agency} pid={pid} />
       <div id={tableId} className="mt-2">
@@ -177,7 +191,7 @@ function OtherAgencies({ agencies }: { agencies: Agency[] }) {
       <ul className="mt-2 list-disc pl-6 text-small text-ink">
         {agencies.map((agency) => (
           <li key={agency.agency_id} data-agency={agency.agency_id}>
-            {agency.implementing_agency}
+            <AgencyName agency={agency} />
           </li>
         ))}
       </ul>

@@ -47,7 +47,7 @@ from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
 from strata.server.viewer_sql import data_through
 from strata.tools import registry
-from strata.tools.check_plan import agency_id as agency_key
+from strata.lakehouse.clean import agency_id as agency_key
 from strata.tools.data_readiness_for import fill
 
 log = logging.getLogger("strata.server.home")

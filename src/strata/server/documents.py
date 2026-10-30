@@ -39,7 +39,7 @@ from strata.lakehouse.engine import Engine
 from strata.lakehouse.passages import select
 from strata.reader.layout import https
 from strata.server.projects import display_name
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 
 SQL = Path(__file__).resolve().parent / "sql" / "documents"
 # The documents API's type for each group, in the order a project produces its documents.

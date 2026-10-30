@@ -1,0 +1,58 @@
+{
+  "as_of": "2026-10-23",
+  "project": {
+    "project_id": "P130164",
+    "project_name": "Rajasthan Road Sector Modernization Project",
+    "display_name": "Rajasthan Road Sector Modernization",
+    "country": "India",
+    "status": "Closed",
+    "implementing_agencies": [
+      "Rajasthan State Public Works Department"
+    ]
+  },
+  "agencies": [
+    {
+      "implementing_agency": "Rajasthan State Public Works Department",
+      "agency_id": "public-works-department",
+      "also_written_as": [
+        "Public Works Department"
+      ],
+      "versions": [
+        {
+          "document_id": "40122770",
+          "plan_date": "2026-08-17",
+          "disclosed_on": "2026-08-17",
+          "is_latest": true,
+          "read": true,
+          "activities": 8,
+          "is_baseline": false,
+          "shown": true
+        },
+        {
+          "document_id": "40119876",
+          "plan_date": "2026-07-31",
+          "disclosed_on": "2026-07-31",
+          "is_latest": false,
+          "read": true,
+          "activities": 7,
+          "is_baseline": false,
+          "shown": true
+        }
+      ],
+      "baseline": null,
+      "changes": {
+        "state": "compared",
+        "previous_plan_date": "2026-07-31",
+        "counts": {
+          "added": 1,
+          "dropped": 0,
+          "redated": 0,
+          "reestimated": 0
+        }
+      },
+      "version_count": 2,
+      "shown_count": 2
+    }
+  ],
+  "documents_through": "2026-10-23"
+}

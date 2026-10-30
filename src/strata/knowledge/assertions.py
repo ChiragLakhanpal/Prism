@@ -600,7 +600,22 @@ def read_answer(report: Report, answer: Answer, ladder: Ladder, dates: Periods, 
             report_number=report.report_number, version=report.version, sequence=None,
             passage_id=passage["passage_id"], evidence_id=evidence, pdf_page=_int(item.get("pdf_page")),
             quote=quote, read_by=read_by, public_from=report.public_from))
-    return kept, rejected
+    return once_a_page(kept, list(report.passages)), rejected
+
+
+def once_a_page(kept: list[Assertion], order: list[str]) -> list[Assertion]:
+    """One assertion for each thing a page of a report states: two read from one page that name the same subject,
+    attribute, period and value are one, the one from the passage that comes first on the page (ticket 136). On the
+    workspace the layout parser read the PAD's risk table twice, as table65.1 and table65b.1, so the batch model
+    rated the overall risk from both cells, and each ISR that rated otherwise disagreed with the PAD twice."""
+    rank = {passage_id: at for at, passage_id in enumerate(order)}
+    first: dict[tuple, Assertion] = {}
+    for assertion in sorted(kept, key=lambda one: rank.get(one.passage_id, len(rank))):
+        first.setdefault((assertion.document_id, assertion.version, assertion.pdf_page, assertion.subject_kind,
+                          assertion.subject_id, assertion.attribute, assertion.period_event, assertion.period_start,
+                          assertion.period_end, assertion.value), assertion)
+    held = {id(assertion) for assertion in first.values()}
+    return [assertion for assertion in kept if id(assertion) in held]
 
 
 def read_answers(asked: list[tuple[Report, Request]], answers: dict[str, Answer], ladder: Ladder, dates: Periods,

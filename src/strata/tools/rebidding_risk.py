@@ -34,7 +34,7 @@ from strata.estimates import rebidding
 from strata.estimates.rebidding import CANCELED_ROW, NO_AWARD, SAME_REFERENCE, Label, Reason
 from strata.reader.repair import LOOK_ALIKE
 from strata.tools import common, find_comparables, rejected_bids
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 from strata.tools.registry import Call
 from strata.tools.search_passages import notice_page
 
