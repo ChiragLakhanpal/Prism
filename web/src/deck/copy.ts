@@ -267,8 +267,9 @@ export const deckCopy = {
         "Click Ask Strata about this package at the foot of the page. The chip keeps the answer inside this package. " +
         "Copy the question here, paste it and press Enter. While it runs, the steps show which tools it called. Under" +
         " the answer, the check line counts the numbers that matched a record. If the verifier removed a sentence, " +
-        "open it and read the reason aloud. That's the product working, not failing. If the App stalls, go back one " +
-        "slide and show the recorded answer.",
+        "open it and read the reason aloud. That's the product working, not failing. Kenya water is still running, so" +
+        " this answer rests on records; the report paragraphs come with a closed project on the ladder slide. If the " +
+        "App stalls, go back one slide and show the recorded answer.",
     },
 
     // ── How it is built ──
@@ -407,11 +408,13 @@ export const deckCopy = {
         "Implementation Status and Results Report 7, {project}, August 26, 2016; Implementation Completion and " +
         "Results Report, {project}, October 10, 2019, paragraph 78, page 27.",
       notes:
-        "The assessment asks what to do when a completion report and the supervision ratings disagree. Kenya water is" +
-        " still running, so this example is a closed roads project, P130164. A press per rung, then the example. " +
-        "Strata keeps both reports. The card turns amber only when the disagreement changes a number or a claim in " +
-        "the answer, because constant warnings get ignored. A rating that moves over time is a trajectory, not a " +
-        "disagreement.",
+        "The assessment asks what to do when a completion report and the supervision ratings disagree. Kenya water " +
+        "has no completion report yet, so this example is a closed roads project, P130164. A press per rung, then the" +
+        " example. Then click Open the timeline, and click the chip that says the reports disagree. The drawer shows " +
+        "both passages, each with its paragraph and page, and Open at page shows the report's own page. This is the " +
+        "promise made good: every claim, down to the paragraph. Strata keeps both reports, and the card turns amber " +
+        "only when the disagreement changes a number or a claim in an answer, because constant warnings get ignored. " +
+        "A rating that moves over time is a trajectory, not a disagreement.",
     },
     hindsight: {
       title: "Strata showed {ratio} risks that completion reports later blamed",
