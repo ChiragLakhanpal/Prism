@@ -19,7 +19,7 @@ import { ReasonField } from "../components/DecisionForm";
 import { Disclosure } from "../components/Disclosure";
 import { PassageBlock } from "../components/EvidenceDrawer";
 import { Fill } from "../components/Fill";
-import { fillText } from "../components/LessonParts";
+import { actorText, fillText } from "../components/LessonParts";
 import { OutcomePanel } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
 import { Num } from "../components/Num";
@@ -33,7 +33,7 @@ import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import { ApiError, postJson } from "../lib/api";
 import { refusedAs, useLoad, type Load } from "../lib/load";
-import { LESSONS_HREF, pageHref } from "../lib/lessons";
+import { LESSONS_HREF, pageHref, type Actor } from "../lib/lessons";
 import {
   REPORTS_HREF,
   reportHref,
@@ -361,7 +361,8 @@ function Reports({ group }: { group: ReportGroup }) {
 }
 
 type Saved = { saved: { outcome: string; next: string | null }; item: ReportGroup };
-type GaveWay = { kind: "stale"; name: string | null; time: string | null; reason: string } | { kind: "lost" };
+// actor: who decided first, by the Lessons pages' one rule (ticket 140), never a name.
+type GaveWay = { kind: "stale"; actor: Actor | null; time: string | null; reason: string } | { kind: "lost" };
 
 function DecisionForm({ group, onSaved, onGaveWay, initial }: {
   group: ReportGroup;
@@ -396,8 +397,8 @@ function DecisionForm({ group, onSaved, onGaveWay, initial }: {
       }));
     } catch (error) {
       setSaving(null);
-      const body = error instanceof ApiError ? (error.body as { code?: string; values?: { name?: string; time?: string }; item?: ReportGroup }) : null;
-      if (body?.code === "stale") onGaveWay({ kind: "stale", name: body.values?.name ?? null, time: body.values?.time ?? null, reason }, body.item);
+      const body = error instanceof ApiError ? (error.body as { code?: string; values?: { actor?: Actor | null; time?: string }; item?: ReportGroup }) : null;
+      if (body?.code === "stale") onGaveWay({ kind: "stale", actor: body.values?.actor ?? null, time: body.values?.time ?? null, reason }, body.item);
       else if (body?.code === "not_a_passage_reviewer") onGaveWay({ kind: "lost" });
       else setFailed(true);
     }
@@ -466,7 +467,7 @@ function Record({ group, onReopened, initialOpen = false, initialFailed = false,
   const lead = (
     <Fill
       template={w.record[outcome.outcome]}
-      slots={{ kind, date: <Num date={outcome.decided_on} />, name: outcome.reviewer_name ?? "", agreeing: countWord(outcome.agreeing ?? 0) }}
+      slots={{ kind, date: <Num date={outcome.decided_on} />, actor: actorText(outcome.actor, true), agreeing: countWord(outcome.agreeing ?? 0) }}
     />
   );
   const state = outcome.outcome === "ranked_lower" || outcome.outcome === "ranked_lower_by_agreement" || outcome.outcome === "left_lower" ? "success" : "neutral";
@@ -579,7 +580,7 @@ export function ReportGroupView({ group: loaded, initial, sample = false }: {
     action = (
       <div ref={panel} tabIndex={-1} className="flex flex-col gap-4 outline-none" data-gave-way="stale">
         <Alert state="info" live="status">
-          <Fill template={w.form.stale} slots={{ name: gaveWay.name ?? "", date: gaveWay.time ? <Num date={gaveWay.time} /> : "" }} /> {w.form.staleBody}
+          <Fill template={w.form.stale} slots={{ actor: actorText(gaveWay.actor), date: gaveWay.time ? <Num date={gaveWay.time} /> : "" }} /> {w.form.staleBody}
         </Alert>
         <ReasonField label={w.form.staleReason} value={gaveWay.reason} max={group.limits.reason_max_chars} readOnly />
         {/* What the other reviewer decided, and why: the refusal returned the group as it is now. */}

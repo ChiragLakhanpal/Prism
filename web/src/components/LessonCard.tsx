@@ -19,7 +19,7 @@ import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { DefinitionWindow } from "./Term";
-import { EvidenceBadge, fillText, SourceChip, Tag } from "./LessonParts";
+import { actorText, EvidenceBadge, fillText, SourceChip, Tag } from "./LessonParts";
 import { ProjectId } from "./ProjectId";
 import { Num } from "./Num";
 import { ReasonField } from "./DecisionForm";
@@ -258,7 +258,15 @@ export function LessonCard({
             triggerClassName="inline-flex min-h-6 items-center text-small"
           >
             <span data-lesson-decided>
-              <Fill template={words.card.decided} slots={{ version: <Num value={card.version} />, date: <Num date={card.decided_on} /> }} />
+              <Fill
+                template={words.card.decided}
+                slots={{
+                  decider: actorText(card.decided_by),
+                  recommender: actorText(card.recommended_by, true),
+                  version: <Num value={card.version} />,
+                  date: <Num date={card.decided_on} />,
+                }}
+              />
             </span>
           </DefinitionWindow>
         )}

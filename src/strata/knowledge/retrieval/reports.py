@@ -305,6 +305,12 @@ class PassageReports:
             raise Refused(403, "not_a_passage_reviewer")
         return person
 
+    def actor(self, act: Act, viewer: Viewer) -> dict | None:
+        """Who made a decision, as the Lessons pages name every actor (ticket 140; strata.config.Roles.actor): you, a
+        passage reviewer, or a reviewer, with no region, and never a name or an email. None for my own decision, such
+        as a passage ranked lower by agreement."""
+        return self.roles.actor(act.reviewer_email, viewer.email, PAGE) if act.reviewer_email else None
+
     @staticmethod
     def sent_by(report: Report, viewer: Viewer) -> bool:
         return bool((viewer.user_id and report.viewer_id == viewer.user_id)
@@ -548,7 +554,7 @@ class PassageReports:
         outcome = None
         if decided is not None:
             outcome = {"outcome": OUTCOMES[decided.act], "decided_on": _iso(decided.decided_at),
-                       "reviewer_name": decided.reviewer_name, "reason": decided.reason,
+                       "actor": self.actor(decided, viewer), "reason": decided.reason,
                        "agreeing": decided.agreeing}
         return {"group_id": group.group_id, "stage": stage, "kind_label": self.kind_label(shown, audit is not None),
                 "query_kind": group.query_kind, "state": ledger.state(group), "mode": self.mode,
@@ -586,7 +592,7 @@ class PassageReports:
             raise Refused(404, "unknown_group", {"group_id": wanted})
         if body.get("expected_state") != ledger.state(group):
             latest = ledger.latest(group)
-            raise Refused(409, "stale", {"name": latest.reviewer_name if latest else None,
+            raise Refused(409, "stale", {"actor": self.actor(latest, viewer) if latest else None,
                                          "time": _iso(latest.decided_at) if latest else None},
                           item=self.detail(engine, ledger, group, viewer))
         audit, waiting = ledger.audit(group), ledger.waiting(group)

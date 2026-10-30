@@ -22,7 +22,7 @@ import { NoteSentences } from "../components/DraftNotes";
 import { highlighted } from "../components/Document";
 import { Fill } from "../components/Fill";
 import { LessonCard, LessonSources } from "../components/LessonCard";
-import { EvidenceBadge, fillText, Tag } from "../components/LessonParts";
+import { actorText, EvidenceBadge, fillText, Tag } from "../components/LessonParts";
 import { ProjectId } from "../components/ProjectId";
 import { ClockLine, HistoryList, OutcomePanel, statusOf } from "../components/LessonReview";
 import { LoadError } from "../components/LoadError";
@@ -354,7 +354,8 @@ function staleSlots(item: ReviewItem): Record<string, ReactNode> {
   const acts: Record<string, string> = { recommended: "recommend", decided: "decide", cross_checked: "cross_check" };
   const last = [...item.history].reverse().find((event) => event.event in acts);
   return {
-    name: last?.name ?? "",
+    // Inside the sentence: "While you had this lesson open, an accredited procurement specialist for South Asia ..."
+    actor: actorText(last?.actor, true),
     act: words.form.staleActs[last ? acts[last.event] : "recommend"],
     date: last?.on ? <Num date={last.on} /> : "",
   };

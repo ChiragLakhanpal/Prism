@@ -348,9 +348,10 @@ class LessonsPage:
 
     # ── New ──────────────────────────────────────────────────────────────
 
-    def new_lessons(self, store: Store, visit: Visit) -> dict | None:
+    def new_lessons(self, store: Store, visit: Visit, you: str | None) -> dict | None:
         """Lessons that became current at version 1 in the window, newest first, as library cards: at most
-        lessons.new_cards_max, then how many more the library holds. None on a first visit or with none new."""
+        lessons.new_cards_max, then how many more the library holds. None on a first visit or with none new. Each card
+        names who decided and recommended it as the library's cards do, for the viewer you."""
         if visit.first:
             return None
         added = added_in(store, visit.previous_started_at, visit.started_at)
@@ -359,7 +360,7 @@ class LessonsPage:
         added.sort(key=lambda row: (decided_at(store, row), row["lesson_id"]), reverse=True)
         most = int(self.review.thresholds.value("lessons.new_cards_max"))
         more = len(added) - most
-        return {"cards": [self.review.card(store, row["lesson_id"]) for row in added[:most]],
+        return {"cards": [self.review.card(store, row["lesson_id"], you) for row in added[:most]],
                 "more": max(more, 0),
                 "more_segments": fill(form(words()["newMore"], more),
                                       {"count": count(more, capital=True),
@@ -457,5 +458,5 @@ class LessonsPage:
             item["exported_uses"] = self.exported_uses(store, drafts, item["lesson_id"])
         return {"view": "preview" if preview else "staff", "as_of": None, "visit": visit.as_dict(), "digest": digest,
                 "notices": self.changed_where_used(with_versions(store, extra_versions), drafts),
-                "new_lessons": self.new_lessons(store, visit),
+                "new_lessons": self.new_lessons(store, visit, viewer.email),
                 "feedback": None if preview else self.feedback(feedback), "library": library}

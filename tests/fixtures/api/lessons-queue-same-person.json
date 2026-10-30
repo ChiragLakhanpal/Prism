@@ -134,12 +134,12 @@
           "last_day": false
         },
         "recommendation": {
-          "name": "Omar Haddad",
-          "role": "lead procurement specialist",
+          "actor": {
+            "who": "you"
+          },
           "phrase": "repeat",
           "on": "2026-10-27",
           "reason": "It gives the same advice as IEG's lesson.",
-          "region": "South Asia",
           "repeat_of": "lesson-cfdf000a46",
           "change": null
         },

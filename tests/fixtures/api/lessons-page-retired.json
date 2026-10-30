@@ -437,6 +437,16 @@
         "ieg_status": "restated",
         "review_date": null,
         "decided_on": "2026-10-29",
+        "decided_by": {
+          "who": "role",
+          "role": "lead procurement specialist",
+          "region": "South Asia"
+        },
+        "recommended_by": {
+          "who": "role",
+          "role": "accredited procurement specialist",
+          "region": "South Asia"
+        },
         "state": "current",
         "rechecking_since": null,
         "retired": null,
@@ -678,6 +688,16 @@
         "ieg_status": "restated",
         "review_date": null,
         "decided_on": "2026-10-29",
+        "decided_by": {
+          "who": "role",
+          "role": "lead procurement specialist",
+          "region": "South Asia"
+        },
+        "recommended_by": {
+          "who": "role",
+          "role": "accredited procurement specialist",
+          "region": "South Asia"
+        },
         "state": "current",
         "rechecking_since": null,
         "retired": null,
