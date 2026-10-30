@@ -4897,3 +4897,24 @@ Record these here under ticket 142, with the time:
 - the `ratings` block's `last_sequence` and `source`
 
 This is criterion 3's live proof. Nothing is written to the workspace beyond the App deploy.
+
+## Ticket 60, step 1 of 1: a baseline save on Databricks SQL leaves only the winning save's steps (criterion 4, workspace part)
+
+The merger parked this on October 30, 2026, after merge commit 4ba645a4 (branch `strata/60-accessibility-focus-and-screen-states-2` at 9c5146b3). The builder named no workspace step; this is the check the verifier parked (`.notes/60-verify.md`, "Parked (needs the workspace)"). Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs this block from a snapshot at or after 4ba645a4, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Link the main checkout's `web/node_modules` into the snapshot before the App deploy.
+
+What ticket 60 changes: `baseline.save` in `src/strata/server/baseline.py` runs a new statement after each save, `src/strata/server/sql/baseline/remove_lost_steps.sql`. When a later save beat this one, this save's copied planned dates leave `strata.ops.plan_baseline_steps` at once. It is a DELETE whose WHERE holds an EXISTS subquery on `strata.ops.plan_baselines`, and so far it has run only on DuckDB. No table changed.
+
+Redeploy the App. If a later merge's redeploy already runs 4ba645a4 or a later commit, record that run here instead of deploying again.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then sign in to https://strata-7405609289499029.9.azure.databricksapps.com as a viewer with a role, open `/projects/P156634/procurement/northern-water-works-development-agency` in a fresh browser context, and press "Save as the baseline" on the plan that is already the baseline, so the saved baseline does not change. Then run this read-only query:
+
+    SELECT s.agency_id, b.saved_at AS baseline_saved_at, s.saved_at AS steps_saved_at, count(*) AS steps FROM strata.ops.plan_baseline_steps AS s JOIN strata.ops.plan_baselines AS b ON b.project_id = s.project_id AND b.agency_id = s.agency_id WHERE s.project_id = 'P156634' GROUP BY s.agency_id, b.saved_at, s.saved_at
+
+It worked if both of these hold:
+
+- The save's `PUT /api/projects/P156634/procurement/northern-water-works-development-agency/baseline` answers 200, and the page says it saved the plan as the baseline.
+- The query returns one row per agency, and in each row `steps_saved_at` equals `baseline_saved_at`: only the winning save's steps are left.
+
+Record here under ticket 60, with the time: the deploy's exit code, the commit the App runs, any secret the deploy's step 3 names, the PUT's status, and the query's rows. This is criterion 4's live proof. Nothing is written to the workspace beyond the App deploy and the one baseline save.

@@ -6,7 +6,7 @@ Read first: DESIGN.md section 10 (accessibility) and the Announcer, Check line, 
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 **Area:** app
 **Phase:** P4
 **Design review:** yes
@@ -97,3 +97,45 @@ Recordings, captures, gallery states and screen tests
   - The gallery's `navigation--hover-pill`, `--focus-pill` and `--view-open` shots skip 800 px, where the view switch now sits in the bar; give them `widths: [1440, 1024, 800]` in `web/capture/shots.ts`. (ticket 93, `.notes/93-design.md` follow-up 7)
   - Captures at widths other than 1440 px, and the gallery states beyond those the tests use, for the class sweep, the sidebar and the top bar. (tickets 91, 92 and 93, their done comments' deferred lists; `.notes/92-verify.md` and `.notes/93-verify.md`)
 - October 29, 2026, orchestrator (18:15 PDT): its run stopped by the orchestrator after the design critic blocked round 2 on a capture inconsistency (section 1 "Two past packages matched" above section 5 "None of the 49" in the India risks captures), because five builders had the machine's load at 90 and the demo tickets come first. The reviewer approved round 2 and the design lead passed it. The branch strata/60-accessibility-focus-and-screen-states-2 (1cb6d9ac, with round 1's fix) merges later through a merge-only run; the critic's item and the unfinished round 2 fix (one file in worktree wf_731410d9-1cd-63) are follow-ups.
+- October 30, 2026, merger: merged into build/strata as 4ba645a4 (merge with history; branch `strata/60-accessibility-focus-and-screen-states-2` at 9c5146b3, kept). The history scan found no keys. The merge gate passed in 134.6 seconds on the orchestrator's quiet-window script's second try. The first try, at 04:13 PDT with the load near 50, failed after 141.1 seconds on one timing test this merge does not touch (`tests/test_estimate_time.py::test_the_stored_what_if_grid_is_read_within_100_ms` read the stored grid in 153 ms against its 100 ms limit; 2,484 other tests passed). The script waited ten minutes, tried again at 04:25 PDT, and the commit landed at 04:28 PDT. The by-hand gate on build/strata afterwards passed in 134.0 seconds, from 04:28:30 to 04:30:44 PDT, at 4ba645a4, with no other gate, test run or headless browser running when it started; the secret and history scan took 3.8 s, so the history scan has read the merged history (limit 150 s). Built in the worktree `.claude/worktrees/wf_bed16f70-837-1`, now removed. The older worktree `.claude/worktrees/wf_731410d9-1cd-63` on the same branch is stale; its removal is left to its owner. Review (merge run, round 1) approved with 0 blocking and 5 follow-ups (`.notes/60-review.md`; round 2 at 1cb6d9ac in `.notes/60-review-r2.md`); verify (merge run, round 1) passed (`.notes/60-verify.md`).
+
+  Evidence from the verify notes:
+  - Criterion 1 passes. The 43 new screen tests and the 21 changed ones passed (64), and the 15 tests of items whose fix landed earlier in build/strata passed. The verifier's axe sweep through `web/tests/axe.ts` covered 21 changed states at 1440, 1024 and 390 px and all 36 gallery pages at 1024 px: 99 of 99 scans found no violation.
+  - Criterion 2 passes. Tests read the live regions in each case: once check 6's alert shows, the status line is empty and stays so (`checks.spec.ts:362`, `:395`); the focused h1 is "Procurement Plan of October 9, 2026" while the check loads (`check-plan.spec.ts:1013`); the recompute after a quick second change is said (`planned-package.spec.ts:537`); an unchanged method says "Method set to Request for Bids (RFB)." and never "Updating the past range" (`:555`); the planned dates' region empties after a 503 (`package-steps.spec.ts:103`).
+  - Criterion 3 passes. An Enter commit leaves zero frames with focus on the body (`planned-package.spec.ts:573`, plus two probes the test does not take); a grade changed after finishing keeps focus and `scrollY` at 1440 and 390 px (`retrieval-pages.spec.ts:495`); "Show all agencies" is 24 px tall with its ring clear of the next line (`projects.spec.ts:405`); "Judge the next query" sits at least 8 px clear of the Ask bar (`retrieval-pages.spec.ts:523`); a focused dot's ring stays inside the window and the chart (`package.spec.ts:571`).
+  - Criterion 4 passes offline. The partial refusal keeps its paragraph above the alert (`checks.spec.ts:448`); the false as-of and preview alerts are gone since ticket 40 (`hub.spec.ts:1256`, `:1234`); a beaten save names the plan that won and never claims its own date (`hub.spec.ts:1154`, plus 12 Python baseline tests); the drawer's read carries `view=public` (`hub.spec.ts:1265`); a not-found package shows no scope chip (`package.spec.ts:1168`, `planned-package.spec.ts:1189`). Its workspace part is parked (below).
+  - Criterion 5 passes at 1440 px. The four new streams are regenerated word for word from their scripted cases, and the two abstention streams are ticket 58's recordings. Each new state is in the gallery. The shots exist at their widths, and the verifier took them at 1440 px: the risks captures pair one country, `planned--missing` shows no load error, and the shell captures show the Lessons page.
+  - Criterion 6 passes. The builder's gate on 9c5146b3, with build/strata at 2e90b536 merged in, was 140.4 s; the verifier's was 139.3 s at loads of 35 to 49.
+  - Probes: no evidence before its public date (P130164's ICR answers 404 as of 2019-10-09 and 200 as of 2020-01-01); the refusal and benchmark tests pass; four planted numbers were removed or kept as the tool's rows say; "Two past packages matched", "3 of the 52" and "the one completion report" match the fixture's rows and `values.toml`.
+
+  Items done differently from their notes:
+  - Item 51 (partial refusal): built with check 6 down instead of the judge, because checks 1 to 3 prove the showcase sentences, so a silent judge would remove none of them; the reason is in `tests/fixtures/agent/cases.toml`.
+  - Items 52 and 53 (as-of and preview alerts): ticket 40 removed both false alerts from the copy file, as the ticket allowed.
+  - Item 54: `RisksSection` reads the preview from `previewOf` and still sends `?view=` as every other read does (round 2 accepted it).
+  - Item 62, second part: superseded by ticket 126, which moved the caption's two numbers into the `{m}` count's tooltip, where both are the tool's.
+  - Items 40 and 41 (range chart Escape and click): handled through ticket 96 (`num.spec.ts:218`). Item 46 (skip link): ticket 93's (`shell.spec.ts:176`).
+  - Item 42 (cost lane touch): design lead's half, under parked decision 4 (a tap opens at once).
+  - The critic's round 2 item (India's risks captures): fixed a third way in 9c5146b3; India's whole-page risks shots keep section 5 loading, since its route can only answer with Kenya's 49. The next design round should confirm it.
+  - Item 80 (optional): not taken.
+
+  Workspace results: none run. Every key is set, but mergers run no workspace step, and the builder named none. The verifier's parked check is in `docs/workspace-catchup.md` under "Ticket 60, step 1 of 1", for the second session (strata-58) or the orchestrator to run from a snapshot at or after 4ba645a4: the App redeploy with `--keep-secrets`, one "Save as the baseline" on P156634's NWWDA plan, and a read-only query that shows only the winning save's steps in `strata.ops.plan_baseline_steps` (criterion 4, workspace part: `remove_lost_steps.sql` is proven only on DuckDB).
+
+  Decisions parked for the user: none new. The review, the verifier and the design rounds parked none.
+
+  Follow-ups for the PM (none blocking):
+  1. The new capture test's last check can pass before the page draws (`web/tests/capture.spec.ts` line 193): wait for `#check-criteria`'s `data-zone-state` to be `loading` and for exactly one loading section first (review item 1).
+  2. `tests/test_rebidding_risk.py` line 40's docstring names a caption ticket 126 removed (review item 2).
+  3. The beaten sentence can be false in one race order (`web/src/copy.ts` line 2699, `baseline.beaten`); the review gives the new words, with `web/tests/hub.spec.ts` line 1173 (review item 3).
+  4. `tests/test_project_hub.py` lines 867 and 881 describe the warehouse's text rows as they were before ticket 128 (review item 4).
+  5. Escape in a planned package's chip editor rests focus on the body for about two frames; return focus to the chip in Radix's `onCloseAutoFocus` (verify follow-up 1).
+
+  Deferred to the design pass:
+  - Captures at 1024, 390, 320 and 800 px (function was checked at 1440 px; axe ran at all three widths).
+  - Gallery states beyond those the tests use.
+  - The text link's ring as a box shadow with no 2 px offset.
+  - Design lead's round 2 P2 to P6: the bar over the h1 in `risks--drawer` and `--count-reports`, the guess editor's growth at 390 px, the export notice's indent, the beaten sentence, and the beaten capture.
+  - Item 47's 320 px wordmark spacing (measured, no overlap).
+  - The skip link over "Your briefing" on Home.
+  - `planned--missing`'s empty space.
+  - The decided lessons' captures read "Decided on January 4, 2027.", after the data date (`tests/fixtures/api/lessons-item-decided-kept.json` lines 207 and 222; review item 5).
+  - Item 80 (optional).
