@@ -4550,3 +4550,30 @@ It worked if it exits 0 and its diff shows the review notes and the mission brie
 ## Tickets 131 and 132, the App redeploy ran: the App runs 3a016534
 
 **Ran on October 29, 2026 (orchestrator), from a snapshot of 3a016534.** The App redeployed from 3a016534 at 04:40 UTC on October 30 (exit 0) with tickets 131 and 132. Ticket 131: step 1 ran at 20:56 PDT (the five as-read columns added to strata.silver.plan_rows; DESCRIBE lists them last); step 2's bundle deploy refused to overwrite remote changes in the job bundle (it asks for --force, which waits for the owner; the nightly is paused), the App deploy ran; step 3 ran from a snapshot of 1f859636: the plan rewrite for P156634 wrote the 8 plan rows of document 40132287 again with four references settled from the plan's text (229129-CW-RFQ to -RFB, 541055-CW-RFQ to -RFB, 193471-9O-RFQ to 199471-GO-RFQ, 207796-CS-IND to -INDV) and KE-NWWDA-193461-9O-RF8 kept as read (reference_repair reference_as_read), descriptions joined (Boreholes, Sarman), then bronze_to_gold alone on the nightly job ended SUCCESS in 17 minutes and strata.gold.package carries the repaired references; step 4 at 21:45 PDT: the plan check route for the plan of October 9, 2026 answers with Boreholes and Sarman, no broken form, and reference_as_read true for 193461-9O-RF8 alone (criterion 3 met). Ticket 132: step 1's App deploy ran (the bundle deploy waits as above); step 2 ran at 21:29 PDT (agent sync to strata-orchestrator version 12; the check exits 0); step 3 (detect_disagreements for 541055's status disagreement) waits for the owner's scoped run from the new code (the scoped script under .notes/workflows, which imports the main checkout's src), because the whole-workspace task trips the inline cap (ticket 135) and the session's rules stop the orchestrator from writing to the workspace that way; step 4 after it. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 138, step 1 of 2: redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit 2589ad25. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after 2589ad25. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's server and web code only. No table, job, tool description or agent prompt changed (the new `src/strata/server/sql/contracts/project.sql` reads `strata.gold.contract` as it stands), so no bundle deploy and no agent sync is needed. If a later merge's redeploy already runs 2589ad25 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 2589ad25 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 138.
+
+## Ticket 138, step 2 of 2: the Timeline and Connections tabs give P130164 the same contracts (criterion 3)
+
+Run after step 1. Open the two tabs in a fresh browser context, or in a browser profile that has not opened P130164 in the past two hours. Review F2 says why: the Timeline answer is a kept page (`Cache-Control: private, max-age` up to 7,200 s), and an answer kept from before the redeploy has no `contracts` field, which blanks the app. Signed in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role, call:
+
+    GET /api/projects/P130164/timeline
+    GET /api/projects/P130164/connections
+
+The builder named the Free Edition App (https://strata-7474658003099155.aws.databricksapps.com), which is history since October 26. Use the paid workspace's App above.
+
+It worked if all of these hold:
+
+- Both answers' `contracts.count` are equal. On the fixture it is 8 (7 from `awards_fy2001_2016`, 1 from `notices`). The workspace may hold another number, N.
+- On the Timeline tab (`/projects/P130164/timeline`), the note under the chart reads "I hold N contracts for this project. The Records lane finds each contract's package by its STEP reference, so it leaves out ... from the contract awards for fiscal 2001 to 2016, which have none." If the Records lane is empty, it no longer says "I have no contract records for this project."
+- On the Connections tab (`/projects/P130164/connections`), the finding names the same N: "In this project, M of its N contracts appeared together with ..." when some have no link, or "In this project, N contracts appeared together with ..." when all do.
+
+Record both counts, the Timeline note and the Connections finding word for word, the commit the App runs and the time here under ticket 138. This is criterion 3's live proof.
