@@ -31,8 +31,8 @@ FETCHED = dt.datetime(2026, 10, 28, 8, 0, tzinfo=dt.UTC)
 PLAN_TEXT_TABLES = ("document_texts", "document_pages", "layout_pages")  # in bronze
 TABLES = ("bronze.document_lists", "bronze.document_texts", "bronze.document_pages", "bronze.layout_pages",
           "silver.plan_versions", "silver.plan_listings", "silver.plan_rows", "silver.plan_steps",
-          "silver.plan_step_delays", "silver.plan_data_notes", "ops.skipped_documents", "ops.parse_runs",
-          "ops.parse_failures", "ops.data_readiness")
+          "silver.plan_step_delays", "silver.plan_data_notes", "silver.notices", "ops.skipped_documents",
+          "ops.parse_runs", "ops.parse_failures", "ops.data_readiness")
 
 
 def document_id(number: int) -> str:

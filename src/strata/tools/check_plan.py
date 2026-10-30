@@ -68,6 +68,7 @@ from functools import cache
 from importlib import resources
 
 from strata.config import load_views
+from strata.reader.repair import AS_READ as REFERENCE_AS_READ
 from strata.tools.registry import Call
 
 CONTRACT_STATUSES = ("Signed", "Completed")  # STEP's Process Status once a contract is signed
@@ -479,6 +480,8 @@ def _row(activity: dict, evidence_id: str, plan: dict, marks: list[dict]) -> dic
                    "document_id": plan["document_id"], "pdf_page": activity["pdf_page"]},
         **{key: activity[key] for key in ("activity_reference_no", "section", "description", "review_type",
                                           "method", "market_approach")},
+        # A reference that breaks STEP's grammar and stays as the plan gives it (strata.reader.repair; ticket 131).
+        "reference_as_read": activity.get("reference_repair") == REFERENCE_AS_READ,
         "estimated_amount_usd": _text(estimated),
         "estimated_millions": millions(estimated),
         "actual_amount_usd": _text(actual),

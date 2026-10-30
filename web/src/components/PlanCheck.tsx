@@ -521,6 +521,12 @@ function Reference({ row, open, onOpen }: { row: Activity; open: boolean; onOpen
   );
 }
 
+// Under a reference that breaks STEP's form and that the plan reader kept as it read it (ticket 131), so the reader
+// knows the odd characters come from the plan, not from Strata.
+function AsRead({ row }: { row: Activity }) {
+  return row.reference_as_read ? <span className="block text-small text-ink-muted">{words.referenceAsRead}</span> : null;
+}
+
 function Found({ row, result }: { row: Activity; result: CheckedPlan }) {
   return row.marks.length > 0 ? (
     <div className="flex flex-col gap-3">
@@ -542,6 +548,7 @@ function TableRow({ row, result, fresh, mark, change, onOpen }: RowProps) {
     <tr id={rowKey(row)} data-named={mark === "named" || undefined} data-row-mark={mark} className={cx("border-t border-line align-top", fresh && "animate-fade-in")}>
       <th scope="row" tabIndex={-1} data-activity={rowKey(row)} className={cx(CELL, "text-left font-normal focus-visible:outline-offset-[-2px]")}>
         <Reference row={row} open={mark === "open"} onOpen={onOpen} />
+        <AsRead row={row} />
         {row.description && <span className="mt-1 block text-small text-ink">{row.description}</span>}
         <UploadLines row={row} />
         <ChangedLine change={change} />
@@ -581,6 +588,7 @@ function ActivityCard({ row, result, fresh, mark, change, onOpen }: RowProps) {
             <Reference row={row} open={mark === "open"} onOpen={onOpen} />
           </span>
         </h3>
+        <AsRead row={row} />
         {/* The Description in ink-muted and the reasons in ink, so the reason under it reads as the finding (ticket 59). */}
         {row.description && <p className="mt-1 text-small text-ink-muted">{row.description}</p>}
         <UploadLines row={row} />

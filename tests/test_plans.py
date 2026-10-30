@@ -643,7 +643,9 @@ def test_a_page_whose_text_pypdf_cannot_decode_reads_as_empty_and_a_file_that_is
 def test_words_a_cell_wrapped_at_its_edge_read_as_the_pdf_gives_them_unless_the_flag_rejoins_them(fresh, rejoin):
     """Parked decision 8 (tickets 08, 10 and 18): a STEP cell wraps "Exploratory" as "Explor" then
     "atory". config/models.toml's [layout] rejoin_split_words, false until the user decides, joins
-    such a word; the plan's own words are values.toml's."""
+    such a word in the layout parser's reading, which the row keeps as read; the plan's own words are
+    values.toml's. Since ticket 131 the reader's repair joins it either way, because the plan's other
+    rows write "Exploratory" and "County" whole (strata.reader.repair)."""
     from strata.fixture import recorded as fmt
     from strata.lakehouse import plans
     from strata.reader.documents import RecordedDocuments
@@ -655,8 +657,9 @@ def test_words_a_cell_wrapped_at_its_edge_read_as_the_pdf_gives_them_unless_the_
     [found] = rows(fresh, DEMO_ROWS + " AND r.activity_reference_no = :reference", agency=NWWDA, plan_date=DEMO_PLAN,
                    reference="KE-NWWDA-229129-CW-RFB")
     expected = next(row for row in GROUND_TRUTH["plan_row"] if row["reference"] == "KE-NWWDA-229129-CW-RFB")
-    assert (found["description"] == expected["description"]) is rejoin
-    assert squash(found["description"]) == squash(expected["description"])
+    assert (found["description_as_read"] == expected["description"]) is rejoin
+    assert squash(found["description_as_read"]) == squash(expected["description"])
+    assert found["description"] == expected["description"]
 
 
 # ── A reference the layout parser misreads (ticket 78) ──
@@ -746,7 +749,12 @@ def test_a_plan_page_whose_words_carry_markup_is_written_to_silver_as_plain_word
     tagged_in_bronze = rows(engine, "SELECT count(*) AS n FROM strata.bronze.layout_pages WHERE tables LIKE :tagged",
                             tagged="%<u>WORKS</u>%")
     assert tagged_in_bronze[0]["n"] > 0
-    assert written == rows(db, DEMO_ROWS + " ORDER BY r.activity_reference_no", agency=NWWDA, plan_date=DEMO_PLAN)
+    # The fixture's rows were written again once silver held the notices, which this run's database has none of, so
+    # the repair's joins differ; the words as read are the same (ticket 131).
+    repaired = ("description", "description_joins")
+    assert [{key: value for key, value in row.items() if key not in repaired} for row in written] == [
+        {key: value for key, value in row.items() if key not in repaired}
+        for row in rows(db, DEMO_ROWS + " ORDER BY r.activity_reference_no", agency=NWWDA, plan_date=DEMO_PLAN)]
     assert {clean.category(row["section"]) for row in written} == {
         "WORKS", "GOODS", "CONSULTING FIRMS", "INDIVIDUAL CONSULTANTS"}
 

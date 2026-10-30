@@ -42,7 +42,10 @@ role = "draft"
 # "atory"), and the reader keeps a space at each wrap, so such a word shows split. When this is true,
 # the offline parser joins a wrap with no space when the line above reaches the cell's right edge and
 # the next line starts with a lower-case letter. It is false until the user decides (ticket 18 parked
-# it again; tickets 08 and 10 parked it first, decision 8), so plans show their words as the PDF does.
+# it again; tickets 08 and 10 parked it first, decision 8). Since ticket 131 it changes only the
+# reading a row keeps in description_as_read, which the source view shows as the PDF gives it: the
+# plan reader's repair (src/strata/reader/repair.py) joins a split word in every row's description
+# when the project's notices or the plan's other rows write the word whole, whatever this says.
 [layout]
 parser = "ai_parse_document"
 rejoin_split_words = false
