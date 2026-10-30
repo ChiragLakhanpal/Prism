@@ -10,7 +10,7 @@
 // - /present/notes: the speaker notes, in their own window, kept in step with the deck through a BroadcastChannel.
 //
 // The deck reads its numbers from /deck/data.json (web/src/deck/data.ts), the measures snapshot the proposal cites.
-import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Table2 } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
@@ -1048,7 +1048,21 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
 
   const next = slides[place.n] ?? null;
   const figureSteps = slide.figure?.steps ?? 0;
-  const figureLine = slide.figure && place.step > 0 && place.step <= figureSteps ? figureStepText(slide.figure.id, place.step) : null;
+  // The words each press brings onto the screen, for the script: a figure's steps from its text version, and the
+  // slide's own items as the preview beside the notes draws them.
+  const preview = useRef<HTMLDivElement>(null);
+  const [own, setOwn] = useState<Record<number, string>>({});
+  useLayoutEffect(() => {
+    const found: Record<number, string> = {};
+    for (const item of preview.current?.querySelectorAll("section[data-slide] [data-step]:not([data-motion-item])") ?? []) {
+      const n = Number(item.getAttribute("data-step"));
+      if (n && !(n in found)) found[n] = spokenText(item);
+    }
+    setOwn(found);
+  }, [slide.n]);
+  const screen = Array.from({ length: slide.steps }, (_, index) =>
+    slide.figure && index < figureSteps ? figureStepText(slide.figure.id, index + 1) : (own[index + 1 - figureSteps] ?? ""),
+  );
   return (
     <div className="flex min-h-dvh flex-col bg-page" data-deck="notes">
       <main className="layout flex-1 py-8">
@@ -1089,13 +1103,8 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
               {slide.title}
             </h1>
             <div data-notes-view={place.n}>
-              <SpeakerNotes slide={slide} glance />
+              <SpeakerNotes slide={slide} glance step={place.step} screen={screen} />
             </div>
-            {figureLine && (
-              <p className="border-l-4 border-info-icon bg-surface py-2 pl-4 text-small text-ink" data-notes-step>
-                {figureLine}
-              </p>
-            )}
             <p className="text-small text-ink-muted" data-next-title>
               {next ? <NextTitle slide={next} /> : deckCopy.notesView.last}
             </p>
@@ -1110,7 +1119,7 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
           </div>
           {/* The slide on screen at its press, and the next one whole, so the presenter sees what the room sees. */}
           <aside className="flex flex-col gap-6 lg:sticky lg:top-8 lg:self-start" data-notes-previews>
-            <SlidePreview label={deckCopy.notesView.now} slide={slide} step={place.step} data={data} slides={slides} width={448} />
+            <SlidePreview label={deckCopy.notesView.now} slide={slide} step={place.step} data={data} slides={slides} width={448} rootRef={preview} />
             {next && <SlidePreview label={deckCopy.notesView.then} slide={next} step={next.steps} data={data} slides={slides} width={288} />}
           </aside>
         </div>
@@ -1124,13 +1133,29 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
 
 // A slide as the room sees it, scaled into the notes window. It is a picture of the slide, so assistive tech and the
 // keyboard skip it; the notes beside it say the same.
-function SlidePreview({ label, slide, step, data, slides, width }: { label: string; slide: Slide; step: number; data: DeckData; slides: Slide[]; width: number }) {
+function SlidePreview({
+  label,
+  slide,
+  step,
+  data,
+  slides,
+  width,
+  rootRef,
+}: {
+  label: string;
+  slide: Slide;
+  step: number;
+  data: DeckData;
+  slides: Slide[];
+  width: number;
+  rootRef?: Ref<HTMLDivElement>;
+}) {
   const scale = width / CANVAS.width;
   return (
     <div className="flex flex-col gap-2" data-notes-preview={slide.n}>
       <p className="text-caption text-ink-muted">{label}</p>
       <div aria-hidden="true" inert className="relative overflow-hidden rounded-sm border border-line" style={{ width, height: CANVAS.height * scale }}>
-        <div className="absolute top-0 left-0 origin-top-left" style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})` }}>
+        <div ref={rootRef} className="absolute top-0 left-0 origin-top-left" style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})` }}>
           <SlideCanvas slide={slide} data={data} slides={slides} total={slides.length} current step={step} twin={false} recorded={false} />
         </div>
       </div>
@@ -1138,23 +1163,68 @@ function SlidePreview({ label, slide, step, data, slides, width }: { label: stri
   );
 }
 
-// The presenter's notes for a slide: what to say, what to do on it, and the questions a technical panel may ask about
-// it, each with an answer to give as written. The notes window sets what to say large enough to read at a glance.
-function SpeakerNotes({ slide, glance = false }: { slide: Slide; glance?: boolean }) {
+// The presenter's notes for a slide. In the notes window they are a script: the line to say as the slide arrives and
+// what to do then, and for each press the words it brings onto the screen and an extra line to say, with the current
+// press set large and the ones already said muted. In the reading view the same lines are a list. Under both are the
+// questions a technical panel may ask about the slide, each with an answer to give as written.
+function SpeakerNotes({ slide, glance = false, step = 0, screen = [] }: { slide: Slide; glance?: boolean; step?: number; screen?: string[] }) {
   const words = deckCopy.notesView;
   const Heading = glance ? "h2" : "h3";
+  const figureSteps = slide.figure?.steps ?? 0;
+  const current = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    if (glance) current.current?.scrollIntoView?.({ block: "nearest" });
+  }, [glance, step, slide.n]);
+  const beat = (k: number) =>
+    cx("flex flex-col gap-1 border-l-4 pl-4", k === step ? "border-info-icon text-ink" : "border-transparent", k < step ? "text-ink-muted" : "text-ink");
+  const presses = Array.from({ length: slide.steps }, (_, index) => index + 1);
+  const adds = (slide.adds ?? []).filter((add): add is string => Boolean(add));
   return (
     <div className="flex flex-col gap-6">
       <section>
         <Heading className="text-label text-ink-muted">{words.say}</Heading>
-        <div className={cx("mt-1 text-ink", glance ? "text-lead" : "text-body")}>{slide.notes}</div>
+        {glance ? (
+          <ol className="mt-2 flex flex-col gap-4" data-notes-script>
+            <li ref={step === 0 ? current : undefined} className={beat(0)} data-beat={0}>
+              <div className={step === 0 ? "text-lead" : "text-body"}>{slide.notes}</div>
+              {slide.cue && (
+                <p className="text-small font-semibold text-primary" data-notes-cue>
+                  {slide.cue}
+                </p>
+              )}
+            </li>
+            {presses.map((k) => (
+              <li key={k} ref={step === k ? current : undefined} className={beat(k)} data-beat={k}>
+                <span className="text-caption text-ink-muted">{`${words.press} ${k}`}</span>
+                {screen[k - 1] && (
+                  <p className={k === step ? "text-lead" : "text-body"} data-notes-step={k === step && k <= figureSteps ? "" : undefined}>
+                    {screen[k - 1]}
+                  </p>
+                )}
+                {slide.adds?.[k - 1] && <p className="text-small italic">{slide.adds[k - 1]}</p>}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="mt-1 text-body text-ink">{slide.notes}</div>
+        )}
       </section>
-      {slide.cue && (
+      {!glance && slide.cue && (
         <section>
           <Heading className="text-label text-ink-muted">{words.cue}</Heading>
           <p className="mt-1 border-l-4 border-info-icon pl-3 text-small text-ink" data-notes-cue>
             {slide.cue}
           </p>
+        </section>
+      )}
+      {!glance && adds.length > 0 && (
+        <section>
+          <Heading className="text-label text-ink-muted">{words.asYouPress}</Heading>
+          <ul className="mt-1 flex list-disc flex-col gap-1 pl-6 text-small text-ink">
+            {adds.map((add) => (
+              <li key={add}>{add}</li>
+            ))}
+          </ul>
         </section>
       )}
       {slide.asked && slide.asked.length > 0 && (

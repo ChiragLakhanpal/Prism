@@ -52,6 +52,8 @@ export type Slide = {
   // What the presenter does on the slide, and the questions a technical panel may ask about it, each with an answer
   // to give as written (deckCopy.speaker, by the slide's id).
   cue?: ReactNode;
+  // An extra line to say at each press, under the words that press brings onto the screen.
+  adds?: (string | null)[];
   asked?: { q: string; a: string }[];
 };
 
@@ -689,6 +691,7 @@ export function buildSlides(data: DeckData): Slide[] {
       ...draft,
       n: index + 1,
       cue: draft.cue ?? deckCopy.speaker[draft.id]?.cue,
+      adds: deckCopy.speaker[draft.id]?.adds,
       asked: deckCopy.speaker[draft.id]?.asked,
     }));
 }
