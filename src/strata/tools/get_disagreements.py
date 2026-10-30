@@ -50,6 +50,7 @@ from strata.knowledge.assertions import (CONTRACT_SIGNING, PASSAGES, REPORT_PERI
 from strata.tools.registry import Call
 from strata.tools.search_passages import SOURCE_COLUMNS, passage_source
 from strata.tools.withheld import WITHHELD, withheld
+from strata.tools.withheld import reads as withheld_reads
 
 TABLE = "strata.gold.disagreement"
 NOT_A_MOMENT = (REPORT_PERIOD, WHOLE_PROJECT, CONTRACT_SIGNING)  # periods that name no single moment
@@ -79,7 +80,7 @@ def months_between(start: dt.date, end: dt.date) -> int:
 
 
 def _boolean(value) -> bool | None:
-    """A boolean from DuckDB or from the warehouse's text."""
+    """A boolean, or a boolean written as text."""
     return None if value is None else value if isinstance(value, bool) else str(value).lower() == "true"
 
 
@@ -207,6 +208,17 @@ def trajectories(held: list[Assertion]) -> list[dict]:
     return found
 
 
+def reads(project_id: str, as_of: dt.date, view: str) -> list[tuple[str, dict]]:
+    """The statements get_disagreements runs for a project, named as Strata holds it, as of the date and in the view,
+    for a page that sends its reads as one batch (the Timeline, ticket 125)."""
+    common = {"subject_id": project_id, "package": "package"}
+    return [(_sql("subject.sql"), {"project": "project", **common}),
+            (_sql("assertions.sql"), {"as_of": as_of, "passages": f"{PASSAGES}:", **common}),
+            (_sql("rejections.sql"), {"project_id": project_id, "as_of": as_of}),
+            (_sql("disagreements.sql"), {"as_of": as_of, **common}),
+            *withheld_reads(view, "disagreements_on_active_projects", project_id, as_of)]
+
+
 def get_disagreements(call: Call, subject_id: str, attribute: str | None = None) -> dict:
     """The disagreements and trajectories about the subject, as of call.as_of."""
     subject_id = subject_id.strip()
@@ -231,7 +243,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
     passages = {row["assertion_id"]: _passage(row) for row in held}
     current = [assertion for assertion in assertions if _current(assertion, call.as_of)
                and (attribute is None or assertion.attribute == attribute)]
-    reasons = [{"reason": row["reason"], "count": int(row["rejected"])}
+    reasons = [{"reason": row["reason"], "count": row["rejected"]}
                for row in _rows(call, "rejections.sql", project_id=project_id, as_of=call.as_of)]
     rejected = {"count": sum(reason["count"] for reason in reasons), "reasons": reasons}
 

@@ -86,6 +86,15 @@ def lacks(view: str, capability: str) -> bool:
     return not views().capabilities[capability].values.get(view, True)
 
 
+def reads(view: str, capability: str, project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
+    """The statements withheld_in runs for a project named as Strata holds it, none when the view keeps the
+    capability, for a page that sends its reads as one batch (ticket 125)."""
+    if not lacks(view, capability):
+        return []
+    each = {"project_id": project_id.strip().upper(), "as_of": as_of}
+    return [(_sql("project.sql"), each), (_sql("history.sql"), each)]
+
+
 def withheld_in(engine, view: str, as_of: dt.date, capability: str, project_id: str | None) -> bool:
     """Whether the view leaves this capability out for the project: the view lacks it, and the project was active on
     the as-of date."""

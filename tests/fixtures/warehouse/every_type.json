@@ -1,0 +1,43 @@
+{
+  "about": "One statement with a column of each type Strata's tables hold, and the SQL warehouse's answer to it in the Statement Execution API's shape (format JSON_ARRAY, disposition INLINE): the manifest names each column's type_name and type_text, and the result writes every value as text, or null. The second row is all null. Ticket 128 types the values from this manifest; tests/test_engine.py runs the same statement on DuckDB and compares.",
+  "statement": "SELECT CAST(2 AS BIGINT) AS contracts, CAST(2 AS INT) AS version, CAST(23 AS SMALLINT) AS pdf_page, CAST(1 AS TINYINT) AS lots, CAST(1230000.00 AS DECIMAL(18, 2)) AS estimated_amount_usd, CAST(0.25 AS DOUBLE) AS share, CAST(0.5 AS FLOAT) AS weight, true AS latest, DATE '2016-05-16' AS document_date, TIMESTAMP '2026-10-23 23:30:00' AS fetched_at, CAST('2026-10-23 23:30:00' AS TIMESTAMP_NTZ) AS made_at, 'ISR' AS document_type UNION ALL SELECT CAST(NULL AS BIGINT), CAST(NULL AS INT), CAST(NULL AS SMALLINT), CAST(NULL AS TINYINT), CAST(NULL AS DECIMAL(18, 2)), CAST(NULL AS DOUBLE), CAST(NULL AS FLOAT), CAST(NULL AS BOOLEAN), CAST(NULL AS DATE), CAST(NULL AS TIMESTAMP), CAST(NULL AS TIMESTAMP_NTZ), CAST(NULL AS STRING) ORDER BY contracts NULLS LAST",
+  "reply": {
+    "statement_id": "01f1b3c4-0000-1a2b-8c9d-0e1f2a3b4c5d",
+    "status": {"state": "SUCCEEDED"},
+    "manifest": {
+      "format": "JSON_ARRAY",
+      "schema": {
+        "column_count": 12,
+        "columns": [
+          {"name": "contracts", "type_text": "BIGINT", "type_name": "LONG", "position": 0},
+          {"name": "version", "type_text": "INT", "type_name": "INT", "position": 1},
+          {"name": "pdf_page", "type_text": "SMALLINT", "type_name": "SHORT", "position": 2},
+          {"name": "lots", "type_text": "TINYINT", "type_name": "BYTE", "position": 3},
+          {"name": "estimated_amount_usd", "type_text": "DECIMAL(18,2)", "type_name": "DECIMAL", "position": 4,
+           "type_precision": 18, "type_scale": 2},
+          {"name": "share", "type_text": "DOUBLE", "type_name": "DOUBLE", "position": 5},
+          {"name": "weight", "type_text": "FLOAT", "type_name": "FLOAT", "position": 6},
+          {"name": "latest", "type_text": "BOOLEAN", "type_name": "BOOLEAN", "position": 7},
+          {"name": "document_date", "type_text": "DATE", "type_name": "DATE", "position": 8},
+          {"name": "fetched_at", "type_text": "TIMESTAMP", "type_name": "TIMESTAMP", "position": 9},
+          {"name": "made_at", "type_text": "TIMESTAMP_NTZ", "type_name": "TIMESTAMP_NTZ", "position": 10},
+          {"name": "document_type", "type_text": "STRING", "type_name": "STRING", "position": 11}
+        ]
+      },
+      "total_chunk_count": 1,
+      "chunks": [{"chunk_index": 0, "row_offset": 0, "row_count": 2}],
+      "total_row_count": 2,
+      "truncated": false
+    },
+    "result": {
+      "chunk_index": 0,
+      "row_offset": 0,
+      "row_count": 2,
+      "data_array": [
+        ["2", "2", "23", "1", "1230000.00", "0.25", "0.5", "true", "2016-05-16", "2026-10-23T23:30:00.000Z",
+         "2026-10-23T23:30:00.000", "ISR"],
+        [null, null, null, null, null, null, null, null, null, null, null, null]
+      ]
+    }
+  }
+}

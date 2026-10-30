@@ -25,7 +25,7 @@ def query(name: str) -> str:
 
 
 def _day(value) -> dt.date | None:
-    """A date from DuckDB, or the text the warehouse writes it as."""
+    """A date, or a date written as text."""
     if value is None or isinstance(value, dt.date):
         return value
     return dt.date.fromisoformat(str(value)[:10])
@@ -35,6 +35,12 @@ def data_through(engine: Engine) -> dt.date | None:
     """The data-freshness stamp's day, or None when no daily source has loaded anything yet."""
     rows = engine.run(query("data_through"), {"cadence": DAILY}).rows
     return _day(rows[0][0]) if rows else None
+
+
+def nightly_finished(engine: Engine) -> str | None:
+    """When the nightly job last finished a task, as text, or None before any run (ticket 125's warm)."""
+    rows = engine.run(query("nightly_finished")).rows
+    return None if not rows or rows[0][0] is None else str(rows[0][0])
 
 
 def warehouse_user(engine: Engine) -> str | None:

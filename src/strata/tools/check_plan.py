@@ -85,7 +85,7 @@ def implementing_agencies(text: str | None) -> list[str]:
     return [name.strip() for name in re.split(r",(?! )", text or "") if name.strip()]
 
 
-# Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read once here.
+# Every engine gives typed values (ticket 128); each is read once here, and a value written as text reads the same.
 
 def _date(value) -> dt.date | None:
     if value is None or value == "":
@@ -263,6 +263,14 @@ class Baseline:
 @cache
 def _views():
     return load_views()
+
+
+def baseline_reads(project_id: str, agency: str, as_of: dt.date, view: str) -> list[tuple[str, dict]]:
+    """The statement read_baseline runs, none when the view has no baseline, for a page that sends it in one batch
+    with others (ticket 125)."""
+    if not _views().allows(view, "baseline"):
+        return []
+    return [(_sql("baseline.sql"), {"project_id": project_id, "agency_id": agency, "as_of": as_of})]
 
 
 def read_baseline(engine, project_id: str, agency: str, as_of: dt.date, view: str) -> Baseline | None:

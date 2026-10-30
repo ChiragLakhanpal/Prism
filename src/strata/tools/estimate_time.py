@@ -136,7 +136,7 @@ def _stored_cell(row: dict) -> dict:
     key = f"{row['run_id']}/{row['step_reference']}/{row['market_approach'] or '-'}/{row['prequalification'] or '-'}"
     return {
         "evidence_id": f"strata.gold.time_estimate_score:{key}", "public_from": _iso(row["public_from"]),
-        "source": {"model": row["model"], "model_version": int(row["model_version"]), "run_id": row["run_id"],
+        "source": {"model": row["model"], "model_version": row["model_version"], "run_id": row["run_id"],
                    "scored": "batch"},
         "as_described": bool(row["as_described"]), "market_approach": row["market_approach"],
         "prequalification": row["prequalification"], "review_type": row["review_type"],

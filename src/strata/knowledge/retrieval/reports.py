@@ -369,7 +369,7 @@ class PassageReports:
         evidence_id, run_id = body["evidence_id"], body["run_id"]
         cited = rows(writer, "citation", run_id=run_id, evidence_id=evidence_id)
         sentence = body.get("sentence_id")
-        chosen = [row for row in cited if sentence is None or int(row["sentence_index"]) == int(sentence)] or cited
+        chosen = [row for row in cited if sentence is None or row["sentence_index"] == int(sentence)] or cited
         if not chosen:
             raise Refused(404, "not_in_answer")
         citation = chosen[0]

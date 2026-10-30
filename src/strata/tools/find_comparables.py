@@ -74,7 +74,7 @@ def _rows(engine, name: str, **params) -> list[dict]:
     return [dict(zip(result.columns, row)) for row in result.rows]
 
 
-# Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read once here.
+# Every engine gives typed values (ticket 128); each is read once here, and a value written as text reads the same.
 
 def _date(value) -> dt.date | None:
     if value is None or value == "":
@@ -126,6 +126,11 @@ class Limits:
 
 # ── The package ──────────────────────────────────────────────────────────
 
+def package_reads(step_reference: str, as_of: dt.date) -> list[tuple[str, dict]]:
+    """The statement read_package runs, for a page that sends its reads as one batch (ticket 125)."""
+    return [(_sql("package.sql"), {"step_reference": step_reference.strip(), "as_of": as_of})]
+
+
 def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
     """The package as its newest plan version public on the as-of date gives it, or None when no
     such version lists it. The package page's header shows the same facts."""
@@ -154,7 +159,7 @@ def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
         "planned_signing_on": _iso(_date(row["planned_signing_on"])),
         "plan": {"document_id": row["document_id"], "implementing_agency": row["implementing_agency"],
                  "agency_id": agency_id(row["implementing_agency"] or ""), "plan_date": _iso(_date(row["plan_date"])),
-                 "disclosed_on": _iso(_date(row["disclosed_on"])), "pdf_page": int(row["pdf_page"])},
+                 "disclosed_on": _iso(_date(row["disclosed_on"])), "pdf_page": row["pdf_page"]},
     }
 
 

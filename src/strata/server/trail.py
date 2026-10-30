@@ -212,7 +212,7 @@ def _bids_stage(engine: Engine, notices: list[dict], method: str | None, consult
         listed = bids_by_notice.get(notice["notice_id"], [])
         grouped: dict[int, list[dict]] = {}
         for row in listed:
-            grouped.setdefault(int(row["bid"]), []).append(row)
+            grouped.setdefault(row["bid"], []).append(row)
         bids = []
         for number, members in grouped.items():
             first = members[0]

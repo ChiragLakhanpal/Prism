@@ -260,7 +260,7 @@ def evaluation_set(labels: Iterable[Label]) -> list[Query]:
 def latest(engine: Engine) -> list[Label]:
     """Every label of the labeled set's latest build."""
     return [Label(row["query_set"], row["query_id"], row["query_text"], as_date(row["query_date"]), row["project_id"],
-                  row["passage_id"], int(row["grade"]), row["origin"], float(row["weight"]))
+                  row["passage_id"], row["grade"], row["origin"], row["weight"])
             for row in rows(engine, "latest_labels")]
 
 
