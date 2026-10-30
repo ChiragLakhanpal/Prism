@@ -829,7 +829,7 @@ def write_rows(engine: Engine, project_id: str, versions: list[Version], misread
             joins = json.dumps([join.as_dict() for join in row.description_joins]) if row.description_joins else None
             rows.append((version.document_id, project_id, row.section, row.activity_reference_no,
                          row.description or None, *(row.fields.get(column) for column in ROW_COLUMNS),
-                         row.reference_as_read, row.reference_repair, row.reference_carried_by,
+                         row.activity_reference_no_as_read, row.reference_repair, row.reference_carried_by,
                          row.description_as_read or None, joins, row.pdf_page, parser, version.public_from))
             steps += [(version.document_id, project_id, row.activity_reference_no, s.step, s.step_order,
                        s.planned_on, s.actual_on, version.public_from) for s in row.steps]

@@ -13,9 +13,10 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
+import pytest
 
 from strata.lakehouse.engine import DuckDBEngine
-from strata.reader import repair
+from strata.reader import repair, step
 from strata.server.app import create_app
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -65,6 +66,39 @@ def test_a_reference_in_steps_grammar_or_in_an_older_form_is_kept_and_one_a_noti
     found = repair.reference("KE-NWWDA-541055-CW-RF8", records)
     assert (found.written, found.repair, found.carried_by) == (
         "KE-NWWDA-541055-CW-RF8", "reference_as_read", "strata.silver.notices:OP00999998")
+
+
+def plan_row(reference: str) -> step.PlanRow:
+    return step.PlanRow("GOODS", reference, "Supply and Delivery of a 4 x 4 vehicle", 3)
+
+
+def repaired(versions: list[repair.VersionRows], notices: list[repair.Notice] = ()) -> list[tuple]:
+    """Each row of the versions after repair.plan: its version, its reference, why and the record that carries it."""
+    repair.plan(versions, notices)
+    return [(version.document_id, row.activity_reference_no, row.reference_repair, row.reference_carried_by)
+            for version in versions for row in version.rows]
+
+
+def test_another_plan_versions_row_or_text_carries_a_one_swap_repair_and_the_versions_own_rows_do_not():
+    misread, whole = "KE-NWWDA-193461-G0-RFQ", "KE-NWWDA-193461-GO-RFQ"
+    # Another version's row reads the reference whole.
+    assert repaired([repair.VersionRows("D1", (), [plan_row(misread)]),
+                     repair.VersionRows("D2", (), [plan_row(whole)])]) == [
+        ("D1", whole, "look_alike", f"strata.silver.plan_rows:D2/{whole}"), ("D2", whole, None, None)]
+    # Another version's text lists it.
+    assert repaired([repair.VersionRows("D1", (), [plan_row(misread)]),
+                     repair.VersionRows("D2", (whole,), [])]) == [
+        ("D1", whole, "look_alike", "strata.silver.plan_versions:D2")]
+    # Both versions read it the same wrong way, and a notice carries it whole: another version's misread is no
+    # record that STEP holds it so, and both rows take the notice's reference.
+    notice = repair.Notice("OP00999999", whole, "Supply of a vehicle")
+    assert repaired([repair.VersionRows("D1", (), [plan_row(misread)]),
+                     repair.VersionRows("D2", (), [plan_row(misread)])], [notice]) == [
+        ("D1", whole, "look_alike", "strata.silver.notices:OP00999999"),
+        ("D2", whole, "look_alike", "strata.silver.notices:OP00999999")]
+    # A row of the same version that reads it whole does not repair it.
+    assert repaired([repair.VersionRows("D1", (), [plan_row(misread), plan_row(whole)])]) == [
+        ("D1", misread, "reference_as_read", None), ("D1", whole, None, None)]
 
 
 def notice_words() -> frozenset[str]:
@@ -165,20 +199,34 @@ def test_the_plan_check_shows_the_repaired_text_and_the_source_view_and_the_draw
     assert [field["value"] for field in drawer["row"]["fields"] if field["key"] == "description"] == [as_read]
 
 
-def test_the_workspaces_misread_reference_is_kept_as_read_and_the_plan_check_and_package_page_say_so(fixture_db,
-                                                                                                   tmp_path):
+MISREAD = "KE-NWWDA-193461-90-RF8"  # what ai_parse_document read on the workspace (ticket 131)
+# On October 26, 2026 the workspace's layout parser read KE-NWWDA-229129-CW-RFB on page 3 as -RFQ, and the plan's
+# text settled it (ticket 78).
+SETTLED, SETTLED_MISREAD = "KE-NWWDA-229129-CW-RFB", "KE-NWWDA-229129-CW-RFQ"
+
+
+@pytest.fixture(scope="module")
+def misread(fixture_db, tmp_path_factory) -> Path:
+    """A copy of the fixture whose plan of October 9, 2026 (document 40132287) the layout parser read as it did on
+    the workspace, with its plan rows written again (ticket 122's rewrite): the database, after the rewrite."""
+    from strata.lakehouse import plans
+
+    copy = tmp_path_factory.mktemp("misread") / "fixture.duckdb"
+    copy.write_bytes(fixture_db.read_bytes())
+    with DuckDBEngine.open(copy) as engine:
+        for read_well, misread_as in (("KE-NWWDA-199461-GO-RFB", MISREAD), (SETTLED, SETTLED_MISREAD)):
+            engine.run("UPDATE strata.bronze.layout_pages SET tables = replace(tables, :read_well, :misread) "
+                       "WHERE document_id = :document_id",
+                       {"read_well": read_well, "misread": misread_as, "document_id": "40132287"})
+        plans.rewrite(engine, "P156634")
+    return copy
+
+
+def test_the_workspaces_misread_reference_is_kept_as_read_and_the_plan_check_and_package_page_say_so(misread):
     """On the workspace, the layout parser read KE-NWWDA-199461-GO-RFB (the plan's text and notice OP00147052) as
     KE-NWWDA-193461-90-RF8. The reader's settling (ticket 78) allows two characters and this is four, and no one
     look-alike swap makes it whole, so the row keeps it as read, flagged, and the pages say so."""
-    from strata.lakehouse import plans
-
-    copy = tmp_path / "fixture.duckdb"
-    copy.write_bytes(fixture_db.read_bytes())
-    with DuckDBEngine.open(copy) as engine:
-        engine.run("UPDATE strata.bronze.layout_pages SET tables = replace(tables, :read_well, :misread) "
-                   "WHERE document_id = :document_id",
-                   {"read_well": "KE-NWWDA-199461-GO-RFB", "misread": MISREAD, "document_id": "40132287"})
-        plans.rewrite(engine, "P156634")
+    with DuckDBEngine.open(misread, read_only=True) as engine:
         [flagged] = engine.run("SELECT activity_reference_no, activity_reference_no_as_read, reference_repair, "
                                "description FROM strata.silver.plan_rows WHERE document_id = :document_id "
                                "AND activity_reference_no_as_read = :misread",
@@ -187,11 +235,26 @@ def test_the_workspaces_misread_reference_is_kept_as_read_and_the_plan_check_and
                        "Supply and Delivery 1 No. 4 x 4 Wheel drive, manual transmission of engine capacity 4,100 - "
                        "4,200 cc")
 
-    get = server_on(copy)
+    get = server_on(misread)
     checked = get("/api/projects/P156634/procurement/northern-water-works-development-agency/2026-10-09?asof=2026-10-23")
     assert {row["activity_reference_no"]: row["reference_as_read"] for row in checked["rows"]}[MISREAD] is True
     assert sum(row["reference_as_read"] for row in checked["rows"]) == 1
     assert get(f"/api/packages/{MISREAD}?asof=2026-10-23")["package"]["reference_as_read"] is True
 
 
-MISREAD = "KE-NWWDA-193461-90-RF8"  # what ai_parse_document read on the workspace (ticket 131)
+def test_a_reference_the_plans_text_settled_shows_as_the_page_prints_it_in_the_source_view_and_the_drawer(misread):
+    """Page 3 of the plan prints KE-NWWDA-229129-CW-RFB, and the plan's text settled the layout parser's -RFQ to it
+    (ticket 78): the source view and the evidence drawer show the page's -RFB, never the parser's misreading."""
+    with DuckDBEngine.open(misread, read_only=True) as engine:
+        [row] = engine.run("SELECT activity_reference_no_as_read, reference_repair, pdf_page FROM "
+                           "strata.silver.plan_rows WHERE document_id = :document_id AND activity_reference_no = "
+                           ":reference", {"document_id": "40132287", "reference": SETTLED}).rows
+    assert row == (SETTLED_MISREAD, "plan_text", 3)
+
+    get = server_on(misread)
+    listed = [plan_row["activity_reference_no"] for plan_row in
+              get(f"/api/projects/P156634/documents/{PLAN_SLUG}?page=3&asof=2026-10-23")["plan_rows"]]
+    assert SETTLED in listed and SETTLED_MISREAD not in listed
+    drawer = get(f"/api/evidence?id=strata.silver.plan_rows:40132287/{SETTLED}&asof=2026-10-23")
+    assert drawer["row"]["activity_reference_no"] == SETTLED
+    assert SETTLED_MISREAD not in json.dumps(drawer)

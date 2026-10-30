@@ -16,11 +16,16 @@
 #              reference uses yet.
 # look_alikes  pairs of characters a PDF's text or the layout parser can give one for the other: a digit and the
 #              letter it looks like. The repair tries each swap on its own, one character at a time.
+# join_guard_letters  the repair joins two halves of a split description word only when the joined word is in
+#              the project's notices' titles or the plan's other rows, and not when both halves are words of this
+#              many letters or more that the notices' titles use on their own ("Motor Cycles" stays two words)
 # [kinds]      each kind code a reference carries, with STEP's procurement category for it
 
 methods = ["RFB", "RFQ", "RFP", "DIR", "QCBS", "QBS", "FBS", "LCS", "CQS", "CDS", "INDV"]
 
 look_alikes = [["0", "O"], ["8", "B"], ["1", "I"], ["5", "S"]]
+
+join_guard_letters = 2
 
 [kinds]
 CW = "Works"

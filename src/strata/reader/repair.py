@@ -12,7 +12,7 @@ row is read and before it is written (strata.lakehouse.plans.write_rows), and it
   look_alikes) makes it whole and a notice of the project or one of its plan versions carries the repaired
   reference. The row keeps the reference as read beside it, with the record that carries the repair. Any other
   reference that breaks the grammar stays as read and is flagged reference_as_read, and the page shows it as the
-  plan gives it: one that a record carries as read too, which STEP holds that way, and one no record settles.
+  plan gives it: one that a notice carries as read too, which STEP holds that way, and one no record settles.
 - A word split by a space inside a description is joined when the joined word is in the titles of the project's
   notices or among the words of the plan version's other rows, unless both halves are words of two letters or more
   that the notices' titles use on their own ("Motor Cycles" stays two words). Each join is recorded with the words
@@ -82,13 +82,16 @@ def _swaps(reference: str) -> set[str]:
     return {reference[:i] + pairs[c] + reference[i + 1:] for i, c in enumerate(reference) if c in pairs}
 
 
-def reference(read: str, records: Mapping[str, str]) -> ReferenceRead:
+def reference(read: str, records: Mapping[str, str], held: Mapping[str, str] | None = None) -> ReferenceRead:
     """A reference as the row should keep it, given the references the project's records carry (records: each
-    reference with the evidence id of a record that carries it)."""
+    reference with the evidence id of a record that carries it) and those that show STEP holds a reference as
+    written (held: the notices' references; records when not given). Another plan version's row is no such proof:
+    the same layout parser can read the same characters wrong in every version."""
+    held = records if held is None else held
     if not clean.in_step_form(read) or clean.follows_step_grammar(read):
         return ReferenceRead(read, read, None, None)
-    if read in records:  # STEP holds it as read, so the plan prints it so: kept, and flagged as the plan gives it
-        return ReferenceRead(read, read, AS_READ, records[read])
+    if read in held:  # STEP holds it as read, so the plan prints it so: kept, and flagged as the plan gives it
+        return ReferenceRead(read, read, AS_READ, held[read])
     whole = sorted(swap for swap in _swaps(read) if clean.follows_step_grammar(swap) and swap in records)
     if len(whole) == 1:
         return ReferenceRead(whole[0], read, LOOK_ALIKE, records[whole[0]])
@@ -132,7 +135,8 @@ def words(texts: Iterable[str | None]) -> frozenset[str]:
 def description(read: str, notice_words: Container[str], plan_words: Container[str]) -> DescriptionRead:
     """A description with each word the PDF split joined again, given the words of the project's notices' titles
     and the words of the plan version's other rows (words). Two halves join when the joined word is in either list,
-    unless both are words of two letters or more that the notices' titles use on their own."""
+    unless both are words of two letters or more (config/references.toml's join_guard_letters) that the notices'
+    titles use on their own."""
     tokens: list[str] = []
     joins: list[Join] = []
     for token in read.split(" "):
@@ -142,7 +146,8 @@ def description(read: str, notice_words: Container[str], plan_words: Container[s
             a, b = left.group(0), right.group(0)
             joined = (a + b).lower()
             found_in = "notices" if joined in notice_words else "plan" if joined in plan_words else None
-            both_words = min(len(a), len(b)) >= 2 and a.lower() in notice_words and b.lower() in notice_words
+            both_words = (min(len(a), len(b)) >= clean.REFERENCES.join_guard_letters
+                          and a.lower() in notice_words and b.lower() in notice_words)
             if found_in and not both_words:
                 tokens[-1] += token
                 joins.append(Join(f"{a} {b}", a + b, found_in))
@@ -167,9 +172,11 @@ def plan(versions: Sequence[VersionRows], notices: Iterable[Notice]) -> None:
     """Every row of a project's plan versions repaired in place, after it is read and before it is written.
 
     A row's reference is checked against the references the project's notices carry, then those the other versions'
-    rows read, then those every version's text lists; a row whose reference the plan's text gave over the layout
-    parser's reading (ticket 78) keeps that, with the reason plan_text. A row's description is joined with the words
-    of the notices' titles and of its version's other rows. Each row keeps what was read beside what is written."""
+    rows read, then those every version's text lists; only a notice that writes it as read keeps a broken reference
+    as STEP holds it, since another version's row may be the same misreading. A row whose reference the plan's text
+    gave over the layout parser's reading (ticket 78) keeps that, with the reason plan_text. A row's description is
+    joined with the words of the notices' titles and of its version's other rows. Each row keeps what was read
+    beside what is written."""
     notices = list(notices)
     notice_words = words(notice.title for notice in notices)
     # Every version's references as read, before any row is repaired, so no repair rests on another.
@@ -184,11 +191,11 @@ def plan(versions: Sequence[VersionRows], notices: Iterable[Notice]) -> None:
     for version in versions:
         records = _Records(from_notices, in_rows, in_texts, version.document_id)
         for row in version.rows:
-            if row.activity_reference_no != row.reference_as_read:  # the plan's text gave it (ticket 78)
+            if row.activity_reference_no != row.activity_reference_no_as_read:  # the plan's text gave it (ticket 78)
                 row.reference_repair = PLAN_TEXT
                 row.reference_carried_by = f"{PLAN_TEXT_EVIDENCE}:{version.document_id}"
             else:
-                found = reference(row.activity_reference_no, records)
+                found = reference(row.activity_reference_no, records, from_notices)
                 row.activity_reference_no, row.reference_repair, row.reference_carried_by = (
                     found.written, found.repair, found.carried_by)
         each = [Counter(words([row.description_as_read])) for row in version.rows]

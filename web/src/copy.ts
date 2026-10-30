@@ -1353,6 +1353,8 @@ export const copy = {
       cancelled_millions: "Canceled (US$, millions)",
       loan_number: "Loan or credit",
       activity_reference_no: "Activity",
+      // A plan row's reference as the layout parser read it, where one look-alike swap repaired it (ticket 131).
+      activity_reference_no_as_read: "Activity, as I read it from the plan",
       planned_completion_on: "Planned completion",
       days_after_closing: "Days after closing",
       // The fields a plan signal adds to its plan row (ticket 37): the date as first published, and the amounts.

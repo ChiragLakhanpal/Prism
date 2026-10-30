@@ -44,6 +44,12 @@
 -- pdf_page                    the PDF page the row is on
 -- parser                      the layout parser that read the page
 -- public_from                 the version's public date (ADR 0002)
+--
+-- A table made before ticket 131 lacks activity_reference_no_as_read, reference_repair, reference_carried_by,
+-- description_as_read and description_joins, and CREATE TABLE IF NOT EXISTS adds none. On such a workspace,
+-- run this once before any bundle or App deploy; it puts the columns last:
+--   ALTER TABLE strata.silver.plan_rows ADD COLUMNS (activity_reference_no_as_read STRING, reference_repair STRING,
+--     reference_carried_by STRING, description_as_read STRING, description_joins STRING)
 CREATE TABLE IF NOT EXISTS strata.silver.plan_rows (
   document_id STRING NOT NULL,
   project_id STRING NOT NULL,

@@ -137,6 +137,7 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
     sources.toml), then read the Procurement Plans of the projects plans_for names (a project ID or
     several; none when it is None)."""
     manifest = manifest or fmt.load_manifest()
+    projects = (plans_for,) if isinstance(plans_for, str) else tuple(plans_for or ())
     out.parent.mkdir(parents=True, exist_ok=True)
     building = out.with_name(f"{out.stem}.building{out.suffix}")  # ignored by git like the database itself
     for leftover in (building, building.with_name(building.name + ".wal")):
@@ -149,7 +150,7 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
             # Every recorded plan, though the nightly job reads only each project's newest (config/thresholds.toml,
             # ingestion.plan_versions; ticket 108): the tests compare P156634's versions, first listings and delays.
             every = plans.with_plan_versions(load_thresholds(), plans.EVERY_VERSION)
-            for project_id in ((plans_for,) if isinstance(plans_for, str) else plans_for or ()):
+            for project_id in projects:
                 plans.run_on_fixture(engine, project_id, manifest=manifest, clock=clock, thresholds=every)
             if tables == catalog.TABLES:  # the lakehouse run needs the real table definitions
                 # The job's own parse_and_embed reads no documents here: the plan reader ran above, so gold's
@@ -160,7 +161,7 @@ def build(out=FIXTURE_DB, manifest=None, tables=catalog.TABLES, plans_for=PLAN_P
                 # The plan rows written again now that silver.notices holds the projects' notices, as on the
                 # workspace, where bronze_to_gold runs before the plan reader: the repair takes the notices as its
                 # dictionary (strata.reader.repair; ticket 131). Gold syncs the rows that changed.
-                for project_id in ((plans_for,) if isinstance(plans_for, str) else plans_for or ()):
+                for project_id in projects:
                     plans.rewrite(engine, project_id, thresholds=every)
                 gold.build(engine)
                 passages.run_on_fixture(engine, manifest=manifest, run_id=RUN_ID, clock=clock)

@@ -2706,15 +2706,16 @@ class References:
     kinds: dict[str, str]  # each kind code a reference carries, with STEP's procurement category for it
     methods: tuple[str, ...]  # the method codes STEP writes as a reference's method part
     look_alikes: tuple[tuple[str, str], ...]  # pairs of characters a PDF's text can give one for the other
+    join_guard_letters: int  # halves of this many letters or more that the notices use on their own stay apart
 
 
 def load_references(path: Path = CONFIG_DIR / "references.toml") -> References:
     """The parts STEP writes an Activity Reference No. with, and the look-alike pairs the plan reader's repair tries
-    (ticket 131). Each kind is two capital letters, each method code is capital letters, and each look-alike pair
-    is two different single characters."""
+    (ticket 131). Each kind is two capital letters, each method code is capital letters, each look-alike pair
+    is two different single characters, and join_guard_letters is 1 or more."""
     data = _read(path)
     entry = _Entry(path, "the file", data)
-    entry.only({"kinds", "methods", "look_alikes"})
+    entry.only({"kinds", "methods", "look_alikes", "join_guard_letters"})
     kinds = _Entry(path, "kinds", data.get("kinds", {})).table
     if not kinds or not all(re.fullmatch(r"[A-Z]{2}", code) and isinstance(name, str) and name.strip()
                             for code, name in kinds.items()):
@@ -2727,7 +2728,10 @@ def load_references(path: Path = CONFIG_DIR / "references.toml") -> References:
             isinstance(pair, list) and len(pair) == 2 and all(isinstance(c, str) and len(c) == 1 for c in pair)
             and pair[0] != pair[1] for pair in pairs):
         raise ConfigError(f"In {path.name}, look_alikes must list pairs of two different single characters.")
-    return References(dict(kinds), methods, tuple((a, b) for a, b in pairs))
+    guard = entry.integer("join_guard_letters")
+    if guard < 1:
+        raise ConfigError(f"In {path.name}, join_guard_letters must be a whole number of letters, 1 or more.")
+    return References(dict(kinds), methods, tuple((a, b) for a, b in pairs), guard)
 
 
 # ── The nightly job's quality checks ─────────────────────────────────────
