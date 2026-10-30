@@ -1559,6 +1559,7 @@
      "country",
      "notice_to"
     ],
+    "period": "plan_date",
     "country_name": "Kenya"
    },
    "counts": {

@@ -542,8 +542,13 @@ is planning that has no STEP row yet, and returns their past range: how long eac
 procurement notice to its signed contract. It reads notices and contract awards from every project, joined on \
 the STEP reference, and picks comparables by stated criteria: method, category, market approach, review type, \
 size band, region and period. Each criterion you leave out defaults from the package's plan row: its Method, its \
-category and its project's country, with notices from {past_range.period_from} to the plan's date. With no \
-step_reference, a criterion you leave out stays open, and notices run to the as-of date. Market approach, review type and size band stay open unless you \
+category and its project's country, with notices from {past_range.period_from} to the plan's date. A plan older \
+than that start runs the period to the as-of date instead. With no \
+step_reference, a criterion you leave out stays open, and notices run to the as-of date. The result's criteria.period \
+says how the period ends: plan_date, as_of, asked, or plan_before_data and plan_before_start for a plan older than its \
+start. A period that ends before it starts matches no package, and criteria.period then says why: before_data when the \
+as-of date comes before {past_range.period_from}, ends_before_start when a date you gave makes it so. Name no period then. \
+Market approach, review type and size band stay open unless you \
 give them, because a package still open has no review type or signed amount in any record. Write any to \
 leave a criterion open. It returns one row per comparable, shortest first, with its days and months and \
 whether it is still open, and a coverage line that says how many matching packages it could not use and why. \
@@ -636,7 +641,7 @@ description = "Only packages whose specific procurement notice is dated on or af
 name = "notice_to"
 type = "date"
 required = false
-description = "Only packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date."
+description = "Only packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date, or for the as-of date when the plan is older than the period's start."
 
 [[tools.find_comparables.parameters]]
 name = "as_of"
@@ -772,7 +777,7 @@ description = "Comparable packages whose specific procurement notice is dated on
 name = "notice_to"
 type = "date"
 required = false
-description = "Comparable packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date."
+description = "Comparable packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date, or for the as-of date when the plan is older than the period's start."
 
 [[tools.estimate_time.parameters]]
 name = "described_amount_usd"
@@ -1162,7 +1167,7 @@ description = "Only packages whose specific procurement notice is dated on or af
 name = "notice_to"
 type = "date"
 required = false
-description = "Only packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date."
+description = "Only packages whose specific procurement notice is dated on or before this date. Leave it out for the plan's date, or for the as-of date when the plan is older than the period's start."
 
 [[tools.rebidding_risk.parameters]]
 name = "as_of"

@@ -4070,6 +4070,13 @@ export const copy = {
       sizeTo: "had signed contracts of US${to} or less",
       region: "were in {region}",
       period: "had notices from {from} to {to}",
+      // A plan older than the period's start runs the period to the as-of date, in a sentence of its own that says why
+      // (ticket 137; web/src/lib/period.ts picks it from find_comparables' criteria.period). periodOlder names the
+      // dataset whose first day starts the period (past_range.period_from), because Strata also holds awards from
+      // before it (fiscal 2001 to 2016, and award notices of fiscal 2017 to 2019).
+      periodOlder:
+        "The plan is older than the contract awards data since fiscal 2020, so I compared packages with notices from {from} to {to}.",
+      periodOlderThanStart: "The plan is older than the period's start, so I compared packages with notices from {from} to {to}.",
     },
     // The coverage line's noun and one phrase per reason code find_comparables returns
     // (config/tools.toml, [tools.find_comparables.result]).
@@ -4251,6 +4258,18 @@ export const copy = {
       noneSizeTo: "have signed contracts of US${to} or less",
       noneRegion: "be in {region}",
       nonePeriod: "have notices from {from} to {to}",
+      // The same two as the note's periodOlder and periodOlderThanStart, for a search that found nothing (ticket 137).
+      nonePeriodOlder:
+        "The plan is older than the contract awards data since fiscal 2020, so I looked for packages with notices from {from} to {to}.",
+      nonePeriodOlderThanStart: "The plan is older than the period's start, so I looked for packages with notices from {from} to {to}.",
+      // A period that would end before it starts names no range: it says why no package can match (ticket 137). Its
+      // start is past_range.period_from, the first day of the contract awards data since fiscal 2020; the awards of
+      // fiscal 2001 to 2016 and the award notices of fiscal 2017 to 2019 come before it, so the sentence names the
+      // period's start, never the start of every award Strata holds.
+      noneBeforeData:
+        "The period of notices starts on {from}, when the contract awards data since fiscal 2020 begin. That is after the as-of " +
+        "date of {asOf}, so no past package can match.",
+      noneEndsBeforeStart: "The period of notices ends before it starts, so no past package can match.",
       noneEnd: "Data readiness shows which records I hold for this region and period.",
       // The coverage line's words, so one screen never names the page two ways (ticket 58).
       noneLink: "See Data readiness for these sources",

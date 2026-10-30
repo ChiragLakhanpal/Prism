@@ -48,6 +48,7 @@ import {
 } from "./TimeEstimate";
 import { cx } from "../lib/cx";
 import { formatCount, formatDate, formatNumber } from "../lib/format";
+import { periodWords, type PeriodForm } from "../lib/period";
 import { dataReadinessHref } from "../routes";
 import { Button } from "./Button";
 import { CoverageLine } from "./Checks";
@@ -474,10 +475,12 @@ function NoChartBlock({ title, lead, children }: { title: ReactNode; lead?: Reac
 export const planCheckHref = (pkg: { project_id: string; step_reference: string; plan: { agency_id: string; plan_date: string } }) =>
   `/projects/${pkg.project_id}/procurement/${pkg.plan.agency_id}/${pkg.plan.plan_date}#${encodeURIComponent(pkg.step_reference)}`;
 
-// The criteria the tool used, as phrases: the fields compared, and the others in a second sentence.
-function criteriaParts(result: ComparablesResult, form: "note" | "empty") {
+// The criteria the tool used, as phrases: the fields compared, and the others in a second sentence. The period of
+// notices is one of those phrases, or a sentence of its own after them when the plan is older than the period's start
+// or the period could hold no package (web/src/lib/period.ts; ticket 137).
+function criteriaParts(result: ComparablesResult, form: PeriodForm) {
   const criteria = result.criteria;
-  if (!criteria) return { fields: [] as ReactNode[], parts: [] as ReactNode[] };
+  if (!criteria) return { fields: [] as ReactNode[], parts: [] as ReactNode[], period: null };
   const f = copy.packagePage.facts;
   const named: [string, string | null][] = [
     [f.method, criteria.method],
@@ -503,18 +506,15 @@ function criteriaParts(result: ComparablesResult, form: "note" | "empty") {
   if (criteria.country_name) {
     parts.push(<Fill key="region" template={form === "note" ? n.region : e.noneRegion} slots={{ region: criteria.country_name }} />);
   }
-  parts.push(
-    <Fill
-      key="period"
-      template={form === "note" ? n.period : e.nonePeriod}
-      slots={{ from: <Num date={criteria.notice_from} />, to: <Num date={criteria.notice_to} /> }}
-    />,
-  );
-  return { fields, parts };
+  const said = periodWords(criteria, form, result.as_of);
+  const dates = Object.fromEntries(Object.entries(said.slots).map(([slot, date]) => [slot, <Num date={date} />]));
+  const period = <Fill key="period" template={said.template} slots={dates} />;
+  if (said.part) parts.push(period);
+  return { fields, parts, period: said.part ? null : period };
 }
 
 function Looked({ result }: { result: ComparablesResult }) {
-  const { fields, parts } = criteriaParts(result, "empty");
+  const { fields, parts, period } = criteriaParts(result, "empty");
   return (
     <>
       {fields.length > 0 && (
@@ -522,13 +522,19 @@ function Looked({ result }: { result: ComparablesResult }) {
           <Fill template={words.empty.noneLooked} slots={{ fields: <Joined items={fields} /> }} />{" "}
         </>
       )}
-      <Fill template={words.empty.noneHadTo} slots={{ parts: <Joined items={parts} /> }} /> {words.empty.noneEnd}
+      {parts.length > 0 && (
+        <>
+          <Fill template={words.empty.noneHadTo} slots={{ parts: <Joined items={parts} /> }} />{" "}
+        </>
+      )}
+      {period && <>{period} </>}
+      {words.empty.noneEnd}
     </>
   );
 }
 
 function Note({ result }: { result: ComparablesResult }) {
-  const { fields, parts } = criteriaParts(result, "note");
+  const { fields, parts, period } = criteriaParts(result, "note");
   return (
     <p className="text-chart-text-subtle" data-chart-note>
       <span className="font-bold text-chart-text">{words.note.label}</span>{" "}
@@ -537,7 +543,13 @@ function Note({ result }: { result: ComparablesResult }) {
           <Fill template={words.note.same} slots={{ fields: <Joined items={fields} /> }} />{" "}
         </>
       )}
-      <Fill template={words.note.they} slots={{ parts: <Joined items={parts} /> }} />
+      {parts.length > 0 && <Fill template={words.note.they} slots={{ parts: <Joined items={parts} /> }} />}
+      {period && (
+        <>
+          {parts.length > 0 && " "}
+          {period}
+        </>
+      )}
     </p>
   );
 }
