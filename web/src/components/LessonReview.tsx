@@ -13,7 +13,7 @@ import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { itemHref, type Clock, type HistoryEvent, type Item, type QueueRow as Row } from "../lib/lessons";
 import { Fill } from "./Fill";
-import { EvidenceBadge, fillText } from "./LessonParts";
+import { actorText, EvidenceBadge, fillText } from "./LessonParts";
 import { ProjectId } from "./ProjectId";
 import { Num } from "./Num";
 import { STATES, type State } from "./state";
@@ -85,17 +85,17 @@ export function NextLines({ row }: { row: Row }) {
     const date = <Num date={origin.on} />;
     lines.push(
       origin.kind === "cross_check" ? (
-        <Fill template={r.nextCrossCheck} slots={{ name: origin.name ?? "", region: origin.region ?? "", date }} />
+        <Fill template={r.nextCrossCheck} slots={{ actor: actorText(origin.actor), date }} />
       ) : origin.kind === "edition" ? (
         <Fill template={r.nextEdition} slots={{ date, edition: origin.reason ?? "" }} />
       ) : (
-        <Fill template={r.nextAsked} slots={{ name: origin.name ?? "", date }} />
+        <Fill template={r.nextAsked} slots={{ actor: actorText(origin.actor), date }} />
       ),
     );
   }
   if (row.stage === "decision" && row.recommendation) {
     const phrase = r.phrases[row.recommendation.phrase] ?? row.recommendation.phrase;
-    lines.push(<Fill template={r.nextDecide} slots={{ name: row.recommendation.name, phrase, date: <Num date={row.recommendation.on} /> }} />);
+    lines.push(<Fill template={r.nextDecide} slots={{ actor: actorText(row.recommendation.actor), phrase, date: <Num date={row.recommendation.on} /> }} />);
   } else if (row.stage === "recommendation" && row.group === "others" && !row.can.reason_code) {
     lines.push(r.nextRecommend);
   }
@@ -141,11 +141,6 @@ export function QueueRow({ row }: { row: Row }) {
 }
 
 // ── History ──────────────────────────────────────────────────────────────
-
-const ROLE: Record<string, string> = {
-  "accredited procurement specialist": words.review.roles.accredited,
-  "lead procurement specialist": words.review.roles.lead,
-};
 
 function valueText(field: string, value: unknown, lists: { risk_factors: Item[]; stages: Item[]; kinds: Item[] }): string {
   const label = (items: Item[], key: unknown) => items.find((item) => item.key === key)?.label ?? String(key ?? "");
@@ -194,8 +189,8 @@ function Changes({ event, lists }: { event: HistoryEvent; lists: { risk_factors:
 
 function eventSentence(event: HistoryEvent): ReactNode {
   const h = words.review.history;
-  const name = event.name ?? "";
-  const role = ROLE[event.role ?? ""] ?? event.role ?? "";
+  // Who acted, by the server's one rule (ticket 140): never a name or an email.
+  const actor = actorText(event.actor);
   switch (event.event) {
     case "proposed":
       return (
@@ -207,26 +202,26 @@ function eventSentence(event: HistoryEvent): ReactNode {
     case "restatement":
       return <Fill template={h.restatement} slots={{ date: event.review_date ? <Num date={event.review_date} /> : "" }} />;
     case "recheck_asked":
-      return fillText(h.asked, { name });
+      return fillText(h.asked, { actor });
     case "recheck_edition":
       return fillText(h.edition, { edition: event.reason ?? "" });
     case "recheck_cross_check":
-      return fillText(h.crossCheckStarted, { name });
+      return fillText(h.crossCheckStarted, { actor });
     case "recommended":
       return event.outcome === "change"
-        ? fillText(h.recommendedChange, { name, role })
-        : fillText(h.recommended, { name, role, phrase: words.row.phrases[event.outcome ?? ""] ?? "" });
+        ? fillText(h.recommendedChange, { actor })
+        : fillText(h.recommended, { actor, phrase: words.row.phrases[event.outcome ?? ""] ?? "" });
     case "decided": {
       const phrase = h.decisions[event.outcome ?? ""] ?? "";
       return (
         <Fill
           template={h.decided}
-          slots={{ name, phrase: <Fill template={phrase} slots={{ target: event.target ?? "", version: event.version ? <Num value={event.version} /> : "" }} /> }}
+          slots={{ actor, phrase: <Fill template={phrase} slots={{ target: event.target ?? "", version: event.version ? <Num value={event.version} /> : "" }} /> }}
         />
       );
     }
     case "cross_checked":
-      return fillText(event.outcome === "agree" ? h.agreed : h.disagreed, { name, region: event.region ?? "" });
+      return fillText(event.outcome === "agree" ? h.agreed : h.disagreed, { actor });
     default:
       return null;
   }
@@ -256,7 +251,7 @@ export function HistoryList({ events, lists, headingId, stacked = false }: { eve
                   </>
                 )}
               </p>
-              {wordingChanged && <p className="mt-1">{fillText(h.wordingChanged, { name: event.name ?? "" })}</p>}
+              {wordingChanged && <p className="mt-1">{fillText(h.wordingChanged, { actor: actorText(event.actor) })}</p>}
               <Changes event={event} lists={lists} />
             </div>
           </li>

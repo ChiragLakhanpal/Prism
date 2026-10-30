@@ -4707,3 +4707,35 @@ It worked if section 1 reads "They had to be in India. The plan is older than th
 While on the page, also note whether the plan-row panel shows a raw "{agency}" ("{agency} plan of June 20, 2018"). The verifier saw it on the fixture copy, where the stand-in plan row has no implementing agency. It is outside this ticket's criteria, and a note here helps a follow-up ticket.
 
 Record section 1's sentence word for word, the comparables answer's `notice_from`, `notice_to` and `period`, the commit the App runs and the time here under ticket 137. This is criterion 3's live proof.
+
+## Ticket 140, step 1 of 2: redeploy the App
+
+The merger parked this on October 30, 2026, after merge commit 7a146529. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after 7a146529. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Only the App's server and web code changed: `Roles.actor` in `src/strata/config.py`, the lesson review and the Lessons page (`src/strata/knowledge/lessons/review.py` and `page.py`), Passage reports (`src/strata/knowledge/retrieval/reports.py`), and the web's `actorText` with its copy. No table, job, tool description or agent prompt changed, so no bundle deploy and no agent sync is needed. Tickets 134 and 137 park an App redeploy too; one deploy from a snapshot at or after 7a146529 serves all three. If a later merge's redeploy already runs 7a146529 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 7a146529 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 140.
+
+## Ticket 140, step 2 of 2: the review queue names the owner as "you" and everyone else by role (criterion 3)
+
+Run after step 1, read-only. Sign in to the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, as the owner (chirag.lakhanpal.cl@gmail.com), in a fresh browser context, so no answer kept from before the redeploy is shown.
+
+1. Open `/lessons/review`.
+2. Open one item's page from the queue.
+3. Open `/lessons`.
+4. From the same signed-in browser, call `GET /api/lessons/review`.
+
+It worked if:
+
+- every queue row's `recommendation` and `origin` holds `actor` and no `name`;
+- the owner's own acts read "You recommended ... on {date}.";
+- anyone else's acts read "A/An {role} for {region} ...". The live `config/roles.toml` lists only the owner, so an act that anyone else recorded reads "A reviewer ...";
+- "Chirag Lakhanpal" and no email appear anywhere in the page content of the three pages.
+
+If the queue holds no item, record that it is empty and that the item page could not be opened; the proof then waits for the first recommendation on the workspace.
+
+While on `/lessons`, also open its public preview (`/lessons?view=public`) and note whether a card reads "You decided ...". The verifier found that a preview still names the viewer's own act "You" (review follow-up 1, outside this ticket's criteria); a note here helps the follow-up ticket.
+
+Record the lines word for word, the commit the App runs and the time here under ticket 140. This is criterion 3's live proof.

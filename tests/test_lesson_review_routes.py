@@ -12,7 +12,10 @@ Expected values come from tests/ground_truth/values.toml and the 29 design brief
 """
 
 import asyncio
+import dataclasses
 import datetime as dt
+import json
+import re
 import shutil
 import tomllib
 from pathlib import Path
@@ -42,6 +45,9 @@ LEELA = viewer("leela.iyer@worldbank.example")  # lead, South Asia, works on P13
 OMAR = viewer("omar.haddad@worldbank.example")  # lead, South Asia
 PRIYA = viewer("priya.nair@worldbank.example")  # lead, South Asia
 WANJIRU = viewer("wanjiru.kamau@worldbank.example")  # lead, Eastern and Southern Africa
+# How a page names an act's actor to anyone but the actor (ticket 140).
+LEAD_SOUTH_ASIA = {"who": "role", "role": "lead procurement specialist", "region": "South Asia"}
+ACCREDITED_SOUTH_ASIA = {"who": "role", "role": "accredited procurement specialist", "region": "South Asia"}
 
 
 @pytest.fixture
@@ -237,10 +243,11 @@ def test_a_decision_makes_the_lesson_current_at_version_1_with_both_names_reason
     assert version["days_from_publication"] == 2551
 
     history = call(app, "GET", f"/api/lessons/review/{item['item_id']}", ASHA).json()["history"]
-    acts = [(event["event"], event.get("name"), event.get("reason"), event["on"]) for event in history
+    # The record keeps both names; the page names Asha's act as hers and Omar's by role (ticket 140).
+    acts = [(event["event"], event.get("actor"), event.get("reason"), event["on"]) for event in history
             if event["event"] in ("recommended", "decided")]
-    assert acts == [("recommended", "Asha Raman", "The ICR and IEG both say it.", TODAY.isoformat()),
-                    ("decided", "Omar Haddad", "Clear evidence from two reports.", TODAY.isoformat())]
+    assert acts == [("recommended", {"who": "you"}, "The ICR and IEG both say it.", TODAY.isoformat()),
+                    ("decided", LEAD_SOUTH_ASIA, "Clear evidence from two reports.", TODAY.isoformat())]
 
     library = call(app, "GET", "/api/lessons", ANA).json()
     [lesson] = library["lessons"]
@@ -471,7 +478,108 @@ def test_a_retirement_writes_a_new_version_that_records_was_now_and_the_reason(a
     assert call(app, "GET", "/api/lessons", ASHA).json()["lessons"] == []
 
 
+# ── Who an act names (ticket 140) ────────────────────────────────────────
+#
+# One rule names the person behind an act: "you" to that person, their role and region to everyone else the roles
+# file lists, and "a reviewer" for anyone it no longer lists. No answer holds a person's name or email.
+
+def people_in(answer) -> list[str]:
+    """Every name or email of a person in the roles file that an answer holds."""
+    text = json.dumps(answer).lower()
+    return [found for person in ROLES.people for found in (person.name, person.email) if found.lower() in text]
+
+
+def test_a_recommendation_names_you_to_the_one_who_made_it_and_their_role_and_region_to_others(app):
+    item = item_for(app, OMAR, REBIDDING)
+    act(app, OMAR, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Clear.")
+
+    mine, theirs = item_for(app, OMAR, REBIDDING), item_for(app, PRIYA, REBIDDING)
+
+    assert mine["recommendation"]["actor"] == {"who": "you"}
+    assert theirs["recommendation"]["actor"] == LEAD_SOUTH_ASIA
+    assert people_in(mine) == people_in(theirs) == []
+
+
+def test_an_item_s_history_names_each_act_s_actor_by_the_same_rule(app):
+    item = item_for(app, ASHA, REBIDDING)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    act(app, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Agree.")
+
+    def actors(headers) -> tuple[list, dict]:
+        page = call(app, "GET", f"/api/lessons/review/{item['item_id']}", headers).json()
+        return [(event["event"], event["actor"]) for event in page["history"] if "actor" in event], page
+
+    asha, asha_page = actors(ASHA)
+    priya, priya_page = actors(PRIYA)
+
+    assert asha == [("recommended", {"who": "you"}), ("decided", LEAD_SOUTH_ASIA)]
+    assert priya == [("recommended", ACCREDITED_SOUTH_ASIA), ("decided", LEAD_SOUTH_ASIA)]
+    assert people_in(asha_page) == people_in(priya_page) == []
+
+
+def test_a_re_check_names_who_asked_for_it_by_their_own_region_or_as_you(app):
+    _, recheck = recheck_of_rebidding(app)  # Wanjiru, a lead in Eastern and Southern Africa, asks
+
+    [row] = [row for row in call(app, "GET", "/api/lessons/review", ASHA).json()["groups"]["you"]
+             if row["item_id"] == recheck]
+    asked = call(app, "GET", f"/api/lessons/review/{recheck}", WANJIRU).json()
+
+    assert row["origin"]["actor"] == {"who": "role", "role": "lead procurement specialist",
+                                      "region": "Eastern and Southern Africa"}
+    assert [event["actor"] for event in asked["history"] if event["event"] == "recheck_asked"] == [{"who": "you"}]
+    assert people_in(row) == people_in(asked) == []
+
+
+def test_an_act_by_someone_the_roles_file_no_longer_lists_names_a_reviewer(app, database):
+    item = item_for(app, ASHA, REBIDDING)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    without_asha = dataclasses.replace(ROLES, people=tuple(person for person in ROLES.people
+                                                           if person.email != ASHA["X-Forwarded-Email"]))
+    connection = scenario.OneConnection(database)
+    later = create_app(engine_for=connection.engine_for, lessons=LessonReview(
+        without_asha, today=lambda: TODAY, now=lambda: dt.datetime.combine(TODAY, dt.time(15, 0), tzinfo=dt.UTC)),
+        lesson_record=connection.the_app)
+
+    page = call(later, "GET", f"/api/lessons/review/{item['item_id']}", OMAR).json()
+
+    assert page["recommendation"]["actor"] == {"who": "reviewer"}
+    assert [event["actor"] for event in page["history"] if event["event"] == "recommended"] == [{"who": "reviewer"}]
+    assert people_in(page) == []
+
+
+def test_a_library_card_names_who_decided_its_version_and_who_recommended_it_by_the_same_rule(app):
+    item = item_for(app, ASHA, REBIDDING)
+    act(app, ASHA, item["item_id"], "recommend", expected_stage="recommendation", outcome="add", reason="Yes.")
+    act(app, OMAR, item["item_id"], "decide", expected_stage="decision", outcome="add", reason="Agree.")
+
+    [omar] = call(app, "GET", "/api/lessons", OMAR).json()["lessons"]
+    [ana] = call(app, "GET", "/api/lessons", ANA).json()["lessons"]
+
+    assert (omar["decided_by"], omar["recommended_by"]) == ({"who": "you"}, ACCREDITED_SOUTH_ASIA)
+    assert (ana["decided_by"], ana["recommended_by"]) == (LEAD_SOUTH_ASIA, ACCREDITED_SOUTH_ASIA)
+    assert people_in(omar) == people_in(ana) == []
+
+
 # ── The screens' recorded answers ────────────────────────────────────────
+
+def test_no_recorded_answer_a_lessons_page_reads_holds_a_person_s_name_or_email():
+    """Ticket 140: the answers the pages under /lessons read (the library, Waiting for review and each item, Passage
+    reports, Judging, and the frame's counts), which the screen tests and the design gallery serve, hold no name or email
+    of anyone in either roles file, nor any email at all. A draft's lesson choices (lessons-choice-*) are the draft
+    page's."""
+    folder = ROOT / "tests" / "fixtures" / "api"
+    answers = [path for pattern in ("lessons-*.json", "passage-report*.json", "judging*.json", "retrieval-me-*.json")
+               for path in sorted(folder.glob(pattern)) if not path.name.startswith("lessons-choice-")]
+    people = [*ROLES.people, *load_roles().people]
+    words = {word.lower() for person in people for word in (person.name, person.email)}
+    email = re.compile(r"[\w.%+-]+@[\w-]+\.[\w.]+")
+
+    assert len(answers) > 60  # every Lessons screen's recordings, not a pattern that matches nothing
+    held = {path.name: sorted({word for word in words if word in path.read_text().lower()}
+                              | set(email.findall(path.read_text())))
+            for path in answers}
+    assert {name: found for name, found in held.items() if found} == {}
+
 
 def test_the_screens_recorded_lesson_answers_are_what_the_routes_answer(fixture_db, tmp_path):
     """tests/record_lessons_api.py writes the answers the Lessons screens' tests and the gallery serve, from one

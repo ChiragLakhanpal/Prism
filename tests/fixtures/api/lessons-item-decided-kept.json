@@ -38,12 +38,12 @@
   "may_repeat": false,
   "clock": null,
   "recommendation": {
-    "name": "Asha Raman",
-    "role": "accredited procurement specialist",
+    "actor": {
+      "who": "you"
+    },
     "phrase": "change",
     "on": "2026-10-28",
     "reason": "The lesson holds, and current market rates is what the new rules ask for.",
-    "region": "South Asia",
     "repeat_of": null,
     "change": {
       "statement": "Base works cost estimates on current market rates to avoid rebidding",
@@ -58,10 +58,13 @@
   },
   "origin": {
     "kind": "asked",
-    "name": "Wanjiru Kamau",
+    "actor": {
+      "who": "role",
+      "role": "lead procurement specialist",
+      "region": "Eastern and Southern Africa"
+    },
     "on": "2026-10-28",
-    "reason": "The 2025 Procurement Regulations changed how cost estimates are prepared.",
-    "region": null
+    "reason": "The 2025 Procurement Regulations changed how cost estimates are prepared."
   },
   "decided": null,
   "can": {
@@ -176,15 +179,19 @@
     {
       "event": "recheck_asked",
       "on": "2026-10-28",
-      "name": "Wanjiru Kamau",
+      "actor": {
+        "who": "role",
+        "role": "lead procurement specialist",
+        "region": "Eastern and Southern Africa"
+      },
       "reason": "The 2025 Procurement Regulations changed how cost estimates are prepared."
     },
     {
       "event": "recommended",
       "on": "2026-10-28",
-      "name": "Asha Raman",
-      "role": "accredited procurement specialist",
-      "region": "South Asia",
+      "actor": {
+        "who": "you"
+      },
       "outcome": "change",
       "reason": "The lesson holds, and current market rates is what the new rules ask for.",
       "changes": [
@@ -198,9 +205,11 @@
     {
       "event": "decided",
       "on": "2027-01-04",
-      "name": "Omar Haddad",
-      "role": "lead procurement specialist",
-      "region": "South Asia",
+      "actor": {
+        "who": "role",
+        "role": "lead procurement specialist",
+        "region": "South Asia"
+      },
       "outcome": "keep",
       "reason": "The lesson already says market rates, and the new rules ask for the same.",
       "changes": [],

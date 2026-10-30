@@ -47,10 +47,13 @@
   "recommendation": null,
   "origin": {
     "kind": "asked",
-    "name": "Wanjiru Kamau",
+    "actor": {
+      "who": "role",
+      "role": "lead procurement specialist",
+      "region": "Eastern and Southern Africa"
+    },
     "on": "2026-10-28",
-    "reason": "The 2025 Procurement Regulations changed how cost estimates are prepared.",
-    "region": null
+    "reason": "The 2025 Procurement Regulations changed how cost estimates are prepared."
   },
   "decided": null,
   "can": {
@@ -165,7 +168,11 @@
     {
       "event": "recheck_asked",
       "on": "2026-10-28",
-      "name": "Wanjiru Kamau",
+      "actor": {
+        "who": "role",
+        "role": "lead procurement specialist",
+        "region": "Eastern and Southern Africa"
+      },
       "reason": "The 2025 Procurement Regulations changed how cost estimates are prepared."
     }
   ],

@@ -19,7 +19,7 @@ import { Alert } from "./Alert";
 import { Button } from "./Button";
 import { Fill } from "./Fill";
 import { DefinitionWindow } from "./Term";
-import { EvidenceBadge, fillText, SourceChip, Tag } from "./LessonParts";
+import { actorText, EvidenceBadge, fillText, SourceChip, Tag } from "./LessonParts";
 import { ProjectId } from "./ProjectId";
 import { Num } from "./Num";
 import { ReasonField } from "./DecisionForm";
@@ -258,7 +258,15 @@ export function LessonCard({
             triggerClassName="inline-flex min-h-6 items-center text-small"
           >
             <span data-lesson-decided>
-              <Fill template={words.card.decided} slots={{ version: <Num value={card.version} />, date: <Num date={card.decided_on} /> }} />
+              <Fill
+                template={words.card.decided}
+                slots={{
+                  decider: actorText(card.decided_by),
+                  recommender: actorText(card.recommended_by, true),
+                  version: <Num value={card.version} />,
+                  date: <Num date={card.decided_on} />,
+                }}
+              />
             </span>
           </DefinitionWindow>
         )}
@@ -297,7 +305,11 @@ export function LessonCard({
             <p>{card.edition ? fillText(words.card.rules, { edition: card.edition.name }) : words.card.rulesUnknown}</p>
             {retired && (
               <p data-retired-line>
-                <Fill template={copy.lessonsPage.retiredLine} slots={{ date: <Num date={retired.on} />, reason: retired.reason }} />
+                {/* The retired version's decided_by is the lead who retired it (ticket 140). */}
+                <Fill
+                  template={card.decided_by?.who === "you" ? copy.lessonsPage.retiredLineYou : copy.lessonsPage.retiredLine}
+                  slots={{ actor: actorText(card.decided_by), date: <Num date={retired.on} />, reason: retired.reason }}
+                />
               </p>
             )}
           </>

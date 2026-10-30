@@ -556,7 +556,13 @@ def test_new_lessons_show_their_evidence_badge_and_who_decided_them_by_role(stor
     assert cards[story_of.IEG_LESSON]["ieg_status"] == "ieg_lesson"
     assert [tag["label"] for tag in cards[story_of.REBIDDING_LESSON]["methods"]] == ["Request for Bids (RFB)"]
     assert page["new_lessons"]["more"] == 0
-    assert "decided_by" not in cards[story_of.REBIDDING_LESSON]  # roles, never names
+    # Roles and regions, never names or emails (ticket 140): Omar decided after Asha recommended, and Ana reads both by role.
+    rebidding = cards[story_of.REBIDDING_LESSON]
+    assert (rebidding["decided_by"], rebidding["recommended_by"]) == (
+        {"who": "role", "role": "lead procurement specialist", "region": "South Asia"},
+        {"who": "role", "role": "accredited procurement specialist", "region": "South Asia"})
+    held = json.dumps(page["new_lessons"]).lower()
+    assert not any(word in held for word in ("asha", "omar", "raman", "haddad", "@worldbank.example"))
 
 
 def test_a_lesson_resting_on_an_icr_with_no_icr_review_yet_awaits_ieg_review():

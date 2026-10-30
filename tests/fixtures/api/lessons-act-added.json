@@ -39,12 +39,14 @@
     "may_repeat": false,
     "clock": null,
     "recommendation": {
-      "name": "Asha Raman",
-      "role": "accredited procurement specialist",
+      "actor": {
+        "who": "role",
+        "role": "accredited procurement specialist",
+        "region": "South Asia"
+      },
       "phrase": "add",
       "on": "2026-10-27",
       "reason": "The ICR and IEG's review both say estimates below market rates led to rebidding.",
-      "region": "South Asia",
       "repeat_of": null,
       "change": null
     },
@@ -379,9 +381,11 @@
       {
         "event": "recommended",
         "on": "2026-10-27",
-        "name": "Asha Raman",
-        "role": "accredited procurement specialist",
-        "region": "South Asia",
+        "actor": {
+          "who": "role",
+          "role": "accredited procurement specialist",
+          "region": "South Asia"
+        },
         "outcome": "add",
         "reason": "The ICR and IEG's review both say estimates below market rates led to rebidding.",
         "changes": []
@@ -389,9 +393,9 @@
       {
         "event": "decided",
         "on": "2026-10-27",
-        "name": "Omar Haddad",
-        "role": "lead procurement specialist",
-        "region": "South Asia",
+        "actor": {
+          "who": "you"
+        },
         "outcome": "add",
         "reason": "Two reports state it, and it names a step to take.",
         "changes": [],

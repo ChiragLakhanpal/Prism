@@ -3,7 +3,11 @@
   "body": {
     "code": "stale",
     "values": {
-      "name": "Daniel Okafor",
+      "actor": {
+        "who": "role",
+        "role": "passage reviewer",
+        "region": null
+      },
       "time": "2026-10-23T11:40:16Z"
     },
     "item": {
@@ -110,7 +114,11 @@
       "outcome": {
         "outcome": "ranked_lower",
         "decided_on": "2026-10-23T11:40:16Z",
-        "reviewer_name": "Daniel Okafor",
+        "actor": {
+          "who": "role",
+          "role": "passage reviewer",
+          "region": null
+        },
         "reason": "The paragraph is about estimates in general. Questions about these contracts need paragraph 55.",
         "agreeing": null
       },

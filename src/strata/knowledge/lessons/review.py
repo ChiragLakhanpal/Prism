@@ -490,12 +490,26 @@ class LessonReview:
         return {"day": min(day, limit), "limit_days": limit, "start_on": _iso(start), "due_on": _iso(due),
                 "overdue_days": overdue, "last_day": due == today}
 
-    def _act(self, act: dict | None) -> dict | None:
+    def actor(self, email: str | None, you: str | None, region: str | None) -> dict:
+        """Who made an act, as the Lessons pages name them: you, their role and region, or a reviewer, never a name or
+        an email (ticket 140; strata.config.Roles.actor holds the rule)."""
+        return self.roles.actor(email, you, PAGE, region)
+
+    def _origin_actor(self, store: Store, item: dict, you: str | None) -> dict | None:
+        """Who started a re-check: the reviewer who asked, for the lesson's region, or who disagreed in a cross-check,
+        for the region that cross-checked; none when I started it because an edition took effect."""
+        if not item["origin_by"]:
+            return None
+        where = (store.items.get(item["origin_item_id"]) or {}).get("region") if item["origin"] == "cross_check" \
+            else item["region"]
+        return self.actor(item["origin_by"], you, where)
+
+    def _act(self, act: dict | None, you: str | None) -> dict | None:
         if act is None:
             return None
-        return {"name": act["actor_name"], "role": act["actor_role"], "phrase": act["outcome"],
-                "on": _iso(act["acted_at"]), "reason": act["reason"], "region": act["actor_region"],
-                "repeat_of": act["repeat_of"], "change": _json(act["change"], None)}
+        return {"actor": self.actor(act["actor"], you, act["actor_region"]), "phrase": act["outcome"],
+                "on": _iso(act["acted_at"]), "reason": act["reason"], "repeat_of": act["repeat_of"],
+                "change": _json(act["change"], None)}
 
     def row(self, store: Store, item: dict, person: Person | None) -> dict:
         """One queue row: what the item is, where it came from, its clock, who acts next or why not you."""
@@ -505,9 +519,8 @@ class LessonReview:
         project = store.projects.get(subject["project_id"]) or {}
         origin = None
         if item["kind"] == "recheck" or (item["kind"] == "new" and item["origin"] == "cross_check"):
-            origin = {"kind": item["origin"], "name": item["origin_by_name"], "on": _iso(item["entered_on"]),
-                      "reason": item["origin_reason"],
-                      "region": (store.items.get(item["origin_item_id"]) or {}).get("region")}
+            origin = {"kind": item["origin"], "actor": self._origin_actor(store, item, person.email if person else None),
+                      "on": _iso(item["entered_on"]), "reason": item["origin_reason"]}
         decided = None
         if item["kind"] == "cross_check":
             checked = store.items.get(item["decided_item_id"]) or {}
@@ -521,7 +534,8 @@ class LessonReview:
                         "country": project.get("country_name"), "sector": project.get("sector_name")},
             **self.ieg(store,subject["evidence"], subject["project_id"]),
             "may_repeat": item["kind"] == "new" and bool(store.repeats(item)),
-            "clock": self.clock(store, item), "recommendation": self._act(store.act(item, "recommend")),
+            "clock": self.clock(store, item),
+            "recommendation": self._act(store.act(item, "recommend"), person.email if person else None),
             "origin": origin, "decided": decided, "can": can,
         }
 
@@ -648,6 +662,7 @@ class LessonReview:
     def detail(self, store: Store, item: dict, person: Person | None) -> dict:
         """The review page: the row, then the evidence in full, the tags, the history and the outcome."""
         row = self.row(store, item, person)
+        you = person.email if person else None
         subject = self.subject(store, item)
         project = store.projects.get(subject["project_id"]) or {}
         ieg = self.ieg(store,subject["evidence"], subject["project_id"])
@@ -661,9 +676,9 @@ class LessonReview:
             "tags": {**tags, "sector": project.get("sector_name")},
             "lesson": {"lesson_id": subject["lesson_id"], "version": subject["version"],
                        "next_version": self._next_version(store, item["lesson_id"]) if item["kind"] == "recheck" else None},
-            "summary": self.summary(store, item), "repeats": self.likely_repeats(store, item),
-            "history": self.history(store, item),
-            "outcome": self.outcome(store, item), "lists": {**self.lists.as_dict(), **lesson_tags.as_dict()},
+            "summary": self.summary(store, item), "repeats": self.likely_repeats(store, item, you),
+            "history": self.history(store, item, you),
+            "outcome": self.outcome(store, item, you), "lists": {**self.lists.as_dict(), **lesson_tags.as_dict()},
             "limits": {"reason_max_chars": int(self.value("reason_max_chars")),
                        "statement_max_chars": int(self.value("statement_max_chars")),
                        "sample_percent": round(float(self.value("cross_check_share")) * 100),
@@ -683,12 +698,12 @@ class LessonReview:
                 "checks": note.get("checks"),
                 "removed": note.get("removed", []), "disagreements": note.get("disagreements", [])}
 
-    def likely_repeats(self, store: Store, item: dict) -> list[dict]:
+    def likely_repeats(self, store: Store, item: dict, you: str | None) -> list[dict]:
         """Each current lesson the writer said the item may repeat, as a compact card with the writer's kept
         sentences about it. New lessons only (the 29 brief, section 5.8)."""
         if item["kind"] != "new":
             return []
-        return [{**self.card(store, repeat["lesson_id"]), "sentences": repeat["sentences"],
+        return [{**self.card(store, repeat["lesson_id"], you), "sentences": repeat["sentences"],
                  "next_version": self._next_version(store, repeat["lesson_id"])}
                 for repeat in store.repeats(item)]
 
@@ -698,12 +713,13 @@ class LessonReview:
         latest = store.latest(lesson_id) if lesson_id else None
         return _int(latest["version"]) + 1 if latest else None
 
-    def history(self, store: Store, item: dict) -> list[dict]:
-        """What happened to the item, in order, each event in the past tense."""
+    def history(self, store: Store, item: dict, you: str | None) -> list[dict]:
+        """What happened to the item, in order, each event in the past tense, each act named by who made it as the
+        viewer you reads it."""
         events = []
         if item["kind"] == "cross_check":
             checked = store.items.get(item["decided_item_id"])
-            events += self.history(store, checked) if checked else []
+            events += self.history(store, checked, you) if checked else []
         elif item["kind"] == "new":
             proposal = store.proposals.get(item["proposal_id"]) or {}
             template = template_for(proposal.get("document_type") or "")
@@ -720,13 +736,12 @@ class LessonReview:
         if item["kind"] == "recheck" or (item["kind"] == "new" and item["origin"] == "cross_check"):
             events.append({"event": {"asked": "recheck_asked", "edition": "recheck_edition"}.get(item["origin"],
                                                                                                "recheck_cross_check"),
-                           "on": _iso(item["entered_on"]), "name": item["origin_by_name"],
+                           "on": _iso(item["entered_on"]), "actor": self._origin_actor(store, item, you),
                            "reason": item["origin_reason"]})
         for act in store.acts.get(item["item_id"], []):
             event = {"recommend": "recommended", "decide": "decided", "cross_check": "cross_checked"}[act["act"]]
-            entry = {"event": event, "on": _iso(act["acted_at"]), "name": act["actor_name"], "role": act["actor_role"],
-                     "region": act["actor_region"], "outcome": act["outcome"], "reason": act["reason"],
-                     "changes": self._changes(store, item, act)}
+            entry = {"event": event, "on": _iso(act["acted_at"]), "actor": self.actor(act["actor"], you, act["actor_region"]),
+                     "outcome": act["outcome"], "reason": act["reason"], "changes": self._changes(store, item, act)}
             if act["act"] == "decide":
                 lesson_id = act["repeat_of"] or store.lesson_of(item)
                 version = store.written_by(lesson_id, item["item_id"])
@@ -761,12 +776,14 @@ class LessonReview:
         return [{"field": key, "was": was.get(key), "now": change.get(key)} for key in TAGS
                 if key in change and change.get(key) != was.get(key)]
 
-    def outcome(self, store: Store, item: dict) -> dict | None:
-        """A decided item's result, for the outcome panel on its record."""
+    def outcome(self, store: Store, item: dict, you: str | None) -> dict | None:
+        """A decided item's result, for the outcome panel on its record. A cross-check's names who checked it, as you
+        reads it."""
         if item["kind"] == "cross_check":
             check = store.act(item, "cross_check")
             return None if check is None else {"outcome": check["outcome"], "on": _iso(check["acted_at"]),
-                                               "decided_region": item["decided_region"]}
+                                               "decided_region": item["decided_region"],
+                                               "actor": self.actor(check["actor"], you, check["actor_region"])}
         decision = store.act(item, "decide")
         if decision is None:
             return None
@@ -786,8 +803,9 @@ class LessonReview:
 
     # ── The library ──────────────────────────────────────────────────────
 
-    def card(self, store: Store, lesson_id: str) -> dict:
-        """One lesson card, naming roles and never people (the 29 brief, section 4.1). A retired lesson's card says
+    def card(self, store: Store, lesson_id: str, you: str | None) -> dict:
+        """One lesson card, naming roles and never people (the 29 brief, section 4.1): who decided its version and who
+        recommended it, by the one rule, so you read "you" for your own act (ticket 140). A retired lesson's card says
         when and why a lead retired it, by role (ticket 39)."""
         latest = store.latest(lesson_id)
         retired = latest["state"] in RETIRED.values()
@@ -796,10 +814,13 @@ class LessonReview:
         recheck = store.open_recheck(lesson_id)
         first = next((row for row in evidence if row["role"] == "source"), None)
         chips_max = int(self.value("card_chips_max"))
+        region = (store.items.get(latest["item_id"]) or {}).get("region") or project.get("region")
         return {
             "lesson_id": lesson_id, "version": _int(latest["version"]), "statement": latest["statement"],
             **self.tags(latest), "sector": project.get("sector_name"), "pid": latest["project_id"],
             **self.ieg(store,evidence, latest["project_id"]), "decided_on": _iso(latest["decided_on"]),
+            "decided_by": self.actor(latest["decided_by"], you, region),
+            "recommended_by": self.actor(latest["recommended_by"], you, region),
             "state": latest["state"] if retired else "rechecking" if recheck else "current",
             "rechecking_since": _iso(recheck["entered_on"]) if recheck else None,
             "retired": {"as": latest["state"], "on": _iso(latest["decided_on"]), "reason": latest["reason"]}
@@ -886,7 +907,7 @@ class LessonReview:
                 "can_recheck": person is not None,
                 "limits": {"reason_max_chars": int(self.value("reason_max_chars"))},
                 "waiting": self._waiting(store, person) if person else None,
-                "lessons": [self.card(store, row["lesson_id"]) for row in shown]}
+                "lessons": [self.card(store, row["lesson_id"], viewer.email) for row in shown]}
 
     @staticmethod
     def count_line(status: str, n: int, m: int, first: int, last: int, pages: int, narrowed: bool) -> list[dict]:

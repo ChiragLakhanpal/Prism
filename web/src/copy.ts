@@ -6574,7 +6574,10 @@ export const copy = {
       quote: '"{quote}"',
       // The version, beside the evidence badge, opens who decided it (ticket 126).
       versionLabel: "Version {version}",
-      decided: "A lead procurement specialist decided version {version} on {date}, after an accredited procurement specialist recommended it.",
+      // Who decided and who recommended, each by lessons.actor (ticket 140): "A lead procurement specialist for South
+      // Asia decided version 1 on October 27, 2026, after an accredited procurement specialist for South Asia
+      // recommended it."
+      decided: "{decider} decided version {version} on {date}, after {recommender} recommended it.",
       rules: "Its projects followed {edition}.",
       rulesUnknown: "I couldn't tell which rules the project followed.",
       rechecking: "Reviewers started a re-check on {date}.",
@@ -6659,6 +6662,20 @@ export const copy = {
         retired_outdated: "Retired as out of date",
       } as Record<string, string>,
     },
+    // Who made an act (ticket 140), as the server's one rule names them (strata.config.Roles.actor): you, their role
+    // with the region they acted for, or a reviewer the roles file no longer lists, and never a name or an email. Each
+    // has the form that starts a sentence and the form inside one. Every {actor} below is one of these.
+    actor: {
+      you: "You",
+      youInside: "you",
+      reviewer: "A reviewer",
+      reviewerInside: "a reviewer",
+      role: "A {role}",
+      roleAn: "An {role}",
+      roleInside: "a {role}",
+      roleAnInside: "an {role}",
+      region: "{who} for {region}",
+    },
     // A queue row (section 5.4), and the same status and clock lines on the review page.
     row: {
       statusYou: {
@@ -6683,9 +6700,9 @@ export const copy = {
       clockCrossCheck: "Due {due}.",
       clockTooltip: "Business days since {start}. Weekends and World Bank holidays don't count.",
       nextRecommend: "Waiting for an accredited procurement specialist to recommend it.",
-      nextDecide: "{name} recommended {phrase} on {date}.",
-      nextAsked: "{name} asked for a re-check on {date}.",
-      nextCrossCheck: "{name} in {region} disagreed with the decision on {date}, so a re-check started.",
+      nextDecide: "{actor} recommended {phrase} on {date}.",
+      nextAsked: "{actor} asked for a re-check on {date}.",
+      nextCrossCheck: "{actor} disagreed with the decision on {date}, so a re-check started.",
       nextEdition: "I started a re-check on {date} because {edition} took effect.",
       phrases: {
         add: "adding it",
@@ -6760,25 +6777,21 @@ export const copy = {
       repeatsNone: "I found no lesson in the library that this repeats.",
       historyOpen: "What has happened so far",
       historyDone: "What happened",
-      roles: {
-        accredited: "accredited procurement specialist",
-        lead: "lead procurement specialist",
-      },
       history: {
         proposed: "I proposed this lesson from the {doc} for {name} ({pid}). The report became public on {date}.",
         restatement: "I attached IEG's restatement from its ICR Review of {date}.",
-        recommended: "{name}, {role}, recommended {phrase}.",
-        recommendedChange: "{name}, {role}, recommended changing it.",
-        decided: "{name}, lead procurement specialist, {phrase}.",
-        asked: "{name} asked for a re-check.",
+        recommended: "{actor} recommended {phrase}.",
+        recommendedChange: "{actor} recommended changing it.",
+        decided: "{actor} {phrase}.",
+        asked: "{actor} asked for a re-check.",
         edition: "I started a re-check because {edition} took effect for the lesson's projects.",
-        crossCheckStarted: "{name} disagreed with a decision in a cross-check, so a re-check started.",
-        agreed: "{name}, {region}, agreed with the decision.",
-        disagreed: "{name}, {region}, disagreed with the decision.",
+        crossCheckStarted: "{actor} disagreed with a decision in a cross-check, so a re-check started.",
+        agreed: "{actor} agreed with the decision.",
+        disagreed: "{actor} disagreed with the decision.",
         reason: 'Reason: "{reason}"',
         was: "Was: {value}",
         now: "Now: {value}",
-        wordingChanged: "{name} changed the wording before adding it.",
+        wordingChanged: "{actor} changed the wording before adding it.",
         merged: "Rested on {quotes} from {reports}.",
         mergedNow: "Rests on {quotes} from {reports}.",
         quotes: { one: "{count} quote", many: "{count} quotes" },
@@ -6885,7 +6898,7 @@ export const copy = {
       refused: "I couldn't save your {act}.",
       acts: { recommend: "recommendation", decide: "decision", cross_check: "cross-check" } as Record<string, string>,
       tryAgain: "Try again",
-      staleLead: "While you had this lesson open, {name} {act} on {date}.",
+      staleLead: "While you had this lesson open, {actor} {act} on {date}.",
       staleActs: { recommend: "recommended it", decide: "made a decision", cross_check: "cross-checked it" } as Record<string, string>,
       staleBody: "I didn't send your reason. You can copy it from the box below.",
       staleReason: "Your reason, not sent",
@@ -6917,8 +6930,9 @@ export const copy = {
         changed: { lead: "Changed to version {version} on {date}.", body: "See the history for both reasons." },
         retired_wrong: { lead: "Retired because it was wrong, on {date}.", body: "See the history for both reasons." },
         retired_outdated: { lead: "Retired because it no longer applies, on {date}.", body: "See the history for both reasons." },
-        agree: { lead: "A reviewer in {region} agreed with this decision on {date}.", body: "See the history for the reasons." },
-        disagree: { lead: "A reviewer in {region} disagreed with this decision on {date}.", body: "A re-check started in the region that decided." },
+        // {actor}: who cross-checked it, by lessons.actor (ticket 140).
+        agree: { lead: "{actor} agreed with this decision on {date}.", body: "See the history for the reasons." },
+        disagree: { lead: "{actor} disagreed with this decision on {date}.", body: "A re-check started in the region that decided." },
       } as Record<string, { lead: string; body: string }>,
     },
     // Ticket 40's previews and as-of view (section 5.15): copy it can use when it lands.
@@ -7092,8 +7106,10 @@ export const copy = {
     },
     nothingMatches: "I have no {noun} that match these filters.",
     nothingMatchesBody: "Try fewer filters. Stage, method and sector each narrow the list.",
-    // A retired lesson's card (brief 29's Lesson card, retired variant).
-    retiredLine: "A lead procurement specialist retired it on {date}. The lead's reason: \"{reason}\"",
+    // A retired lesson's card (brief 29's Lesson card, retired variant). {actor} is the lead who retired it, by
+    // lessons.actor (ticket 140), and you read your own retirement as yours.
+    retiredLine: "{actor} retired it on {date}. The lead's reason: \"{reason}\"",
+    retiredLineYou: "You retired it on {date}. Your reason: \"{reason}\"",
   },
 
   // A version notice (ticket 39; the 39 brief, section 5.3): a lesson that changed after the version a draft row
@@ -7729,7 +7745,8 @@ export const copy = {
       saving: "Saving",
       failed: "I couldn't save your decision just now. Your reason is still here.",
       tryAgain: "Try again",
-      stale: "{name} decided on these reports on {date}, while you had them open.",
+      // {actor} is copy.lessons.actor's (ticket 140): "A passage reviewer decided on these reports ...".
+      stale: "{actor} decided on these reports on {date}, while you had them open.",
       staleBody: "I didn't send your reason. You can copy it from the box below.",
       staleReason: "Your reason, not sent",
       lostRole: "Your account is no longer on the list of passage reviewers, so I couldn't save this.",
@@ -7742,12 +7759,13 @@ export const copy = {
     } as Record<string, { lead: string; body: string }>,
     nextReport: "Open the next report waiting for you",
     backToReports: "Back to Passage reports",
+    // Who decided, by copy.lessons.actor's form inside a sentence (ticket 140): "by you" or "by a passage reviewer".
     record: {
-      ranked_lower: "Ranked lower for questions about {kind} on {date}, by {name}.",
-      kept: "Kept its ranking on {date}, by {name}.",
+      ranked_lower: "Ranked lower for questions about {kind} on {date}, by {actor}.",
+      kept: "Kept its ranking on {date}, by {actor}.",
       ranked_lower_by_agreement: "Ranked lower by agreement on {date}, after {agreeing} people made the same report.",
-      left_lower: "Left ranked lower on {date}, by {name}, after a check.",
-      restored: "Ranking restored on {date}, by {name}, after a check.",
+      left_lower: "Left ranked lower on {date}, by {actor}, after a check.",
+      restored: "Ranking restored on {date}, by {actor}, after a check.",
     } as Record<string, string>,
     recordReason: "Reason: \"{reason}\"",
     reopen: "Reopen the report",
