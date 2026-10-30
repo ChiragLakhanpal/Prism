@@ -211,24 +211,15 @@ export function StepTracker({ state }: { state: StepsState }) {
           </li>
         ))}
       </ol>
-      {!plan && dates.status_reason && (
-        <p data-tracker-status className="mt-4 text-caption text-ink-muted">
-          <Fill template={words.status} slots={{ status: dates.status_reason }} />
-        </p>
-      )}
+      {/* The plan's Process Status is in the side panel, so the tracker does not repeat it (ticket 126). */}
       {!plan && (
-        <p data-tracker-note className={cx(dates.status_reason ? "mt-1" : "mt-4", "text-caption text-ink-muted")}>
+        <p data-tracker-note className="mt-4 text-caption text-ink-muted">
           {words.none}
         </p>
       )}
       </div>
       {plan && (
         <FootStrip>
-          {dates.status_reason && (
-            <p data-tracker-status>
-              <Fill template={words.status} slots={{ status: dates.status_reason }} />
-            </p>
-          )}
           <Source>
             <Fill template={source} slots={{ plan: date(plan) }} /> <Fill template={counted} slots={{ date: date(state.result.as_of) }} />
           </Source>

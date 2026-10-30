@@ -115,7 +115,6 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         id={stepRef}
         loading
         narrowLines={3}
-        purpose={copy.pages.package.purpose}
         facts={{ line: null, show: words.factsShow, onShow: () => undefined }}
       />
     );
@@ -174,7 +173,6 @@ export function PackagePage({ stepRef }: { stepRef: string }) {
         id={facts.step_reference}
         // Ticket 112: the copy key copies the STEP reference. The 24 px key keeps the 20 px line's height.
         idAction={<CopyKey text={facts.step_reference} what={copy.copyKey.reference} className="-my-0.5 align-top" />}
-        purpose={copy.pages.package.purpose}
         facts={{ line: factsLine(facts), show: words.factsShow, onShow: planRowOf(facts), expanded: planRowOpen }}
       />
     );

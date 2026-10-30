@@ -4,7 +4,27 @@
 // is one GLOSSARY.md entry.
 import { Fragment, type ReactNode } from "react";
 import { terms } from "../glossary";
-import { Term } from "./Term";
+import { cx } from "../lib/cx";
+import { DefinitionWindow, Term } from "./Term";
+
+// An abbreviation a specialist reads every day, such as "PAD", "ISR", "ICR", "PPAR" or "PDO", written short on a chart
+// label, in a legend or in a foot strip, with a Term's window that spells it out (ticket 126, the tuck-away inventory's
+// pattern 4; DESIGN.md section 7, rules 10 and 22: the window counts as the spell-out there). The words come from the
+// copy file, where the sentence that used to spell it out on screen lives.
+export function Abbr({ short, spelled }: { short: string; spelled: ReactNode }) {
+  return (
+    // A short form such as "ISR" (19 px) or a rating code such as "S" (7 px) is under 24 px wide, so an ::after pads its
+    // hit area to WCAG 2.5.8's 24 px without moving the words, as a measure's number does (MeasureNum).
+    <DefinitionWindow
+      label={short}
+      title={short}
+      inText
+      triggerClassName={cx("relative after:absolute after:inset-y-0 after:content-['']", short.length < 2 ? "after:-inset-x-2.5" : "after:-inset-x-1.5")}
+    >
+      {spelled}
+    </DefinitionWindow>
+  );
+}
 
 const ABBREVIATIONS: Record<string, string> = Object.fromEntries(
   Object.keys(terms).flatMap((term) => {

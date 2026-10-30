@@ -6,6 +6,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { AccessLabel } from "../components/AccessLabel";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { Button } from "../components/Button";
+import { Feedforward } from "../components/Feedforward";
 import { EmptyState } from "../components/Card";
 import { EightColumns } from "../components/EightColumns";
 import { LoadError } from "../components/LoadError";
@@ -118,18 +119,17 @@ export function UploadCheckPage({ uploadId, search }: { uploadId: string; search
           pill={checkPill(checked)}
           // The head sticks only while it holds the page's one action (DESIGN.md section 5, Page head; ticket 100).
           sticky={!preview}
+          // The feedforward is the button's tooltip and description (ticket 126, pattern 5). It is a draft's, not the
+          // upload control's own "never submits" line (rule 39), which stays visible on Check my plan.
           action={preview ? undefined : (
-            <Button variant="primary" onClick={start} aria-describedby={`${slotId}-description ${slotId}-feedforward`} data-dates-action>
-              {/* A button's count is a numeral (DESIGN.md section 7). */}
-              {words.datesButton(count, formatNumber(count, { compact: false }))}
-            </Button>
+            <Feedforward sentence={words.datesFeedforward}>
+              <Button variant="primary" onClick={start} aria-describedby={`${slotId}-description`} data-dates-action>
+                {/* A button's count is a numeral (DESIGN.md section 7). */}
+                {words.datesButton(count, formatNumber(count, { compact: false }))}
+              </Button>
+            </Feedforward>
           )}
-          feedforward={preview ? undefined : (
-            <>
-              <p id={`${slotId}-feedforward`} className="text-caption text-ink-muted @lg/page:text-right">{words.datesFeedforward}</p>
-              <span id={`${slotId}-description`} className="sr-only">{words.datesDescription}</span>
-            </>
-          )}
+          feedforward={preview ? undefined : <span id={`${slotId}-description`} className="sr-only">{words.datesDescription}</span>}
         />
         <AccessLabel className="mt-2" />
         <PlanCheck

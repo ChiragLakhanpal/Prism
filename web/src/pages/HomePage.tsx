@@ -23,6 +23,7 @@ import { Fill } from "../components/Fill";
 import { FootStrip } from "../components/FootStrip";
 import { Tag } from "../components/LessonParts";
 import { LoadError } from "../components/LoadError";
+import { MadeBy } from "../components/MadeBy";
 import { MeasureNum } from "../components/MeasureNum";
 import { Num, type NumCheck } from "../components/Num";
 import { FromLine, homeFrom, planFrom } from "../components/NumFrom";
@@ -239,13 +240,9 @@ function Briefing({ answer, named, fold, sentencesId }: { answer: HomeAnswer | n
       </h1>
     );
   }
-  const day = answer ? answer.as_of ?? answer.today : null;
-  // The date line needs no data: while Home loads, it names today.
-  const line = !answer || !day
-    ? words.dateLine(formatDayLine(browserToday()))
-    : answer.as_of
-      ? words.dateLineAsOf(formatDayLine(day, { withYear: true }))
-      : words.dateLine(formatDayLine(day, { today: answer.today }));
+  // The date line shows only as of a past date, which changes what the page shows (DESIGN.md section 7, rule 45). An
+  // eyebrow that told you today's date went in ticket 126; a screen reader still hears the briefing named first.
+  const line = answer?.as_of ? words.dateLineAsOf(formatDayLine(answer.as_of, { withYear: true })) : null;
   const popover = answer ? countWindow(answer) : undefined;
   const shown = answer ? (fold === "folded" ? answer.briefing.sentences.slice(0, 1) : answer.briefing.sentences) : [];
   const sentences = shown.map((sentence, index) => (
@@ -256,25 +253,35 @@ function Briefing({ answer, named, fold, sentencesId }: { answer: HomeAnswer | n
   ));
   return (
     <h1 id="briefing" tabIndex={-1} className="focus:outline-none" data-briefing={answer ? "ready" : "loading"}>
-      <span data-date-line className="block text-label text-ink-muted">
-        {line}
-      </span>
-      <span className="sr-only">{words.dateLineEnd}</span>
+      {/* One hidden span with its full stop, so a screen reader hears "Your briefing. One plan ..." with no gap. */}
+      {line ? (
+        <>
+          <span data-date-line className="mb-2 block text-label text-ink-muted">
+            {line}
+          </span>
+          <span className="sr-only">{words.dateLineEnd}</span>
+        </>
+      ) : (
+        <span className="sr-only">
+          {copy.pages.home.title}
+          {words.dateLineEnd}
+        </span>
+      )}
       {answer &&
         (fold !== "none" ? (
           // Beside an answer the answer leads, so the briefing steps down to body (fairshare's strip, plan 9, pattern 6).
-          <span id={sentencesId} className="mt-2 block max-w-prose text-body text-pretty text-ink" data-sentences data-fold={fold}>
+          <span id={sentencesId} className="block max-w-prose text-body text-pretty text-ink" data-sentences data-fold={fold}>
             {sentences}
           </span>
         ) : reportsAState(answer) ? (
           // A first run or a quiet window reports a state, not a finding, so it takes lead (DESIGN.md section 1,
           // principle 6).
-          <span id={sentencesId} className="mt-2 block max-w-prose text-lead text-pretty text-ink" data-sentences data-status-lead>
+          <span id={sentencesId} className="block max-w-prose text-lead text-pretty text-ink" data-sentences data-status-lead>
             {sentences}
           </span>
         ) : (
           // The page's finding: a count word's tooltip opens under all of it (DESIGN.md, Number tooltip).
-          <span id={sentencesId} className="mt-2 block max-w-[22.5em] text-finding text-pretty text-ink-heading" data-sentences data-finding>
+          <span id={sentencesId} className="block max-w-[22.5em] text-finding text-pretty text-ink-heading" data-sentences data-finding>
             {sentences}
           </span>
         ))}
@@ -356,7 +363,6 @@ function StartHere({ links }: { links: HomeAnswer["start_here"]["links"] }) {
       headingId={START_HERE_ANCHOR}
       headingRef={title}
       note={<span data-start-count>{count}</span>}
-      tag={start.caption}
       corner={
         <Button variant="ghost" flush onPage aria-label={start.removeName} loading={state === "removing"} busyLabel={start.removing} onClick={() => void choose(false)}>
           {start.remove}
@@ -499,7 +505,13 @@ function WorthKnowing({ answer }: { answer: HomeAnswer }) {
   const folded = Math.max(0, worth.lines.length - worth.fold_after);
   const isPublic = worth.kind === "public";
   const name = isPublic ? words.publicView.title : words.worth.title;
-  const tag = isPublic ? words.publicView.tag : words.worth.tag;
+  // How I wrote the lines is in the made-by window at the zone's head (ticket 126), not a tag fragment such as "Fixed
+  // checks, no model". The dates stay on first sight in the source line.
+  const tag = isPublic ? (
+    <MadeBy name={words.publicView.madeByName}>{words.publicView.madeBy}</MadeBy>
+  ) : (
+    <MadeBy name={words.worth.madeByName}>{words.worth.madeBy}</MadeBy>
+  );
   const through = formatDate(worth.through, { style: "short" });
   const checked = formatDate(worth.checked_on, { style: "short" });
   const source = isPublic ? words.publicView.source(through) : worth.kind === "agency" ? words.worth.sourceAgency(through, checked) : words.worth.source(through, checked);
@@ -547,9 +559,7 @@ function WorthEmpty({ answer, source }: { answer: HomeAnswer; source: string }) 
   if (worth.empty === "first_run") {
     return (
       <>
-        <p className="text-pretty">
-          {w.firstRunTitle} {w.firstRunBody}
-        </p>
+        <p className="text-pretty">{w.firstRunBody}</p>
         <p className="mt-2">
           <TextLink href="/projects">{w.firstRunLink}</TextLink>
         </p>

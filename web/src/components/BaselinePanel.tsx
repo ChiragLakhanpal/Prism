@@ -20,6 +20,7 @@ import { useStore } from "../lib/store";
 import { allows, appliedView } from "../lib/view";
 import { Alert } from "./Alert";
 import { Button } from "./Button";
+import { Feedforward } from "./Feedforward";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { TaskZone, ZoneBlock } from "./TaskZone";
@@ -149,15 +150,19 @@ export function BaselinePanel({
   }
   if (staff && (mode.kind === "idle" || mode.kind === "undone" || mode.kind === "busy" || mode.kind === "failed")) {
     if (!baseline) {
+      // What saving does next, "Later checks of this agency's plans then also measure delay from its dates.", is the
+      // button's tooltip and description (ticket 126, pattern 5), not a third sentence in the row.
       controls = (
-        <Button
-          variant="secondary"
-          loading={busy === "save" || busy === "undo"}
-          busyLabel={words.saving}
-          onClick={() => run("save", () => save(planDate), () => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) }))}
-        >
-          {words.save}
-        </Button>
+        <Feedforward sentence={words.saveNext}>
+          <Button
+            variant="secondary"
+            loading={busy === "save" || busy === "undo"}
+            busyLabel={words.saving}
+            onClick={() => run("save", () => save(planDate), () => ({ kind: "done", message: <Fill template={words.justSaved} slots={{ plan_date: date(planDate) }} />, undo: undoTo(null) }))}
+          >
+            {words.save}
+          </Button>
+        </Feedforward>
       );
     } else if (isThis) {
       controls = (

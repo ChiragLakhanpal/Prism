@@ -13,7 +13,7 @@ export function DataPage({ match, search }: { match: Match; search: string }) {
   const key = match.key as "data" | "dataSources";
   return (
     <>
-      <PageHeader title={copy.pages[key].title} purpose={copy.pages[key].purpose} />
+      <PageHeader title={copy.pages[key].title} />
       <div className="mt-8">{key === "data" ? <DataReadiness search={search} /> : <SourcesAndLicenses />}</div>
     </>
   );

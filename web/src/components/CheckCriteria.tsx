@@ -32,6 +32,8 @@ import { CollapsedSection } from "./CollapsedSection";
 import { CostEstimate } from "./CostLane";
 import { CriteriaLessons, CriteriaNotes, CriteriaTable, markerNumbers, openFrom, Part, RejectedBids } from "./CriteriaParts";
 import { Fill } from "./Fill";
+import { InfoWindow } from "./MadeBy";
+import { DefinitionWindow } from "./Term";
 import { Num } from "./Num";
 import { fromLine, recordsFrom } from "./NumFrom";
 import { Skeleton, SkeletonLine } from "./Skeleton";
@@ -327,7 +329,18 @@ function PasteField({ summary, text, onText, onCompare, fieldError, edited, comp
   const n = (value: number) => formatNumber(value, { compact: false });
   return (
     <div className="mt-4 flex flex-col" data-paste-field>
-      <label htmlFor={id} className="text-small font-semibold text-ink">{words.field.label}</label>
+      {/* How I compare the criteria you paste is in the window after the label (ticket 126); its count of packages
+          stays a number there. */}
+      <div className="flex items-center">
+        <label htmlFor={id} className="text-small font-semibold text-ink">{words.field.label}</label>
+        <InfoWindow name={words.field.methodName} kind="note">
+          {summary.public_criteria_count === 1 ? (
+            words.methodOne
+          ) : (
+            <Fill template={words.method} slots={{ n: <Num value={summary.public_criteria_count} /> }} />
+          )}
+        </InfoWindow>
+      </div>
       <textarea
         id={id}
         value={text}
@@ -399,17 +412,12 @@ export function CheckCriteriaView(props: ViewProps) {
     <div className="mt-6">
       {state === "ok" ? (
         <p className="max-w-prose text-body text-ink" data-criteria-intro>
-          {data.public_criteria_count === 1 ? words.introOne : <Fill template={words.intro} slots={{ n: <PublicCount summary={data} /> }} />}
+          {words.intro}
         </p>
       ) : (
-        <div className="flex flex-col gap-2">
-          <p className="max-w-prose text-body text-ink" data-criteria-intro>
-            {words.introNonePublic}
-          </p>
-          <p className="text-caption">
-            <TextLink href={readiness("compare_criteria", publicKeys)}>{words.introNonePublicLink}</TextLink>
-          </p>
-        </div>
+        <p className="text-caption">
+          <TextLink href={readiness("compare_criteria", publicKeys)}>{words.introNonePublicLink}</TextLink>
+        </p>
       )}
       {state === "ok" && (
         <PasteField summary={data} text={props.text} onText={props.onText} onCompare={props.onCompare} fieldError={props.fieldError}
@@ -420,7 +428,16 @@ export function CheckCriteriaView(props: ViewProps) {
       {runSteps}
       <PartOne comparison={comparison} readinessHref={readiness("compare_criteria", compared?.sources.map((source) => source.key) ?? publicKeys)}
         steps={compareSteps} onRetry={props.onCompare} asOf={props.asOf ?? null} />
-      <Part heading={words.rejected.heading} busy={run.status === "running"} partKey="rejected">
+      {/* How I quoted and grouped the reasons is in the title's window (ticket 126): method a reader opens. */}
+      <Part
+        heading={
+          <DefinitionWindow openOnHover inText={false} label={words.rejected.heading} title={words.rejected.heading}>
+            {words.rejected.intro}
+          </DefinitionWindow>
+        }
+        busy={run.status === "running"}
+        partKey="rejected"
+      >
         {run.status === "running" && <RejectedSkeleton />}
         {run.status === "error" && <ErrorBlock message={words.rejected.error} code={run.requestId} onRetry={props.onRetryRun} />}
         {result && (

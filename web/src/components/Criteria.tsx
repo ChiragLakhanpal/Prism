@@ -335,11 +335,13 @@ export function CardTop({
 
 // The instruction with the guess count, which follows the sentence: on its own where the sentence is a folded panel's
 // summary (ticket 101).
+// The chips look and act as buttons, so the line says only how many guesses to check (ticket 126 dropped "Choose any
+// part to change it."); with none, there is no line. A preview still says nothing can change.
 export function CardInstruction({ guesses, preview = false }: { guesses: number; preview?: boolean }) {
+  if (!preview && guesses === 0) return null;
   return (
     <p className="mt-1 text-small text-ink" data-instruction>
-      {preview ? words.preview : words.card.instruction}
-      {!preview && guesses > 0 && <> {words.card.guesses(guesses, formatCount(guesses, { capital: true }))}</>}
+      {preview ? words.preview : words.card.guesses(guesses, formatCount(guesses, { capital: true }))}
     </p>
   );
 }

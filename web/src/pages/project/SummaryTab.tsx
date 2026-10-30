@@ -22,10 +22,12 @@ import { EvidenceCard } from "../../components/EvidenceCard";
 import { FactTable, type FactRow } from "../../components/FactTable";
 import { Fill } from "../../components/Fill";
 import { LoadError } from "../../components/LoadError";
+import { InfoWindow, MadeBy } from "../../components/MadeBy";
 import { Num } from "../../components/Num";
 import { SkeletonLine, SkeletonText } from "../../components/Skeleton";
 import { Source } from "../../components/Source";
 import { Table, type Column, type Row } from "../../components/Table";
+import { DefinitionWindow } from "../../components/Term";
 import { copy } from "../../copy";
 import type { EvidenceEvent } from "../../lib/answer";
 import type { Fact, FactSource, Summary } from "../../lib/api";
@@ -187,24 +189,39 @@ function Lead({ summary }: { summary: Summary }) {
   }
   // The page's finding (DESIGN.md section 1, principle 7; ticket 99), in the finding style, about 45 characters a line in
   // balanced lines. It is built from the records alone, with no model, so it carries no byline (ticket 111 kept the
-  // project page's records free of one), and its caption says so.
+  // project page's records free of one). How I built it, with its as-of date, is in the made-by window at its end
+  // (ticket 126), no longer a caption under it.
   return (
     <p className="max-w-[22.5em] text-finding text-balance text-ink-heading" data-summary-lead data-finding>
       {text}
+      <MadeBy name={words.madeByName}>
+        <Fill template={words.madeBy} slots={{ as_of_date: <Num date={summary.as_of} /> }} />
+      </MadeBy>
     </p>
   );
 }
 
 const LABELS = words.label;
 
+// note: a sentence about a row, such as why a category stands in for a risk rating, which its label's window holds
+// (ticket 126): the label already says what the row shows.
 function factRows(facts: Fact[], numbers: Map<string, number>, events: Record<string, EvidenceEvent>, value: (fact: Fact) => ReactNode, note?: (fact: Fact) => ReactNode): FactRow[] {
-  return facts.map((fact) => ({
-    key: fact.key,
-    label: LABELS[fact.key] ?? fact.key,
-    value: value(fact),
-    note: note?.(fact),
-    source: <SourceCell source={fact.source} numbers={numbers} events={events} loans={citedLoans(fact)} />,
-  }));
+  return facts.map((fact) => {
+    const label = LABELS[fact.key] ?? fact.key;
+    const said = note?.(fact);
+    return {
+      key: fact.key,
+      label: said ? (
+        <DefinitionWindow openOnHover label={label} title={label} inText={false}>
+          {said}
+        </DefinitionWindow>
+      ) : (
+        label
+      ),
+      value: value(fact),
+      source: <SourceCell source={fact.source} numbers={numbers} events={events} loans={citedLoans(fact)} />,
+    };
+  });
 }
 
 // A list of values, one per line with 4 px between them, such as the sectors with their shares, so a name
@@ -297,7 +314,6 @@ export function SummarySkeleton() {
     <>
       <div aria-hidden="true" className="max-w-[22.5em] text-finding">
         <SkeletonText className="text-finding" widths={["w-full", "w-full", "w-full", "w-2/5"]} />
-        <SkeletonLine className="mt-2 text-caption" width="w-1/2" />
       </div>
       <p role="status" className="sr-only">
         {words.loading}
@@ -342,9 +358,6 @@ export function SummaryFacts({ summary }: { summary: Summary }) {
   return (
     <>
       <Lead summary={data} />
-      <p className="mt-2 text-caption text-ink-muted" data-made-by>
-        <Fill template={words.madeBy} slots={{ as_of_date: <Num date={data.as_of} /> }} />
-      </p>
       <div className={TABLES}>
         <div>
           <FactTable
@@ -360,7 +373,20 @@ export function SummaryFacts({ summary }: { summary: Summary }) {
         {data.money.length > 0 && (
           <div>
             <FactTable
-              title={words.group.money}
+              // The route says when the loans data reports more disbursed and canceled than committed. Only a reader
+              // who adds the three amounts asks why, so the answer is in an info window on the title (ticket 126).
+              title={
+                data.lead.amounts_exceed_commitment ? (
+                  <>
+                    {words.group.money}
+                    <InfoWindow name={words.money.exceedsName} kind="money-note">
+                      {words.money.exceeds}
+                    </InfoWindow>
+                  </>
+                ) : (
+                  words.group.money
+                )
+              }
               caption={words.caption.money(name)}
               labelHeader={head("label")}
               valueHeader={head("money")}
@@ -368,12 +394,6 @@ export function SummaryFacts({ summary }: { summary: Summary }) {
               numeric
               rows={factRows(data.money, numbers, events, (fact) => <Money fact={fact} />)}
             />
-            {/* The route says when the loans data reports more disbursed and canceled than committed. */}
-            {data.lead.amounts_exceed_commitment && (
-              <p className="mt-2 max-w-prose text-caption text-ink-muted" data-money-note>
-                {words.money.exceeds}
-              </p>
-            )}
           </div>
         )}
         {data.ratings.length > 0 ? (

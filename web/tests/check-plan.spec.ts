@@ -87,7 +87,8 @@ test("the plan check finds every activity, states the finding, and folds the act
   await expect(main.getByText("Procurement Plan of October 9, 2026", { exact: true })).toBeVisible();
   await expect(main.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(main.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
-  await expect(main.locator("[data-count-line]")).toHaveText("Showing 6 of 9 activities.");
+  // Ticket 126: no count line, since the fold row below says which activities it hides.
+  await expect(main.locator("[data-count-line]")).toHaveCount(0);
   await expect(view(page, "table")).toBeVisible();
   expect(await refsIn(page, "table")).toEqual(MARKED);
   const fold = view(page, "table").locator("[data-fold]:visible");
@@ -152,8 +153,10 @@ test("in the public preview the plan check is lit as Projects, its breadcrumb st
   await expect(page.locator("[data-finding]")).toHaveText(
     "I don't show signals on active projects in this view, so a procurement still under way isn't prejudged; three have data notes.",
   );
-  // The finding holds the signals back, so its byline says so (DESIGN.md section 5, Byline).
-  await expect(page.locator("[data-finding-block] [data-byline]")).toHaveText("Strata held back");
+  // The finding holds the signals back, so its block's byline kind says so, with no visible words (DESIGN.md section 5,
+  // Byline; ticket 126).
+  await expect(page.locator("[data-finding-block]")).toHaveAttribute("data-byline", "heldBack");
+  await expect(page.locator("[data-finding-block]")).not.toContainText("Strata held back");
   const head = page.locator("[data-plan-header]");
   await expect(head.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(head.getByRole("button")).toHaveCount(0);
@@ -187,7 +190,7 @@ test("Show them opens the folded activities by mouse, and Hide them folds them a
   await expect(hide).toHaveAttribute("aria-expanded", "true");
   await expect(hide).toBeFocused();
   expect(await refsIn(page, "table")).toEqual([...MARKED, ...FOLDED]);
-  await expect(page.locator("[data-count-line]")).toHaveText("Showing all nine activities.");
+  await expect(page.locator("[data-count-line]")).toHaveCount(0);
   for (const ref of FOLDED) {
     await expect(view(page, "table").locator(`tr[id="${ref}"]`)).toContainText("No signals.");
   }
@@ -258,10 +261,11 @@ test("the table follows DESIGN.md: title sentence, count line, surface-2 header,
 
   const header = await table.locator("thead").evaluate((el) => getComputedStyle(el).backgroundColor);
   expect(header).toBe("rgb(231, 237, 243)");
-  // The header band sits 16 px under the panel's name and its count line, never touching them (the critique of
-  // ticket 100, round 1).
+  // The header band sits 16 px under the panel's name, never touching it (the critique of ticket 100, round 1; the
+  // panel has no count line since ticket 126).
   const bottom = (selector: string) => page.locator(selector).evaluate((el) => el.getBoundingClientRect().bottom);
-  const nameFoot = Math.max(await bottom("[data-section=activities] [data-zone-name]"), await bottom("[data-section=activities] [data-zone-tag]"));
+  await expect(page.locator("[data-section=activities] [data-zone-tag]")).toHaveCount(0);
+  const nameFoot = await bottom("[data-section=activities] [data-zone-name]");
   expect(Math.round((await table.locator("thead").evaluate((el) => el.getBoundingClientRect().top)) - nameFoot)).toBeGreaterThanOrEqual(16);
   const amountHead = table.locator("thead th").nth(3);
   const amount = table.locator('tr[id="KE-NWWDA-541055-CW-RFB"] td').nth(2);
@@ -380,13 +384,16 @@ test("below a table frame of 34rem the cards open the What Strata found definiti
 
   await term.click();
 
-  await expect(page.getByRole("dialog", { name: "What Strata found" })).toContainText("It gives a reason to look, never a finding.");
+  const definition = page.getByRole("dialog", { name: "What Strata found" });
+  await expect(definition).toContainText("It gives a reason to look, never a finding.");
+  // Ticket 126: the window opens on how I checked and how I measure delay, which sat under the finding until then.
+  await expect(definition.locator("[data-method-sentence]")).toContainText(
+    "I measure delay from the first published planned date, because each plan update can move the planned dates.",
+  );
   await page.keyboard.press("Escape");
 
-  // At 320 px the two don't fit side by side, so the definition takes a line of its own and
-  // neither breaks.
+  // At 320 px the definition's word never breaks.
   await page.setViewportSize({ width: 320, height: 900 });
-  expect(await page.locator("[data-count-line]").evaluate(textLines)).toBe(1);
   expect(await term.evaluate(textLines)).toBe(1);
 });
 
@@ -839,10 +846,12 @@ for (const width of [1440, 390]) {
     release();
     await expect(page.getByRole("heading", { level: 2, name: FINDING })).toBeVisible();
     await expect(narration).toHaveCount(0);
-    // The finding takes the narration's place, its byline on the narration's top line, and no other part of the page,
-    // its rows and source line included, has a byline.
-    await expect(page.locator("[data-byline]")).toHaveText(["Strata found"]);
-    await expect(page.locator("[data-plan-check] [data-byline] + h2")).toHaveText(FINDING);
+    // The finding takes the narration's place, on the narration's top line. Its block carries the byline's kind as
+    // data, with no visible words (ticket 126), and no other part of the page, its rows and source line included, has
+    // a byline.
+    await expect(page.locator("[data-byline]")).toHaveCount(1);
+    await expect(page.locator("[data-plan-check] [data-byline]")).toHaveAttribute("data-byline", "found");
+    await expect(page.locator("[data-plan-check] [data-byline] > h2")).toHaveText(FINDING);
     // The status said the step once, then how many activities were checked.
     await expect.poll(async () => (await seen()).said).toEqual([NARRATION.running, "Checked nine activities."]);
     // The narration showed for more than 400 ms, so the finding entered: opacity and a 4 px rise over 200 ms.

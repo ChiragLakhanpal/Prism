@@ -43,11 +43,12 @@ export function LessonsFrame({ pageKey, failed = false, children }: { pageKey: L
   const named = copy.pages[pageKey];
   const library = pageKey === "lessons";
   // The wide layout (plan 8.3; ticket 110): all 12 columns, with each sentence kept to the width of prose, so the
-  // margins even out beside the rail. When the drawer opens, the page narrows and keeps its left edge.
+  // margins even out beside the rail. When the drawer opens, the page narrows and keeps its left edge. The title has no
+  // purpose under it (ticket 126).
   return (
     <div className="layout-grid">
       <div data-lessons-frame={pageKey} className="col-span-12 min-w-0">
-        <PageHead title={named.title} purpose={library && !failed ? named.purpose : undefined} />
+        <PageHead title={named.title} />
         {/* A failed read's alert went to the alert slot, so nothing else draws here. */}
         {failed ? children : <div className={library ? "mt-8" : "mt-3"}>{children}</div>}
       </div>
@@ -202,7 +203,7 @@ function Decided({ queue }: { queue: Queue }) {
       <Table
         level={2}
         title={title}
-        count={{ noun: q.decidedNoun, one: q.decidedNounOne, total: decided.total, from: decided.from, to: decided.to }}
+        count={{ noun: q.decidedNoun, one: q.decidedNounOne, total: decided.total, from: decided.from, to: decided.to, ordered: true }}
         rowHeader="lesson"
         // As cards, each card shows the days' column by its name alone, and the definition ends the count
         // line's row once (DESIGN.md section 5, Tables).
