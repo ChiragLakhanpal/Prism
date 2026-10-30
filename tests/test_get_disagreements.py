@@ -378,6 +378,46 @@ def test_on_the_fixture_each_of_p130164_s_two_pairs_is_a_group_of_its_own(engine
     assert result["counts"] == {"groups": 2, "disagreements": 2}
 
 
+def pair(key: str, earlier: tuple[str, int, str], later: tuple[str, int, str], lean: str = "later") -> dict:
+    """A disagreement row about P130164's overall risk under the moment rule, between two ISRs given as (documents
+    API id, ISR number, date written)."""
+    sides = [{"assertion_id": f"{document}#risk", "document_id": document, "sequence": sequence, "made_at": made_at,
+              "document_type": "Implementation Status and Results Report", "evidence_tier": "isr"}
+             for document, sequence, made_at in (earlier, later)]
+    return {"disagreement_id": key, "subject_kind": "project", "subject_id": "P130164", "rule_id": "moment",
+            "attribute": "overall_risk", "sides": sides,
+            "lean_assertion_id": sides[0 if lean == "earlier" else 1]["assertion_id"]}
+
+
+def test_a_chain_of_pairs_is_split_so_no_report_is_named_on_both_sides_of_a_group():
+    """Code review round 1, F1: ISR 3 against ISR 5, ISR 3 against ISR 7 and ISR 5 against ISR 7 share reports in a
+    chain. A group is a star: one report, its anchor, against every report that disagrees with it, so ISR 5 is never
+    on both sides of one group. The report most pairs share is the anchor first."""
+    from strata.tools.get_disagreements import groups
+
+    isr_3, isr_5, isr_7 = ("23868309", 3, "2015-06-01"), ("25481343", 5, "2016-01-01"), ("26733307", 7, "2016-08-26")
+    found = groups([pair("a", isr_3, isr_5), pair("b", isr_3, isr_7), pair("c", isr_5, isr_7)])
+
+    for group in found:
+        assert not set(documents(group["earlier"])) & set(documents(group["later"])), group
+    assert [(group["anchor"], group["disagreement_ids"]) for group in found] == [
+        ({"side": "earlier", "document_id": "23868309"}, ["a", "b"]),
+        ({"side": "earlier", "document_id": "25481343"}, ["c"])]
+    assert [(documents(group["earlier"]), documents(group["later"])) for group in found] == [
+        (["23868309"], ["25481343", "26733307"]), (["25481343"], ["26733307"])]
+    # Every pair is in exactly one group.
+    assert sorted(key for group in found for key in group["disagreement_ids"]) == ["a", "b", "c"]
+
+
+def test_a_group_s_anchor_is_the_report_its_pairs_share(planted):
+    """The PAD is the overall risk group's anchor, on its earlier side, and the ICR the progress group's, on its later
+    side, so the timeline's line starts from the right report."""
+    found = {group["attribute"]: group for group in get_disagreements(planted, subject_id="P130164")["groups"]}
+
+    assert found["overall_risk"]["anchor"] == {"side": "earlier", "document_id": PAD}
+    assert found["pdo_progress"]["anchor"] == {"side": "later", "document_id": ICR}
+
+
 # ── The words the screens write from the result ─────────────────────────
 
 def copy_keys(group: str) -> set[str]:

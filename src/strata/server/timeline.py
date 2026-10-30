@@ -54,6 +54,7 @@ from strata.server.projects import display_name
 from strata.server.viewer_sql import DAILY, data_through
 from strata.server.viewer_sql import query as viewer_query
 from strata.tools import registry
+from strata.tools.get_disagreements import lean, written
 from strata.tools.get_disagreements import reads as disagreement_reads
 from strata.tools.withheld import WITHHELD, withheld_in
 
@@ -281,17 +282,12 @@ def _kinds(documents: list[dict]) -> list[dict]:
             for kind, held in found.items()]
 
 
-def _written(documents: list[dict]) -> list[dict]:
-    return sorted(documents, key=lambda one: (one["made_at"] or "", one["document_id"]))
-
-
-def _line(drawn: list[dict], items: dict[str, dict]) -> dict:
-    """One group's dashed line: the pair that joins its anchor, the side with one report (or the fewer), to the
-    nearest report on the other side, with the group's counts of pairs and reports and the side it leans on."""
+def _line(drawn: list[dict], items: dict[str, dict], anchor: str) -> dict:
+    """One group's dashed line: the pair that joins its anchor, the one report the group's pairs share, to the nearest
+    report on the other side, with the group's counts of pairs and reports and the side it leans on."""
     side = {"earlier": 0, "later": 1}
-    documents = {name: _written(list({one["sides"][at]["document_id"]: one["sides"][at] for one in drawn}.values()))
+    documents = {name: written(list({one["sides"][at]["document_id"]: one["sides"][at] for one in drawn}.values()))
                  for name, at in side.items()}
-    anchor = "earlier" if len(documents["earlier"]) <= len(documents["later"]) else "later"
     other = "later" if anchor == "earlier" else "earlier"
 
     def apart(one: dict) -> int:
@@ -299,15 +295,13 @@ def _line(drawn: list[dict], items: dict[str, dict]) -> dict:
         return abs((second - first).days)
 
     line = _disagreement(min(drawn, key=apart), items)
-    leaned = {"earlier" if one["lean_assertion_id"] == one["sides"][0]["assertion_id"] else "later"
-              if one["lean_assertion_id"] else None for one in drawn}
-    lean = leaned.pop() if len(leaned) == 1 else None
+    leaned = lean(drawn)
     line["group"] = {
         "count": len(drawn), "disagreement_ids": [one["disagreement_id"] for one in drawn],
         "anchor_side": anchor, "anchor_item_id": line["sides"][side[anchor]]["item_id"],
         "anchor_reports": _kinds(documents[anchor]), "other_reports": _kinds(documents[other]),
         "reports": len({one["document_id"] for one in documents[anchor] + documents[other]}),
-        "lean": None if lean is None else "anchor" if lean == anchor else "others"}
+        "lean": None if leaned is None else "anchor" if leaned == anchor else "others"}
     return line
 
 
@@ -320,7 +314,7 @@ def lines(found: dict, items: dict[str, dict]) -> tuple[list[dict], list[dict]]:
     for group in found.get("groups") or []:
         held = [rows[key] for key in group["disagreement_ids"] if key in pairs]
         if held:
-            drawn.append(_line(held, items))
+            drawn.append(_line(held, items, group["anchor"]["side"]))
     return drawn, list(pairs.values())
 
 

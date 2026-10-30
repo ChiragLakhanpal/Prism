@@ -382,7 +382,7 @@ export function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }
 }
 
 // The chart card, in any state the payload gives: the finding, the subtitle, the chart or the list, the notes, the
-// source line and the table twin. The design gallery draws it as it is.
+// source line and the table twin, under the chart and under the list. The design gallery draws it as it is.
 export function TimelineCard({
   data,
   wide,
@@ -465,14 +465,12 @@ export function TimelineCard({
         {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} data={data} />}
         <SourceLine data={data} />
       </div>
-      {chart && (
-        <>
-          <Button variant="ghost" className="mt-2" flush aria-expanded={table} aria-controls={tableId} onClick={() => setTable((open) => !open)}>
-            {table ? words.hide : words.show}
-          </Button>
-          {table ? <TimelineTable data={data} id={tableId} onOpen={onOpen} /> : <div id={tableId} hidden />}
-        </>
-      )}
+      {/* Under the list too: a list item stands for a line, which may stand for several pairs, so only the table
+          lists every pair (ticket 136; code review round 1, B1). Below 768 px Table draws its rows as cards. */}
+      <Button variant="ghost" className="mt-2" flush aria-expanded={table} aria-controls={tableId} onClick={() => setTable((open) => !open)}>
+        {table ? words.hide : words.show}
+      </Button>
+      {table ? <TimelineTable data={data} id={tableId} onOpen={onOpen} /> : <div id={tableId} hidden />}
     </figure>
   );
 }

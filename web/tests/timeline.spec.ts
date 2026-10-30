@@ -676,4 +676,18 @@ test("16 pairs about three facts are three lines with three pills that count the
   await expect(lines.filter({ hasText: "Overall risk" })).toContainText("5 reports disagree");
   await expect(lines.filter({ hasText: "Overall risk" })).toContainText("Overall risk: the PAD and 4 ISRs disagree");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  // The list tells each fact once, so its table twin lists every pair, each opening its own two sides, at 390 px
+  // too (code review round 1, B1). A fresh page at 390 px starts with the table closed.
+  await page.reload();
+  await expect(page.locator("[data-timeline=ready]")).toBeVisible();
+  await page.getByRole("button", { name: "Show the table" }).click();
+  // Table draws its rows as cards here; the table it hides below 768 px holds the same links.
+  const cards = page.locator("[data-timeline-table] a[data-table-item^='disagreement:']:visible");
+  await expect(cards).toHaveCount(16);
+  await expect(cards.filter({ hasText: "Overall risk: the PAD and ISR 9" })).toHaveCount(1);
+  // Each pair opens its own two sides in the evidence drawer.
+  const opens = await cards.evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).searchParams.get("evidence")));
+  expect(new Set(opens).size).toBe(16);
+  expect(opens.every((evidence) => evidence?.startsWith("disagreement:"))).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

@@ -24,10 +24,11 @@ A subject is a project, with its packages, or one package by its STEP reference.
 - rejected: how many assertions read from the project's reports the run left out, by reason, such as a
   quote that was not word for word on its cited page.
 - groups and counts (ticket 136): the disagreements about one fact, one group each. Pairs about the same subject,
-  under the same ladder rule and attribute, that share the document on their earlier side or on their later side
-  are one group: the PAD's overall risk against each ISR's, or ISRs 1 to 11 against the ICR's progress towards the
-  PDO. A group gives its count of pairs, their ids, the documents on each side and the side every pair leans on;
-  counts says how many groups over how many disagreements. The rows keep every pair, for a table.
+  under the same ladder rule and attribute, that share one report (the group's anchor) on their earlier side or on
+  their later side are one group: the PAD's overall risk against each ISR's, or ISRs 1 to 11 against the ICR's
+  progress towards the PDO. A group gives its anchor, its count of pairs, their ids, the documents on each side and
+  the side every pair leans on; counts says how many groups over how many disagreements. The rows keep every pair,
+  for a table.
 The registry returns the trajectories, the rejected count, the groups and their counts as one more citable record,
 the summary.
 
@@ -185,7 +186,10 @@ def _document(side: dict) -> dict:
     return {key: side[key] for key in ("document_id", "document_type", "sequence", "made_at", "evidence_tier")}
 
 
-def _lean(rows: list[dict]) -> str | None:
+SIDES = ("earlier", "later")
+
+
+def lean(rows: list[dict]) -> str | None:
     """The side every pair of a group leans on, earlier or later, or None when the pairs lean different ways or the
     ladder ranked both sides the same."""
     leaned = {"earlier" if row["lean_assertion_id"] == row["sides"][0]["assertion_id"] else "later"
@@ -193,45 +197,54 @@ def _lean(rows: list[dict]) -> str | None:
     return leaned.pop() if len(leaned) == 1 else None
 
 
+def written(documents: list[dict]) -> list[dict]:
+    """Reports in the order they were written."""
+    return sorted(documents, key=lambda one: (one["made_at"] or "", one["document_id"]))
+
+
+def _stars(members: list[dict]) -> list[tuple[tuple[str, str], list[dict]]]:
+    """The pairs about one fact as stars: the report on one side that the most pairs share is a group's anchor, with
+    every pair it is in; those pairs leave, and the next anchor is chosen from the rest. On a tie the earlier side
+    wins, then the report of the first pair. So no report is ever on both sides of one group, as it would be if
+    pairs that share a report were joined in a chain (code review round 1, F1)."""
+    left = list(members)
+    out = []
+    while left:
+        shared: dict[tuple[str, str], list[dict]] = {}
+        for row in left:
+            for side, held in zip(SIDES, row["sides"]):
+                shared.setdefault((side, held["document_id"]), []).append(row)
+        anchor, together = max(shared.items(), key=lambda item: (len(item[1]), item[0][0] == "earlier"))
+        taken = {id(row) for row in together}
+        left = [row for row in left if id(row) not in taken]
+        out.append((anchor, together))
+    return out
+
+
 def groups(rows: list[dict]) -> list[dict]:
     """The disagreements about one fact, as one group each (ticket 136): pairs about the same subject, under the same
-    ladder rule and attribute, that share their earlier side's document, or their later side's. The PAD's overall
-    risk against each ISR's is one group, and so are ISRs 1 to 11 against the ICR's progress towards the PDO. Each
-    group gives its count of pairs, their ids, the documents on each side in the order written, and the side every
-    pair leans on, if one. The rows keep every pair; a group adds no figure the rows do not hold."""
+    ladder rule and attribute, that share one report, their anchor, on their earlier side or on their later side. The
+    PAD's overall risk against each ISR's is one group, and so are ISRs 1 to 11 against the ICR's progress towards the
+    PDO. Each group gives its anchor, its count of pairs, their ids, the documents on each side in the order written,
+    and the side every pair leans on, if one. The rows keep every pair; a group adds no figure the rows do not hold."""
     by_fact: dict[tuple, list[dict]] = {}
     for row in rows:
         by_fact.setdefault((row["subject_kind"], row["subject_id"], row["rule_id"], row["attribute"]), []).append(row)
     found = []
     for members in by_fact.values():
-        parent = list(range(len(members)))
-
-        def root(at: int) -> int:
-            while parent[at] != at:
-                at = parent[at]
-            return at
-
-        first: dict[tuple[str, str], int] = {}
-        for at, row in enumerate(members):
-            for side, held in zip(("earlier", "later"), row["sides"]):
-                parent[root(at)] = root(first.setdefault((side, held["document_id"]), at))
-        joined: dict[int, list[dict]] = {}
-        for at, row in enumerate(members):
-            joined.setdefault(root(at), []).append(row)
-        for together in sorted(joined.values(), key=lambda one: members.index(one[0])):
+        order = {id(row): at for at, row in enumerate(members)}
+        for (side, document_id), together in sorted(_stars(members), key=lambda star: order[id(star[1][0])]):
             sides: dict[str, dict[str, dict]] = {"earlier": {}, "later": {}}
             for row in together:
-                for side, held in zip(("earlier", "later"), row["sides"]):
-                    sides[side].setdefault(held["document_id"], _document(held))
+                for name, held in zip(SIDES, row["sides"]):
+                    sides[name].setdefault(held["document_id"], _document(held))
             head = together[0]
-
-            def written(side: str) -> list[dict]:
-                return sorted(sides[side].values(), key=lambda one: (one["made_at"] or "", one["document_id"]))
-
             found.append({"subject_kind": head["subject_kind"], "subject_id": head["subject_id"],
-                          "attribute": head["attribute"], "rule_id": head["rule_id"], "count": len(together),
+                          "attribute": head["attribute"], "rule_id": head["rule_id"],
+                          "anchor": {"side": side, "document_id": document_id}, "count": len(together),
                           "disagreement_ids": [row["disagreement_id"] for row in together],
-                          "earlier": written("earlier"), "later": written("later"), "lean": _lean(together)})
+                          "earlier": written(list(sides["earlier"].values())),
+                          "later": written(list(sides["later"].values())), "lean": lean(together)})
     return found
 
 

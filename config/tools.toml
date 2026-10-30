@@ -859,12 +859,12 @@ Cite a disagreement by its row's evidence id, and each side by the side's own ev
 from its text. A side that rests on a passage backs only its dates and its quote. For a number on a side, such as \
 ISR 7's sequence or the months after the mid-term review, cite the row as well. When Prompt Shields found a prompt attack in a side's passage as it was read in, or never screened \
 it, the side comes without its text and its quote, and the coverage line says how many passages. Disagreements \
-about the same subject, under the same rule and attribute, that share the document on their earlier side or on \
-their later side are one group, one fact told several times, such as the PAD's overall risk against each ISR's: \
-each group gives its count of disagreements, their ids, the documents on each side and the side every pair leans \
-on, and counts says how many groups there are over how many disagreements. Say a group once, with its count, \
-rather than each pair. The trajectories, the count of left-out assertions, the groups \
-and their counts come back in the result's summary, which you cite for them. When an answer rests on one side of a \
+about one fact are one group. A group's pairs share the subject, the rule, the attribute and one report, its \
+anchor, on one side, such as the PAD's overall risk against each ISR's. Each group gives its anchor, its count, \
+its disagreement ids, the reports on each side and the side every pair leans on. counts says how many groups \
+there are over how many disagreements. Say a group once, with its count, rather than each pair. The \
+trajectories, the count of left-out assertions, the groups and their counts come back in the result's summary, \
+which you cite for them. When an answer rests on one side of a \
 disagreement, show both sides."""
 adapter = "strata.tools.get_disagreements:get_disagreements"
 benchmark = "get-disagreements-p130164"

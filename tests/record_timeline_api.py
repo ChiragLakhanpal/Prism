@@ -35,7 +35,11 @@ import httpx
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
+# The planted copy's module sits beside this one; added once, as a pytest worker loads this file once.
+if str(ROOT / "tests") not in sys.path:
+    sys.path.insert(0, str(ROOT / "tests"))
 
+from planted_groups import plant  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.server.app import create_app  # noqa: E402
 
@@ -90,9 +94,6 @@ GROUPED = {
 
 def planted(folder: Path) -> Path:
     """The planted copy of the fixture database, in folder."""
-    sys.path.insert(0, str(ROOT / "tests"))
-    from planted_groups import plant
-
     return plant(FIXTURE_DB, folder / "planted.duckdb")
 
 

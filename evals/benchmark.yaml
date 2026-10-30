@@ -382,9 +382,10 @@ questions:
         - [Moderately Unsatisfactory, 12, 13]
       rejected: [1]
       # The disagreements about one fact are one group with its count (ticket 136): here one pair about one fact,
-      # as [attribute, rule, count], and the summary's count of groups over disagreements.
+      # as [attribute, rule, count, anchor side, anchor document], and the summary's count of groups over
+      # disagreements. A group is a star around the one report its pairs share, its anchor.
       groups:
-        - [pdo_progress, outcome, 1]
+        - [pdo_progress, outcome, 1, earlier, "26733307"]
       counts: [1, 1]
     # A disagreement shows both sides (the verifier's check 6), so the answer cites both.
     cites: [strata.gold.passage:26733307/v1/s4, strata.gold.passage:31525018/v1/78]
@@ -398,7 +399,8 @@ questions:
       isr-13-rating). The recording plants one rating whose quote is not on paragraph 45's page, which
       the run left out and counts. Prompt Shields screened both sides' passages and found no attack in
       either, so both keep their words and none is left out. ISR 7 and paragraph 78 are the only pair about
-      progress towards the PDO in the fixture, so they are one group of one.
+      progress towards the PDO in the fixture, so they are one group of one, anchored on the earlier report,
+      ISR 7, since a pair shares each of its reports once and a tie goes to the earlier side.
   - id: get-lessons-cost-estimates
     kind: documents
     tool: get_lessons

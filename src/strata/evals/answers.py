@@ -169,7 +169,8 @@ def disagreement_answer(result, question) -> dict[str, list]:
     words the coverage line says it kept from the agent because Prompt Shields found an attack or never screened
     them (ticket 64), and, from the summary record the agent cites them by, the runs of the trajectory, each as
     [rating, first ISR, last ISR], the count of assertions the run left out, each group of disagreements about one
-    fact as [attribute, rule, count], and how many groups over how many disagreements (ticket 136)."""
+    fact as [attribute, rule, count, anchor side, anchor document], and how many groups over how many disagreements
+    (ticket 136)."""
     evidence = {side["assertion_id"]: side["evidence_id"] for row in result["rows"] for side in row["sides"]}
     from strata.knowledge.shields import LEFT_OUT
 
@@ -184,7 +185,8 @@ def disagreement_answer(result, question) -> dict[str, list]:
             "trajectory_runs": [[run["value"], run["first_sequence"], run["last_sequence"]]
                                 for trajectory in result["summary"]["trajectories"] for run in trajectory["runs"]],
             "rejected": [result["summary"]["rejected"]["count"]],
-            "groups": [[group["attribute"], group["rule_id"], group["count"]] for group in result["summary"]["groups"]],
+            "groups": [[group["attribute"], group["rule_id"], group["count"], group["anchor"]["side"],
+                        group["anchor"]["document_id"]] for group in result["summary"]["groups"]],
             "counts": [result["summary"]["counts"]["groups"], result["summary"]["counts"]["disagreements"]]}
 
 

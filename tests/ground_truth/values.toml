@@ -564,6 +564,17 @@ paragraph = 49
 pdf_page = 26
 
 [[value]]
+id = "pad-risk-table-overall"
+says = "The P130164 PAD's risk table (Annex 4, the ORAF) rates the Overall Implementation Risk Substantial in its last row, on PDF page 70. The layout parser reads the row as one table cell, 18381488/v1/table65.8, whose words read \"Rating: Substantial\" (ticket 136)."
+value = "Substantial"
+quote = "Overall Implementation Risk: Rating Substantial"
+document = "documents/P130164/pad-2013-10-01"
+document_type = "Project Appraisal Document"
+project = "P130164"
+date = 2013-10-01
+pdf_page = 70
+
+[[value]]
 id = "isr-1-pdo-indicators"
 says = "ISR 1 has a section on the PDO indicators on PDF page 2 of 4. An ISR numbers no paragraphs, so a passage from it is cited by its section's name (tests/fixtures/api/evidence-isr-p130164-s4.json)."
 value = "Project Development Objective Indicators"
