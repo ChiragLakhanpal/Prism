@@ -22,7 +22,9 @@ reading the demo's pages ahead (ticket 125). app_from_env() reads only the envir
   forwarded. Without them, the server
   keeps no usage events, records no opened sources, decisions, labels or lesson reviews and keeps no drafts, and runs go
   to the server log only. On this computer, STRATA_APP_STATE_FILE can name a DuckDB file that keeps the
-  opened sources, the drafts, the uploads and the Lessons visits instead.
+  opened sources, the drafts, the uploads and the Lessons visits instead. A script that writes as the app on
+  this computer, such as the seed command, reads the two from the env file, and writes with the env file's
+  DATABRICKS_TOKEN once the workspace refuses them (app_token, ticket 129).
 - PGHOST, PGPORT, PGDATABASE, PGUSER and PGSSLMODE, which the platform sets for the app's Lakebase database
   resource: app state lives there (ADR 0005; src/strata/appstate), starting with the packages a person
   plans and the plan checks they open (ticket 15). The app signs in as its own service principal, with the
@@ -49,9 +51,11 @@ from __future__ import annotations
 
 import base64
 import json
+import math
 import os
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from collections.abc import Callable, Mapping
@@ -91,13 +95,24 @@ from strata.uploads.store import UploadStore
 ROOT = Path(__file__).resolve().parents[3]
 WEB_DIST = ROOT / "web" / "dist"
 TOKEN_PATH = "/oidc/v1/token"
+# What a script that writes as the app says once, when the workspace refused the app's secret (ticket 129).
+OWNER_FALLBACK = "The App's secret is gone since the platform restarted the App; writing as the owner instead."
 # A token is renewed this long before Databricks says it expires.
 RENEW_SECONDS = 300
 
 
-def app_token(host: str, client_id: str, client_secret: str, timeout: int = 30):
+def app_token(host: str, client_id: str, client_secret: str, timeout: int = 30, owner_token: str = "",
+              say: Callable[[str], None] = print):
     """The app's own access token, from its service principal's client id and secret (OAuth
-    machine-to-machine), kept until shortly before it expires."""
+    machine-to-machine), kept until shortly before it expires.
+
+    A script that writes as the app on this computer, such as the seed command, also gives the owner's token
+    (owner_token, the env file's DATABRICKS_TOKEN). Each time the platform starts the App again it makes the App's
+    service principal a new secret, and the one in the env file stops working (ticket 129). So when the token
+    endpoint refuses the client (401, which RFC 6749 section 5.2 keeps for OAuth's invalid_client),
+    the token is the owner's from then on, the client id and secret are not tried again, and `say` gets
+    OWNER_FALLBACK once. The App has no owner's token, so on the App a refusal is still an error, as is any other
+    answer from the endpoint."""
     lock, held = threading.Lock(), {"token": None, "until": 0.0}
     basic = base64.b64encode(f"{client_id}:{client_secret}".encode()).decode()
 
@@ -110,6 +125,12 @@ def app_token(host: str, client_id: str, client_secret: str, timeout: int = 30):
                 try:
                     with urllib.request.urlopen(request, timeout=timeout) as response:
                         reply = json.loads(response.read())
+                except urllib.error.HTTPError as error:
+                    if error.code != 401 or not owner_token:
+                        raise EngineError(f"The workspace gave the app no token: {error}") from error
+                    say(OWNER_FALLBACK)
+                    held["token"], held["until"] = owner_token, math.inf
+                    return owner_token
                 except OSError as error:
                     raise EngineError(f"The workspace gave the app no token: {error}") from error
                 held["token"] = reply["access_token"]
@@ -119,19 +140,28 @@ def app_token(host: str, client_id: str, client_secret: str, timeout: int = 30):
     return token
 
 
-def as_the_app(host: str, client_id: str, client_secret: str) -> Transport:
-    """Calls to the workspace's REST API as the app's own service principal."""
-    token = app_token(host, client_id, client_secret)
+def as_the_app(host: str, client_id: str, client_secret: str, owner_token: str = "",
+               say: Callable[[str], None] = print) -> Transport:
+    """Calls to the workspace's REST API as the app's own service principal, or as the owner once the workspace
+    refused the app's secret (app_token)."""
+    token = app_token(host, client_id, client_secret, owner_token=owner_token, say=say)
     return lambda method, path, body: http_transport(host, token())(method, path, body)
 
 
 def _the_app_s_engine(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
-    """The SQL warehouse as the app's own service principal, for the rows the app writes itself."""
+    """The SQL warehouse as the app's own service principal, for the rows the app writes itself.
+
+    On this computer the env file also holds the owner's token (DATABRICKS_TOKEN), which a script that writes as the
+    app falls back to when the workspace refuses the app's secret (app_token). On the App, where the platform sets
+    DATABRICKS_APP_PORT (ops/app/app.yaml), there is no fallback even if a deploy gave it a DATABRICKS_TOKEN. The App
+    writes its own rows only with its own token (CLAUDE.md rule 7)."""
     host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
     client_id, secret = environ.get("DATABRICKS_CLIENT_ID", ""), environ.get("DATABRICKS_CLIENT_SECRET", "")
     if not (host and warehouse and client_id and secret):
         return None
-    transport = as_the_app(host, client_id, secret)
+    on_the_app = bool(environ.get("DATABRICKS_APP_PORT", "").strip())
+    owner = "" if on_the_app else environ.get("DATABRICKS_TOKEN", "").strip()
+    transport = as_the_app(host, client_id, secret, owner_token=owner)
     return lambda: WarehouseEngine(warehouse, transport)
 
 
@@ -190,17 +220,19 @@ def server_app() -> FastAPI:
 
 
 def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.EngineFor | None = None,
-                 access: Access | None = None, read_ahead: bool = False) -> FastAPI:
+                 access: Access | None = None, read_ahead: bool = False,
+                 the_app: Callable[[], Engine] | None = None) -> FastAPI:
     """engine_for and access stand in for the viewer's own warehouse reads and the workspace's groups, for a command
-    that drives the app's routes as the app itself, such as the seed command (ticket 41). read_ahead reads the demo's
-    pages into the pages the app keeps when it starts and every hour after (src/strata/server/warm.py), as the server
-    does; a command or a test that drives the routes leaves it off."""
+    that drives the app's routes as the app itself, such as the seed command (ticket 41). Such a command also gives
+    the_app, the engine it opened with _the_app_s_engine(), so the whole run shares one token (ticket 129).
+    read_ahead reads the demo's pages into the pages the app keeps when it starts and every hour after
+    (src/strata/server/warm.py), as the server does; a command or a test that drives the routes leaves it off."""
     environ = os.environ if environ is None else environ
     thresholds = load_thresholds()
     timeout = thresholds.value("app.stamp_timeout_seconds")
     web = Path(environ["STRATA_WEB_DIST"]) if environ.get("STRATA_WEB_DIST") else WEB_DIST
     engine_for = engine_for or engines.from_environment(environ, timeout_seconds=timeout)
-    the_app = _the_app_s_engine(environ)
+    the_app = the_app or _the_app_s_engine(environ)
     state_file = app_state_file(environ) if not the_app else None
     state = the_app or state_file
     app_state = _app_state(environ) or state_file
