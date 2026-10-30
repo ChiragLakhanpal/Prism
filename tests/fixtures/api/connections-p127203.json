@@ -50,6 +50,10 @@
     "paragraph_items": [],
     "document_items": []
   },
+  "contracts": {
+    "count": 0,
+    "sources": []
+  },
   "shown": 1,
   "total": 42,
   "threshold": "0.50",

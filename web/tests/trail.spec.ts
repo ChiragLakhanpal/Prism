@@ -224,8 +224,9 @@ test("Connections draws at most 20 nodes, counts the rest by kind, and joins pac
   await expect(tabs).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections"]);
   await expect(tabs.last()).toHaveAttribute("aria-current", "page");
 
-  // The finding counts every linked contract, those with no STEP reference too, and each paragraph once.
-  await expect(page.locator("#connections-finding")).toHaveText("In this project, seven contracts appeared together with 89 paragraphs from 12 of its reports.");
+  // The finding counts every linked contract, those with no STEP reference too, and each paragraph once. It names the
+  // eight contracts the Timeline tab's note counts too, since one of them has no link (ticket 138).
+  await expect(page.locator("#connections-finding")).toHaveText("In this project, seven of its eight contracts appeared together with 89 paragraphs from 12 of its reports.");
   await expect(page.locator("[data-connections]")).not.toContainText("Showing 19 of"); // the "more" links say it (ticket 126, R59)
   const nodes = page.locator("[data-node]");
   expect(await nodes.count()).toBeLessThanOrEqual(20);

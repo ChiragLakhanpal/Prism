@@ -365,8 +365,10 @@ export function EvidenceTrail({
               </text>
               <line x1={PAD} x2={width - PAD} y1={y} y2={y} className="stroke-chart-grey200" strokeWidth={1} />
               {lanesEmpty[lane] && (
-                <text x={PAD} y={rows.rowA + 14} className="fill-chart-text-subtle">
-                  {words.laneEmpty[lane]}
+                <text x={PAD} y={rows.rowA + 14} className="fill-chart-text-subtle" data-lane-empty={lane}>
+                  {/* An empty Records lane of a project with contracts says it left them out, not that it has none
+                      (ticket 138); the note under the chart names them. */}
+                  {lane === "what" && data.contracts.left_out.count > 0 ? words.laneLeftOut : words.laneEmpty[lane]}
                 </text>
               )}
               {lane !== "what" && <line x1={PAD} x2={width - PAD} y1={rows.bottom + 8} y2={rows.bottom + 8} className="stroke-line" strokeWidth={1} />}

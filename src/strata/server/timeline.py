@@ -48,6 +48,7 @@ from strata.config import KEY_DATE, ConfigError, TimelineSettings, load_ladder, 
 from strata.dbx import Viewer
 from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES, STATUS
 from strata.lakehouse.engine import Engine
+from strata.server import contracts as project_contracts
 from strata.server.projects import display_name
 from strata.server.viewer_sql import DAILY, data_through
 from strata.server.viewer_sql import query as viewer_query
@@ -404,6 +405,40 @@ def alt_text(project_id: str, dated: list[dict], ratings: dict | None, disagreem
     return out + as_of
 
 
+def _from_sources(found: list[dict]) -> list[dict]:
+    """"seven from the contract awards for fiscal 2001 to 2016 and one from award notices", each count a segment."""
+    names = words()["records"]
+    out: list[dict] = []
+    for at, one in enumerate(found):
+        if at:
+            out.append({"text": names["and"] if at == len(found) - 1 else names["comma"]})
+        out.extend(fill(names["from"], {"n": _count(one["count"]), "source": names["sources"][one["source"]]}))
+    return out
+
+
+def records_note(held: dict) -> list[dict] | None:
+    """The note under the chart that names the contracts the Records lane leaves out, by source and why (ticket 138),
+    after the count of the project's contracts the Connections tab names too. None when the lane leaves none out."""
+    left = held["left_out"]
+    if not left["count"]:
+        return None
+    templates = words()["records"]
+
+    def form(forms: dict, n: int) -> str:
+        return forms["one"] if n == 1 else forms["many"]
+
+    out = fill(form(templates["held"], held["count"]), {"n": _count(held["count"])})
+    no_reference, no_date = left[project_contracts.NO_STEP_REFERENCE], left[project_contracts.NO_SIGNING_DATE]
+    if no_reference:
+        n = sum(one["count"] for one in no_reference)
+        out += [{"text": " "}, *fill(form(templates["noReference"], n), {"sources": _from_sources(no_reference)})]
+    if no_date:
+        n = sum(one["count"] for one in no_date)
+        out += [{"text": " "}, *fill(form(templates["noDateAlso" if no_reference else "noDate"], n),
+                                     {"sources": _from_sources(no_date)})]
+    return out
+
+
 # ── The timeline ─────────────────────────────────────────────────────────
 
 def reads(project_id: str, as_of: dt.date, view: str = "staff") -> list[tuple[str, dict]]:
@@ -416,6 +451,7 @@ def reads(project_id: str, as_of: dt.date, view: str = "staff") -> list[tuple[st
             (_query("reports"), {**each, "language": LANGUAGE}),
             *[(_query("events"), {**each, "words": words}) for kind in EVENTS for words, _, _ in EVENTS[kind]],
             (_query("signings"), {**each, **SIGNINGS}),
+            project_contracts.statement(pid, as_of),
             (viewer_query("data_through"), {"cadence": DAILY})]
 
 
@@ -463,7 +499,11 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
     report_items = [item for item in every.values() if item["type"] != "isr" or item["document_id"] in marked]
     events = [event for kind in EVENTS if (event := _event(engine, pid, as_of, kind, reports, sequences)) is not None]
     signings = [_record(row, pid) for row in _rows(engine, "signings", project_id=pid, as_of=as_of, **SIGNINGS)]
-    above = int(load_thresholds().value("timeline.what_lane_group_above"))
+    # The project's contracts as the Connections tab counts them too, and those the lane cannot place (ticket 138).
+    found_contracts = project_contracts.of_project(engine, pid, as_of)
+    held = {**project_contracts.held(found_contracts),
+            "left_out": project_contracts.left_out(found_contracts, {record["step_reference"] for record in signings})}
+    above =int(load_thresholds().value("timeline.what_lane_group_above"))
     bands = ratings["bands"] if ratings else []
     marks = [*report_items, *events, *_grouped(signings, pid, above), *bands]
     items = ordered(marks, disagreements)
@@ -487,7 +527,8 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         "disagreement_line_state": PAGE.timeline.disagreement_line_state,
         "rejected": {"count": int((found.get("rejected") or {}).get("count") or 0)} if status != "failed" else None,
         "counts": {lane: sum(item["lane"] == lane for item in dated) for lane in LANES},
-        "finding": finding(ratings, disagreements, status),
+        "contracts": held, "records_note": records_note(held),
+        "finding":finding(ratings, disagreements, status),
         "alt": alt_text(pid, dated, ratings, disagreements, status, asked),
         "sources": ["documents", "notices", "awards"],
         # The data-freshness stamp's day, which the source line ends with ("through October 23, 2026").

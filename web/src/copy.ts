@@ -17,6 +17,14 @@ const stop = (text: string) => (text.endsWith(".") ? text : `${text}.`);
 const noneOf = (written: number, one: string, two: string, many: string) => (written === 1 ? one : written === 2 ? two : many);
 // STEP spelled out, as a screen writes it the first time it names STEP (DESIGN.md section 7, rule 10).
 const STEP_SPELLED = "Systematic Tracking of Exchanges in Procurement (STEP)";
+// Each source of a project's contracts in strata.gold.contract, as a sentence names it after "from" (ticket 138): the
+// Timeline's note on the Records lane and the Connections tab's count of a project's contracts. A source that
+// src/strata/lakehouse/gold/contract.sql adds needs its name here (tests/test_project_contracts.py).
+const CONTRACT_SOURCE_NAMES: Record<string, string> = {
+  awards: "the contract awards since fiscal 2020",
+  awards_fy2001_2016: "the contract awards for fiscal 2001 to 2016",
+  notices: "award notices",
+};
 
 // Since ticket 126 a sidebar section's page has no purpose under its title: a specialist knows what each tab is for,
 // and its title and first block say the rest (DESIGN.md section 5, Page head's Purpose row). The tabs' purposes of
@@ -7375,6 +7383,18 @@ export const copy = {
       `In this project, {contracts} ${contracts === 1 ? "contract" : "contracts"} appeared together with {paragraphs} ${
         paragraphs === 1 ? "paragraph" : "paragraphs"
       } from one of its reports.`,
+    // When only some of the project's contracts appeared together with a paragraph: {held} is all of them, the count
+    // the Timeline tab's note names too (ticket 138), so it is always more than one.
+    findingOf: (paragraphs: number, documents: number) =>
+      `In this project, {contracts} of its {held} contracts appeared together with {paragraphs} ${
+        paragraphs === 1 ? "paragraph" : "paragraphs"
+      } from {documents} of its reports.`,
+    findingOfOneReport: (paragraphs: number) =>
+      `In this project, {contracts} of its {held} contracts appeared together with {paragraphs} ${
+        paragraphs === 1 ? "paragraph" : "paragraphs"
+      } from one of its reports.`,
+    // The tooltip on {held}: one line for each source, "Seven from the contract awards for fiscal 2001 to 2016".
+    heldFrom: (count: string, source: string) => `${count} from ${CONTRACT_SOURCE_NAMES[source] ?? source}`,
     findingNone: "In this project, no contract appeared together with a paragraph from its reports.",
     // The one legend line the diagram needs: a dashed link is not a cause (ticket 126 dropped the solid-line sentences,
     // which the diagram shows).
@@ -8001,6 +8021,9 @@ export const copy = {
       how: "I have no ISRs or other operations documents for this project yet.",
       what: "I have no contract records for this project.",
     } as Record<string, string>,
+    // The Records lane with no mark while the project has contracts it leaves out (ticket 138): the note under the
+    // chart names them by source.
+    laneLeftOut: "I can't place this project's contracts in this lane. The note under the chart says why.",
     noRatings: "I have no ISR ratings for this project.",
     // The band row's caption when get_disagreements did not answer, in place of noRatings.
     ratingsFailed: "I couldn't read this project's ISR ratings just now.",
@@ -8152,6 +8175,29 @@ export const copy = {
         icr_review: "the ICR Review",
         ppar: "the PPAR",
         other: "the report",
+      },
+      // The note under the chart when the Records lane leaves out some of the project's contracts (ticket 138). held
+      // is the count the Connections tab names too (src/strata/server/contracts.py). The lane draws each package on
+      // its first signing, so a contract with no STEP reference, or a package with no signing date, has no mark.
+      // {sources} lists "seven from the contract awards for fiscal 2001 to 2016" for each source, joined by "and".
+      records: {
+        held: { one: "I hold {n} contract for this project.", many: "I hold {n} contracts for this project." },
+        noReference: {
+          one: "The Records lane finds each contract's package by its STEP reference, so it leaves out {sources}, which has none.",
+          many: "The Records lane finds each contract's package by its STEP reference, so it leaves out {sources}, which have none.",
+        },
+        noDate: {
+          one: "The Records lane leaves out {sources}, which has no signing date.",
+          many: "The Records lane leaves out {sources}, which have no signing date.",
+        },
+        noDateAlso: {
+          one: "It also leaves out {sources}, which has no signing date.",
+          many: "It also leaves out {sources}, which have no signing date.",
+        },
+        from: "{n} from {source}",
+        comma: ", ",
+        and: " and ",
+        sources: CONTRACT_SOURCE_NAMES,
       },
     },
   },

@@ -47,6 +47,32 @@
     "ppar": "the PPAR",
     "other": "the report"
   },
+  "records": {
+    "held": {
+      "one": "I hold {n} contract for this project.",
+      "many": "I hold {n} contracts for this project."
+    },
+    "noReference": {
+      "one": "The Records lane finds each contract's package by its STEP reference, so it leaves out {sources}, which has none.",
+      "many": "The Records lane finds each contract's package by its STEP reference, so it leaves out {sources}, which have none."
+    },
+    "noDate": {
+      "one": "The Records lane leaves out {sources}, which has no signing date.",
+      "many": "The Records lane leaves out {sources}, which have no signing date."
+    },
+    "noDateAlso": {
+      "one": "It also leaves out {sources}, which has no signing date.",
+      "many": "It also leaves out {sources}, which have no signing date."
+    },
+    "from": "{n} from {source}",
+    "comma": ", ",
+    "and": " and ",
+    "sources": {
+      "awards": "the contract awards since fiscal 2020",
+      "awards_fy2001_2016": "the contract awards for fiscal 2001 to 2016",
+      "notices": "award notices"
+    }
+  },
   "numberWords": [
     "one",
     "two",
