@@ -7,8 +7,8 @@ as Ana, its writer (the scripted writer, replaying tests/fixtures/agent/writers.
 verifier checks every sentence, and the draft is saved in strata.ops; Ana marks it as checked and exports it. The
 screens' tests serve the story's answers, so they must stay word for word what the routes answer.
 
-Expected values come from independent sources: the four signals from the ticket, the two contracts since ISR 19 and
-their amounts from tests/ground_truth/values.toml.
+Expected values come from independent sources: the four signals from the ticket, less the one the contract awards
+overtook (ticket 132), the two contracts since ISR 19 and their amounts from tests/ground_truth/values.toml.
 """
 
 import asyncio
@@ -55,12 +55,14 @@ def test_the_screens_recorded_answers_are_what_the_routes_answer(story):
         assert text == (RECORDED / name).read_text(), f"{name} is out of date: uv run --frozen python tests/record_following_api.py"
 
 
-def test_followings_p156634_row_needs_a_look_with_its_four_signals_and_the_closed_project_folds(story):
+def test_followings_p156634_row_needs_a_look_with_three_signals_and_the_closed_project_folds(story):
+    """The ticket's four signals but the first: the contract awards say KE-NWWDA-541055-CW-RFB was signed on June 22,
+    2026 (values.toml, award-541055-signed), so its planned completion passed with a signed contract (ticket 132)."""
     following = read(story, "following-p156634.json")
     first, second = following["projects"]
 
     assert (first["project"]["project_id"], first["status"]) == ("P156634", "needs_a_look")
-    assert [row["check"] for row in first["rows"]] == ["completion_passed", "above_estimate", "late_direct", "closing_moves"]
+    assert [row["check"] for row in first["rows"]] == ["above_estimate", "late_direct", "closing_moves"]
     assert (second["project"]["project_id"], second["status"]) == ("P130164", "closed")
     assert following["counts"]["shown"] == 1 and following["counts"]["folded"] == 1
     assert read(story, "following-asof-2024-06-30.json")["projects"][0]["status"] == "watch"
@@ -75,7 +77,20 @@ def test_add_to_mission_brief_writes_five_parts_with_numbers_from_tools_and_cita
     assert draft["kind"] == "mission_brief" and draft["state"] == "draft"
     assert [note["key"] for note in draft["notes"]] == PARTS
     assert all(note["state"] == "written" and note["sentences"] for note in draft["notes"])
-    assert draft["removed"] == []
+    # Ticket 132: the writer's recording says KE-NWWDA-541055-CW-RFB passed its planned completion with no signed
+    # contract, but the plan check now names it moved on since the plan and returns no such signal, so the verifier
+    # removes that sentence: the row it cites did not come back as a signal this turn.
+    assert [(removed["sentence"], removed["reason"]) for removed in draft["removed"]] == [
+        ("In it, KE-NWWDA-541055-CW-RFB passed its planned completion of July 31, 2026 with no signed contract.",
+         "id_not_returned")]
+    # The awards part rests on KE-CWSB-567630-CW-DIR's contract record, which the agency's plan of August 17, 2026
+    # contradicts, so check 6 shows both sides; Strata leans on the contract record (values.toml, award-567630-signed).
+    [card] = draft["disagreements"]
+    assert card["key"] == "awards" and card["changes_answer"]
+    assert {side["evidence_id"]: side["leaned"] for side in card["sides"]} == {
+        "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR": False, "strata.gold.contract:1901323": True}
+    assert [hold["key"] for hold in draft["holds"]] == ["notChecked", "disagreements"]
+    assert [hold["key"] for hold in read(story, "drafts-mission-brief-kept.json")["holds"]] == ["notChecked"]
     awards = next(note for note in draft["notes"] if note["key"] == "awards")
     signed = [next(field["value"] for field in row["fields"] if field["key"] == "signed_on") for row in awards["table"]]
     assert signed == [TRUTH["award-567630-signed"]["value"].isoformat(), TRUTH["award-565568-signed"]["value"].isoformat()]
@@ -169,7 +184,9 @@ def test_a_part_the_writer_refused_is_saved_as_refused_with_its_table_and_nothin
 
     assert (disbursement["state"], disbursement["refusal"], disbursement["sentences"]) == ("refused", "out_of_scope", [])
     assert sorted(row["reference"] for row in disbursement["table"]) == ["IDA60290", "IDA60300"]
-    assert draft["removed"] == []
+    # Nothing removed from the refused part; the plans part loses only the sentence ticket 132 overtook (the test of
+    # the five parts above).
+    assert [removed["key"] for removed in draft["removed"]] == ["plans"]
 
 
 def word_text(draft: dict) -> str:

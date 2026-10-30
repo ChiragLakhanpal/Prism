@@ -289,9 +289,11 @@ def test_a_tie_between_records_goes_to_the_more_specific_source(engine):
         assert row["subject_kind"] == "package"
     plan_side = next(side for side in next(iter(found.values()))["sides"] if side["form"] == "plan_row")
     assert plan_side["evidence_id"].startswith("strata.silver.plan_rows:") and plan_side["made_at"] == "2026-10-09"
-    # The earlier plan versions dated the signing the same way, and a later version replaced each of them.
+    # The earlier plan versions dated the signing the same way, and a later version replaced each of them. The plan
+    # of April 21, 2021 still said Pending Implementation after the July 9, 2021 signing (ticket 132), against the
+    # contract record and the award notice, until the plan of July 21, 2025 replaced it: two more.
     [not_used] = result["coverage"]["not_used"]
-    assert (not_used["reason"], not_used["count"]) == ("replaced_by_later_version", 4)
+    assert (not_used["reason"], not_used["count"]) == ("replaced_by_later_version", 6)
 
 
 def test_a_tie_between_equally_specific_records_goes_to_the_more_recent_one(engine):

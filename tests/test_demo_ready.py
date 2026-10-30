@@ -528,10 +528,11 @@ def test_the_smoke_question_returns_a_cited_answer_that_passed_the_six_checks(tw
 def test_the_recheck_prints_each_signal_s_current_state_with_the_recorded_values(two_runs):
     _, out = two_runs["first"]
 
-    completion = long_day(TRUTH["plan-541055-planned-completion"]["value"])
-    assert (f"Planned completion passed: KE-NWWDA-541055-CW-RFB passed its planned completion ({completion}) with no "
-            "signed contract.") in out
+    # Ticket 132: KE-NWWDA-541055-CW-RFB's planned completion passed with no signed contract in the plan, but the
+    # contract awards say it was signed (values.toml, award-541055-signed), so the plan check names it moved on since
+    # the plan and the completion check finds nothing.
     assert TRUTH["plan-541055-no-signed-contract"]["value"] == "no signed contract"
+    assert "Planned completion passed: ran and found nothing." in out
     assert re.search(r"KE-NWWDA-229129-CW-RFB was signed at about \d+ times its estimate: "
                      + re.escape(f"{dollars(TRUTH['plan-229129-actual']['value'])} against "
                                  f"{dollars(TRUTH['plan-229129-estimated']['value'])}."), out)
@@ -743,7 +744,7 @@ def test_a_closed_p156634_is_the_first_change_the_recheck_prints_and_never_a_fai
     assert code == 0, out
     assert changed[0].strip() == "P156634 is closed on the workspace, and was active in the fixture."
     closing = long_day(TRUTH["closing-date-p156634"]["value"])
-    assert f"In the fixture: Needs a look, with four signals. Its closing date was {closing}." in out
+    assert f"In the fixture: Needs a look, with three signals. Its closing date was {closing}." in out
     assert (f"On the workspace: Not checked: the project is closed, and the checks run only on active projects. "
             f"It closed on {closing}.") in out
     assert "   The P156634 recheck: passed. Not checked on the workspace, with " in out

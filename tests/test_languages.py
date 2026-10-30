@@ -162,10 +162,13 @@ def test_with_lang_fr_the_scripted_answer_is_written_in_french_and_its_quotes_st
 
 # ── A scripted draft in French (the ticket's criterion 3) ────────────────
 
-def test_with_lang_fr_review_notes_are_written_in_french_and_keep_their_language_in_the_word_file(fixture_db, tmp_path):
+def test_with_lang_fr_review_notes_are_written_in_french_and_keep_their_language_in_the_word_file(writers_fixture_db,
+                                                                                                   tmp_path):
     """The draft is asked for with lang=fr. Its notes are in French, all six checks pass with nothing removed, the
     draft says it was written in French, the plan's description is quoted in its own English words, and the Word
-    file's note runs carry French proofing while its headings stay English."""
+    file's note runs carry French proofing while its headings stay English. It runs on the fixture as the writer's
+    French recording saw it (tests/writer_world.py, ticket 132)."""
+    fixture_db = writers_fixture_db
     import io
     import zipfile
     from xml.etree import ElementTree
