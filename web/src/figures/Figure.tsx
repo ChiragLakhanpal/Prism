@@ -173,6 +173,32 @@ export function HairlineFigure({ onFail, className }: { onFail: () => void; clas
   );
 }
 
+// How far apart, at most, the parts of one step start (styles/deck.css draws each over 500 ms).
+const STAGGER = 400;
+
+// Where a shape or a word starts, from its own attributes, so it needs no layout and works on a slide not shown yet.
+function startOf(part: SVGElement): [number, number] {
+  const at = (name: string) => Number.parseFloat(part.getAttribute(name) ?? "") || 0;
+  switch (part.tagName) {
+    case "line":
+      return [at("x1"), at("y1")];
+    case "circle":
+    case "ellipse":
+      return [at("cx"), at("cy")];
+    case "path": {
+      const move = /M\s*(-?[\d.]+)[\s,]+(-?[\d.]+)/i.exec(part.getAttribute("d") ?? "");
+      return move ? [Number(move[1]), Number(move[2])] : [0, 0];
+    }
+    case "polygon":
+    case "polyline": {
+      const [x, y] = (part.getAttribute("points") ?? "").trim().split(/[\s,]+/).map(Number);
+      return [x || 0, y || 0];
+    }
+    default:
+      return [at("x"), at("y")];
+  }
+}
+
 // A diagram, whole, or at a step when the deck gives one.
 export function Diagram({ id, step }: { id: FigureId; step?: number }) {
   const figure = FIGURES[id];
@@ -180,16 +206,27 @@ export function Diagram({ id, step }: { id: FigureId; step?: number }) {
   const markup = useMemo(() => (figure.svg ? inline(figure.svg) : ""), [figure.svg]);
   // A part a press brings in draws itself (styles/deck.css). Each line or outline with a solid stroke gets pathLength
   // 1, so a single dash as long as the stroke can draw it from its start. A fill with no stroke, or a dashed stroke,
-  // fades in instead.
+  // fades in instead. Within a step, each part starts in reading order, left to right and top to bottom, so the eye
+  // follows the drawing: its delay grows with how far its start lies from the step's first, up to STAGGER.
   useLayoutEffect(() => {
     const root = box.current;
     if (!root) return;
-    for (const shape of root.querySelectorAll<SVGElement>("[data-motion-item] :is(path, line, polyline, polygon, rect, circle, ellipse)")) {
-      const stroke = shape.getAttribute("stroke");
-      const solid = stroke !== null && stroke !== "none" && !shape.hasAttribute("stroke-dasharray");
-      if (solid) shape.setAttribute("pathLength", "1");
-      shape.toggleAttribute("data-draw", solid);
-      shape.toggleAttribute("data-fade", !solid);
+    for (const item of root.querySelectorAll<SVGElement>("[data-motion-item]")) {
+      const parts = [...item.querySelectorAll<SVGElement>(":is(path, line, polyline, polygon, rect, circle, ellipse, text)")];
+      const starts = parts.map(startOf);
+      const x0 = Math.min(...starts.map(([x]) => x));
+      const y0 = Math.min(...starts.map(([, y]) => y));
+      const span = Math.max(1, Math.max(...starts.map(([x]) => x)) - x0 + Math.max(...starts.map(([, y]) => y)) - y0);
+      parts.forEach((part, index) => {
+        const [x, y] = starts[index];
+        part.style.setProperty("--draw-delay", `${Math.round(((x - x0 + y - y0) / span) * STAGGER)}ms`);
+        if (part.tagName === "text") return;
+        const stroke = part.getAttribute("stroke");
+        const solid = stroke !== null && stroke !== "none" && !part.hasAttribute("stroke-dasharray");
+        if (solid) part.setAttribute("pathLength", "1");
+        part.toggleAttribute("data-draw", solid);
+        part.toggleAttribute("data-fade", !solid);
+      });
     }
   }, [markup]);
   useLayoutEffect(() => {

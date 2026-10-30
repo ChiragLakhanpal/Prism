@@ -95,7 +95,7 @@ export function DeckApp({ view }: { view: DeckView }) {
     );
   }
   if (!data || !slides) return view.kind === "slides" && big ? <Loading /> : <PageLoading />;
-  if (view.kind === "notes") return <NotesView slides={slides} />;
+  if (view.kind === "notes") return <NotesView slides={slides} data={data} />;
   if (view.kind === "page" || !big) return <ReadingView slides={slides} data={data} page={view.kind === "page"} big={big} />;
   // The slide the address shows now, which presentation mode keeps current, so a window that shrinks to the reading
   // view and grows again comes back to the same slide.
@@ -915,8 +915,8 @@ function ReadingSlide({ slide, data, total }: { slide: Slide; data: DeckData; to
           </SourceLine>
         )}
         <Disclosure show={deckCopy.reading.showNotes} hide={deckCopy.reading.hideNotes} testId="notes">
-          <div className="max-w-prose text-body text-ink" data-notes={slide.n}>
-            {slide.notes}
+          <div className="max-w-prose" data-notes={slide.n}>
+            <SpeakerNotes slide={slide} />
           </div>
         </Disclosure>
       </div>
@@ -967,7 +967,7 @@ function minutes(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-function NotesView({ slides }: { slides: Slide[] }) {
+function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
   const total = slides.length;
   const [place, setPlace] = useState<Place>({ n: 1, step: 0 });
   const [alone, setAlone] = useState(false);
@@ -1026,20 +1026,6 @@ function NotesView({ slides }: { slides: Slide[] }) {
     },
     [alone, slides],
   );
-  const goTo = useCallback(
-    (n: number) => {
-      if (!alone && channel.current) {
-        try {
-          channel.current.postMessage({ type: "go", n } satisfies Message);
-          return;
-        } catch {
-          // fall through and move alone
-        }
-      }
-      setPlace((current) => arrive(n, current.n, slides));
-    },
-    [alone, slides],
-  );
 
   const shownN = useRef(place.n);
   useEffect(() => {
@@ -1066,7 +1052,7 @@ function NotesView({ slides }: { slides: Slide[] }) {
   return (
     <div className="flex min-h-dvh flex-col bg-page" data-deck="notes">
       <main className="layout flex-1 py-8">
-        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_28rem]">
           <div className="flex max-w-prose flex-col gap-6">
             <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
               {/* The slide and the press counters, each on its own line, so they never run together. */}
@@ -1102,8 +1088,8 @@ function NotesView({ slides }: { slides: Slide[] }) {
             <h1 id="notes-title" className="text-h1 text-ink-heading">
               {slide.title}
             </h1>
-            <div className="text-body text-ink" data-notes-view={place.n}>
-              {slide.notes}
+            <div data-notes-view={place.n}>
+              <SpeakerNotes slide={slide} glance />
             </div>
             {figureLine && (
               <p className="border-l-4 border-info-icon bg-surface py-2 pl-4 text-small text-ink" data-notes-step>
@@ -1122,34 +1108,68 @@ function NotesView({ slides }: { slides: Slide[] }) {
               </Button>
             </div>
           </div>
-          <nav aria-label={deckCopy.notesView.outline} data-notes-outline>
-            <h2 className="text-h2 text-ink-heading">{deckCopy.notesView.outline}</h2>
-            <ol className="mt-3 flex flex-col">
-              {slides.map((one) => (
-                <li key={one.n}>
-                  <button
-                    type="button"
-                    onClick={(event) => {
-                      goTo(one.n);
-                      event.currentTarget.blur();
-                    }}
-                    aria-current={one.n === place.n ? "step" : undefined}
-                    className={cx(
-                      "w-full rounded-sm px-2 py-1 text-left text-small hover:bg-tint-hover",
-                      one.n === place.n ? "bg-tint font-semibold text-ink-heading" : "text-ink",
-                    )}
-                  >
-                    {one.kind === "opener" ? deckCopy.topics[one.topic!].name : (one.outline ?? one.title)}
-                  </button>
-                </li>
-              ))}
-            </ol>
-          </nav>
+          {/* The slide on screen at its press, and the next one whole, so the presenter sees what the room sees. */}
+          <aside className="flex flex-col gap-6 lg:sticky lg:top-8 lg:self-start" data-notes-previews>
+            <SlidePreview label={deckCopy.notesView.now} slide={slide} step={place.step} data={data} slides={slides} width={448} />
+            {next && <SlidePreview label={deckCopy.notesView.then} slide={next} step={next.steps} data={data} slides={slides} width={288} />}
+          </aside>
         </div>
       </main>
       <p role="status" className="sr-only">
         {announce}
       </p>
+    </div>
+  );
+}
+
+// A slide as the room sees it, scaled into the notes window. It is a picture of the slide, so assistive tech and the
+// keyboard skip it; the notes beside it say the same.
+function SlidePreview({ label, slide, step, data, slides, width }: { label: string; slide: Slide; step: number; data: DeckData; slides: Slide[]; width: number }) {
+  const scale = width / CANVAS.width;
+  return (
+    <div className="flex flex-col gap-2" data-notes-preview={slide.n}>
+      <p className="text-caption text-ink-muted">{label}</p>
+      <div aria-hidden="true" inert className="relative overflow-hidden rounded-sm border border-line" style={{ width, height: CANVAS.height * scale }}>
+        <div className="absolute top-0 left-0 origin-top-left" style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})` }}>
+          <SlideCanvas slide={slide} data={data} slides={slides} total={slides.length} current step={step} twin={false} recorded={false} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// The presenter's notes for a slide: what to say, what to do on it, and the questions a technical panel may ask about
+// it, each with an answer to give as written. The notes window sets what to say large enough to read at a glance.
+function SpeakerNotes({ slide, glance = false }: { slide: Slide; glance?: boolean }) {
+  const words = deckCopy.notesView;
+  const Heading = glance ? "h2" : "h3";
+  return (
+    <div className="flex flex-col gap-6">
+      <section>
+        <Heading className="text-label text-ink-muted">{words.say}</Heading>
+        <div className={cx("mt-1 text-ink", glance ? "text-lead" : "text-body")}>{slide.notes}</div>
+      </section>
+      {slide.cue && (
+        <section>
+          <Heading className="text-label text-ink-muted">{words.cue}</Heading>
+          <p className="mt-1 border-l-4 border-info-icon pl-3 text-small text-ink" data-notes-cue>
+            {slide.cue}
+          </p>
+        </section>
+      )}
+      {slide.asked && slide.asked.length > 0 && (
+        <section>
+          <Heading className="text-label text-ink-muted">{words.asked}</Heading>
+          <dl className="mt-2 flex flex-col gap-3" data-notes-asked>
+            {slide.asked.map(({ q, a }) => (
+              <div key={q}>
+                <dt className="text-small font-semibold text-ink-heading">{q}</dt>
+                <dd className="mt-0.5 text-small text-ink">{a}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
     </div>
   );
 }

@@ -276,11 +276,13 @@ test("the speaker notes open in their own window, follow the deck press by press
   await expect(notes.locator("[data-notes-press]")).toHaveText(deckCopy.pressOf("1", String(figureCopy.pipeline.steps.length)));
   await expect(notes.locator("[data-notes-step]")).toHaveText(figureCopy.pipeline.steps[0]);
   expect((await scan(notes)).violations.map((found) => found.id)).toEqual([]);
-  // The notes' forward press moves the deck, and its outline jumps to a slide.
+  // The notes' forward press moves the deck, and the preview beside the notes shows the slide on screen at that press.
   await notes.getByRole("button", { name: deckCopy.notesView.nextButton }).click();
   await expect(slideById(page, "pipeline")).toHaveAttribute("data-step-current", "2");
-  await notes.locator("[data-notes-outline] button").first().click();
-  await expect(page.locator("section[data-slide='1']")).toBeVisible();
+  const pipeline = await numberOf(page, "pipeline");
+  await expect(notes.locator("[data-notes-preview]").first()).toHaveAttribute("data-notes-preview", String(pipeline));
+  await expect(notes.locator(`[data-notes-preview='${pipeline}'] section[data-slide]`)).toHaveAttribute("data-step-current", "2");
+  await expect(notes.locator("[data-notes-preview]").nth(1)).toHaveAttribute("data-notes-preview", String(pipeline + 1));
 });
 
 // Every slide whole, its reading view and its notes, as /present/page and presentation mode draw them.

@@ -49,6 +49,10 @@ export type Slide = {
   // A demo's recorded answer, which a press on the slide swaps in on the canvas (ticket 116; Recorded.tsx).
   recorded?: Recording;
   notes: ReactNode;
+  // What the presenter does on the slide, and the questions a technical panel may ask about it, each with an answer
+  // to give as written (deckCopy.speaker, by the slide's id).
+  cue?: ReactNode;
+  asked?: { q: string; a: string }[];
 };
 
 // Each slide's title has this id, so a chart and a table region can be named by it.
@@ -236,14 +240,8 @@ export function buildSlides(data: DeckData): Slide[] {
       ),
       recorded: recording,
       source: { lead: deckCopy.noteLead, text: s.demoPackage.note },
-      notes: recording ? (
-        <>
-          {s.demoPackage.notes}{" "}
-          <Fill template={s.demoPackage.notesRecorded} slots={{ step: recording.step, date: day(recording.result.as_of) }} />
-        </>
-      ) : (
-        s.demoPackage.notes
-      ),
+      notes: s.demoPackage.notes,
+      cue: recording ? <Fill template={s.demoPackage.cueRecorded} slots={{ step: recording.step, date: day(recording.result.as_of) }} /> : undefined,
     },
     {
       id: "demo-answer",
@@ -687,7 +685,12 @@ export function buildSlides(data: DeckData): Slide[] {
   // the close's notes say that everything shown is built.
   return drafts
     .filter((draft) => draft.id !== "limits" || data.designed_not_built.length > 0)
-    .map((draft, index) => ({ ...draft, n: index + 1 }));
+    .map((draft, index) => ({
+      ...draft,
+      n: index + 1,
+      cue: draft.cue ?? deckCopy.speaker[draft.id]?.cue,
+      asked: deckCopy.speaker[draft.id]?.asked,
+    }));
 }
 
 // The rubric's dimensions, a press each: its points, where Strata earns them, and what a reviewer can open.
