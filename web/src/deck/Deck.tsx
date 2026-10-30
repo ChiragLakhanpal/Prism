@@ -11,7 +11,7 @@
 //
 // The deck reads its numbers from /deck/data.json (web/src/deck/data.ts), the measures snapshot the proposal cites.
 import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Table2 } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronUp, Table2 } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
 import { Footer } from "../components/Frame";
@@ -677,13 +677,10 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
     return () => document.removeEventListener("keydown", onKey);
   }, [go, slides, toggleFull]);
 
-  const press = (move: Move) => go(moved(at.current, move, slides));
   const width = CANVAS.width * scale;
   const height = CANVAS.height * scale;
   const charted = Boolean(slide.chart) || recorded;
   const showBar = !full.on || awake || barFocus;
-  const atStart = place.n === 1 && place.step === 0;
-  const atEnd = place.n === total && place.step >= slide.steps;
   return (
     <main
       className={cx("flex min-h-dvh flex-col items-center justify-center", full.on ? (slide.theme === "navy" ? "bg-navy" : "bg-page") : "bg-surface-2 p-6")}
@@ -725,14 +722,6 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
         data-deck-bar
       >
         <div className="flex items-center gap-2">
-          <button type="button" onClick={() => press("back")} disabled={atStart} className={cx(GHOST, "text-primary hover:bg-tint-hover")} data-previous>
-            <ChevronLeft aria-hidden="true" className="size-4" />
-            {deckCopy.bar.previous}
-          </button>
-          <button type="button" onClick={() => press("forward")} disabled={atEnd} className={cx(GHOST, "text-primary hover:bg-tint-hover")} data-next>
-            {deckCopy.bar.next}
-            <ChevronRight aria-hidden="true" className="size-4" />
-          </button>
           {slide.steps > 0 && (
             <span data-chrome className="text-caption text-ink-muted tabular-nums" data-press-counter>
               {deckCopy.pressOf(String(place.step), String(slide.steps))}

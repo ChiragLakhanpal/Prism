@@ -50,6 +50,8 @@ export function moveFor(event: KeyboardEvent): Move | null {
   const target = event.target as HTMLElement | null;
   if (target?.closest?.("input, textarea, select, [contenteditable=true], [data-scroll-region], [role=dialog]")) return null;
   if (["ArrowRight", "ArrowDown", "PageDown"].includes(event.key)) return "forward";
+  // Space and Enter move on too, as in most slide tools, except on a button or a link, which they press instead.
+  if ((event.key === " " || event.key === "Enter") && !target?.closest?.("a, button, summary, [role=button], [role=link]")) return "forward";
   if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) return "back";
   if (event.key === "Home") return "first";
   if (event.key === "End") return "last";

@@ -87,6 +87,8 @@ test("/present serves the talk outside the app's frame: the bookends, five topic
   await expect(page.locator("section[data-slide]:not([hidden])")).toHaveCount(1);
   await expect(page.locator(`section[data-slide='${count}']`)).toBeVisible();
   expect(new URL(page.url()).pathname).toBe(`/present/${count}`);
+  // The keyboard moves the deck, so the control bar has no move buttons: on a slide with no chart it holds none.
+  await expect(page.locator("[data-deck-bar] button")).toHaveCount(0);
   await expect(page).toHaveTitle(`Slide ${count} of ${count} | Strata deck`);
   const ids = await page.locator("section[data-slide]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-slide-id")));
   expect(ids[0]).toBe("welcome");
@@ -153,8 +155,9 @@ test("a press brings in one figure step or one point at a time, a press after th
   await expect(slide).toHaveAttribute("data-step-current", "0");
   await expect(shownParts(slide)).toHaveCount(0);
   await expect(page.locator("[data-deck-status]")).toHaveText(new RegExp(`^Slide ${layers} of \\d+: `));
+  // Space and Enter press forward too, as the arrow keys do.
   for (let step = 1; step <= steps; step += 1) {
-    await page.keyboard.press("ArrowRight");
+    await page.keyboard.press(step === 1 ? "Space" : step === 2 ? "Enter" : "ArrowRight");
     await expect(slide).toHaveAttribute("data-step-current", String(step));
     // Every part shown is at this step or before it, and this step's parts are shown.
     const reached = await shownParts(slide).evaluateAll((parts) => parts.map((part) => Number(part.getAttribute("data-step"))));

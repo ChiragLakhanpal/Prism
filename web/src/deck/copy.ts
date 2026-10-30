@@ -42,8 +42,6 @@ export const deckCopy = {
 
   bar: {
     label: "Deck",
-    previous: "Previous",
-    next: "Next",
     showTable: "Show the table",
     showChart: "Show the chart",
   },
