@@ -1,8 +1,10 @@
 // The evidence trail (DESIGN.md section 5; the 23 brief, section 4): a project's reports, events and records in
 // three lanes, Why, How and What, on one time axis. Circles are reports, diamonds events and squares records; the
 // How lane's band row shows the ISRs' ratings of progress, lighter for better, each band naming its rating; a
-// dashed line, in its card's state colour, joins two reports that disagree, with a 24 px chip that reads
-// "2 reports disagree". There are no gridlines, so dashes always mean a disagreement.
+// dashed line, in its card's state colour, joins two reports that disagree, with a 24 px pill that names the fact and
+// the reports, "Overall risk: the PAD and 13 ISRs disagree": one line for every pair about one fact that shares a
+// report (ticket 136). Where the whole pill has no room, it says only "14 reports disagree". There are no gridlines,
+// so dashes always mean a disagreement.
 //
 // As the range chart does (ticket 12), the drawn layer is one svg with role="img", named by a hidden paragraph
 // that holds the alt text the server wrote; the items sit over it as links in one group with one tab stop, because
@@ -29,13 +31,18 @@ import {
   bandLabels,
   capitalize,
   chartType,
+  chipShort,
+  factName,
   itemName,
   joinNames,
+  leanLine,
   lineFor,
   markLabel,
   markY,
   othersOf,
+  pillText,
   placeLabels,
+  reportsName,
   scaleFor,
   shortName,
   yearX,
@@ -175,11 +182,11 @@ function tipFor(item: Item, items: Item[]): Tip {
       line: words.tip.band.replace("{start}", long(item.date)).replace("{end}", long(item.end)),
     };
   }
-  const lean = item.sides.find((side) => side.leaned);
+  const [anchor, others] = item.group ? [reportsName(item.group.anchor_reports), reportsName(item.group.other_reports)] : item.sides.map(shortName);
   return {
-    header: words.chip,
-    main: capitalize(words.sides.replace("{side1}", shortName(item.sides[0])).replace("{side2}", shortName(item.sides[1]))),
-    line: lean ? words.tip.leans.replace("{lean}", shortName(lean)) : "",
+    header: factName(item.attribute),
+    main: capitalize(words.sides.replace("{side1}", anchor).replace("{side2}", others)),
+    line: leanLine(item) ?? "",
   };
 }
 
@@ -221,26 +228,38 @@ export function EvidenceTrail({
       const w = measure(words.lane[lane].toUpperCase(), LANE_LABEL.size, LANE_LABEL.weight, false, LANE_LABEL.tracking);
       return { x0: PAD, x1: PAD + w, y0: ROWS[lane].label, y1: ROWS[lane].label + 24 };
     });
-    const chipWidth = 8 + CHIP_ICON + 4 + measure(words.chip, type.s, 600) + 8;
-    const lines: Line[] = [];
-    if (showLines) {
-      for (const item of items) {
-        if (item.kind !== "disagreement") continue;
-        lines.push(lineFor(item, x, chipWidth, laneLabelBoxes, width, lines.map((line) => line.chip)));
-      }
-    }
+    const chipWidth = (text: string) => 8 + CHIP_ICON + 4 + measure(text, type.s, 600) + 8;
     const marks = items.filter((item): item is MarkItem => item.kind !== "band" && item.kind !== "disagreement");
     const labelHeight = type.s * 1.25;
-    const placed = placeLabels(
-      marks.map((item) => {
-        const text = markLabel(item);
-        return { id: item.id, lane: item.lane, x: x(item.date), text, width: measure(text, type.s, 400, item.kind === "record") };
-      }),
-      lines.map((line) => line.chip),
-      width,
-      labelHeight,
-      lines.flatMap((line) => line.points),
-    );
+    // Each pill takes its whole words where they fit clear of a lane's label and an earlier pill, or else its count
+    // alone. When the whole words would drop a mark's label that the counts alone keep, every pill takes its count.
+    const laid = (whole: boolean) => {
+      const lines: Line[] = [];
+      const texts: Record<string, string> = {};
+      if (showLines) {
+        for (const item of items) {
+          if (item.kind !== "disagreement") continue;
+          const forms = whole ? [pillText(item), chipShort(item)] : [chipShort(item)];
+          const line = lineFor(item, x, forms.map(chipWidth), laneLabelBoxes, width, lines.map((one) => one.chip));
+          texts[item.id] = forms[line.form];
+          lines.push(line);
+        }
+      }
+      const placed = placeLabels(
+        marks.map((item) => {
+          const text = markLabel(item);
+          return { id: item.id, lane: item.lane, x: x(item.date), text, width: measure(text, type.s, 400, item.kind === "record") };
+        }),
+        lines.map((line) => line.chip),
+        width,
+        labelHeight,
+        lines.flatMap((line) => line.points),
+      );
+      return { lines, texts, placed, dropped: placed.filter((one) => "dropped" in one).length };
+    };
+    const whole = laid(true);
+    const counted = whole.dropped > 0 ? laid(false) : whole;
+    const { lines, texts, placed } = counted.dropped < whole.dropped ? counted : whole;
     const bands = items.filter((item): item is BandItem => item.kind === "band").map((band) => {
       const x0 = x(band.date);
       const x1 = Math.max(x(band.end), x0 + 8);
@@ -264,7 +283,7 @@ export function EvidenceTrail({
         targets.push({ item, box: { x0: cx - HIT / 2, x1: cx + HIT / 2, y0: cy - HIT / 2, y1: cy + HIT / 2 }, cx, cy: cy - 8 });
       }
     }
-    return { axis, x, lines, placed, bands, targets, marks, chipWidth, laneLabelBoxes };
+    return { axis, x, lines, texts, placed, bands, targets, marks, laneLabelBoxes };
     // fonts: measured again once the web fonts arrive.
   }, [items, asOf, width, type.s, showLines, fonts]);
 
@@ -486,7 +505,7 @@ export function EvidenceTrail({
                 refs.current[index] = element;
               }}
               href={evidenceHref(item.evidence_id)}
-              aria-label={itemName(item, index, total, items)}
+              aria-label={itemName(item, index, total, items, layout.texts[item.id])}
               aria-current={isActive ? "true" : undefined}
               tabIndex={index === active ? 0 : -1}
               data-item={item.id}
@@ -543,7 +562,7 @@ export function EvidenceTrail({
                   ) : (
                     <Info aria-hidden="true" className="size-4 shrink-0 text-info-icon" />
                   )}
-                  <span aria-hidden="true">{words.chip}</span>
+                  <span aria-hidden="true">{layout.texts[item.id] ?? chipShort(item)}</span>
                 </>
               )}
             </a>

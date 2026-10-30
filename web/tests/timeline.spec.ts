@@ -146,7 +146,7 @@ test("P130164's timeline places each report, event and record at its date, names
     [6, "Restructuring, July 27, 2017. Operations lane. Item 7 of 14."],
     [7, "ISR 12, April 10, 2018, rated progress Moderately Unsatisfactory. Operations lane. Item 8 of 14."],
     [9, "Implementation Completion and Results Report, October 10, 2019. Disagrees with ISR 7 and the ICR Review. Evaluations lane. Item 10 of 14."],
-    [10, "2 reports disagree: ISR 7, August 26, 2016, and the ICR, October 10, 2019. I lean on the ICR. Item 11 of 14."],
+    [10, "Progress towards the PDO: ISR 7 and the ICR disagree. ISR 7 is from August 26, 2016, and the ICR from October 10, 2019. I lean on the ICR. Item 11 of 14."],
     [11, "Implementation Completion Report Review, March 27, 2020, replaced by its re-issue of May 4, 2023. Evaluations lane. Item 12 of 14."],
   ] as const) {
     expect(names[at]).toBe(expected);
@@ -657,4 +657,85 @@ test("a contract mark's package record from a project's timeline has no past-ran
   await page.locator("[data-timeline-table] a[href*='KE-MOWI-47509-CW-RFB']").first().click();
   await expect(drawer(page).getByRole("heading", { level: 2 })).toContainText("KE-MOWI-47509-CW-RFB");
   await expect(drawer(page).locator("[data-drawer-caption]")).toHaveCount(0);
+});
+
+// Ticket 136: one dashed line and one pill per fact the reports disagree about, the pill naming the fact and the
+// reports, on the fixture as built and on the planted copy of tests/planted_groups.py, as the workspace's assertions
+// pass read P130164: 16 pairs about three facts (tests/record_timeline_api.py, GROUPED).
+
+// Each pill's words and box, and the pairs of pills whose boxes meet.
+async function pills(page: Page): Promise<{ texts: string[]; overlaps: string[] }> {
+  return chart(page).evaluate((root) => {
+    const found = [...root.querySelectorAll<HTMLElement>("[data-item-kind=disagreement]")].map((chip) => ({ text: chip.textContent ?? "", box: chip.getBoundingClientRect() }));
+    const overlaps: string[] = [];
+    for (const [at, a] of found.entries()) {
+      for (const b of found.slice(at + 1)) {
+        if (a.box.left < b.box.right && b.box.left < a.box.right && a.box.top < b.box.bottom && b.box.top < a.box.bottom) overlaps.push(`${a.text} and ${b.text}`);
+      }
+    }
+    return { texts: found.map((one) => one.text), overlaps };
+  });
+}
+
+const grouped = async () => ({ "/api/projects/P130164/timeline": { body: await recorded("timeline-p130164-grouped.json") } });
+
+test("each dashed line's pill names the fact and the reports, and no two pills overlap, at 1440 and 390 px", async ({ page }) => {
+  await open(page);
+  await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(2);
+  expect(await pills(page)).toEqual({
+    texts: ["Progress towards the PDO: ISR 7 and the ICR disagree", "Efficiency: the ICR and the ICR Review disagree"],
+    overlaps: [],
+  });
+  await page.setViewportSize({ width: 390, height: 800 });
+  const lines = page.locator("[data-timeline-list] > li > a").filter({ has: page.locator("[data-badge]") });
+  await expect(lines).toHaveCount(2);
+  await expect(lines.first()).toContainText("2 reports disagree");
+  await expect(lines.first()).toContainText("Progress towards the PDO: ISR 7 and the ICR disagree");
+});
+
+test("16 pairs about three facts are three lines with three pills that count their reports, and the table lists all 16", async ({ page }) => {
+  await open(page, "/projects/P130164/timeline", 1440, await grouped());
+  await expect(page.locator("[data-timeline-finding]")).toHaveText(
+    "Reports disagree on three points, and ISR ratings of progress fell from Satisfactory to Moderately Unsatisfactory.",
+  );
+  await expect(chart(page).locator("[data-disagreement-line]")).toHaveCount(3);
+  const { texts, overlaps } = await pills(page);
+  expect(texts.sort()).toEqual([
+    "Efficiency: the ICR and the ICR Review disagree",
+    "Overall risk: the PAD and 4 ISRs disagree",
+    "Progress towards the PDO: the ICR and 11 ISRs disagree",
+  ]);
+  expect(overlaps).toEqual([]);
+  // The PAD's mark says whom it disagrees with: every ISR on its line's other side.
+  await expect(item(page, "doc:18381488")).toHaveAccessibleName(/Disagrees with 4 ISRs\./);
+  // The title's count is of points, and its tooltip says so.
+  await page.locator("[data-timeline-finding]").getByRole("button", { name: "three" }).focus();
+  await expect(page.getByRole("tooltip")).toContainText("Points on which this project's reports disagree");
+  expect(await axe(page)).toEqual([]);
+
+  await page.getByRole("button", { name: "Show the table" }).click();
+  const pairs = page.locator("[data-timeline-table] tbody tr").filter({ has: page.locator("a[data-table-item^='disagreement:']") });
+  await expect(pairs).toHaveCount(16);
+  await expect(pairs.filter({ hasText: "Overall risk: the PAD and ISR 8" })).toContainText("I lean on ISR 8.");
+
+  await page.setViewportSize({ width: 390, height: 800 });
+  const lines = page.locator("[data-timeline-list] > li > a").filter({ has: page.locator("[data-badge]") });
+  await expect(lines).toHaveCount(3);
+  await expect(lines.filter({ hasText: "Overall risk" })).toContainText("5 reports disagree");
+  await expect(lines.filter({ hasText: "Overall risk" })).toContainText("Overall risk: the PAD and 4 ISRs disagree");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  // The list tells each fact once, so its table twin lists every pair, each opening its own two sides, at 390 px
+  // too (code review round 1, B1). A fresh page at 390 px starts with the table closed.
+  await page.reload();
+  await expect(page.locator("[data-timeline=ready]")).toBeVisible();
+  await page.getByRole("button", { name: "Show the table" }).click();
+  // Table draws its rows as cards here; the table it hides below 768 px holds the same links.
+  const cards = page.locator("[data-timeline-table] a[data-table-item^='disagreement:']:visible");
+  await expect(cards).toHaveCount(16);
+  await expect(cards.filter({ hasText: "Overall risk: the PAD and ISR 9" })).toHaveCount(1);
+  // Each pair opens its own two sides in the evidence drawer.
+  const opens = await cards.evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).searchParams.get("evidence")));
+  expect(new Set(opens).size).toBe(16);
+  expect(opens.every((evidence) => evidence?.startsWith("disagreement:"))).toBe(true);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
 });

@@ -38,11 +38,12 @@ import {
   HEIGHT,
   LANES,
   bandLine,
-  capitalize,
+  chipShort,
   fullLabel,
   joinNames,
+  leanLine,
   othersOf,
-  shortName,
+  pillText,
   type Item,
   type Lane,
   type RecordDisagreement,
@@ -95,16 +96,22 @@ const titleSize = (chart: boolean, width: number) => (chart ? (width > 700 ? 20 
 const titleLines = (chart: boolean, width: number) => (chart ? (width >= 1000 ? 1 : 2) : width >= 320 ? 3 : 4);
 
 // A disagreement's line takes its card's state: amber only while an answer open on this page has a sentence it
-// changes (the 23 brief, section 4.4), and the default otherwise.
+// changes (the 23 brief, section 4.4), and the default otherwise. A line for several pairs (ticket 136) takes the
+// state of any of its pairs the answer shows.
 export function lineStates(data: Timeline, run: Run | null): Record<string, LineState> {
   const states: Record<string, LineState> = {};
   for (const item of data.items) {
     if (item.kind !== "disagreement") continue;
-    const found = run?.disagreements.find((one) => one.id.endsWith(`:${item.disagreement_id}`));
-    states[item.id] = found ? (found.changes_answer ? "warning" : "info") : data.disagreement_line_state;
+    const ids = item.group?.disagreement_ids ?? [item.disagreement_id];
+    const found = run?.disagreements.filter((one) => ids.some((id) => one.id.endsWith(`:${id}`))) ?? [];
+    states[item.id] = found.length ? (found.some((one) => one.changes_answer) ? "warning" : "info") : data.disagreement_line_state;
   }
   return states;
 }
+
+// What the title's count counts: pairs of reports, or, where a line stands for several pairs, points (ticket 136).
+const findingCheck = (data: Timeline) =>
+  data.items.some((item) => item.kind === "disagreement" && (item.group?.count ?? 1) > 1) ? words.findingCheckPoints : words.findingCheck;
 
 // The Note line: what the bands show (the chart's one legend line, ticket 126's K16), then each abbreviation that
 // appears and each code a band shows, written short, each opening a window that spells it out (ticket 126, pattern 4).
@@ -193,10 +200,7 @@ function TimelineTable({ data, id, onOpen }: { data: Timeline; id: string; onOpe
   ];
   const note = (item: Item): ReactNode => {
     if (item.kind === "band") return words.note.trajectory;
-    if (item.kind === "disagreement") {
-      const lean = item.sides.find((side) => side.leaned);
-      return lean ? words.note.leans.replace("{lean}", shortName(lean)) : null;
-    }
+    if (item.kind === "disagreement") return leanLine(item);
     if (item.kind === "report" && item.replaced_by) return words.note.replaced.replace("{date}", formatDate(item.replaced_by.date));
     if (item.kind === "report" && item.disagrees_with?.length) return words.note.disagrees.replace("{other}", joinNames(othersOf(item, data.items)));
     return null;
@@ -304,9 +308,9 @@ function ListItemText({ item, data, states }: { item: Item; data: Timeline; stat
           <Num date={item.date} style="table" />
         </span>
         <span className="mt-1 block">
-          <StatusBadge kind={state === "warning" ? "chip-warning" : "chip-info"} />
+          <StatusBadge kind={state === "warning" ? "chip-warning" : "chip-info"} text={chipShort(item)} />
         </span>
-        <span className="mt-1 block text-caption text-ink">{capitalize(words.sides.replace("{side1}", shortName(item.sides[0])).replace("{side2}", shortName(item.sides[1])))}</span>
+        <span className="mt-1 block text-caption text-ink">{pillText(item)}</span>
       </>
     );
   }
@@ -383,7 +387,7 @@ export function TimelineLoading({ wide, slow }: { wide: boolean; slow: boolean }
 }
 
 // The chart card, in any state the payload gives: the finding, the subtitle, the chart or the list, the notes, the
-// source line and the table twin. The design gallery draws it as it is.
+// source line and the table twin, under the chart and under the list. The design gallery draws it as it is.
 export function TimelineCard({
   data,
   wide,
@@ -418,7 +422,7 @@ export function TimelineCard({
     <figure aria-labelledby={titleId} tabIndex={-1} data-timeline-card className="rounded-md border border-line bg-surface p-4 @md/page:p-6">
       <p id={titleId} data-timeline-finding className="text-pretty font-bold text-ink-heading" style={{ fontSize: titleSize(chart, width) }}>
         {/* The count's tooltip opens above it, so it never hides the finding's second line. */}
-        <SegmentText segments={data.finding} check={chart ? { tooltip: words.findingCheck, from: reportsFrom(data), act: words.findingCheckAct, opens: "rows", onOpen: openTable, side: "top" } : undefined} />
+        <SegmentText segments={data.finding} check={chart ? { tooltip: findingCheck(data), from: reportsFrom(data), act: words.findingCheckAct, opens: "rows", onOpen: openTable, side: "top" } : undefined} />
       </p>
       <p data-timeline-subtitle className="mt-1 max-w-prose text-small text-chart-text-subtle">
         {chart ? (
@@ -473,14 +477,12 @@ export function TimelineCard({
         {data.rejected && data.rejected.count > 0 && <Abstention count={data.rejected.count} data={data} />}
         <SourceLine data={data} />
       </div>
-      {chart && (
-        <>
-          <Button variant="ghost" className="mt-2" flush aria-expanded={table} aria-controls={tableId} onClick={() => setTable((open) => !open)}>
-            {table ? words.hide : words.show}
-          </Button>
-          {table ? <TimelineTable data={data} id={tableId} onOpen={onOpen} /> : <div id={tableId} hidden />}
-        </>
-      )}
+      {/* Under the list too: a list item stands for a line, which may stand for several pairs, so only the table
+          lists every pair (ticket 136; code review round 1, B1). Below 768 px Table draws its rows as cards. */}
+      <Button variant="ghost" className="mt-2" flush aria-expanded={table} aria-controls={tableId} onClick={() => setTable((open) => !open)}>
+        {table ? words.hide : words.show}
+      </Button>
+      {table ? <TimelineTable data={data} id={tableId} onOpen={onOpen} /> : <div id={tableId} hidden />}
     </figure>
   );
 }

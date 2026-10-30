@@ -140,8 +140,10 @@ export type ChangeState = "compared" | "earliest" | "previous_not_read";
 
 // version_count and shown_count are the route's counts, so the screen never counts them.
 export type Agency = {
+  // The longest way the project writes the agency's name; also_written_as holds the others (ticket 133).
   implementing_agency: string;
   agency_id: string;
+  also_written_as?: string[];
   versions: PlanVersion[];
   version_count: number;
   shown_count?: number;

@@ -209,7 +209,31 @@
           "leaned": true
         }
       ],
-      "after": "doc:31525018"
+      "after": "doc:31525018",
+      "group": {
+        "count": 1,
+        "disagreement_ids": [
+          "437378890475ef48"
+        ],
+        "anchor_side": "earlier",
+        "anchor_item_id": "doc:26733307",
+        "anchor_reports": [
+          {
+            "type": "isr",
+            "count": 1,
+            "sequence": 7
+          }
+        ],
+        "other_reports": [
+          {
+            "type": "icr",
+            "count": 1,
+            "sequence": null
+          }
+        ],
+        "reports": 2,
+        "lean": "others"
+      }
     },
     {
       "id": "doc:31906731",
@@ -293,7 +317,31 @@
           "leaned": true
         }
       ],
-      "after": "doc:34056616"
+      "after": "doc:34056616",
+      "group": {
+        "count": 1,
+        "disagreement_ids": [
+          "51ea6e6516c0ea63"
+        ],
+        "anchor_side": "earlier",
+        "anchor_item_id": "doc:31525018",
+        "anchor_reports": [
+          {
+            "type": "icr",
+            "count": 1,
+            "sequence": null
+          }
+        ],
+        "other_reports": [
+          {
+            "type": "icr_review",
+            "count": 1,
+            "sequence": null
+          }
+        ],
+        "reports": 2,
+        "lean": "others"
+      }
     }
   ],
   "table": [
@@ -728,7 +776,8 @@
   },
   "disagreements": {
     "status": "ok",
-    "count": 2
+    "count": 2,
+    "pairs": 2
   },
   "records_disagree": [],
   "records_disagree_count": 0,

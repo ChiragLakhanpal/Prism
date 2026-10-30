@@ -4577,3 +4577,82 @@ It worked if all of these hold:
 - On the Connections tab (`/projects/P130164/connections`), the finding names the same N: "In this project, M of its N contracts appeared together with ..." when some have no link, or "In this project, N contracts appeared together with ..." when all do.
 
 Record both counts, the Timeline note and the Connections finding word for word, the commit the App runs and the time here under ticket 138. This is criterion 3's live proof.
+
+## Ticket 133, step 1 of 2: note the three Kenya projects' headings, then redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit 9dee397f. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after 9dee397f. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+Before the deploy, signed in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role, save the agency headings the App gives now, so step 2 can compare them:
+
+    GET /api/projects/P156634
+    GET /api/projects/P161305
+    GET /api/projects/P155350
+
+Keep each answer's agency headings (each heading's `implementing_agency` and `agency_id`, in order). Then redeploy:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's server and tool code only (`src/strata/lakehouse/clean.py`'s pairing rule and its callers). No table, job, tool description or agent prompt changed, so no bundle deploy and no agent sync is needed. If a later merge's redeploy already runs 9dee397f or a later commit, record that run here instead of deploying again, and take the headings from the answers you or the owner saved before that deploy, or say that none were saved.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names 9dee397f or a later commit. Record the exit code, the commit the App runs, any secret step 3 names, and the three projects' headings from before the deploy here under ticket 133.
+
+## Ticket 133, step 2 of 2: P130164's plan and notices meet on one heading (criterion 3)
+
+Run after step 1, read-only. Signed in to the App as a viewer with a role, call:
+
+    GET /api/projects/P130164
+
+It worked if the answer holds one agency heading for the Public Works Department, with `implementing_agency` "Rajasthan State Public Works Department", with `also_written_as` ["Public Works Department"] and the plan of June 20, 2018 among its versions, and no second heading whose `implementing_agency` is "Public Works Department". Note that heading's `agency_id` (on the fixture copy it is `public-works-department`, the plan's spelling). Then call:
+
+    GET /api/projects/P130164/procurement/<that agency_id>
+    GET /api/projects/P130164/procurement/rajasthan-state-public-works-department
+
+It worked if both open the same plan with the same `agency_id`, `abstention` is null, and the plan's rows pair with the notices (the check marks rows from the records, not "I don't have a Procurement Plan from this agency yet"). Then call:
+
+    GET /api/projects/P156634
+    GET /api/projects/P161305
+    GET /api/projects/P155350
+
+It worked if each gives the same headings as step 1 saved, in the same order, each with `also_written_as` []. P161305 keeps two headings, "Kenya National Highways Authority" and "Kenya National Highways Authority (KeNHA)"; that is expected (a decision parked for the user under ticket 133). Coast and Northern Water Works Development Agency on P156634 stay two headings.
+
+In the browser, `/projects/P130164/procurement` shows one section headed "Rajasthan State Public Works Department" with the June 20, 2018 plan, and its window reads "Rajasthan State Public Works Department. Also written as Public Works Department." Record the heading, its `agency_id`, both plan check answers' plan dates and abstention, the three projects' headings, the commit the App runs and the time here under ticket 133. This is criterion 3's live proof.
+
+## Ticket 136, step 1 of 3: sync the agent's get_disagreements description
+
+The merger parked this on October 29, 2026, after merge commit a25cf415. Every key is set, but mergers run no workspace step, so the orchestrator runs these three blocks today, one at a time and in order, from a snapshot at or after a25cf415. The get_disagreements description in `config/tools.toml` changed (it now names the groups), and the Foundry agent keeps the old one until the sync runs.
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked when the `--check` run exits 0. Record both exit codes and the agent version here under ticket 136.
+
+## Ticket 136, step 2 of 3: the assertions pass for P130164 from the new code
+
+Run after step 1, and after a bundle deploy that carries a25cf415 or a later commit (`uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace`; ticket 132's record above says the bundle deploy waits for `--force`, which is the owner's call). In the builder's words, run the assertions pass for P130164 from the new code, either the nightly's task:
+
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["detect_disagreements"]}' --timeout 160m -p strata
+
+or the scoped run from ticket 135, limited to P130164. Ticket 135 has not merged, so `ops/assertions/batch_live.py` has no `--projects` yet, and the pass over the whole workspace trips the warehouse's inline cap (ticket 132's record above). Until 135 lands, the scoped route is the one the orchestrator used for ticket 132: `.notes/workflows/assertions-demo.py`, which imports the main checkout's `src`, limited to P130164. Each of these reads the held answers again through `read_answer`, so `once_a_page` runs and keeps one of the PAD's two risk cells. `redetect` alone does not: it keeps `18381488/v1/table65b.1` (the round 2 review and the verifier say so).
+
+It worked when this query returns no rows:
+
+    SELECT d.disagreement_id FROM strata.gold.disagreement AS d JOIN strata.gold.assertion AS a ON a.assertion_id IN (d.first_assertion_id, d.second_assertion_id) WHERE d.project_id = 'P130164' AND a.evidence_id = 'strata.gold.passage:18381488/v1/table65b.1'
+
+Record the run, its result and the row count here under ticket 136.
+
+## Ticket 136, step 3 of 3: one line per fact on the P130164 Timeline tab (criterion 3)
+
+Run after step 2. Redeploy the App from the same snapshot. If a later merge's redeploy already runs a25cf415 or a later commit, record that run instead of deploying again.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then open the P130164 Timeline tab in a fresh browser context, because the timeline answer is a kept page for up to two hours (ticket 138's step 2 says why). Sign in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role and open `/projects/P130164/timeline`.
+
+It worked when all of these hold, at 1440 and 390 px:
+
+- There is one dashed line and one pill per fact, not one for each pair (the tab read 60 pills on October 29 at 20:10 PDT).
+- No pill overlaps another.
+- No pill names a report on both of its sides.
+- "Show the table" lists every pair.
+
+Record the deploy's exit code, the commit the App runs, the pills word for word, the pair count and the time here under ticket 136. This is criterion 3's live proof.

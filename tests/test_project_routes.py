@@ -115,7 +115,8 @@ def test_a_project_page_gives_its_header_and_each_agency_s_plan_versions_newest_
     assert counts["kilifi-mariakani-water-and-sewerage-company-ltd"] == 1
     # An agency the project record names that has published no plan is listed with no versions.
     assert {"implementing_agency": "Water Sector Trust Fund", "agency_id": "water-sector-trust-fund",
-            "versions": [], "baseline": None, "changes": None, "version_count": 0, "shown_count": 0} in body["agencies"]
+            "also_written_as": [], "versions": [], "baseline": None, "changes": None, "version_count": 0,
+            "shown_count": 0} in body["agencies"]
     assert body["documents_through"] == "2026-10-22"
 
 

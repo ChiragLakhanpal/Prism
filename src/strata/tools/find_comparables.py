@@ -52,7 +52,7 @@ from importlib import resources
 from strata.config import load_sources, load_thresholds, load_tools
 from strata.estimates.past_range import QUARTERS, Observation, dot_packages, months, quantile_dots, quartiles
 from strata.reader.repair import AS_READ as REFERENCE_AS_READ
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 from strata.tools.registry import Call
 
 TOOL = "find_comparables"

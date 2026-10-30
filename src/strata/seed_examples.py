@@ -38,7 +38,7 @@ import httpx
 from strata.config import Examples, Roles, load_examples, load_roles
 from strata.knowledge.lessons import notices
 from strata.server.home import HomeStore
-from strata.tools.check_plan import agency_id
+from strata.lakehouse.clean import agency_id
 
 FOLLOWS = "follows"
 REVIEW_NOTES = "review_notes_demo_plan"

@@ -865,8 +865,14 @@ read from the project's reports that were left out because their quote was not w
 Cite a disagreement by its row's evidence id, and each side by the side's own evidence id: quote a side's words \
 from its text. A side that rests on a passage backs only its dates and its quote. For a number on a side, such as \
 ISR 7's sequence or the months after the mid-term review, cite the row as well. When Prompt Shields found a prompt attack in a side's passage as it was read in, or never screened \
-it, the side comes without its text and its quote, and the coverage line says how many passages. The trajectories and the count of left-out assertions come back in the result's summary, which \
-you cite for them. When an answer rests on one side of a disagreement, show both sides."""
+it, the side comes without its text and its quote, and the coverage line says how many passages. Disagreements \
+about one fact are one group. A group's pairs share the subject, the rule, the attribute and one report, its \
+anchor, on one side, such as the PAD's overall risk against each ISR's. Each group gives its anchor, its count, \
+its disagreement ids, the reports on each side and the side every pair leans on. counts says how many groups \
+there are over how many disagreements. Say a group once, with its count, rather than each pair. The \
+trajectories, the count of left-out assertions, the groups and their counts come back in the result's summary, \
+which you cite for them. When an answer rests on one side of a \
+disagreement, show both sides."""
 adapter = "strata.tools.get_disagreements:get_disagreements"
 benchmark = "get-disagreements-p130164"
 sources = ["documents", "ieg_ratings", "awards", "awards_fy2001_2016", "notices"]
@@ -900,7 +906,7 @@ row_fields = ["evidence_id", "public_from", "source", "disagreement_id", "subjec
               "attribute", "attribute_kind", "period", "sides", "lean_assertion_id", "other_assertion_id", "rule_id",
               "if_you_keep"]
 source_fields = ["table", "project_id", "subject_id", "evidence_ids"]
-fields = ["subject", "trajectories", "rejected"]
+fields = ["subject", "trajectories", "rejected", "groups", "counts"]
 # prompt_shields_hit and not_screened count passages, not disagreements: the sides whose passage's words the tool
 # kept from the agent (strata.knowledge.shields), as search_passages counts the passages it leaves out.
 reasons = ["replaced_by_later_version", "prompt_shields_hit", "not_screened"]
@@ -909,8 +915,9 @@ abstentions = ["unknown_subject", "unknown_attribute", "no_assertions", "view_pu
 # state, so they come back as one citable record too. rejected.reasons counts the assertions the run left out by
 # the batch's own codes (strata.knowledge.assertions): passage_not_found, quote_not_on_page, unknown_attribute,
 # unknown_period and value_not_on_scale. No screen shows the codes: the Timeline states only the count, so the copy
-# file has no words for them (ticket 20's verification round 3, V3).
-summary_fields = ["trajectories", "rejected"]
+# file has no words for them (ticket 20's verification round 3, V3). The groups and their counts (ticket 136) are
+# figures too: "3 groups over 60 disagreements" is the summary's counts.
+summary_fields = ["trajectories", "rejected", "groups", "counts"]
 # Each side is the assertion as its source made it, under the evidence id of the passage or record it rests
 # on, with the passage's text when it rests on one, so a claim can cite it or quote from it. A side whose passage
 # Prompt Shields flagged or never screened has no text or quote, and its text_left_out names the reason.

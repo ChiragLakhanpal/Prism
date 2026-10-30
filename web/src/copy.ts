@@ -2228,6 +2228,9 @@ export const copy = {
     source: "World Bank documents and reports API, Procurement Plans listed for this project, through {date}.",
     sourceUndated: "World Bank documents and reports API, Procurement Plans listed for this project.",
     agencyEmpty: "I don't have a Procurement Plan from this agency yet.",
+    // An agency the project's plans and record write more than one way (ticket 133): its heading shows the longest
+    // name and opens a window with the others.
+    alsoWrittenAs: (names: string) => `Also written as ${names}.`,
     // Two or more agencies with no plan share one block after the agencies with plans.
     otherAgencies: "Other implementing agencies",
     othersEmpty: "I don't have a Procurement Plan from these agencies yet:",
@@ -7951,6 +7954,26 @@ export const copy = {
     tableRange: "{start} to {end}",
     // The disagreement line's label. The ticket fixes the numeral.
     chip: "2 reports disagree",
+    // A dashed line's pill (ticket 136): the fact the reports disagree about, the one report and the others, as
+    // "Overall risk: the PAD and 13 ISRs disagree". {anchor} and {others} are short names or counted kinds of report
+    // (server.plural). Where the pill has no room, it says only how many reports disagree, as chipCount.
+    pill: "{fact}: {anchor} and {others} disagree",
+    chipCount: "{n} reports disagree",
+    // A pair of reports in the table, under the line that draws its fact: "Overall risk: the PAD and ISR 9".
+    pair: "{fact}: {side1} and {side2}",
+    // What the reports disagree about, by the evidence ladder's attribute (config/evidence_ladder.toml).
+    fact: {
+      pdo_progress: "Progress towards the PDO",
+      implementation_progress: "Implementation progress",
+      overall_risk: "Overall risk",
+      outcome: "Outcome",
+      efficiency: "Efficiency",
+      bank_performance: "World Bank performance",
+      me_quality: "Monitoring and evaluation",
+      signed_on: "Signing date",
+      signed_amount_usd: "Signed amount",
+    } as Record<string, string>,
+    factOther: "A rating",
     // A tooltip's third line.
     tip: {
       disagrees: "Disagrees with {other}.",
@@ -7961,6 +7984,9 @@ export const copy = {
       group: "Select to list them.",
       band: "{start} to {end}. Progress towards achievement of PDO.",
       leans: "I lean on {lean}.",
+      // A line for several pairs (ticket 136): every pair leans on the other report of its own pair, or they differ.
+      leansEach: "I lean on each of the {others}.",
+      leansTable: "The table says which report I lean on in each pair.",
       written: "{written}.",
       writtenDisagrees: "{written}. Disagrees with {other}.",
     },
@@ -7978,7 +8004,13 @@ export const copy = {
       group: "{count} contracts signed in {year}. Records lane. Item {i} of {n}.",
       band: "ISRs {first} to {last} rated progress {rating}, from {start} to {end}. Operations lane. Item {i} of {n}.",
       bandOne: "ISR {first} rated progress {rating}, from {start} to {end}. Operations lane. Item {i} of {n}.",
-      disagreement: "2 reports disagree: {side1}, {date1}, and {side2}, {date2}. I lean on {lean}. Item {i} of {n}.",
+      // A dashed line's pill first, as it reads on the chart ({lead}: the whole pill, or its count and then the whole
+      // pill, from lead below), then each report's date (ticket 136).
+      disagreement: "{lead}. {side1} is from {date1}, and {side2} from {date2}. I lean on {lean}. Item {i} of {n}.",
+      // A line for several pairs (ticket 136): its pill's words, then the lean line if any.
+      disagreementGroup: "{lead}. {lean}Item {i} of {n}.",
+      lead: "{chip}. {pill}",
+      leanNext: "{lean} ",
     },
     group: (n: string, pid: string) => `${n} items on the timeline of ${pid}`,
     help: "Use the arrow keys to move between items. Left and Right go in date order. Up and Down move between lanes. Press Enter to open an item's source.",
@@ -8057,6 +8089,8 @@ export const copy = {
     abstentionCheck: "Ratings and dates from this project's documents that I left out.",
     // The title's count: what it counts, and that it opens the table.
     findingCheck: "Pairs of this project's reports that disagree.",
+    // The same where a line stands for several pairs (ticket 136), so the title counts points, not pairs.
+    findingCheckPoints: "Points on which this project's reports disagree, each one report against one or more others.",
     findingCheckAct: "Select to see the table.",
     // Under the title, which already says what failed: what is missing until then, true of the chart and the list.
     // Without the check, no ISR is a side of a disagreement, so only the newest ISR keeps its own mark.
@@ -8136,6 +8170,9 @@ export const copy = {
         failed: "I couldn't read this project's ISR ratings or check its reports for disagreements just now.",
         leadOne: "Two reports disagree",
         leadSeveral: "{count} pairs of reports disagree",
+        // Where one report disagrees with several others about one fact, the title counts the facts (ticket 136).
+        leadPoint: "Reports disagree on one point",
+        leadPoints: "Reports disagree on {count} points",
         fell: "ISR ratings of progress fell from {first} to {last}",
         rose: "ISR ratings of progress rose from {first} to {last}",
         same: "ISR ratings of progress were {rating} at the first ISR and at the last",
@@ -8152,6 +8189,8 @@ export const copy = {
         // When get_disagreements did not answer: Strata could not read the ratings, which is not having none.
         ratingsFailed: "I couldn't read this project's ISR ratings just now.",
         line: "A dashed line joins {side1} and {side2}, which disagree.",
+        // A line for several pairs (ticket 136): "A dashed line marks where the PAD and 13 ISRs disagree."
+        lineGroup: "A dashed line marks where {anchor} and {others} disagree.",
         noLines: "No reports disagree.",
         // The page's as-of date, last, when the page asked for one: the drawn label is inside the image.
         asOf: "It shows what was public on {date}.",
@@ -8187,6 +8226,15 @@ export const copy = {
         and: " and ",
         sources: CONTRACT_SOURCE_NAMES,
       },
+      // Several reports of one kind on one side of a line (ticket 136), the page's pill and the alt text alike.
+      plural: {
+        pad: "{n} PADs",
+        isr: "{n} ISRs",
+        icr: "{n} ICRs",
+        icr_review: "{n} ICR Reviews",
+        ppar: "{n} PPARs",
+        other: "{n} reports",
+      } as Record<string, string>,
     },
   },
 
