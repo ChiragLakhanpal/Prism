@@ -92,6 +92,8 @@ export type Timeline = {
   // Ticket 132: where a package's records disagree (a plan row, the contract awards, an award notice), which no dashed
   // line joins, the newest first. A recording made before the ticket may lack it.
   records_disagree?: RecordDisagreement[];
+  // How many there are, as the route counts them, for the list's count line and its Show all.
+  records_disagree_count?: number;
   // The state a dashed line takes when no answer or draft open on the page depends on it: config/project_page.toml's
   // [timeline] disagreement_line_state (the 23 brief, section 10), "info" unless it is switched back to "warning".
   disagreement_line_state: "info" | "warning";

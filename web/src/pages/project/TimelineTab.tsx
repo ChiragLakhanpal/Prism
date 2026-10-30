@@ -52,6 +52,8 @@ import { MonoWords } from "../../components/MonoWords";
 import { withReadParams } from "../../lib/view";
 
 const words = copy.timeline;
+// The plan's Process Status in a moved-on sentence, as the plan check words it (ticket 132).
+const stillSays = copy.checkPlan.reason.stillSays;
 const CHART_MIN = 520;
 const WIDE = "(width >= 48rem)";
 
@@ -473,7 +475,10 @@ function RecordLine({ one, onOpen }: { one: RecordDisagreement; onOpen: (one: Re
   const [first, second] = one.sides;
   const sentence =
     status && other ? (
-      <Fill template={r.status[other.record] ?? r.status.contract_awards} slots={{ plan: <Num date={status.made_at} />, date: <Num date={other.value} /> }} />
+      <Fill
+        template={r.status[other.record] ?? r.status.contract_awards}
+        slots={{ plan: <Num date={status.made_at} />, date: <Num date={other.value} />, status: stillSays[status.value] ?? status.value }}
+      />
     ) : (
       <Fill
         template={one.attribute === "signed_amount_usd" ? r.signed_amount_usd : r.signed_on}
@@ -499,7 +504,15 @@ function RecordLine({ one, onOpen }: { one: RecordDisagreement; onOpen: (one: Re
   );
 }
 
-function RecordsDisagree({ found, onOpen }: { found: RecordDisagreement[]; onOpen: (one: RecordDisagreement, element: HTMLElement) => void }) {
+function RecordsDisagree({
+  found,
+  count,
+  onOpen,
+}: {
+  found: RecordDisagreement[];
+  count: number;
+  onOpen: (one: RecordDisagreement, element: HTMLElement) => void;
+}) {
   const r = words.records;
   const titleId = useId();
   const [all, setAll] = useState(false);
@@ -511,16 +524,16 @@ function RecordsDisagree({ found, onOpen }: { found: RecordDisagreement[]; onOpe
       </h3>
       <p className="max-w-prose text-small text-ink-muted">{r.lede}</p>
       <p data-records-disagree-count className="text-small text-ink">
-        <Fill template={r.count(found.length)} slots={{ n: <Num count={found.length} capital /> }} />
+        <Fill template={r.count(count)} slots={{ n: <Num count={count} capital /> }} />
       </p>
       <ul className="flex flex-col gap-4">
         {shown.map((one) => (
           <RecordLine key={one.id} one={one} onOpen={onOpen} />
         ))}
       </ul>
-      {found.length > r.listUpTo && (
+      {count > r.listUpTo && (
         <Button variant="ghost" flush aria-expanded={all} onClick={() => setAll((open) => !open)}>
-          <Fill template={all ? r.showFewer : r.showAll} slots={{ n: formatCount(all ? r.listUpTo : found.length) }} />
+          <Fill template={all ? r.showFewer : r.showAll} slots={{ n: formatCount(all ? r.listUpTo : count) }} />
         </Button>
       )}
     </section>
@@ -577,6 +590,7 @@ export function TimelineTab({ pid }: { pid: string }) {
         {records.length > 0 && (
           <RecordsDisagree
             found={records}
+            count={load.data.records_disagree_count ?? records.length}
             onOpen={(one, element) => openEvidence(one.evidence_id, { serial: null, sentence: null, marker: element, runId: null, fallback: heading.current })}
           />
         )}

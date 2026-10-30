@@ -376,7 +376,7 @@ def test_a_pending_activity_with_no_later_step_done_from_another_record_stays_st
     """Ticket 132, criterion 1: in the plan of March 5, 2026, KE-NWWDA-541061-CW-RFQ is Pending Implementation, and
     no contract record or award notice says it was signed (only the agency's later plan does), so as of October 22,
     2026 it is still pending 9 days before the project closes. In the same plan, the two activities the contract
-    awards say were signed while it was the agency's latest plan are moved on since the plan, counted apart."""
+    awards say were signed before the agency's next plan replaced it are moved on since the plan, counted apart."""
     result = check_plan(engine, plan_date="2026-03-05", as_of="2026-10-22")
 
     pending = reasons(result, "KE-NWWDA-541061-CW-RFQ")

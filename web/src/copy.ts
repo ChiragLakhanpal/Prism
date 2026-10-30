@@ -2937,11 +2937,15 @@ export const copy = {
       no_method: "The row gives no Method, so I couldn't choose its steps.",
       duplicate_ref: "Another row in your file has the same reference, {ref}. I checked both.",
       // Ticket 132: the plan row still says pending, and a later record says the contract was signed, by the record
-      // that says so (check_plan's record value).
+      // that says so (check_plan's record value). {status} is stillSays' word for the plan's Process Status, or STEP's
+      // value word for word (DESIGN.md section 7, rule 17).
       moved_on_since_plan: {
-        contract_awards: "The plan still says pending, but the contract awards say the contract was signed on {date}.",
-        award_notice: "The plan still says pending, but an award notice says the contract was signed on {date}.",
+        contract_awards: "The plan still says {status}, but the contract awards say the contract was signed on {date}.",
+        award_notice: "The plan still says {status}, but an award notice says the contract was signed on {date}.",
       } as Record<string, string>,
+      // The plan's Process Status in a moved-on sentence: "pending" for Pending Implementation, as the ticket words it;
+      // any other value, such as Under Implementation, is written as STEP gives it.
+      stillSays: { "Pending Implementation": "pending" } as Record<string, string>,
     },
     // The citation after a moved-on reason, which opens the disagreement between the plan row and that record.
     movedOnSource: {
@@ -8039,19 +8043,20 @@ export const copy = {
       count: (n: number) => (n === 1 ? "One package record disagrees with another." : "{n} pairs of package records disagree."),
       listUpTo: 5,
       showAll: "Show all {n}",
-      showFewer: "Show the newest {n}",
+      showFewer: "Show the first {n}",
       // What each side's record is, in a sentence: the plan of a date, the contract awards, an award notice of a date.
       name: {
         plan: "the plan of {date}",
-        contract_awards: "the contract awards",
+        contract_awards: "the contract award record",
         award_notice: "the award notice of {date}",
       } as Record<string, string>,
       // The record Strata leans on, with no date.
-      leanName: { plan: "the plan", contract_awards: "the contract awards", award_notice: "the award notice" } as Record<string, string>,
-      // The plan still says the contract is not signed, and a record says it was: the plan check's moved-on row.
+      leanName: { plan: "the plan", contract_awards: "the contract award record", award_notice: "the award notice" } as Record<string, string>,
+      // The plan still says the contract is not signed, and a record says it was: the plan check's moved-on row. {status}
+      // is the plan check's stillSays word for the plan's Process Status, or STEP's value word for word.
       status: {
-        contract_awards: "The plan of {plan} still says pending, but the contract awards say the contract was signed on {date}.",
-        award_notice: "The plan of {plan} still says pending, but an award notice says the contract was signed on {date}.",
+        contract_awards: "The plan of {plan} still says {status}, but the contract awards say the contract was signed on {date}.",
+        award_notice: "The plan of {plan} still says {status}, but an award notice says the contract was signed on {date}.",
       } as Record<string, string>,
       signed_on: "Two records give different signing dates: {first} says {value1}, and {second} says {value2}.",
       signed_amount_usd: "Two records give different signed amounts: {first} says US${value1}, and {second} says US${value2}.",

@@ -22,7 +22,7 @@ The checks, with their thresholds in config/thresholds.toml's [plan_check] (CLAU
   gives no planned completion date or no estimate (the activity then counts as not fully checked).
 - Moved on since the plan (ticket 132): the plan still says the contract is not signed (a Process Status
   before signing and no Signed Contract date), and a contract record or an award notice says it was signed
-  while this version was the agency's latest plan. That is a disagreement between the two records, defined once
+  before a later plan of the agency replaced this version (at any time, for the agency's latest plan). That is a disagreement between the two records, defined once
   by the nightly job's detect_disagreements task (strata.knowledge.assertions), and the tool reads it
   (moved_on.sql) rather than working it out again. The row then gets none of the pending checks above, whose
   "no signed contract" the record contradicts; its reason gives the record's signing date and which record it

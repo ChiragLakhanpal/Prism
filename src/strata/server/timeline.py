@@ -54,6 +54,7 @@ from strata.server.viewer_sql import query as viewer_query
 from strata.tools import registry
 from strata.tools.check_plan import RECORD_WORDS
 from strata.tools.get_disagreements import reads as disagreement_reads
+from strata.tools.get_disagreements import replaced as replaced_disagreement
 from strata.tools.withheld import WITHHELD, withheld_in
 
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
@@ -455,6 +456,7 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
 
     shown_rows = [] if status != "ok" else found["rows"]
     disagreements = [one for row in shown_rows if (one := _disagreement(row, every)) is not None]
+    listed = records_disagree(shown_rows)
     sides = {side["item_id"].removeprefix(f"{DOC}:") for found_one in disagreements for side in found_one["sides"]}
     isrs = [item for item in every.values() if item["type"] == "isr"]
     marked = isr_marks(ratings["points"] if ratings else [], isrs, sides, lambda rating: ladder.side(BANDED, rating))
@@ -477,8 +479,10 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         "as_of": as_of.isoformat(), "asked_as_of": _iso(asked), "view": view,
         "items": items, "table": table, "ratings": ratings,
         "disagreements": {"status": status, "count": len(disagreements)},
-        # The disagreements between a package's records, listed under the chart (ticket 132).
-        "records_disagree": records_disagree(shown_rows),
+        # The disagreements between a package's records, listed under the chart, and how many there are, which the
+        # list's count line and its Show all state (ticket 132; CLAUDE.md rule 1).
+        "records_disagree": listed,
+        "records_disagree_count": len(listed),
         # The state a dashed line takes when no answer or draft open on the page depends on it (config).
         "disagreement_line_state": PAGE.timeline.disagreement_line_state,
         "rejected": {"count": int((found.get("rejected") or {}).get("count") or 0)} if status != "failed" else None,
@@ -602,6 +606,8 @@ def disagreement_row(row: dict) -> dict:
             "disagreement_id": row["disagreement_id"], "project_id": row["project_id"], "attribute": row["attribute"],
             "period": row["period"], "rule_id": row["rule_id"], "lean_assertion_id": row["lean_assertion_id"],
             "other_assertion_id": row["other_assertion_id"], "if_you_keep": row["if_you_keep"], "sides": sides,
+            # The day a later version replaced a side, only for a disagreement a replaced plan's check cites (ticket 132).
+            **({"replaced_on": row["replaced_on"]} if row.get("replaced_on") else {}),
             "source": {"table": row["source"]["table"], "project_id": row["project_id"]}}
 
 
@@ -611,8 +617,12 @@ def read_disagreement(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     found = _rows(engine, "disagreement", disagreement_id=key, as_of=as_of)
     if not found:
         return None
-    row = next((one for one in _tool(engine, found[0]["project_id"], as_of)["rows"] if one["disagreement_id"] == key),
-               None)
+    pid = found[0]["project_id"]
+    row = next((one for one in _tool(engine, pid, as_of)["rows"] if one["disagreement_id"] == key), None)
+    if row is None:
+        # A disagreement a later version replaced, such as a replaced plan's row that the contract awards moved past:
+        # current answers leave it out, but that plan's check still cites it (ticket 132's review round 1, B1).
+        row = replaced_disagreement(registry.Call(engine, Viewer(), "staff", as_of, load_thresholds()), pid, key)
     if row is None:
         return None
     sides = {_stratum(GROUPS.get(side["document_type"] or "", "other")) for side in row["sides"]}

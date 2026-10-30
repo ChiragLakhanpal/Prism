@@ -242,6 +242,22 @@ test("each reason is built from the copy file's sentence and the tool's values, 
   await expect(row("KE-NWWDA-541061-CW-RFQ")).toContainText("Completed, but Actual Amount reads 0.00.");
 });
 
+test("a moved-on row whose plan says another status before signing names STEP's value word for word", async ({ page }) => {
+  // Ticket 132's review round 1, F4: "pending" stands for Pending Implementation only. A made-up answer gives
+  // KE-NWWDA-541062-CW-RFQ the Process Status Under Implementation, which some Kenya plans hold (KE-CWSB-565568-GO-RFQ).
+  const answer = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
+  const changed = answer.rows.find((one: { activity_reference_no: string }) => one.activity_reference_no === "KE-NWWDA-541062-CW-RFQ");
+  changed.process_status = "Under Implementation";
+  for (const mark of changed.marks) for (const reason of mark.reasons) reason.process_status = "Under Implementation";
+  await openPlan(page, 1440, { body: JSON.stringify(answer) });
+  const row = (ref: string) => view(page, "table").locator(`tr[id="${ref}"]`);
+
+  await expect(row("KE-NWWDA-541062-CW-RFQ")).toContainText(
+    "The plan still says Under Implementation, but the contract awards say the contract was signed on May 11, 2026.",
+  );
+  await expect(row("KE-NWWDA-541055-CW-RFB")).toContainText("The plan still says pending, but");
+});
+
 test("column names and values are STEP's, word for word", async ({ page }) => {
   await openPlan(page);
   const table = view(page, "table").locator("table");

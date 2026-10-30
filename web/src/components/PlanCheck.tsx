@@ -218,7 +218,10 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       // Ticket 132: what the record shows, with the disagreement between the plan row and that record cited.
       return (
         <>
-          <Fill template={r.moved_on_since_plan[reason.record ?? ""] ?? r.moved_on_since_plan.contract_awards} slots={{ date: day(reason.signed_on!) }} />
+          <Fill
+            template={r.moved_on_since_plan[reason.record ?? ""] ?? r.moved_on_since_plan.contract_awards}
+            slots={{ date: day(reason.signed_on!), status: r.stillSays[reason.process_status ?? ""] ?? reason.process_status }}
+          />
           {reason.disagreement_id && <DisagreementCite id={reason.disagreement_id} record={reason.record} />}
         </>
       );

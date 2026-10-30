@@ -72,7 +72,8 @@ in the result's thresholds, and checks one that has no estimate. \
 A signed amount is compared with its estimate, and the result says how late the contract was signed, measured \
 from the first published planned date. A package still pending close to the project's closing date is marked. \
 Weak records get data notes. A package the plan still shows as not signed, while the contract awards or an award \
-notice say its contract was signed when this plan was the agency's latest, is marked moved_on instead of pending: \
+notice say its contract was signed before a later plan of the agency replaced this one (at any time, for the \
+agency's latest plan), is marked moved_on instead of pending: \
 the records have moved past the plan, and the reason cites the disagreement between them. \
 It returns one row per activity in STEP's columns, with its marks (needs_a_look, \
 watch, moved_on, data_note) and the values behind each reason. How many activities the plan lists and how many carry each \
@@ -157,7 +158,8 @@ summary_fields = ["counts"]
 [tools.project_signals]
 description = """Runs Strata's seven fixed checks on one active project's public records and says which found \
 a reason to look. A signal is a reason to look, never a finding. The checks: an activity in an implementing \
-agency's latest Procurement Plan passed its planned completion with no signed contract; a contract was signed \
+agency's latest Procurement Plan passed its planned completion with no signed contract, leaving out an activity \
+a contract record or an award notice says was signed (moved on since the plan); a contract was signed \
 at {plan_check.actual_to_estimate_ratio} times its estimate or more; a Direct Selection activity of \
 US${signals.late_direct_min_usd} or more first appears in a plan published {signals.late_direct_months} months \
 or less before the closing date, when the agency's previous plan does not list it; the loan history shows the \

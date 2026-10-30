@@ -604,7 +604,7 @@ test("under the chart, where the records disagree lists a plan that still says p
   await expect(items.first()).toHaveAttribute("data-activity", "KE-NWWDA-541055-CW-RFB");
   await expect(first).toContainText(
     "The plan of October 9, 2026 still says pending, but the contract awards say the contract was signed on June 22, 2026. " +
-      "I lean on the contract awards.",
+      "I lean on the contract award record.",
   );
   await section.getByRole("button", { name: "Show all 25" }).click();
   await expect(items).toHaveCount(25);
