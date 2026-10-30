@@ -989,8 +989,9 @@ function Populated({
       maxMonths={maxMonths}
       planRowMonths={planned ? null : planRowMonths}
       plan={plan}
-      notice={result.plan?.planned_notice_on ?? null}
-      signing={result.plan?.planned_signing_on ?? null}
+      // The plan's step dates, as the step tracker shows them: the plan line's two ends when it has both (ticket 139).
+      notice={pkg?.planned_notice_on ?? null}
+      signing={pkg?.planned_signing_on ?? null}
       planned={Boolean(planned)}
       narrow={narrow}
       onType={onType}
@@ -1360,14 +1361,12 @@ function PlanControl({
       <p id={ids.helper} className={cx("col-start-1 row-start-1 text-caption text-ink-muted", moved && narrow && "invisible")}>
         {planned ? (
           plan !== null ? w.helperPlanned : w.helperPlannedNone
-        ) : notice && signing ? (
+        ) : planRowMonths !== null ? (
           // The plan row's two dates are in the plan months' tooltip in the finding (ticket 126), so the line under
           // the input says nothing then.
           null
-        ) : plan !== null ? (
-          w.helperTyped
         ) : (
-          w.helperNoPlan
+          <NoPlanLine notice={notice} signing={signing} typed={plan !== null} />
         )}
       </p>
       {resetButton(cx("col-start-1 row-start-1 self-start", !narrow && "hidden"), true)}
@@ -1377,6 +1376,19 @@ function PlanControl({
       </p>
     </div>
   );
+}
+
+// Why there is no plan line from the plan row, by the plan's step dates the step tracker shows (ticket 139): it names
+// the one date the plan gives, or says the signing comes first; with neither date, the plan row has none. typed is
+// whether a number of months typed in the input draws the line instead.
+function NoPlanLine({ notice, signing, typed }: { notice: string | null; signing: string | null; typed: boolean }) {
+  const w = words.control;
+  const on = (iso: string) => <Num date={iso} />;
+  if (notice && signing)
+    return typed ? w.helperTypedSigningFirst : <Fill template={w.helperSigningFirst} slots={{ notice: on(notice), signing: on(signing) }} />;
+  if (signing) return typed ? w.helperTypedOnlySigning : <Fill template={w.helperOnlySigning} slots={{ signing: on(signing) }} />;
+  if (notice) return typed ? w.helperTypedOnlyNotice : <Fill template={w.helperOnlyNotice} slots={{ notice: on(notice) }} />;
+  return typed ? w.helperTyped : w.helperNoPlan;
 }
 
 // ── The table twin ───────────────────────────────────────────────────────
