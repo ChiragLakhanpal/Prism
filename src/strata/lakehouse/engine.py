@@ -18,6 +18,10 @@ A page's reads go as one batch (ticket 125): run_many(engine, statements) posts 
 waits once (each statement cost the statements API about two seconds, so a page that ran six one after another took
 twelve), and read_together(engine, statements) gives a page an engine that answers each of its reads from that batch.
 How the warehouse engine waits is config/thresholds.toml's [warehouse].
+
+The warehouse returns a statement's result inline only up to warehouse.statement_result_bytes, and refuses a larger
+one. A read that grows with the workspace goes through read_in_parts (ticket 135), which measures the rows first and
+asks for them in parts that fit; on DuckDB and Spark, which have no such limit, it is one statement as before.
 """
 
 from __future__ import annotations
@@ -216,6 +220,111 @@ def read_ahead(engine, statements: Sequence[Statement]) -> None:
     runs each one when it is asked for, as before."""
     if isinstance(engine, ReadTogether):
         engine.add(statements)
+
+
+# ── Reads within the warehouse's result limit (tickets 123 and 135) ────────
+
+# The characters JSON writes with a backslash: the control characters, the quote mark and the backslash itself. Each
+# takes two to six bytes in the warehouse's result where the text holds one.
+ESCAPED = "".join(chr(code) for code in range(1, 32)) + '"\\'
+# What one value takes in a result beside its text: its quote marks and comma, and room for a value the warehouse
+# writes longer than CAST(... AS STRING) gives it, such as a timestamp with its T and milliseconds, or a null.
+VALUE_BYTES = 16
+
+
+def json_bytes(text: str) -> str:
+    """The SQL for the most bytes a text column's value can take in the warehouse's JSON result: six bytes for each
+    character JSON may write as an escape (a quote mark, a backslash, a control character such as a line break, or a
+    letter outside ASCII, as \\u00e9), and the text's own bytes for the rest. It binds :escaped (ESCAPED). text is a
+    column name or a SQL expression, never a value."""
+    return (f"5 * octet_length(encode({text}, 'UTF-8')) - 4 * length({text}) "
+            f"+ 5 * (length({text}) - length(translate({text}, :escaped, '')))")
+
+
+@functools.cache
+def statement_result_bytes() -> int:
+    """The most bytes one statement's result may hold on the SQL warehouse (config/thresholds.toml,
+    warehouse.statement_result_bytes)."""
+    from strata.config import load_thresholds
+
+    return int(load_thresholds().value("warehouse.statement_result_bytes"))
+
+
+@dataclass(frozen=True)
+class Parts:
+    """What read_in_parts read: every part's rows as one result, and the keys whose own rows pass the limit, which it
+    left out."""
+
+    result: Result
+    left_out: tuple[str, ...] = ()
+
+
+@functools.lru_cache(maxsize=256)
+def _measure(sql: str, key: str) -> tuple[str, tuple[str, ...]]:
+    """The statement that measures sql's result key by key, as the most bytes each key's rows can take in the
+    warehouse's JSON (json_bytes for each value, and VALUE_BYTES a value), and the columns sql returns. It is sql
+    itself, with its WITH clause kept and its ORDER BY left out, inside a SELECT that adds up each key's rows."""
+    import sqlglot
+
+    tree = sqlglot.parse_one(sql, read="databricks")
+    with_key = "with_" if "with_" in type(tree).arg_types else "with"
+    ctes = tree.args.get(with_key)
+    body = tree.copy()
+    body.set(with_key, None)
+    body.set("order", None)
+    columns = tuple(body.named_selects)
+    if key not in columns:
+        raise EngineError(f"read_in_parts reads by a column the statement returns, and {key} is not one of "
+                          f"{', '.join(columns)}.")
+    values = " + ".join(json_bytes(f"coalesce(CAST(part_rows.{column} AS STRING), '')") for column in columns)
+    measure = (f"SELECT part_rows.{key} AS part_key, sum({values} + :part_row_bytes) AS part_bytes "  # sql-lint: names only
+               f"FROM ({body.sql(dialect='databricks', comments=False)}) AS part_rows GROUP BY part_rows.{key}")
+    return (f"{ctes.sql(dialect='databricks', comments=False)} {measure}" if ctes else measure), columns
+
+
+def read_in_parts(engine, sql: str, params: Params, key: str, part: Callable[[list[str]], dict],
+                  keys: Sequence[str] | None = None) -> Parts:
+    """sql's rows, read in statements whose results fit the engine's limit on one statement's result (its
+    result_bytes; the SQL warehouse's is config/thresholds.toml's warehouse.statement_result_bytes), so no statement
+    of the read can pass it, whatever the workspace holds. An engine with no such limit, as DuckDB and Spark have
+    none, runs sql once, as before.
+
+    It measures first, with one statement that gives the most bytes each key's rows can take (key is a column sql
+    returns, such as project_id). When every row fits together it runs sql once with params, unchanged. When they do
+    not, it reads only the keys asked for (keys, or every key), in parts of as many keys as fit, in their order: each
+    part is sql with params and part(the part's keys), the parameters that limit sql to those keys. Each key's rows
+    come in one part, in sql's own order. A key whose own rows pass the limit is left out, with a warning, and named
+    in what it returns. On October 29, 2026 the assertions pass read every project's records in one statement, and
+    the warehouse refused it: "Inline byte limit exceeded" (ticket 135)."""
+    cap = getattr(engine, "result_bytes", None)
+    if not cap:
+        return Parts(engine.run(sql, params))
+    measure, columns = _measure(sql, key)
+    sizes = {str(found): int(size or 0) for found, size in engine.run(measure, {
+        **(params or {}), "escaped": ESCAPED, "part_row_bytes": VALUE_BYTES * len(columns) + 2}).rows}
+    if sum(sizes.values()) <= cap:
+        return Parts(engine.run(sql, params))
+    wanted = [found for found in dict.fromkeys(str(one) for one in keys) if found in sizes] if keys is not None \
+        else list(sizes)
+    left_out = tuple(found for found in wanted if sizes[found] > cap)
+    for found in left_out:
+        log.warning("I left %s %s out of my read: its rows can take up to %s bytes, and the SQL warehouse returns at "
+                    "most %s in one statement (config/thresholds.toml, warehouse.statement_result_bytes).", key,
+                    found, f"{sizes[found]:,}", f"{cap:,}")
+    parts: list[list[str]] = [[]]
+    held = 0
+    for found in (found for found in wanted if found not in left_out):
+        if parts[-1] and held + sizes[found] > cap:
+            parts.append([])
+            held = 0
+        parts[-1].append(found)
+        held += sizes[found]
+    rows: list[tuple] = []
+    for keys_of_part in (one for one in parts if one):
+        result = engine.run(sql, {**(params or {}), **part(keys_of_part)})
+        columns = result.columns
+        rows += result.rows
+    return Parts(Result(tuple(columns), tuple(rows)), left_out)
 
 
 TABLE_NAME = re.compile(r"strata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*")
@@ -560,15 +669,17 @@ class Waits:
 
 class WarehouseEngine:
     """The workspace's SQL warehouse, run as whoever owns the token. Its rows hold Python values typed from the
-    statement's manifest, as DuckDBEngine's and SparkEngine's do (typed())."""
+    statement's manifest, as DuckDBEngine's and SparkEngine's do (typed()). result_bytes is the most bytes one
+    statement's result may hold, which read_in_parts keeps to (config/thresholds.toml, warehouse.statement_result_bytes)."""
 
     name = "databricks"
 
     def __init__(self, warehouse_id: str, transport: Transport, timeout_seconds: float = 600, sleep=time.sleep,
-                 waits: Waits | None = None):
+                 waits: Waits | None = None, result_bytes: int | None = None):
         self.warehouse_id, self.transport = warehouse_id, transport
         self.timeout_seconds, self.sleep = timeout_seconds, sleep
         self.waits = waits or Waits.from_thresholds()
+        self.result_bytes = result_bytes or statement_result_bytes()
 
     @classmethod
     def connect(cls, host: str, token: str, warehouse_id: str) -> WarehouseEngine:
