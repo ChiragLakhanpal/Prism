@@ -4616,3 +4616,43 @@ It worked if both open the same plan with the same `agency_id`, `abstention` is 
 It worked if each gives the same headings as step 1 saved, in the same order, each with `also_written_as` []. P161305 keeps two headings, "Kenya National Highways Authority" and "Kenya National Highways Authority (KeNHA)"; that is expected (a decision parked for the user under ticket 133). Coast and Northern Water Works Development Agency on P156634 stay two headings.
 
 In the browser, `/projects/P130164/procurement` shows one section headed "Rajasthan State Public Works Department" with the June 20, 2018 plan, and its window reads "Rajasthan State Public Works Department. Also written as Public Works Department." Record the heading, its `agency_id`, both plan check answers' plan dates and abstention, the three projects' headings, the commit the App runs and the time here under ticket 133. This is criterion 3's live proof.
+
+## Ticket 136, step 1 of 3: sync the agent's get_disagreements description
+
+The merger parked this on October 29, 2026, after merge commit a25cf415. Every key is set, but mergers run no workspace step, so the orchestrator runs these three blocks today, one at a time and in order, from a snapshot at or after a25cf415. The get_disagreements description in `config/tools.toml` changed (it now names the groups), and the Foundry agent keeps the old one until the sync runs.
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked when the `--check` run exits 0. Record both exit codes and the agent version here under ticket 136.
+
+## Ticket 136, step 2 of 3: the assertions pass for P130164 from the new code
+
+Run after step 1, and after a bundle deploy that carries a25cf415 or a later commit (`uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace`; ticket 132's record above says the bundle deploy waits for `--force`, which is the owner's call). In the builder's words, run the assertions pass for P130164 from the new code, either the nightly's task:
+
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["detect_disagreements"]}' --timeout 160m -p strata
+
+or the scoped run from ticket 135, limited to P130164. Ticket 135 has not merged, so `ops/assertions/batch_live.py` has no `--projects` yet, and the pass over the whole workspace trips the warehouse's inline cap (ticket 132's record above). Until 135 lands, the scoped route is the one the orchestrator used for ticket 132: `.notes/workflows/assertions-demo.py`, which imports the main checkout's `src`, limited to P130164. Each of these reads the held answers again through `read_answer`, so `once_a_page` runs and keeps one of the PAD's two risk cells. `redetect` alone does not: it keeps `18381488/v1/table65b.1` (the round 2 review and the verifier say so).
+
+It worked when this query returns no rows:
+
+    SELECT d.disagreement_id FROM strata.gold.disagreement AS d JOIN strata.gold.assertion AS a ON a.assertion_id IN (d.first_assertion_id, d.second_assertion_id) WHERE d.project_id = 'P130164' AND a.evidence_id = 'strata.gold.passage:18381488/v1/table65b.1'
+
+Record the run, its result and the row count here under ticket 136.
+
+## Ticket 136, step 3 of 3: one line per fact on the P130164 Timeline tab (criterion 3)
+
+Run after step 2. Redeploy the App from the same snapshot. If a later merge's redeploy already runs a25cf415 or a later commit, record that run instead of deploying again.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+Then open the P130164 Timeline tab in a fresh browser context, because the timeline answer is a kept page for up to two hours (ticket 138's step 2 says why). Sign in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a viewer with a role and open `/projects/P130164/timeline`.
+
+It worked when all of these hold, at 1440 and 390 px:
+
+- There is one dashed line and one pill per fact, not one for each pair (the tab read 60 pills on October 29 at 20:10 PDT).
+- No pill overlaps another.
+- No pill names a report on both of its sides.
+- "Show the table" lists every pair.
+
+Record the deploy's exit code, the commit the App runs, the pills word for word, the pair count and the time here under ticket 136. This is criterion 3's live proof.
