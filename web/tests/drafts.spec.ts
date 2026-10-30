@@ -4,6 +4,9 @@
 // are the ticket's, DESIGN.md's and the 35 design brief's, copied here so the test checks the copy file
 // against an independent source. The network is off: the shared fixture fails any test whose page asks
 // for anything outside its own origin, so these tests also prove that exporting reaches nothing outside.
+// The plan check page they start on is the drafts story's own (drafts-check-plan.json), on the fixture as the
+// writer's recording saw it (tests/writer_world.py): before ticket 132 named two of its three marked rows moved on
+// since the plan.
 import { readdir, readFile } from "node:fs/promises";
 import { scan } from "./axe";
 import type { Page } from "@playwright/test";
@@ -73,7 +76,7 @@ async function axe(page: Page) {
 
 test("Check a plan offers to draft review notes on its three marked rows, and says the draft waits in Drafts", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await serve(page, { [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") } });
+  await serve(page, { [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") } });
   await page.goto(PLAN);
 
   const action = page.getByRole("button", { name: "Draft review notes (3 rows)" });
@@ -97,7 +100,7 @@ test("Check a plan offers to draft review notes on its three marked rows, and sa
 
 test("Shift+Tab back to the draft action in Check a plan's stuck header does not scroll the page", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await serve(page, { [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") } });
+  await serve(page, { [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") } });
   await page.goto(PLAN);
   const action = page.locator("[data-draft-action]");
   await expect(action).toBeVisible();
@@ -114,7 +117,7 @@ test("Shift+Tab back to the draft action in Check a plan's stuck header does not
 });
 
 test("with no activity marked, a preview or an as-of date, Check a plan offers no draft", async ({ page }) => {
-  const result = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
+  const result = JSON.parse(await recorded("drafts-check-plan.json"));
   for (const row of result.rows) row.marks = row.marks.filter((mark: { mark: string }) => mark.mark === "data_note");
   Object.assign(result.counts, { needs_a_look: 0, watch: 0, signal: 0 });
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -140,7 +143,7 @@ test("Check a plan names the review notes the team already started on the same p
   const existing = { body: await recorded("drafts-existing-yours.json"), delay: 150 };
   const me = { body: await recorded("me.json") };
   await serve(page, {
-    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") },
     "/api/drafts/existing": existing,
     "/api/me": me,
   });
@@ -160,7 +163,7 @@ test("Check a plan names the review notes the team already started on the same p
 test("an open draft the lookup finds late is not put above a plan check already drawn", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, {
-    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") },
     "/api/drafts/existing": { body: await recorded("drafts-existing-yours.json"), delay: 900 },
   });
   await page.goto(PLAN);
@@ -178,7 +181,7 @@ test("an open draft the lookup finds late is not put above a plan check already 
 test("an open draft the lookup finds before a slow plan check is drawn is named, and the page does not move after", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, {
-    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json"), delay: 1200 },
+    [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json"), delay: 1200 },
     "/api/drafts/existing": { body: await recorded("drafts-existing-yours.json"), delay: 500 },
   });
   await page.goto(PLAN);
@@ -201,7 +204,7 @@ test("on the agency's latest plan, with no version in the address, the lookup st
     if (request.url().includes("/api/drafts/existing")) asked.push(new URL(request.url()).search);
   });
   await serve(page, {
-    [`/api${latest}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json"), delay: 1200 },
+    [`/api${latest}`]: { body: await recorded("drafts-check-plan.json"), delay: 1200 },
     "/api/drafts/existing": { body: await recorded("drafts-existing-latest.json"), delay: 500 },
   });
   await page.goto(latest);
@@ -220,7 +223,7 @@ test("on the agency's latest plan, with no version in the address, the lookup st
 test("drafting shows the marked activities at once, then becomes the saved draft in place, and Back returns to the plan check", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const asked = await serve(page, {
-    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") },
     "POST /api/drafts": { body: await recorded("drafts-write-review-notes.sse"), delay: 600 },
     [`GET /api${DRAFT}`]: { body: await recorded("drafts-review-notes-draft.json") },
   });
@@ -252,7 +255,7 @@ test("a draft written in this visit, opened again from Drafts after it was check
   list.groups.exported = list.groups.exported.filter((one: { draft_id: string }) => one !== entry);
   list.groups.checked.unshift(Object.assign(entry, { state: "checked", exported: null }));
   const asked = await serve(page, {
-    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") },
     "POST /api/drafts": { body: await recorded("drafts-write-review-notes.sse") },
     [`GET /api${DRAFT}`]: draft,
     "POST /api/drafts/draft-0001/check": { body: await recorded("drafts-review-notes-checked.json") },
@@ -276,7 +279,7 @@ test("a draft written in this visit, opened again from Drafts after it was check
 test("Stop writing goes back to the plan check, which says nothing was saved", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, {
-    [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") },
+    [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") },
     "POST /api/drafts": { body: await recorded("drafts-write-review-notes.sse"), delay: 60_000 },
   });
   await page.goto(PLAN);
@@ -290,7 +293,7 @@ test("Stop writing goes back to the plan check, which says nothing was saved", a
 test("a writer that does not answer, or notes that all fail the checks, save nothing and say so", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   const stream = { body: await recorded("drafts-write-agent-unavailable.sse") };
-  await serve(page, { [`/api${PLAN}`]: { body: await recorded("check-plan-p156634-nwwda-2026-10-09.json") }, "POST /api/drafts": stream });
+  await serve(page, { [`/api${PLAN}`]: { body: await recorded("drafts-check-plan.json") }, "POST /api/drafts": stream });
   await page.goto(PLAN);
   await page.getByRole("button", { name: "Draft review notes (3 rows)" }).click();
   await expect(page.getByRole("alert")).toContainText(

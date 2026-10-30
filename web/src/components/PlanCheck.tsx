@@ -24,7 +24,7 @@ import { copy } from "../copy";
 import type { EvidenceEvent } from "../lib/answer";
 import type { Activity, CheckPlanResult, Mark, Reason } from "../lib/api";
 import { cx } from "../lib/cx";
-import { evidenceIn, openEvidence, remember } from "../lib/evidence";
+import { evidenceHref, evidenceIn, openEvidence, remember, visited } from "../lib/evidence";
 import { formatAmountText, formatCount, formatDate, formatNumber } from "../lib/format";
 import { planRowCheckId } from "../lib/planRows";
 import { address } from "../lib/router";
@@ -33,6 +33,7 @@ import { sticks } from "../lib/sticky";
 import { useStore } from "../lib/store";
 import { Button } from "./Button";
 import { CheckPill } from "./CheckPill";
+import { CitationMarker } from "./CitationMarker";
 import { EightColumns } from "./EightColumns";
 import { Fill, Joined, Unbroken } from "./Fill";
 import { FootStrip } from "./FootStrip";
@@ -51,8 +52,8 @@ import { DefinitionWindow } from "./Term";
 import { TextLink } from "./TextLink";
 
 const words = copy.checkPlan;
-export const BADGE: Record<Mark, BadgeKind> = { needs_a_look: "needs-a-look", watch: "watch", data_note: "data-note" };
-const RANK: Record<Mark, number> = { needs_a_look: 0, watch: 1, data_note: 2 };
+export const BADGE: Record<Mark, BadgeKind> = { needs_a_look: "needs-a-look", watch: "watch", moved_on: "moved-on", data_note: "data-note" };
+const RANK: Record<Mark, number> = { needs_a_look: 0, watch: 1, moved_on: 2, data_note: 3 };
 
 export type CheckedPlan = CheckPlanResult & {
   plan: NonNullable<CheckPlanResult["plan"]>;
@@ -128,6 +129,25 @@ function BaselineSentence({ reason, result, kind }: { reason: Reason; result: Ch
   );
 }
 
+// The citation of a moved-on reason (ticket 132): the disagreement between the plan row and the record that says the
+// contract was signed, which opens in the evidence drawer with both sides, as the Timeline tab's list opens it.
+function DisagreementCite({ id, record }: { id: string; record?: string | null }) {
+  const key = `disagreement:${id}`;
+  const opened = useStore(visited).has(key);
+  const open = evidenceIn(useStore(address).search) === key;
+  return (
+    <CitationMarker
+      n={1}
+      source={words.movedOnSource[record ?? ""] ?? words.movedOnSource.contract_awards}
+      href={evidenceHref(key)}
+      evidenceId={key}
+      opened={opened}
+      active={open}
+      onOpen={(marker) => openEvidence(key, { serial: null, sentence: null, marker, runId: null })}
+    />
+  );
+}
+
 // One reason's sentence from the copy file, filled with the tool's values for it.
 function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan }) {
   const r = words.reason;
@@ -193,6 +213,17 @@ function ReasonText({ reason, result }: { reason: Reason; result: CheckedPlan })
       return <Fill template={r.no_planned_date} slots={{ step: reason.step }} />;
     case "no_estimate":
       return <>{r.no_estimate}</>;
+    case "moved_on_since_plan":
+      // Ticket 132: what the record shows, with the disagreement between the plan row and that record cited.
+      return (
+        <>
+          <Fill
+            template={r.moved_on_since_plan[reason.record ?? ""] ?? r.moved_on_since_plan.contract_awards}
+            slots={{ date: day(reason.signed_on!), status: r.stillSays[reason.process_status ?? ""] ?? reason.process_status }}
+          />
+          {reason.disagreement_id && <DisagreementCite id={reason.disagreement_id} record={reason.record} />}
+        </>
+      );
     default:
       // The registry refuses a reason code config/tools.toml does not list, so none reaches here.
       return null;
@@ -249,6 +280,7 @@ function Counted({ rows, mark }: { rows: Activity[]; mark: Mark }) {
 // 100; DESIGN.md section 5, Plan check table), and its tooltip says so.
 function Finding({ result, onMark }: { result: CheckedPlan; onMark?: (mark: Mark) => void }) {
   const { needs_a_look: look, watch, data_note: notes } = result.counts;
+  const moved = result.counts.moved_on ?? 0;
   const f = words.finding;
   const word = (count: number, mark: Mark, capital: boolean) => {
     const what = checked(result, <Counted mark={mark} rows={result.rows.filter((row) => row.marks.some((m) => m.mark === mark))} />);
@@ -261,6 +293,7 @@ function Finding({ result, onMark }: { result: CheckedPlan; onMark?: (mark: Mark
   return (
     <>
       <Fill template={first} slots={{ look: word(look, "needs_a_look", true), watch: word(watch, "watch", false) }} />
+      {moved > 0 && <Fill template={f.movedOn(moved)} slots={{ moved: word(moved, "moved_on", false) }} />}
       {notes > 0 && <Fill template={f.notes(notes)} slots={{ notes: word(notes, "data_note", false) }} />}
       {f.end}
     </>
@@ -1031,12 +1064,14 @@ export function PlanSource({ result }: { result: CheckedPlan }) {
   );
 }
 
-// A finding as long as most are, "One needs a look and two are worth watching; three have data notes.", from the
-// finding's own templates. It only holds the finding's place, unseen, while the check loads.
+// A finding as long as most are, "One needs a look and two are worth watching; two have moved on since the plan;
+// three have data notes.", from the finding's own templates. It only holds the finding's place, unseen, while the
+// check loads. Since ticket 132 a plan the records have moved past says so in its finding, so the typical one does.
 function typicalFinding(): string {
   const f = words.finding;
   return (
     fill(f.lookAndWatch(1, 2), { look: formatCount(1, { capital: true }), watch: formatCount(2) }) +
+    fill(f.movedOn(2), { moved: formatCount(2) }) +
     fill(f.notes(3), { notes: formatCount(3) }) +
     f.end
   );

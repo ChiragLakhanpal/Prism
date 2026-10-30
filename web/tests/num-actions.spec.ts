@@ -263,24 +263,21 @@ test("on the plan check every number says what it is and where it came from, and
     if (await show.isVisible()) await show.click();
   }
   const seen = await checkPage(page);
-  expect(seen.map((one) => one.label)).toEqual(expect.arrayContaining(["One", "two", "three", "186", "4", "9"]));
+  // The finding's count words (one worth watching, two moved on since the plan, three data notes; ticket 132), and
+  // KE-NWWDA-229129-CW-RFB's 186 days and about 4 times.
+  expect(seen.map((one) => one.label)).toEqual(expect.arrayContaining(["one", "two", "three", "186", "4"]));
 });
 
-test("on Home every number opens what its action line names, and 1.23 gives the plan row's own 1,230,000.00", async ({ page }) => {
+test("on Home every number opens what its action line names", async ({ page }) => {
   await serve(page, { "/api/me": { body: await recorded("me-home.json") }, "/api/home": { body: await recorded("home.json") } });
   await page.goto("/");
   await expect(page.locator("[data-home=ready]")).toBeVisible();
-  // The one number a tooltip names that Home does not show: the plan row's own Estimated Amount behind "1.23".
-  const seen = await checkPage(page, ["1.23: 1,230,000.00"]);
-  const millions = seen.find((one) => one.label === "1.23")!;
-  expect(millions).toMatchObject({
-    what: "The plan row's Estimated Amount (US$) is 1,230,000.00. This line gives it in millions.",
-    from: "From the Northern Water Works Development Agency plan of October 9, 2026.",
-    act: "Select to see the plan row.",
-  });
-  expect(seen.filter((one) => one.opens === "window").map((one) => one.label)).toEqual(["One", "One", "two", "One", "Two"]);
-  // The days to closing come from the project's closing date, which the plan row does not hold, so they open nothing.
-  expect(seen.find((one) => one.what === "Days from my check to the project's closing date.")).toMatchObject({ act: "", opens: null });
+  // Every number a tooltip names, Home shows: the one activity line writes its amounts whole (ticket 132 left no line
+  // with an estimate in millions, whose tooltip gave the plan row's own value).
+  const seen = await checkPage(page);
+  const estimate = seen.find((one) => one.label === "300,000")!;
+  expect(estimate).toMatchObject({ from: "From the Northern Water Works Development Agency plan of October 9, 2026.", act: "Select to see the plan row." });
+  expect(seen.filter((one) => one.opens === "window").map((one) => one.label)).toEqual(["One", "One", "One", "Two"]);
 });
 
 test("on a draft every number opens what its action line names", async ({ page }) => {

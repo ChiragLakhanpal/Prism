@@ -76,7 +76,7 @@ Write the dataset name without a number in it. The proposal's Annex 3 credits ev
 3. `web/tests/following.spec.ts` types the Status column's definition, which names the number in words. Change "three" to "four" in both places it does.
 4. Commit.
 
-A threshold that changes a mark on the demo plan also changes the benchmark answers and the screen tests that state the mark. For example, `[plan_check] completion_passed_min_estimated_usd` above 1,230,000 would take Needs a look off KE-NWWDA-541055-CW-RFB.
+A threshold that changes a mark on the demo plan also changes the benchmark answers and the screen tests that state the mark. For example, `[plan_check] completion_passed_min_estimated_usd` above 2,000,000 would turn NWWDA-WSDP-03-2019-2020 in the agency's plan of April 21, 2021 from Needs a look to Watch. KE-NWWDA-541055-CW-RFB is moved on since the plan whatever the threshold is, because the contract awards say its contract was signed.
 
 The rehearsal's value changes no outcome on the fixture. A value that changes which projects need a look, or which signals fire, also changes four tests that state those outcomes: `tests/test_project_signals.py`, `tests/test_mission_brief.py`, `tests/test_hazard.py` and `tests/test_signals_track.py`. Run them after step 2 and change each expected outcome the new value moves, with the project and the signal it names.
 

@@ -113,10 +113,12 @@ class = "judgment"
 scale = "four_point"
 names = ["me_quality", "M&E Quality Rating"]
 
+# A plan row whose Process Status is a state before signing, such as Pending Implementation, says the signing has not
+# happened yet (ticket 132), so its Process Status is an assertion about the signing too, in the plan's own words.
 [attributes.signed_on]
 kind = "date"
 class = "moment"
-names = ["contract_signing_date", "Contract Signature Date", "Signed Contract"]
+names = ["contract_signing_date", "Contract Signature Date", "Signed Contract", "Process Status"]
 
 [attributes.signed_amount_usd]
 kind = "amount"

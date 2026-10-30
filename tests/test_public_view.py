@@ -53,12 +53,15 @@ def test_p156634_in_the_public_view_keeps_its_data_notes_and_shows_no_signal(eng
     staff = run(engine, "check_plan", {"project_id": "P156634", "implementing_agency": NWWDA}, "staff")
     public = run(engine, "check_plan", {"project_id": "P156634", "implementing_agency": NWWDA}, "public")
 
-    assert (staff["counts"]["needs_a_look"], staff["counts"]["watch"], staff["withheld"]) == (1, 2, None)
+    assert (staff["counts"]["needs_a_look"], staff["counts"]["watch"], staff["withheld"]) == (0, 1, None)
     assert (public["counts"]["needs_a_look"], public["counts"]["watch"], public["counts"]["signal"]) == (0, 0, 0)
     assert public["counts"]["data_note"] == staff["counts"]["data_note"] == 3
     assert public["withheld"] == "view_public_active"
     marks = {mark["mark"] for row in public["rows"] for mark in row["marks"]}
     assert marks == {"data_note"}
+    # Ticket 132: moved on since the plan is a disagreement between two records, which the public view holds back on a
+    # project still under way, as it holds back get_disagreements' rows; World Bank staff see both activities.
+    assert (staff["counts"]["moved_on"], public["counts"]["moved_on"]) == (2, 0)
     # The implementing agency preview of its own agency's plan is the same as World Bank staff's.
     assert run(engine, "check_plan", {"project_id": "P156634", "implementing_agency": NWWDA}, "piu")["counts"] == \
         staff["counts"]

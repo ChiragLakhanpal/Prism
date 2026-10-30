@@ -40,6 +40,8 @@ const CHECKED: Record<string, string[]> = {
   no_planned_date: ["step"],
   no_estimate: ["estimated_amount_usd", "actual_amount_usd"],
   no_method: ["method"],
+  // Ticket 132: the plan's Process Status, and the signing date the contract awards or an award notice give.
+  moved_on_since_plan: ["process_status", "signed_on", "as_of"],
 };
 const UNMARKED = ["process_status", "planned_completion_on", "signed_on", "as_of"];
 

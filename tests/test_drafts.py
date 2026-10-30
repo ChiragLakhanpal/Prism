@@ -10,6 +10,11 @@ principal, a DuckDB file here; the fixture database is opened read-only.
 Expected values come from independent sources: the three activities with a signal and their marks from
 the blueprint's Check a plan wireframe (tests/ground_truth/values.toml, plan_row wireframe_mark), and each
 citation's evidence id from check_plan's own recorded answer (tests/fixtures/api).
+
+The writer's recording was made from those three marked activities. Ticket 132 found the contract awards say two of
+them were signed, so on the fixture as built the plan check names them moved on since the plan and marks one
+activity with a signal; until the writer is re-recorded live, the stories run on the fixture as the recording saw it
+(tests/writer_world.py), and one test shows what the writer is asked on the fixture as built.
 """
 
 import asyncio
@@ -101,11 +106,12 @@ def clock():
 
 
 @pytest.fixture
-def drafting(fixture_db, state_db, clock):
-    """The app with the fixture database, app state in a DuckDB file, and the scripted writer of a case."""
+def drafting(writers_fixture_db, state_db, clock):
+    """The app with the fixture database as the writer's recording saw it (tests/writer_world.py, ticket 132), app
+    state in a DuckDB file, and the scripted writer of a case."""
     @contextmanager
     def reading(viewer):
-        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        with DuckDBEngine.open(writers_fixture_db, read_only=True) as engine:
             yield engine
 
     def state():
@@ -138,12 +144,12 @@ def test_every_hold_a_kind_names_has_its_line_in_the_copy_file():
             assert kinds.holds[hold].copy in lines[key], f"{key}'s hold {hold} has no line in web/src/copy.ts"
 
 
-def test_the_screens_recorded_draft_answers_are_what_the_routes_answer(fixture_db, tmp_path):
+def test_the_screens_recorded_draft_answers_are_what_the_routes_answer(writers_fixture_db, tmp_path):
     """tests/record_drafts_api.py writes the answers the draft screens' tests serve, from one story on the
-    fixture; the routes must still answer with them word for word."""
+    fixture as the writer's recording saw it; the routes must still answer with them word for word."""
     from record_drafts_api import answers
 
-    for name, text in answers(tmp_path).items():
+    for name, text in answers(tmp_path, writers_fixture_db).items():
         assert text == (ROOT / "tests" / "fixtures" / "api" / name).read_text(), f"{name} is out of date"
 
 
@@ -186,6 +192,37 @@ def test_draft_review_notes_writes_a_note_on_each_activity_with_a_signal_each_ci
     assert (checks["judge"]["called"], checks["judge"]["proven"]) == (False, checks["sentences"]["written"])
     assert [data["checks_run"] for kind, data in sent if kind == "step" and data["id"] == "check"
             and data["status"] == "done"] == [[1, 2, 3, 4, 5, 6]]
+
+
+def test_on_the_fixture_as_built_the_writer_is_asked_only_about_the_activity_with_a_signal(fixture_db, state_db, clock):
+    """Ticket 132: on the fixture as the gate built it, KE-NWWDA-541055-CW-RFB and KE-NWWDA-541062-CW-RFQ have moved
+    on since the plan, which is no signal, so review notes cover KE-NWWDA-229129-CW-RFB alone, the one activity worth
+    watching, and its note keeps the recorded sentences, each citing its own row."""
+    writer = ScriptedAgent(load_cases(WRITER_CASES)["review-notes-nwwda-2026-10-09"])
+
+    @contextmanager
+    def reading(viewer):
+        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+            yield engine
+
+    app = create_app(engine_for=reading, drafts=DraftStore(lambda: DuckDBEngine.open(state_db)),
+                     opened=OpenedLog(lambda: DuckDBEngine.open(state_db), now=clock),
+                     writers=lambda kind: writer,
+                     runs=RunLog(lambda: DuckDBEngine.open(state_db)), access=Access(load_roles(), StaticGroups(GROUPS)),
+                     today=lambda: TODAY, now=clock, new_draft_id=lambda: "draft-0001", new_run_id=lambda: "run-0001")
+
+    _, draft_id = draft_review_notes(app)
+
+    draft = call(app, "GET", f"/api/drafts/{draft_id}", ANA).json()
+    assert [note["activity_reference_no"] for note in draft["notes"]] == ["KE-NWWDA-229129-CW-RFB"]
+    [note] = draft["notes"]
+    assert note["state"] == "written" and note["sentences"]
+    assert {evidence for sentence in note["sentences"] for evidence in sentence["evidence_ids"]} == {
+        ROW_OF["KE-NWWDA-229129-CW-RFB"]}
+    # The writer was asked about that activity's row and no other activity's.
+    asked = json.dumps(writer.received[0]["input"])
+    assert "KE-NWWDA-229129-CW-RFB" in asked
+    assert "KE-NWWDA-541055-CW-RFB" not in asked and "KE-NWWDA-541062-CW-RFQ" not in asked
 
 
 def test_a_note_sentence_its_row_does_not_support_and_advice_with_no_lesson_are_removed_after_one_judge_call(drafting):
