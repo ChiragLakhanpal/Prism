@@ -47,8 +47,10 @@ from strata.dbx import Viewer
 from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES
 from strata.lakehouse.engine import Engine
 from strata.server.projects import display_name
-from strata.server.viewer_sql import data_through
+from strata.server.viewer_sql import DAILY, data_through
+from strata.server.viewer_sql import query as viewer_query
 from strata.tools import registry
+from strata.tools.get_disagreements import reads as disagreement_reads
 from strata.tools.withheld import WITHHELD, withheld_in
 
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
@@ -369,6 +371,19 @@ def alt_text(project_id: str, dated: list[dict], ratings: dict | None, disagreem
 
 
 # ── The timeline ─────────────────────────────────────────────────────────
+
+def reads(project_id: str, as_of: dt.date, view: str = "staff") -> list[tuple[str, dict]]:
+    """Every statement timeline() runs, get_disagreements' among them, for the route that sends them as one batch
+    (ticket 125). A project ID is held in capitals, so the reads after the first name it so."""
+    pid = project_id.strip().upper()
+    each = {"project_id": pid, "as_of": as_of}
+    return [(_query("project"), each),
+            *disagreement_reads(pid, as_of, view),
+            (_query("reports"), {**each, "language": LANGUAGE}),
+            *[(_query("events"), {**each, "words": words}) for kind in EVENTS for words, _, _ in EVENTS[kind]],
+            (_query("signings"), {**each, **SIGNINGS}),
+            (viewer_query("data_through"), {"cadence": DAILY})]
+
 
 def _project(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
     found = _rows(engine, "project", project_id=project_id.strip().upper(), as_of=as_of)

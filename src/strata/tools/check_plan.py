@@ -265,6 +265,14 @@ def _views():
     return load_views()
 
 
+def baseline_reads(project_id: str, agency: str, as_of: dt.date, view: str) -> list[tuple[str, dict]]:
+    """The statement read_baseline runs, none when the view has no baseline, for a page that sends it in one batch
+    with others (ticket 125)."""
+    if not _views().allows(view, "baseline"):
+        return []
+    return [(_sql("baseline.sql"), {"project_id": project_id, "agency_id": agency, "as_of": as_of})]
+
+
 def read_baseline(engine, project_id: str, agency: str, as_of: dt.date, view: str) -> Baseline | None:
     """The baseline saved for this agency's plans by the as-of date, as the view may see it (the roles file's [views]:
     baseline, and baseline_saver for who saved it), or None."""

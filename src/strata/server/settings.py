@@ -1,7 +1,7 @@
 """The app as its environment sets it up: on the Databricks App, or on this computer.
 
-`python -m strata.server` and the Databricks App start the server through app_from_env(), which
-reads only the environment it is given:
+`python -m strata.server` and the Databricks App start the server through server_app(), which is app_from_env()
+reading the demo's pages ahead (ticket 125). app_from_env() reads only the environment it is given:
 
 - DATABRICKS_HOST and DATABRICKS_WAREHOUSE_ID (the app's sql-warehouse resource): each viewer's
   queries run on that warehouse with their own forwarded token. On this computer,
@@ -62,7 +62,8 @@ from fastapi import FastAPI
 from strata.agent import runner as agent_runner
 from strata.agent.runs import RunLog
 from strata.appstate import lakebase
-from strata.config import load_roles, load_thresholds
+from strata.config import load_demo, load_roles, load_thresholds
+from strata.dbx import Viewer
 from strata.drafts.store import DraftStore
 from strata.server.following import FollowStore
 from strata.server.home import HomeStore
@@ -82,7 +83,9 @@ from strata.server.choices import ChoiceLog
 from strata.estimates.exposures import ExposureLog
 from strata.server.evidence import OpenedLog
 from strata.server.suppliers import SupplierLog
+from strata.server.page_cache import PageCache
 from strata.server.usage import UsageLog
+from strata.server.warm import Warm
 from strata.uploads.store import UploadStore
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -132,6 +135,18 @@ def _the_app_s_engine(environ: Mapping[str, str]) -> Callable[[], Engine] | None
     return lambda: WarehouseEngine(warehouse, transport)
 
 
+def _warm(environ: Mapping[str, str], thresholds) -> Warm | None:
+    """The demo's pages read ahead as the app's own service principal (ticket 125; src/strata/server/warm.py), on the
+    workspace's warehouse, with a viewer that is the app itself: its client id and the token its secret gets."""
+    host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
+    client_id, secret = environ.get("DATABRICKS_CLIENT_ID", ""), environ.get("DATABRICKS_CLIENT_SECRET", "")
+    if not (host and warehouse and client_id and secret) or environ.get("STRATA_DATABASE_FILE", "").strip():
+        return None
+    token = app_token(host, client_id, secret)
+    return Warm(load_demo(), lambda: Viewer(name="Strata", user_id=client_id, token=token()),
+                thresholds.value("app.warm_every_seconds"))
+
+
 def app_state_file(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
     """On this computer, STRATA_APP_STATE_FILE names a DuckDB file for the opened sources, the drafts and the
     packages, made with the catalog's tables, so scripts/dev can write a draft without the workspace.
@@ -167,10 +182,19 @@ def _app_state(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
     return lakebase.from_environment(environ, app_token(host, client_id, secret))
 
 
+def server_app() -> FastAPI:
+    """The app as the server runs it (`python -m strata.server`, and so the Databricks App): from its environment, and
+    reading the demo's pages ahead as the App itself when the environment names the workspace's warehouse and the
+    App's own identity (ticket 125)."""
+    return app_from_env(read_ahead=True)
+
+
 def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.EngineFor | None = None,
-                 access: Access | None = None) -> FastAPI:
+                 access: Access | None = None, read_ahead: bool = False) -> FastAPI:
     """engine_for and access stand in for the viewer's own warehouse reads and the workspace's groups, for a command
-    that drives the app's routes as the app itself, such as the seed command (ticket 41)."""
+    that drives the app's routes as the app itself, such as the seed command (ticket 41). read_ahead reads the demo's
+    pages into the pages the app keeps when it starts and every hour after (src/strata/server/warm.py), as the server
+    does; a command or a test that drives the routes leaves it off."""
     environ = os.environ if environ is None else environ
     thresholds = load_thresholds()
     timeout = thresholds.value("app.stamp_timeout_seconds")
@@ -206,4 +230,6 @@ def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.E
                       feedback_record=the_app, citations=CitationLog(the_app) if the_app else None,
                       lesson_writer=agent_runner.lesson_writer_from_environment(environ),
                       tracer_provider=tracing.from_env(environ), judge=answer_judge.from_environment(environ),
-                      web_dist=web if (web / "index.html").is_file() else None, environ=environ)
+                      web_dist=web if (web / "index.html").is_file() else None, environ=environ,
+                      page_cache=PageCache.from_thresholds(thresholds),
+                      warm=_warm(environ, thresholds) if read_ahead else None)

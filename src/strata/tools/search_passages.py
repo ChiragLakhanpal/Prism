@@ -140,6 +140,12 @@ def passage_row(found: dict) -> dict:
     }
 
 
+def passages_query() -> str:
+    """passages.sql, the one statement that reads passages by id, for a page that reads the passages it cites in its
+    own batch (the Summary, ticket 125)."""
+    return _sql("passages.sql")
+
+
 def read_passage(engine, passage_id: str, as_of: dt.date) -> dict | None:
     """One passage by its id, read as the viewer, where it was public on the as-of date and not yet
     replaced by a re-issue of its report then (ADR 0002), or None. The evidence drawer opens it from a
