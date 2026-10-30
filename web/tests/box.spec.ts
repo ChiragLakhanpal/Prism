@@ -694,7 +694,7 @@ test("Down then Enter asks the first package suggestion within the package, a cl
   const foot = page.locator("[data-box-popup] [data-box-keys]");
   await expect(foot).toBeVisible();
   await expect(foot).toHaveAttribute("aria-hidden", "true");
-  await expect(foot.locator("> *")).toHaveText(["Enter chooses", "Up Down move", "Esc closes"]);
+  await expect(foot.locator("> *")).toHaveText(["Enter Select", "Up Down Move", "Esc Close"]);
   await expect(foot.locator("[data-key-hint]")).toHaveText(["Enter", "Up", "Down", "Esc"]);
   expect((await scan(page)).violations).toEqual([]);
   await page.keyboard.press("ArrowDown");

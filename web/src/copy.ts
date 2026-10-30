@@ -544,9 +544,9 @@ export const copy = {
     // Ticket 127: the One box list's foot strip, from 768 px on a device that can hover, aria-hidden since the combobox
     // names its keys. Each {key} is a Key hint.
     keys: {
-      choose: "{enter} chooses",
-      move: "{up} {down} move",
-      close: "{escape} closes",
+      choose: "{enter} Select",
+      move: "{up} {down} Move",
+      close: "{escape} Close",
       up: "Up",
       down: "Down",
       escape: "Esc",
