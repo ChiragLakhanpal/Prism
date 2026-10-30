@@ -157,6 +157,22 @@ def activities(rows: Rows, references: list[str]) -> dict[str, Activity]:
     return found
 
 
+# The two steps the plan's own months run between, by the step-label registry's keys: the bid invitation (STEP's
+# Specific Procurement Notice / Invitation) and the signed contract. Section 1 of the package workspace draws its plan
+# line between their planned dates in the package's newest plan version (find_comparables' read_package), and the step
+# tracker shows the same dates for the same steps (ticket 139), so the plan's dates are read once, through activities.
+PLAN_LINE = ("bid_invitation", "contract_signed")
+
+
+def plan_line(activity: Activity | None) -> tuple[dt.date | None, dt.date | None]:
+    """The planned dates the plan's months run between, the bid invitation's and the signed contract's, in the
+    activity's newest plan version public on the reader's date; None for each its plan does not date."""
+    names = {entry["key"]: entry["step_name"] for family in families().values() for entry in family["steps"]}
+    found = [activity.steps.get(names[key]) if activity else None for key in PLAN_LINE]
+    notice, signing = (row.planned_on if row else None for row in found)
+    return notice, signing
+
+
 def observe(activity: Activity, names: list[str], k: int, basis: str, as_of: dt.date) -> tuple[int, bool] | None:
     """One comparable's observation at step k: (days, reached), or None when it gives none."""
     row = activity.steps.get(names[k])

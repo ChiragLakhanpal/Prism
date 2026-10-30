@@ -32,7 +32,10 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
   quarter, half, three quarters and 8 in 10 were signed. Below min_comparables the tool returns no
   range and no share, abstains (too_few_comparables) and still returns every comparable. Above
   quantile_dots_above it also returns quantile_dots dots.
-- The plan's months run from the plan row's planned notice date to its planned signing date. The
+- The plan's months run from the plan row's planned notice date to its planned signing date: the bid invitation's
+  and the signed contract's planned dates in its newest plan version, read through strata.estimates.step_dates as the
+  step tracker reads every step's (step_dates.plan_line; ticket 139), so section 1 draws its plan line exactly when
+  the tracker shows both dates. The
   result gives how many comparables were signed within them, and, from min_comparables up, about how
   many in 10, so the screen states counts and never works one out.
 - From min_comparables up, frequencies holds the two numbers each frequency phrase states, so the agent
@@ -55,6 +58,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from importlib import resources
 
 from strata.config import load_sources, load_thresholds, load_tools
+from strata.estimates import step_dates
 from strata.estimates.past_range import QUARTERS, Observation, dot_packages, months, quantile_dots, quartiles
 from strata.reader.repair import AS_READ as REFERENCE_AS_READ
 from strata.lakehouse.clean import agency_id
@@ -133,8 +137,22 @@ class Limits:
 # ── The package ──────────────────────────────────────────────────────────
 
 def package_reads(step_reference: str, as_of: dt.date) -> list[tuple[str, dict]]:
-    """The statement read_package runs, for a page that sends its reads as one batch (ticket 125)."""
-    return [(_sql("package.sql"), {"step_reference": step_reference.strip(), "as_of": as_of})]
+    """The statements read_package runs, for a page that sends its reads as one batch (ticket 125): its plan row, and
+    its steps' dates as the step tracker reads them."""
+    reference = step_reference.strip()
+    return [(_sql("package.sql"), {"step_reference": reference, "as_of": as_of}),
+            (step_dates.sql("steps.sql"), {"references": reference, "as_of": as_of})]
+
+
+def _plan_line(engine, reference: str, as_of: dt.date) -> tuple[dt.date | None, dt.date | None]:
+    """The plan's planned notice and signing dates: the bid invitation's and the signed contract's planned dates, read
+    through step_dates.activities as the step tracker reads every step's (ticket 139), so section 1 draws its plan line
+    exactly when the tracker shows both."""
+    def rows(sql: str, **params) -> list[dict]:
+        result = engine.run(sql, {**params, "as_of": as_of})
+        return [dict(zip(result.columns, values)) for values in result.rows]
+
+    return step_dates.plan_line(step_dates.activities(rows, [reference]).get(reference))
 
 
 def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
@@ -144,6 +162,7 @@ def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
     if not found:
         return None
     row = found[0]
+    notice_on, signing_on = _plan_line(engine, step_reference.strip(), as_of)
     estimated = _money(row["estimated_amount_usd"])
     return {
         "evidence_id": f"strata.silver.plan_rows:{row['document_id']}/{row['activity_reference_no']}",
@@ -163,8 +182,8 @@ def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
         "review_type": row["review_type"],
         "estimated_amount_usd": str(estimated) if estimated is not None else None,
         "process_status": row["process_status"],
-        "planned_notice_on": _iso(_date(row["planned_notice_on"])),
-        "planned_signing_on": _iso(_date(row["planned_signing_on"])),
+        "planned_notice_on": _iso(notice_on),
+        "planned_signing_on": _iso(signing_on),
         "plan": {"document_id": row["document_id"], "implementing_agency": row["implementing_agency"],
                  "agency_id": agency_id(row["implementing_agency"] or ""), "plan_date": _iso(_date(row["plan_date"])),
                  "disclosed_on": _iso(_date(row["disclosed_on"])), "pdf_page": row["pdf_page"]},

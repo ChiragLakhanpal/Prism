@@ -4129,10 +4129,23 @@ export const copy = {
     control: {
       label: "Planned months",
       unit: "months",
-      helper: "The plan row puts the notice on {notice} and the signed contract on {signing}.",
+      // The plan line's two dates are the planned dates the step tracker shows for the bid invitation and the signed
+      // contract (ticket 139): this sentence, in the plan months' tooltip, says so.
+      helper: "From the plan's step dates: bid invitation {notice}, contract signed {signing}.",
       helperNoPlan:
         "The plan row has no planned notice date or signing date, so there is no plan line yet. Type a number of months to compare.",
       helperTyped: "The plan row has no planned notice date or signing date, so the line shows the months you typed.",
+      // The plan's step dates give one of the line's two dates, or put the signing first, so there is no plan line; each
+      // sentence names the date the tracker shows (ticket 139).
+      helperOnlySigning:
+        "The plan's step dates put the signed contract on {signing} but give no planned notice date, so there is no plan line yet. Type a number of months to compare.",
+      helperOnlyNotice:
+        "The plan's step dates put the bid invitation on {notice} but give no planned signing date, so there is no plan line yet. Type a number of months to compare.",
+      helperSigningFirst:
+        "The plan's step dates put the signed contract on {signing}, before the bid invitation on {notice}, so there is no plan line yet. Type a number of months to compare.",
+      helperTypedOnlySigning: "The plan's step dates give no planned notice date, so the line shows the months you typed.",
+      helperTypedOnlyNotice: "The plan's step dates give no planned signing date, so the line shows the months you typed.",
+      helperTypedSigningFirst: "The plan's step dates put the signing before the notice, so the line shows the months you typed.",
       // A package planned from a sentence (ticket 15): the line is the person's plan, the same value as its plan chip.
       // True whether What I understood is folded or open (ticket 101's design review, round 2).
       helperPlanned: 'The line shows your plan, the same months as "Your plan" in the How group. Moving the line changes your plan.',

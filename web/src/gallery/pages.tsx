@@ -165,7 +165,8 @@ function sampleResult(signed: readonly number[], open: readonly number[], option
       ],
     },
     abstention: options.abstain ? { reason: "too_few_comparables", count: total, min_comparables: 20 } : null,
-    package: samplePackage,
+    // With no plan, the plan's step dates give neither of the plan line's two ends, as the server answers (ticket 139).
+    package: options.plan === false ? { ...samplePackage, planned_notice_on: null, planned_signing_on: null } : samplePackage,
     criteria: {
       method: pr.method,
       category: pr.category,

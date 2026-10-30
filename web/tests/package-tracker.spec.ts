@@ -313,3 +313,61 @@ test("in the right column the tracker sticks only while the window shows all of 
   await expect(tracker(page)).toBeInViewport({ ratio: 1 });
   expect(Math.round((await tracker(page).boundingBox())!.y)).toBe(56 + 24);
 });
+
+// Ticket 139: section 1's plan line and the tracker read the plan's dates the same way, so section 1 draws its line
+// whenever the tracker shows a planned bid invitation and a planned signing, and names the date the tracker shows when
+// it cannot draw one. The hand-made set's plan of December 15, 2020 plans the bid invitation for March 1, 2021 and the
+// signing for June 10, 2021 (tests/step_set.py, TARGET_PLANNED).
+const HAND = "KE-HAND-900000-CW-RFB";
+const HAND_FILES = { pkg: "package-ke-hand-900000.json", comparables: "comparables-ke-hand-900000.json", steps: "steps-ke-hand-900000.json" };
+const planSentence = (page: Page) => page.locator("[data-past-range] [data-plan-control] p").first();
+
+test("section 1 draws the plan line from the planned bid invitation and the planned signing the tracker shows, and says where its dates come from", async ({ page }) => {
+  await openStepRow(page, HAND, HAND_FILES);
+
+  const shown = await words(items(page));
+  expect([shown[0], shown[4]]).toEqual(["Bid invitation (SPN) Next Planned for Mar 1, 2021", "Contract signed Planned for Jun 10, 2021"]);
+  await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", "3.3");
+  await page.locator("[data-past-range] [data-finding] [data-num]").filter({ hasText: "3.3" }).first().focus();
+  await expect(page.getByRole("tooltip")).toContainText("From the plan's step dates: bid invitation March 1, 2021, contract signed June 10, 2021.");
+});
+
+test("a plan that dates the signing but not the bid invitation has no plan line, and section 1 names the date the tracker shows", async ({ page }) => {
+  // What the server answers for such a plan, as the walkthrough's KE-SDOR-KIHBT-563865-CW-RFB read on the workspace
+  // (tests/test_plan_line.py): the tracker has no date for the bid invitation, so the bidding document is next, and
+  // find_comparables has no plan.
+  const steps = JSON.parse(await recorded(HAND_FILES.steps));
+  const [invitation, bidding] = steps.step_dates.steps;
+  Object.assign(invitation, {
+    plan_first_date: null,
+    plan_first_version_date: null,
+    plan_latest_date: null,
+    plan_latest_version_date: null,
+    abstain_reason: "not_in_plan",
+    state: "unknown",
+    middle: { planned_date: null, days: null, days_relation: null, longer: null, in10: null },
+    cautious: { planned_date: null, days: null, days_relation: null, longer: null, in10: null },
+  });
+  bidding.state = "next";
+  const comparables = JSON.parse(await recorded(HAND_FILES.comparables));
+  Object.assign(comparables, { plan: null, frequencies: { ...comparables.frequencies, plan: null } });
+  comparables.package.planned_notice_on = null;
+  const api = `/api/packages/${HAND}`;
+  await serve(page, {
+    [api]: { body: await recorded(HAND_FILES.pkg) },
+    [`${api}/comparables`]: { body: JSON.stringify(comparables) },
+    [`${api}/steps`]: { body: JSON.stringify(steps) },
+  });
+  await page.goto(`/packages/${HAND}`);
+  await expect(items(page)).toHaveCount(6);
+
+  const shown = await words(items(page));
+  expect([shown[0], shown[4]]).toEqual(["Bid invitation (SPN) No date Not in the plan", "Contract signed Planned for Jun 10, 2021"]);
+  await expect(page.getByRole("slider")).toHaveCount(0);
+  await expect(planSentence(page)).toHaveText(
+    "The plan's step dates put the signed contract on June 10, 2021 but give no planned notice date, so there is no plan line yet. Type a number of months to compare.",
+  );
+  await page.getByRole("textbox", { name: "Planned months" }).fill("4");
+  await expect(page.getByRole("slider")).toHaveAttribute("aria-valuenow", "4");
+  await expect(planSentence(page)).toHaveText("The plan's step dates give no planned notice date, so the line shows the months you typed.");
+});

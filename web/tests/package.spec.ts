@@ -110,9 +110,12 @@ async function derived(name: string, edit: (body: Comparables) => void): Promise
 }
 
 // A plan row with no planned dates: no plan, so no share of it either.
+// A plan row with no planned dates, as the server answers it: no plan, and no step date for the plan line's two ends
+// (ticket 139).
 const noPlan = (body: Comparables) => {
   body.plan = null;
   (body.frequencies as { plan: unknown }).plan = null;
+  Object.assign(body.package as object, { planned_notice_on: null, planned_signing_on: null });
 };
 
 async function signedWithin(months: number): Promise<number> {
@@ -431,7 +434,7 @@ test("below 768 px the reset button shows under the input while the line is off 
 
     // The plan row's two dates are in the plan months' tooltip since ticket 126 (T13), so no helper line sits under the
     // input. The error's held line still sits between the control and the chart (ticket 59).
-    await expect(page.getByText(/^The plan row puts the notice on/)).toHaveCount(0);
+    await expect(page.getByText(/^From the plan's step dates/)).toHaveCount(0);
     const errorBox = await pageBox(page.locator("[data-plan-control] > p.text-error"));
     expect(errorBox.top, `${width} px: the error's line under the input`).toBeGreaterThanOrEqual(inputBox.bottom);
     expect(before, `${width} px: and the chart under it`).toBeGreaterThanOrEqual(errorBox.bottom);
@@ -474,7 +477,7 @@ test("from 768 px the reset button sits on the input's row with its focus ring 8
   }
   // The plan row's two dates are in the plan months' tooltip in the finding since ticket 126 (T13).
   await section(page).locator("[data-finding] [data-num]").filter({ hasText: "1.5" }).first().focus();
-  await expect(page.getByRole("tooltip")).toContainText("The plan row puts the notice on");
+  await expect(page.getByRole("tooltip")).toContainText("From the plan's step dates: bid invitation March 10, 2026, contract signed April 24, 2026.");
 });
 
 // The readout sits beside the knob in row B, so it keeps clear of the knob's focus ring, on either side
