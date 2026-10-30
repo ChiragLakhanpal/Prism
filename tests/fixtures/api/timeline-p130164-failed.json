@@ -287,6 +287,8 @@
     "status": "failed",
     "count": 0
   },
+  "records_disagree": [],
+  "records_disagree_count": 0,
   "disagreement_line_state": "info",
   "rejected": null,
   "counts": {

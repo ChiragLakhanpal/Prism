@@ -104,13 +104,14 @@ def live_judge():
     return AzureOpenAIJudge("https://judge.example.invalid", "not-a-real-key", "gpt-5.4", post=post)
 
 
-def test_the_recording_command_re_records_the_judge_for_each_case_whose_answer_asks_it(copied, fixture_db):
+def test_the_recording_command_re_records_the_judge_for_each_case_whose_answer_asks_it(copied, writers_fixture_db):
     """Ticket 24: with --judge, every scripted case is replayed through the answer stream, and every writer case
     through its draft workflow's six checks, and the live judge's answer is kept for each case that asks it. A
-    case whose judge does not respond, or that never asks it, keeps no file."""
+    case whose judge does not respond, or that never asks it, keeps no file. The writer cases' notes were recorded
+    on the fixture as tests/writer_world.py keeps it (ticket 132), so the replay reads that copy."""
     @contextmanager
     def engine_for(viewer):
-        with DuckDBEngine.open(fixture_db, read_only=True) as engine:
+        with DuckDBEngine.open(writers_fixture_db, read_only=True) as engine:
             yield engine
 
     cases = load_cases(copied / "cases.toml") | load_cases(copied / "writers.toml")
@@ -173,9 +174,12 @@ class LiveWriter:
         return {**answer, "usage": {"total_tokens": 900}}
 
 
-def test_the_recording_command_re_records_each_writer_case_from_the_rows_its_workflow_reads(copied, fixture_db):
+def test_the_recording_command_re_records_each_writer_case_from_the_rows_its_workflow_reads(copied, writers_fixture_db):
     """Ticket 35's writer cases (writers.toml) are re-recorded the same way: the workflow reads check_plan on
-    the workspace, the live writer answers, and the diff shows what changed."""
+    the workspace, the live writer answers, and the diff shows what changed. Here the workspace is the fixture as the
+    recording saw it (tests/writer_world.py): on the fixture as built, check_plan marks one of the three activities
+    with a signal since ticket 132, and a live re-recording asks the writer about that one."""
+    fixture_db = writers_fixture_db
     # The review notes writer's cases; the mission brief writer's (ticket 37) answer from a recording of their own.
     cases = {key: case for key, case in load_cases(copied / "writers.toml").items()
              if case.recording == "review-notes-nwwda-2026-10-09"}

@@ -116,8 +116,13 @@ def test_an_officer_uploads_the_fixture_plan_and_gets_its_check_with_the_publish
     assert answer.status_code == 200, answer.text
     result = answer.json()
     assert result["kept"] is True and result["upload_id"] == "upl-000000000001"
-    assert marks(result) == {mark: BENCHMARK["expected"][mark]
-                             for mark in ("needs_a_look", "watch", "data_note", "unmarked")}
+    # The published plan's marks, except the two activities the contract awards say were signed: on the published plan
+    # they are moved on since the plan, a disagreement the nightly job writes between two public records (ticket 132),
+    # and an upload is no public record, so its check still reads them as pending (a follow-up of ticket 132).
+    published = {mark: BENCHMARK["expected"][mark] for mark in ("needs_a_look", "watch", "data_note", "unmarked")}
+    assert BENCHMARK["expected"]["moved_on"] == ["KE-NWWDA-541055-CW-RFB", "KE-NWWDA-541062-CW-RFQ"]
+    assert marks(result) == {**published, "needs_a_look": ["KE-NWWDA-541055-CW-RFB"],
+                             "watch": sorted([*published["watch"], "KE-NWWDA-541062-CW-RFQ"])}
     # Nine activities: the wireframe's eight and the one it leaves out, in the order of the officer's file.
     references = [row["reference"] for row in TRUTH["plan_row"]] + TRUTH["plan"]["also_lists"]
     assert sorted(row["activity_reference_no"] for row in result["rows"]) == sorted(references)
