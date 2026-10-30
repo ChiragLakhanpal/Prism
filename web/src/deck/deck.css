@@ -20,33 +20,63 @@
   visibility: hidden;
 }
 
-[data-deck-figure] [data-motion-item] [data-draw] {
+[data-deck-figure]:not([data-deck-figure="layers"]) [data-motion-item] [data-draw] {
   stroke-dasharray: 1;
   transition:
     stroke-dashoffset 500ms var(--draw-ease) var(--draw-delay, 0ms),
     fill-opacity 200ms var(--draw-ease) var(--draw-delay, 0ms);
 }
 
-[data-deck-figure] [data-motion-item] [data-fade] {
+[data-deck-figure]:not([data-deck-figure="layers"]) [data-motion-item] [data-fade] {
   transition: opacity 200ms var(--draw-ease) var(--draw-delay, 0ms);
 }
 
 [data-deck-figure] [data-motion-item] text {
-  transition: opacity 200ms var(--draw-ease) calc(var(--draw-delay, 0ms) + 150ms);
+  transition:
+    opacity 200ms var(--draw-ease) calc(var(--draw-delay, 0ms) + 150ms),
+    fill 200ms var(--draw-ease);
 }
 
-[data-deck-figure] [data-motion-item][data-unreached] [data-draw] {
+[data-deck-figure]:not([data-deck-figure="layers"]) [data-motion-item][data-unreached] [data-draw] {
   stroke-dashoffset: 1;
   fill-opacity: 0;
   transition: none;
 }
 
-[data-deck-figure] [data-motion-item][data-unreached] :is([data-fade], text) {
+[data-deck-figure]:not([data-deck-figure="layers"]) [data-motion-item][data-unreached] :is([data-fade], text) {
+  opacity: 0;
+  transition: none;
+}
+
+/* A step the talk has moved past recedes: its words take the muted ink, as a slide's earlier points do, so the eye
+   stays on the newest part. A figure shown whole keeps its own colors. */
+[data-deck-figure] [data-motion-item][data-past] text {
+  fill: var(--color-ink-muted);
+}
+
+/* Slide 12's stack builds the way FairShare's architecture slide does. Each layer arrives whole and drops into its
+   place from above over 700 ms on the same ease-out curve, and its words fade in once it has landed. */
+[data-deck-figure="layers"] [data-motion-item] {
+  transition: transform 700ms var(--draw-ease), opacity 300ms var(--draw-ease);
+}
+
+[data-deck-figure="layers"] [data-motion-item][data-unreached] {
+  transform: translateY(-48px);
+  opacity: 0;
+  transition: none;
+}
+
+[data-deck-figure="layers"] [data-motion-item] text {
+  transition: opacity 200ms var(--draw-ease) 450ms, fill 200ms var(--draw-ease);
+}
+
+[data-deck-figure="layers"] [data-motion-item][data-unreached] text {
   opacity: 0;
   transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  [data-deck-figure] [data-motion-item],
   [data-deck-figure] [data-motion-item] :is([data-draw], [data-fade], text) {
     transition: none;
   }

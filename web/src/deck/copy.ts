@@ -1193,7 +1193,7 @@ export const figureCopy = {
     steps: [
       "World Bank open data and documents arrive every night and land in bronze, silver and gold tables on Databricks.",
       "The knowledge model is a set of Unity Catalog tables with an edge table, numbered passages and dated assertions.",
-      "The tools are SQL through the Genie Agent, hybrid search over passages, a walk over the edge table, and the time estimates.",
+      "The tools are fixed SQL on the gold tables, hybrid search over passages, a Genie space for open questions, and the time estimates.",
       "The Strata agent in Microsoft Foundry picks the tools and writes each claim with the IDs of its evidence.",
       "The verifier checks every sentence against the rows and passages before anyone sees it.",
       "The Strata app, a Databricks App, runs each tool with the viewer's own permissions.",

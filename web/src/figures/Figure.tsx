@@ -236,6 +236,7 @@ export function Diagram({ id, step }: { id: FigureId; step?: number }) {
       const at = Number(item.getAttribute("data-step"));
       item.toggleAttribute("data-unreached", step !== undefined && at > step);
       item.toggleAttribute("data-current", step !== undefined && at === step);
+      item.toggleAttribute("data-past", step !== undefined && at < step);
     }
   }, [markup, step]);
   return <div ref={box} data-figure={id} data-figure-step={step ?? figure.steps} className="block shrink-0" dangerouslySetInnerHTML={{ __html: markup }} />;
