@@ -6,7 +6,7 @@ Read first: `src/strata/server/timeline.py` (the records lane, `CONTRACT_SOURCES
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** server
 **Phase:** P4
 **Design review:** no
@@ -18,3 +18,27 @@ Read first: `src/strata/server/timeline.py` (the records lane, `CONTRACT_SOURCES
 ## Comments
 
 - October 29, 2026, orchestrator: opened at 21:03 PDT from the walkthrough's second capture.
+
+- October 29, 2026, merger: merged strata/138-the-timeline-and-the-connections-tab-agree-on-contracts (head 8d2a5a56: the work in 03556929, with one merge of build/strata in 8d2a5a56) into build/strata as merge commit 2589ad25, with history, since the history scan found no key-shaped line in the branch's commits. The worktree that built it was `.claude/worktrees/wf_a68953bb-7de-2`; I remove it right after this commit and keep the branch. The merge changes 26 files (790 lines in, 8 out). `web/src/copy.ts` and `web/tests/timeline.spec.ts` merged on their own with ticket 127's changes; after the merge, every server copy file was still in step with `copy.ts`, and `tests/test_project_contracts.py` passed (5 tests).
+  - The gate: I committed through the orchestrator's quiet-window script. Its first try, at 22:30 PDT at a one-minute load of 30 with no other gate or test run going, passed in 145.1 seconds and made 2589ad25 (python-1 139.8 s, python-2 135.1 s, Playwright 120.5 s and 122.7 s). `git log --parents -1` shows the two parents bfbacbad and 8d2a5a56.
+  - By hand on build/strata: the first run, at 22:33:32 PDT at a one-minute load of 30, was stopped by the 150-second limit with no test failed (another worktree's Playwright run started during it). The second run passed in 137.4 seconds, from 22:41:05 to 22:43:23 PDT, at 2589ad25, at a one-minute load of 29 once no other gate, test run or headless browser was running, with the secret and history scan in 3.6 s. The Python halves took 132.2 s and 128.7 s, and Playwright 114.0 s and 120.0 s. So the history scan has read the merged history. The gate is 12.6 seconds under its 150-second limit.
+  - Notes that passed, at 8d2a5a56:
+    - The code review approved round 1 with nothing blocking and six follow-ups (`.notes/138-review.md`).
+    - Design review and critique: none, since the ticket says "Design review: no" and the user's rule of October 25 holds them for the end.
+  - Verify (`.notes/138-verify.md`): pass. Criteria 1 and 2 pass on the fixture, and criterion 3 is parked for the paid workspace. The worktree's gate passed in 134.9 seconds.
+    - Criterion 1: `src/strata/server/contracts.py` and `src/strata/server/sql/contracts/project.sql` are the one definition of a project's contracts (its rows in `strata.gold.contract` public on the as-of date, from all three sources), and the Timeline and Connections routes both return it as `contracts`. The verifier's probe called both routes for all 93 projects in `strata.gold.project`, plus P124109, P127203 and P000000, at 22 dates each for the projects with contracts: 171 pairs answered 200 with 0 problems, each count equal to a separate `count(*)` on `strata.gold.contract`. On October 23, 2026 both tabs hold P130164 8 (7 from `awards_fy2001_2016`, 1 from `notices`), P156634 262, P170941 59, P176758 288 and P127203 0. Two mutants, one giving the Connections tab its own definition, each failed a test.
+    - Criterion 2: on P130164 the note reads "I hold eight contracts for this project. The Records lane finds each contract's package by its STEP reference, so it leaves out seven from the contract awards for fiscal 2001 to 2016, which have none." As of August 26, 2016 the empty lane reads "I can't place this project's contracts in this lane. The note under the chart says why." instead of "I have no contract records for this project". The Python test and `timeline.spec.ts` check both word for word, and `trail.spec.ts` checks the Connections finding ("seven of its eight contracts appeared together with 89 paragraphs from 12 of its reports").
+    - Three numbers against their source rows: P130164's 8 is the 7 rows of `awards/P130164-fy2001-2016.json` plus award notice OP00044090; Kenya's awards add up to 603 (256, 288 and 59, values.toml `counts.kenya.contracts`); the 75 Kenya contracts the lane leaves out equal 603 minus `with_step_reference` 528.
+  - Deferred to the design pass:
+    - How the records note and the empty Records lane caption look, and where they sit at each width. The verifier checked them only as text, through the screen tests. No capture was taken.
+  - Workspace results: I ran none. Every key is set (`guard.py --env-keys`), but mergers run no workspace step, so I parked two blocks in `docs/workspace-catchup.md` under ticket 138: step 1 redeploys the App (`ops/app/deploy_app.py --keep-secrets`; no table, job, tool description or prompt changed, so no bundle deploy or agent sync), and step 2 is criterion 3's live proof (P130164's `contracts.count` equal on `/api/projects/P130164/timeline` and `/api/projects/P130164/connections`, with both sentences recorded). The second session (strata-58) or the orchestrator runs them from a snapshot at or after 2589ad25. The builder named the Free Edition App's address; the block points at the paid workspace's App, and it says to open the tabs in a fresh browser context because of review F2.
+  - Follow-ups from the review (none blocks):
+    - F2 matters for the live check: a Timeline answer a browser kept from before the redeploy (up to 7,200 s) has no `contracts` field, and `EvidenceTrail.tsx:371` reads `data.contracts.left_out.count` with no guard, so the whole app goes blank until the kept answer expires. The fix is `(data.contracts?.left_out.count ?? 0) > 0` and `contracts?:` in the `Timeline` type in `web/src/lib/timeline.ts`.
+    - F1: on P156634 the Records lane draws 5 packages from FY2020 and later award notices that hold no row in `strata.gold.contract` (for example KE-GAWASCO-111742-CW-RFB), so the lane draws from a set wider than the count it states. No sentence is false. The review gives a `noticed_only` count and a copy sentence for it.
+    - F3: the Timeline's source line does not name the contract awards for fiscal 2001 to 2016, which P130164's note counts from; add `awards_fy2001_2016` to `sources` and to `copy.timeline.sourceNames`, then re-record.
+    - F4: `records_note`'s "no signing date" sentences and its three-source comma have no test (the verifier called them by hand and they wrote correct sentences).
+    - F5: the first test passes even if both routes answered 404; assert the set of projects that answered 200.
+    - F6: two lost spaces in `timeline.py` (`above =int(` and `"finding":finding(`).
+  - Decisions parked for the user: the builder, the reviewer and the verifier parked none, and no builder report reached me with any. The task named `docs/agents/areas/server.md` as the area brief, but no such file exists; the reviewer used CLAUDE.md, DESIGN.md, GLOSSARY.md, `docs/agents/areas/app.md` and the unslop rules.
+  - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. The main checkout was clean before the merge, and no other merge ran in it while mine was in progress.
+  - Unblocks: none. No ticket lists 138 under "Blocked by".
