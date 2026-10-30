@@ -163,7 +163,7 @@ PLANNED = "pkg-000000000036"
 # as on the STEP row, its comparables reach P130164's completion report.
 PLANNED_CRITERIA = {"values": {
     "category": {"value": "Works", "provenance": "sentence"},
-    "description": {"value": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+    "description": {"value": "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply",
                     "provenance": "sentence"},
     "country": {"value": "IN", "provenance": "you"},
     "method": {"value": "Request for Bids", "provenance": "sentence"}}}

@@ -3,9 +3,11 @@
 -- procurement notice and the signed contract, and the project and country it belongs to.
 --
 -- A package is named by its STEP reference. When several versions list it, the newest by plan date
--- wins, then the one disclosed last; within a version, the first page that lists it.
+-- wins, then the one disclosed last; within a version, the first page that lists it. reference_repair says when
+-- the reference breaks STEP's grammar and stays as the plan gives it (reference_as_read; ticket 131).
 SELECT
   r.activity_reference_no,
+  r.reference_repair,
   r.document_id,
   r.project_id,
   r.section,

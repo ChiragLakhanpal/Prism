@@ -108,6 +108,21 @@ test("the plan check finds every activity, states the finding, and folds the act
   );
 });
 
+// Ticket 131: on the workspace the layout parser read KE-NWWDA-199461-GO-RFB as KE-NWWDA-193461-90-RF8, which no one
+// look-alike swap makes whole, so the plan reader kept it as read and check_plan flags it (reference_as_read).
+test("a reference the plan reader kept as it read it says so under the reference, and no other row does", async ({ page }) => {
+  const result = JSON.parse(await recorded("check-plan-p156634-nwwda-2026-10-09.json"));
+  const flagged = result.rows.find((row: { activity_reference_no: string }) => row.activity_reference_no === "KE-NWWDA-229129-CW-RFB");
+  Object.assign(flagged, { activity_reference_no: "KE-NWWDA-193461-90-RF8", reference_as_read: true });
+  await openPlan(page, 1440, { body: JSON.stringify(result) });
+
+  const table = view(page, "table");
+  await expect(table.locator("tr", { has: page.getByRole("button", { name: "KE-NWWDA-193461-90-RF8" }) })).toContainText(
+    "As I read it from the plan",
+  );
+  await expect(table.getByText("As I read it from the plan", { exact: true })).toHaveCount(1);
+});
+
 // Ticket 100: the plan check belongs to the Packages section, though its address stays under /projects/, and in a view
 // without Packages (the public view) it belongs to Projects (DESIGN.md section 5, Plan check table; plan 8.0).
 const sidebar = (page: Page) => page.getByRole("navigation", { name: "Main" });
@@ -620,7 +635,7 @@ test("a row's reference opens its records in the drawer, the row keeps the curre
     ["Actual divided by estimated", "about 4"],
   ]);
   expect(await pairs("plan")).toEqual([
-    ["Description", "Drilling of 4 Number Explor atory Boreholes In Wajir Cou nty"],
+    ["Description", "Drilling of 4 Number Exploratory Boreholes In Wajir County"],
     ["Method", "Request for Bids"],
     ["Market Approach", "Open - National"],
     ["Review Type", "Post"],

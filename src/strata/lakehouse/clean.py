@@ -14,7 +14,9 @@ Each rule is defined once here, and every silver transform uses it:
   than the fetch, the day Strata first fetched it (ADR 0002).
 - A STEP reference (KE-NWWDA-541055-CW-RFB) is parsed into its parts. Sources write it with stray
   spaces (KE- WASREB-...) or slashes (KE/TAVEVO/82746/GO/RFB), and both normalize to hyphens. The
-  method is never read from the reference: its last part is kept only for the data note.
+  method is never read from the reference: its last part is kept only for the data note. Its kinds
+  and method codes are config/references.toml's, which the plan reader's repair also reads
+  (follows_step_grammar; ticket 131).
 - Loan numbers come in five forms (IDA60300, IDA-60300, IDA / 60300, a bare 60300, and the older
   four-digit number with a country code, 6030-KE) and normalize to one: the lender's letters and
   the five-digit number, IDA60300. The older form gains its 0 (6030-KE is credit 60300). A number
@@ -37,7 +39,7 @@ import html
 import re
 from dataclasses import dataclass
 
-from strata.config import MethodName, load_method_names
+from strata.config import MethodName, load_method_names, load_references
 
 # ── Text and amounts ─────────────────────────────────────────────────────
 
@@ -140,7 +142,10 @@ def public_from(published: dt.date | None, fetched: dt.date) -> dt.date:
 
 # ── STEP references ──────────────────────────────────────────────────────
 
-CATEGORIES = {"CW": "Works", "GO": "Goods", "CS": "Consultant Services", "NC": "Non-consulting Services"}
+# The parts a STEP reference is made of: its kinds, with STEP's category for each, and its method codes
+# (config/references.toml, the one registry the plan reader's repair reads too; ticket 131).
+REFERENCES = load_references()
+CATEGORIES = REFERENCES.kinds
 # A category as the FY2001 to FY2016 awards dataset writes it, where it differs from STEP's name.
 OLD_CATEGORIES = {"CIVIL WORKS": "Works"}
 
@@ -214,7 +219,28 @@ def hires_a_named_person(procurement_category, description, supplier) -> bool:
 
 STEP_REFERENCE = re.compile(
     r"(?P<country>[A-Z]{2})-(?P<agency>[A-Z0-9][A-Z0-9 &.()]*?)-(?P<number>\d+)-"
-    r"(?P<category>CW|GO|CS|NC)-(?P<method>[A-Z]+)(?P<suffix>-.+)?")
+    rf"(?P<category>{'|'.join(map(re.escape, CATEGORIES))})-(?P<method>[A-Z]+)(?P<suffix>-.+)?")
+
+# A plan row's reference in STEP's form, part by part: two characters, the agency's parts, the number, a kind of two
+# characters, the method and perhaps one more part. Its characters may be misread; in_step_form checks only the
+# shape, and follows_step_grammar checks every part: the country's two letters, the agency's letters, the number's
+# digits, a kind in config/references.toml and a method code there (ticket 131).
+_STEP_FORM = re.compile(r"[A-Z0-9]{2}-[A-Z0-9]+(?:-[A-Z0-9]+)*?-[A-Z0-9]+-[A-Z0-9]{2}-[A-Z0-9]+(?:-[A-Z0-9]+)?")
+_STEP_GRAMMAR = re.compile(
+    r"[A-Z]{2}-[A-Z]+(?:-[A-Z]+)*-\d+-"
+    rf"(?:{'|'.join(map(re.escape, CATEGORIES))})-(?:{'|'.join(map(re.escape, REFERENCES.methods))})(?:-[A-Z0-9]+)?")
+
+
+def in_step_form(reference: str) -> bool:
+    """Whether a plan row's reference has the shape of STEP's references, whatever its characters, so
+    KE-NWWDA-193461-90-RF8 does and NWWDA-WSDP-03-2019-2020, an older form, does not."""
+    return bool(_STEP_FORM.fullmatch(reference))
+
+
+def follows_step_grammar(reference: str) -> bool:
+    """Whether every part of a plan row's reference is one STEP writes: KE-NWWDA-541055-CW-RFB does, and
+    KE-NWWDA-193461-90-RF8, whose kind and method are not in config/references.toml, does not."""
+    return bool(_STEP_GRAMMAR.fullmatch(reference))
 
 
 @dataclass(frozen=True)

@@ -39,6 +39,7 @@ export function PageHead({
   titleRef,
   loading = false,
   narrowLines = 2,
+  narrowestLines,
   id,
   idAction,
   meta,
@@ -66,6 +67,9 @@ export function PageHead({
   // How many h1 lines the skeleton holds below a 48rem page area, where a long title wraps more, such as a package's
   // Description (3; ticket 101's design review). From 48rem it holds two.
   narrowLines?: number;
+  // How many it holds below a 21rem page area, where the breadcrumb's link back holds two lines too (holdBack), when
+  // that differs: a package's Description whose words the plan reader joined wraps once more there (ticket 131).
+  narrowestLines?: number;
   // An object's ID, such as its STEP reference.
   id?: string;
   // What follows the ID on its line, such as the copy key that copies it (ticket 112; the package page, ticket 101).
@@ -99,10 +103,14 @@ export function PageHead({
             loading ? (
               <>
                 {/* Below 48rem the title holds narrowLines lines, and from 28rem one fewer: with no purpose under it
-                    since ticket 126, the zones under a two-line title showed the extra line as a jump. */}
+                    since ticket 126, the zones under a two-line title showed the extra line as a jump. Below 21rem it
+                    holds narrowestLines when a page gives it (ticket 131). */}
                 <span aria-hidden="true" className="flex flex-col text-h1 @md/page:hidden">
                   {Array.from({ length: narrowLines - 1 }, (_, index) => (
                     <SkeletonLine key={index} width="w-full" className={index > 0 ? "@[28rem]/page:hidden" : undefined} />
+                  ))}
+                  {Array.from({ length: Math.max(0, (narrowestLines ?? narrowLines) - narrowLines) }, (_, index) => (
+                    <SkeletonLine key={`narrowest-${index}`} width="w-full" className="hidden @max-[21rem]/page:flex" />
                   ))}
                   <SkeletonLine width="w-3/5" />
                 </span>

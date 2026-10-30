@@ -1310,6 +1310,8 @@ export const copy = {
       cancelled_millions: "Canceled (US$, millions)",
       loan_number: "Loan or credit",
       activity_reference_no: "Activity",
+      // A plan row's reference as the layout parser read it, where one look-alike swap repaired it (ticket 131).
+      activity_reference_no_as_read: "Activity, as I read it from the plan",
       planned_completion_on: "Planned completion",
       days_after_closing: "Days after closing",
       // The fields a plan signal adds to its plan row (ticket 37): the date as first published, and the amounts.
@@ -2767,6 +2769,9 @@ export const copy = {
     // "Request for Bids · Open - National", as STEP gives the two values. The dot is tied to the
     // Method with a no-break space, so a line never starts with it.
     methodDot: "\u00a0·",
+    // Under a reference that breaks STEP's form, which the plan reader kept as it read it, since no one look-alike
+    // swap and no notice or plan version settled it (ticket 131).
+    referenceAsRead: "As I read it from the plan",
     noSignals: "No signals.",
     foundDefinition:
       "Needs a look and Watch are signals. A signal is a fixed check on public records. It gives a reason to look, " +
@@ -3899,6 +3904,8 @@ export const copy = {
     },
     // The "In the plan" value, a link back to the plan check with this row in view.
     inPlan: "{agency} plan of {date}",
+    // Beside a reference that breaks STEP's form, kept as the plan reader read it (ticket 131), on the ID line.
+    referenceAsRead: "as I read it from the plan",
     missing: "Not in the plan row",
     loading: "Loading this package.",
     error: "I couldn't load this package.",
