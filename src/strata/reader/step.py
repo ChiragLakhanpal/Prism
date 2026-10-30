@@ -181,6 +181,19 @@ class PlanRow:
     pdf_page: int
     fields: dict = field(default_factory=dict)  # silver column -> value, for the STEP columns the table has
     steps: list[StepDates] = field(default_factory=list)
+    # The reference and description as the layout parser read them, and what the repair made of them before the row
+    # is written (strata.reader.repair; ticket 131). activity_reference_no and description hold the repaired values.
+    activity_reference_no_as_read: str | None = None
+    reference_repair: str | None = None  # why the reference differs from the reading, or why it is flagged
+    reference_carried_by: str | None = None  # the evidence id of the record that carries the reference kept
+    description_as_read: str | None = None
+    description_joins: tuple = ()  # each strata.reader.repair.Join the repair made
+
+    def __post_init__(self):
+        if self.activity_reference_no_as_read is None:
+            self.activity_reference_no_as_read = self.activity_reference_no
+        if self.description_as_read is None:
+            self.description_as_read = self.description
 
 
 def _date(text: str) -> dt.date | None:

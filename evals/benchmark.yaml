@@ -56,6 +56,10 @@ questions:
       # line writes ("US$1.23 million of works"): values.toml plan-541055-estimated (US$1,230,000.00), and the
       # estimates of US$300,000.00 and US$295,000.00 the plan gives the two activities worth watching.
       estimated_millions: ["KE-NWWDA-229129-CW-RFB 0.3", "KE-NWWDA-541055-CW-RFB 1.23", "KE-NWWDA-541062-CW-RFQ 0.3"]
+      # Ticket 131: the activities whose reference breaks STEP's grammar and stays as the plan gives it. Every
+      # reference the fixture's plan reads is in STEP's grammar or an older form, so no row keeps one as read;
+      # tests/test_plan_text_repair.py reads one such reference into a copy of the plan and checks the pages.
+      reference_as_read: []
     ground_truth: tests/ground_truth/check_plan_nwwda_2026_10_09.sql
     source: >-
       The marks the blueprint's Check a plan wireframe gives the plan's eight activities

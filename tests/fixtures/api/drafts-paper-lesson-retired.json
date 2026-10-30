@@ -161,7 +161,7 @@
     {
       "key": "ppsd",
       "part": "ppsd",
-      "evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Bo%20reholes%20Project-Lot%201-%20Sarma%20n%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
+      "evidence_id": "strata.tools.get_lessons:@2026-10-28?query=Equipping%20of%20Exploratory%20Boreholes%20Project-Lot%201-%20Sarman%20-%20Tarbaj%20Water%20Supply&packages=IN-RRSMP-7431-CW-RFB",
       "description": null,
       "mark": null,
       "state": "written",
@@ -185,7 +185,7 @@
       "drafts": [
         {
           "draft_id": "draft-0002",
-          "package_title": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+          "package_title": "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply",
           "checked_by": "Ana Example",
           "checked_at": "2026-10-28T09:04:00Z",
           "rows": 2
@@ -213,10 +213,11 @@
         },
         "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
         "section": "WORKS",
-        "description": "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj Water Supply",
+        "description": "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply",
         "review_type": "Post",
         "method": "Request for Bids",
         "market_approach": "Open - National",
+        "reference_as_read": false,
         "estimated_amount_usd": "1230000.00",
         "estimated_millions": "1.23",
         "actual_amount_usd": "0.00",
@@ -280,10 +281,11 @@
         },
         "activity_reference_no": "KE-NWWDA-541062-CW-RFQ",
         "section": "WORKS",
-        "description": "Equipping of Exploratory Bo reholes project- Lot 3- Qaras Water Supply",
+        "description": "Equipping of Exploratory Boreholes project- Lot 3- Qaras Water Supply",
         "review_type": "Post",
         "method": "Request for Quotations",
         "market_approach": "Limited - National",
+        "reference_as_read": false,
         "estimated_amount_usd": "295000.00",
         "estimated_millions": "0.3",
         "actual_amount_usd": "0.00",
@@ -410,7 +412,7 @@
           "sector": "Transportation"
         },
         "decided_on": "2026-10-27",
-        "fit": 0.08,
+        "fit": 0.09,
         "rank": 1
       },
       "highlights": []

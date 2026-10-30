@@ -124,11 +124,13 @@ description = "Use only plan versions and project dates public on or before this
 
 [tools.check_plan.result]
 row = "One activity in the plan: its STEP fields as the plan gives them, its marks and the values behind each reason."
-row_fields = ["evidence_id", "public_from", "source", "activity_reference_no", "section", "description",
-              "review_type", "method", "market_approach", "estimated_amount_usd", "estimated_millions",
+row_fields = ["evidence_id", "public_from", "source", "activity_reference_no", "reference_as_read", "section",
+              "description", "review_type", "method", "market_approach", "estimated_amount_usd", "estimated_millions",
               "actual_amount_usd", "process_status", "signed_on", "planned_signing_on", "planned_signing_plan_date",
               "days_late", "planned_completion_on", "planned_completion_plan_date", "first_listing_confirmed",
               "actual_to_estimate", "marks", "position", "listed"]
+# reference_as_read is true when the activity's reference breaks STEP's grammar and the plan reader kept it as the
+# plan gives it, since no single look-alike swap and no notice or plan version settled it (ticket 131).
 # estimated_millions is the estimate in US$ millions to two decimals with trailing zeros dropped, the figure Home's
 # briefing line writes ("US$1.23 million of works", ticket 41): a derived figure, so the tool returns it (rule 1).
 source_fields = ["document_type", "project_id", "implementing_agency", "plan_date", "document_id", "pdf_page"]
