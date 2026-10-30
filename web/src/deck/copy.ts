@@ -127,7 +127,7 @@ export const deckCopy = {
     },
     work: {
       name: "Strata at work",
-      line: "Strata checks a borrower's plan, sizes the package that needs a look and answers a question about it, live.",
+      line: "Strata checks a borrower's plan, sizes a package it marks Watch and answers a question about it, live.",
     },
     built: {
       name: "How it is built",
@@ -156,8 +156,8 @@ export const deckCopy = {
     agenda: {
       title: "The problem, a live demo, then how Strata is built, answers and grows",
       notes:
-        "I'll follow one real case the whole way through, a water works package in Kenya whose planned date passed " +
-        "with no signed contract.",
+        "I'll follow one real case the whole way through, a water works package in Kenya that's still pending after " +
+        "its project closed.",
     },
 
     // ── Three strata ──
@@ -222,11 +222,11 @@ export const deckCopy = {
       source: "the Procurement Plan of {date} for {project}, as published in Systematic Tracking of Exchanges in Procurement (STEP).",
       notes:
         "Here's a real Procurement Plan from a Kenyan water agency, and Strata checks every row of it. This package, " +
-        "{step}, needs a look. Its planned completion has passed, and the plan shows no signed contract.",
+        "{step}, is marked Watch. It's still pending, and its project has closed.",
     },
     demoPackage: {
-      title: "Comparing the package that needs a look with the packages that came before it",
-      box: "Package {step}, which the plan check says needs a look",
+      title: "Comparing that package with the packages that came before it",
+      box: "Package {step}, which the plan check marks Watch",
       action: "Open the package",
       lines: [
         "Each comparable package is a dot on a month axis, from its notice to its signed contract.",
