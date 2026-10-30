@@ -1,4 +1,5 @@
-# The demo's cases: the projects and packages the walkthrough opens (ticket 125).
+# The demo's cases: the projects and packages the walkthrough opens (ticket 125; the walkthrough's five cases,
+# .notes/demo/walkthrough-brief.md, added October 30, 2026).
 #
 # The App reads their pages into its memory when it starts and every app.warm_every_seconds after
 # (config/thresholds.toml), as the App itself, so a presenter never meets a cold page: for each project its header,
@@ -7,7 +8,7 @@
 # and the demo plan's project and package (config/slice.toml) are among them.
 
 # Project IDs, as the projects API writes them.
-projects = ["P130164", "P156634"]
+projects = ["P130164", "P156634", "P161305", "P155350"]
 
 # STEP references.
-packages = ["KE-NWWDA-541055-CW-RFB"]
+packages = ["KE-NWWDA-541055-CW-RFB", "IN-RRSMP-7516-CW-RFB", "KE-SDOR-KIHBT-563865-CW-RFB"]
