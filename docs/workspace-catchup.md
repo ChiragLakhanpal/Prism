@@ -4743,3 +4743,29 @@ Record the lines word for word, the commit the App runs and the time here under 
 ## Tickets 127, 138, 133, 136 and 134, the App redeploy ran: the App runs de8e6a06
 
 **Ran on October 30, 2026 (orchestrator), from a snapshot of de8e6a06.** The App redeployed from de8e6a06 (deployment of 06:56 UTC on October 30; two earlier attempts ended in the platform's DeadlineExceeded while the compute started cold, with no deployment made) with tickets 127, 138, 133, 136 and 134, and the local copy moved to the same build. Checked on the App's pages at 00:05 PDT, captured at 1440 px: ticket 127, the ask box sits on the work's columns, 56 px, with no printed name and the placeholder 'Ask Strata about this project'; ticket 136, the P130164 Timeline tab reads 'Reports disagree on four points, and ISR ratings of progress fell from Satisfactory to Moderately Unsatisfactory' with four pills that do not overlap (the PAD and 8 ISRs on overall risk; the ICR and 11 ISRs on progress towards the PDO; the PAD and the ICR Review; the ICR Review and 4 ISRs), the band row and Show the table (criterion 3's live half holds for the lines; the PAD's twice-read table cell stays until the owner's scoped assertions run from the new code, step 2 of 136's block); ticket 138, the same tab's records lane reads 'I can't place this project's contracts in this lane. The note under the chart says why.' and the note 'I hold seven contracts for this project. The Records lane finds each contract's package by its STEP reference, so it leaves out seven from the contract awards for fiscal 2001 to 2016, which have none.' (the Connections tab's count and the timeline's now share one definition); ticket 133, the P130164 Procurement tab shows one heading, Rajasthan State Public Works Department, with the plan of June 20, 2018 (13 activities) and its packages; ticket 134, that tab reads 'The only plan I have read from this agency is the plan of June 20, 2018, so I can't compare it with an earlier version. See the plans I haven't read'. The Data page's paused-refresh line and the Kenya plan check's wording are in the morning's capture. The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 135, step 1 of 2: the assertions pass for the five demo projects reads within the inline limit (criterion 3)
+
+The merger parked this on October 30, 2026, after merge commit a95183e1. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these two blocks one at a time and in order, from a snapshot at or after a95183e1. No bundle deploy and no App deploy is needed: the script runs on this machine against the SQL warehouse, and its `WarehouseEngine` now reads within `warehouse.statement_result_bytes` (26,214,400 in `config/thresholds.toml`), the cap the owner's run of October 29 at about 20:05 PDT hit.
+
+    uv run --script ops/assertions/batch_live.py --env-file "<main checkout>/.env" --projects P156634,P130164,P161305,P155350,P113151
+
+It worked if it prints no "Inline byte limit exceeded" and exits 0. After the run's summary ("Run live-... holds ... assertions and ... disagreements ...") it prints one line for each of the five projects, in the form "P156634: N assertions (I from ISR ratings, R from records, G from the IEG ratings dataset, T read from reports), and the check rejected ...", then "The showcase disagreement came back as the benchmark expects".
+
+- Exit 1 with "still in a running batch": the batch is still running. Run the same command again later. It waits for the same batch and does not ask again for answers it holds.
+- A line "I left out ...": a project's own rows passed the limit, so it kept the assertions the tables held. Record the line. The review's follow-ups F5 and F6 cover this case.
+- Exit 2: it could not run. Record the error.
+
+This run includes P130164 and runs the pass from the new code, so it also serves ticket 136's step 2 above. After it, run that block's query and record its result under ticket 136.
+
+Record the exit code, the run summary, the five project lines word for word and the time here under ticket 135.
+
+Ticket 123's limit is now `warehouse.statement_result_bytes` in `config/thresholds.toml`. Ticket 123's step 1 above still names `ingestion.inline_result_bytes`, which ticket 135 removed.
+
+## Ticket 135, step 2 of 2: the P156634 Timeline tab shows the ISR rating bands (criterion 3)
+
+Run after step 1, read-only. The builder named the Free Edition App (https://strata-7474658003099155.aws.databricksapps.com), which is history since October 26. Use the paid workspace's App, https://strata-7405609289499029.9.azure.databricksapps.com, signed in as a viewer with a role. Open `/projects/P156634/timeline` in a fresh browser context, because the timeline answer is a kept page for up to two hours (ticket 138's step 2 says why). The App already runs de8e6a06, which draws the band row, so no redeploy is needed.
+
+It worked if the Timeline tab shows grey ISR rating bands in the Operations lane, with labels in the form "ISRs 1 to 4 rated progress Satisfactory", and the Note line under the chart reads "The grey bands show each ISR's rating of progress towards the project development objective (PDO). Darker means a lower rating." It did not work if the band row reads "I have no ISR ratings for this project." or "I couldn't read this project's ISR ratings just now."
+
+Record the band labels word for word, the commit the App runs and the time here under ticket 135. With step 1, this is criterion 3's live proof.

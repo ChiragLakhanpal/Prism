@@ -6,7 +6,7 @@ Read first: `ops/assertions/batch_live.py` (`run_live`, `main`), `src/strata/kno
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** server
 **Phase:** P4
 **Design review:** no
@@ -18,3 +18,34 @@ Read first: `ops/assertions/batch_live.py` (`run_live`, `main`), `src/strata/kno
 ## Comments
 
 - October 29, 2026, orchestrator: opened from the owner's failed run of the assertions pass at about 20:05 PDT.
+
+- October 30, 2026, merger: merged strata/135-the-assertions-pass-reads-within-the-inline-limit (head 960e9e5d: the work in 1568b33a and one merge of build/strata) into build/strata as merge commit a95183e1, with history, since the history scan found no key-shaped line in the branch's commits. The worktree that built it was `.claude/worktrees/wf_a68953bb-7de-17`; I remove it right after this commit and keep the branch. The merge changes 8 files (510 lines in, 65 out): `config/thresholds.toml`, `ops/assertions/batch_live.py`, `src/strata/knowledge/assertions.py`, `src/strata/knowledge/sql/assertions/report_passages.sql`, `src/strata/lakehouse/engine.py`, `src/strata/lakehouse/plans.py` and two test files. Git merged it on 639e9a5c with no conflict. No install file changed; I ran `scripts/install` anyway.
+  - The gate: I committed through the orchestrator's quiet-window script.
+    - Its first try, at 01:19 PDT, started at a one-minute load of 12 that rose to 31. It failed after 123.4 seconds on one Playwright test outside this ticket, which changes no web file: `web/tests/drafts.spec.ts:588` ("tabbing through a draft never leaves the focused element under the bar ...") found Discard, Export to Word and Mark as checked under a sticky part, and the other 590 tests in that half passed. The merge stayed in place, as the script asks.
+    - Its second try, at 01:31 PDT at a load of 4, passed in 138.5 seconds and made a95183e1. The Python halves took 128.5 s and 133.4 s, and Playwright 114.5 s and 118.6 s. `git log --parents -1` shows the two parents 639e9a5c and 960e9e5d.
+  - By hand on build/strata: `.githooks/pre-commit` passed in 137.2 seconds, from 01:33:45 to 01:36:02 PDT, at a95183e1, with no other gate, test run or headless browser running. The secret and history scan took 3.7 s, so the history scan has read the merged history. The Python halves took 128.5 s and 132.1 s, and Playwright 112.7 s and 116.7 s. The `drafts.spec.ts:588` test passed in both of these runs.
+  - Notes that passed, at 960e9e5d:
+    - The code review approved round 1 with nothing blocking and eight follow-ups (`.notes/135-review.md`).
+    - Design review and critique: none, since the ticket says "Design review: no" and has no screen.
+  - Verify (`.notes/135-verify.md`): pass, with criteria 1 and 2 proven and criterion 3 parked for the workspace. The worktree's gate passed in 140.2 seconds at loads of 13 to 30, and the ticket's own two tests took 0.74 s and 0.42 s.
+    - Criterion 1: the cap has one definition, `statement_result_bytes = 26_214_400` in `config/thresholds.toml` [warehouse], the number in the warehouse's error, and `ingestion.inline_result_bytes` is gone. Every read of the pass (the seven families, the report passages, the batch answers and the held rows) goes through one helper, `strata.lakehouse.engine.read_in_parts`. The fixture test's `CappedWarehouse` refuses any reply over 600,000 bytes: the pass that ignores the cap is refused on the records statement, and the real pass is refused nothing. Eight of ten mutants failed the test; the other two are the batch-answers read (follow-up V1) and `VALUE_BYTES = 4`, which is still an upper bound. The fixture's 1,373 assertions and 53 disagreements match build/strata's fixture, and all 142 tables hold the same row counts.
+    - Criterion 2: `--projects "P130164, P176758"` behind the capped warehouse rebuilt only those two projects (0 to 51 and 0 to 389 rows), left P156634 at 0, and printed one line for each, such as "P130164: 51 assertions (34 from ISR ratings, 1 from records, 3 from the IEG ratings dataset, 13 read from reports) ...", which match the fixture's rows. Without the flag the run covers every project of `default_projects`, and `nightly.py` is unchanged.
+    - Probes: the estimate stayed above the real JSON for every key of all 13 reads (the tightest 0.92), hard text from quote marks to emoji was covered, caps down to 20,000 bytes refused nothing and changed no row, the as-of tests, the 11 must-refuse streams and the number no record holds all passed.
+  - Workspace results: every key is set (`guard.py --env-keys`), but mergers run no workspace step, so I ran none. I parked criterion 3's two steps in `docs/workspace-catchup.md` under "Ticket 135, step 1 of 2" and "step 2 of 2", for the second session (strata-58) or the orchestrator to run from a snapshot at or after a95183e1: `uv run --script ops/assertions/batch_live.py --env-file .env --projects P156634,P130164,P161305,P155350,P113151` (exit 0, no "Inline byte limit exceeded", five project lines; no bundle or App deploy is needed), then the P156634 Timeline tab's ISR rating bands on the paid workspace's App. The builder named the Free Edition App, which is history since October 26, so the block names https://strata-7405609289499029.9.azure.databricksapps.com. The run includes P130164 from the new code, so it also serves ticket 136's step 2, as the block says. At the review's request, the block also says ticket 123's limit is now `warehouse.statement_result_bytes`.
+  - Deferred to the design pass: none. The ticket has no screen.
+  - Follow-ups from the review and the verify (none blocks):
+    - F1: `plans.read_plans` keeps its own packing and `ROW_BYTES = 256` beside `read_in_parts` and `VALUE_BYTES = 16` (`src/strata/lakehouse/plans.py:443` and `:489-511`). Have it call `read_in_parts` and delete its loop, so the limit has one reader (CLAUDE.md rule 4).
+    - F2: in `ops/assertions/batch_live.py:22-35` the two new `--projects` paragraphs sit between "Then check the ground-truth queries on both engines:" and its `check.py same-rows` command. Move them below the command.
+    - F3: the per-project line counts requests waited for in an earlier run's batch as "went to it in this run" (`assertions.py:566`). Count `sent` only for a new batch and print a `resumed` count.
+    - F4: no test covers a key whose own rows pass the cap (`tests/test_assertions_within_the_cap.py:78`). Add one behind `CappedWarehouse(copy, 150_000)` that expects P127203, P130164 and P156634 left out and their rows kept.
+    - F5: `RunReport.changed` counts a left-out project's rows as changed although none changed (`assertions.py:890-897`; 389 at a 150,000-byte cap in the review's run).
+    - F6: passages map each document to one project (`assertions.py:153`), so a shared report whose passages pass the cap could delete the other project's assertions from it. Map each document to a set of projects.
+    - F7: the run without `--projects` prints about 2,200 project lines (`batch_live.py:145`). Print them only when `--projects` is given.
+    - F8: a part of the default run can now name thousands of ids through `array_contains(split(:x, ','), id)` (`assertions.py:102` and `:155`). When the owner times the default run, check whether a part is slow, and use a semi-join if it is.
+    - V1: no test covers the batch answers read in parts; the fixture's answers take 4,821 bytes.
+    - V2: `--projects` takes any text as a project id, so `P000000` or `p176758` prints "0 assertions" and changes nothing. Warn about an id `default_projects` does not hold.
+    - V3: `ESCAPED` leaves out NUL, which JSON writes in six bytes against the one the estimate counts.
+    - Outside this ticket: `web/tests/drafts.spec.ts:588` failed once under merge-gate load at 01:21 PDT and passed in the next two gates. It needs a ticket of its own if it trips again.
+  - Decisions parked for the user: none from the builder, the review or the verify.
+  - Coordination: no session named strata-58 was listed when the merge started, so I sent no message about the index.
+  - No ticket waits on 135.
