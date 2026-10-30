@@ -152,12 +152,16 @@ def _the_app_s_engine(environ: Mapping[str, str]) -> Callable[[], Engine] | None
     """The SQL warehouse as the app's own service principal, for the rows the app writes itself.
 
     On this computer the env file also holds the owner's token (DATABRICKS_TOKEN), which a script that writes as the
-    app falls back to when the workspace refuses the app's secret (app_token). The App's environment has none."""
+    app falls back to when the workspace refuses the app's secret (app_token). On the App, where the platform sets
+    DATABRICKS_APP_PORT (ops/app/app.yaml), there is no fallback even if a deploy gave it a DATABRICKS_TOKEN. The App
+    writes its own rows only with its own token (CLAUDE.md rule 7)."""
     host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
     client_id, secret = environ.get("DATABRICKS_CLIENT_ID", ""), environ.get("DATABRICKS_CLIENT_SECRET", "")
     if not (host and warehouse and client_id and secret):
         return None
-    transport = as_the_app(host, client_id, secret, owner_token=environ.get("DATABRICKS_TOKEN", "").strip())
+    on_the_app = bool(environ.get("DATABRICKS_APP_PORT", "").strip())
+    owner = "" if on_the_app else environ.get("DATABRICKS_TOKEN", "").strip()
+    transport = as_the_app(host, client_id, secret, owner_token=owner)
     return lambda: WarehouseEngine(warehouse, transport)
 
 

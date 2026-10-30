@@ -87,7 +87,21 @@ def test_on_the_app_which_has_no_owner_s_token_a_refused_secret_is_still_an_erro
         app = app_from_env({**environ, "DATABRICKS_HOST": host})
         visit(app, "/api/freshness", "/api/health")
 
+    # The usage log did try to write, so the secret was asked for and refused.
+    assert [call[0] for call in calls].count("token") == 1
     assert written(calls, "strata.ops.usage_events") == []
+    assert FALLBACK not in capsys.readouterr().out
+
+
+def test_on_the_app_a_refused_secret_is_an_error_even_when_its_environment_holds_a_person_s_token(capsys):
+    """CLAUDE.md rule 7: the App writes its own rows with its own token. The platform sets DATABRICKS_APP_PORT on the
+    App (ops/app/app.yaml), so a DATABRICKS_TOKEN that a later deploy gave the App is never a fallback there."""
+    with fake_warehouse.workspace(token_status=401) as (host, calls):
+        app = app_from_env(environment(host, DATABRICKS_APP_PORT="8000"))
+        visit(app, "/api/freshness", "/api/health")
+
+    assert [call[0] for call in calls].count("token") == 1
+    assert not [call for call in calls if call[1] == f"Bearer {OWNER}"]
     assert FALLBACK not in capsys.readouterr().out
 
 
@@ -96,6 +110,7 @@ def test_a_token_endpoint_that_fails_for_another_reason_is_an_error_not_a_fallba
         app = app_from_env(environment(host))
         visit(app, "/api/freshness", "/api/health")
 
+    assert [call[0] for call in calls].count("token") == 1
     assert written(calls, "strata.ops.usage_events") == []
     assert FALLBACK not in capsys.readouterr().out
 
@@ -185,6 +200,27 @@ def test_the_seed_command_says_the_fallback_once_only_when_the_secret_was_refuse
     assert out.splitlines().count(FALLBACK) == (1 if token_status == 401 else 0)
     # The App's client id and secret are tried once in the whole run, even though the run opens many engines.
     assert len([call for call in calls if call[0] == "token"]) == 1
+
+
+class FailingSeed:
+    """A workspace whose seed command fell back to the owner's token and then failed with a long error."""
+
+    ERROR = ("EngineError: The SQL warehouse refused the statement: " + "PERMISSION_DENIED on strata.ops.follows. " * 7
+             + "That is the end of the real error.")
+
+    def seed(self):
+        return 1, f"{FALLBACK}\n{self.ERROR}"
+
+
+def test_when_the_seed_fails_after_the_fallback_the_home_step_keeps_the_whole_error_and_still_names_the_fallback():
+    ready = demo_ready()
+    said: list[str] = []
+
+    outcome = ready.home_step(FailingSeed(), ready.Setup(seed_command=lambda: True), said.append, kept={})
+
+    assert outcome.state == ready.FAILED
+    assert outcome.summary == f"The seed command failed: {FailingSeed.ERROR}"
+    assert f"   {FALLBACK}" in said
 
 
 def test_the_demo_ready_command_s_home_step_passes_both_ways_and_names_the_fallback_only_when_it_happened(home):

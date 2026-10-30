@@ -618,15 +618,17 @@ def home_step(workspace, setup: Setup, say, kept: dict) -> Outcome:
     say("5. Home's examples and its briefing window.")
     if setup.seed_command():
         code, output = workspace.seed()
-        if code != 0:
-            return Outcome(step, FAILED, f"The seed command failed: {one_line(output) or 'it said nothing'}")
-        say(f"   I ran python -m {SEED_MODULE} for the reviewing panel's group. It makes only the examples that are "
-            "missing.")
         # The platform made the App a new secret when it last started the App, so the seed command wrote with the
-        # env file's token (ticket 129).
-        as_the_owner = OWNER_FALLBACK in output.splitlines()
+        # env file's token (ticket 129). The line is said on its own, so it never crowds the error out of a failure.
+        lines = output.splitlines()
+        as_the_owner = OWNER_FALLBACK in lines
         if as_the_owner:
             say(f"   {OWNER_FALLBACK}")
+        if code != 0:
+            reason = "\n".join(line for line in lines if line != OWNER_FALLBACK)
+            return Outcome(step, FAILED, f"The seed command failed: {one_line(reason) or 'it said nothing'}")
+        say(f"   I ran python -m {SEED_MODULE} for the reviewing panel's group. It makes only the examples that are "
+            "missing.")
     else:
         built = False
         say(f"   The seed command, python -m {SEED_MODULE}, is not built yet (ticket 41), so I seeded no examples.")
