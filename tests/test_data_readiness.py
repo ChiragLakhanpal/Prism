@@ -590,6 +590,64 @@ def test_a_late_source_says_so_once_in_its_fresh_cell_and_what_holds_a_kind_back
     assert not any("under Sources" in sentence for sentence in held)
 
 
+# The owner paused the nightly job on October 29, 2026, to stop spending (ticket 134); the project records were last
+# fetched on October 26.
+PAUSED_ON, LAST_FETCHED = dt.date(2026, 10, 29), dt.date(2026, 10, 26)
+
+
+def paused(since: str) -> Thresholds:
+    """The thresholds file with ingestion.paused_since set to a day, or empty while the refresh runs."""
+    values = copy.deepcopy(config.load_thresholds().values)
+    values["ingestion"]["paused_since"] = since
+    return Thresholds(config.load_thresholds().path, values)
+
+
+def project_records(fetched=LAST_FETCHED):
+    when = at(fetched)
+    return [("projects", "all", "coverage_rows", "coverage", 120, 120, None, when, "run-1"),
+            ("projects", "all", "linked_sector", "linked", 120, 120, None, when, "run-1"),
+            ("projects", "all", "fresh_fetched", "fresh", None, None, fetched, when, "run-1")]
+
+
+def held_back(result) -> list[str]:
+    return [registry_text(sentence) for kind in result["kinds"] for sentence in kind["holds_back"]]
+
+
+def test_a_paused_refresh_says_since_when_and_how_old_the_records_are_and_never_how_late(written):
+    """Ticket 134: once the refresh is paused, the days late grow each day though nothing is broken, so the page says
+    since when the refresh is paused and the day of the records instead."""
+    result = call_on(written(*project_records()), as_of=PAUSED_ON, sources="projects", thresholds=paused("2026-10-29"))
+
+    fresh = cell(result, "projects", "fresh")
+    assert (fresh["status"], fresh["late_days"], fresh["paused_since"]) == ("partial", None, "2026-10-29")
+    [gap] = result["gaps"]
+    assert (gap["type"], registry_text(gap["phrase"])) == (
+        "paused", "the project records as of October 26, with the refresh paused since October 29")
+    assert "Refresh paused since October 29; project records as of October 26." in held_back(result)
+    assert not any("behind their" in sentence for sentence in held_back(result))
+
+
+def test_the_page_says_late_only_while_the_refresh_runs(written):
+    path = written(*project_records())
+
+    running = call_on(path, as_of=PAUSED_ON, sources="projects", thresholds=paused(""))
+    assert (cell(running, "projects", "fresh")["late_days"], cell(running, "projects", "fresh")["paused_since"]) == (
+        2, None)
+    assert "I last fetched the project records on October 26, two days behind their daily update." in held_back(running)
+    # A page as of a day before the pause shows the refresh as it ran then.
+    before = call_on(path, as_of=PAUSED_ON - dt.timedelta(days=1), sources="projects", thresholds=paused("2026-10-29"))
+    assert (cell(before, "projects", "fresh")["late_days"], cell(before, "projects", "fresh")["paused_since"]) == (
+        1, None)
+
+
+def test_a_source_the_refresh_is_not_yet_due_for_says_nothing_of_the_pause(written):
+    """A source fetched the day before is on time, paused or not, so its Fresh cell says only its date."""
+    path = written(*project_records(fetched=PAUSED_ON - dt.timedelta(days=1)))
+
+    fresh = cell(call_on(path, as_of=PAUSED_ON, sources="projects", thresholds=paused("2026-10-29")), "projects", "fresh")
+    assert (fresh["status"], fresh["late_days"], fresh["paused_since"]) == (None, None, None)
+
+
 def test_a_source_with_no_measures_leaves_the_headline_out_and_says_how_many(written):
     result = call_on(written(*awards()))
 

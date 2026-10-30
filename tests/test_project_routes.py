@@ -120,6 +120,21 @@ def test_a_project_page_gives_its_header_and_each_agency_s_plan_versions_newest_
     assert body["documents_through"] == "2026-10-22"
 
 
+def test_the_procurement_tab_counts_the_plans_the_project_lists_that_i_have_not_read(fixture_app):
+    """Ticket 134: the documents API lists 240 Procurement Plans for P156634 (data/fixture/recorded/api/documents/
+    P156634.json) and the plan reader read 11 of them, so an agency's only plan is the only one I have read, and the
+    tab links to the other 229, the same documents the Documents tab marks Not read."""
+    body = get(fixture_app, "/api/projects/P156634?asof=2026-10-22").json()
+    documents = get(fixture_app, "/api/projects/P156634/documents?asof=2026-10-22").json()
+
+    [plans] = [group for group in documents["groups"] if group["type"] == "procurement_plan"]
+    assert plans["count"] == 240
+    assert body["plans_unread"] == 229 == sum(1 for document in plans["documents"] if not document["read"])
+    kilifi = next(agency for agency in body["agencies"]
+                  if agency["agency_id"] == "kilifi-mariakani-water-and-sewerage-company-ltd")
+    assert (kilifi["version_count"], kilifi["changes"]["state"]) == (1, "earliest")
+
+
 def test_a_version_disclosed_after_the_as_of_date_is_left_out(fixture_app):
     body = get(fixture_app, "/api/projects/P156634?asof=2026-06-01").json()
 

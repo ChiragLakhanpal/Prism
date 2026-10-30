@@ -412,6 +412,37 @@ def test_packages_list_every_activity_in_each_agency_s_latest_plan_a_page_at_a_t
     assert get(hub, "/api/projects/P156634/packages?q=atlantis").json()["total"] == 0
 
 
+def one_plan_each(tmp_path):
+    """P127203's one plan as the paid workspace held it on October 29, 2026 (ticket 134): the Haiti agency's plan of
+    September 17, 2019, read (a parse_reason) with no STEP rows; and a made-up P000002 whose one plan is only listed."""
+    database = tmp_path / "one-plan.duckdb"
+    with DuckDBEngine.open(database) as engine:
+        catalog.build(engine)
+        engine.insert_rows(
+            "strata.silver.plan_versions",
+            ("document_id", "project_id", "implementing_agency", "plan_date", "disclosed_on", "series_order",
+             "previous_document_id", "is_latest", "pdf_pages", "route_b_pages", "parse_reason", "text_url", "pdf_url",
+             "public_from"),
+            [(doc, project, "Electricite d'Haiti", "2019-09-17", "2019-09-17", 1, None, True, 2, 0, reason,
+              f"https://t/{doc}.txt", f"https://t/{doc}.pdf", "2019-09-17")
+             for doc, project, reason in (("D1", "P127203", "the agency's latest version"), ("D2", "P000002", None))])
+    return database
+
+
+def test_packages_say_which_plan_i_read_when_it_lists_no_activities_and_none_when_i_read_no_plan(tmp_path):
+    """Ticket 134: a plan I read that holds no rows is a plan I read, so Packages names it rather than say I haven't
+    read a Procurement Plan; a plan only listed is not read."""
+    app = app_on(one_plan_each(tmp_path))
+
+    read = get(app, "/api/projects/P127203/packages?asof=2026-10-29").json()
+    assert (read["total"], read["plans_read"]) == (0, [{
+        "implementing_agency": "Electricite d'Haiti", "agency_id": "electricite-d-haiti", "plan_date": "2019-09-17",
+        "activities": 0}])
+    assert get(app, "/api/projects/P127203/packages?asof=2019-09-16").json()["plans_read"] == []
+    listed = get(app, "/api/projects/P000002/packages?asof=2026-10-29").json()
+    assert (listed["total"], listed["plans_read"]) == (0, [])
+
+
 # ── Documents and the source view ────────────────────────────────────────
 
 def test_p130164_s_documents_list_each_type_in_project_cycle_order_with_its_dates(hub):

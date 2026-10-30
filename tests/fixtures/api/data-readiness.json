@@ -2446,7 +2446,8 @@
           "status": null,
           "note": null,
           "schedule": "daily",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2504,7 +2505,8 @@
           "status": null,
           "note": null,
           "schedule": "frozen",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2553,7 +2555,8 @@
           "status": null,
           "note": null,
           "schedule": "monthly",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2602,7 +2605,8 @@
           "status": null,
           "note": null,
           "schedule": "monthly",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2651,7 +2655,8 @@
           "status": null,
           "note": null,
           "schedule": "monthly",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2706,7 +2711,8 @@
           "status": null,
           "note": null,
           "schedule": "monthly",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2761,7 +2767,8 @@
           "status": null,
           "note": null,
           "schedule": "monthly",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2816,7 +2823,8 @@
           "status": null,
           "note": null,
           "schedule": "daily",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2865,7 +2873,8 @@
           "status": null,
           "note": null,
           "schedule": "daily",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2914,7 +2923,8 @@
           "status": null,
           "note": null,
           "schedule": "yearly",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -2963,7 +2973,8 @@
           "status": null,
           "note": null,
           "schedule": "yearly",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },
@@ -3092,7 +3103,8 @@
           "status": null,
           "note": null,
           "schedule": "as published",
-          "late_days": null
+          "late_days": null,
+          "paused_since": null
         }
       }
     },

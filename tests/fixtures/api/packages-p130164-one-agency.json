@@ -97,5 +97,13 @@
       "process_status": "Signed"
     }
   ],
-  "read_through": "2026-10-23"
+  "read_through": "2026-10-23",
+  "plans_read": [
+    {
+      "implementing_agency": "Public Works Department",
+      "agency_id": "public-works-department",
+      "plan_date": "2026-08-17",
+      "activities": 8
+    }
+  ]
 }

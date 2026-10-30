@@ -62,6 +62,8 @@ export type Cell = {
   years_row?: number | null;
   schedule?: string;
   late_days?: number | null;
+  // The day the refresh was paused (config/thresholds.toml's ingestion.paused_since), in place of late_days (ticket 134).
+  paused_since?: string | null;
   published_as_table?: boolean;
   // Ticket 18: a row whose records arrive as text; a document collection's projects, those its documents
   // belong to; and

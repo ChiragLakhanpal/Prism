@@ -468,6 +468,42 @@ test("an agency the plan and the record write two ways is one heading under its 
   await expect(opener).toBeFocused();
 });
 
+// P127203 on the paid workspace on October 29, 2026 (ticket 134): one plan, of September 17, 2019, read with no activities.
+async function onePlanRead(plansUnread: number, read: boolean) {
+  const body = JSON.parse(await recorded("project-p156634.json"));
+  const kilifi = body.agencies.find((agency: { agency_id: string }) => agency.agency_id === "kilifi-mariakani-water-and-sewerage-company-ltd");
+  kilifi.versions = [{ ...kilifi.versions[0], plan_date: "2019-09-17", disclosed_on: "2019-09-17", read, activities: read ? 0 : null }];
+  body.agencies = [kilifi];
+  body.plans_unread = plansUnread;
+  const packages = JSON.parse(await recorded("packages-p156634-no-match.json"));
+  packages.query = "";
+  packages.plans_read = read ? [{ implementing_agency: kilifi.implementing_agency, agency_id: kilifi.agency_id, plan_date: "2019-09-17", activities: 0 }] : [];
+  return {
+    "/api/projects/P156634": { body: JSON.stringify(body) },
+    "/api/projects/P156634/summary": { body: await recorded("summary-p156634.json") },
+    "/api/projects/P156634/packages": { body: JSON.stringify(packages) },
+  };
+}
+
+test("a plan I read with no activities says so, and the haven't-read line shows only when I read no plan", async ({ page }) => {
+  await open(page, "/projects/P156634/procurement", await onePlanRead(0, true));
+  const packages = page.locator("[data-packages=ready]");
+  await expect(packages).toContainText("I read the plan of September 17, 2019 and found no activities in it.");
+  await expect(packages).not.toContainText("I haven't read");
+  // With no other plan listed, the agency's sentence links nowhere.
+  const sentence = page.locator("[data-agency] [data-changes-sentence]");
+  await expect(sentence).toHaveText("The only plan I have read from this agency is the plan of September 17, 2019, so I can't compare it with an earlier version.");
+  await expect(sentence.getByRole("link")).toHaveCount(0);
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await open(page, "/projects/P156634/procurement", await onePlanRead(4, false));
+  await expect(page.locator("[data-packages=ready]")).toContainText("I haven't read a Procurement Plan for this project yet, so I can't list its packages.");
+  await expect(page.locator("[data-packages=ready]")).not.toContainText("found no activities");
+  // A plan only listed is no plan I have read, so the agency has no sentence about it; its row says Not read.
+  await expect(page.locator("[data-agency] [data-changes-sentence]")).toHaveCount(0);
+  await expect(page.getByRole("table", { name: /^Kilifi/ }).getByText("Not read", { exact: true })).toBeVisible();
+});
+
 test("a project with no plans says so, and a project with no record is not found", async ({ page }) => {
   await open(page, "/projects/P130164/procurement", { "/api/projects/P130164": { body: await recorded("project-p130164.json") } });
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Rajasthan Road Sector Modernization · P130164 · India · closed");

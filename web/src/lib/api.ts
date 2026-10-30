@@ -109,7 +109,10 @@ export type PackageRow = {
   estimated_amount_usd: string | null;
   process_status: string | null;
 };
-export type PackageList = Paged<PackageRow> & { read_through: string | null };
+// plans_read: each agency's latest plan I read, with how many activities it lists, so a project whose read plans list no
+// activity names them rather than say I haven't read a plan (ticket 134).
+export type PlanRead = { implementing_agency: string; agency_id: string; plan_date: string; activities: number };
+export type PackageList = Paged<PackageRow> & { read_through: string | null; plans_read: PlanRead[] };
 
 // GET /api/projects/{pid}: the project page's header and each agency's plan versions, newest first.
 export type PlanVersion = {
@@ -163,6 +166,8 @@ export type ProjectPage = {
   };
   agencies: Agency[];
   documents_through: string | null;
+  // The Procurement Plans the project's documents list that I haven't read, the Documents tab's Not read (ticket 134).
+  plans_unread: number;
 };
 
 // GET /api/projects/{pid}/procurement/{agencyId}/{version}/changes: what changed since the version before.

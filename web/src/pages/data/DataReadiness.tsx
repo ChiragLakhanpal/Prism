@@ -165,6 +165,12 @@ function measureCell(cell: Cell, column: Column, measures: Measures): ReactNode 
             />
           </Qualifier>
         ) : null}
+        {/* While the refresh is paused, a source due for a fetch says since when, never how late (ticket 134). */}
+        {cell.paused_since ? (
+          <Qualifier>
+            <Template text={words.sources.paused} values={{ date: <Num date={cell.paused_since} style="short" today={measures.asOf} /> }} />
+          </Qualifier>
+        ) : null}
         <Badge status={cell.status} />
       </Stack>
     );
