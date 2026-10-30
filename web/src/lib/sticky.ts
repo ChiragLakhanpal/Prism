@@ -17,6 +17,9 @@
 // column and scrolls up with the page, so the box keeps riding 16 px above it and never covers it; the hook follows
 // the scroll for that, and only while such a bar sticks. --sticky-bottom, which shifts the scroll margins of the
 // controls in a page's own foot bar, is written only while that bar sticks, as before the box moved (ticket 113).
+// While such a bar sticks, the hook also writes its insets from the ask bar's edges, as --ask-inset-start and
+// --ask-inset-end, so from a frame of 75rem the box spans the bar's columns and centers over it (app.css, "The ask bar on
+// the grid"; ticket 127).
 //
 // The bottom padding counts the ask bar only while focus is in the page's main, the one place where a focused element
 // can scroll under the box. Elsewhere it would move the page for nothing: focus in the box itself, where a browser
@@ -90,6 +93,15 @@ export function useStickyPadding(page: RefObject<HTMLElement | null>) {
         root.style.removeProperty("--sticky-bottom");
         root.style.removeProperty("--sticky-foot");
       }
+      if (footPart && askPart) {
+        const foot = footPart.getBoundingClientRect();
+        const ask = askPart.getBoundingClientRect();
+        root.style.setProperty("--ask-inset-start", `${foot.left - ask.left}px`);
+        root.style.setProperty("--ask-inset-end", `${ask.right - foot.right}px`);
+      } else {
+        root.style.removeProperty("--ask-inset-start");
+        root.style.removeProperty("--ask-inset-end");
+      }
     };
     update();
     // A part mounts, unmounts, or changes the classes that make it stick; the window's size changes where the bar and
@@ -129,6 +141,8 @@ export function useStickyPadding(page: RefObject<HTMLElement | null>) {
       root.style.removeProperty("--sticky-top");
       root.style.removeProperty("--sticky-bottom");
       root.style.removeProperty("--sticky-foot");
+      root.style.removeProperty("--ask-inset-start");
+      root.style.removeProperty("--ask-inset-end");
     };
   }, [page]);
 }

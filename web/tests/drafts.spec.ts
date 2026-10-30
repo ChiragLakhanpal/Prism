@@ -601,6 +601,14 @@ test("on a draft at 1440 by 900 the box floats 16 px above the draft bar, and th
   expect(Math.round(edge.y + edge.height), "the draft bar on the window's bottom edge").toBe(900);
   expect(Math.round(edge.y - (box.y + box.height)), "the box 16 px above the draft bar").toBe(16);
   expect(await page.evaluate(() => document.documentElement.style.scrollPaddingBottom)).toBe(`${Math.round(900 - box.y + 8)}px`);
+  // Ticket 127: the box spans the draft bar's columns, so it centers over the bar. It follows the bar's own edges, not
+  // the work's: a bar narrowed inside the column takes the box with it.
+  const edges = (rect: { x: number; width: number }) => [Math.round(rect.x), Math.round(rect.x + rect.width)];
+  expect(edges(box), "the box on the draft bar's edges").toEqual(edges(edge));
+  await page.addStyleTag({ content: "[data-draft-bar] { margin-inline: 80px 120px; }" });
+  const narrowed = (await bar(page).boundingBox())!;
+  expect(edges(narrowed)).toEqual([edge.x + 80, edge.x + edge.width - 120].map(Math.round));
+  await expect.poll(async () => edges((await page.locator("[data-box-slot] form > [data-focus-ring]").boundingBox())!)).toEqual(edges(narrowed));
 });
 
 // Round 1's review: near the end of a draft the bar lets go of the window's foot and scrolls up with the page; the box
