@@ -15,28 +15,25 @@ _genie_ask and warm_warehouse, because fairshare could not be read on the build 
 3. It polls the message until Genie is done, at most answer_seconds from when it asked.
 4. It reads the query attachment's result in every chunk, and types each cell from its column's type. Genie
    returns every cell as text, and the verifier's first check matches a sentence's numbers against typed values.
+   The engine adapter's typed() reads each cell, as it reads the warehouse's own answers (ticket 128).
 
 An answer with no query, such as Genie asking which country you mean, comes back with its text and no rows.
 """
 
 from __future__ import annotations
 
-import datetime as dt
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from strata.config import Thresholds
-from strata.lakehouse.engine import EngineError, PermissionDenied, Transport
+from strata.lakehouse.engine import EngineError, PermissionDenied, Transport, typed
 
 GENIE = "/api/2.0/genie/spaces"
 WAREHOUSES = "/api/2.0/sql/warehouses"
 STATEMENTS = "/api/2.0/sql/statements/"
 DONE = ("COMPLETED", "FAILED", "CANCELLED", "QUERY_RESULT_EXPIRED")
-WHOLE = ("BYTE", "SHORT", "INT", "INTEGER", "LONG", "BIGINT", "TINYINT", "SMALLINT")
-FRACTION = ("FLOAT", "DOUBLE", "REAL")
 
 
 class GenieError(RuntimeError):
@@ -75,29 +72,6 @@ class Answer:
     columns: list[tuple[str, str]] = field(default_factory=list)
     rows: list[list[Any]] = field(default_factory=list)
     text: str | None = None
-
-
-def typed(value: str | None, type_name: str) -> Any:
-    """One cell of a Genie result as its column's type says."""
-    if value is None:
-        return None
-    kind = (type_name or "STRING").upper().split("(")[0]
-    try:
-        if kind in WHOLE:
-            return int(value)
-        if kind in FRACTION:
-            return float(value)
-        if kind == "DECIMAL":
-            return Decimal(value)
-        if kind == "BOOLEAN":
-            return value.lower() == "true"
-        if kind == "DATE":
-            return dt.date.fromisoformat(value[:10])
-        if kind in ("TIMESTAMP", "TIMESTAMP_NTZ"):
-            return dt.datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except (ValueError, InvalidOperation):
-        return value
-    return value
 
 
 class GenieClient:

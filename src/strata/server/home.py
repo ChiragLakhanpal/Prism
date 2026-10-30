@@ -667,7 +667,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
         day = as_of or today()
         most = in_view()
         totals = engine.run(_query("projects_held"), {"as_of": day})
-        total = int(totals.rows[0][0]) if totals.rows else 0
+        total = totals.rows[0][0] if totals.rows else 0
         found = engine.run(_query("closed_projects"), {"as_of": day})
         rows = [dict(zip(found.columns, row)) for row in found.rows][:most]
         line = words()["line"]["public"]
@@ -676,8 +676,8 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, access: Access, vi
             pid = row["project_id"]
             segments = fill(line, {"project": row["project_name"] or pid, "pid": {"pid": pid},
                                    "country": row["country_name"] or row["country_code"] or "",
-                                   "date": _date(row["closing_date"]), "traced": {"number": int(row["traced"])},
-                                   "contracts": {"number": int(row["contracts"])}})
+                                   "date": _date(row["closing_date"]), "traced": {"number": row["traced"]},
+                                   "contracts": {"number": row["contracts"]}})
             lines.append({"kind": "public", "id": f"line-public-{pid}", "key": pid, "status": "closed",
                           "reason": "closed", "example": False, "segments": segments,
                           "source": {"evidence_id": f"strata.gold.project:{pid}", "kind": "record", "pid": pid},

@@ -169,8 +169,8 @@ def queries(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
         return say.fill(say.at("dash.gov.find.queries.none"), day=say.day(today, today)), today
     app = say.at("dash.gov.through.app")
     return say.say("dash.gov.find.queries.readable", "people", day=say.day(today, today),
-                   people=len({row["person"] for row in found}), queries=sum(int(row["queries"]) for row in found),
-                   appQueries=sum(int(row["queries"]) for row in found if row["through"] == app)), today
+                   people=len({row["person"] for row in found}), queries=sum(row["queries"] for row in found),
+                   appQueries=sum(row["queries"] for row in found if row["through"] == app)), today
 
 
 RUN_LINEAGE = """
@@ -316,7 +316,7 @@ def decisions(engine: Engine, start: dt.date, today: dt.date) -> dict:
     one), and how many came within the limit."""
     rows = _rows(engine, "kpi_days_to_decision", start, today)
     fewest = int(_value(load_kpis()["days_to_decision"].fewest))
-    days = [int(row["days_from_publication"]) for row in rows]
+    days = [row["days_from_publication"] for row in rows]
     return {"n": len(rows), "median": _whole(statistics.median(days)) if len(days) >= fewest else None,
             "k": sum(within_limit(_date(row["published_on"]), _date(row["decided_on"])) for row in rows),
             "latest": _date(rows[0]["decided_on"]) if rows else None}
@@ -492,7 +492,7 @@ def adoption(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
         return say.fill(say.at("dash.ai.find.adoption.none"), week=week), today
     weeks = _rows(engine, "use_by_week", today - dt.timedelta(days=89), today)
     text = say.say("dash.ai.find.adoption.used", "people", week=week, people=people, day=say.day(today, today),
-                   checked=sum(int(row["checked"]) for row in weeks), exported=sum(int(row["exported"]) for row in weeks))
+                   checked=sum(row["checked"] for row in weeks), exported=sum(row["exported"] for row in weeks))
     plans = _rows(engine, "kpi_plan_rows_offered", EPOCH, today)[0]
     if plans["denominator"]:
         text += " " + say.fill(say.at("dash.ai.find.adoption.planRows"), rows=int(plans["denominator"]),

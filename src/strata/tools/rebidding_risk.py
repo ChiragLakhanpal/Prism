@@ -102,7 +102,7 @@ def read_plan_row(engine, key: str, as_of: dt.date) -> dict | None:
                       f"#{reference}") if row["implementing_agency"] and plan_date else None,
         "source": {"document_type": "Procurement Plan", "implementing_agency": row["implementing_agency"],
                    "project_id": row["project_id"], "document_id": document_id,
-                   "document_date": common.iso(row["plan_date"]), "pdf_page": int(row["pdf_page"])}}}
+                   "document_date": common.iso(row["plan_date"]), "pdf_page": row["pdf_page"]}}}
 
 
 def _canceled_left_out(found: dict) -> list[str]:

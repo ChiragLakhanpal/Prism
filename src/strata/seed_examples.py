@@ -186,14 +186,14 @@ def change_a_lesson(person: Panelist, examples: Examples, store: HomeStore, draf
     _row_key, lesson_id, version = cited[0]
     with lesson_engine() as engine:
         history = notices.history(engine)
-    rows = sorted(history.get(lesson_id) or [], key=lambda row: int(row["version"]))
+    rows = sorted(history.get(lesson_id) or [], key=lambda row: row["version"])
     if not rows:
         return "no_lesson_cited"
     latest = rows[-1]
     moment = now()
     changed = f"{latest['statement']} {examples.lesson_change_sentence}"
     row = {**{key: (value.isoformat() if isinstance(value, dt.date) else value) for key, value in latest.items()},
-           "version": int(latest["version"]) + 1, "statement": changed, "state": "current", "change_kind": "wording",
+           "version": latest["version"] + 1, "statement": changed, "state": "current", "change_kind": "wording",
            "was": json.dumps({"statement": latest["statement"]}), "now": json.dumps({"statement": changed}),
            "reason": examples.lesson_change_sentence,
            "item_id": f"example-{lesson_id}", "decided_on": moment.date().isoformat(), "decided_by": "strata",

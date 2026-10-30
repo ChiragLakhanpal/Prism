@@ -442,7 +442,7 @@ def _dicts(engine: Engine, name: str) -> list[dict]:
 
 
 def read_rows(engine: Engine) -> list[SupplierRow]:
-    return [SupplierRow(row["source"], row["source_key"], int(row["position"]), row["contract_id"], row["project_id"],
+    return [SupplierRow(row["source"], row["source_key"], row["position"], row["contract_id"], row["project_id"],
                         row["name"], row["country"], row["step_supplier_id"], bool(row["individual_consultant"]),
                         row["contract"], row["public_from"]) for row in _dicts(engine, "supplier_rows.sql")]
 
@@ -454,7 +454,7 @@ def read_decisions(engine: Engine) -> dict[str, Decision]:
 
 def read_past_judgements(engine: Engine) -> dict[str, PastJudgement]:
     return {row["pair_id"]: PastJudgement(row["model"], row["left_name"], row["right_name"], Judgement(
-        row["model_decision"], float(row["model_confidence"]), row["model_reason"]))
+        row["model_decision"], row["model_confidence"], row["model_reason"]))
             for row in _dicts(engine, "past_judgements.sql")}
 
 

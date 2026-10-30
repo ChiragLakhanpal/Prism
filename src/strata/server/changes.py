@@ -97,7 +97,7 @@ def _steps(rows: list[dict], document_id: str) -> dict[str, dict[str, tuple[int,
     for row in rows:
         if row["document_id"] == document_id:
             found.setdefault(row["activity_reference_no"], {}).setdefault(
-                row["step"], (int(row["step_order"]), _day(row["planned_on"])))
+                row["step"], (row["step_order"], _day(row["planned_on"])))
     return found
 
 
@@ -111,6 +111,21 @@ def _redated(was: dict[str, tuple[int, dt.date | None]], now: dict[str, tuple[in
         moved.append({"step": step, "was": _iso(before), "now": _iso(after), "days": abs(days) if days else days,
                       "direction": None if days is None else "later" if days > 0 else "earlier"})
     return moved
+
+
+def versions_reads(project_id: str) -> list[tuple[str, dict]]:
+    """The statement versions() runs, for a page that sends its reads as one batch (ticket 125)."""
+    return [(_query("versions"), {"project_id": project_id})]
+
+
+def compare_reads(all_versions: list[dict], version: dict) -> list[tuple[str, dict]]:
+    """The statements compare() may run for this version, for a page that sends them in one batch with others
+    (ticket 125): none when the version has no version before it."""
+    before = {row["document_id"]: row for row in all_versions}.get(version.get("previous_document_id") or "")
+    if before is None:
+        return []
+    pair = {"now": version["document_id"], "was": before["document_id"]}
+    return [(_query("rows"), pair), (_query("steps"), pair)]
 
 
 def compare(engine: Engine, all_versions: list[dict], version: dict, as_of: dt.date, detail: bool = True) -> dict:

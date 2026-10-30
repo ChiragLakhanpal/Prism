@@ -104,8 +104,8 @@ def passage_source(found: dict) -> dict:
 
 
 def passage_row(found: dict) -> dict:
-    """One passage in the registry's row shape, without a search's rank. Values arrive typed from DuckDB
-    and as text from the SQL warehouse, so each is read once here. A notice's text has its notice's id
+    """One passage in the registry's row shape, without a search's rank. Every engine gives typed
+    values (ticket 128), and each is read once here. A notice's text has its notice's id
     and its page on the World Bank's site; a table row has its table, its row and its cells."""
     kind = found["kind"]
     notice = kind == NOTICE_TEXT
@@ -138,6 +138,12 @@ def passage_row(found: dict) -> dict:
         "header": found["header"],
         "text": found["text"],
     }
+
+
+def passages_query() -> str:
+    """passages.sql, the one statement that reads passages by id, for a page that reads the passages it cites in its
+    own batch (the Summary, ticket 125)."""
+    return _sql("passages.sql")
 
 
 def read_passage(engine, passage_id: str, as_of: dt.date) -> dict | None:
