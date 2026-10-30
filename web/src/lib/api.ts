@@ -636,7 +636,7 @@ export type QuantileDot = {
 
 // How find_comparables' period of notices ends (src/strata/tools/find_comparables.py, period; ticket 137): on the plan's
 // date, the as-of date, a date the call gave, or the as-of date because the plan is older than the period's start. The
-// last two never run forward, so no package can match: the as-of date comes before the awards data, or a date the call
+// last two never run forward, so no package can match: the as-of date comes before the period's start, or a date the call
 // gave ends the period before it starts.
 export type ComparablesPeriod =
   | "plan_date"

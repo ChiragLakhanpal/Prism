@@ -15,10 +15,10 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
   given, because a package still open has no review type or signed amount in any record. "any"
   leaves a criterion open. A criterion matches whatever its case, since the agent writes it.
 - The period never ends before it starts (ticket 137). A plan older than its start, such as a plan of 2018
-  against awards data that starts on July 1, 2019, runs it to the as-of date instead. A period that still
-  ends before it starts, as when the as-of date comes before the awards data, matches no package, so the
-  tool abstains (no_comparables). period() is the one place this is decided, and criteria.period names
-  the case, so the screen's note says why instead of naming a range.
+  against the contract awards data since FY2020, which start on July 1, 2019, runs it to the as-of date
+  instead. A period that still ends before it starts, as when the as-of date comes before the period's start,
+  matches no package, so the tool abstains (no_comparables). period() is the one place this is decided, and
+  criteria.period names the case, so the screen's note says why instead of naming a range.
 - A package with a Method in no_notice_methods, or a Market Approach that starts with a word in
   no_notice_market_approaches, has no specific procurement notice, so the tool abstains
   (no_public_notice).

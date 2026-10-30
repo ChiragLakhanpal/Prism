@@ -40,11 +40,20 @@ plainTest("for every plan date in the fixture, section 1 never names a period th
   }
   const p130164 = (asOf: string) => periods.find((entry) => entry.plan_date === "2018-06-20" && entry.as_of === asOf)!;
   plainExpect(written(p130164("2026-10-30"), "note")).toBe(
-    "The plan is older than the awards data I hold, so I compared packages with notices from July 1, 2019 to October 30, 2026.",
+    "The plan is older than the contract awards data since fiscal 2020, so I compared packages with notices from July 1, 2019 to October 30, 2026.",
   );
   plainExpect(written(p130164("2018-06-20"), "empty")).toBe(
-    "The awards data I hold starts on July 1, 2019, after the as-of date of June 20, 2018, so no past package can match.",
+    "The period of notices starts on July 1, 2019, when the contract awards data since fiscal 2020 begin. That is after the as-of date of June 20, 2018, so no past package can match.",
   );
+  // The fixture's plan dates give only plan_date, plan_before_data and before_data, so the other two cases are made by hand.
+  const byHand = (entry: Omit<Period, "plan_date" | "as_of">): Period => ({ plan_date: "2020-01-01", as_of: "2026-10-30", ...entry });
+  plainExpect(written(byHand({ notice_from: "2021-01-01", notice_to: "2026-10-30", period: "plan_before_start" }), "note")).toBe(
+    "The plan is older than the period's start, so I compared packages with notices from January 1, 2021 to October 30, 2026.",
+  );
+  const endsBeforeStart = byHand({ notice_from: "2024-01-01", notice_to: "2023-01-01", period: "ends_before_start" });
+  for (const form of ["note", "empty"] as const) {
+    plainExpect(written(endsBeforeStart, form)).toBe("The period of notices ends before it starts, so no past package can match.");
+  }
 });
 
 const REF = "IN-RRSMP-7516-CW-RFB";
@@ -72,7 +81,7 @@ test("P130164's package of a plan older than the awards data looks from the data
   await expect(section).toContainText("No past package matched this one, so I have nothing to compare it with.");
   await expect(section).toContainText("They had to be in India.");
   await expect(section).toContainText(
-    "The plan is older than the awards data I hold, so I looked for packages with notices from July 1, 2019 to October 30, 2026.",
+    "The plan is older than the contract awards data since fiscal 2020, so I looked for packages with notices from July 1, 2019 to October 30, 2026.",
   );
   await expect(section).not.toContainText("to June 20, 2018");
 });
@@ -81,7 +90,9 @@ test("as of a date before the awards data, the section says why no package can m
   const section = await openIndia(page, "comparables-in-rrsmp-7516-2018-12-01.json");
 
   await expect(section).toContainText("They had to be in India.");
-  await expect(section).toContainText("The awards data I hold starts on July 1, 2019, after the as-of date of December 1, 2018, so no past package can match.");
+  await expect(section).toContainText(
+    "The period of notices starts on July 1, 2019, when the contract awards data since fiscal 2020 begin. That is after the as-of date of December 1, 2018, so no past package can match.",
+  );
   await expect(section).not.toContainText("notices from");
 });
 
@@ -100,5 +111,5 @@ test("with comparables, the note says the plan is older than the awards data and
 
   const note = page.locator("[data-chart-note]");
   await expect(note).toContainText("They were in Kenya.");
-  await expect(note).toContainText("The plan is older than the awards data I hold, so I compared packages with notices from July 1, 2019 to October 30, 2026.");
+  await expect(note).toContainText("The plan is older than the contract awards data since fiscal 2020, so I compared packages with notices from July 1, 2019 to October 30, 2026.");
 });

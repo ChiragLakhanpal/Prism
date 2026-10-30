@@ -1,11 +1,12 @@
 """find_comparables' period of notices at seam 2, the tool contract (ticket 137): it never ends before it starts.
 
-The period starts with the awards data Strata holds, July 1, 2019 (config/thresholds.toml, past_range.period_from),
-and by default ends on the plan's date. A plan older than the awards data would end it before it starts, as the
-walkthrough's capture of IN-RRSMP-7516-CW-RFB (P130164, plan of June 20, 2018) showed on October 29, 2026: "They had
-to be in India and have notices from July 1, 2019 to June 20, 2018". Such a plan's period runs to the as-of date
-instead, and criteria.period says so, which section 1's note (web/src/lib/period.ts) writes as its own sentence. When
-even that ends before it starts, no package can match, and the period says why instead of naming a range.
+The period starts with the contract awards data since FY2020, July 1, 2019 (config/thresholds.toml,
+past_range.period_from), and by default ends on the plan's date. A plan older than that data would end it before it
+starts, as the walkthrough's capture of IN-RRSMP-7516-CW-RFB (P130164, plan of June 20, 2018) showed on October 29,
+2026: "They had to be in India and have notices from July 1, 2019 to June 20, 2018". Such a plan's period runs to the
+as-of date instead, and criteria.period says so, which section 1's note (web/src/lib/period.ts) writes as its own
+sentence. When even that ends before it starts, no package can match, and the period says why instead of naming a
+range.
 
 The fixture reads no plan of P130164, though its documents list names them all, so P130164's package is tested on a
 copy of the fixture database that holds the newest plan's row for it (tests/record_comparables_api.py,
@@ -14,12 +15,14 @@ india_database). The answers the screen tests serve are recorded by the same mod
 
 import datetime as dt
 import json
+import re
 import tomllib
 from pathlib import Path
 
 import pytest
 
 from record_comparables_api import AS_OF, INDIA_PACKAGE, answers, india_database, plan_dates
+from strata.config import load_tools
 from strata.dbx import Viewer
 from strata.lakehouse.engine import DuckDBEngine
 from strata.tools import registry
@@ -100,3 +103,12 @@ def test_for_every_plan_date_in_the_fixture_the_period_never_ends_before_it_star
 def test_the_recorded_answers_are_what_the_tool_and_the_routes_give(fixture_db, tmp_path):
     for name, text in answers(tmp_path).items():
         assert text == (RECORDED / name).read_text(), f"{name} is out of date: run tests/record_comparables_api.py"
+
+
+def test_the_period_s_cases_are_named_the_same_by_the_tool_the_screen_and_the_agent_s_description():
+    # A case added to the tool and not to the screen's union would fall through to the screen's forward range sentence.
+    api = (ROOT / "web" / "src" / "lib" / "api.ts").read_text()
+    union = api.split("export type ComparablesPeriod =", 1)[1].split(";", 1)[0]
+    assert sorted(re.findall(r'"(\w+)"', union)) == sorted(FORWARD + EMPTY)
+    description = load_tools()["find_comparables"].description
+    assert [case for case in FORWARD + EMPTY if case not in description] == []

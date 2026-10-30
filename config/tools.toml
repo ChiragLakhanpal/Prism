@@ -547,7 +547,7 @@ than that start runs the period to the as-of date instead. With no \
 step_reference, a criterion you leave out stays open, and notices run to the as-of date. The result's criteria.period \
 says how the period ends: plan_date, as_of, asked, or plan_before_data and plan_before_start for a plan older than its \
 start. A period that ends before it starts matches no package, and criteria.period then says why: before_data when the \
-as-of date comes before the awards data, ends_before_start when a date you gave makes it so. Name no period then. \
+as-of date comes before {past_range.period_from}, ends_before_start when a date you gave makes it so. Name no period then. \
 Market approach, review type and size band stay open unless you \
 give them, because a package still open has no review type or signed amount in any record. Write any to \
 leave a criterion open. It returns one row per comparable, shortest first, with its days and months and \
