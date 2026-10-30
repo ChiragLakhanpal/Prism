@@ -40,3 +40,4 @@ Read first: `src/strata/reader/layout.py`, `src/strata/reader/step.py` (ticket 1
   5. The June 10, 2024 plan's text lists 133 references but the reader writes 16: record pages 5 to 10 of document 34337516 and find where the other rows go. Also, Contract Completion is not read on that page (no Planned or Actual heads), as before this ticket.
 
   Deferred to the design pass: none. The ticket changes no screen.
+- October 30, 2026, orchestrator (03:39 PDT): the App redeploy ran from a5d002c7 (the catch-up block "Tickets 141, the App redeploy ran"); the page's check by eye is the owner's.
