@@ -41,3 +41,4 @@ Read first: `docs/design/notes-2026-10-29/tuck-away-inventory.md` (all of it), `
   - Decisions parked for the user: none from the builder, the reviewer or the verifier. The task named `docs/agents/areas/web.md` as the area brief, but no such file exists; the reviewer and verifier used CLAUDE.md, the build's standing rules and `docs/agents/areas/app.md`.
   - Coordination: ListAgents showed no session named strata-58 (only strata-e1, strata-fd and 03-projects-b9), so I sent no index-busy or index-free message. The main checkout was clean before the merge, and no other merge ran in it while mine was in progress.
   - Unblocks: none. No ticket lists 126 as a blocker.
+- October 29, 2026, orchestrator (19:48 PDT): the App redeploy ran from cbd7e47d (the catch-up block "Tickets 126 and 129, the App redeploy ran"); the page's check by eye is the owner's.
