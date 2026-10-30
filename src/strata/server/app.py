@@ -830,7 +830,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.delete("/api/projects/{project_id}/procurement/{agency_id}/baseline")
     def remove_baseline(project_id: str, agency_id: str, viewer: Viewer = Depends(current_viewer)):
         def write(engine: Engine):
-            baseline.remove(engine, project_id, agency_id)
+            baseline.remove(engine, project_id, agency_id, now().astimezone(dt.UTC).date())
             return {"baseline": None}
         return write_baseline(viewer, f"removing the baseline of {project_id}, {agency_id}", write)
 

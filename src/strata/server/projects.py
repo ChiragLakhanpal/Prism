@@ -36,7 +36,6 @@ from pathlib import Path
 
 from strata.lakehouse.engine import Engine, read_ahead
 from strata.server import changes
-from strata.lakehouse.clean import Agencies
 from strata.tools.check_plan import implementing_agencies, read_baseline, record_is_current
 from strata.tools.check_plan import baseline_reads as read_baseline_reads
 
@@ -131,8 +130,10 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
     """Each agency's versions, newest first, then the agencies the record names with no plan. A plan and the record
     that write one agency two ways are one agency (strata.lakehouse.clean's rule; ticket 133), headed by its longest
     name, with its other names in also_written_as for the heading's window. Its id is its latest plan's spelling."""
-    # Newest first, so each agency's first name, and so its id, is its latest plan's spelling.
-    grouped = Agencies([row["implementing_agency"] for row in versions] + named)
+    # Every version of the project's plans, for the agencies, their baselines and what changed (ticket 125).
+    all_versions = changes.versions(engine, project_id)
+    # The agencies in the one order every caller uses (Agencies.of_project), so each id is the plan check's.
+    grouped = changes.agencies(all_versions, as_of, named)
 
     def heading(name: str) -> dict:
         found = grouped.find(name)
@@ -150,7 +151,6 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
             "document_id": row["document_id"], "plan_date": _iso(row["plan_date"]),
             "disclosed_on": _iso(row["disclosed_on"]), "is_latest": not agency["versions"],
             "read": read, "activities": row["activities"] if read else None})
-    all_versions = changes.versions(engine, project_id) if agencies else []
     # Each agency's baseline and what changed in its latest version, as one more batch (ticket 125).
     latest = {row["document_id"]: row for row in all_versions}
     read_ahead(engine, [statement for agency in agencies.values() for statement in (
@@ -176,6 +176,7 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
 def packages_reads(project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
     """The statements packages() runs, for the route that sends them as one batch (ticket 125)."""
     return [(_query("packages"), {"project_id": project_id, "as_of": as_of}),
+            *changes.versions_reads(project_id),
             (_query("documents_through"), {"project_id": project_id})]
 
 
@@ -185,7 +186,8 @@ def packages(engine: Engine, project_id: str, as_of: dt.date, query: str = "", p
     ("Exploratory Bo reholes"), so the search compares both with every space taken out. An agency whose plans write
     its name two ways lists only its latest plan's rows, under the id the Procurement tab gives it."""
     found = _rows(engine, "packages", project_id=project_id, as_of=as_of)  # the newest plan first
-    grouped = Agencies(row["implementing_agency"] for row in found)
+    # The agencies in the one order every caller uses (Agencies.of_project), so each id is the Procurement tab's.
+    grouped = changes.agencies(changes.versions(engine, project_id), as_of)
     latest: dict[str, tuple] = {}
     rows = []
     for row in found:

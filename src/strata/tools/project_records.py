@@ -34,7 +34,6 @@ from decimal import ROUND_DOWN, Decimal
 from importlib import resources
 
 from strata.config import load_project_page, load_sources
-from strata.lakehouse.clean import agency_id
 from strata.tools import check_plan as plan_check
 from strata.tools import project_signals as signals
 from strata.tools.registry import Call
@@ -89,9 +88,11 @@ def _dataset(source_key: str) -> str:
 def _plans(call: Call, project: dict, record_agencies: list[str]) -> tuple[list[dict], list[dict], list[str]]:
     """The latest plan of each agency, the activities in those plans planned to finish after closing, and the
     agencies the project record names that published no plan."""
-    rows, after, series = [], [], []
+    rows, after, series = [], [], set()
     closing = _date(project["closing_date"])
-    for latest in signals._rows(call, "latest_plans.sql", project_id=project["project_id"]):
+    # The project's agencies by the one pairing rule, with the record's names (strata.lakehouse.clean; ticket 133).
+    grouped = plan_check.agencies(call, project["project_id"], record_agencies)
+    for latest in signals.latest_plans(call, project["project_id"], grouped):
         result = plan_check.check_plan(call, project["project_id"], latest["implementing_agency"])
         if result["plan"] is None:
             continue
@@ -100,12 +101,12 @@ def _plans(call: Call, project: dict, record_agencies: list[str]) -> tuple[list[
         # run skips): it counts zero of each, and its record carries a data note that its counts are missing.
         missing = counts is None
         counts = counts or {"activities": 0, "needs_a_look": 0, "watch": 0}
-        series.append(plan["implementing_agency"].lower())
+        series.add(plan["agency_id"])
         rows.append(_record(plan["evidence_id"], plan["public_from"], "plans", "plans", project["project_id"],
                             plan["plan_date"], plan["implementing_agency"],
                             [("implementing_agency", plan["implementing_agency"], "text"),
                              # The agency's id in links, for the page's link to this version's plan check.
-                             ("agency_id", agency_id(plan["implementing_agency"]), "key"),
+                             ("agency_id", plan["agency_id"], "key"),
                              ("plan_date", plan["plan_date"], "date"), ("activities", counts["activities"], "count"),
                              ("needs_a_look", counts["needs_a_look"], "count"), ("watch", counts["watch"], "count"),
                              ("counts_missing", True if missing else None, "flag")]))
@@ -119,7 +120,9 @@ def _plans(call: Call, project: dict, record_agencies: list[str]) -> tuple[list[
                                       ("implementing_agency", plan["implementing_agency"], "text"),
                                       ("planned_completion_on", row["planned_completion_on"], "date"),
                                       ("days_after_closing", (finish - closing).days, "count")]))
-    unmatched = [name for name in record_agencies if name.lower() not in series]
+    # A record name is matched when the rule makes it one agency with a plan's (P130164's record and plan, say).
+    unmatched = [name for name in record_agencies
+                 if (found := grouped.find(name)) is None or found.agency_id not in series]
     return rows, after, unmatched
 
 

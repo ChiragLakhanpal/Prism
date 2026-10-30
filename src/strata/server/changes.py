@@ -73,12 +73,11 @@ def versions(engine: Engine, project_id: str) -> list[dict]:
             for row in _rows(engine, "versions", project_id=project_id)]
 
 
-def agencies(all_versions: list[dict], as_of: dt.date) -> Agencies:
-    """The project's agencies by the one pairing rule (strata.lakehouse.clean; ticket 133), newest public plan first
-    and then the plans public only later, as check_plan orders them, so each agency has check_plan's id."""
-    public = [row for row in all_versions if row["public_from"] <= as_of]
-    later = [row for row in all_versions if row["public_from"] > as_of]
-    return Agencies(row["implementing_agency"] for row in [*reversed(public), *reversed(later)])
+def agencies(all_versions: list[dict], as_of: dt.date, record_names=()) -> Agencies:
+    """The project's agencies as of a date by the one pairing rule, in the one order of Agencies.of_project
+    (strata.lakehouse.clean; ticket 133), so each agency has check_plan's id. A record's names never change a plan
+    agency's id, so a caller without the record leaves them out."""
+    return Agencies.of_project(all_versions, record_names, as_of)
 
 
 def _version(row: dict, grouped: Agencies) -> dict:

@@ -41,7 +41,7 @@ from strata.drafts.store import iso
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied
 from strata.reader.step_columns import registry as step_columns
 from strata.reader.upload import UploadError, read_upload
-from strata.server import projects
+from strata.server import changes, projects
 from strata.server.access import Access, is_author
 from strata.server.engines import EngineFor
 from strata.tools import registry
@@ -100,16 +100,21 @@ def agency_projects(engine: Engine, agency: str, as_of: dt.date) -> list[dict]:
     wanted = agency.strip().lower()
     listed = []
     for row in rows:
-        if wanted not in [name.lower() for name in implementing_agencies(row["implementing_agency"])]:
+        names = implementing_agencies(row["implementing_agency"])
+        if wanted not in [name.lower() for name in names]:
             continue
-        plans = engine.run(upload_sql("agency_latest_plan"),
-                           {"project_id": row["project_id"], "agency": agency, "as_of": as_of})
-        latest = [dict(zip(plans.columns, plan)) for plan in plans.rows]
+        # The agency's plans by the one pairing rule (strata.lakehouse.clean; ticket 133), so a plan that writes its
+        # name another way than the record ("Public Works Department") is still its plan, under the plan check's id.
+        versions = changes.versions(engine, row["project_id"])
+        mine = changes.agencies(versions, as_of, names).find(agency)
+        latest = next((version for version in reversed(versions)  # oldest first, so the newest comes first here
+                       if mine and mine.holds(version["implementing_agency"]) and version["public_from"] <= as_of),
+                      None)
         listed.append({"project_id": row["project_id"], "project_name": row["project_name"],
                        "display_name": projects.display_name(row["project_name"]),
-                       "latest_plan": ({"plan_date": _day(latest[0]["plan_date"]),
-                                        "disclosed_on": _day(latest[0]["disclosed_on"]),
-                                        "agency_id": agency_id(latest[0]["implementing_agency"])}
+                       "latest_plan": ({"plan_date": _day(latest["plan_date"]),
+                                        "disclosed_on": _day(latest["disclosed_on"]),
+                                        "agency_id": mine.agency_id}
                                        if latest else None)})
     return listed
 

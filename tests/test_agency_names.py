@@ -15,11 +15,12 @@ from pathlib import Path
 
 import httpx
 import pytest
-from india_agency import DAY, INDIA_PLAN, INDIA_RECORD, RECORDED, app_on, give_p130164_a_plan
+from india_agency import DAY, INDIA_PLAN, INDIA_RECORD, RECORDED, app_on, give_p130164_a_plan, rename_a_plan
 
 from strata.dbx import Viewer
-from strata.lakehouse.clean import Agencies
+from strata.lakehouse.clean import Agencies, same_agency
 from strata.lakehouse.engine import DuckDBEngine
+from strata.server import uploads
 from strata.tools import registry
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -64,7 +65,32 @@ def test_an_agency_is_found_by_any_of_its_names_or_their_ids():
         assert agencies.find(asked) == agency, asked
     # An id the project's names do not hold, written by the rule's own words, still finds the one agency it pairs with.
     assert Agencies([INDIA_PLAN]).find("rajasthan-state-public-works-department").name == INDIA_PLAN
+    # A team named as the record writes it drafts for the plan check's id (strata.server.drafts).
+    assert same_agency(INDIA_RECORD, "public-works-department")
+    assert not same_agency("Coast Water Works Development Agency", "northern-water-works-development-agency")
     assert agencies.find("northern-water-works-development-agency") is None
+
+
+def test_every_caller_s_agencies_take_the_project_s_names_in_one_order():
+    # Given in any order, a project's versions give the newest public plan's spelling as the agency's id, then a plan
+    # public only later, then the record's names, so the plan check, the tab and every tool name the agency alike.
+    versions = [
+        {"document_id": "3", "implementing_agency": "Government of Rajasthan Public Works Department",
+         "plan_date": dt.date(2026, 11, 2), "public_from": dt.date(2026, 11, 3)},
+        {"document_id": "1", "implementing_agency": INDIA_RECORD, "plan_date": dt.date(2018, 6, 20),
+         "public_from": dt.date(2018, 7, 2)},
+        {"document_id": "2", "implementing_agency": INDIA_PLAN, "plan_date": dt.date(2019, 1, 10),
+         "public_from": dt.date(2019, 1, 10)},
+    ]
+    [agency] = Agencies.of_project(versions, ["Rajasthan Public Works Department"], dt.date(2026, 10, 23))
+
+    assert agency.agency_id == "public-works-department"
+    assert agency.names == (INDIA_PLAN, INDIA_RECORD, "Government of Rajasthan Public Works Department",
+                            "Rajasthan Public Works Department")
+    assert agency.name == "Government of Rajasthan Public Works Department"  # the longest
+    # On the day the plan of November 2 is public, its spelling is the id.
+    assert Agencies.of_project(versions, (), dt.date(2026, 11, 3)).find(INDIA_PLAN).agency_id == (
+        "government-of-rajasthan-public-works-department")
 
 
 def test_the_kenya_names_that_only_share_a_type_word_stay_apart():
@@ -81,32 +107,49 @@ def test_the_kenya_names_that_only_share_a_type_word_stay_apart():
     assert all(agency.also_written_as == () for agency in p156634)
     # Two water companies whose names differ only by their place are two agencies.
     assert len(list(Agencies(["Kwale Water and Sewerage Company Ltd", "Wajir Water and Sewerage Company Ltd"]))) == 2
+    # A bare type name that pairs with both stands alone, so it never makes Coast and Northern one agency, and find
+    # gives it as itself.
+    bare = Agencies(["Coast Water Works Development Agency", "Northern Water Works Development Agency",
+                     "Water Works Development Agency"])
+    assert [agency.names for agency in bare] == [("Coast Water Works Development Agency",),
+                                                 ("Northern Water Works Development Agency",),
+                                                 ("Water Works Development Agency",)]
+    assert bare.find("water-works-development-agency").name == "Water Works Development Agency"
 
 
 # Every module that names an implementing agency in a link, or pairs two of a project's names, by what it imports
-# from the rule. A new caller is added here knowingly.
+# from the rule, and by which of the rule's ways in it calls: a module that groups a whole project's agencies goes
+# through the plan check's (check_plan.agencies), what changed in a plan (changes.agencies) or each agency's latest
+# plan (project_signals.latest_plans), which all take the names in Agencies.of_project's one order, so their ids
+# agree. A new caller is added here knowingly.
 RULE = "strata.lakehouse.clean"
 RULE_NAMES = {"agency_id", "Agencies", "same_agency", "Agency"}
+GATEWAYS = {("strata.tools.check_plan", "agencies"), ("strata.server.changes", "agencies"),
+            ("strata.tools.project_signals", "latest_plans")}
 CALLERS = {
-    # The Procurement tab's headings and Packages, and what changed in a plan.
-    "strata.server.projects": {"Agencies"},
-    "strata.server.changes": {"Agencies", "agency_id"},
-    # The plan check, which the agency track record, the drafts, Home and the project signals call.
+    # A project's agencies in the one order: the plan check, which the agency track record, the drafts, Home and the
+    # project signals call, and what changed in a plan.
     "strata.tools.check_plan": {"Agencies", "agency_id"},
-    # A baseline is saved for the agency the plan check names.
-    "strata.server.baseline": {"Agencies"},
+    "strata.server.changes": {"Agencies", "agency_id"},
+    # The Procurement tab's headings and Packages.
+    "strata.server.projects": {"changes.agencies"},
+    # A baseline is saved and removed under the agency's own id, the one the plan check reads it by.
+    "strata.server.baseline": {"Agency", "changes.agencies"},
+    # Your agency's projects and the agency Home find the agency's latest plan; an upload links to its plan check.
+    "strata.server.uploads": {"agency_id", "changes.agencies"},
+    # The project's signals and records list each agency's latest plan once, under the plan check's id.
+    "strata.tools.project_signals": {"Agencies", "agency_id", "check_plan.agencies"},
+    "strata.tools.project_records": {"check_plan.agencies", "project_signals.latest_plans"},
+    # A draft is the team's own when the team's agency is the plan's by the rule.
+    "strata.server.drafts": {"agency_id", "same_agency"},
     # Links to a plan check from one plan row: the contract trail and the package page (find_comparables), the box,
-    # rebidding risk, the project's records and signals, Home, the documents list, uploads and the seeded examples.
+    # rebidding risk, Home, the documents list, the viewer's agency and the seeded examples.
     "strata.tools.find_comparables": {"agency_id"},
     "strata.server.lookup": {"agency_id"},
     "strata.tools.rebidding_risk": {"agency_id"},
-    "strata.tools.project_records": {"agency_id"},
-    "strata.tools.project_signals": {"agency_id"},
     "strata.server.home": {"agency_id"},
     "strata.server.documents": {"agency_id"},
-    "strata.server.uploads": {"agency_id"},
     "strata.server.app": {"agency_id"},
-    "strata.server.drafts": {"agency_id"},
     "strata.seed_examples": {"agency_id"},
     "strata.proposal.deck": {"agency_id"},
 }
@@ -118,14 +161,18 @@ def _module(path: Path) -> str:
 
 def test_the_pairing_rule_lives_in_clean_and_every_caller_imports_it_from_there():
     found: dict[str, set[str]] = {}
+    gateway_words = tuple(f".{name}(" for _, name in GATEWAYS)
     for path in sorted((ROOT / "src" / "strata").rglob("*.py")):
         source = path.read_text()
-        if not any(name in source for name in (*RULE_NAMES, "agency_key")):
-            continue  # a module whose text never names the rule can neither import it nor define its own
+        if not any(name in source for name in (*RULE_NAMES, "agency_key", *gateway_words)):
+            continue  # a module whose text never names the rule can neither use it nor define its own
         tree = ast.parse(source, str(path))
         module = _module(path)
         imported = {alias.asname or alias.name.split(".")[0] for node in ast.walk(tree)
                     if isinstance(node, ast.Import | ast.ImportFrom) for alias in node.names}
+        # Each name a module was imported as, with the module: "plan_check" for strata.tools.check_plan.
+        modules = {alias.asname or alias.name: f"{node.module}.{alias.name}" for node in ast.walk(tree)
+                   if isinstance(node, ast.ImportFrom) and node.module for alias in node.names}
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom):
                 named = {alias.name for alias in node.names} & RULE_NAMES
@@ -135,10 +182,13 @@ def test_the_pairing_rule_lives_in_clean_and_every_caller_imports_it_from_there(
                 assert not ("agency_id" in named and node.module != RULE), f"{module} imports agency_id from {node.module}"
             if isinstance(node, ast.FunctionDef) and module != RULE:
                 assert node.name not in ("agency_id", "agency_key", "same_agency"), f"{module} defines {node.name}"
-            if (isinstance(node, ast.Attribute) and node.attr == "agency_id" and isinstance(node.value, ast.Name)
-                    and node.value.id in imported):
+            if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name):
+                through = modules.get(node.value.id)
+                if (through, node.attr) in GATEWAYS:
+                    found.setdefault(module, set()).add(f"{through.rsplit('.', 1)[1]}.{node.attr}")
                 # Another module's agency_id reached through its name, such as upload_routes.agency_id.
-                assert False, f"{module} calls {node.value.id}.agency_id"
+                assert not (node.attr == "agency_id" and node.value.id in imported), \
+                    f"{module} calls {node.value.id}.agency_id"
 
     assert found == CALLERS
 
@@ -163,14 +213,18 @@ def india(fixture_db, tmp_path_factory):
     return database, app_on(database)
 
 
-def get(app, path):
+def send(app, method, path, body=None):
     async def go():
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
-            return await client.get(path, headers=ANA)
+            return await client.request(method, path, headers=ANA, json=body)
     response = asyncio.run(go())
     assert response.status_code == 200, response.text
     return response.json()
+
+
+def get(app, path):
+    return send(app, "GET", path)
 
 
 def test_p130164_s_procurement_tab_shows_one_heading_with_the_plan_under_the_record_s_longer_name(india):
@@ -209,8 +263,39 @@ def test_the_plan_check_the_tab_the_package_workspace_and_the_track_record_agree
     with DuckDBEngine.open(database, read_only=True) as engine:
         track = registry.call("agency_track_record", {"project_id": "P130164", "implementing_agency": INDIA_RECORD},
                               registry.Context(engine, VIEWER, "staff", dt.date(2026, 10, 23)))
+        records = registry.call("project_records", {"project_id": "P130164"},
+                                registry.Context(engine, VIEWER, "staff", dt.date(2026, 10, 23)))
     assert track["agency"] == {"agency_id": tab, "agency_name": INDIA_PLAN}
     assert track["plan"]["document_id"] == "40122770"
+    # The mission brief's records pair the record's name with the plan, so it names no agency without a plan.
+    [plan] = [row for row in records["rows"] if row["evidence_id"].startswith("strata.silver.plan_versions:")]
+    assert next(field["value"] for field in plan["fields"] if field["key"] == "agency_id") == tab
+    assert records["unmatched_agencies"] == []
+
+
+def test_a_baseline_saved_or_removed_through_the_record_s_name_is_the_agency_s_baseline(fixture_db, tmp_path):
+    app = app_on(give_p130164_a_plan(fixture_db, tmp_path), read_only=False)
+    check = f"/api/projects/P130164/procurement/public-works-department?{DAY}"
+    by_record = "/api/projects/P130164/procurement/rajasthan-state-public-works-department/baseline"
+
+    saved = send(app, "PUT", by_record, {"plan_date": "2026-07-31"})["baseline"]
+    # Saved under the agency's own id, the one the plan check and the Procurement tab read it by.
+    assert (saved["evidence_id"], saved["document_id"]) == (
+        "strata.ops.plan_baselines:P130164/public-works-department", "40119876")
+    assert get(app, check)["baseline"]["plan_date"] == "2026-07-31"
+    assert get(app, f"/api/projects/P130164?{DAY}")["agencies"][0]["baseline"]["plan_date"] == "2026-07-31"
+
+    send(app, "DELETE", by_record)
+    assert get(app, check)["baseline"] is None
+
+
+def test_an_agency_team_named_as_the_record_writes_it_finds_its_latest_plan_written_another_way(india):
+    # "Your agency's projects" and the agency Home, for a team whose agency the roles file writes as the record does.
+    database, _ = india
+    with DuckDBEngine.open(database, read_only=True) as engine:
+        [project] = uploads.agency_projects(engine, INDIA_RECORD, dt.date(2026, 10, 23))
+    assert (project["project_id"], project["latest_plan"]) == (
+        "P130164", {"plan_date": "2026-08-17", "disclosed_on": "2026-08-17", "agency_id": "public-works-department"})
 
 
 def test_the_procurement_tab_s_recordings_are_what_the_server_answers_on_the_copy(india):
@@ -229,3 +314,32 @@ def test_the_kenya_projects_keep_their_headings_on_the_fixture(fixture_db):
     p161305 = get(app, f"/api/projects/P161305?{DAY}")["agencies"]
     assert [(agency["implementing_agency"], agency["also_written_as"]) for agency in p161305] == [
         (name, []) for name in P161305_PLANS + P161305_RECORD]
+
+
+# ── One agency whose own plans write its name two ways, on a copy of the fixture ─
+
+NWWDA = "Northern Water Works Development Agency"
+
+
+def _tools(database: Path) -> dict:
+    with DuckDBEngine.open(database, read_only=True) as engine:
+        context = registry.Context(engine, VIEWER, "staff", dt.date(2026, 10, 23))
+        return {tool: registry.call(tool, {"project_id": "P156634"}, context)
+                for tool in ("project_signals", "project_records")}
+
+
+def test_project_signals_and_records_read_one_latest_plan_of_an_agency_whose_plans_write_its_name_two_ways(
+        fixture_db, tmp_path):
+    # NWWDA's plan of March 5, 2026 written with "The": still NWWDA's plan, so its plan of October 9 is its latest.
+    renamed = _tools(rename_a_plan(fixture_db, tmp_path, "40090127", f"The {NWWDA}"))
+
+    plans = renamed["project_signals"]["plans"]
+    assert [(plan["agency_id"], plan["document_id"]) for plan in plans if NWWDA in plan["implementing_agency"]] == [
+        ("northern-water-works-development-agency", "40132287")]
+    for row in renamed["project_signals"]["rows"]:
+        ids = [item["evidence_id"] for item in row.get("items", [])]
+        assert len(ids) == len(set(ids)), row["check"]
+    ids = [row["evidence_id"] for row in renamed["project_records"]["rows"]]
+    assert len(ids) == len(set(ids))
+    # Writing an older plan's name with "The" changes nothing either tool returns.
+    assert renamed == _tools(fixture_db)

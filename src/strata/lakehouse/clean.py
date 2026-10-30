@@ -34,8 +34,12 @@ Each rule is defined once here, and every silver transform uses it:
   agency when they are the same after the words "the", "Government of" and "State" are dropped, or when one
   ends with the whole of the other, at least two words of it (ticket 133). So a leading place name on one of
   the two drops away, and two names that differ only by their places ("Kwale Water and Sewerage Company Ltd",
-  "Wajir Water and Sewerage Company Ltd") stay two agencies. Agencies groups a project's names by this rule,
-  and every module that names an agency in a link, or pairs two of its names, goes through it.
+  "Wajir Water and Sewerage Company Ltd") stay two agencies. Agencies groups a project's names by this rule, and
+  Agencies.of_project takes them in one order, so every caller gives an agency the same id. Every module of the
+  server and the tools that names an agency in a link, or pairs two of its names, goes through it
+  (tests/test_agency_names.py lists them). The plan reader's series in strata.lakehouse.plans still pairs a
+  project's plan versions by the exact name each plan writes, so what changed between two plans that write one
+  agency's name two ways is a follow-up.
 """
 
 from __future__ import annotations
@@ -473,9 +477,12 @@ class Agency:
 class Agencies:
     """One project's implementing agencies, grouped by same_agency from the names its plans and its record give.
 
-    A caller gives its plan versions' names newest first, then the names the project record gives, so an agency's
-    id is its newest plan's spelling, the one each of its plan rows links with (agency_id of the row's own name), and
-    an agency with no plan takes its record's. A name that pairs with two agencies joins them into one."""
+    Callers build it with of_project, which orders the names one way for all of them: the plan versions public by
+    the as-of date, newest first, then those public only later, then the names the project record gives. So every
+    caller gives an agency the same id, its newest public plan's spelling, the one each of its plan rows links with
+    (agency_id of the row's own name), and an agency with no plan takes its record's. A name that pairs with two
+    agencies joins neither and stands alone, so a bare type name ("Water Works Development Agency") never makes
+    Coast and Northern one agency, and find, which calls such a name ambiguous, agrees."""
 
     def __init__(self, names):
         groups: list[list[str]] = []
@@ -484,16 +491,28 @@ class Agencies:
             if not name:
                 continue
             joined = [group for group in groups if any(same_agency(name, other) for other in group)]
-            if not joined:
+            if len(joined) == 1:
+                if name.lower() not in {other.lower() for other in joined[0]}:
+                    joined[0].append(name)
+            elif not any(name.lower() in {other.lower() for other in group} for group in joined):
                 groups.append([name])
-                continue
-            first = joined[0]
-            for other in joined[1:]:
-                first.extend(other)
-                groups.remove(other)
-            if name.lower() not in {other.lower() for other in first}:
-                first.append(name)
         self._agencies = tuple(Agency(agency_id(group[0]), max(group, key=len), tuple(group)) for group in groups)
+
+    @classmethod
+    def of_project(cls, versions, record_names=(), as_of: dt.date | None = None) -> Agencies:
+        """A project's agencies from its plan versions (each a mapping with implementing_agency, plan_date,
+        public_from and document_id) and the names its record gives, in the one order every caller uses: the
+        versions public by as_of newest first, by plan date, then the day each became public, then document id;
+        then those public only later, newest first; then the record's names. Every version when as_of is None."""
+        def newest(version) -> tuple:
+            return (version["plan_date"] or dt.date.min, version["public_from"] or dt.date.min,
+                    str(version["document_id"]))
+
+        named = [version for version in versions if (version["implementing_agency"] or "").strip()]
+        public = [version for version in named if as_of is None or version["public_from"] <= as_of]
+        later = [version for version in named if as_of is not None and version["public_from"] > as_of]
+        ordered = [*sorted(public, key=newest, reverse=True), *sorted(later, key=newest, reverse=True)]
+        return cls([version["implementing_agency"] for version in ordered] + list(record_names))
 
     def __iter__(self):
         return iter(self._agencies)

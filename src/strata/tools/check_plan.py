@@ -191,27 +191,38 @@ def _version(row: dict) -> dict:
             "public_from": _date(row["public_from"]), "text_url": row["text_url"], "pdf_url": row["pdf_url"]}
 
 
+def _versions(call: Call, project_id: str) -> list[dict]:
+    """Every version of the project's plans that names its agency, oldest first, so the latest is last even when an
+    agency's name is written two ways."""
+    versions = [_version(row) for row in _rows(call, "versions.sql", project_id=project_id)
+                if row["implementing_agency"]]
+    versions.sort(key=lambda version: (version["plan_date"], version["public_from"], version["document_id"]))
+    return versions
+
+
+def agencies(call: Call, project_id: str, record_agencies=(), versions: list[dict] | None = None) -> Agencies:
+    """The project's agencies as of call.as_of by the one pairing rule (strata.lakehouse.clean; ticket 133), from
+    every version of its plans and then the agencies its record names, so a plan and the record that write one agency
+    two ways are one agency, whose id is its newest public plan's spelling. A tool that lists a project's agencies
+    reads them here, so its ids are the plan check's."""
+    return Agencies.of_project(_versions(call, project_id) if versions is None else versions, record_agencies,
+                               call.as_of)
+
+
 def _choose(call: Call, project_id: str, asked: str, plan_date: dt.date | None,
             record_agencies: list[str]) -> tuple[dict | None, dict | None]:
     """The plan version to check, or the abstention that says why there is none. record_agencies
     is the agencies the project record names, so an agency with no plan can still be named in full."""
-    versions = [_version(row) for row in _rows(call, "versions.sql", project_id=project_id)
-                if row["implementing_agency"]]
-    # By date, so the latest is last even when an agency's name is spelled two ways.
-    versions.sort(key=lambda version: (version["plan_date"], version["public_from"], version["document_id"]))
+    versions = _versions(call, project_id)
     public = [version for version in versions if version["public_from"] <= call.as_of]
-    # The project's agencies by the one pairing rule (strata.lakehouse.clean; ticket 133), from its plans, newest
-    # public plan first, and then the agencies its record names, so a plan and the record that write one agency two
-    # ways are one agency, whose id is its newest public plan's spelling.
-    later = [version for version in reversed(versions) if version["public_from"] > call.as_of]
-    agencies = Agencies([version["implementing_agency"] for version in [*reversed(public), *later]] + record_agencies)
-    found = agencies.find(asked)
+    grouped = agencies(call, project_id, record_agencies, versions)
+    found = grouped.find(asked)
     mine = [version for version in versions if found and found.holds(version["implementing_agency"])]
     if not mine:
         # The latest public version of each agency, so an agency whose name is written two ways is listed once, as
         # its latest plan spells it.
         listed = {}
-        for agency in agencies:
+        for agency in grouped:
             its = [version for version in public if agency.holds(version["implementing_agency"])]
             if its:
                 listed[agency.agency_id] = its[-1]
