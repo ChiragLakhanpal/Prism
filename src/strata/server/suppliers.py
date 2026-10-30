@@ -48,7 +48,7 @@ def _side(row: dict, side: str) -> dict:
 
 
 def _day(value) -> str | None:
-    """The day of a timestamp, which DuckDB gives as a datetime and the warehouse as text."""
+    """The day of a timestamp, given as a datetime or as text."""
     if value is None or value == "":
         return None
     return value.date().isoformat() if isinstance(value, dt.datetime) else str(value)[:10]

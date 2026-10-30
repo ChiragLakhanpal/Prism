@@ -7,12 +7,14 @@ out the way the route works them out.
 """
 
 import asyncio
+import datetime as dt
 import tomllib
 from contextlib import contextmanager
 from pathlib import Path
 
 import httpx
 import pytest
+from warehouse_over_fixture import WarehouseOverFixture
 
 from strata.lakehouse.engine import DuckDBEngine
 from strata.server.app import create_app
@@ -257,6 +259,22 @@ def test_a_crowded_what_lane_groups_contracts_by_year_and_the_table_keeps_every_
     assert len(records) > 12
     assert sum(group["count"] for group in groups) + len(placed(body, kind="record")) == len(records)
     assert all(group["evidence_id"] == f"contracts:P156634:{group['year']}" for group in groups)
+
+
+def test_p156634_s_timeline_from_the_warehouse_s_text_is_the_timeline_the_fixture_gives(server, fixture_db):
+    """Ticket 128: the workspace writes every value as text, a report's version as "1", and its page failed at
+    `(row["version"] or 1) > 1` while the fixture's page answered. The same rows, written as the warehouse writes
+    them with their manifest, go through WarehouseEngine and the route and give the same timeline."""
+    warehouse = WarehouseOverFixture(fixture_db)
+    app = create_app(engine_for=warehouse.engine_for, today=lambda: dt.date(2026, 10, 23))
+
+    answered = get(app, f"/api/projects/P156634/timeline?{DAY}")
+
+    assert answered.status_code == 200, answered.text
+    versions = [value for kind, value in warehouse.values_written("version") if value is not None]
+    assert versions and all(isinstance(value, str) for value in versions)
+    assert {kind for kind, _ in warehouse.values_written("version")} == {"INT"}
+    assert answered.json() == get(server, f"/api/projects/P156634/timeline?{DAY}").json()
 
 
 def test_a_project_strata_has_no_record_of_gets_404(server):

@@ -74,7 +74,7 @@ def _rows(engine, name: str, **params) -> list[dict]:
     return [dict(zip(result.columns, row)) for row in result.rows]
 
 
-# Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read once here.
+# Every engine gives typed values (ticket 128); each is read once here, and a value written as text reads the same.
 
 def _date(value) -> dt.date | None:
     if value is None or value == "":
@@ -154,7 +154,7 @@ def read_package(engine, step_reference: str, as_of: dt.date) -> dict | None:
         "planned_signing_on": _iso(_date(row["planned_signing_on"])),
         "plan": {"document_id": row["document_id"], "implementing_agency": row["implementing_agency"],
                  "agency_id": agency_id(row["implementing_agency"] or ""), "plan_date": _iso(_date(row["plan_date"])),
-                 "disclosed_on": _iso(_date(row["disclosed_on"])), "pdf_page": int(row["pdf_page"])},
+                 "disclosed_on": _iso(_date(row["disclosed_on"])), "pdf_page": row["pdf_page"]},
     }
 
 

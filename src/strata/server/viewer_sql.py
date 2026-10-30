@@ -25,7 +25,7 @@ def query(name: str) -> str:
 
 
 def _day(value) -> dt.date | None:
-    """A date from DuckDB, or the text the warehouse writes it as."""
+    """A date, or a date written as text."""
     if value is None or isinstance(value, dt.date):
         return value
     return dt.date.fromisoformat(str(value)[:10])

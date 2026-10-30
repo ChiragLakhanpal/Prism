@@ -17,4 +17,4 @@ Read first: `src/strata/server/settings.py` (`_the_app_s_engine`, `as_the_app`, 
 
 ## Comments
 
-- October 29, 2026, orchestrator: opened at 12:55 PDT after the second dead secret; the platform's restart at 14:46 UTC made the new one.
+- October 29, 2026, orchestrator: opened at 12:18 PDT after the second dead secret; the platform's restart at 14:46 UTC made the new one.

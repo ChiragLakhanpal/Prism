@@ -1,0 +1,20 @@
+# 131: Plan text read from a PDF is repaired: a reference that breaks STEP's grammar and a word split by the page are fixed, with the notices as the dictionary
+
+**What to build:** On October 29, 2026 the first draft of the demo walkthrough, built from the App's screens, showed that the Kenya water plan of October 9, 2026 (P156634, Northern Water Works Development Agency) carries the PDF's broken text into the app: the reference `KE-NWWDA-193461-90-RF8` sits beside references ending GO-RFB and GO-RFQ (its method reads Request for Quotations), and descriptions read "Equipping of Exploratory Bo reholes Project-Lot 1- Sarma n - Tarbaj", "R oads Division", "Boardro om" and "Nair obi Campus". A panel reads these as typos, and the broken reference pairs with no notice. The reader is `src/strata/reader/step.py` (the Activity Reference No. pattern at line 35; `src/strata/reader/layout.py` line 472 handles a reference cut by a wrapped cell) and the parse of a reference into its parts is `src/strata/lakehouse/clean.py`. Build a repair that lives in one place, runs in the reader after the row is read and before it is written, and keeps the text as read beside the repaired text (rule 2: the source view shows the page's words; the repaired value is a derived column with its reason): (1) a reference whose parts break the grammar (country, agency, number, a kind in the known kinds, a method in the known methods, both lists in one registry) is repaired when exactly one character swap of the look-alike pairs (0 and O, 8 and B, 1 and I, 5 and S) makes it valid and the repaired reference appears in the project's notices or in another version of the same plan; otherwise it stays as read and is flagged `reference_as_read`, and the page shows it with "as the plan prints it"; (2) a word split by a space inside a description is joined when the joined word appears in the project's notice titles or in a word list of the plan's own other rows, and the join is recorded; the fixture gets the recorded Kenya rows as a test, including a case that must not be joined ("Lot 1- Sarma n" stays unless "Sarman" appears in a notice). Keep the gate under 150 seconds. The live proof is the orchestrator's: after the merge, the plan rows of P156634's October 9, 2026 plan are rewritten alone (the plan rewrite of ticket 122's path, no new documents fetched) and the plan check and package pages show the repaired text, recorded in the catch-up file.
+
+Read first: `src/strata/reader/step.py`, `src/strata/reader/layout.py` (lines 460 to 490), `src/strata/lakehouse/clean.py` (the reference parts), `config/` for the registry of kinds and methods (if none exists, add one file and read it from both places), the catch-up file's block for ticket 122 (the plan rewrite), and the walkthrough draft's findings in `.notes/demo/walkthrough-brief.md` of the main checkout (the orchestrator's copy).
+
+**Blocked by:** None (can start immediately)
+
+**Status:** ready
+**Area:** reader
+**Phase:** P4
+**Design review:** no
+
+- [ ] The repair lives in one module with the look-alike pairs and the kinds and methods lists in one registry; a reference is repaired only when one swap makes it valid and the result appears in the project's notices or another plan version (tests: the Kenya reference becomes KE-NWWDA-193461-GO-RFQ only if a notice or plan carries it, else it is flagged as read).
+- [ ] Split words are joined only when the joined word appears in the notices or the plan's other rows, with the join recorded, and the text as read stays in its own column and in the source view (tests with the five Kenya descriptions, one that must not change).
+- [ ] On the paid workspace, after the plan rows of the October 9, 2026 plan are rewritten, the plan check and the package pages for P156634 show the repaired text and the flagged reference reads "as the plan prints it" (recorded in the catch-up file under this ticket).
+
+## Comments
+
+- October 29, 2026, orchestrator: opened from the walkthrough draft's findings on the Kenya water screens.

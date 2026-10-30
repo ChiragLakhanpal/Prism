@@ -97,7 +97,7 @@ def _steps(rows: list[dict], document_id: str) -> dict[str, dict[str, tuple[int,
     for row in rows:
         if row["document_id"] == document_id:
             found.setdefault(row["activity_reference_no"], {}).setdefault(
-                row["step"], (int(row["step_order"]), _day(row["planned_on"])))
+                row["step"], (row["step_order"], _day(row["planned_on"])))
     return found
 
 

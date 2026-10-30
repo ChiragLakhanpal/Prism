@@ -54,7 +54,7 @@ def _rows(engine: Engine, name: str, **params) -> list[dict]:
 
 
 def _day(value) -> dt.date | None:
-    """A date from DuckDB, or the text the warehouse writes it as."""
+    """A date, or a date written as text."""
     if value is None or value == "" or isinstance(value, dt.date):
         return value or None
     return dt.date.fromisoformat(str(value)[:10])
@@ -138,7 +138,7 @@ def _agencies(engine: Engine, project_id: str, versions: list[dict], named: list
         agency["versions"].append({
             "document_id": row["document_id"], "plan_date": _iso(row["plan_date"]),
             "disclosed_on": _iso(row["disclosed_on"]), "is_latest": not agency["versions"],
-            "read": read, "activities": int(row["activities"]) if read else None})
+            "read": read, "activities": row["activities"] if read else None})
     all_versions = changes.versions(engine, project_id) if agencies else []
     for agency in agencies.values():
         saved = read_baseline(engine, project_id, agency["agency_id"], as_of, view)

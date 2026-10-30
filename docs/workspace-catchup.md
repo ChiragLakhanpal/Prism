@@ -4351,3 +4351,23 @@ The builder's third step was the App redeploy (`uv run --script ops/app/deploy_a
 
 - `GET /api/packages/KE-NWWDA-541055-CW-RFB` returns `package.display_name` "Water and Sanitation Development".
 - On Data readiness, the shelf window's Layout parser row still shows `ai_parse_document` in mono, since the live parser keeps its registry name (only the offline parser reads "My offline substitute").
+
+## Ticket 128, step 1 of 2: redeploy the App, so the warehouse engine types every value
+
+Parked on October 29, 2026 with ticket 128, which merged into build/strata as 92a3171b (branch `strata/128-the-warehouse-engine-returns-typed-values` at 1cf9ae9b). Every key is set, but mergers run no workspace step: the orchestrator or the second session runs these two steps, one at a time and in this order, from a snapshot that includes this merge (92a3171b, the done commit that follows it, or a later commit), as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`).
+
+What ticket 128 changes on the App: `WarehouseEngine.run` in `src/strata/lakehouse/engine.py` now types every value from the statement's manifest (`typed()`: BIGINT, INT, SMALLINT and TINYINT to int, DECIMAL to Decimal, DOUBLE and FLOAT to float, BOOLEAN to bool, DATE to date, TIMESTAMP to datetime, the rest unchanged, NULL as None), and the Genie client uses the same function. This fixes the error page on `/projects/P156634/timeline` (reference 4ea75fa73165f2f36e32f9eadbb1c79c; `timeline.py` line 215, `TypeError: '>' not supported between instances of 'str' and 'int'`), and, by the verifier's probe, five document reader pages too. No table, grant, secret or SQL file changed. Run from the snapshot:
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+It worked if it exits 0 and its last line is `Strata is running at https://...`. Record the exit code, the commit the App runs, and any secret its step 3 names here under ticket 128.
+
+## Ticket 128, step 2 of 2: the P156634 timeline answers on the App (criterion 3)
+
+Parked on October 29, 2026 with ticket 128 (merge 92a3171b). Run after step 1. Signed in to the App as a staff viewer:
+
+    GET https://strata-7405609289499029.9.azure.databricksapps.com/api/projects/P156634/timeline
+
+It worked if the route answers 200 with JSON (not the error page), and https://strata-7405609289499029.9.azure.databricksapps.com/projects/P156634/timeline renders its three lanes. Record the status, the time and the three lanes here under ticket 128; this is criterion 3's live proof.
+
+While the session is on the workspace, it may also save the warehouse's real replies (the Statement Execution API's JSON, manifest and all) to the timeline's `reports.sql` statement for P156634 and to the statement in `tests/fixtures/warehouse/every_type.json`. Those would replace the replay rows and manifest that the builder wrote by hand in the API's documented shape (a decision parked for the user under ticket 128). Saving them changes fixture files, so it lands through a ticket, not through this block.

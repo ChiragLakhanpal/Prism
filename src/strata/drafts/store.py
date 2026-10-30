@@ -16,8 +16,8 @@ A Saved draft's content is the draft as those choices leave it (strata.drafts.le
 its counts, its holds and its files all read the same rows.
 
 The store holds no access rule. The draft routes (src/strata/server/drafts.py) ask the one access rule
-(src/strata/server/access.py) before they show or change anything. Values arrive typed from DuckDB and
-as text from the SQL warehouse, so each is read once here.
+(src/strata/server/access.py) before they show or change anything. Every engine gives typed values
+(ticket 128), and each is read once here.
 """
 
 from __future__ import annotations
@@ -51,7 +51,7 @@ def _sql(name: str) -> str:
 
 
 def moment(value) -> dt.datetime | None:
-    """A timestamp from either engine, in UTC: DuckDB gives a naive UTC datetime, the warehouse text."""
+    """A timestamp in UTC, from a datetime with or without a zone, or from text."""
     if value is None or value == "":
         return None
     if not isinstance(value, dt.datetime):
@@ -220,17 +220,17 @@ class DraftStore:
         states: dict[str, list[State]] = {}
         for row in self._rows(engine, "states", ids=ids):
             states.setdefault(row["draft_id"], []).append(State(
-                int(row["step"]), row["state"], row["from_state"], row["actor_id"], row["actor_name"],
+                row["step"], row["state"], row["from_state"], row["actor_id"], row["actor_name"],
                 moment(row["changed_at"])))
         exports: dict[str, Export] = {}
         for row in self._rows(engine, "exports", ids=ids):
             if row["draft_id"] in exports:
                 continue  # newest first, so the first is the latest
-            files = tuple({"name": item["name"], "media_type": item["media_type"], "size": int(item["size_bytes"])}
+            files = tuple({"name": item["name"], "media_type": item["media_type"], "size": item["size_bytes"]}
                           for item in self._rows(engine, "files", draft_id=row["draft_id"], export_id=row["export_id"]))
             exports[row["draft_id"]] = Export(
-                row["export_id"], moment(row["exported_at"]), row["actor_id"], row["actor_name"], int(row["footnotes"]),
-                int(row["sources"]), int(row["opened"]), json.loads(row["snapshot"]), files)
+                row["export_id"], moment(row["exported_at"]), row["actor_id"], row["actor_name"], row["footnotes"],
+                row["sources"], row["opened"], json.loads(row["snapshot"]), files)
         fields: dict[str, dict] = {}
         for row in self._rows(engine, "fields", ids=ids):
             fields.setdefault(row["draft_id"], {})[(row["row_key"], row["field"])] = FieldValue(

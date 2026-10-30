@@ -187,9 +187,9 @@ def _counted(checks: dict | None, part: Mapping | None, sign: int) -> dict | Non
 
 
 def from_row(row: dict, moment) -> LessonChoice:
-    """One stored choice, from either engine (DuckDB gives typed values, the SQL warehouse text)."""
+    """One stored choice, from either engine, which both give typed values (ticket 128)."""
     rewrite = row["rewrite"]
-    return LessonChoice(int(row["choice_no"]), row["row_key"], row["lesson_id"], row["action"], int(row["cited_version"]),
-                        int(row["current_version"]), row["reason"] or None,
+    return LessonChoice(row["choice_no"], row["row_key"], row["lesson_id"], row["action"], row["cited_version"],
+                        row["current_version"], row["reason"] or None,
                         json.loads(rewrite) if rewrite else None, row["draft_state"], row["actor_name"],
                         moment(row["chosen_at"]))

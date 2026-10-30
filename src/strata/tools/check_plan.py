@@ -85,7 +85,7 @@ def implementing_agencies(text: str | None) -> list[str]:
     return [name.strip() for name in re.split(r",(?! )", text or "") if name.strip()]
 
 
-# Values arrive typed from DuckDB and as text from the SQL warehouse, so each is read once here.
+# Every engine gives typed values (ticket 128); each is read once here, and a value written as text reads the same.
 
 def _date(value) -> dt.date | None:
     if value is None or value == "":

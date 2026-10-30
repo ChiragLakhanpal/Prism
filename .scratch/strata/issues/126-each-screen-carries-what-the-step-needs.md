@@ -17,4 +17,4 @@ Read first: `docs/design/notes-2026-10-29/tuck-away-inventory.md` (all of it), `
 
 ## Comments
 
-- October 29, 2026, orchestrator: opened at 14:10 PDT from the design lead's inventory of the same day; the owner named the first two lines.
+- October 29, 2026, orchestrator: opened at 12:50 PDT from the design lead's inventory of the same day; the owner named the first two lines.

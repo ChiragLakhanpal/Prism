@@ -243,7 +243,7 @@ def _reading_order(row: dict) -> tuple:
     key after the version in its id, read as numbers where it holds them (54 before 100, s2 before s10)."""
     key = str(row["passage_id"]).split("/", 2)[-1]
     chunks = tuple((0, int(chunk), "") if chunk.isdigit() else (1, 0, chunk) for chunk in re.findall(r"\d+|\D+", key))
-    return row["kind"] == "table_row", int(row["pdf_page"]), chunks
+    return row["kind"] == "table_row", row["pdf_page"], chunks
 
 
 def _passages(engine: Engine, document_id: str, version: int, page: int) -> tuple[list[dict], list[dict]]:
@@ -258,7 +258,7 @@ def _passages(engine: Engine, document_id: str, version: int, page: int) -> tupl
             paragraphs.append({"passage_id": row["passage_id"], "section_path": row["section_path"],
                                "paragraph": row["paragraph"], "numbered": bool(row["paragraph_numbered"]),
                                "part": row["part"], "language": row["language"], "text": row["text"],
-                               "from_page_before": int(row["pdf_page"]) < page})
+                               "from_page_before": row["pdf_page"] < page})
     return paragraphs, list(tables.values())
 
 

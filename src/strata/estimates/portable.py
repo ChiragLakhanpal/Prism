@@ -151,16 +151,16 @@ def latest(engine, name: str, as_of, alias: str = "champion", learner: str = "po
     if not result.rows:
         return None
     row = dict(zip(result.columns, result.rows[0]))
-    key = (name, int(row["version"]), str(row["registered_at"]), learner)
+    key = (name, row["version"], str(row["registered_at"]), learner)
     model = _MODELS.get(key)
     if model is None:
-        trees = engine.run(TREES, {"model": name, "version": int(row["version"]), "alias": alias, "as_of": as_of})
+        trees = engine.run(TREES, {"model": name, "version": row["version"], "alias": alias, "as_of": as_of})
         kept = dict(zip(trees.columns, trees.rows[0]))
         model = TimeEstimateModel.from_state(kept["state_json"], kept["booster_json"], learner)
         if len(_MODELS) > 2:  # the newest versions are kept: an older one is read again if asked for
             _MODELS.clear()
         _MODELS[key] = model
-    return Kept(name, int(row["version"]), row["alias"], model, row["mlflow_run_id"])
+    return Kept(name, row["version"], row["alias"], model, row["mlflow_run_id"])
 
 
 # The model last read, by its name, version and registration time, so a request does not parse its trees

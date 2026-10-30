@@ -650,7 +650,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
             return saved
         with engine_for(viewer) as engine:
             history = notices.history(engine)
-        versions = sorted(int(row["version"]) for row in history.get(body.lesson_id, []))
+        versions = sorted(row["version"] for row in history.get(body.lesson_id, []))
         latest = versions[-1] if versions else None
         shown_now = runtime.draft_view(saved, viewer, body.view, kinds, opened_by(viewer.user_id, saved),
                                        notices.row_notices(saved.content, history))
