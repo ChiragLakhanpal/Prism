@@ -4491,3 +4491,58 @@ It worked if all of these hold:
 - The source view of the plan's page 3 (document 40132287), `GET /api/projects/P156634/documents/procurement-plan-northern-water-works-development-agency-2026-10-09?page=3`, lists KE-NWWDA-229129-CW-RFB in its `plan_rows`, not -RFQ.
 
 Look for the builder's words, "As I read it from the plan", not the ticket's "as the plan prints it" (a decision parked for the user under ticket 131). The walkthrough's row stays KE-NWWDA-193461-90-RF8 with the note, because no single look-alike swap reaches a valid reference; that is expected, not a failure. Record the status, the time and what each page shows here under ticket 131. This is criterion 3's live proof.
+
+## Ticket 132, step 1 of 4: deploy the bundle and redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit 3a016534. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these four blocks one at a time and in order, from a snapshot at or after 3a016534. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The builder named only the App deploy. The merger added the bundle deploy, because step 3's `detect_disagreements` runs in the nightly job and needs the job to carry this ticket's `src/strata/knowledge/sql/assertions/plan_statuses.sql` and `config/evidence_ladder.toml`. No table changes: `gold/assertion.sql` changed only in a comment (the new `status` value form).
+
+It worked if both exit 0, the App deploy's last line is `Strata is running at https://...`, and the App's active deployment names 3a016534 or a later commit. Record both exit codes, the commit the App runs, and any secret the App deploy's step 3 names here under ticket 132.
+
+## Ticket 132, step 2 of 4: sync the agent's tool descriptions
+
+Run after step 1, from the same snapshot. `check_plan` and `project_signals` in `config/tools.toml` changed (both descriptions name the moved-on case).
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked if the `--check` run exits 0. Record both exit codes here under ticket 132.
+
+## Ticket 132, step 3 of 4: the nightly's detect_disagreements writes 541055's status disagreement
+
+Run after step 1, when the orchestrator allows writes on the workspace again. The builder asked for the pass for P156634; until ticket 135 scopes the pass to a list of projects, the task rebuilds every project's assertions (9 minutes in the scheduled run of October 29). The scheduled nightly after step 1's bundle deploy does the same; if it ran, record its run id instead of starting another.
+
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["detect_disagreements"]}' --timeout 160m -p strata
+
+It worked if the task ends SUCCESS and this query returns at least one row:
+
+    SELECT d.disagreement_id FROM strata.gold.disagreement AS d JOIN strata.gold.assertion AS a ON a.assertion_id IN (d.first_assertion_id, d.second_assertion_id) WHERE a.subject_id = 'KE-NWWDA-541055-CW-RFB' AND a.value_form = 'status'
+
+Record the run id, the task's result and the disagreement ids here under ticket 132.
+
+## Ticket 132, step 4 of 4: the moved-on row and its disagreement on the App (criterion 3)
+
+Run after steps 1 and 3. Signed in to the App (https://strata-7405609289499029.9.azure.databricksapps.com) as a staff viewer, open:
+
+    /projects/P156634/procurement/northern-water-works-development-agency/2026-10-09
+
+It worked if all of these hold:
+
+- KE-NWWDA-541055-CW-RFB shows Moved on with the sentence "The plan still says pending, but the contract awards say the contract was signed on June 22, 2026."
+- That sentence's citation opens both records: the plan row and the contract award record (`strata.gold.contract:1903781` on the fixture).
+- `/projects/P156634/timeline` lists the same disagreement under "Where the records disagree".
+- The citation on the plan of March 5, 2026 (`/projects/P156634/procurement/northern-water-works-development-agency/2026-03-05`) also opens.
+
+Record the status, the time and what each page shows here under ticket 132. This is criterion 3's live proof.
+
+## Ticket 132, follow-up after step 3 (review C3, not a criterion): re-record the review notes and mission brief writers
+
+The round 2 review asked for this block. The writers' recordings in `tests/fixtures/agent/recorded` were made before ticket 132, so the draft stories replay them on `tests/writer_world.py`'s copy of the fixture, without the plan rows' Process Status assertions and their disagreements. Run it after steps 2 and 3, so the writers and the warehouse's disagreements are current. It writes over tracked files, so run it on the branch of the follow-up ticket that removes `tests/writer_world.py` and `writers_fixture_db` in `tests/conftest.py`, not in the main checkout during a merge:
+
+    uv run --script ops/agent/record.py --env-file "<main checkout>/.env" --writers
+
+It worked if it exits 0 and its diff shows the review notes and the mission brief recorded from the plan check as it now marks the NWWDA plan of October 9, 2026 (on the fixture: 0 Needs a look, 1 Watch, 2 Moved on since the plan). Then re-record the drafts answers on the fixture as built (`tests/record_drafts_api.py`), delete `tests/writer_world.py`, and run the gate. Record the exit code and the recordings that changed here under ticket 132.
