@@ -678,7 +678,7 @@ class LessonReview:
                        "next_version": self._next_version(store, item["lesson_id"]) if item["kind"] == "recheck" else None},
             "summary": self.summary(store, item), "repeats": self.likely_repeats(store, item, you),
             "history": self.history(store, item, you),
-            "outcome": self.outcome(store, item), "lists": {**self.lists.as_dict(), **lesson_tags.as_dict()},
+            "outcome": self.outcome(store, item, you), "lists": {**self.lists.as_dict(), **lesson_tags.as_dict()},
             "limits": {"reason_max_chars": int(self.value("reason_max_chars")),
                        "statement_max_chars": int(self.value("statement_max_chars")),
                        "sample_percent": round(float(self.value("cross_check_share")) * 100),
@@ -776,12 +776,14 @@ class LessonReview:
         return [{"field": key, "was": was.get(key), "now": change.get(key)} for key in TAGS
                 if key in change and change.get(key) != was.get(key)]
 
-    def outcome(self, store: Store, item: dict) -> dict | None:
-        """A decided item's result, for the outcome panel on its record."""
+    def outcome(self, store: Store, item: dict, you: str | None) -> dict | None:
+        """A decided item's result, for the outcome panel on its record. A cross-check's names who checked it, as you
+        reads it."""
         if item["kind"] == "cross_check":
             check = store.act(item, "cross_check")
             return None if check is None else {"outcome": check["outcome"], "on": _iso(check["acted_at"]),
-                                               "decided_region": item["decided_region"]}
+                                               "decided_region": item["decided_region"],
+                                               "actor": self.actor(check["actor"], you, check["actor_region"])}
         decision = store.act(item, "decide")
         if decision is None:
             return None

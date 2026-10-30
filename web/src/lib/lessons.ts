@@ -195,6 +195,8 @@ export type Outcome = {
   days_from_publication?: number | null;
   published_on?: string | null;
   decided_region?: string;
+  // A cross-check's: who checked it (ticket 140).
+  actor?: Actor | null;
 };
 
 export type ReviewItem = QueueRow & {

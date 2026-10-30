@@ -305,7 +305,11 @@ export function LessonCard({
             <p>{card.edition ? fillText(words.card.rules, { edition: card.edition.name }) : words.card.rulesUnknown}</p>
             {retired && (
               <p data-retired-line>
-                <Fill template={copy.lessonsPage.retiredLine} slots={{ date: <Num date={retired.on} />, reason: retired.reason }} />
+                {/* The retired version's decided_by is the lead who retired it (ticket 140). */}
+                <Fill
+                  template={card.decided_by?.who === "you" ? copy.lessonsPage.retiredLineYou : copy.lessonsPage.retiredLine}
+                  slots={{ actor: actorText(card.decided_by), date: <Num date={retired.on} />, reason: retired.reason }}
+                />
               </p>
             )}
           </>

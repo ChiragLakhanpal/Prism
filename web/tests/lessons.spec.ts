@@ -531,6 +531,16 @@ test("a library card names who decided its version and who recommended it, yours
     "A lead procurement specialist for South Asia decided version 2 on October 29, 2026, after you recommended it.",
   );
   await namesNoPerson(page);
+
+  // A retired lesson's card names who retired it by the same rule.
+  const retired = JSON.parse(await recorded("lessons-page.json"));
+  retired.library = JSON.parse(await recorded("lessons-library-retired.json"));
+  await viewer(page, { "/api/lessons/page": { body: JSON.stringify(retired) } });
+  await page.goto("/lessons?status=retired");
+  await expect(page.locator("[data-library] [data-lesson-card=full]").first()).toContainText(
+    "A lead procurement specialist for South Asia retired it on October 29, 2026. The lead's reason: \"IEG's own review later said the permits were not the cause.\"",
+  );
+  await namesNoPerson(page);
 });
 
 // ── The evidence drawer ──────────────────────────────────────────────────

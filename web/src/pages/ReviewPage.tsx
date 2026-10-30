@@ -344,6 +344,7 @@ function recordPanel(item: ReviewItem): Panel | null {
     target: outcome.target ?? "",
     version: outcome.version ? <Num value={outcome.version} /> : "",
     region: item.region,
+    actor: actorText(outcome.actor),
   };
   const state: State = outcome.outcome === "rejected" || outcome.outcome.startsWith("retired") ? "neutral" : outcome.outcome === "agree" || outcome.outcome === "disagree" ? "info" : "success";
   return { state, lead: <Fill template={words_.lead} slots={slots} />, body: <Fill template={words_.body} slots={slots} />, links: [] };

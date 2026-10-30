@@ -6881,8 +6881,9 @@ export const copy = {
         changed: { lead: "Changed to version {version} on {date}.", body: "See the history for both reasons." },
         retired_wrong: { lead: "Retired because it was wrong, on {date}.", body: "See the history for both reasons." },
         retired_outdated: { lead: "Retired because it no longer applies, on {date}.", body: "See the history for both reasons." },
-        agree: { lead: "A reviewer in {region} agreed with this decision on {date}.", body: "See the history for the reasons." },
-        disagree: { lead: "A reviewer in {region} disagreed with this decision on {date}.", body: "A re-check started in the region that decided." },
+        // {actor}: who cross-checked it, by lessons.actor (ticket 140).
+        agree: { lead: "{actor} agreed with this decision on {date}.", body: "See the history for the reasons." },
+        disagree: { lead: "{actor} disagreed with this decision on {date}.", body: "A re-check started in the region that decided." },
       } as Record<string, { lead: string; body: string }>,
     },
     // Ticket 40's previews and as-of view (section 5.15): copy it can use when it lands.
@@ -7056,8 +7057,10 @@ export const copy = {
     },
     nothingMatches: "I have no {noun} that match these filters.",
     nothingMatchesBody: "Try fewer filters. Stage, method and sector each narrow the list.",
-    // A retired lesson's card (brief 29's Lesson card, retired variant).
-    retiredLine: "A lead procurement specialist retired it on {date}. The lead's reason: \"{reason}\"",
+    // A retired lesson's card (brief 29's Lesson card, retired variant). {actor} is the lead who retired it, by
+    // lessons.actor (ticket 140), and you read your own retirement as yours.
+    retiredLine: "{actor} retired it on {date}. The lead's reason: \"{reason}\"",
+    retiredLineYou: "You retired it on {date}. Your reason: \"{reason}\"",
   },
 
   // A version notice (ticket 39; the 39 brief, section 5.3): a lesson that changed after the version a draft row
