@@ -6,6 +6,9 @@
 -- column and notes the difference. The codes below are those whose STEP method name the fixture's
 -- plans show; a reference that ends in any other code never makes this note. Each method name is
 -- STEP's word for word, as src/strata/reader/step.py lists them in VALUES, and a test checks it.
+-- RFP joined on October 30, 2026 (ticket 141): P161305's plan of September 24, 2026 writes
+-- KE-KENHA-537932-CW-RFP with Request for Proposals, and P155350's plan of June 10, 2024 writes
+-- its -RFP works, such as PK-SID-2961-CW-RFP, with Request for Bids, which this note now keeps.
 --
 -- actual_amount_zero: a row whose Process Status is Signed or Completed but whose Actual Amount
 -- (US$) reads 0.00, so the record does not say what the contract cost.
@@ -25,6 +28,7 @@ JOIN (
   VALUES
     ('RFB', 'Request for Bids'),
     ('RFQ', 'Request for Quotations'),
+    ('RFP', 'Request for Proposals'),
     ('DIR', 'Direct Selection'),
     ('QCBS', 'Quality And Cost-Based Selection'),
     ('INDV', 'Individual Consultant Selection')
