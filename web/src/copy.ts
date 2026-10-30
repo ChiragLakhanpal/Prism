@@ -507,17 +507,32 @@ export const copy = {
   // The one box (the 14 brief, section 5.1). The placeholder names only what the box can do now;
   // ticket 15 adds "describe a package" back. {id}, {pcode}, {loan} and {step_ref} show in Roboto Mono.
   box: {
+    // Ticket 127: the field's accessible name, never printed in the Ask bar (the owner's call of October 29, 2026);
+    // the placeholders from 768 px carry the word instead. label is its description.
+    name: "Ask Strata",
     label: "Open a project or package, or ask a question",
-    placeholderWide: "Open a project or package, or ask a question",
-    // Below 768 px (ticket 93), so it is never cut; the field's name stays label.
+    placeholderWide: "Open a project or package, or ask Strata a question",
+    placeholderProject: "Ask Strata about this project",
+    placeholderPackage: "Ask Strata about this package",
+    // Below 768 px (ticket 93), so they are never cut; the field's description stays label.
     placeholderShort: "Open a project or package, or ask",
-    placeholderProject: "Ask about this project",
-    placeholderPackage: "Ask about this package",
+    placeholderProjectShort: "Ask about this project",
+    placeholderPackageShort: "Ask about this package",
     // {pid} is hintId, set in Roboto Mono.
     hint: "Type a project ID such as {pid}, a STEP reference, a loan number, or a question.",
     hintId: "P130164",
     listName: "What Enter will do",
     enter: "Enter",
+    // Ticket 127: the One box list's foot strip, from 768 px on a device that can hover, aria-hidden since the combobox
+    // names its keys. Each {key} is a Key hint.
+    keys: {
+      choose: "{enter} Select",
+      move: "{up} {down} Move",
+      close: "{escape} Close",
+      up: "Up",
+      down: "Down",
+      escape: "Esc",
+    },
     option: {
       project: "Open {pcode}",
       projectLine: (name: string, country: string | null) => (country ? `${name}, ${country}` : name),
