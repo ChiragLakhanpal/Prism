@@ -4803,3 +4803,58 @@ It worked if section 1 draws a plan line of 5.8 months whose tooltip reads "From
 ## Tickets 130, 135, 137, 139 and 140, the App redeploy ran: the App runs 97fb5bcb
 
 **Ran on October 30, 2026 (orchestrator), from a snapshot of 97fb5bcb.** The App redeployed from 97fb5bcb (deployment of 09:08 UTC on October 30, exit 0) with tickets 130, 135, 137 and 139 (and 140 from the earlier merge), and the local copy moved to the same build. Ticket 137, step 2: the agent sync ran at 02:02 PDT from the same snapshot (strata-orchestrator version 14; the check exits 0). Checked on the App's pages at 02:20 PDT, captured at 1440 px: ticket 137, /packages/IN-RRSMP-7516-CW-RFB section 1 names no range that ends before it starts; it reads '3,732 past packages matched this one, but I can't measure how long any of them took. Of the 3,732, 1,964 lacked the STEP reference that links notice to contract and 1,768 had no specific procurement notice in the records I hold.'; ticket 139, /packages/KE-SDOR-KIHBT-563865-CW-RFB section 1 reads 'The plan's step dates put the signed contract on November 7, 2029 but give no planned notice date, so there is no plan line yet. Type a number of months to compare.', the same dates the tracker shows (Bidding document issued planned for Dec 9, 2026 through Contract signed planned for Nov 7, 2029), so the two no longer contradict each other; ticket 130, both package pages carry 'From the plan row' and 'Where the steps stand' as a list in the right column at 1440 px; ticket 140, the review queue as the owner reads 'You recommended adding it on October 29, 2026. You recommended it, so a different lead decides.' with no person's name on the page; ticket 135, the scoped run is the owner's (the script now takes a project list and reads in pages). The signed-in checks these tickets name (the pages by eye at the three widths) are the owner's on the App, or the specialist's path of ticket 49's step 2.
+
+## Ticket 141, step 1 of 4: write the plan rows of P155350, P156634 and P130164 again from bronze, then rebuild gold
+
+The merger parked this on October 30, 2026, after merge commit a5d002c7 (branch `strata/141-the-pakistan-plan-s-rows-carry-their-method-and-estimate` at 75988d26). Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these four blocks one at a time and in order, from a snapshot at or after a5d002c7, as the header says (`git archive <sha> | tar -x -C <scratchpad>/snap-<sha>`). Run steps 1 to 4 on the same day and outside the nightly window, so no nightly `parse_and_embed` on the old reader runs between the rewrite and step 4's bundle deploy.
+
+What ticket 141 changes: the plan reader (`src/strata/reader/step.py`) now matches a column label that ai_parse_document cut with spaces ("Actual Am ount (US$" is Actual Amount (US$)), and reads a row that the parser folded into a repeated header (PK-SID-2961-CW-RFP on PDF page 4 of P155350's plan of June 10, 2024, document 34337516). `src/strata/lakehouse/sql/plans/plan_data_notes.sql` adds RFP (Request for Proposals) to the reference codes. An -RFP reference whose Method column names another method now gets a `method_differs_from_reference` note, and the row keeps the Method column's method. No table, route or web file changed. Steps 1 to 3 are the builder's step 1 and 2 plus criterion 2's workspace part, which the verifier parked. Step 4 is the builder's step 3.
+
+First, before any rewrite, keep this read-only answer for step 3. It fingerprints every P130164 and P156634 row except the two rows this ticket recovers:
+
+    SELECT project_id, document_id, count(*) AS plan_rows, sum(hash(activity_reference_no, method, estimated_amount_usd, actual_amount_usd, process_status)) AS fingerprint FROM strata.silver.plan_rows WHERE project_id IN ('P130164', 'P156634') AND activity_reference_no NOT IN ('IN-RRSMP-7431-CW-RFB', 'NWWDA-WSDP-03-2019-2020') GROUP BY project_id, document_id ORDER BY project_id, document_id
+    SELECT activity_reference_no, document_id, pdf_page FROM strata.silver.plan_rows WHERE activity_reference_no IN ('IN-RRSMP-7431-CW-RFB', 'NWWDA-WSDP-03-2019-2020') ORDER BY activity_reference_no, document_id
+
+Then write the three projects' plan rows again from bronze (ticket 122's rewrite path, which fetches and parses no document; `--project` takes one project a run) and rebuild gold once:
+
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P155350
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P156634
+    uv run --script ops/plans/run_live.py --env-file "<main checkout>/.env" --rewrite --project P130164
+    databricks jobs run-now --json '{"job_id": <nightly job ID>, "only": ["bronze_to_gold"]}' --timeout 160m -p strata
+
+It worked if each `run_live.py` exits 0 and fetches and parses nothing, P155350's run prints 16 rows for the plan of June 10, 2024 (15 before; the builder's count), and `bronze_to_gold` ends SUCCESS. Record the two queries' answers, each script's lines, the job run id and its result here under ticket 141.
+
+## Ticket 141, step 2 of 4: P155350's plan rows read the method and amounts the plan prints (criterion 3's rows)
+
+Run after step 1, read-only:
+
+    SELECT activity_reference_no, pdf_page, method, estimated_amount_usd, actual_amount_usd, process_status FROM strata.silver.plan_rows WHERE document_id = '34337516' ORDER BY pdf_page, activity_reference_no
+    SELECT activity_reference_no, reference_method_code, reference_method, method FROM strata.silver.plan_data_notes WHERE document_id = '34337516' AND note = 'method_differs_from_reference' ORDER BY activity_reference_no
+
+It worked if all of these hold:
+
+- The first query returns 16 rows on PDF page 4.
+- PK-SID-2961-CW-RFP is among them, with Request for Bids, 5024100.36 and Signed.
+- PK-SID-20260-CW-RFB shows 3557787.46.
+- Every `estimated_amount_usd` is NULL, because the plan prints no Estimated Amount column.
+- Every method is Request for Bids.
+- The second query gives each -RFP row (2961, 2962, 2963, 2964, 2965, 2967, 2968, and 2969 as the parser read it) RFP, Request for Proposals and Request for Bids.
+
+Three figures are known to be wrong until the review's follow-up 1 lands, and they are not a failure of this step. PK-SID-29086-CW-RFB reads 4324242.94, where PDF page 4 prints 4,924,242.94 (ai_parse_document read a 9 as a 3). PK-SID-2969-CW-RFP carries 1042222.84, which page 4 prints on PK-SID-2960-CW-RFP. PK-SID-69713-CW-RFB carries 3704929.34, which page 4 prints on PK-SID-69711-CW-RFB. The last two are ticket 78's `_settle` picking the wrong listed reference. Record both queries' rows here under ticket 141.
+
+## Ticket 141, step 3 of 4: P130164 and P156634 read as before, except the two recovered rows (criterion 2, workspace part)
+
+Run after step 1, read-only: run step 1's two queries again and compare them with the answers kept before the rewrite.
+
+It worked if the first query's rows are the same as before, document by document (the same count and fingerprint), and the second query lists IN-RRSMP-7431-CW-RFB and NWWDA-WSDP-03-2019-2020 each in one more plan version than before, with NWWDA-WSDP-03-2019-2020 newly in document 40132287 (PDF page 3). Any other difference fails criterion 2: record which document and which rows differ, and do not go on to step 4. Record both answers here under ticket 141. P130164's plan of June 20, 2018 is not in the fixture, so this is the only proof that it reads as before.
+
+## Ticket 141, step 4 of 4: deploy the bundle and redeploy the App, then P155350's Procurement tab (criterion 3, restated)
+
+Run after steps 2 and 3, from the same snapshot. The bundle deploy carries the reader to the nightly's `parse_and_embed`. The App redeploy carries the RFP code to the plan check of an uploaded plan (`check_plan.reference_methods()` reads the same note definition). Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+If a later merge's redeploy already runs a5d002c7 or a later commit, record that run here instead of deploying again.
+
+Then sign in to https://strata-7405609289499029.9.azure.databricksapps.com as a viewer with a role and open `/projects/P155350`, Procurement tab, the plan of June 10, 2024, in a fresh browser context. It worked if the plan shows 16 activities including PK-SID-2961-CW-RFP, each row shows its Actual Amount, Estimated reads "Not in the plan", each -RFP row's method reads Request for Bids, and the plan check shows the method note on each -RFP row ("The reference ends in RFP (Request for Proposals), but the Method column says Request for Bids. I use the Method column."). The ticket's own words ("estimates and Request for Proposals on the -RFP rows") cannot hold, because the World Bank's PDF and text of document 34337516 print neither; the review and the verifier restated the proof this way (a decision parked for the user). Record both exit codes, the bundle deploy's "3. What changed:" lines, the commit the App runs, any secret the App deploy's step 3 names, and what the tab shows here under ticket 141.
