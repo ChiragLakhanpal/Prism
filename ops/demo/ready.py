@@ -39,7 +39,9 @@ it changes anything (ticket 81). Otherwise it lists the workspace, then takes th
    the user. It never records the fixture again and never edits tests/ground_truth/values.toml.
 5. Home. It runs ticket 41's seed command for the reviewing panel's group, and says whether the demo plan's
    Disclosed date falls inside home.window_days of the data-through date, or what the briefing shows instead. Until
-   ticket 41 merges, it says that neither is built.
+   ticket 41 merges, it says that neither is built. The seed command writes as the App's service principal, whose
+   secret the platform replaces each time it starts the App again; when the workspace refuses the env file's secret,
+   the seed writes with DATABRICKS_TOKEN instead, and this step repeats the line the seed printed (ticket 129).
 6. It lists the workspace again and prints what changed. A second run prints "No changes."
 
 Then it prints one line per step and exits 0 when no step failed, with the last line "Strata is ready for the
@@ -86,6 +88,7 @@ from strata.agent.verifier import ALL_CHECKS  # noqa: E402
 from strata.config import Thresholds, load_slice, load_thresholds  # noqa: E402
 from strata.evals import answer_benchmark, benchmark  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
+from strata.server.settings import OWNER_FALLBACK  # noqa: E402  (what the seed says when it wrote as the owner)
 from strata.server.viewer_sql import data_through  # noqa: E402
 from strata.tools import registry  # noqa: E402
 
@@ -611,7 +614,7 @@ def recheck_step(workspace, setup: Setup, say, kept: dict) -> Outcome:
 
 def home_step(workspace, setup: Setup, say, kept: dict) -> Outcome:
     step = "Home"
-    limits, built = setup.limits(), True
+    limits, built, as_the_owner = setup.limits(), True, False
     say("5. Home's examples and its briefing window.")
     if setup.seed_command():
         code, output = workspace.seed()
@@ -619,6 +622,11 @@ def home_step(workspace, setup: Setup, say, kept: dict) -> Outcome:
             return Outcome(step, FAILED, f"The seed command failed: {one_line(output) or 'it said nothing'}")
         say(f"   I ran python -m {SEED_MODULE} for the reviewing panel's group. It makes only the examples that are "
             "missing.")
+        # The platform made the App a new secret when it last started the App, so the seed command wrote with the
+        # env file's token (ticket 129).
+        as_the_owner = OWNER_FALLBACK in output.splitlines()
+        if as_the_owner:
+            say(f"   {OWNER_FALLBACK}")
     else:
         built = False
         say(f"   The seed command, python -m {SEED_MODULE}, is not built yet (ticket 41), so I seeded no examples.")
@@ -647,6 +655,8 @@ def home_step(workspace, setup: Setup, say, kept: dict) -> Outcome:
                     "not list this plan's activities.")
     if not built:
         return Outcome(step, NOT_BUILT, "Ticket 41 adds the seed command and Home's window.")
+    if as_the_owner:
+        return Outcome(step, PASSED, "The examples are seeded, as the owner, and the window is checked.")
     return Outcome(step, PASSED, "The examples are seeded and the window is checked.")
 
 

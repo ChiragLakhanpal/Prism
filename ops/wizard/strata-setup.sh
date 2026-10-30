@@ -477,6 +477,13 @@ service_principal() {
   step "Next to Service principals, click Manage. Click Add service principal, then Add new."
   step "Name it strata-probes and click Add. Open it, open the Secrets tab, and click Generate secret."
   step "Copy the client ID and the secret. Databricks shows the secret only once."
+  # Ticket 129: the platform replaces the App's secret at each restart, and src/strata/server/settings.py's
+  # app_token falls back to DATABRICKS_TOKEN when the workspace refuses it.
+  say "Paste the secret of strata-probes here, not the secret of the App's own service principal."
+  say "A secret of the App's own service principal lives only until the platform next restarts the App,"
+  say "because the platform then makes it a new one. You never need to paste the App's secret: when the"
+  say "workspace refuses it, the scripts that write as the App, such as the seed command, write with your"
+  say "personal access token instead."
   ask_required DATABRICKS_CLIENT_ID "Paste the client ID:"
   ask_secret_required DATABRICKS_CLIENT_SECRET "Paste the secret. It stays hidden while you paste:"
   if databricks_works; then

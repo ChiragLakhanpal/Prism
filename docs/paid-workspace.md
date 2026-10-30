@@ -239,7 +239,7 @@ Command 15, the examples for the reviewing panel. It has never run on any worksp
 uv run python -m strata.seed_examples --env-file .env
 ```
 
-It needs the panel's people in config/roles.toml, each with a user_id, and DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET of the App's service principal in the env file (docs/workspace-catchup.md, ticket 41 step 2). Both are yours to add: the roles file through the gate, and the secret in the env file. The Azure account is a different Databricks account from the Free Edition one, so expect new user ids; the wizard's test 7 evidence line prints your own. Then either runs the command.
+It needs the panel's people in config/roles.toml, each with a user_id, and DATABRICKS_CLIENT_ID and DATABRICKS_CLIENT_SECRET of the App's service principal in the env file (docs/workspace-catchup.md, ticket 41 step 2). Both are yours to add: the roles file through the gate, and the secret in the env file. You add the secret once: the platform makes the App's service principal a new secret each time it starts the App again, so the one in the env file works only until the next restart, and after that the command writes with your DATABRICKS_TOKEN and says "The App's secret is gone since the platform restarted the App; writing as the owner instead." (ticket 129). The Azure account is a different Databricks account from the Free Edition one, so expect new user ids; the wizard's test 7 evidence line prints your own. Then either runs the command.
 
 Command 16, the demo-ready command. Either runs it. About two minutes when the App is running, 12:45:28 to 12:47:31 UTC on October 26; about ten when it restarts the App.
 
