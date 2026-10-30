@@ -79,18 +79,21 @@ function MethodFact({ result }: { result: CheckedPlan }) {
   );
 }
 
+// The change line when only the comparison failed: it says so and links the section below, which holds the alert and
+// Try again. The one copy of it: "Compared with" draws it, and so does the gallery's state.
+export function ChangeLineError({ className }: { className?: string }) {
+  return (
+    <p className={className} data-change-line>
+      {line.error}{" "}
+      <TextLink href="#changes" className="whitespace-nowrap">
+        {line.errorLink}
+      </TextLink>
+    </p>
+  );
+}
+
 function comparedFact(result: CheckedPlan, { changes, failed }: Comparison, onSeeChanges: () => void): ReactNode {
-  if (failed) {
-    // As the change line said under the finding before ticket 130: the zone below holds the alert and Try again.
-    return (
-      <p data-change-line>
-        {line.error}{" "}
-        <TextLink href="#changes" className="whitespace-nowrap">
-          {line.errorLink}
-        </TextLink>
-      </p>
-    );
-  }
+  if (failed) return <ChangeLineError />;
   if (!changes) return null;
   const versions = (
     <Source className="mt-1">

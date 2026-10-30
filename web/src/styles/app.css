@@ -446,13 +446,11 @@
     display: none;
   }
   /* The part the side column holds under its panel (Workspace.tsx's sideSticky; ticket 130) sticks 24 px under the bar
-     for the rest of the page, but only in a window at least 45rem tall, so the stacked step tracker, about 615 px, is
-     always whole on screen; in a shorter window it scrolls with the page. */
-  @media (height >= 45rem) {
-    [data-side-sticky] {
-      position: sticky;
-      top: calc(var(--frame-top) + 1.5rem);
-    }
+     for the rest of the page only while the window shows all of it, which Workspace.tsx measures and marks as
+     data-fits, so its foot and Source line are never held out of view; otherwise it scrolls with the page. */
+  [data-side-sticky][data-fits] {
+    position: sticky;
+    top: calc(var(--frame-top) + 1.5rem);
   }
 }
 

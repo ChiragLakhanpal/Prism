@@ -10,8 +10,41 @@
 // folded into the head (fold "head": an object's facts become the page head's facts line, and the panel is not drawn)
 // or after the work (fold "after", as Home's side panels do). The DOM keeps the reading order either way: a panel that
 // folds into the head comes before the zones, and one that follows the work comes after them.
-import type { ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { cx } from "../lib/cx";
+
+// The part under the side panel (sideSticky). It sticks only while the window shows all of it under the bar: it
+// measures its own height against the window less the bar and the 24 px it sticks under, again whenever it or the
+// window changes size, and marks data-fits, which app.css makes it stick on. A consulting firm's nine steps, about
+// 815 px, fit a 1440 by 900 window and not a 1280 by 800 one, where the card scrolls with the page instead (ticket
+// 130, review round 1, B2).
+function SideSticky({ children }: { children: ReactNode }) {
+  const part = useRef<HTMLDivElement>(null);
+  const [fits, setFits] = useState(false);
+  useLayoutEffect(() => {
+    const element = part.current;
+    if (!element) return;
+    const measure = () => {
+      const root = getComputedStyle(document.documentElement);
+      const bar = parseFloat(root.getPropertyValue("--frame-top")) || 0;
+      const gap = 1.5 * (parseFloat(root.fontSize) || 16);
+      setFits(element.offsetHeight <= window.innerHeight - bar - gap);
+    };
+    measure();
+    const resized = new ResizeObserver(measure);
+    resized.observe(element);
+    window.addEventListener("resize", measure);
+    return () => {
+      resized.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+  return (
+    <div ref={part} data-side-sticky data-fits={fits || undefined} className="mt-4">
+      {children}
+    </div>
+  );
+}
 
 export function Workspace({
   answer,
@@ -26,8 +59,9 @@ export function Workspace({
   head: ReactNode;
   side?: ReactNode;
   // What the side column holds under its panel, 16 px down, which sticks 24 px under the bar for the rest of the page
-  // while the window is at least 45rem tall, so all of it stays in view (app.css, "The workspace layout"). The page
-  // passes it only from a frame of 75rem, where the side column shows: the package workspace's step tracker.
+  // only while the window shows all of it, so its foot and its Source line are never held out of view (SideSticky
+  // below; app.css, "The workspace layout"). The page passes it only from a frame of 75rem, where the side column
+  // shows: the package workspace's step tracker.
   sideSticky?: ReactNode;
   fold?: "head" | "after";
   // The zones.
@@ -48,11 +82,7 @@ export function Workspace({
       )}
     >
       {side}
-      {sideSticky != null && (
-        <div data-side-sticky className="mt-4">
-          {sideSticky}
-        </div>
-      )}
+      {sideSticky != null && <SideSticky>{sideSticky}</SideSticky>}
     </div>
   );
   return (

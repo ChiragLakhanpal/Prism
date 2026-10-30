@@ -1046,6 +1046,9 @@ export function PlanCheck({ result, findingRef, defaultOpen = false, afterMethod
 // and a saved baseline at 1280 px (494 px), the narrowest window where it sits beside the finding, and it keeps the
 // first marked row in a 1440 by 900 window's first screen; a longer panel grows the row.
 const HOW_CHECKED_ROW = "min-h-[31rem]";
+// The same least height for the skeleton's row, which reads the page area's width from its container instead of the
+// hook. The two must match; Tailwind needs whole class names, so both are written out in full.
+const HOW_CHECKED_ROW_LOADING = "@xl/page:min-h-[31rem]";
 
 // The plan's source line: under the activities, and in a row's records in the drawer.
 export function PlanSource({ result }: { result: CheckedPlan }) {
@@ -1125,8 +1128,8 @@ export function PlanCheckSkeleton({ slow, afterNarration, howChecked = false }: 
   return (
     <div data-plan-skeleton>
       {/* EightColumns' columns 1 to 8, or 1 to 7 beside "How I checked"'s place from a page area of 75rem, which holds
-          the row's least height as the populated row does (HOW_CHECKED_ROW). */}
-      <div className={cx("layout-grid mt-6", howChecked && "@xl/page:min-h-[31rem]")}>
+          the row's least height as the populated row does (HOW_CHECKED_ROW_LOADING). */}
+      <div className={cx("layout-grid mt-6", howChecked && HOW_CHECKED_ROW_LOADING)}>
         <div className={cx("col-span-12 min-w-0 max-w-[72ch] @lg/page:col-span-8", howChecked && "@xl/page:col-span-7")}>
         {/* The narration and the place it holds share one grid cell, so it is exactly as tall as the finding it stands
             for. The place is a typical finding, written from the copy file's templates in the finding's own style and

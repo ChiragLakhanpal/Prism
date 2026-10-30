@@ -117,20 +117,6 @@ function usePlanChanges(pid: string, agencyId: string, planDate: string | null, 
   };
 }
 
-// The change line when only the comparison failed: it says so and links the section below, which holds
-// the alert and Try again.
-export function ChangeLineError() {
-  const line = words.changes;
-  return (
-    <p className="mt-2 text-body text-ink" data-change-line>
-      {line.error}{" "}
-      <TextLink href="#changes" className="whitespace-nowrap">
-        {line.errorLink}
-      </TextLink>
-    </p>
-  );
-}
-
 // The change section when only the comparison failed: the error takes the zone body's place under its heading (the
 // 21 brief, section 5.4; DESIGN.md section 5, Task zone's error state), with the request's reference when the server
 // gave one.

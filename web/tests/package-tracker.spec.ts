@@ -27,7 +27,13 @@ async function serve(page: Page, answers: Record<string, Answer>, size = { width
   });
 }
 
-async function openStepRow(page: Page, ref: string, files: { pkg: string; comparables: string; steps: string }, size?: { width: number; height: number }) {
+async function openStepRow(
+  page: Page,
+  ref: string,
+  files: { pkg: string; comparables: string; steps: string },
+  size?: { width: number; height: number },
+  count = 6,
+) {
   const api = `/api/packages/${ref}`;
   await serve(
     page,
@@ -39,7 +45,7 @@ async function openStepRow(page: Page, ref: string, files: { pkg: string; compar
     size,
   );
   await page.goto(`/packages/${ref}`);
-  await expect(tracker(page).getByRole("listitem")).toHaveCount(6);
+  await expect(tracker(page).getByRole("listitem")).toHaveCount(count);
 }
 
 const tracker = (page: Page) => page.locator("[data-step-tracker]");
@@ -266,4 +272,44 @@ test("at 1440 and 1280 px the tracker is a list in the right column under the pl
     expect(new Set(await lefts(page)).size, `${width} px`).toBe(width === 1024 ? 6 : 1);
     await page.unrouteAll();
   }
+});
+
+// The round 1 review's B1 and B2: the card sticks only while the window shows all of it, so its Source line is never
+// held out of view, and a step the arrow keys move to is brought into view when it is not.
+const CONSULTING = { pkg: "package-ke-cwsb-224323.json", comparables: "comparables-ke-cwsb-224323.json", steps: "steps-ke-cwsb-224323.json" };
+const sticking = (page: Page) => page.locator("[data-side-sticky]").evaluate((part) => getComputedStyle(part).position);
+// A screen and a half down, inside zone 1, whose comparables run to about 3,000 px for this package: the card sticks
+// there when it fits, clear of the work's end, which pushes a stuck card up with the page.
+const midway = (page: Page) => page.evaluate(() => window.scrollTo(0, Math.round(window.innerHeight * 1.5)));
+async function tabToTracker(page: Page) {
+  for (let tabs = 0; tabs < 40 && !(await page.evaluate(() => document.activeElement?.hasAttribute("data-step-state"))); tabs++) await page.keyboard.press("Tab");
+}
+
+test("in the right column the tracker sticks only while the window shows all of it, and the arrow keys bring a step below the window into view", async ({ page }) => {
+  // Six steps at 1280 by 800, at the page's top: the card is in the page's flow and its last steps are below the window.
+  await openStepRow(page, "KE-HAND-900000-CW-RFB", { pkg: "package-ke-hand-900000.json", comparables: "comparables-ke-hand-900000.json", steps: "steps-ke-hand-900000.json" }, { width: 1280, height: 800 });
+  await tabToTracker(page);
+  await expect(items(page).nth(0)).toBeFocused();
+  await page.keyboard.press("End");
+  await expect(items(page).nth(5)).toBeFocused();
+  await expect(items(page).nth(5)).toBeInViewport({ ratio: 1 });
+  await page.unrouteAll();
+
+  // A consulting firm's nine steps: taller than a 1280 by 800 window less the bar, so the card scrolls with the page,
+  // and the arrow keys still bring its last step into view.
+  await openStepRow(page, "KE-CWSB-224323-CS-QCBS", CONSULTING, { width: 1280, height: 800 }, 9);
+  await midway(page);
+  expect(await sticking(page)).toBe("static");
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await tabToTracker(page);
+  await page.keyboard.press("End");
+  await expect(items(page).nth(8)).toBeFocused();
+  await expect(items(page).nth(8)).toBeInViewport({ ratio: 1 });
+
+  // In a 1440 by 900 window the nine steps fit under the bar, so the card sticks, whole on screen.
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await midway(page);
+  await expect.poll(() => sticking(page)).toBe("sticky");
+  await expect(tracker(page)).toBeInViewport({ ratio: 1 });
+  expect(Math.round((await tracker(page).boundingBox())!.y)).toBe(56 + 24);
 });

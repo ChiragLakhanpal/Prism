@@ -1317,10 +1317,14 @@ test("at 1440 and 1280 px How I checked sits beside the finding with the method,
     "The plan of July 21, 2025, saved by Ana Example on October 23, 2026. Go to Baseline for delay",
     "Source: Strata's saved baselines, as of October 23, 2026.",
   ]);
-  // Go to Baseline for delay lands on that row's heading, where its controls are.
+  // Go to Baseline for delay lands on that row's heading, where its controls are, and focus goes with it: the browser
+  // focuses a link's target that can take focus (the heading's tabIndex -1), so a screen reader lands where See what
+  // changed lands (the round 1 review's follow-up 3).
   await checkedFact(page, "Baseline").getByRole("link", { name: "Go to Baseline for delay" }).click();
   await expect(page).toHaveURL(/#baseline$/);
-  await expect(page.getByRole("region", { name: "Baseline for delay" }).getByRole("heading", { level: 2 })).toBeInViewport();
+  const baselineHeading = page.getByRole("region", { name: "Baseline for delay" }).getByRole("heading", { level: 2 });
+  await expect(baselineHeading).toBeFocused();
+  await expect(baselineHeading).toBeInViewport();
 });
 
 test("at 1024 and 390 px How I checked follows the activities, so the first marked row stays in the first screen, and axe is clean at 1440, 1280, 1024 and 390 px", async ({ page }) => {

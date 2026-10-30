@@ -164,11 +164,16 @@ export function StepTracker({ state }: { state: StepsState }) {
     event.preventDefault();
     const index = to(stop, steps.length - 1);
     setFocused(index);
-    // In the side column the card sticks under the bar and stays whole on screen, so focus moves along it without
-    // scrolling the page (DESIGN.md section 10's rule for sticky parts; ticket 130).
-    const sticky = list.current?.closest<HTMLElement>("[data-side-sticky]");
-    const still = sticky != null && getComputedStyle(sticky).position === "sticky";
-    list.current?.querySelectorAll<HTMLElement>("[data-step-state]")[index]?.focus(still ? { preventScroll: true } : undefined);
+    const node = list.current?.querySelectorAll<HTMLElement>("[data-step-state]")[index];
+    if (!node) return;
+    // In the side column, where the ask box does not reach, a step already whole on screen under the bar takes focus
+    // without scrolling the page: the browser would otherwise scroll it clear of the box's scroll padding, which moves
+    // the page for nothing while the card sticks. A step under the bar or below the window is brought into view as
+    // anywhere else (DESIGN.md section 10's rule for sticky parts; ticket 130, review round 1, B1).
+    const bar = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--frame-top")) || 0;
+    const box = node.getBoundingClientRect();
+    const seen = node.closest("[data-side-sticky]") !== null && box.top >= bar && box.bottom <= window.innerHeight;
+    node.focus(seen ? { preventScroll: true } : undefined);
   };
 
   return (
