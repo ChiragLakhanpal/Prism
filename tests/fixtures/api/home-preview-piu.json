@@ -31,22 +31,13 @@
       ],
       [
         {
-          "count": 2,
-          "word": "Two",
-          "kind": "behind",
-          "ids": [
-            "line-activity-KE-NWWDA-541055-CW-RFB",
-            "line-activity-KE-NWWDA-541062-CW-RFQ"
-          ]
-        },
-        {
-          "text": " of "
+          "text": "None of "
         },
         {
           "text": "its"
         },
         {
-          "text": " activities are behind their planned dates."
+          "text": " activities is behind its planned dates."
         }
       ]
     ],
@@ -65,101 +56,12 @@
   },
   "worth": {
     "kind": "agency",
-    "lines": [
-      {
-        "kind": "activity",
-        "id": "line-activity-KE-NWWDA-541055-CW-RFB",
-        "key": "KE-NWWDA-541055-CW-RFB",
-        "status": "needs_a_look",
-        "reason": "completion_passed_no_contract",
-        "example": false,
-        "plan": "40132287",
-        "segments": [
-          {
-            "ref": "KE-NWWDA-541055-CW-RFB"
-          },
-          {
-            "text": " passed its planned completion date of "
-          },
-          {
-            "date": "2026-07-31"
-          },
-          {
-            "text": " with no signed contract in the plan."
-          },
-          {
-            "text": " The project closes "
-          },
-          {
-            "date": "2026-10-31"
-          },
-          {
-            "text": "."
-          }
-        ],
-        "source": {
-          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-          "kind": "plan",
-          "date": "2026-10-09",
-          "agency": "Northern Water Works Development Agency",
-          "pid": "P156634"
-        },
-        "action": {
-          "key": "openActivity",
-          "href": "/projects/P156634/packages/KE-NWWDA-541055-CW-RFB",
-          "hidden": "KE-NWWDA-541055-CW-RFB"
-        },
-        "differs": null
-      },
-      {
-        "kind": "activity",
-        "id": "line-activity-KE-NWWDA-541062-CW-RFQ",
-        "key": "KE-NWWDA-541062-CW-RFQ",
-        "status": "watch",
-        "reason": "pending_near_closing",
-        "example": false,
-        "plan": "40132287",
-        "segments": [
-          {
-            "ref": "KE-NWWDA-541062-CW-RFQ"
-          },
-          {
-            "text": " is still pending in the plan, "
-          },
-          {
-            "number": 3,
-            "what": "daysToClose"
-          },
-          {
-            "text": " days before the project closes on "
-          },
-          {
-            "date": "2026-10-31"
-          },
-          {
-            "text": "."
-          }
-        ],
-        "source": {
-          "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541062-CW-RFQ",
-          "kind": "plan",
-          "date": "2026-10-09",
-          "agency": "Northern Water Works Development Agency",
-          "pid": "P156634"
-        },
-        "action": {
-          "key": "openActivity",
-          "href": "/projects/P156634/packages/KE-NWWDA-541062-CW-RFQ",
-          "hidden": "KE-NWWDA-541062-CW-RFQ"
-        },
-        "differs": null
-      }
-    ],
+    "lines": [],
     "fold_after": 8,
     "partial": null,
     "checked_on": "2026-10-28",
     "through": "2026-10-23",
-    "empty": null,
+    "empty": "nothing_behind",
     "agency": {
       "name": "Northern Water Works Development Agency",
       "agency_id": "northern-water-works-development-agency"

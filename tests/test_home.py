@@ -63,15 +63,17 @@ def lines(answer: dict, kind: str | None = None, status: str | None = None) -> l
 def test_the_briefing_reads_like_the_tickets_and_each_count_equals_the_lines_it_counts(story):
     answer = story.home().json()
 
+    # Ticket 132: the plan's two Pending Implementation activities, KE-NWWDA-541055-CW-RFB and KE-NWWDA-541062-CW-RFQ,
+    # were signed by the plan's date, the contract awards say (values.toml, award-541055-signed and
+    # award-541062-signed), so the plan check names them moved on since the plan, and neither is behind its dates.
     assert sentences(answer) == ["One plan changed in the past 15 days.",
-                                 "One of its activities needs a look and two are worth watching.",
+                                 "One of its activities is worth watching.",
                                  "One lesson cited in your drafts changed.",
                                  "Two drafts are waiting for you to check."]
     found = counts(answer)
-    assert {kind: found[kind]["count"] for kind in found} == {"plans": 1, "look": 1, "watch": 2, "lessonsChanged": 1,
-                                                              "drafts": 2}
+    assert {kind: found[kind]["count"] for kind in found} == {"plans": 1, "watch": 1, "lessonsChanged": 1, "drafts": 2}
     # Each count lists the ids of what it counts, and those are the lines below, kind by kind.
-    assert found["look"]["ids"] == [line["id"] for line in lines(answer, "activity", "needs_a_look")]
+    assert lines(answer, "activity", "needs_a_look") == []
     assert found["watch"]["ids"] == [line["id"] for line in lines(answer, "activity", "watch")]
     assert found["lessonsChanged"]["ids"] == [line["id"] for line in lines(answer, "lesson", "changed")]
     assert found["drafts"]["ids"] == [row["draft_id"] for row in answer["waiting"]["rows"]]
@@ -80,41 +82,38 @@ def test_the_briefing_reads_like_the_tickets_and_each_count_equals_the_lines_it_
                                                    "data_through": "2026-10-23", "phrase": None}
 
 
-def test_the_first_two_lines_are_the_wireframes_real_lines_from_the_nwwda_plan_of_october_9(story):
+def test_the_first_line_is_the_wireframes_real_line_the_records_have_not_moved_past(story):
+    """The wireframe's first real line, KE-NWWDA-541055-CW-RFB's planned completion passed with no signed contract in
+    the plan, is gone: the contract awards say it was signed on June 22, 2026 (values.toml, award-541055-signed), and
+    the plan check names it moved on since the plan (ticket 132). Its second real line now comes first."""
     answer = story.home().json()
-    first, second = lines(answer)[:2]
-    name, closes = value("project-name-p156634"), long(value("closing-date-p156634"))
-    completion = long(value("plan-541055-planned-completion"))
+    [first] = lines(answer, "activity")
+    name = value("project-name-p156634")
     actual, estimate = value("plan-229129-actual"), value("plan-229129-estimated")
 
-    # The wireframe's two real lines, with the project named from its record and "in the plan" after "no signed
-    # contract", because the awards dataset shows the contract signed (values.toml, award-541055-signed).
+    # The project named from its record, and the activity's estimate, since it is the first line of its plan.
     assert text_of(first["segments"]) == (
-        f"KE-NWWDA-541055-CW-RFB, US$1.23 million of works in the {name} (P156634), passed its planned completion "
-        f"date of {completion} with no signed contract in the plan. The project closes {closes}.")
-    assert text_of(second["segments"]) == (
-        f"In the same plan, KE-NWWDA-229129-CW-RFB was signed at US${actual:,.2f} against an estimate of "
-        f"US${estimate:,.0f}.")
-    assert (first["status"], second["status"]) == ("needs_a_look", "watch")
-    # Each "Open the activity" lands on that activity's page, and each line cites its plan row.
-    assert first["action"] == {"key": "openActivity", "href": "/projects/P156634/packages/KE-NWWDA-541055-CW-RFB",
-                               "hidden": "KE-NWWDA-541055-CW-RFB"}
-    assert second["action"]["href"] == "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB"
-    assert first["source"]["evidence_id"] == "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
+        f"KE-NWWDA-229129-CW-RFB, US${estimate:,.0f} of works in the {name} (P156634), was signed at US${actual:,.2f} "
+        f"against an estimate of US${estimate:,.0f}.")
+    assert first["status"] == "watch"
+    assert not [line for line in lines(answer) if "KE-NWWDA-541055-CW-RFB" in text_of(line["segments"])]
+    # "Open the activity" lands on that activity's page, and the line cites its plan row.
+    assert first["action"] == {"key": "openActivity", "href": "/projects/P156634/packages/KE-NWWDA-229129-CW-RFB",
+                               "hidden": "KE-NWWDA-229129-CW-RFB"}
+    assert first["source"]["evidence_id"] == "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"
     assert first["source"]["date"] == value("plan-2026-10-09-disclosed").isoformat()
 
 
 def test_each_number_in_a_line_names_what_it_is_and_a_rounded_amount_carries_the_plan_rows_own_value(story):
     """Ticket 96: a number's tooltip says what the number is, and a rounded amount's gives the record's own unrounded
     value (DESIGN.md, Signal line), so the server says which value each number in a line is."""
-    first, second, third = lines(story.home().json(), "activity")[:3]
+    [first] = lines(story.home().json(), "activity")
     numbers = lambda line: [segment for segment in line["segments"] if "written" in segment or "number" in segment]
 
-    assert numbers(first) == [{"written": "1.23", "what": "millions",
-                               "exact": f"{value('plan-541055-estimated'):,.2f}"}]
-    assert numbers(second) == [{"written": f"{value('plan-229129-actual'):,.2f}", "what": "actual"},
-                               {"written": f"{value('plan-229129-estimated'):,.0f}", "what": "estimated"}]
-    assert [segment["what"] for segment in numbers(third)] == ["daysToClose"]
+    # US$300,000 is below a million, so the line writes the estimate whole, with nothing rounded to carry.
+    assert numbers(first) == [{"written": f"{value('plan-229129-estimated'):,.0f}", "what": "estimated"},
+                              {"written": f"{value('plan-229129-actual'):,.2f}", "what": "actual"},
+                              {"written": f"{value('plan-229129-estimated'):,.0f}", "what": "estimated"}]
 
 
 def test_each_activity_page_the_lines_open_answers_for_its_activity(story):
@@ -268,12 +267,13 @@ def test_the_strip_shows_only_to_world_bank_staff(story):
 def test_the_agency_preview_lists_the_activities_behind_their_planned_dates_in_the_agencys_latest_plan(story):
     answer = story.home(view="piu").json()
 
+    # Ticket 132: the plan's two Pending Implementation activities were signed by the plan's date, the contract awards
+    # say (values.toml, award-541055-signed and award-541062-signed), so neither is behind its planned dates.
     assert sentences(answer)[:2] == [
         f"I checked your team's latest Procurement Plan, the plan of October 9, 2026 for the "
         f"{value('project-name-p156634')} (P156634).",
-        "Two of its activities are behind their planned dates."]
-    assert [line["key"] for line in lines(answer)] == ["KE-NWWDA-541055-CW-RFB", "KE-NWWDA-541062-CW-RFQ"]
-    assert text_of(lines(answer)[0]["segments"]).startswith("KE-NWWDA-541055-CW-RFB passed its planned completion")
+        "None of its activities is behind its planned dates."]
+    assert lines(answer) == []
     # The preview shows no team's drafts and no examples, and says so.
     assert answer["waiting"] == {"rows": [], "total": 0, "more": False, "reason": "preview"}
     assert answer["start_here"]["visible"] is False and answer["preview"] is True
@@ -312,8 +312,8 @@ def test_an_officers_own_home_lists_their_plans_activities_behind_their_dates_an
     assert sentences(answer) == [
         f"I checked your team's latest Procurement Plan, the plan of October 9, 2026 for the "
         f"{value('project-name-p156634')} (P156634).",
-        "Two of its activities are behind their planned dates."]
-    assert [line["key"] for line in lines(answer)] == ["KE-NWWDA-541055-CW-RFB", "KE-NWWDA-541062-CW-RFQ"]
+        "None of its activities is behind its planned dates."]
+    assert lines(answer) == []
     assert answer["waiting"]["reason"] is None and answer["start_here"] == {"visible": False, "links": []}
     assert asyncio.run(get("/api/me")).json()["start_here_visible"] is False
 

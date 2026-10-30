@@ -597,6 +597,39 @@ test("the public preview of a project still under way hides its disagreements, a
   await expect(page.locator("main [data-alert]")).toHaveCount(1);
 });
 
+test("under the chart, where the records disagree lists a plan that still says pending beside the contract awards, and opens both records", async ({ page }) => {
+  // Ticket 132: the plan check names KE-NWWDA-541055-CW-RFB moved on since the plan, citing this disagreement, and the
+  // Timeline tab lists the same one (tests/test_timeline.py checks both routes name it). The plan of October 9, 2026
+  // still says Pending Implementation; the contract awards say the contract was signed on June 22, 2026 (values.toml,
+  // plan-541055-status and award-541055-signed).
+  await open(page, "/projects/P156634/timeline", 1440, {
+    "/api/projects/P156634": { body: await recorded("project-p156634.json") },
+    "/api/projects/P156634/timeline": { body: await recorded("timeline-p156634.json") },
+    "/api/evidence?id=disagreement:a29dcd3a40952830": { body: await recorded("evidence-disagreement-ke-nwwda-541055-moved-on.json") },
+  });
+  const section = page.getByRole("region", { name: "Where the records disagree" });
+  await expect(section.locator("[data-records-disagree-count]")).toHaveText("25 pairs of package records disagree.");
+  const items = section.locator("[data-record-disagreement]");
+  // The plans that still say pending come first, and the newest of those first; five show before Show all.
+  await expect(items).toHaveCount(5);
+  const first = section.locator("[data-activity=KE-NWWDA-541055-CW-RFB]");
+  await expect(items.first()).toHaveAttribute("data-activity", "KE-NWWDA-541055-CW-RFB");
+  await expect(first).toContainText(
+    "The plan of October 9, 2026 still says pending, but the contract awards say the contract was signed on June 22, 2026. " +
+      "I lean on the contract award record.",
+  );
+  await section.getByRole("button", { name: "Show all 25" }).click();
+  await expect(items).toHaveCount(25);
+  await expect(section.locator("[data-activity=KE-NWWDA-199461-GO-RFB]").first()).toContainText(
+    "Two records give different signing dates:",
+  );
+
+  await first.getByRole("button", { name: "Open both records for KE-NWWDA-541055-CW-RFB" }).click();
+  await expect(page).toHaveURL(/evidence=disagreement%3Aa29dcd3a40952830/);
+  await expect(drawer(page)).toContainText("Pending Implementation");
+  expect(await axe(page)).toEqual([]);
+});
+
 test("a contract mark's package record from a project's timeline has no past-range caption, since the page has no past range", async ({ page }) => {
   // Ticket 101's review, round 2: "Comparable package in the past range" belongs only to a package that the page's
   // past range counts. P156634's timeline opens the same record kind for a contract mark, with no past range.
