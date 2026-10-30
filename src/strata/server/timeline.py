@@ -20,6 +20,8 @@ timeline() gives GET /api/projects/{pid}/timeline everything the Timeline tab dr
     group's one report (its anchor) to the nearest of the others and names them all (group), so the PAD against
     13 ISRs is one line, not 13 lines on top of one another. Each line keeps its drawn pair's sides in the order
     they were written and the side Strata leans on.
+- records_disagree: get_disagreements' rows about a package whose two sides are both records (a plan row, a
+  contract record, an award notice), which no dashed line can join, listed under the chart (ticket 132).
 - table: the same items with every contract on its own row and every pair of reports that disagree on its own
   row, for "Show the table".
 - ratings: the series the bands draw, with its first and last ratings and which way it moved.
@@ -48,14 +50,16 @@ from pathlib import Path
 from strata.agent.verifier import sentence_of
 from strata.config import KEY_DATE, ConfigError, TimelineSettings, load_ladder, load_project_page, load_thresholds
 from strata.dbx import Viewer
-from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES
+from strata.knowledge.assertions import KEY_DATE_LABELS, PASSAGES, STATUS
 from strata.lakehouse.engine import Engine
 from strata.server.projects import display_name
 from strata.server.viewer_sql import DAILY, data_through
 from strata.server.viewer_sql import query as viewer_query
 from strata.tools import registry
+from strata.tools.check_plan import RECORD_WORDS
 from strata.tools.get_disagreements import lean, written
 from strata.tools.get_disagreements import reads as disagreement_reads
+from strata.tools.get_disagreements import replaced as replaced_disagreement
 from strata.tools.withheld import WITHHELD, withheld_in
 
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
@@ -337,6 +341,36 @@ def _disagreement(row: dict, items: dict[str, dict]) -> dict | None:
             "rule_id": row["rule_id"], "sides": sides, "after": later["item_id"]}
 
 
+# Each record a package's disagreement can rest on, in the step tracker's and the plan check's words for it.
+RECORD_NAMES = {"plan_row": "plan", **RECORD_WORDS}
+
+
+def records_disagree(rows: list[dict]) -> list[dict]:
+    """Where the records disagree (ticket 132): get_disagreements' rows about a package whose two sides are both
+    records, such as a plan row that still says pending and the contract awards that say the contract was signed,
+    which no dashed line on the chart joins. Each gives its STEP reference, its attribute and both sides in the order
+    they were written, with each side's record, field name, value, date and evidence id, and the side Strata leans
+    on: a plan that still says pending first, then the newest first. The plan check cites the same disagreement by
+    its id, so both pages name one fact (CLAUDE.md rule 4)."""
+    found = []
+    for row in rows:
+        if row["subject_kind"] != "package" or any(side["form"] not in RECORD_NAMES for side in row["sides"]):
+            continue
+        sides = [{"record": RECORD_NAMES[side["form"]], "form": side["form"], "field_name": side["field_name"],
+                  "value": side["value"], "value_form": side["value_form"], "made_at": side["made_at"],
+                  "public_from": side["public_from"], "evidence_id": side["evidence_id"],
+                  "leaned": side["assertion_id"] == row["lean_assertion_id"]} for side in row["sides"]]
+        key = f"{DISAGREEMENT}:{row['disagreement_id']}"
+        found.append({"id": key, "evidence_id": key, "disagreement_id": row["disagreement_id"],
+                      "step_reference": row["subject_id"], "attribute": row["attribute"], "rule_id": row["rule_id"],
+                      "date": max(side["made_at"] for side in sides), "public_from": row["public_from"], "sides": sides})
+    # A plan that still says pending first, since the plan check names those rows moved on since the plan; then the
+    # newest first, since the latest plan's are the ones a reader acts on; then by reference.
+    found.sort(key=lambda one: (one["step_reference"], one["disagreement_id"]))
+    found.sort(key=lambda one: one["date"], reverse=True)
+    return sorted(found, key=lambda one: not any(side["value_form"] == STATUS for side in one["sides"]))
+
+
 LANE_ORDER = {lane: at for at, lane in enumerate(LANES)}
 KIND_ORDER = {"report": 0, "event": 0, "record": 0, "group": 0, "band": 1}
 
@@ -508,6 +542,7 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
     every = {f"{DOC}:{document_id}": _report(row, versions, as_of, sequences, rated) for document_id, row in reports.items()}
 
     disagreements, pairs = lines(found, every) if status == "ok" else ([], [])
+    listed = records_disagree(found["rows"] if status == "ok" else [])
     sides = {side["item_id"].removeprefix(f"{DOC}:") for found_one in disagreements for side in found_one["sides"]}
     isrs = [item for item in every.values() if item["type"] == "isr"]
     marked = isr_marks(ratings["points"] if ratings else [], isrs, sides, lambda rating: ladder.side(BANDED, rating))
@@ -530,6 +565,10 @@ def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, vi
         "as_of": as_of.isoformat(), "asked_as_of": _iso(asked), "view": view,
         "items": items, "table": table, "ratings": ratings,
         "disagreements": {"status": status, "count": len(disagreements), "pairs": len(pairs)},
+        # The disagreements between a package's records, listed under the chart, and how many there are, which the
+        # list's count line and its Show all state (ticket 132; CLAUDE.md rule 1).
+        "records_disagree": listed,
+        "records_disagree_count": len(listed),
         # The state a dashed line takes when no answer or draft open on the page depends on it (config).
         "disagreement_line_state": PAGE.timeline.disagreement_line_state,
         "rejected": {"count": int((found.get("rejected") or {}).get("count") or 0)} if status != "failed" else None,
@@ -653,6 +692,8 @@ def disagreement_row(row: dict) -> dict:
             "disagreement_id": row["disagreement_id"], "project_id": row["project_id"], "attribute": row["attribute"],
             "period": row["period"], "rule_id": row["rule_id"], "lean_assertion_id": row["lean_assertion_id"],
             "other_assertion_id": row["other_assertion_id"], "if_you_keep": row["if_you_keep"], "sides": sides,
+            # The day a later version replaced a side, only for a disagreement a replaced plan's check cites (ticket 132).
+            **({"replaced_on": row["replaced_on"]} if row.get("replaced_on") else {}),
             "source": {"table": row["source"]["table"], "project_id": row["project_id"]}}
 
 
@@ -662,13 +703,19 @@ def read_disagreement(engine: Engine, key: str, as_of: dt.date) -> dict | None:
     found = _rows(engine, "disagreement", disagreement_id=key, as_of=as_of)
     if not found:
         return None
-    row = next((one for one in _tool(engine, found[0]["project_id"], as_of)["rows"] if one["disagreement_id"] == key),
-               None)
+    pid = found[0]["project_id"]
+    row = next((one for one in _tool(engine, pid, as_of)["rows"] if one["disagreement_id"] == key), None)
+    if row is None:
+        # A disagreement a later version replaced, such as a replaced plan's row that the contract awards moved past:
+        # current answers leave it out, but that plan's check still cites it (ticket 132's review round 1, B1).
+        row = replaced_disagreement(registry.Call(engine, Viewer(), "staff", as_of, load_thresholds()), pid, key)
     if row is None:
         return None
     sides = {_stratum(GROUPS.get(side["document_type"] or "", "other")) for side in row["sides"]}
-    return {"kind": "disagreement", "stratum": "Why" if sides == {"Why"} else None, "short_name": None,
-            "row": disagreement_row(row)}
+    # Two records about a package (ticket 132) are the What lane's, as a contract mark is; two reports keep their own.
+    records = all(side["evidence_tier"] == "record" for side in row["sides"])
+    stratum = "What" if records else "Why" if sides == {"Why"} else None
+    return {"kind": "disagreement", "stratum": stratum, "short_name": None, "row": disagreement_row(row)}
 
 
 def read_signing(engine: Engine, key: str, as_of: dt.date) -> dict | None:

@@ -643,7 +643,8 @@ def test_the_earliest_version_and_a_version_after_one_not_read_say_why_they_list
 # ── The baseline ─────────────────────────────────────────────────────────
 
 NWWDA = "/api/projects/P156634/procurement/northern-water-works-development-agency"
-REASONS = {"KE-NWWDA-229129-CW-RFB": "signed_late_over_estimate", "KE-NWWDA-541055-CW-RFB": "completion_passed_no_contract"}
+# KE-NWWDA-541055-CW-RFB's reason is moved_on_since_plan since ticket 132, which states no delay.
+REASONS = {"KE-NWWDA-229129-CW-RFB": "signed_late_over_estimate", "KE-NWWDA-541055-CW-RFB": "moved_on_since_plan"}
 
 
 @pytest.fixture
@@ -683,9 +684,16 @@ def test_a_check_after_saving_the_baseline_gives_delay_from_the_baseline_and_fro
     # from August 1, 2021, the baseline's date, to the signing on January 3, 2022 (plan-229129-signed).
     assert signed["days_late"] == 186
     assert signed["baseline"] == {"state": "late", "planned_on": "2021-08-01", "days": 155, "plan_date": "2025-07-21"}
-    # The plan of March 5, 2026 first listed KE-NWWDA-541055-CW-RFB, after the baseline.
-    assert found["KE-NWWDA-541055-CW-RFB"]["baseline"] == {
-        "state": "not_in_baseline", "planned_on": None, "days": None, "plan_date": "2025-07-21"}
+    # KE-NWWDA-541055-CW-RFB, which the plan of March 5, 2026 first listed after the baseline, has moved on since the
+    # plan (ticket 132): the contract awards say it was signed, so no reason measures its delay from any plan.
+    assert "baseline" not in found["KE-NWWDA-541055-CW-RFB"] and found["KE-NWWDA-541055-CW-RFB"]["mark"] == "moved_on"
+    # The plan of April 21, 2021 first listed KE-NWWDA-229129-CW-RFB, after the plan of December 7, 2020: with that
+    # one as the baseline, the signing's delay is measured only from its first published planned date.
+    call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2020-12-07"})
+    earlier = reasons(get(writable, f"{NWWDA}/2026-10-09?asof=2026-10-23").json())
+    assert earlier["KE-NWWDA-229129-CW-RFB"]["baseline"] == {
+        "state": "not_in_baseline", "planned_on": None, "days": None, "plan_date": "2020-12-07"}
+    call(writable, "PUT", f"{NWWDA}/baseline", body={"plan_date": "2025-07-21"})
 
     # The Procurement tab marks the baseline among the agency's versions.
     page = get(writable, "/api/projects/P156634?asof=2026-10-23").json()

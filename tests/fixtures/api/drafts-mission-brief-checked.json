@@ -9,7 +9,7 @@
  },
  "created_at": "2026-10-23T14:02:00Z",
  "checked": {
-  "at": "2026-10-23T14:03:00Z",
+  "at": "2026-10-23T14:04:00Z",
   "by": "Ana Example",
   "you": true
  },
@@ -61,22 +61,6 @@
       {
        "text": "October 9, 2026",
        "evidence_id": "strata.silver.plan_versions:40132287"
-      }
-     ],
-     "quote": null
-    },
-    {
-     "index": 1,
-     "text": "In it, KE-NWWDA-541055-CW-RFB passed its planned completion of July 31, 2026 with no signed contract.",
-     "kind": "record",
-     "evidence_ids": [
-      "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
-     ],
-     "numbers": [],
-     "dates": [
-      {
-       "text": "July 31, 2026",
-       "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
       }
      ],
      "quote": null
@@ -139,12 +123,12 @@
       },
       {
        "key": "needs_a_look",
-       "value": 1,
+       "value": 0,
        "kind": "count"
       },
       {
        "key": "watch",
-       "value": 2,
+       "value": 1,
        "kind": "count"
       }
      ]
@@ -188,7 +172,7 @@
       },
       {
        "key": "watch",
-       "value": 2,
+       "value": 0,
        "kind": "count"
       }
      ]
@@ -232,7 +216,7 @@
       },
       {
        "key": "watch",
-       "value": 3,
+       "value": 0,
        "kind": "count"
       }
      ]
@@ -2594,76 +2578,15 @@
      },
      {
       "key": "needs_a_look",
-      "value": 1,
+      "value": 0,
       "kind": "count"
      },
      {
       "key": "watch",
-      "value": 2,
+      "value": 1,
       "kind": "count"
      }
     ]
-   },
-   "highlights": []
-  },
-  "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB": {
-   "id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-   "kind": "record",
-   "tool": "check_plan",
-   "stratum": "What",
-   "short_name": null,
-   "row": {
-    "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-    "public_from": "2026-10-09",
-    "source": {
-     "document_type": "Procurement Plan",
-     "project_id": "P156634",
-     "implementing_agency": "Northern Water Works Development Agency",
-     "plan_date": "2026-10-09",
-     "document_id": "40132287",
-     "pdf_page": 3
-    },
-    "activity_reference_no": "KE-NWWDA-541055-CW-RFB",
-    "section": "WORKS",
-    "description": "Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply",
-    "review_type": "Post",
-    "method": "Request for Bids",
-    "market_approach": "Open - National",
-    "reference_as_read": false,
-    "estimated_amount_usd": "1230000.00",
-    "estimated_millions": "1.23",
-    "actual_amount_usd": "0.00",
-    "process_status": "Pending Implementation",
-    "signed_on": null,
-    "planned_signing_on": "2026-04-24",
-    "planned_signing_plan_date": "2026-03-05",
-    "days_late": null,
-    "planned_completion_on": "2026-07-31",
-    "planned_completion_plan_date": "2026-03-05",
-    "first_listing_confirmed": false,
-    "actual_to_estimate": null,
-    "marks": [
-     {
-      "mark": "needs_a_look",
-      "reasons": [
-       {
-        "code": "completion_passed_no_contract",
-        "mark": "needs_a_look",
-        "planned_completion_on": "2026-07-31",
-        "planned_completion_plan_date": "2026-03-05",
-        "closing_date": "2026-10-31",
-        "days_to_close": 8,
-        "evidence_ids": [
-         "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
-         "strata.silver.plan_rows:40090127/KE-NWWDA-541055-CW-RFB",
-         "strata.gold.project:P156634"
-        ]
-       }
-      ]
-     }
-    ],
-    "position": null,
-    "listed": null
    },
    "highlights": []
   },
@@ -2712,7 +2635,7 @@
      },
      {
       "key": "watch",
-      "value": 2,
+      "value": 0,
       "kind": "count"
      }
     ]
@@ -2784,16 +2707,46 @@
    "stratum": "What",
    "short_name": null,
    "row": {
+    "assertion_id": "strata.gold.contract:1901323#KE-CWSB-567630-CW-DIR/signed_on",
     "evidence_id": "strata.gold.contract:1901323",
-    "public_from": "2026-08-28",
-    "part": "awards",
-    "reference": "KE-CWSB-567630-CW-DIR",
+    "project_id": "P156634",
     "source": {
      "source_key": "awards",
      "document_type": "Contract Awards in Investment Project Financing (Since FY 2020)",
      "project_id": "P156634",
      "document_date": "2026-08-28"
     },
+    "evidence_tier": "record",
+    "form": "contract_record",
+    "source_key": "awards",
+    "document_id": "1901323",
+    "document_type": null,
+    "report_number": null,
+    "version": null,
+    "sequence": null,
+    "passage_id": "1901323",
+    "pdf_page": null,
+    "paragraph": null,
+    "paragraph_numbered": null,
+    "printed_page": null,
+    "doc_key": null,
+    "section_path": null,
+    "language": null,
+    "kind": null,
+    "text": null,
+    "text_left_out": null,
+    "field_name": "contract_signing_date",
+    "value": "2026-08-28",
+    "value_form": "date",
+    "judgment": null,
+    "quote": null,
+    "period_start": "2026-08-28",
+    "period_end": "2026-08-28",
+    "made_at": "2026-08-28",
+    "public_from": "2026-08-28",
+    "months_after_event": null,
+    "part": "awards",
+    "reference": "KE-CWSB-567630-CW-DIR",
     "fields": [
      {
       "key": "step_reference",
@@ -2834,6 +2787,43 @@
       "key": "estimated_millions",
       "value": "2.6",
       "kind": "millions"
+     }
+    ],
+    "also": [
+     {
+      "assertion_id": "strata.gold.contract:1901323#KE-CWSB-567630-CW-DIR/signed_on",
+      "evidence_id": "strata.gold.contract:1901323",
+      "project_id": "P156634",
+      "source": null,
+      "evidence_tier": "record",
+      "form": "contract_record",
+      "source_key": "awards",
+      "document_id": "1901323",
+      "document_type": null,
+      "report_number": null,
+      "version": null,
+      "sequence": null,
+      "passage_id": "1901323",
+      "pdf_page": null,
+      "paragraph": null,
+      "paragraph_numbered": null,
+      "printed_page": null,
+      "doc_key": null,
+      "section_path": null,
+      "language": null,
+      "kind": null,
+      "text": null,
+      "text_left_out": null,
+      "field_name": "contract_signing_date",
+      "value": "2026-08-28",
+      "value_form": "date",
+      "judgment": null,
+      "quote": null,
+      "period_start": "2026-08-28",
+      "period_end": "2026-08-28",
+      "made_at": "2026-08-28",
+      "public_from": "2026-08-28",
+      "months_after_event": null
      }
     ]
    },
@@ -3175,6 +3165,49 @@
     ]
    },
    "highlights": []
+  },
+  "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR": {
+   "id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
+   "kind": "record",
+   "tool": "get_disagreements",
+   "stratum": "What",
+   "short_name": null,
+   "row": {
+    "assertion_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR#KE-CWSB-567630-CW-DIR/signed_on",
+    "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
+    "project_id": "P156634",
+    "source": null,
+    "evidence_tier": "record",
+    "form": "plan_row",
+    "source_key": "documents",
+    "document_id": "40122770",
+    "document_type": "Procurement Plan",
+    "report_number": null,
+    "version": null,
+    "sequence": null,
+    "passage_id": "40122770/KE-CWSB-567630-CW-DIR",
+    "pdf_page": 3,
+    "paragraph": null,
+    "paragraph_numbered": null,
+    "printed_page": null,
+    "doc_key": null,
+    "section_path": null,
+    "language": null,
+    "kind": null,
+    "text": null,
+    "text_left_out": null,
+    "field_name": "Process Status",
+    "value": "Pending Implementation",
+    "value_form": "status",
+    "judgment": null,
+    "quote": null,
+    "period_start": "2026-08-17",
+    "period_end": "2026-08-17",
+    "made_at": "2026-08-17",
+    "public_from": "2026-08-17",
+    "months_after_event": null
+   },
+   "highlights": []
   }
  },
  "checks": {
@@ -3188,8 +3221,8 @@
   ],
   "sentences": {
    "written": 11,
-   "kept": 11,
-   "removed": 0
+   "kept": 10,
+   "removed": 1
   },
   "numbers": {
    "total": 16,
@@ -3197,7 +3230,7 @@
   },
   "dates": {
    "total": 9,
-   "matched": 9
+   "matched": 8
   },
   "quotes": {
    "total": 0,
@@ -3205,11 +3238,11 @@
   },
   "sources": {
    "total": 11,
-   "returned": 11
+   "returned": 10
   },
   "checked": {
    "total": 25,
-   "matched": 25
+   "matched": 24
   },
   "shown": {
    "numbers": {
@@ -3217,15 +3250,15 @@
     "matched": 16
    },
    "dates": {
-    "total": 9,
-    "matched": 9
+    "total": 8,
+    "matched": 8
    },
    "quotes": {
     "total": 0,
     "found": 0
    },
    "judged": 0,
-   "proven": 11
+   "proven": 10
   },
   "judge": {
    "called": false,
@@ -3233,21 +3266,20 @@
    "judged": 0,
    "followed": 0,
    "unjudged": 0,
-   "proven": 11
+   "proven": 10
   },
   "advice": {
    "total": 0,
    "cited": 0
   },
   "disagreements": {
-   "disputed": 0,
-   "shown": 0,
-   "attached": 0,
+   "disputed": 1,
+   "shown": 1,
+   "attached": 1,
    "unasked": 0,
-   "warned": 0
+   "warned": 1
   },
   "cited_tools": [
-   "check_plan",
    "project_records"
   ],
   "tools": [
@@ -3258,7 +3290,27 @@
   ]
  },
  "checks_count": 6,
- "removed": [],
+ "removed": [
+  {
+   "index": 1,
+   "sentence": "In it, KE-NWWDA-541055-CW-RFB passed its planned completion of July 31, 2026 with no signed contract.",
+   "kind": "record",
+   "reason": "id_not_returned",
+   "reasons": [
+    {
+     "check": 2,
+     "code": "id_not_returned",
+     "text": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
+    },
+    {
+     "check": 1,
+     "code": "date_not_in_records",
+     "text": "July 31, 2026"
+    }
+   ],
+   "key": "plans"
+  }
+ ],
  "sources": [
   {
    "evidence_id": "strata.silver.plan_versions:40132287",
@@ -3270,7 +3322,7 @@
    "last_opened_at": null
   },
   {
-   "evidence_id": "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB",
+   "evidence_id": "strata.silver.plan_versions:40122770",
    "number": 2,
    "cited_in": [
     "plans"
@@ -3279,17 +3331,8 @@
    "last_opened_at": null
   },
   {
-   "evidence_id": "strata.silver.plan_versions:40122770",
-   "number": 3,
-   "cited_in": [
-    "plans"
-   ],
-   "opened": false,
-   "last_opened_at": null
-  },
-  {
    "evidence_id": "strata.tools.project_records:P156634@2026-10-23",
-   "number": 4,
+   "number": 3,
    "cited_in": [
     "awards",
     "closing"
@@ -3299,7 +3342,7 @@
   },
   {
    "evidence_id": "strata.gold.contract:1901323",
-   "number": 5,
+   "number": 4,
    "cited_in": [
     "awards"
    ],
@@ -3308,7 +3351,7 @@
   },
   {
    "evidence_id": "strata.silver.isr_ratings:P156634/40114539/pdo",
-   "number": 6,
+   "number": 5,
    "cited_in": [
     "ratings"
    ],
@@ -3317,7 +3360,7 @@
   },
   {
    "evidence_id": "strata.silver.isr_ratings:P156634/40091292/pdo",
-   "number": 7,
+   "number": 6,
    "cited_in": [
     "ratings"
    ],
@@ -3326,7 +3369,7 @@
   },
   {
    "evidence_id": "strata.silver.isr_ratings:P156634/40114539/implementation",
-   "number": 8,
+   "number": 7,
    "cited_in": [
     "ratings"
    ],
@@ -3335,7 +3378,7 @@
   },
   {
    "evidence_id": "strata.gold.loan:P156634/IDA60300",
-   "number": 9,
+   "number": 8,
    "cited_in": [
     "disbursement"
    ],
@@ -3344,7 +3387,7 @@
   },
   {
    "evidence_id": "strata.gold.loan:P156634/IDA60290",
-   "number": 10,
+   "number": 9,
    "cited_in": [
     "disbursement"
    ],
@@ -3353,7 +3396,7 @@
   },
   {
    "evidence_id": "strata.gold.project_closing_date:P156634/2025-11-30",
-   "number": 11,
+   "number": 10,
    "cited_in": [
     "closing"
    ],
@@ -3361,10 +3404,10 @@
    "last_opened_at": null
   }
  ],
- "citations": 13,
+ "citations": 12,
  "opened": {
   "count": 0,
-  "of": 11
+  "of": 10
  },
  "layout": {
   "columns": [
@@ -3389,6 +3432,81 @@
   "version": null,
   "run_id": "run-0001"
  },
- "disagreements": [],
- "choices": []
+ "disagreements": [
+  {
+   "id": "strata.gold.disagreement:83eeb55bf1335b4c",
+   "disagreement_id": "83eeb55bf1335b4c",
+   "after": 4,
+   "changes_answer": true,
+   "changes_sentence_ids": [
+    4
+   ],
+   "changes_count": 1,
+   "attached_by_verifier": true,
+   "attribute": "signed_on",
+   "rule_id": "tieSpecific",
+   "period_event": "contract_signing",
+   "sides": [
+    {
+     "evidence_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR",
+     "assertion_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR#KE-CWSB-567630-CW-DIR/signed_on",
+     "type": "procurement_plan",
+     "document_type": "Procurement Plan",
+     "report_number": null,
+     "sequence": null,
+     "paragraph": null,
+     "paragraph_numbered": null,
+     "evidence_tier": "record",
+     "made_at": "2026-08-17",
+     "field_name": "Process Status",
+     "value": "Pending Implementation",
+     "value_form": "status",
+     "quote": null,
+     "months_after_event": null,
+     "doc_key": null,
+     "sentence": null,
+     "leaned": false
+    },
+    {
+     "evidence_id": "strata.gold.contract:1901323",
+     "assertion_id": "strata.gold.contract:1901323#KE-CWSB-567630-CW-DIR/signed_on",
+     "type": "record",
+     "document_type": null,
+     "report_number": null,
+     "sequence": null,
+     "paragraph": null,
+     "paragraph_numbered": null,
+     "evidence_tier": "record",
+     "made_at": "2026-08-28",
+     "field_name": "contract_signing_date",
+     "value": "2026-08-28",
+     "value_form": "date",
+     "quote": null,
+     "months_after_event": null,
+     "doc_key": null,
+     "sentence": null,
+     "leaned": true
+    }
+   ],
+   "if_you_keep": {
+    "assertion_id": "strata.silver.plan_rows:40122770/KE-CWSB-567630-CW-DIR#KE-CWSB-567630-CW-DIR/signed_on",
+    "attribute": "signed_on",
+    "value": "Pending Implementation",
+    "value_form": "status",
+    "judgment": null,
+    "field_name": "Process Status",
+    "period_event": "contract_signing"
+   },
+   "key": "awards"
+  }
+ ],
+ "choices": [
+  {
+   "disagreement_id": "83eeb55bf1335b4c",
+   "kept": "lean",
+   "reason": null,
+   "at": "2026-10-23T14:03:00Z",
+   "by": "Ana Example"
+  }
+ ]
 }

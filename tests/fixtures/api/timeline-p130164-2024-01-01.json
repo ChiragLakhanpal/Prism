@@ -779,6 +779,8 @@
     "count": 2,
     "pairs": 2
   },
+  "records_disagree": [],
+  "records_disagree_count": 0,
   "disagreement_line_state": "info",
   "rejected": {
     "count": 1

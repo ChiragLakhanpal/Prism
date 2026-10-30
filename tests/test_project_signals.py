@@ -56,20 +56,23 @@ def with_signals(**changed):
     return dataclasses.replace(defaults, values={**defaults.values, "signals": {**defaults.values["signals"], **changed}})
 
 
-def test_p156634_needs_a_look_with_the_four_signals_of_the_following_wireframe(today):
+def test_p156634_needs_a_look_with_three_of_the_four_signals_of_the_following_wireframe(today):
+    """The wireframe's fourth signal, KE-NWWDA-541055-CW-RFB's planned completion passed with no signed contract, no
+    longer fires: the contract awards say it was signed on June 22, 2026 (values.toml, award-541055-signed), so the
+    plan check, which this check reads, names the activity moved on since the plan (ticket 132)."""
     result = today
 
     assert result["status"] == "needs_a_look"
-    assert sorted(fired(result)) == ["above_estimate", "closing_moves", "completion_passed", "late_direct"]
-    assert result["counts"]["signals"] == 4
+    assert sorted(fired(result)) == ["above_estimate", "closing_moves", "late_direct"]
+    assert result["counts"]["signals"] == 3
 
 
-def test_ke_nwwda_541055_passed_its_planned_completion_with_no_signed_contract(today):
-    [activity] = fired(today)["completion_passed"]["items"]
-
-    assert activity["activity_reference_no"] == "KE-NWWDA-541055-CW-RFB"
-    assert activity["planned_completion_on"] == TRUTH["plan-541055-planned-completion"]["value"].isoformat()
-    assert activity["signed_on"] is None
+def test_ke_nwwda_541055_s_passed_completion_is_no_signal_once_the_contract_awards_say_it_was_signed(engine, today):
+    """Ticket 132: on August 1, 2026 the latest NWWDA plan was the one of March 5, 2026, its planned completion of July
+    31 had passed, and the award of June 22 was public, so the activity had already moved on; the completion signal
+    fires on nothing either then or on October 22."""
+    assert "completion_passed" not in fired(today)
+    assert "completion_passed" not in fired(signals(engine, as_of=dt.date(2026, 8, 1)))
 
 
 def test_ke_nwwda_229129_was_signed_at_about_4_times_its_estimate(today):
@@ -110,8 +113,8 @@ def test_each_signal_names_the_record_its_marker_opens_and_the_closing_date_sign
     assert moves["source"]["evidence_id"] == "strata.gold.project_closing_date:P156634/2025-11-30"
     assert [item["closing_date"] for item in moves["items"] if item["evidence_id"] == moves["source"]["evidence_id"]] == [
         TRUTH["closing-p156634-move-3"]["value"].isoformat()]
-    completion = fired(today)["completion_passed"]
-    assert completion["source"]["evidence_id"] == "strata.silver.plan_rows:40132287/KE-NWWDA-541055-CW-RFB"
+    above = fired(today)["above_estimate"]
+    assert above["source"]["evidence_id"] == "strata.silver.plan_rows:40132287/KE-NWWDA-229129-CW-RFB"
 
 
 def test_restructurings_ratings_and_disbursement_ran_and_found_nothing(today):

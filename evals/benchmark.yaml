@@ -24,21 +24,25 @@ questions:
     tool: check_plan
     question: >-
       As of October 22, 2026, which activities in the Northern Water Works Development Agency's
-      Procurement Plan of October 9, 2026 for P156634 need a look, which are worth watching, and
-      which have data notes?
+      Procurement Plan of October 9, 2026 for P156634 need a look, which are worth watching, which
+      have moved on since the plan, and which have data notes?
     arguments:
       project_id: P156634
       implementing_agency: Northern Water Works Development Agency
       plan_date: "2026-10-09"
       as_of: "2026-10-22"
     expected:
-      needs_a_look: [KE-NWWDA-541055-CW-RFB]
-      watch: [KE-NWWDA-229129-CW-RFB, KE-NWWDA-541062-CW-RFQ]
+      # Ticket 132: the plan still shows KE-NWWDA-541055-CW-RFB and KE-NWWDA-541062-CW-RFQ Pending Implementation,
+      # and the contract awards say both were signed before the plan's date (values.toml, award-541055-signed and
+      # award-541062-signed). The records have moved past the plan, so neither needs a look or is worth watching.
+      needs_a_look: []
+      watch: [KE-NWWDA-229129-CW-RFB]
+      moved_on: [KE-NWWDA-541055-CW-RFB, KE-NWWDA-541062-CW-RFQ]
       data_note: [KE-NWWDA-199461-GO-RFB, KE-NWWDA-503455-CW-RFQ, KE-NWWDA-541061-CW-RFQ]
       unmarked: [KE-NWWDA-199471-GO-RFQ, KE-NWWDA-207796-CS-INDV, NWWDA-WSDP-03-2019-2020]
       # The activities with a signal (needs a look or watch), which the result's counts.signal counts
-      # and "Draft review notes (3 rows)" drafts a note on (ticket 35).
-      with_a_signal: [KE-NWWDA-229129-CW-RFB, KE-NWWDA-541055-CW-RFB, KE-NWWDA-541062-CW-RFQ]
+      # and "Draft review notes (1 row)" drafts a note on (ticket 35).
+      with_a_signal: [KE-NWWDA-229129-CW-RFB]
       # The activities whose reasons also give the delay from a saved baseline (ticket 21). The fixture
       # holds no baseline, so none does; tests/test_project_hub.py saves the plan of July 21, 2025 as the
       # baseline, with KE-NWWDA-229129-CW-RFB's signing re-dated to August 1, 2021 in it, and checks that
@@ -53,9 +57,9 @@ questions:
       # upload never reaches an answer; tests/test_uploads.py checks an upload of this plan by team.
       upload_positions: []
       # Ticket 41: each activity with a signal and its estimate in US$ millions to two decimals, which Home's briefing
-      # line writes ("US$1.23 million of works"): values.toml plan-541055-estimated (US$1,230,000.00), and the
-      # estimates of US$300,000.00 and US$295,000.00 the plan gives the two activities worth watching.
-      estimated_millions: ["KE-NWWDA-229129-CW-RFB 0.3", "KE-NWWDA-541055-CW-RFB 1.23", "KE-NWWDA-541062-CW-RFQ 0.3"]
+      # line writes ("US$1.23 million of works"): the estimate of US$300,000.00 the plan gives the one activity worth
+      # watching.
+      estimated_millions: ["KE-NWWDA-229129-CW-RFB 0.3"]
       # Ticket 131: the activities whose reference breaks STEP's grammar and stays as the plan gives it. Every
       # reference the fixture's plan reads is in STEP's grammar or an older form, so no row keeps one as read;
       # tests/test_plan_text_repair.py reads one such reference into a copy of the plan and checks the pages.
@@ -64,7 +68,9 @@ questions:
     source: >-
       The marks the blueprint's Check a plan wireframe gives the plan's eight activities
       (tests/ground_truth/values.toml, plan_row wireframe_mark), and the ninth activity the
-      wireframe leaves out, with no mark (values.toml, plan.also_lists).
+      wireframe leaves out, with no mark (values.toml, plan.also_lists), except the two Pending
+      Implementation activities the contract awards say were signed (award-541055-signed and
+      award-541062-signed), which ticket 132 moved on since the plan.
 
   # Ticket 37: the fixed signals on a project World Bank staff follow, and the status they give it.
   - id: project-signals-p156634
@@ -77,16 +83,20 @@ questions:
       as_of: "2026-10-22"
     expected:
       status: [needs_a_look]
-      # One row per check that fired, and what each fired on.
-      completion_passed: [KE-NWWDA-541055-CW-RFB]
+      # One row per check that fired, and what each fired on. The completion check reads check_plan, which since
+      # ticket 132 names KE-NWWDA-541055-CW-RFB moved on since the plan: the contract awards say it was signed on
+      # June 22, 2026 (values.toml, award-541055-signed), so its planned completion passed with a signed contract
+      # and the check does not fire (null).
+      completion_passed: null
       above_estimate: [KE-NWWDA-229129-CW-RFB]
       late_direct: [KE-CWSB-567630-CW-DIR]
       closing_moves: ["2022-11-30", "2024-04-30", "2025-11-30"]
     ground_truth: tests/ground_truth/project_signals_p156634_late_direct_and_moves.sql
     source: >-
-      The ticket's four lines from the blueprint's Following wireframe: KE-NWWDA-541055-CW-RFB's planned completion
-      of July 31, 2026 with no signed contract (tests/ground_truth/values.toml, plan-541055-planned-completion and
-      plan-541055-no-signed-contract); KE-NWWDA-229129-CW-RFB signed at US$1,245,092.76 against US$300,000.00
+      The ticket's four lines from the blueprint's Following wireframe, less the first, which the contract awards
+      overtook (ticket 132): KE-NWWDA-541055-CW-RFB's planned completion of July 31, 2026 with no signed contract in
+      the plan (tests/ground_truth/values.toml, plan-541055-planned-completion and plan-541055-no-signed-contract)
+      but a contract signed on June 22, 2026 in the awards (award-541055-signed); KE-NWWDA-229129-CW-RFB signed at US$1,245,092.76 against US$300,000.00
       (plan-229129-actual); KE-CWSB-567630-CW-DIR, US$2,600,000.00, first listed on August 17, 2026
       (plan-cwsb-567630-estimated and plan-cwsb-567630-first-listed); and the three months the loan history first
       showed a new closing date (closing-p156634-move-1 to move-3).
