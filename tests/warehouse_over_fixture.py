@@ -9,6 +9,9 @@ answers as the Statement Execution API answers with format JSON_ARRAY and dispos
 each column's type_name and type_text, and the result writes every value as text, or null. A route run on
 WarehouseEngine over it reads the fixture's rows as the workspace serves them, so it must answer what it answers on
 DuckDB. It keeps every reply it gave, so a test can show what the engine was sent.
+
+A page's statements reach it at once, each on its own thread (ticket 125's run_many), as they reach the
+workspace. Its one DuckDB connection takes one call at a time, so it answers them one after another.
 """
 
 from __future__ import annotations
@@ -16,6 +19,7 @@ from __future__ import annotations
 import datetime as dt
 import decimal
 import json
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -65,6 +69,7 @@ class WarehouseOverFixture:
     def __init__(self, database: Path | str):
         self.database = database
         self.replies: list[dict] = []
+        self.one_at_a_time = threading.Lock()
 
     @contextmanager
     def engine_for(self, _viewer=None):
@@ -75,6 +80,10 @@ class WarehouseOverFixture:
     def answer(self, fixture: DuckDBEngine, method: str, path: str, body: dict | None) -> dict:
         if (method, path) != ("POST", STATEMENTS):
             raise AssertionError(f"The fixture's warehouse answers only new statements, not {method} {path}.")
+        with self.one_at_a_time:
+            return self._answer(fixture, body)
+
+    def _answer(self, fixture: DuckDBEngine, body: dict) -> dict:
         params = {parameter["name"]: bound(parameter) for parameter in body["parameters"]}
         try:
             cursor = fixture.connection.execute(transpile(body["statement"]), params or None)

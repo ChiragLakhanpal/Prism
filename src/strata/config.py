@@ -3206,6 +3206,29 @@ def load_designed_not_built(path: Path = CONFIG_DIR / "designed_not_built.toml")
     return tuple(items)
 
 
+# ── The demo's cases (ticket 125) ────────────────────────────────────────
+
+@dataclass(frozen=True)
+class Demo:
+    """The projects and packages whose pages the App reads ahead (config/demo.toml)."""
+
+    projects: tuple[str, ...]
+    packages: tuple[str, ...]
+
+
+def load_demo(path: Path = CONFIG_DIR / "demo.toml") -> Demo:
+    """The demo's cases, each a list of IDs as text."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"projects", "packages"})
+    lists = {}
+    for key in ("projects", "packages"):
+        found = data.get(key, [])
+        if not isinstance(found, list) or not all(isinstance(item, str) and item.strip() for item in found):
+            raise ConfigError(f"In {path.name}, {key} must be a list of IDs in quotes, such as [\"P156634\"].")
+        lists[key] = tuple(item.strip() for item in found)
+    return Demo(lists["projects"], lists["packages"])
+
+
 # ── The deck (ticket 47) ─────────────────────────────────────────────────
 
 @dataclass(frozen=True)
