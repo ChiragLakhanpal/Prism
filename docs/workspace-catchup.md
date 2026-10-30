@@ -4678,3 +4678,32 @@ Run after step 1, read-only. The builder named the Free Edition App (https://str
 While on P156634's and P127203's Procurement tabs, also note any agency that says "I haven't read the plan of ..., the version before the latest". The verifier flagged that a previous plan that was read but held no rows still gets that sentence (review follow-up 1, outside this ticket's criteria); a note here helps the follow-up ticket.
 
 Record the three sentences word for word, the link's target, the commit the App runs and the time here under ticket 134. This is criterion 3's live proof.
+
+## Ticket 137, step 1 of 3: redeploy the App
+
+The merger parked this on October 29, 2026, after merge commit dc4ab518. Every key is set, but mergers run no workspace step, so the second session (strata-58) or the orchestrator runs these three blocks one at a time and in order, from a snapshot at or after dc4ab518. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, as the header says.
+
+    uv run --script ops/app/deploy_app.py --env-file "<main checkout>/.env" --keep-secrets
+
+The change is in the App's tool, server and web code (`src/strata/tools/find_comparables.py`'s period of notices, `config/tools.toml`, and section 1's note in `web/src/lib/period.ts` and `web/src/components/PastRange.tsx`). No table or job changed, so no bundle deploy is needed. The tool descriptions changed, so step 2 syncs the agent. If a later merge's redeploy already runs dc4ab518 or a later commit, record that run here instead of deploying again.
+
+It worked if the deploy exits 0, its last line is `Strata is running at https://...`, and the App's active deployment names dc4ab518 or a later commit. Record the exit code, the commit the App runs, and any secret step 3 names here under ticket 137.
+
+## Ticket 137, step 2 of 3: sync the agent's tool descriptions
+
+Run after step 1, from the same snapshot. `config/tools.toml` changed find_comparables' description (it names `criteria.period` and its seven cases, with `before_data` "when the as-of date comes before 2019-07-01", and says "Name no period then") and the `notice_to` parameter of three tools. The Foundry agent keeps the old descriptions until the sync runs (review round 1, finding 2).
+
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env"
+    uv run --script ops/agent/sync.py --env-file "<main checkout>/.env" --check
+
+It worked if the `--check` run exits 0 and reports no difference. Record both exit codes and the agent version here under ticket 137.
+
+## Ticket 137, step 3 of 3: section 1 of IN-RRSMP-7516-CW-RFB names a period that never ends before it starts (criterion 3)
+
+Run after step 1, read-only. The builder named the workspace host (https://adb-7405609289499029.9.azuredatabricks.net); its App is https://strata-7405609289499029.9.azure.databricksapps.com. Sign in as a viewer with a role and open `/packages/IN-RRSMP-7516-CW-RFB` in a fresh browser context, so no answer kept from before the redeploy is shown.
+
+It worked if section 1 reads "They had to be in India. The plan is older than the contract awards data since fiscal 2020, so I looked for packages with notices from July 1, 2019 to <the as-of date>." and no range on the page ends on June 20, 2018 (the walkthrough's capture of October 29 read "They had to be in India and have notices from July 1, 2019 to June 20, 2018"). `GET /api/packages/IN-RRSMP-7516-CW-RFB/comparables` gives `criteria.notice_from` 2019-07-01, `criteria.notice_to` the as-of date and `criteria.period` `plan_before_data`. If the workspace holds a newer plan for this package, dated on or after July 1, 2019, the sentence ends on that plan's date instead (`period` `plan_date`); record it as shown.
+
+While on the page, also note whether the plan-row panel shows a raw "{agency}" ("{agency} plan of June 20, 2018"). The verifier saw it on the fixture copy, where the stand-in plan row has no implementing agency. It is outside this ticket's criteria, and a note here helps a follow-up ticket.
+
+Record section 1's sentence word for word, the comparables answer's `notice_from`, `notice_to` and `period`, the commit the App runs and the time here under ticket 137. This is criterion 3's live proof.
