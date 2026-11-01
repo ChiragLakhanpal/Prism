@@ -20,11 +20,14 @@ judge_role = "draft"
 
 # One table per evaluator, in the order the dashboard shows them (the 45 brief, tile 12): key, its label, Foundry's
 # built-in evaluator name, and how each of its inputs maps to a field of a dataset item.
+# Map every item field an evaluator accepts: Foundry refuses the whole run (EvalValidationFailed, missing required
+# data mappings) when an item carries a field its evaluator takes and the mapping leaves out, as it did for
+# groundedness's tool_definitions and tool use's response on November 1, 2026.
 [[evaluators]]
 key = "groundedness"
 label = "Groundedness"
 builtin = "builtin.groundedness"
-data_mapping = { query = "{{item.query}}", response = "{{item.response}}", context = "{{item.context}}" }
+data_mapping = { query = "{{item.query}}", response = "{{item.response}}", context = "{{item.context}}", tool_definitions = "{{item.tool_definitions}}" }
 
 [[evaluators]]
 key = "relevance"
@@ -42,4 +45,4 @@ data_mapping = { query = "{{item.query}}", response = "{{item.response}}", tool_
 key = "tool_use"
 label = "Tool use"
 builtin = "builtin.tool_call_accuracy"
-data_mapping = { query = "{{item.query}}", tool_calls = "{{item.tool_calls}}", tool_definitions = "{{item.tool_definitions}}" }
+data_mapping = { query = "{{item.query}}", response = "{{item.response}}", tool_calls = "{{item.tool_calls}}", tool_definitions = "{{item.tool_definitions}}" }

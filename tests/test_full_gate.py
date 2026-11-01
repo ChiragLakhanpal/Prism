@@ -508,3 +508,11 @@ def test_with_no_genie_space_the_gate_fails_naming_the_missing_space_id(engine, 
     assert (report.exit_code, report.missed) == (1, [full_gate.NO_GENIE_SPACE])
     assert full_gate.NO_GENIE_SPACE == "The Genie benchmark did not run: the env file has no GENIE_SPACE_ID."
     assert measures(stored(store, "full_gate"), "stage", "genie_benchmark") == {"ran": 0.0}
+
+
+def test_each_evaluator_maps_the_item_fields_foundry_requires():
+    # Foundry refused the full gate's run of November 1, 2026 (EvalValidationFailed): the items carry tool_definitions,
+    # which groundedness accepts, and response, which tool call accuracy accepts, and neither mapping named them.
+    mappings = {evaluator.builtin: evaluator.data_mapping for evaluator in load_evaluations().evaluators}
+    assert mappings["builtin.groundedness"]["tool_definitions"] == "{{item.tool_definitions}}"
+    assert mappings["builtin.tool_call_accuracy"]["response"] == "{{item.response}}"
