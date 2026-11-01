@@ -171,7 +171,7 @@ def test_the_app_gets_the_warehouse_the_connection_string_and_each_viewer_s_sql_
         {"name": "app-state", "database": {"instance_name": "strata-state", "database_name": "databricks_postgres",
                                            "permission": "CAN_CONNECT_AND_CREATE"}},
     ]
-    assert scopes == ["sql", "dashboards.genie"]
+    assert scopes == ["sql", "dashboards.genie", "vector-search"]
     assert workspace.databases == ["strata-state"]
 
 
@@ -479,6 +479,13 @@ def test_with_a_genie_space_the_app_asks_it_as_each_viewer():
     assert {"name": "GENIE_SPACE_ID", "value": "01f0aaaabbbbccccddddeeeeffff0000"} in started["env"]
     assert deploy_app.app_yaml(True, True) == (deploy_app.HERE / "app.yaml").read_bytes()
     assert "dashboards.genie" in deploy_app.SCOPES
+
+
+def test_the_app_searches_the_passage_index_as_each_viewer():
+    """search_passages queries the AI Search index with the viewer's forwarded token (src/strata/knowledge/search.py),
+    which needs the vector-search scope. Without it, every search in the App failed as permission from October 28 to
+    October 31, 2026, while the demo-ready command, which asks as the env file's token, passed."""
+    assert "vector-search" in deploy_app.SCOPES
 
 
 # Ticket 70: only the user may write secrets in the shared workspace, so a session that may not still redeploys new

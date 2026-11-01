@@ -118,9 +118,11 @@ DESCRIPTION = "Strata, procurement intelligence on World Bank open data"
 PROBE_DESCRIPTION = "Strata day-one probe app"  # ops/dayone/live.py's PROBE_APP_DESCRIPTION
 FOLDER = "strata-app"
 DIST = REPO / "web" / "dist"
-# The user authorization scopes: each viewer's forwarded token may run SQL on the warehouse, and ask the Genie space
-# as that viewer (ask_genie, ticket 33). Without dashboards.genie the forwarded token gets 403 from Genie.
-SCOPES = ["sql", "dashboards.genie"]
+# The user authorization scopes: each viewer's forwarded token may run SQL on the warehouse, ask the Genie space as
+# that viewer (ask_genie, ticket 33), and query the passage index on AI Search as that viewer (search_passages). Without
+# dashboards.genie the forwarded token gets 403 from Genie. Without vector-search it gets 403 from the index, so every
+# search_passages call in the App failed as permission from October 28 to October 31, 2026.
+SCOPES = ["sql", "dashboards.genie", "vector-search"]
 # The secret's name in the scope, which the wizard saved (ops/wizard/strata-setup.sh).
 APPINSIGHTS_NAME = "APPLICATIONINSIGHTS_CONNECTION_STRING"
 APPINSIGHTS = "appinsights"  # its resource, which app.yaml reads it from
