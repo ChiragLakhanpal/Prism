@@ -26,8 +26,7 @@ import { deckCopy, figureCopy } from "./copy";
 import { loadDeck, type DeckData } from "./data";
 import { Logo, SlideFrame, type Theme } from "./Frame";
 import { NewTabLink, SourceLine, Step, WholeSlides } from "./layouts";
-import { CHART_WIDTH } from "./AwardChart";
-import { FOOTER, type, type Mode } from "./ramp";
+import { CHART_WIDTH, FOOTER, type, type Mode } from "./ramp";
 import { RecordedAnswer, RecordedSlide } from "./Recorded";
 import { buildSlides, figureStepText, TITLE_ID, type Slide } from "./slides";
 import { arrive, fullScreenKey, moved, moveFor, segments, TOPIC_ORDER, type Move, type Place } from "./talk";
@@ -1110,6 +1109,7 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
           <aside className="flex flex-col gap-6 lg:sticky lg:top-8 lg:self-start" data-notes-previews>
             <SlidePreview label={deckCopy.notesView.now} slide={slide} step={place.step} data={data} slides={slides} width={448} rootRef={preview} />
             {next && <SlidePreview label={deckCopy.notesView.then} slide={next} step={next.steps} data={data} slides={slides} width={288} />}
+            {slide.diagrams && slide.diagrams.length > 0 && <StudyDiagrams names={slide.diagrams} />}
           </aside>
         </div>
       </main>
@@ -1117,6 +1117,35 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
         {announce}
       </p>
     </div>
+  );
+}
+
+// The study guide's diagrams behind the slide, under the previews, for the presenter's answers to the panel's
+// questions. Each opens whole in a new tab.
+function StudyDiagrams({ names }: { names: string[] }) {
+  return (
+    <section>
+      <p className="text-caption text-ink-muted">{deckCopy.notesView.diagrams}</p>
+      <ul className="mt-2 grid grid-cols-3 gap-2" data-notes-diagrams>
+        {names.map((name) => (
+          <li key={name}>
+            <a
+              href={`/deck/notes/${name}.svg`}
+              target="_blank"
+              rel="noreferrer"
+              className="group flex flex-col gap-1 text-caption text-ink-muted no-underline"
+            >
+              <img
+                src={`/deck/notes/${name}.svg`}
+                alt=""
+                className="w-full rounded-sm border border-line bg-surface p-1 transition-paint duration-150 group-hover:border-info-icon"
+              />
+              <span>{name.replace(/_/g, " ")}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 
@@ -1185,12 +1214,24 @@ function SpeakerNotes({ slide, glance = false, step = 0, screen = [] }: { slide:
             {presses.map((k) => (
               <li key={k} ref={step === k ? current : undefined} className={beat(k)} data-beat={k}>
                 <span className="text-caption text-ink-muted">{`${words.press} ${k}`}</span>
-                {screen[k - 1] && (
-                  <p className={k === step ? "text-lead" : "text-body"} data-notes-step={k === step && k <= figureSteps ? "" : undefined}>
-                    {screen[k - 1]}
-                  </p>
+                {/* What to say leads; the words the press brings onto the screen follow, small, to show where the
+                    talk is. A press with nothing written to say shows those words as the line. */}
+                {slide.adds?.[k - 1] ? (
+                  <>
+                    <p className={k === step ? "text-lead" : "text-body"}>{slide.adds[k - 1]}</p>
+                    {screen[k - 1] && (
+                      <p className="text-small text-ink-muted">
+                        {words.onScreen} <span data-notes-step={k === step && k <= figureSteps ? "" : undefined}>{screen[k - 1]}</span>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  screen[k - 1] && (
+                    <p className={k === step ? "text-lead" : "text-body"} data-notes-step={k === step && k <= figureSteps ? "" : undefined}>
+                      {screen[k - 1]}
+                    </p>
+                  )
                 )}
-                {slide.adds?.[k - 1] && <p className="text-small italic">{slide.adds[k - 1]}</p>}
               </li>
             ))}
           </ol>
@@ -1198,25 +1239,7 @@ function SpeakerNotes({ slide, glance = false, step = 0, screen = [] }: { slide:
           <div className="mt-1 text-body text-ink">{slide.notes}</div>
         )}
       </section>
-      {!glance && slide.cue && (
-        <section>
-          <Heading className="text-label text-ink-muted">{words.cue}</Heading>
-          <p className="mt-1 border-l-4 border-info-icon pl-3 text-small text-ink" data-notes-cue>
-            {slide.cue}
-          </p>
-        </section>
-      )}
-      {!glance && adds.length > 0 && (
-        <section>
-          <Heading className="text-label text-ink-muted">{words.asYouPress}</Heading>
-          <ul className="mt-1 flex list-disc flex-col gap-1 pl-6 text-small text-ink">
-            {adds.map((add) => (
-              <li key={add}>{add}</li>
-            ))}
-          </ul>
-        </section>
-      )}
-      {slide.asked && slide.asked.length > 0 && (
+      {glance && slide.asked && slide.asked.length > 0 && (
         <section>
           <Heading className="text-label text-ink-muted">{words.asked}</Heading>
           <dl className="mt-2 flex flex-col gap-3" data-notes-asked>

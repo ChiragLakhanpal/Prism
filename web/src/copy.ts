@@ -9659,4 +9659,14 @@ export const copy = {
       markOne: "Select to mark it below.",
     },
   },
+  // The deck's password, asked before the deck loads (web/src/deck/door.tsx). The words live here, not in the deck's
+  // copy file, because the server keeps the deck's copy until the password is given.
+  deckDoor: {
+    title: "Strata deck",
+    line: "Enter the password to open the deck.",
+    label: "Password",
+    open: "Open the deck",
+    wrong: "That password didn't work. Check it and try again.",
+    failed: "I couldn't reach the server. Check your connection and try again.",
+  },
 } as const;

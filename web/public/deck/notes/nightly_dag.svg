@@ -1,0 +1,46 @@
+<svg viewBox="0 0 910 330" role="img" aria-label="The nightly job: ten tasks in one chain at 03:00 New York time on serverless compute, each writing its quality checks and a run row. The bundle gives the whole run 150 minutes; on the paid workspace the job is set to 300 minutes until the first Sunday replay on November 1, 2026." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="nightly_dag-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="nightly_dag-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="nightly_dag-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="nightly_dag-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="nightly_dag-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="10" y="50" width="172" height="64" rx="8" class="d-box hi"/>
+<text x="96.0" y="78.5" class="d-text b" text-anchor="middle">1 fetch_by_watermark</text>
+<text x="96.0" y="93.5" class="d-text s" text-anchor="middle">API pages into bronze</text>
+<path d="M182,82 L189,82" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="189" y="50" width="172" height="64" rx="8" class="d-box"/>
+<text x="275.0" y="78.5" class="d-text b" text-anchor="middle">2 bronze_to_gold</text>
+<text x="275.0" y="93.5" class="d-text s" text-anchor="middle">silver, suppliers, gold</text>
+<path d="M361,82 L368,82" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="368" y="50" width="172" height="64" rx="8" class="d-box hi"/>
+<text x="454.0" y="78.5" class="d-text b" text-anchor="middle">3 parse_and_embed</text>
+<text x="454.0" y="93.5" class="d-text s" text-anchor="middle">plans, passages, vectors</text>
+<path d="M540,82 L547,82" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="547" y="50" width="172" height="64" rx="8" class="d-box"/>
+<text x="633.0" y="78.5" class="d-text b" text-anchor="middle">4 sync_index</text>
+<text x="633.0" y="93.5" class="d-text s" text-anchor="middle">gold.passage, AI Search</text>
+<path d="M719,82 L726,82" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="726" y="50" width="172" height="64" rx="8" class="d-box"/>
+<text x="812.0" y="78.5" class="d-text b" text-anchor="middle">5 relink</text>
+<text x="812.0" y="93.5" class="d-text s" text-anchor="middle">edges between strata</text>
+<rect x="10" y="180" width="172" height="64" rx="8" class="d-box"/>
+<text x="96.0" y="208.5" class="d-text b" text-anchor="middle">6 propose_lessons</text>
+<text x="96.0" y="223.5" class="d-text s" text-anchor="middle">batch model, quote check</text>
+<path d="M182,212 L189,212" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="189" y="180" width="172" height="64" rx="8" class="d-box"/>
+<text x="275.0" y="208.5" class="d-text b" text-anchor="middle">7 detect_disagreements</text>
+<text x="275.0" y="223.5" class="d-text s" text-anchor="middle">assertions, disagreements</text>
+<path d="M361,212 L368,212" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="368" y="180" width="172" height="64" rx="8" class="d-box"/>
+<text x="454.0" y="201.5" class="d-text b" text-anchor="middle">8 score</text>
+<text x="454.0" y="216.5" class="d-text s" text-anchor="middle"><tspan x="454.0" dy="0">estimates, rebidding, watch;</tspan><tspan x="454.0" dy="14">capped at 45 minutes</tspan></text>
+<path d="M540,212 L547,212" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="547" y="180" width="172" height="64" rx="8" class="d-box"/>
+<text x="633.0" y="208.5" class="d-text b" text-anchor="middle">9 measure_data_readiness</text>
+<text x="633.0" y="223.5" class="d-text s" text-anchor="middle">measures, findings, sizes</text>
+<path d="M719,212 L726,212" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<rect x="726" y="180" width="172" height="64" rx="8" class="d-box"/>
+<text x="812.0" y="208.5" class="d-text b" text-anchor="middle">10 refresh_drafts</text>
+<text x="812.0" y="223.5" class="d-text s" text-anchor="middle">flags drafts, never edits</text>
+<path d="M812,114 L812,150 L96,150 L96,180" class="d-arrow" marker-end="url(#nightly_dag-a)"/>
+<text x="10" y="30" class="d-text gt" text-anchor="start">03:00 NEW YORK, ONE TASK AT A TIME; WINDOW 150 MIN IN THE BUNDLE, 300 ON THE PAID WORKSPACE UNTIL NOVEMBER 1</text>
+<rect x="10" y="270" width="888" height="50" rx="8" class="d-box"/>
+<text x="454.0" y="291.5" class="d-text b" text-anchor="middle">After every task</text>
+<text x="454.0" y="306.5" class="d-text s" text-anchor="middle">its quality checks go to ops.quality_checks and a row to ops.pipeline_runs; a failed check never stops the job; a rerun changes nothing already written</text>
+</svg>

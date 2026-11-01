@@ -1,0 +1,69 @@
+<svg viewBox="0 0 900 440" role="img" aria-label="The knowledge model as a graph: gold tables are the nodes and the edge table holds the links. The highlighted four-hop path goes from a supplier through its contract, project and completion report to paragraph 54." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="knowledge_graph-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="knowledge_graph-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="knowledge_graph-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="knowledge_graph-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="knowledge_graph-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="20" y="40" width="180" height="60" rx="8" class="d-box"/>
+<text x="110.0" y="66.5" class="d-text b" text-anchor="middle">Country</text>
+<text x="110.0" y="81.5" class="d-text s" text-anchor="middle">KE, IN ...</text>
+<rect x="240" y="40" width="180" height="60" rx="8" class="d-box hi"/>
+<text x="330.0" y="66.5" class="d-text b" text-anchor="middle">Project</text>
+<text x="330.0" y="81.5" class="d-text s" text-anchor="middle">P130164</text>
+<rect x="460" y="40" width="180" height="60" rx="8" class="d-box"/>
+<text x="550.0" y="66.5" class="d-text b" text-anchor="middle">Package</text>
+<text x="550.0" y="81.5" class="d-text s" text-anchor="middle">STEP reference</text>
+<rect x="680" y="40" width="180" height="60" rx="8" class="d-box"/>
+<text x="770.0" y="66.5" class="d-text b" text-anchor="middle">Notice</text>
+<text x="770.0" y="81.5" class="d-text s" text-anchor="middle">invitation, award</text>
+<rect x="20" y="200" width="180" height="60" rx="8" class="d-box hi"/>
+<text x="110.0" y="226.5" class="d-text b" text-anchor="middle">Document</text>
+<text x="110.0" y="241.5" class="d-text s" text-anchor="middle">ICR, PAD, ISR</text>
+<rect x="460" y="200" width="180" height="60" rx="8" class="d-box hi"/>
+<text x="550.0" y="226.5" class="d-text b" text-anchor="middle">Contract</text>
+<text x="550.0" y="241.5" class="d-text s" text-anchor="middle">OP00044090</text>
+<rect x="680" y="200" width="180" height="60" rx="8" class="d-box hi"/>
+<text x="770.0" y="226.5" class="d-text b" text-anchor="middle">Supplier</text>
+<text x="770.0" y="241.5" class="d-text s" text-anchor="middle">STEP ID first</text>
+<rect x="20" y="340" width="180" height="60" rx="8" class="d-box hi"/>
+<text x="110.0" y="366.5" class="d-text b" text-anchor="middle">Passage</text>
+<text x="110.0" y="381.5" class="d-text s" text-anchor="middle">ICR ¶54, p.23</text>
+<rect x="260" y="340" width="180" height="60" rx="8" class="d-box"/>
+<text x="350.0" y="366.5" class="d-text b" text-anchor="middle">Assertion</text>
+<text x="350.0" y="381.5" class="d-text s" text-anchor="middle">a dated claim</text>
+<rect x="470" y="340" width="180" height="60" rx="8" class="d-box"/>
+<text x="560.0" y="359.5" class="d-text b" text-anchor="middle">Disagreement</text>
+<text x="560.0" y="374.5" class="d-text s" text-anchor="middle"><tspan x="560.0" dy="0">two claims that</tspan><tspan x="560.0" dy="14">cannot both hold</tspan></text>
+<path d="M240,70 L200,70" class="d-arrow" marker-end="url(#knowledge_graph-a)"/>
+<rect x="194.3" y="51.0" width="51.3" height="18" rx="3" class="d-label-bg"/>
+<text x="220" y="62" class="d-text s lab" text-anchor="middle">borrows</text>
+<path d="M420,70 L460,70" class="d-arrow" marker-end="url(#knowledge_graph-a)"/>
+<rect x="420.2" y="51.0" width="39.5" height="18" rx="3" class="d-label-bg"/>
+<text x="440" y="62" class="d-text s lab" text-anchor="middle">plans</text>
+<path d="M640,70 L680,70" class="d-arrow" marker-end="url(#knowledge_graph-a)"/>
+<rect x="616.6" y="51.0" width="86.7" height="18" rx="3" class="d-label-bg"/>
+<text x="660" y="62" class="d-text s lab" text-anchor="middle">advertised in</text>
+<path d="M560,100 L560,200" class="d-arrow" marker-end="url(#knowledge_graph-a)"/>
+<rect x="525.5" y="139.0" width="69.0" height="18" rx="3" class="d-label-bg"/>
+<text x="560" y="150" class="d-text s lab" text-anchor="middle">awarded as</text>
+<path d="M640,230 L680,230" class="d-arrow hi" marker-end="url(#knowledge_graph-a-hi)"/>
+<rect x="628.5" y="211.0" width="63.1" height="18" rx="3" class="d-label-bg"/>
+<text x="660" y="222" class="d-text s lab" text-anchor="middle">signed by</text>
+<path d="M380,100 L380,165 L500,165 L500,200" class="d-arrow hi" marker-end="url(#knowledge_graph-a-hi)"/>
+<rect x="426.1" y="146.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="440" y="157" class="d-text s lab" text-anchor="middle">has</text>
+<path d="M290,100 L290,140 L110,140 L110,200" class="d-arrow hi" marker-end="url(#knowledge_graph-a-hi)"/>
+<rect x="159.6" y="121.0" width="80.8" height="18" rx="3" class="d-label-bg"/>
+<text x="200" y="132" class="d-text s lab" text-anchor="middle">described in</text>
+<path d="M110,260 L110,340" class="d-arrow hi" marker-end="url(#knowledge_graph-a-hi)"/>
+<rect x="121.0" y="289.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="125" y="300" class="d-text s lab" text-anchor="start">has</text>
+<path d="M200,382 L260,382" class="d-arrow" marker-end="url(#knowledge_graph-a)"/>
+<rect x="207.3" y="363.0" width="45.4" height="18" rx="3" class="d-label-bg"/>
+<text x="230" y="374" class="d-text s lab" text-anchor="middle">states</text>
+<path d="M440,370 L470,370" class="d-arrow" marker-end="url(#knowledge_graph-a)"/>
+<rect x="435.2" y="351.0" width="39.5" height="18" rx="3" class="d-label-bg"/>
+<text x="455" y="362" class="d-text s lab" text-anchor="middle">pairs</text>
+<path d="M460,250 L230,250 L230,352 L206,352" class="d-arrow warm dash" marker-end="url(#knowledge_graph-a-warm)"/>
+<rect x="251.5" y="231.0" width="187.0" height="18" rx="3" class="d-label-bg"/>
+<text x="345" y="242" class="d-text s lab" text-anchor="middle">appeared together, score ≥ 0.5</text>
+<rect x="680" y="330" width="200" height="90" rx="8" class="d-box hi"/>
+<text x="780.0" y="350.5" class="d-text b" text-anchor="middle">Four hops</text>
+<text x="780.0" y="365.5" class="d-text s" text-anchor="middle"><tspan x="780.0" dy="0">supplier → contract → project</tspan><tspan x="780.0" dy="14">→ document → ¶54</tspan><tspan x="780.0" dy="14">recursive SQL, at most 4 hops,</tspan><tspan x="780.0" dy="14">only edges public by the date</tspan></text>
+</svg>

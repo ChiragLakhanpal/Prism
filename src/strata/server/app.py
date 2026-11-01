@@ -116,6 +116,7 @@ import dataclasses
 import datetime as dt
 import json
 import logging
+import os
 import threading
 import uuid
 from collections.abc import AsyncIterator, Callable, Mapping
@@ -150,7 +151,8 @@ from strata.harness.turn import (ERROR_CODES, Event, RunError, Runner, Scope, Tr
                                  new_run_id as random_run_id, no_agent)
 from strata.lakehouse.clean import agency_id as agency_key
 from strata.lakehouse.engine import Engine, EngineError, PermissionDenied, read_together
-from strata.config import PackageForm, load_package_form
+from strata.config import DeckGate, PackageForm, load_package_form
+from strata.server import deck_door
 from strata.packages.store import PackageStore
 from strata.knowledge.retrieval.judging import Judging
 from strata.knowledge.retrieval.reports import CitationLog, PassageReports
@@ -335,7 +337,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                new_upload_id: Callable[[], str] = upload_routes.new_upload_id,
                settings: SettingsStore | None = None, exposures: ExposureLog | None = None,
                visits: LessonVisits | None = None, views: Views | None = None,
-               environ: Mapping[str, str] | None = None, home: HomeStore | None = None,
+               environ: Mapping[str, str] | None = None, deck_gate: DeckGate | None = None,
+               home: HomeStore | None = None,
                thresholds: Thresholds | None = None, page_cache: PageCache | None = None,
                warm: Warm | None = None) -> FastAPI:
     """The app.
@@ -1517,11 +1520,36 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         outcome.update(verdict=verdict, error_code=error_code or (None if verdict else "no_answer"))
         yield frame(Event("done", done))
 
+    # The deck's password (deck_door): whether this browser has given it, and the check that gives it the cookie.
+    deck_secret = (environ if environ is not None else os.environ).get("DATABRICKS_CLIENT_SECRET", "")
+
+    @app.get("/api/deck/open", include_in_schema=False)
+    def deck_is_open(request: Request):
+        return Response(status_code=204 if deck_door.admits(deck_gate, request.cookies.get(deck_door.COOKIE),
+                                                            deck_secret) else 401)
+
+    class DeckPassword(BaseModel):
+        password: str = Field(max_length=200)
+
+    @app.post("/api/deck/open", include_in_schema=False)
+    def open_deck(body: DeckPassword):
+        if deck_gate is None:
+            return Response(status_code=204)
+        if not deck_door.opens(deck_gate, body.password):
+            return JSONResponse({"error": "wrong_password"}, status_code=403)
+        response = Response(status_code=204)
+        response.set_cookie(deck_door.COOKIE, deck_door.token(deck_gate, deck_secret), max_age=deck_door.KEEP_SECONDS,
+                            httponly=True, secure=True, samesite="lax")
+        return response
+
     if web is not None:
         @app.get("/{address:path}", include_in_schema=False)
-        def page(address: str):
+        def page(address: str, request: Request):
             if address == "api" or address.startswith("api/"):
                 return JSONResponse({"detail": "Not Found"}, status_code=404)
+            if deck_door.guarded(address) and not deck_door.admits(deck_gate, request.cookies.get(deck_door.COOKIE),
+                                                                   deck_secret):
+                return JSONResponse({"error": "deck_closed"}, status_code=401, headers={"Cache-Control": "no-store"})
             file = web_file(address)
             if file is not None:
                 lasting = file.parent.name == "assets"  # Vite names each asset by its content

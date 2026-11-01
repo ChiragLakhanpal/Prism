@@ -1,0 +1,53 @@
+<svg viewBox="0 0 900 560" role="img" aria-label="One question, step by step: the browser asks the app, the app asks the Foundry agent, the agent asks for tools, the app runs them as the viewer on Databricks, the verifier checks the sentences, and the answer streams back with its citations." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="question_sequence-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="question_sequence-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="question_sequence-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="question_sequence-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="question_sequence-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="15" y="10" width="150" height="40" rx="8" class="d-box"/>
+<text x="90.0" y="33.5" class="d-text b" text-anchor="middle">Browser</text>
+<line x1="90" y1="50" x2="90" y2="545" class="d-rule dash"/>
+<rect x="215" y="10" width="150" height="40" rx="8" class="d-box hi"/>
+<text x="290.0" y="33.5" class="d-text b" text-anchor="middle">Strata app</text>
+<line x1="290" y1="50" x2="290" y2="545" class="d-rule dash"/>
+<rect x="425" y="10" width="150" height="40" rx="8" class="d-box violet"/>
+<text x="500.0" y="33.5" class="d-text b" text-anchor="middle">Foundry agent</text>
+<line x1="500" y1="50" x2="500" y2="545" class="d-rule dash"/>
+<rect x="645" y="10" width="150" height="40" rx="8" class="d-box"/>
+<text x="720.0" y="33.5" class="d-text b" text-anchor="middle">Databricks</text>
+<line x1="720" y1="50" x2="720" y2="545" class="d-rule dash"/>
+<path d="M90,80 L284,80" class="d-arrow hi" marker-end="url(#question_sequence-a-hi)"/>
+<rect x="75.8" y="62.0" width="228.3" height="18" rx="3" class="d-label-bg"/>
+<text x="190.0" y="73" class="d-text s lab" text-anchor="middle">POST /api/ask: question, scope, as-of</text>
+<path d="M290,115 L494,115" class="d-arrow violet" marker-end="url(#question_sequence-a-violet)"/>
+<rect x="295.6" y="97.0" width="198.8" height="18" rx="3" class="d-label-bg"/>
+<text x="395.0" y="108" class="d-text s lab" text-anchor="middle">the question as data, with as-of</text>
+<path d="M500,150 L296,150" class="d-arrow violet" marker-end="url(#question_sequence-a-violet)"/>
+<rect x="316.2" y="132.0" width="157.5" height="18" rx="3" class="d-label-bg"/>
+<text x="395.0" y="143" class="d-text s lab" text-anchor="middle">call search_passages(...)</text>
+<path d="M290,185 L714,185" class="d-arrow hi" marker-end="url(#question_sequence-a-hi)"/>
+<rect x="408.6" y="167.0" width="192.9" height="18" rx="3" class="d-label-bg"/>
+<text x="505.0" y="178" class="d-text s lab" text-anchor="middle">runs it with the viewer&#x27;s token</text>
+<path d="M720,220 L296,220" class="d-arrow" marker-end="url(#question_sequence-a)"/>
+<rect x="382.0" y="202.0" width="246.0" height="18" rx="3" class="d-label-bg"/>
+<text x="505.0" y="213" class="d-text s lab" text-anchor="middle">rows and passages, as the viewer may see</text>
+<path d="M290,255 L494,255" class="d-arrow violet" marker-end="url(#question_sequence-a-violet)"/>
+<rect x="339.9" y="237.0" width="110.3" height="18" rx="3" class="d-label-bg"/>
+<text x="395.0" y="248" class="d-text s lab" text-anchor="middle">the tool&#x27;s result</text>
+<path d="M500,290 L296,290" class="d-arrow violet" marker-end="url(#question_sequence-a-violet)"/>
+<rect x="280.9" y="272.0" width="228.3" height="18" rx="3" class="d-label-bg"/>
+<text x="395.0" y="283" class="d-text s lab" text-anchor="middle">up to 3 rounds of calls, then claims:</text>
+<text x="395" y="308" class="d-text s" text-anchor="middle">sentences, each with its evidence ids</text>
+<rect x="215" y="330" width="150" height="64" rx="8" class="d-box hi"/>
+<text x="290.0" y="351.5" class="d-text b" text-anchor="middle">Verifier</text>
+<text x="290.0" y="366.5" class="d-text s" text-anchor="middle"><tspan x="290.0" dy="0">6 checks on every</tspan><tspan x="290.0" dy="14">sentence</tspan></text>
+<path d="M290,394 L290,420" class="d-arrow" marker-end="url(#question_sequence-a)"/>
+<rect x="215" y="420" width="150" height="40" rx="8" class="d-box"/>
+<text x="290.0" y="443.5" class="d-text b" text-anchor="middle">Kept and removed</text>
+<path d="M290,470 L96,470" class="d-arrow hi" marker-end="url(#question_sequence-a-hi)"/>
+<rect x="105.4" y="452.0" width="175.2" height="18" rx="3" class="d-label-bg"/>
+<text x="193" y="463" class="d-text s lab" text-anchor="middle">stream: sentences, evidence,</text>
+<text x="193" y="488" class="d-text s" text-anchor="middle">checks, removed, done</text>
+<path d="M296,515 L714,515" class="d-arrow dash" marker-end="url(#question_sequence-a)"/>
+<rect x="264.0" y="497.0" width="482.0" height="18" rx="3" class="d-label-bg"/>
+<text x="505" y="508" class="d-text s lab" text-anchor="middle">run log to strata.ops, as the app&#x27;s own principal; trace to Application Insights</text>
+<rect x="565" y="330" width="300" height="100" rx="8" class="d-box"/>
+<text x="577" y="355.5" class="d-text b" text-anchor="start">Why this shape</text>
+<text x="577" y="370.5" class="d-text s" text-anchor="start"><tspan x="577" dy="0">the app holds every row and passage</tspan><tspan x="577" dy="14">the answer used, so the verifier can</tspan><tspan x="577" dy="14">check it; the agent never queries</tspan><tspan x="577" dy="14">data itself (ADR 0003)</tspan></text>
+</svg>

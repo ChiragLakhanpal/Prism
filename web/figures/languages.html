@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One question, any language</title>
+  <!-- Strata deck figure, second draft: diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
+       The language case: a question in French or English, search by meaning over passages in either
+       language, the agent writing in the person's language, the verifier's same six checks, and quotes kept as
+       written, in five steps. Font source: system. The app self-hosts Open Sans and Roboto Mono, so this file loads no
+       web font. -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Open Sans', system-ui, sans-serif; background: #f5f7f9; color: #181f25; min-height: 100vh; display: flex;
+           align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    h1 { font-family: 'Open Sans', system-ui, sans-serif; font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 864px; max-width: 864px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <h1>One question, any language</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="languages-title languages-desc" data-motion-root="" data-motion-mode="none" data-step-count="5">
+        <title id="languages-title">One question, any language</title>
+        <desc id="languages-desc">A question in French or English goes to search by meaning, which finds passages in either language in strata.gold.passage. The agent writes in the person's language and keeps each quote as its source wrote it. The verifier runs the same checks, reading French numbers and dates, and finds each quote word for word on its page.</desc>
+        <defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<g data-motion-item="" data-step="1" aria-label="A question in French or English">
+<rect x="16" y="120" width="128" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="16" y="120" width="128" height="96" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="16" y="120" width="128" height="96" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="26" y="138" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The question</text>
+<text x="26" y="152" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">in French or</text>
+<text x="26" y="163" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">English; screens</text>
+<text x="26" y="174" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">stay in English</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="Search by meaning finds passages in any language">
+<rect x="176" y="92" width="168" height="70" rx="6" fill="#f5f7f9"/>
+<rect x="176" y="92" width="168" height="70" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="186" y="110" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Search by meaning</text>
+<text x="186" y="124" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">embeddings place text</text>
+<text x="186" y="135" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">by meaning, then a</text>
+<text x="186" y="146" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">reranker orders them</text>
+<path d="M 145 168 L 175 127" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="176" y="186" width="168" height="30" rx="6" fill="#f5f7f9"/>
+<rect x="176" y="186" width="168" height="30" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="186" y="200" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">strata.gold.passage</text>
+<rect x="176" y="226" width="168" height="38" rx="6" fill="#f5f7f9"/>
+<rect x="176" y="226" width="168" height="38" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="186" y="244" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">¶60, in French</text>
+<text x="186" y="258" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">ICR, P127203</text>
+<rect x="176" y="272" width="168" height="38" rx="6" fill="#f5f7f9"/>
+<rect x="176" y="272" width="168" height="38" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="186" y="290" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">¶55, in English</text>
+<text x="186" y="304" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">ICR, P130164, page 23</text>
+<path d="M 260 163 L 260 185" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+</g>
+<g data-motion-item="" data-step="3" aria-label="The agent writes in the person&#x27;s language, and quotes stay in their source&#x27;s language">
+<rect x="376" y="120" width="152" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="376" y="120" width="152" height="96" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="386" y="138" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The agent</text>
+<text x="386" y="152" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">writes in the</text>
+<text x="386" y="163" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">person's language;</text>
+<text x="386" y="174" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">quotes stay as</text>
+<text x="386" y="185" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">written</text>
+<path d="M 345 127 L 360 127 L 360 168 L 375 168" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+</g>
+<g data-motion-item="" data-step="4" aria-label="The verifier runs the same checks in either language">
+<rect x="560" y="120" width="152" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="560" y="120" width="152" height="96" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="560" y="120" width="152" height="96" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="570" y="138" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The verifier</text>
+<text x="570" y="152" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">reads French numbers</text>
+<text x="570" y="163" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">and dates; finds each</text>
+<text x="570" y="174" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">quote on its page</text>
+<path d="M 529 168 L 559 168" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#arrow-accent)"/>
+<rect x="580" y="98" width="112" height="13" rx="2" fill="#f5f7f9"/>
+<text x="636" y="108" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">config/languages.toml</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="The answer in French, with English quotes kept as written">
+<rect x="744" y="120" width="108" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="744" y="120" width="108" height="96" rx="6" fill="#ffffff" stroke="#01707e" stroke-width="1"/>
+<rect x="744" y="120" width="108" height="96" rx="6" fill="#01707e" fill-opacity="0.07"/>
+<text x="754" y="138" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The answer</text>
+<text x="754" y="152" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">in French;</text>
+<text x="754" y="163" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">quotes stay</text>
+<text x="754" y="174" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">as written</text>
+<path d="M 713 168 L 743 168" fill="none" stroke="#01707e" stroke-width="1.2" marker-end="url(#arrow-link)"/>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Why a quote is never translated">
+<rect x="560" y="248" width="292" height="62" rx="6" fill="#f5f7f9"/>
+<rect x="560" y="248" width="292" height="62" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="570" y="266" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Why not translate the quote?</text>
+<text x="570" y="280" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a translated quote can't be found word</text>
+<text x="570" y="291" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">for word on its page, so no one could check it</text>
+</g>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

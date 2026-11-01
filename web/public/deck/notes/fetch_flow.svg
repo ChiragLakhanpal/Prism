@@ -1,0 +1,42 @@
+<svg viewBox="0 0 900 330" role="img" aria-label="How fetch_by_watermark keeps bronze incremental and safe to rerun: each page is stripped of contact details, hashed, and kept only if bronze does not hold that hash." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="fetch_flow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="fetch_flow-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="fetch_flow-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="fetch_flow-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="fetch_flow-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="10" y="130" width="120" height="60" rx="8" class="d-box hi"/>
+<text x="70.0" y="156.0" class="d-text b" text-anchor="middle"><tspan x="70.0" dy="0">Ask for the</tspan><tspan x="70.0" dy="15">next page</tspan></text>
+<polygon points="205,110.0 275.0,160 205,210.0 135.0,160" class="d-box"/>
+<text x="205" y="156.0" class="d-text b" text-anchor="middle"><tspan x="205" dy="0">Older than</tspan><tspan x="205" dy="15">the watermark?</tspan></text>
+<text x="205" y="228" class="d-text s" text-anchor="middle">search APIs only</text>
+<rect x="300" y="130" width="130" height="60" rx="8" class="d-box"/>
+<text x="365.0" y="156.0" class="d-text b" text-anchor="middle"><tspan x="365.0" dy="0">Strip contact</tspan><tspan x="365.0" dy="15">details, count them</tspan></text>
+<rect x="460" y="130" width="120" height="60" rx="8" class="d-box"/>
+<text x="520.0" y="149.5" class="d-text b" text-anchor="middle">Hash the page</text>
+<text x="520.0" y="164.5" class="d-text s" text-anchor="middle"><tspan x="520.0" dy="0">sorted records,</tspan><tspan x="520.0" dy="14">no as_of_date</tspan></text>
+<polygon points="660,110.0 730.0,160 660,210.0 590.0,160" class="d-box"/>
+<text x="660" y="156.0" class="d-text b" text-anchor="middle"><tspan x="660" dy="0">Hash already</tspan><tspan x="660" dy="15">in bronze?</tspan></text>
+<rect x="770" y="40" width="120" height="56" rx="8" class="d-box"/>
+<text x="830.0" y="64.5" class="d-text b" text-anchor="middle">Skip it</text>
+<text x="830.0" y="79.5" class="d-text s" text-anchor="middle">a rerun adds nothing</text>
+<rect x="770" y="220" width="120" height="62" rx="8" class="d-box"/>
+<text x="830.0" y="240.5" class="d-text b" text-anchor="middle">Keep it</text>
+<text x="830.0" y="255.5" class="d-text s" text-anchor="middle"><tspan x="830.0" dy="0">20 pages per commit,</tspan><tspan x="830.0" dy="14">with its fetch day</tspan></text>
+<rect x="140" y="260" width="130" height="50" rx="8" class="d-box warm"/>
+<text x="205.0" y="288.5" class="d-text b" text-anchor="middle">Stop this series</text>
+<path d="M130,160 L140,160" class="d-arrow" marker-end="url(#fetch_flow-a)"/>
+<path d="M205,236 L205,260" class="d-arrow warm" marker-end="url(#fetch_flow-a-warm)"/>
+<rect x="228.0" y="241.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="232" y="252" class="d-text s lab" text-anchor="start">yes</text>
+<path d="M275,160 L300,160" class="d-arrow" marker-end="url(#fetch_flow-a)"/>
+<rect x="276.1" y="141.0" width="21.8" height="18" rx="3" class="d-label-bg"/>
+<text x="287" y="152" class="d-text s lab" text-anchor="middle">no</text>
+<path d="M430,160 L460,160" class="d-arrow" marker-end="url(#fetch_flow-a)"/>
+<path d="M580,160 L590,160" class="d-arrow" marker-end="url(#fetch_flow-a)"/>
+<path d="M660,110 L660,68 L770,68" class="d-arrow" marker-end="url(#fetch_flow-a)"/>
+<rect x="686.1" y="49.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="700" y="60" class="d-text s lab" text-anchor="middle">yes</text>
+<path d="M660,210 L660,251 L770,251" class="d-arrow" marker-end="url(#fetch_flow-a)"/>
+<rect x="689.1" y="232.0" width="21.8" height="18" rx="3" class="d-label-bg"/>
+<text x="700" y="243" class="d-text s lab" text-anchor="middle">no</text>
+<path d="M830,96 L830,110 L40,110 L40,130" class="d-arrow dash" marker-end="url(#fetch_flow-a)"/>
+<rect x="237.3" y="91.0" width="405.3" height="18" rx="3" class="d-label-bg"/>
+<text x="440" y="102" class="d-text s lab" text-anchor="middle">next page, until a short page, the reported total or the offset cap</text>
+<text x="10" y="22" class="d-text gt" text-anchor="start">ONE SERIES = ONE SOURCE, OR ONE PILOT COUNTRY OF A SOURCE</text>
+</svg>

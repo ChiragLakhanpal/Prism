@@ -24,6 +24,7 @@ export const PAGE_ORDER: FigureId[] = [
   "reading",
   "knowledge-model",
   "retrieval",
+  "languages",
   "estimate",
   "checks",
   "ladder",

@@ -41,6 +41,8 @@ DEMO_FILE = ROOT / "docs" / "proposal" / "demo-package.json"
 
 # The results and settings the slides read, by their register keys.
 RESULTS = ("passages", "documents-read", "pages-read-well", "award-rows-by-year", "linked-notice", "backtest-years",
+           "award-rows-since-2020", "award-rows-2001-2016", "gap-contracts", "supplier-ids", "contacts-removed",
+           "contacts-left", "disagreements",
            "benchmark-passed", "must-refuse", "hindsight-caught", "hindsight-checklist", "hindsight-interval",
            "azure-spend")
 SETTINGS = ("check-count", "loop-count", "pilot-countries", "rollout-phases", "risks-per-package", "checklist-size",

@@ -1,0 +1,53 @@
+<svg viewBox="0 0 900 420" role="img" aria-label="Three learning loops share one dated store. Each has a trigger, a cadence, an owner and a gate a change must pass, plus a leading indicator that moves first and a lagging one that confirms it." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="three_loops-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="three_loops-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="three_loops-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="three_loops-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="three_loops-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<text x="10" y="82" class="d-text gt" text-anchor="start">Trigger</text>
+<text x="10" y="134" class="d-text gt" text-anchor="start">Cadence</text>
+<text x="10" y="186" class="d-text gt" text-anchor="start">Owner</text>
+<text x="10" y="238" class="d-text gt" text-anchor="start">Gate</text>
+<text x="10" y="290" class="d-text gt" text-anchor="start">Leading</text>
+<text x="10" y="342" class="d-text gt" text-anchor="start">Lagging</text>
+<rect x="110" y="20" width="250" height="36" rx="8" class="d-box violet"/>
+<text x="235.0" y="41.5" class="d-text b" text-anchor="middle">Knowledge loop</text>
+<rect x="110" y="62" width="250" height="46" rx="8" class="d-box"/>
+<text x="235.0" y="82.0" class="d-text s" text-anchor="middle"><tspan x="235.0" dy="0">A new ICR, ICR Review</tspan><tspan x="235.0" dy="14">or PPAR</tspan></text>
+<rect x="110" y="114" width="250" height="46" rx="8" class="d-box"/>
+<text x="235.0" y="127.0" class="d-text s" text-anchor="middle"><tspan x="235.0" dy="0">taken in nightly;</tspan><tspan x="235.0" dy="14">decided within 10</tspan><tspan x="235.0" dy="14">business days</tspan></text>
+<rect x="110" y="166" width="250" height="46" rx="8" class="d-box"/>
+<text x="235.0" y="186.0" class="d-text s" text-anchor="middle"><tspan x="235.0" dy="0">a regional lead</tspan><tspan x="235.0" dy="14">procurement specialist</tspan></text>
+<rect x="110" y="218" width="250" height="46" rx="8" class="d-box violet"/>
+<text x="235.0" y="238.0" class="d-text s" text-anchor="middle"><tspan x="235.0" dy="0">quote on its page;</tspan><tspan x="235.0" dy="14">two people decide</tspan></text>
+<rect x="110" y="270" width="250" height="46" rx="8" class="d-box"/>
+<text x="235.0" y="290.0" class="d-text s" text-anchor="middle"><tspan x="235.0" dy="0">days from publication</tspan><tspan x="235.0" dy="14">to decision</tspan></text>
+<rect x="110" y="322" width="250" height="46" rx="8" class="d-box"/>
+<text x="235.0" y="342.0" class="d-text s" text-anchor="middle"><tspan x="235.0" dy="0">blamed risks covered</tspan><tspan x="235.0" dy="14">at approval</tspan></text>
+<rect x="372" y="20" width="250" height="36" rx="8" class="d-box hi"/>
+<text x="497.0" y="41.5" class="d-text b" text-anchor="middle">Retrieval loop</text>
+<rect x="372" y="62" width="250" height="46" rx="8" class="d-box"/>
+<text x="497.0" y="82.0" class="d-text s" text-anchor="middle"><tspan x="497.0" dy="0">&quot;Wrong passage&quot; reports;</tspan><tspan x="497.0" dy="14">new passages</tspan></text>
+<rect x="372" y="114" width="250" height="46" rx="8" class="d-box"/>
+<text x="497.0" y="134.0" class="d-text s" text-anchor="middle"><tspan x="497.0" dy="0">labels weekly; search</tspan><tspan x="497.0" dy="14">tuned at most monthly</tspan></text>
+<rect x="372" y="166" width="250" height="46" rx="8" class="d-box"/>
+<text x="497.0" y="186.0" class="d-text s" text-anchor="middle"><tspan x="497.0" dy="0">the search owner, with</tspan><tspan x="497.0" dy="14">specialists judging</tspan></text>
+<rect x="372" y="218" width="250" height="46" rx="8" class="d-box hi"/>
+<text x="497.0" y="238.0" class="d-text s" text-anchor="middle"><tspan x="497.0" dy="0">no loss on the held-out</tspan><tspan x="497.0" dy="14">or hindsight set</tspan></text>
+<rect x="372" y="270" width="250" height="46" rx="8" class="d-box"/>
+<text x="497.0" y="290.0" class="d-text s" text-anchor="middle"><tspan x="497.0" dy="0">reports per 100</tspan><tspan x="497.0" dy="14">sources opened</tspan></text>
+<rect x="372" y="322" width="250" height="46" rx="8" class="d-box"/>
+<text x="497.0" y="342.0" class="d-text s" text-anchor="middle"><tspan x="497.0" dy="0">precision at 10,</tspan><tspan x="497.0" dy="14">recall at 20</tspan></text>
+<rect x="634" y="20" width="250" height="36" rx="8" class="d-box green"/>
+<text x="759.0" y="41.5" class="d-text b" text-anchor="middle">Estimates loop</text>
+<rect x="634" y="62" width="250" height="46" rx="8" class="d-box"/>
+<text x="759.0" y="82.0" class="d-text s" text-anchor="middle"><tspan x="759.0" dy="0">signings, plan actuals,</tspan><tspan x="759.0" dy="14">drift</tspan></text>
+<rect x="634" y="114" width="250" height="46" rx="8" class="d-box"/>
+<text x="759.0" y="134.0" class="d-text s" text-anchor="middle"><tspan x="759.0" dy="0">watched monthly;</tspan><tspan x="759.0" dy="14">retrained quarterly</tspan></text>
+<rect x="634" y="166" width="250" height="46" rx="8" class="d-box"/>
+<text x="759.0" y="186.0" class="d-text s" text-anchor="middle"><tspan x="759.0" dy="0">the model owner,</tspan><tspan x="759.0" dy="14">co-signed by the lead</tspan></text>
+<rect x="634" y="218" width="250" height="46" rx="8" class="d-box green"/>
+<text x="759.0" y="231.0" class="d-text s" text-anchor="middle"><tspan x="759.0" dy="0">backtest win, a quarter</tspan><tspan x="759.0" dy="14">in shadow, coverage per</tspan><tspan x="759.0" dy="14">edition, two sign-offs</tspan></text>
+<rect x="634" y="270" width="250" height="46" rx="8" class="d-box"/>
+<text x="759.0" y="290.0" class="d-text s" text-anchor="middle"><tspan x="759.0" dy="0">rolling coverage of</tspan><tspan x="759.0" dy="14">the 8-in-10 range</tspan></text>
+<rect x="634" y="322" width="250" height="46" rx="8" class="d-box"/>
+<text x="759.0" y="342.0" class="d-text s" text-anchor="middle"><tspan x="759.0" dy="0">plan accuracy, offered</tspan><tspan x="759.0" dy="14">versus other rows</tspan></text>
+<rect x="110" y="378" width="774" height="34" rx="8" class="d-box"/>
+<text x="497.0" y="398.5" class="d-text b" text-anchor="middle">One dated store: strata.ops, every row with its public date, so any change can be replayed</text>
+</svg>

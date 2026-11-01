@@ -1,0 +1,90 @@
+<svg viewBox="0 0 920 520" role="img" aria-label="Strata end to end: public World Bank sources feed a nightly Databricks job that writes the strata catalog; the Databricks App runs tools as each viewer, a Foundry agent decides which tools to call, and a verifier checks every sentence before people see it." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="arch_overview-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="arch_overview-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="arch_overview-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="arch_overview-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="arch_overview-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="10" y="30" width="150" height="460" rx="12" class="d-group"/>
+<text x="22" y="48" class="d-text gt" text-anchor="start">Public sources</text>
+<rect x="22" y="60" width="126" height="76" rx="8" class="d-box"/>
+<text x="85.0" y="87.5" class="d-text b" text-anchor="middle">Finances One</text>
+<text x="85.0" y="102.5" class="d-text s" text-anchor="middle"><tspan x="85.0" dy="0">awards, IEG ratings,</tspan><tspan x="85.0" dy="14">loans and credits</tspan></text>
+<rect x="22" y="160" width="126" height="76" rx="8" class="d-box"/>
+<text x="85.0" y="187.5" class="d-text b" text-anchor="middle">Search APIs</text>
+<text x="85.0" y="202.5" class="d-text s" text-anchor="middle"><tspan x="85.0" dy="0">procurement notices,</tspan><tspan x="85.0" dy="14">projects</tspan></text>
+<rect x="22" y="260" width="126" height="76" rx="8" class="d-box"/>
+<text x="85.0" y="287.5" class="d-text b" text-anchor="middle">Documents API</text>
+<text x="85.0" y="302.5" class="d-text s" text-anchor="middle"><tspan x="85.0" dy="0">PADs, ISRs, ICRs,</tspan><tspan x="85.0" dy="14">reviews, plans</tspan></text>
+<rect x="22" y="360" width="126" height="76" rx="8" class="d-box"/>
+<text x="85.0" y="394.5" class="d-text b" text-anchor="middle">Indicators API</text>
+<text x="85.0" y="409.5" class="d-text s" text-anchor="middle">CPIA and WGI</text>
+<rect x="190" y="150" width="140" height="190" rx="8" class="d-box hi"/>
+<text x="260.0" y="213.5" class="d-text b" text-anchor="middle">Nightly job</text>
+<text x="260.0" y="228.5" class="d-text s" text-anchor="middle"><tspan x="260.0" dy="0">10 tasks in a chain</tspan><tspan x="260.0" dy="14">03:00 New York</tspan><tspan x="260.0" dy="14">serverless compute</tspan><tspan x="260.0" dy="14">fetches only</tspan><tspan x="260.0" dy="14">what changed</tspan></text>
+<path d="M160,245 L190,245" class="d-arrow hi" marker-end="url(#arch_overview-a-hi)"/>
+<rect x="155.2" y="226.0" width="39.5" height="18" rx="3" class="d-label-bg"/>
+<text x="175" y="237" class="d-text s lab" text-anchor="middle">fetch</text>
+<rect x="360" y="30" width="220" height="460" rx="12" class="d-group hi"/>
+<text x="372" y="48" class="d-text gt" text-anchor="start">Databricks: data and models</text>
+<rect x="375" y="58" width="190" height="46" rx="8" class="d-box"/>
+<text x="470.0" y="77.5" class="d-text b" text-anchor="middle">bronze</text>
+<text x="470.0" y="92.5" class="d-text s" text-anchor="middle">pages as received</text>
+<rect x="375" y="114" width="190" height="46" rx="8" class="d-box"/>
+<text x="470.0" y="133.5" class="d-text b" text-anchor="middle">silver</text>
+<text x="470.0" y="148.5" class="d-text s" text-anchor="middle">typed rows, passages</text>
+<rect x="375" y="170" width="190" height="46" rx="8" class="d-box hi"/>
+<text x="470.0" y="189.5" class="d-text b" text-anchor="middle">gold</text>
+<text x="470.0" y="204.5" class="d-text s" text-anchor="middle">the knowledge model</text>
+<rect x="375" y="226" width="190" height="46" rx="8" class="d-box"/>
+<text x="470.0" y="245.5" class="d-text b" text-anchor="middle">ops</text>
+<text x="470.0" y="260.5" class="d-text s" text-anchor="middle">runs, answers, decisions</text>
+<path d="M470,104 L470,114" class="d-arrow" marker-end="url(#arch_overview-a)"/>
+<path d="M470,160 L470,170" class="d-arrow" marker-end="url(#arch_overview-a)"/>
+<path d="M470,216 L470,226" class="d-arrow" marker-end="url(#arch_overview-a)"/>
+<rect x="375" y="290" width="190" height="44" rx="8" class="d-box"/>
+<text x="470.0" y="308.5" class="d-text b" text-anchor="middle">AI Search index</text>
+<text x="470.0" y="323.5" class="d-text s" text-anchor="middle">hybrid, on gold.passage</text>
+<rect x="375" y="342" width="190" height="44" rx="8" class="d-box"/>
+<text x="470.0" y="360.5" class="d-text b" text-anchor="middle">Genie space</text>
+<text x="470.0" y="375.5" class="d-text s" text-anchor="middle">over two metric views</text>
+<rect x="375" y="394" width="190" height="44" rx="8" class="d-box"/>
+<text x="470.0" y="412.5" class="d-text b" text-anchor="middle">Models in MLflow</text>
+<text x="470.0" y="427.5" class="d-text s" text-anchor="middle">champion and challenger</text>
+<rect x="375" y="446" width="190" height="36" rx="8" class="d-box"/>
+<text x="470.0" y="467.5" class="d-text b" text-anchor="middle">AI/BI dashboard</text>
+<path d="M330,200 L345,200 L345,81 L375,81" class="d-arrow hi" marker-end="url(#arch_overview-a-hi)"/>
+<rect x="326.0" y="129.0" width="39.5" height="18" rx="3" class="d-label-bg"/>
+<text x="330" y="140" class="d-text s lab" text-anchor="start">write</text>
+<rect x="610" y="30" width="170" height="300" rx="12" class="d-group hi"/>
+<text x="622" y="48" class="d-text gt" text-anchor="start">Databricks App</text>
+<rect x="622" y="58" width="146" height="52" rx="8" class="d-box"/>
+<text x="695.0" y="80.5" class="d-text b" text-anchor="middle">Web app and API</text>
+<text x="695.0" y="95.5" class="d-text s" text-anchor="middle">React and FastAPI</text>
+<rect x="622" y="120" width="146" height="52" rx="8" class="d-box"/>
+<text x="695.0" y="142.5" class="d-text b" text-anchor="middle">Tools</text>
+<text x="695.0" y="157.5" class="d-text s" text-anchor="middle">run as the viewer</text>
+<rect x="622" y="182" width="146" height="52" rx="8" class="d-box hi"/>
+<text x="695.0" y="204.5" class="d-text b" text-anchor="middle">Verifier</text>
+<text x="695.0" y="219.5" class="d-text s" text-anchor="middle">6 checks, every answer</text>
+<rect x="622" y="244" width="146" height="52" rx="8" class="d-box"/>
+<text x="695.0" y="266.5" class="d-text b" text-anchor="middle">Drafts</text>
+<text x="695.0" y="281.5" class="d-text s" text-anchor="middle">Draft, Checked, Exported</text>
+<rect x="610" y="346" width="170" height="46" rx="8" class="d-box"/>
+<text x="695.0" y="365.5" class="d-text b" text-anchor="middle">Lakebase</text>
+<text x="695.0" y="380.5" class="d-text s" text-anchor="middle">app state, fast clicks</text>
+<rect x="610" y="404" width="170" height="86" rx="8" class="d-box violet"/>
+<text x="695.0" y="429.5" class="d-text b" text-anchor="middle">Microsoft Foundry</text>
+<text x="695.0" y="444.5" class="d-text s" text-anchor="middle"><tspan x="695.0" dy="0">orchestrator agent and</tspan><tspan x="695.0" dy="14">writers, Azure OpenAI</tspan><tspan x="695.0" dy="14">models, guardrail</tspan></text>
+<path d="M622,146 L580,146" class="d-arrow hi" marker-end="url(#arch_overview-a-hi)"/>
+<rect x="587.1" y="127.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="601" y="138" class="d-text s lab" text-anchor="middle">SQL</text>
+<path d="M610,312 L565,312" class="d-arrow" marker-end="url(#arch_overview-a)"/>
+<rect x="565.3" y="293.0" width="45.4" height="18" rx="3" class="d-label-bg"/>
+<text x="588" y="304" class="d-text s lab" text-anchor="middle">search</text>
+<path d="M780,270 L800,270 L800,447 L780,447" class="d-arrow violet" marker-end="url(#arch_overview-a-violet)" marker-start="url(#arch_overview-a-violet)"/>
+<rect x="802.0" y="349.0" width="74.9" height="32" rx="3" class="d-label-bg"/>
+<text x="806" y="360" class="d-text s lab" text-anchor="start"><tspan x="806" dy="0">tool calls</tspan><tspan x="806" dy="14">and results</tspan></text>
+<path d="M695,330 L695,346" class="d-arrow" marker-end="url(#arch_overview-a)"/>
+<rect x="820" y="60" width="92" height="120" rx="8" class="d-box"/>
+<text x="866.0" y="95.5" class="d-text b" text-anchor="middle">People</text>
+<text x="866.0" y="110.5" class="d-text s" text-anchor="middle"><tspan x="866.0" dy="0">staff,</tspan><tspan x="866.0" dy="14">implementing</tspan><tspan x="866.0" dy="14">agencies,</tspan><tspan x="866.0" dy="14">the public</tspan></text>
+<path d="M820,100 L780,100" class="d-arrow hi" marker-end="url(#arch_overview-a-hi)" marker-start="url(#arch_overview-a-hi)"/>
+<rect x="786.1" y="81.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="800" y="92" class="d-text s lab" text-anchor="middle">ask</text>
+</svg>

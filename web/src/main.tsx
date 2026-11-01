@@ -1,6 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { DeckDoor } from "./deck/door";
 import { deckView } from "./deck/view";
 import "./styles/app.css";
 
@@ -19,14 +20,13 @@ if (__GALLERY__ && /^\/gallery(\/|$)/.test(window.location.pathname)) {
 } else if (deckView(window.location.pathname)) {
   // The deck at /present (ticket 47) stands outside the app's frame: no navy bar, no box, and nothing in the app
   // links to it. Any other address under /present is the app's not-found page. The deck loads only here, so its
-  // slides and their copy are not in any app page's first download.
+  // slides and their copy are not in any app page's first download. The door asks for the deck's password first, and
+  // the App's server keeps the deck's code and data until it is given.
   const view = deckView(window.location.pathname)!;
-  void import("./deck/Deck").then(({ DeckApp }) =>
-    root.render(
-      <StrictMode>
-        <DeckApp view={view} />
-      </StrictMode>,
-    ),
+  root.render(
+    <StrictMode>
+      <DeckDoor view={view} />
+    </StrictMode>,
   );
 } else {
   root.render(

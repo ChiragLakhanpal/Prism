@@ -10,3 +10,12 @@
 
 presenter_name = "Chirag Lakhanpal"
 presentation_date = "2026-11-01"
+
+# The deck's password (the user's request of October 31, 2026). The App's server hands the deck's code, its data and
+# the study guide's diagrams only to a browser that has given it, so the slides and the speaker notes stay with the
+# presenter, even for people signed into the App. Only the password's PBKDF2-SHA256 digest and its salt are here,
+# never the password. Delete this table and the deck opens without one.
+[gate]
+salt = "297d89ed78926d291670d47cd89b0627"
+iterations = 100000
+digest = "7e70d9e8656e1bf93911962bf9de0734a18c8e330b74c0160b39dc6d4465a687"

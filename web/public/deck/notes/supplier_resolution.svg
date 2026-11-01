@@ -1,0 +1,48 @@
+<svg viewBox="0 0 900 360" role="img" aria-label="How a supplier row is resolved: a STEP supplier ID decides first; only rows without one are matched by name with Splink, and the score routes each pair to an automatic merge, a model, a person, or kept apart." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="supplier_resolution-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="supplier_resolution-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="supplier_resolution-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="supplier_resolution-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="supplier_resolution-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="10" y="150" width="130" height="60" rx="8" class="d-box hi"/>
+<text x="75.0" y="169.5" class="d-text b" text-anchor="middle">A supplier row</text>
+<text x="75.0" y="184.5" class="d-text s" text-anchor="middle"><tspan x="75.0" dy="0">from awards or an</tspan><tspan x="75.0" dy="14">award notice</tspan></text>
+<polygon points="220,130.0 295.0,180 220,230.0 145.0,180" class="d-box"/>
+<text x="220" y="176.0" class="d-text b" text-anchor="middle"><tspan x="220" dy="0">Has a STEP</tspan><tspan x="220" dy="15">supplier ID?</tspan></text>
+<rect x="320" y="20" width="200" height="60" rx="8" class="d-box green"/>
+<text x="420.0" y="39.5" class="d-text b" text-anchor="middle">That ID is the supplier</text>
+<text x="420.0" y="54.5" class="d-text s" text-anchor="middle"><tspan x="420.0" dy="0">never merged with another</tspan><tspan x="420.0" dy="14">ID by name</tspan></text>
+<path d="M140,180 L145,180" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<path d="M220,130 L220,50 L320,50" class="d-arrow green" marker-end="url(#supplier_resolution-a-green)"/>
+<rect x="228.0" y="79.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="232" y="90" class="d-text s lab" text-anchor="start">yes</text>
+<polygon points="220,260.0 295.0,300 220,340.0 145.0,300" class="d-box"/>
+<text x="220" y="296.0" class="d-text b" text-anchor="middle"><tspan x="220" dy="0">Individual</tspan><tspan x="220" dy="15">consultant?</tspan></text>
+<path d="M220,230 L220,260" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<rect x="228.0" y="237.0" width="21.8" height="18" rx="3" class="d-label-bg"/>
+<text x="232" y="248" class="d-text s lab" text-anchor="start">no</text>
+<rect x="10" y="280" width="110" height="50" rx="8" class="d-box"/>
+<text x="65.0" y="301.5" class="d-text b" text-anchor="middle">Never matched,</text>
+<text x="65.0" y="316.5" class="d-text s" text-anchor="middle">never named</text>
+<path d="M145,300 L120,300" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<rect x="118.2" y="281.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="132" y="292" class="d-text s lab" text-anchor="middle">yes</text>
+<rect x="340" y="270" width="170" height="60" rx="8" class="d-box hi"/>
+<text x="425.0" y="289.5" class="d-text b" text-anchor="middle">Splink name match</text>
+<text x="425.0" y="304.5" class="d-text s" text-anchor="middle"><tspan x="425.0" dy="0">same country; blocked</tspan><tspan x="425.0" dy="14">on first word</tspan></text>
+<path d="M295,300 L340,300" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<rect x="307.1" y="281.0" width="21.8" height="18" rx="3" class="d-label-bg"/>
+<text x="318" y="292" class="d-text s lab" text-anchor="middle">no</text>
+<rect x="600" y="86" width="290" height="50" rx="8" class="d-box green"/>
+<text x="745.0" y="107.5" class="d-text b" text-anchor="middle">≥ 0.99: merge automatically</text>
+<text x="745.0" y="122.5" class="d-text s" text-anchor="middle">only same name plus a shared project</text>
+<path d="M510,300 L560,300 L560,110 L600,110" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<rect x="600" y="156" width="290" height="50" rx="8" class="d-box"/>
+<text x="745.0" y="177.5" class="d-text b" text-anchor="middle">0.5 to 0.99: ask the model</text>
+<text x="745.0" y="192.5" class="d-text s" text-anchor="middle">gpt-5.4; stands only at confidence ≥ 0.9</text>
+<path d="M510,300 L560,300 L560,180 L600,180" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<rect x="600" y="226" width="290" height="50" rx="8" class="d-box warm"/>
+<text x="745.0" y="247.5" class="d-text b" text-anchor="middle">unsure, or two IDs would join</text>
+<text x="745.0" y="262.5" class="d-text s" text-anchor="middle">a person decides, with a reason</text>
+<path d="M510,300 L560,300 L560,250 L600,250" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<rect x="600" y="296" width="290" height="50" rx="8" class="d-box"/>
+<text x="745.0" y="324.5" class="d-text b" text-anchor="middle">below 0.5: kept apart</text>
+<path d="M510,300 L560,300 L560,320 L600,320" class="d-arrow" marker-end="url(#supplier_resolution-a)"/>
+<text x="560" y="66" class="d-text gt" text-anchor="start">MATCH PROBABILITY ROUTES THE PAIR</text>
+</svg>

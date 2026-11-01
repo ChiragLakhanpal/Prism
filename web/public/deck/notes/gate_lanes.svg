@@ -1,0 +1,59 @@
+<svg viewBox="0 0 900 445" role="img" aria-label="The pre-commit gate: a secret scan first, then nine lanes in parallel, all offline against a fixture of recorded real data, and the commit lands only if every lane passes within 150 seconds." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="gate_lanes-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="gate_lanes-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="gate_lanes-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="gate_lanes-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="gate_lanes-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="10" y="175" width="100" height="50" rx="8" class="d-box hi"/>
+<text x="60.0" y="203.5" class="d-text b" text-anchor="middle">git commit</text>
+<rect x="140" y="175" width="120" height="50" rx="8" class="d-box"/>
+<text x="200.0" y="189.5" class="d-text b" text-anchor="middle">Secret scan</text>
+<text x="200.0" y="204.5" class="d-text s" text-anchor="middle"><tspan x="200.0" dy="0">staged changes</tspan><tspan x="200.0" dy="14">and history</tspan></text>
+<path d="M110,200 L140,200" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<rect x="310" y="22" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="44.5" class="d-text b" text-anchor="start">guard</text>
+<text x="390" y="46" class="d-text s" text-anchor="start">tests the guard hook</text>
+<path d="M260,200 L285,200 L285,41 L310,41" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,41 L735,41 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="65" width="400" height="38" rx="8" class="d-box hi"/>
+<text x="322" y="87.5" class="d-text b" text-anchor="start">python</text>
+<text x="390" y="89" class="d-text s" text-anchor="start">fixture build, nightly tasks, passage reader, pytest</text>
+<path d="M260,200 L285,200 L285,84 L310,84" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,84 L735,84 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="108" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="130.5" class="d-text b" text-anchor="start">ops</text>
+<text x="390" y="132" class="d-text s" text-anchor="start">wizard and day-one probe tests, 6 workers</text>
+<path d="M260,200 L285,200 L285,127 L310,127" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,127 L735,127 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="151" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="173.5" class="d-text b" text-anchor="start">app</text>
+<text x="390" y="175" class="d-text s" text-anchor="start">app deploy, uploads, the Lakebase probe</text>
+<path d="M260,200 L285,200 L285,170 L310,170" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,170 L735,170 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="194" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="216.5" class="d-text b" text-anchor="start">lint</text>
+<text x="390" y="218" class="d-text s" text-anchor="start">copy words, banned words, components, design tokens</text>
+<path d="M260,200 L285,200 L285,213 L310,213" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,213 L735,213 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="237" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="259.5" class="d-text b" text-anchor="start">sql</text>
+<text x="390" y="261" class="d-text s" text-anchor="start">three-part names, bound parameters only</text>
+<path d="M260,200 L285,200 L285,256 L310,256" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,256 L735,256 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="280" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="302.5" class="d-text b" text-anchor="start">proposal</text>
+<text x="390" y="304" class="d-text s" text-anchor="start">no typed number, placeholders, README links</text>
+<path d="M260,200 L285,200 L285,299 L310,299" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,299 L735,299 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="323" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="345.5" class="d-text b" text-anchor="start">web-1</text>
+<text x="390" y="347" class="d-text s" text-anchor="start">type check, build, half of the Playwright tests</text>
+<path d="M260,200 L285,200 L285,342 L310,342" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,342 L735,342 L735,200 L755,200" class="d-arrow"/>
+<rect x="310" y="366" width="400" height="38" rx="8" class="d-box"/>
+<text x="322" y="388.5" class="d-text b" text-anchor="start">web-2</text>
+<text x="390" y="390" class="d-text s" text-anchor="start">type check, build, the other half</text>
+<path d="M260,200 L285,200 L285,385 L310,385" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<path d="M710,385 L735,385 L735,200 L755,200" class="d-arrow"/>
+<path d="M735,200 L760,200" class="d-arrow" marker-end="url(#gate_lanes-a)"/>
+<rect x="760" y="165" width="130" height="70" rx="8" class="d-box green"/>
+<text x="825.0" y="189.5" class="d-text b" text-anchor="middle">Commit lands</text>
+<text x="825.0" y="204.5" class="d-text s" text-anchor="middle"><tspan x="825.0" dy="0">only if every lane</tspan><tspan x="825.0" dy="14">passes within 150 s</tspan></text>
+<text x="450" y="434" class="d-text s" text-anchor="middle">Offline: no network, a DuckDB fixture of recorded World Bank pages, recorded API answers, a scripted agent. One gate at a time per machine.</text>
+</svg>

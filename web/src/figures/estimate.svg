@@ -1,84 +1,119 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="estimate-title estimate-desc" data-motion-root="" data-motion-mode="none" data-step-count="6" id="estimate-root">
-        <title id="estimate-title">How a time estimate is made</title>
-        <desc id="estimate-desc">Stated criteria choose comparable packages, and with too few Strata shows every package and gives no range; otherwise the past range counts packages still open, a survival model gives the time estimate with its track record, and the plan's date is read against both.</desc>
-        <defs>
+<svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="estimate-title estimate-desc" data-motion-root="" data-motion-mode="none" data-step-count="8" id="estimate-root">
+            <title id="estimate-title">How a time estimate is made</title>
+            <desc id="estimate-desc">Comparable packages come from exact-match SQL on the stated criteria. With too few, every package shows and no range is given. Otherwise the past range is a Kaplan-Meier curve that keeps packages still open in as not signed yet. The time estimate is an XGBoost survival model whose ranges are sized by conformal calibration on packages held out of training. Rolling backtests test it on years it had not seen, a challenger replaces the champion only after its gates, and each night the champion's scores go to strata.gold.time_estimate_score.</desc>
+            <defs>
       <style>#estimate-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
       #estimate-root .diagram-container { width: 100%; overflow-x: auto; }
       @media print {
 #estimate-root .diagram-container { overflow-x: visible; }
 }</style>
-<marker id="estimate-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
-<marker id="estimate-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
-<marker id="estimate-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
-        </defs>
-        <rect width="100%" height="100%" fill="#f5f7f9"/>
-<g data-motion-item="" data-step="1" aria-label="A package and its stated criteria: method, category, market approach, review type, size, region and period">
-<rect x="24" y="24" width="588" height="44" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="24" width="588" height="44" rx="6" fill="#4b5e71" stroke="#586e84" stroke-width="1" fill-opacity="0.1"/>
-<text x="40" y="50" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">A package</text>
-<rect x="116" y="36" width="52" height="20" rx="4" fill="#ffffff" stroke="#586e84" stroke-width="0.8"/>
-<text x="142" y="49" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">method</text>
-<rect x="176" y="36" width="60" height="20" rx="4" fill="#ffffff" stroke="#586e84" stroke-width="0.8"/>
-<text x="206" y="49" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">category</text>
-<rect x="244" y="36" width="100" height="20" rx="4" fill="#ffffff" stroke="#586e84" stroke-width="0.8"/>
-<text x="294" y="49" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">market approach</text>
-<rect x="352" y="36" width="76" height="20" rx="4" fill="#ffffff" stroke="#586e84" stroke-width="0.8"/>
-<text x="390" y="49" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">review type</text>
-<rect x="436" y="36" width="40" height="20" rx="4" fill="#ffffff" stroke="#586e84" stroke-width="0.8"/>
-<text x="456" y="49" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">size</text>
-<rect x="484" y="36" width="52" height="20" rx="4" fill="#ffffff" stroke="#586e84" stroke-width="0.8"/>
-<text x="510" y="49" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">region</text>
-<rect x="544" y="36" width="52" height="20" rx="4" fill="#ffffff" stroke="#586e84" stroke-width="0.8"/>
-<text x="570" y="49" fill="#181f25" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">period</text>
+    <marker id="estimate-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="estimate-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="estimate-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+            </defs>
+            <rect width="100%" height="100%" fill="#f5f7f9"/>
+    <g data-motion-item="" data-step="1" aria-label="Comparable packages: exact-match SQL on the stated criteria">
+<rect x="16" y="24" width="184" height="92" rx="6" fill="#f5f7f9"/>
+<rect x="16" y="24" width="184" height="92" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="16" y="24" width="184" height="92" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="26" y="42" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Comparable packages</text>
+<text x="26" y="56" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">exact-match SQL on the</text>
+<text x="26" y="67" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">stated criteria, over</text>
+<text x="26" y="78" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">gold.package, notice</text>
+<text x="26" y="89" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">and contract</text>
 </g>
-<g data-motion-item="" data-step="2" aria-label="Comparable packages: past packages that match on those criteria">
-<path d="M112,68 V155" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#estimate-arrow)"/>
-<rect x="24" y="156" width="176" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="24" y="156" width="176" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
-<text x="112" y="184.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Comparable packages</text>
+<g data-motion-item="" data-step="2" aria-label="Are there enough comparable packages?">
+<rect x="228" y="40" width="150" height="60" rx="6" fill="#f5f7f9"/>
+<rect x="228" y="40" width="150" height="60" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="238" y="58" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Enough of them?</text>
+<text x="238" y="72" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">the floor is set in</text>
+<text x="238" y="83" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">config/thresholds.toml</text>
+<path d="M 201 70 L 227 70" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#estimate-arrow-accent)"/>
 </g>
-<g data-motion-item="" data-step="3" aria-label="Is the number of comparable packages enough?">
-<path d="M200,180 H227" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#estimate-arrow)"/>
-<polygon points="272,148 316,180 272,212 228,180" fill="#f5f7f9"/>
-<polygon points="272,148 316,180 272,212 228,180" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
-<text x="272" y="184" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Enough?</text>
+<g data-motion-item="" data-step="2" aria-label="With too few, every package shows and no range is given">
+<rect x="228" y="128" width="150" height="52" rx="6" fill="#f5f7f9"/>
+<rect x="228" y="128" width="150" height="52" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="238" y="146" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Too few</text>
+<text x="238" y="160" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">every package shows,</text>
+<text x="238" y="171" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">and no range is given</text>
+<path d="M 303 101 L 303 127" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#estimate-arrow)"/>
 </g>
-<g data-motion-item="" data-step="3" aria-label="With too few, every package is shown and no range is given">
-<path d="M272,212 V271" fill="none" stroke="#4b5e71" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#estimate-arrow)"/>
-<rect x="280" y="236" width="48" height="12" rx="2" fill="#f5f7f9"/>
-<text x="284" y="245" fill="#586e84" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Too few</text>
-<rect x="160" y="272" width="224" height="48" rx="6" fill="#f5f7f9"/>
-<rect x="160" y="272" width="224" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
-<text x="272" y="300.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Every package shown, no range</text>
+<g data-motion-item="" data-step="3" aria-label="The past range: a Kaplan-Meier curve that keeps open packages in">
+<rect x="404" y="24" width="222" height="92" rx="6" fill="#f5f7f9"/>
+<rect x="404" y="24" width="222" height="92" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="414" y="42" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The past range</text>
+<text x="414" y="56" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a Kaplan-Meier curve;</text>
+<text x="414" y="67" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">packages still open</text>
+<text x="414" y="78" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">stay in as not</text>
+<text x="414" y="89" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">signed yet</text>
+<path d="M 379 70 L 403 70" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#estimate-arrow-accent)"/>
+<line x1="556" y1="100" x2="616" y2="100" stroke="#586e84" stroke-width="1"/>
+<path d="M 556 42 L 568 42 L 568 56 L 580 56 L 580 70 L 594 70 L 594 84 L 616 84" fill="none" stroke="#0071bc" stroke-width="1.2"/>
+<circle cx="574" cy="56" r="2.5" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<circle cx="604" cy="84" r="2.5" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
 </g>
-<g data-motion-item="" data-step="4" aria-label="Otherwise the past range counts packages still open">
-<path d="M316,180 H360" fill="none" stroke="#4b5e71" stroke-width="1.2"/>
-<circle cx="364" cy="180" r="4" fill="#4b5e71"/>
-<rect x="318" y="160" width="40" height="12" rx="2" fill="#f5f7f9"/>
-<text x="338" y="169" fill="#586e84" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Enough</text>
-<path d="M364,176 V148.0 Q364,140.0 372,140.0 H395" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#estimate-arrow)"/>
-<rect x="396" y="112" width="216" height="56" rx="6" fill="#f5f7f9"/>
-<rect x="396" y="112" width="216" height="56" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
-<text x="504" y="131.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Past range</text>
-<text x="504" y="145.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">packages still open</text>
-<text x="504" y="157.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">are counted</text>
+<g data-motion-item="" data-step="4" aria-label="The time estimate: an XGBoost survival model">
+<rect x="16" y="208" width="150" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="16" y="208" width="150" height="96" rx="6" fill="#ffffff" stroke="#01707e" stroke-width="1"/>
+<rect x="16" y="208" width="150" height="96" rx="6" fill="#01707e" fill-opacity="0.07"/>
+<text x="26" y="226" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The time estimate</text>
+<text x="26" y="240" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">XGBoost survival, AFT;</text>
+<text x="26" y="251" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">features known at</text>
+<text x="26" y="262" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">the notice date; open</text>
+<text x="26" y="273" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">packages censored</text>
+<path d="M 60 117 L 60 207" fill="none" stroke="#01707e" stroke-width="1.2" marker-end="url(#estimate-arrow-link)"/>
 </g>
-<g data-motion-item="" data-step="5" aria-label="A survival model gives the time estimate, with its track record from years it had not seen">
-<path d="M364,184 V212.0 Q364,220.0 372,220.0 H395" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#estimate-arrow)"/>
-<rect x="396" y="192" width="216" height="56" rx="6" fill="#f5f7f9"/>
-<rect x="396" y="192" width="216" height="56" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
-<text x="504" y="211.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Time estimate</text>
-<text x="504" y="225.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a survival model, tested on</text>
-<text x="504" y="237.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">years it had not seen</text>
+<g data-motion-item="" data-step="5" aria-label="Conformal ranges, sized on packages held out of training">
+<rect x="186" y="208" width="150" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="186" y="208" width="150" height="96" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="196" y="226" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Conformal ranges</text>
+<text x="196" y="240" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a held-out share of</text>
+<text x="196" y="251" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">packages sizes each</text>
+<text x="196" y="262" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">range, so 8 in 10</text>
+<text x="196" y="273" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">means 8 in 10</text>
+<path d="M 167 256 L 185 256" fill="none" stroke="#01707e" stroke-width="1.2" marker-end="url(#estimate-arrow-link)"/>
 </g>
-<g data-motion-item="" data-step="6" aria-label="The plan's date is read against both: how many comparable packages were signed by then">
-<path d="M612,140.0 H628 Q636,140.0 636,148.0 V160 Q636,168 644,168 H659" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#estimate-arrow)"/>
-<path d="M612,220.0 H628 Q636,220.0 636,212.0 V200 Q636,192 644,192 H659" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#estimate-arrow)"/>
-<rect x="660" y="148" width="180" height="64" rx="6" fill="#f5f7f9"/>
-<rect x="660" y="148" width="180" height="64" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1.2" fill-opacity="0.08"/>
-<text x="750" y="171.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">The plan's date</text>
-<text x="750" y="185.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">how many comparable packages</text>
-<text x="750" y="197.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">were signed by then</text>
+<g data-motion-item="" data-step="6" aria-label="Rolling backtests on years the model had not seen">
+<rect x="356" y="208" width="150" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="356" y="208" width="150" height="96" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="366" y="226" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Rolling backtests</text>
+<text x="366" y="240" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">frozen each January,</text>
+<text x="366" y="251" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">tested on the next</text>
+<text x="366" y="262" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">year's packages it</text>
+<text x="366" y="273" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">had not seen</text>
+<path d="M 337 256 L 355 256" fill="none" stroke="#01707e" stroke-width="1.2" marker-end="url(#estimate-arrow-link)"/>
 </g>
-      </svg>
+<g data-motion-item="" data-step="7" aria-label="A challenger replaces the champion only after its gates">
+<rect x="526" y="208" width="150" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="526" y="208" width="150" height="96" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="536" y="226" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Champion, challenger</text>
+<text x="536" y="240" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">wins its backtest and</text>
+<text x="536" y="251" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a quarter in shadow,</text>
+<text x="536" y="262" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">holds every edition,</text>
+<text x="536" y="273" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">then people sign off</text>
+<path d="M 507 256 L 525 256" fill="none" stroke="#01707e" stroke-width="1.2" marker-end="url(#estimate-arrow-link)"/>
+</g>
+<g data-motion-item="" data-step="8" aria-label="Nightly scores in strata.gold.time_estimate_score">
+<rect x="696" y="208" width="152" height="96" rx="6" fill="#f5f7f9"/>
+<rect x="696" y="208" width="152" height="96" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="696" y="208" width="152" height="96" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="706" y="226" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Nightly scores</text>
+<text x="706" y="240" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">gold.time_estimate_</text>
+<text x="706" y="251" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">score: every package</text>
+<text x="706" y="262" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">and what-if, each</text>
+<text x="706" y="273" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">night; the app reads it</text>
+<path d="M 677 256 L 695 256" fill="none" stroke="#01707e" stroke-width="1.2" marker-end="url(#estimate-arrow-link)"/>
+</g>
+<g data-motion-item="" data-step="8" aria-label="The package page shows the past range and the time estimate, or why there is none">
+<rect x="652" y="24" width="196" height="92" rx="6" fill="#f5f7f9"/>
+<rect x="652" y="24" width="196" height="92" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="652" y="24" width="196" height="92" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="662" y="42" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">The package page</text>
+<text x="662" y="56" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">the past range and</text>
+<text x="662" y="67" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">the time estimate,</text>
+<text x="662" y="78" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">or why there is none</text>
+<path d="M 627 70 L 651 70" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#estimate-arrow-accent)"/>
+<path d="M 772 207 L 772 117" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#estimate-arrow-accent)"/>
+</g>
+          </svg>

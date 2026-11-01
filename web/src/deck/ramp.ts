@@ -51,6 +51,9 @@ export function type(role: Role, mode: Mode): { className?: string; style?: CSSP
 }
 
 // The footer's sentence and the header's words, on the canvas only: the reading view has the app's own footer.
+// The width a slide's chart is drawn at, on the canvas and in the reading view, which scrolls a chart wider than its
+// column.
+export const CHART_WIDTH = { present: 400, read: 500 } as const;
 export const FOOTER: CSSProperties = { fontSize: 11, lineHeight: 1.2 };
 export const TRACKER: CSSProperties = { fontSize: 12, lineHeight: 1 };
 

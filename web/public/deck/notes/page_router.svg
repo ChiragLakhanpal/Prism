@@ -1,0 +1,52 @@
+<svg viewBox="0 0 900 405" role="img" aria-label="The page router&#x27;s rules: a scan sends every page to the layout parser; otherwise front matter is read but not cited, data sheets, PAD risk tables and figure pages go to the layout parser, and body pages are read from the published text." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="page_router-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="page_router-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="page_router-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="page_router-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="page_router-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<polygon points="150,20.0 265.0,70 150,120.0 35.0,70" class="d-box"/>
+<text x="150" y="58.5" class="d-text b" text-anchor="middle"><tspan x="150" dy="0">Does the published text</tspan><tspan x="150" dy="15">split into as many pages</tspan><tspan x="150" dy="15">as the PDF has?</tspan></text>
+<rect x="330" y="40" width="200" height="60" rx="8" class="d-box warm"/>
+<text x="430.0" y="66.5" class="d-text b" text-anchor="middle">Scanned document</text>
+<text x="430.0" y="81.5" class="d-text s" text-anchor="middle">every page to Route B</text>
+<path d="M265,70 L330,70" class="d-arrow warm" marker-end="url(#page_router-a-warm)"/>
+<rect x="287.1" y="51.0" width="21.8" height="18" rx="3" class="d-label-bg"/>
+<text x="298" y="62" class="d-text s lab" text-anchor="middle">no</text>
+<path d="M150,120 L150,150" class="d-arrow" marker-end="url(#page_router-a)"/>
+<rect x="161.0" y="129.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="165" y="140" class="d-text s lab" text-anchor="start">yes</text>
+<rect x="30" y="150" width="240" height="60" rx="8" class="d-box"/>
+<text x="150.0" y="176.0" class="d-text b" text-anchor="middle"><tspan x="150.0" dy="0">Before the template&#x27;s</tspan><tspan x="150.0" dy="15">body heading?</tspan></text>
+<rect x="330" y="150" width="200" height="60" rx="8" class="d-box"/>
+<text x="430.0" y="176.5" class="d-text b" text-anchor="middle">Front matter</text>
+<text x="430.0" y="191.5" class="d-text s" text-anchor="middle">cover, contents: read, not cited</text>
+<path d="M270,180 L330,180" class="d-arrow" marker-end="url(#page_router-a)"/>
+<rect x="286.1" y="161.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="300" y="172" class="d-text s lab" text-anchor="middle">yes</text>
+<rect x="560" y="150" width="150" height="60" rx="8" class="d-box warm"/>
+<text x="635.0" y="176.5" class="d-text b" text-anchor="middle">Data sheet section</text>
+<text x="635.0" y="191.5" class="d-text s" text-anchor="middle">Route B</text>
+<path d="M530,180 L560,180" class="d-arrow" marker-end="url(#page_router-a)"/>
+<rect x="534.1" y="161.0" width="21.8" height="18" rx="3" class="d-label-bg"/>
+<text x="545" y="172" class="d-text s lab" text-anchor="middle">or</text>
+<rect x="30" y="230" width="240" height="60" rx="8" class="d-box"/>
+<text x="150.0" y="256.0" class="d-text b" text-anchor="middle"><tspan x="150.0" dy="0">A PAD page in its risk</tspan><tspan x="150.0" dy="15">framework, ORAF or SORT?</tspan></text>
+<rect x="330" y="230" width="200" height="60" rx="8" class="d-box warm"/>
+<text x="430.0" y="256.5" class="d-text b" text-anchor="middle">Risk table</text>
+<text x="430.0" y="271.5" class="d-text s" text-anchor="middle">Route B, rows kept typed</text>
+<path d="M270,260 L330,260" class="d-arrow" marker-end="url(#page_router-a)"/>
+<rect x="286.1" y="241.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="300" y="252" class="d-text s lab" text-anchor="middle">yes</text>
+<rect x="30" y="310" width="240" height="60" rx="8" class="d-box"/>
+<text x="150.0" y="336.0" class="d-text b" text-anchor="middle"><tspan x="150.0" dy="0">No text left after removing</tspan><tspan x="150.0" dy="15">titles and page numbers?</tspan></text>
+<rect x="330" y="310" width="200" height="60" rx="8" class="d-box warm"/>
+<text x="430.0" y="336.5" class="d-text b" text-anchor="middle">Figure or blank</text>
+<text x="430.0" y="351.5" class="d-text s" text-anchor="middle">Route B</text>
+<path d="M270,340 L330,340" class="d-arrow" marker-end="url(#page_router-a)"/>
+<rect x="286.1" y="321.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="300" y="332" class="d-text s lab" text-anchor="middle">yes</text>
+<path d="M150,210 L150,230" class="d-arrow" marker-end="url(#page_router-a)"/>
+<path d="M150,290 L150,310" class="d-arrow" marker-end="url(#page_router-a)"/>
+<rect x="740" y="230" width="150" height="140" rx="8" class="d-box green"/>
+<text x="815.0" y="268.5" class="d-text b" text-anchor="middle">Everything else</text>
+<text x="815.0" y="283.5" class="d-text s" text-anchor="middle"><tspan x="815.0" dy="0">a body page:</tspan><tspan x="815.0" dy="14">Route A, the</tspan><tspan x="815.0" dy="14">published text,</tspan><tspan x="815.0" dy="14">into numbered</tspan><tspan x="815.0" dy="14">passages</tspan></text>
+<path d="M150,370 L150,390 L815,390 L815,370" class="d-arrow green" marker-end="url(#page_router-a-green)"/>
+<rect x="416.0" y="373.0" width="128.0" height="18" rx="3" class="d-label-bg"/>
+<text x="480" y="384" class="d-text s lab" text-anchor="middle">no to every question</text>
+</svg>

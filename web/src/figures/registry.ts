@@ -38,6 +38,7 @@ const SLOT_OF: Record<FigureId, Slot> = {
   reading: "stage",
   "knowledge-model": "stage",
   retrieval: "stage",
+  languages: "stage",
   estimate: "stage",
   checks: "stage",
   ladder: "half",

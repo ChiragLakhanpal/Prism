@@ -1,0 +1,47 @@
+<svg viewBox="0 0 900 430" role="img" aria-label="The verifier&#x27;s order: four deterministic checks first, then the disagreement check, then a model judge only for sentences not already proven. A sentence that fails any check is removed and shown with its reason." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="verifier_flow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="verifier_flow-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="verifier_flow-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="verifier_flow-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="verifier_flow-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="10" y="30" width="150" height="60" rx="8" class="d-box hi"/>
+<text x="85.0" y="49.5" class="d-text b" text-anchor="middle">Each sentence</text>
+<text x="85.0" y="64.5" class="d-text s" text-anchor="middle"><tspan x="85.0" dy="0">with its evidence ids,</tspan><tspan x="85.0" dy="14">numbers, dates, quote</tspan></text>
+<rect x="220" y="30" width="260" height="70" rx="8" class="d-box"/>
+<text x="232" y="47.5" class="d-text b" text-anchor="start">1. Numbers and dates</text>
+<text x="232" y="62.5" class="d-text s" text-anchor="start"><tspan x="232" dy="0">each equals a value in a cited row,</tspan><tspan x="232" dy="14">at the same rounding, or sits</tspan><tspan x="232" dy="14">inside a quote</tspan></text>
+<path d="M160,60 L190,60 L190,65 L220,65" class="d-arrow" marker-end="url(#verifier_flow-a)"/>
+<rect x="220" y="110" width="260" height="70" rx="8" class="d-box"/>
+<text x="232" y="134.5" class="d-text b" text-anchor="start">2. Cited ids came back</text>
+<text x="232" y="149.5" class="d-text s" text-anchor="start"><tspan x="232" dy="0">every id was returned by a tool</tspan><tspan x="232" dy="14">in this answer</tspan></text>
+<path d="M160,60 L190,60 L190,145 L220,145" class="d-arrow" marker-end="url(#verifier_flow-a)"/>
+<rect x="220" y="190" width="260" height="70" rx="8" class="d-box"/>
+<text x="232" y="221.5" class="d-text b" text-anchor="start">3. Quotes on the page</text>
+<text x="232" y="236.5" class="d-text s" text-anchor="start">word for word on the cited page</text>
+<path d="M160,60 L190,60 L190,225 L220,225" class="d-arrow" marker-end="url(#verifier_flow-a)"/>
+<rect x="220" y="270" width="260" height="70" rx="8" class="d-box"/>
+<text x="232" y="294.5" class="d-text b" text-anchor="start">5. Advice cites support</text>
+<text x="232" y="309.5" class="d-text s" text-anchor="start"><tspan x="232" dy="0">advice must cite a lesson or</tspan><tspan x="232" dy="14">comparable packages</tspan></text>
+<path d="M160,60 L190,60 L190,305 L220,305" class="d-arrow" marker-end="url(#verifier_flow-a)"/>
+<text x="220" y="360" class="d-text gt" text-anchor="start">Deterministic, no model, run together</text>
+<rect x="540" y="30" width="340" height="80" rx="8" class="d-box warm"/>
+<text x="552" y="59.5" class="d-text b" text-anchor="start">6. Disagreements show both sides</text>
+<text x="552" y="74.5" class="d-text s" text-anchor="start"><tspan x="552" dy="0">asks get_disagreements as the viewer; a sentence</tspan><tspan x="552" dy="14">resting on one side gets a card with both sides</tspan></text>
+<path d="M480,175 L510,175 L510,70 L540,70" class="d-arrow" marker-end="url(#verifier_flow-a)"/>
+<polygon points="710,125.0 835.0,175 710,225.0 585.0,175" class="d-box"/>
+<text x="710" y="163.5" class="d-text b" text-anchor="middle"><tspan x="710" dy="0">Already proven?</tspan><tspan x="710" dy="15">all numbers, dates</tspan><tspan x="710" dy="15">and quotes matched</tspan></text>
+<path d="M710,110 L710,130" class="d-arrow" marker-end="url(#verifier_flow-a)"/>
+<rect x="540" y="260" width="160" height="60" rx="8" class="d-box green"/>
+<text x="620.0" y="286.5" class="d-text b" text-anchor="middle">Kept</text>
+<text x="620.0" y="301.5" class="d-text s" text-anchor="middle">no model needed</text>
+<path d="M650,205 L620,205 L620,260" class="d-arrow green" marker-end="url(#verifier_flow-a-green)"/>
+<rect x="629.0" y="225.0" width="27.7" height="18" rx="3" class="d-label-bg"/>
+<text x="633" y="236" class="d-text s lab" text-anchor="start">yes</text>
+<rect x="720" y="260" width="160" height="70" rx="8" class="d-box violet"/>
+<text x="800.0" y="277.5" class="d-text b" text-anchor="middle">4. Judge</text>
+<text x="800.0" y="292.5" class="d-text s" text-anchor="middle"><tspan x="800.0" dy="0">gpt-5.4, one batched</tspan><tspan x="800.0" dy="14">call: does it follow</tspan><tspan x="800.0" dy="14">from its sources?</tspan></text>
+<path d="M770,205 L800,205 L800,260" class="d-arrow" marker-end="url(#verifier_flow-a)"/>
+<rect x="808.0" y="225.0" width="21.8" height="18" rx="3" class="d-label-bg"/>
+<text x="812" y="236" class="d-text s lab" text-anchor="start">no</text>
+<rect x="540" y="350" width="340" height="60" rx="8" class="d-box warm"/>
+<text x="710.0" y="376.5" class="d-text b" text-anchor="middle">Any failure: the sentence is removed</text>
+<text x="710.0" y="391.5" class="d-text s" text-anchor="middle">and shown under the answer with its reason, never hidden</text>
+<text x="10" y="400" class="d-text s" text-anchor="start">Advice and summary sentences always go to the judge.</text>
+<text x="10" y="418" class="d-text s" text-anchor="start">If the judge does not answer, every sentence it had to judge is removed.</text>
+</svg>

@@ -1,0 +1,49 @@
+<svg viewBox="0 0 900 300" role="img" aria-label="Rolling backtests: for each year from 2021 to 2025 the model trains only on packages advertised before January 1, then is scored on packages advertised in that year, which it never saw." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="backtest_timeline-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="backtest_timeline-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="backtest_timeline-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="backtest_timeline-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="backtest_timeline-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<line x1="120" y1="250" x2="880" y2="250" class="d-rule"/>
+<line x1="120.0" y1="250" x2="120.0" y2="256" class="d-rule"/>
+<text x="120.0" y="272" class="d-text s" text-anchor="middle">2016</text>
+<line x1="196.0" y1="250" x2="196.0" y2="256" class="d-rule"/>
+<text x="196.0" y="272" class="d-text s" text-anchor="middle">2017</text>
+<line x1="272.0" y1="250" x2="272.0" y2="256" class="d-rule"/>
+<text x="272.0" y="272" class="d-text s" text-anchor="middle">2018</text>
+<line x1="348.0" y1="250" x2="348.0" y2="256" class="d-rule"/>
+<text x="348.0" y="272" class="d-text s" text-anchor="middle">2019</text>
+<line x1="424.0" y1="250" x2="424.0" y2="256" class="d-rule"/>
+<text x="424.0" y="272" class="d-text s" text-anchor="middle">2020</text>
+<line x1="500.0" y1="250" x2="500.0" y2="256" class="d-rule"/>
+<text x="500.0" y="272" class="d-text s" text-anchor="middle">2021</text>
+<line x1="576.0" y1="250" x2="576.0" y2="256" class="d-rule"/>
+<text x="576.0" y="272" class="d-text s" text-anchor="middle">2022</text>
+<line x1="652.0" y1="250" x2="652.0" y2="256" class="d-rule"/>
+<text x="652.0" y="272" class="d-text s" text-anchor="middle">2023</text>
+<line x1="728.0" y1="250" x2="728.0" y2="256" class="d-rule"/>
+<text x="728.0" y="272" class="d-text s" text-anchor="middle">2024</text>
+<line x1="804.0" y1="250" x2="804.0" y2="256" class="d-rule"/>
+<text x="804.0" y="272" class="d-text s" text-anchor="middle">2025</text>
+<line x1="880.0" y1="250" x2="880.0" y2="256" class="d-rule"/>
+<text x="880.0" y="272" class="d-text s" text-anchor="middle">2026</text>
+<text x="10" y="48" class="d-text b" text-anchor="start">Test 2021</text>
+<rect x="120.0" y="34" width="380.0" height="20" rx="3" class="d-fill soft-hi"/>
+<rect x="500.0" y="34" width="76.0" height="20" rx="3" class="d-fill warm"/>
+<line x1="500.0" y1="30" x2="500.0" y2="58" class="d-rule hi" stroke-width="2"/>
+<text x="10" y="90" class="d-text b" text-anchor="start">Test 2022</text>
+<rect x="120.0" y="76" width="456.0" height="20" rx="3" class="d-fill soft-hi"/>
+<rect x="576.0" y="76" width="76.0" height="20" rx="3" class="d-fill warm"/>
+<line x1="576.0" y1="72" x2="576.0" y2="100" class="d-rule hi" stroke-width="2"/>
+<text x="10" y="132" class="d-text b" text-anchor="start">Test 2023</text>
+<rect x="120.0" y="118" width="532.0" height="20" rx="3" class="d-fill soft-hi"/>
+<rect x="652.0" y="118" width="76.0" height="20" rx="3" class="d-fill warm"/>
+<line x1="652.0" y1="114" x2="652.0" y2="142" class="d-rule hi" stroke-width="2"/>
+<text x="10" y="174" class="d-text b" text-anchor="start">Test 2024</text>
+<rect x="120.0" y="160" width="608.0" height="20" rx="3" class="d-fill soft-hi"/>
+<rect x="728.0" y="160" width="76.0" height="20" rx="3" class="d-fill warm"/>
+<line x1="728.0" y1="156" x2="728.0" y2="184" class="d-rule hi" stroke-width="2"/>
+<text x="10" y="216" class="d-text b" text-anchor="start">Test 2025</text>
+<rect x="120.0" y="202" width="684.0" height="20" rx="3" class="d-fill soft-hi"/>
+<rect x="804.0" y="202" width="76.0" height="20" rx="3" class="d-fill warm"/>
+<line x1="804.0" y1="198" x2="804.0" y2="226" class="d-rule hi" stroke-width="2"/>
+<text x="272.0" y="22" class="d-text s hi" text-anchor="middle">train: packages advertised before Jan 1</text>
+<text x="773.5999999999931" y="22" class="d-text s warm" text-anchor="middle">test: the next 12 months</text>
+<text x="120" y="292" class="d-text s" text-anchor="start">Live result on Free Edition: every year abstained, too few packages to size the range; no champion yet.</text>
+</svg>

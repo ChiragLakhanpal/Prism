@@ -10,7 +10,6 @@ import { Fill } from "../components/Fill";
 import { numText } from "../components/Num";
 import { FIGURES, type FigureId } from "../figures/registry";
 import { formatDate, formatNumber } from "../lib/format";
-import { AwardChart, AwardKey, AwardTable, CHART_WIDTH } from "./AwardChart";
 import { deckCopy, figureCopy } from "./copy";
 import { measured, type DeckData, type DeckResult } from "./data";
 import { Demo, NewTabLink, NotMeasured, Phases, Points, Step, Tiles } from "./layouts";
@@ -55,11 +54,12 @@ export type Slide = {
   // An extra line to say at each press, under the words that press brings onto the screen.
   adds?: (string | null)[];
   asked?: { q: string; a: string }[];
+  // The study guide's diagrams behind the slide, for the presenter's answers (web/public/deck/notes).
+  diagrams?: string[];
 };
 
 // Each slide's title has this id, so a chart and a table region can be named by it.
 export const TITLE_ID = (n: number) => `slide-${n}-title`;
-const ALT_ID = "slide-gap-chart-alt";
 
 const s = deckCopy.slides;
 const day = (iso: string | undefined | null) => (iso ? formatDate(iso) : "");
@@ -95,6 +95,16 @@ export function buildSlides(data: DeckData): Slide[] {
   const recording = recordingOf(demo.comparables, demo.step_reference);
   // The talk's one case, end to end: the package the plan check flags is the one the next two demos open.
   const packageHref = `/packages/${encodeURIComponent(demo.step_reference)}`;
+
+  // A fact on the data slide: its sentence with each measured result in place, or what is not measured yet.
+  const fact = (tile: { body: string; results: Record<string, string>; counts?: string[] }) => {
+    const found = Object.entries(tile.results).map(([slot, key]) => [slot, key, r(key)] as const);
+    if (found.some(([, , result]) => !result)) return deckCopy.states.notMeasured;
+    const slots = Object.fromEntries(
+      found.map(([slot, key, result]) => [slot, tile.counts?.includes(slot) || result!.d == null ? count(result!, key) : ratio(result!, key)]),
+    );
+    return <Fill template={tile.body} slots={slots} />;
+  };
 
   // A figure slide: the drawing's steps, then `extra` items of the slide's own.
   const figure = (id: FigureId, extra = 0, wide = true) => {
@@ -326,83 +336,28 @@ export function buildSlides(data: DeckData): Slide[] {
       notes: s.reading.notes,
     },
     {
-      id: "knowledge",
-      part: "built",
-      theme: "light",
-      kind: "figure",
-      title: s.knowledge.title,
-      ...figure("knowledge-model"),
-      source: { lead: deckCopy.noteLead, text: s.knowledge.note },
-      notes: s.knowledge.notes,
-    },
-    {
-      id: "gap",
+      id: "data",
       part: "built",
       theme: "light",
       kind: "text",
-      title: gap ? <Fill template={s.gap.title} slots={{ start: String(gap.start), end: String(gap.end) }} /> : rows ? s.gap.titleNoGap : s.gap.titleNone,
-      steps: (gap ? 1 : 0) + (linked ? 1 : 0) + (rows ? 0 : 1),
-      chart: rows
-        ? {
-            source: "r:award-rows-by-year",
-            // On the slide the chart fills its card, half the content box; in the reading view it keeps its size and
-            // its frame scrolls on a phone.
-            drawing: (mode, labelledById) => (
-              <div className="flex flex-col gap-2">
-                <AwardKey result={rows} />
-                <AwardChart
-                  result={rows}
-                  gap={gap}
-                  width={CHART_WIDTH[mode]}
-                  height={240}
-                  fluid={mode === "present"}
-                  labelledById={labelledById}
-                  describedById={ALT_ID}
-                />
-                <p id={ALT_ID} className="sr-only">
-                  <Fill template={s.gap.chartAlt} slots={{ first: String(Math.min(...years)), last: String(Math.max(...years)) }} />{" "}
-                  {gap && <Fill template={s.gap.chartGap} slots={{ start: String(gap.start), end: String(gap.end) }} />}
-                </p>
-              </div>
-            ),
-            table: <AwardTable result={rows} caption={s.gap.table.rows} />,
-          }
+      title: s.data.title,
+      steps: s.data.tiles.length,
+      body: (at, mode) => (
+        <div className="flex flex-col gap-6">
+          <Tiles
+            tiles={s.data.tiles.map((tile) => ({ head: tile.head, body: fact(tile) }))}
+            at={at}
+            mode={mode}
+          />
+          <p {...type("note", mode)}>
+            <NewTabLink href="/data">{s.data.link}</NewTabLink>
+          </p>
+        </div>
+      ),
+      source: data.pulled_on
+        ? { lead: deckCopy.sourceLead, text: <Fill template={s.data.source} slots={{ date: day(data.pulled_on) }} /> }
         : undefined,
-      body: (at, mode) => {
-        const lines = [
-          ...(gap ? [s.gap.gapNote] : []),
-          ...(linked ? [<Fill key="linked" template={s.gap.linked} slots={{ ratio: ratio(linked, "linked-notice") }} />] : []),
-        ];
-        return (
-          <div className="flex flex-col gap-6">
-            {lines.length > 0 && <Points lines={lines} at={at} mode={mode} />}
-            {rows && lines.length > 0 ? (
-              <Step n={lines.length} at={at} as="p">
-                <span {...type("note", mode)}>
-                  <NewTabLink href="/data">{s.gap.link}</NewTabLink>
-                </span>
-              </Step>
-            ) : rows ? (
-              <p {...type("note", mode)}>
-                <NewTabLink href="/data">{s.gap.link}</NewTabLink>
-              </p>
-            ) : (
-              <NotMeasured n={lines.length + 1} at={at} mode={mode}>
-                {s.gap.noneLine}
-              </NotMeasured>
-            )}
-          </div>
-        );
-      },
-      source: rows ? { lead: deckCopy.sourceLead, text: <Fill template={s.gap.source} slots={{ date: day(rows.measured_on) }} /> } : { lead: deckCopy.sourceLead, text: s.gap.knownSource },
-      notes:
-        rows && gap && linked ? (
-          <Fill template={s.gap.notes} slots={{ start: String(gap.start), end: String(gap.end), ratio: noteRatio(linked, "linked-notice") }} />
-        ) : gap ? (
-          <Fill template={s.gap.notesGap} slots={{ start: String(gap.start), end: String(gap.end) }} />
-        ) : (
-          s.gap.notesNone
-        ),
+      notes: s.data.notes,
     },
 
     // ── 4. How it answers ──
@@ -415,6 +370,20 @@ export function buildSlides(data: DeckData): Slide[] {
       title: s.retrieval.title,
       ...figure("retrieval"),
       notes: s.retrieval.notes,
+    },
+    {
+      id: "languages",
+      part: "answers",
+      theme: "light",
+      kind: "figure",
+      title: s.languages.title,
+      ...figure("languages"),
+      body: (_at, mode) => (
+        <p {...type("note", mode)}>
+          <NewTabLink href="/projects/P127203">{s.languages.action}</NewTabLink>
+        </p>
+      ),
+      notes: s.languages.notes,
     },
     {
       id: "estimate",
@@ -500,62 +469,6 @@ export function buildSlides(data: DeckData): Slide[] {
       source: { lead: deckCopy.sourceLead, text: <Fill template={s.ladder.source} slots={{ project: mono(showcase) }} /> },
       notes: s.ladder.notes,
     },
-    {
-      id: "hindsight",
-      part: "answers",
-      theme: "light",
-      kind: "text",
-      title: caught ? <Fill template={s.hindsight.title} slots={{ ratio: ratio(caught, "hindsight-caught") }} /> : s.hindsight.titleNone,
-      outline: caught ? <Fill template={s.hindsight.title} slots={{ ratio: noteRatio(caught, "hindsight-caught") }} /> : s.hindsight.titleNone,
-      steps: caught ? (checklist ? 2 : 1) : 1,
-      body: (at, mode) =>
-        caught ? (
-          <Points
-            lines={[
-              <Fill key="method" template={s.hindsight.method} slots={{ coders: word("hindsight-coders") }} />,
-              ...(checklist
-                ? [
-                    <Fill
-                      key="checklist"
-                      template={s.hindsight.checklist}
-                      slots={{ top: word("risks-per-package"), checklist: word("checklist-size"), ratio: ratio(checklist, "hindsight-checklist") }}
-                    />,
-                  ]
-                : []),
-            ]}
-            at={at}
-            mode={mode}
-          />
-        ) : (
-          <div className="flex flex-col gap-6">
-            <p className="text-ink" style={mode === "present" ? { maxWidth: 780 } : undefined} {...type("body", mode)}>
-              <Fill template={s.hindsight.methodPlanned} slots={{ coders: word("hindsight-coders") }} />
-            </p>
-            <NotMeasured n={1} at={at} mode={mode}>
-              {s.hindsight.none}
-            </NotMeasured>
-          </div>
-        ),
-      source: caught ? { lead: deckCopy.sourceLead, text: <Fill template={s.hindsight.source} slots={{ date: day(caught.measured_on) }} /> } : undefined,
-      notes: (
-        <>
-          <Fill template={s.hindsight.notes} slots={{ coders: noteWord(data, "hindsight-coders", true) }} />
-          {interval && interval.low !== undefined && interval.high !== undefined && interval.level !== undefined && (
-            <>
-              {" "}
-              <Fill
-                template={s.hindsight.notesInterval}
-                slots={{
-                  level: note("r:hindsight-interval", deckCopy.percent(whole(interval.level))),
-                  low: note("r:hindsight-interval", whole(interval.low)),
-                  high: note("r:hindsight-interval", whole(interval.high)),
-                }}
-              />
-            </>
-          )}
-        </>
-      ),
-    },
 
     // ── 5. How it grows ──
     opener("grows", "grows", "sediment", deckCopy.topics.grows.line, s.growsOpener.notes),
@@ -594,69 +507,27 @@ export function buildSlides(data: DeckData): Slide[] {
       notes: <Fill template={s.rollout.notes} slots={{ countries: noteWord(data, "pilot-countries") }} />,
     },
     {
-      id: "spend",
+      id: "next-reach",
       part: "grows",
       theme: "light",
       kind: "text",
-      title: s.spend.title,
-      steps: s.spend.caps.length + 1,
-      body: (at, mode) => (
-        <div className="flex flex-col gap-8">
-          <Points lines={s.spend.caps} at={at} mode={mode} />
-          {spend ? (
-            <Step n={s.spend.caps.length + 1} at={at} as="p" className="text-ink">
-              <span {...type("note", mode)}>
-                <Fill
-                  template={s.spend.spent}
-                  slots={{
-                    date: day(spend.latest ?? spend.measured_on),
-                    spent: <ResultNum result={spend} resultKey="azure-spend" value={{ written: money(spend.n ?? 0) }} tooltipValue={amount(spend.n ?? 0)} />,
-                    budget: (
-                      <ResultNum
-                        result={{ ...spend, n: spend.budget ?? spend.d }}
-                        resultKey="azure-spend"
-                        value={{ written: money(spend.budget ?? spend.d ?? 0) }}
-                        tooltipValue={amount(spend.budget ?? spend.d ?? 0)}
-                      />
-                    ),
-                    period: <NoteNum sourceKey="r:azure-spend" text={spend.period ?? ""} />,
-                  }}
-                />
-              </span>
-            </Step>
-          ) : (
-            <NotMeasured n={s.spend.caps.length + 1} at={at} mode={mode}>
-              {s.spend.noSpend}
-            </NotMeasured>
-          )}
-        </div>
-      ),
-      source: spend ? { lead: deckCopy.sourceLead, text: <Fill template={s.spend.source} slots={{ date: day(spend.latest ?? spend.measured_on) }} /> } : undefined,
-      notes: s.spend.notes,
+      title: s.nextReach.title,
+      steps: s.nextReach.tiles.length,
+      body: (at, mode) => <Tiles tiles={s.nextReach.tiles} at={at} mode={mode} />,
+      notes: s.nextReach.notes,
     },
     {
-      id: "change",
+      id: "next-product",
       part: "grows",
       theme: "light",
       kind: "text",
-      title: s.change.title,
-      steps: s.change.lines.length + 1,
-      body: (at, mode) => <Points lines={s.change.lines} ask={s.change.ask} at={at} mode={mode} />,
-      notes: s.change.notes,
+      title: s.nextProduct.title,
+      steps: s.nextProduct.tiles.length,
+      body: (at, mode) => <Tiles tiles={s.nextProduct.tiles} at={at} mode={mode} />,
+      notes: s.nextProduct.notes,
     },
 
     // ── The close ──
-    {
-      id: "rubric",
-      part: "close",
-      theme: "light",
-      kind: "text",
-      title: s.rubric.title,
-      steps: data.rubric.dimensions.length,
-      body: (at, mode) => <RubricMap data={data} at={at} mode={mode} />,
-      source: { lead: deckCopy.sourceLead, text: s.rubric.source },
-      notes: s.rubric.notes,
-    },
     {
       id: "limits",
       part: "close",
@@ -702,114 +573,8 @@ export function buildSlides(data: DeckData): Slide[] {
       cue: draft.cue ?? deckCopy.speaker[draft.id]?.cue,
       adds: deckCopy.speaker[draft.id]?.adds,
       asked: deckCopy.speaker[draft.id]?.asked,
+      diagrams: deckCopy.speaker[draft.id]?.diagrams,
     }));
-}
-
-// The rubric's dimensions, a press each: its points, where Strata earns them, and what a reviewer can open.
-function RubricMap({ data, at, mode }: { data: DeckData; at: number; mode: Mode }) {
-  const w = s.rubric;
-  const t = (role: Parameters<typeof type>[0]) => type(role, mode);
-  // In the reading view each dimension is a block of its own, so the map reflows to a phone's width.
-  if (mode === "read") {
-    return (
-      <ul className="flex flex-col divide-y divide-line">
-        {data.rubric.dimensions.map((dimension, index) => (
-          <Step key={dimension.key} n={index + 1} at={at} as="li" className="flex flex-col gap-1 py-3">
-            <p className="font-semibold text-ink-heading" {...t("note")}>
-              {dimension.name}, <RubricPoints dimensionKey={dimension.key} points={dimension.points} /> {w.columns.points.toLowerCase()}
-            </p>
-            <p className="text-ink" {...t("note")}>
-              <Fill template={w.where[dimension.key] ?? ""} slots={{ checks: <SettingWord data={data} settingKey="check-count" /> }} />
-            </p>
-            <div {...t("note")}>
-              <RubricOpen data={data} dimension={dimension.key} />
-            </div>
-          </Step>
-        ))}
-      </ul>
-    );
-  }
-  return (
-    <div className="flex flex-col">
-      <div className="grid gap-x-6 border-b border-line pb-2 text-ink-muted" style={{ gridTemplateColumns: "13rem 4rem minmax(0,1fr) 13rem" }}>
-        <span {...t("label")}>{w.columns.dimension}</span>
-        <span className="text-right" {...t("label")}>
-          {w.columns.points}
-        </span>
-        <span {...t("label")}>{w.columns.where}</span>
-        <span {...t("label")}>{w.columns.open}</span>
-      </div>
-      {data.rubric.dimensions.map((dimension, index) => (
-        <Step
-          key={dimension.key}
-          n={index + 1}
-          at={at}
-          className="grid gap-x-6 border-b border-line py-3"
-          style={{ gridTemplateColumns: "13rem 4rem minmax(0,1fr) 13rem" }}
-        >
-          <span className="font-semibold text-ink-heading" {...t("note")}>
-            {dimension.name}
-          </span>
-          <span className="text-right text-ink tabular-nums" {...t("note")}>
-            <RubricPoints dimensionKey={dimension.key} points={dimension.points} />
-          </span>
-          <span className="text-ink" {...t("note")}>
-            <Fill template={w.where[dimension.key] ?? ""} slots={{ checks: <SettingWord data={data} settingKey="check-count" /> }} />
-          </span>
-          <span {...t("note")}>
-            <RubricOpen data={data} dimension={dimension.key} />
-          </span>
-        </Step>
-      ))}
-    </div>
-  );
-}
-
-// What a reviewer can open for a dimension of the rubric: screens in the app, and the dashboard when its address is set.
-function RubricOpen({ data, dimension }: { data: DeckData; dimension: string }) {
-  const o = s.rubric.open;
-  const showcase = data.showcase.project_id;
-  // Operations shows the dashboard once its address is set; until then, Data readiness, where the nightly job's
-  // measures show.
-  const readiness = (
-    <NewTabLink key="data" href="/data">
-      {o.readiness}
-    </NewTabLink>
-  );
-  const links: Record<string, ReactNode[]> = {
-    architecture: [
-      readiness,
-      <NewTabLink key="connections" href={`/projects/${showcase}/connections`}>
-        <Fill template={o.connections} slots={{ project: <span className="font-mono">{showcase}</span> }} />
-      </NewTabLink>,
-    ],
-    method: [
-      <NewTabLink key="workspace" href={`/packages/${data.demo.step_reference}`}>
-        {o.workspace}
-      </NewTabLink>,
-    ],
-    domain: [
-      <NewTabLink key="check" href={data.demo.links?.checkPlan ?? data.demo.plan_href}>
-        {o.checkPlan}
-      </NewTabLink>,
-    ],
-    operations: [
-      data.urls.dashboard ? (
-        <NewTabLink key="dashboard" href={data.urls.dashboard}>
-          {o.dashboard}
-        </NewTabLink>
-      ) : (
-        readiness
-      ),
-    ],
-  };
-  return (
-    <ul className="flex flex-col gap-1">
-      {(links[dimension] ?? []).map((link, index) => (
-        <li key={index}>{link}</li>
-      ))}
-    </ul>
-  );
 }
 
 // The step texts a figure's presses bring in, for the live region and the speaker notes.

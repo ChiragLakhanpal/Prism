@@ -1,0 +1,48 @@
+<svg viewBox="0 0 900 470" role="img" aria-label="How a report becomes searchable evidence: list, fetch text and PDF, route each page, read paragraphs or parse layout, scan with Prompt Shields, embed with a short header, and sync the search index." xmlns="http://www.w3.org/2000/svg"><style>svg{--bg: #fbfaf7;--fg: #1c1f24;--muted: #586070;--line: #d9dde4;--card: #ffffff;--code-bg: #eef1f5;--accent: #0a58a8;--accent-soft: #e6f0fa;--analogy: #6b46a8;--analogy-soft: #f2edf9;--example: #17714f;--example-soft: #e9f5ef;--say: #0a58a8;--say-soft: #e8f1fb;--watch: #9a4d00;--watch-soft: #fbf1e6;--where: #4d5563;--where-soft: #f1f2f4;--fig-hi: #0a58a8;--fig-hi-soft: #dfeaf7;--fig-warm: #9a4d00;--fig-warm-soft: #f8eadb;--fig-green: #17714f;--fig-green-soft: #dcefe6;--fig-violet: #6b46a8;--fig-violet-soft: #ece4f7;--fig-fill: #f6f7f9;color:var(--fg);font-family:'Open Sans',system-ui,sans-serif;background:#ffffff}.d-text { fill: currentColor; font-size: 12.5px; }.d-text.b { font-weight: 650; }.d-text.s { font-size: 11px; font-weight: 400; fill: var(--muted); }.d-text.gt { font-size: 11.5px; font-weight: 750;   fill: var(--muted); }.d-text.lab { fill: var(--muted); }.d-text.hi { fill: var(--fig-hi); }.d-text.warm { fill: var(--fig-warm); }.d-text.green { fill: var(--fig-green); }.d-text.violet { fill: var(--fig-violet); }.d-box { fill: var(--fig-fill); stroke: currentColor; stroke-width: 1.2; }.d-box.hi { fill: var(--fig-hi-soft); stroke: var(--fig-hi); }.d-box.warm { fill: var(--fig-warm-soft); stroke: var(--fig-warm); }.d-box.green { fill: var(--fig-green-soft); stroke: var(--fig-green); }.d-box.violet { fill: var(--fig-violet-soft); stroke: var(--fig-violet); }.d-box.dash { stroke-dasharray: 5 4; }.d-group { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 6 4; }.d-group.hi { stroke: var(--fig-hi); }.d-group.warm { stroke: var(--fig-warm); }.d-group.green { stroke: var(--fig-green); }.d-group.violet { stroke: var(--fig-violet); }.d-arrow { stroke: currentColor; stroke-width: 1.4; fill: none; }.d-arrow.hi { stroke: var(--fig-hi); stroke-width: 1.8; }.d-arrow.warm { stroke: var(--fig-warm); stroke-width: 1.8; }.d-arrow.green { stroke: var(--fig-green); stroke-width: 1.8; }.d-arrow.violet { stroke: var(--fig-violet); stroke-width: 1.8; }.d-arrow.dash { stroke-dasharray: 5 4; }.d-mk { fill: currentColor; }.d-mk.hi { fill: var(--fig-hi); }.d-mk.warm { fill: var(--fig-warm); }.d-mk.green { fill: var(--fig-green); }.d-mk.violet { fill: var(--fig-violet); }.d-rule { stroke: var(--muted); stroke-width: 1; }.d-rule.hi { stroke: var(--fig-hi); }.d-rule.warm { stroke: var(--fig-warm); }.d-rule.dash { stroke-dasharray: 4 4; }.d-fill { fill: var(--fig-fill); stroke: none; }.d-fill.hi { fill: var(--fig-hi); }.d-fill.warm { fill: var(--fig-warm); }.d-fill.green { fill: var(--fig-green); }.d-fill.violet { fill: var(--fig-violet); }.d-fill.soft-hi { fill: var(--fig-hi-soft); }.d-fill.soft-warm { fill: var(--fig-warm-soft); }.d-fill.soft-green { fill: var(--fig-green-soft); }.d-fill.line { fill: var(--line); }.d-label-bg { fill: var(--card); }</style>
+<defs><marker id="doc_pipeline-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk"/></marker><marker id="doc_pipeline-a-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk hi"/></marker><marker id="doc_pipeline-a-warm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk warm"/></marker><marker id="doc_pipeline-a-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk green"/></marker><marker id="doc_pipeline-a-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="d-mk violet"/></marker></defs>
+<rect x="10" y="30" width="170" height="64" rx="8" class="d-box"/>
+<text x="95.0" y="51.5" class="d-text b" text-anchor="middle">Documents API</text>
+<text x="95.0" y="66.5" class="d-text s" text-anchor="middle"><tspan x="95.0" dy="0">a project&#x27;s list: type,</tspan><tspan x="95.0" dy="14">date, text and PDF links</tspan></text>
+<rect x="10" y="120" width="170" height="64" rx="8" class="d-box"/>
+<text x="95.0" y="141.5" class="d-text b" text-anchor="middle">Fetch the text</text>
+<text x="95.0" y="156.5" class="d-text s" text-anchor="middle"><tspan x="95.0" dy="0">the Bank&#x27;s published</tspan><tspan x="95.0" dy="14">text: bronze.document_texts</tspan></text>
+<rect x="10" y="210" width="170" height="64" rx="8" class="d-box"/>
+<text x="95.0" y="231.5" class="d-text b" text-anchor="middle">Fetch the PDF</text>
+<text x="95.0" y="246.5" class="d-text s" text-anchor="middle"><tspan x="95.0" dy="0">each page&#x27;s text layer:</tspan><tspan x="95.0" dy="14">bronze.document_pages</tspan></text>
+<path d="M95,94 L95,120" class="d-arrow" marker-end="url(#doc_pipeline-a)"/>
+<path d="M95,184 L95,210" class="d-arrow" marker-end="url(#doc_pipeline-a)"/>
+<text x="95" y="300" class="d-text s" text-anchor="middle"><tspan x="95" dy="0">3 s between requests,</tspan><tspan x="95" dy="14">60 minutes a night;</tspan><tspan x="95" dy="14">emails and labelled</tspan><tspan x="95" dy="14">phones removed</tspan></text>
+<polygon points="290,125.0 365.0,180 290,235.0 215.0,180" class="d-box"/>
+<text x="290" y="183.5" class="d-text b" text-anchor="middle">Page router</text>
+<path d="M180,152 L230,152 L230,165" class="d-arrow" marker-end="url(#doc_pipeline-a)"/>
+<path d="M180,242 L230,242 L230,195" class="d-arrow" marker-end="url(#doc_pipeline-a)"/>
+<rect x="400" y="40" width="200" height="110" rx="8" class="d-box green"/>
+<text x="500.0" y="70.5" class="d-text b" text-anchor="middle">Route A: published text</text>
+<text x="500.0" y="85.5" class="d-text s" text-anchor="middle"><tspan x="500.0" dy="0">split on form feeds; headings</tspan><tspan x="500.0" dy="14">from the type&#x27;s template;</tspan><tspan x="500.0" dy="14">numbered paragraphs; over</tspan><tspan x="500.0" dy="14">500 tokens split at sentences</tspan></text>
+<rect x="400" y="210" width="200" height="110" rx="8" class="d-box warm"/>
+<text x="500.0" y="240.5" class="d-text b" text-anchor="middle">Route B: layout parser</text>
+<text x="500.0" y="255.5" class="d-text s" text-anchor="middle"><tspan x="500.0" dy="0">one page at a time through</tspan><tspan x="500.0" dy="14">ai_parse_document; tables,</tspan><tspan x="500.0" dy="14">text and figures; at most</tspan><tspan x="500.0" dy="14">500 pages a day</tspan></text>
+<path d="M290,125 L290,95 L400,95" class="d-arrow green" marker-end="url(#doc_pipeline-a-green)"/>
+<rect x="277.8" y="76.0" width="104.4" height="18" rx="3" class="d-label-bg"/>
+<text x="330" y="87" class="d-text s lab" text-anchor="middle">clean body pages</text>
+<path d="M290,235 L290,265 L400,265" class="d-arrow warm" marker-end="url(#doc_pipeline-a-warm)"/>
+<rect x="274.0" y="279.0" width="128.0" height="32" rx="3" class="d-label-bg"/>
+<text x="338" y="290" class="d-text s lab" text-anchor="middle"><tspan x="338" dy="0">scans, risk tables,</tspan><tspan x="338" dy="14">data sheets, figures</tspan></text>
+<rect x="640" y="120" width="250" height="90" rx="8" class="d-box hi"/>
+<text x="765.0" y="147.5" class="d-text b" text-anchor="middle">silver.passages</text>
+<text x="765.0" y="162.5" class="d-text s" text-anchor="middle"><tspan x="765.0" dy="0">a numbered paragraph or part;</tspan><tspan x="765.0" dy="14">a table row; one table summary</tspan><tspan x="765.0" dy="14">that never backs a number</tspan></text>
+<path d="M600,95 L620,95 L620,150 L640,150" class="d-arrow hi" marker-end="url(#doc_pipeline-a-hi)"/>
+<path d="M600,265 L620,265 L620,180 L640,180" class="d-arrow hi" marker-end="url(#doc_pipeline-a-hi)"/>
+<rect x="640" y="270" width="250" height="64" rx="8" class="d-box"/>
+<text x="765.0" y="284.5" class="d-text b" text-anchor="middle">Prompt Shields</text>
+<text x="765.0" y="299.5" class="d-text s" text-anchor="middle"><tspan x="765.0" dy="0">scan once per text;</tspan><tspan x="765.0" dy="14">a hit is kept, counted,</tspan><tspan x="765.0" dy="14">kept out of search</tspan></text>
+<rect x="640" y="370" width="250" height="64" rx="8" class="d-box"/>
+<text x="765.0" y="391.5" class="d-text b" text-anchor="middle">Embed</text>
+<text x="765.0" y="406.5" class="d-text s" text-anchor="middle"><tspan x="765.0" dy="0">header + text, 1,024</tspan><tspan x="765.0" dy="14">numbers; only new text</tspan></text>
+<path d="M765,210 L765,270" class="d-arrow" marker-end="url(#doc_pipeline-a)"/>
+<path d="M765,334 L765,370" class="d-arrow" marker-end="url(#doc_pipeline-a)"/>
+<rect x="400" y="370" width="200" height="64" rx="8" class="d-box hi"/>
+<text x="500.0" y="391.5" class="d-text b" text-anchor="middle">gold.passage</text>
+<text x="500.0" y="406.5" class="d-text s" text-anchor="middle"><tspan x="500.0" dy="0">plus the AI Search</tspan><tspan x="500.0" dy="14">Delta Sync index</tspan></text>
+<path d="M640,402 L600,402" class="d-arrow hi" marker-end="url(#doc_pipeline-a-hi)"/>
+</svg>

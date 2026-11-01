@@ -23,7 +23,7 @@ EXPORTS = ROOT / "web" / "src" / "figures"
 # The second draft's brief, section 4, and web/src/figures/order.ts: each figure's slot, drawn 1:1.
 SLOTS = {"stage": (864, 352), "half": (420, 352)}
 FIGURES = {"strata": "stage", "one-answer": "stage", "layers": "stage", "architecture": "stage", "pipeline": "stage", "reading": "stage",
-           "knowledge-model": "stage", "retrieval": "stage", "estimate": "stage", "checks": "stage", "ladder": "half",
+           "knowledge-model": "stage", "retrieval": "stage", "languages": "stage", "estimate": "stage", "checks": "stage", "ladder": "half",
            "loops": "stage"}
 # The skill's motion budget (references/animation.md): at most eight steps, twelve marked parts and two a step.
 MOST_STEPS, MOST_ITEMS, MOST_A_STEP = 8, 12, 2

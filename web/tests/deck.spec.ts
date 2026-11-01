@@ -12,6 +12,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Locator, Page } from "@playwright/test";
 import { copyChecker } from "../lint/copy";
+import { copy } from "../src/copy";
 import { deckCopy, figureCopy } from "../src/deck/copy";
 import type { DeckData } from "../src/deck/data";
 import { TOPIC_ORDER } from "../src/deck/talk";
@@ -27,6 +28,13 @@ const LIGHT_LOGO_SHA256 = "15a18185cbdc72239c7b052225e47d533c3128adc6df99e699ba3
 const WHITE_LOGO_SHA256 = "c11d30bf69ad0f6f224b350e93ea976bbac438ff18c82786d1c11454a0317aff";
 // The brief's talk, by each slide's id: the bookends, then the five topics, each opened by its navy opener.
 const OPENERS = ["work", "built", "answers", "grows"];
+
+// The App's server asks for the deck's password first (src/strata/server/deck_door.py, tested in
+// tests/test_deck_door.py); every test but the door's own starts with the deck open.
+test.beforeEach(async ({ context }, testInfo) => {
+  if (testInfo.title.startsWith("the deck asks for its password")) return;
+  await context.route("**/api/deck/open", (route) => route.fulfill({ status: 204 }));
+});
 
 async function serveDeck(page: Page, file = "deck-data.json", status = 200) {
   const body = await recorded(file);
@@ -339,7 +347,7 @@ test("the number check passes on every slide whole, its reading view and its spe
   expect(numberCheck(pieces)).toEqual([]);
   const keys = sourceKeys(pieces);
   const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
-  expect(keys).toEqual(expect.arrayContaining(["r:benchmark-passed", "s:check-count", "s:fewest-comparables", "rubric:architecture"]));
+  expect(keys).toEqual(expect.arrayContaining(["r:benchmark-passed", "s:check-count", "s:fewest-comparables", "r:linked-notice"]));
   expect(unknownKeys(keys, data)).toEqual([]);
   expect(unknownKeys(["r:not-a-result", "s:check-count", "tool:find_everything"], data)).toEqual(["r:not-a-result", "tool:find_everything"]);
   const planted = { ...pieces, "Slide 4": pieces["Slide 4"].replace("</h1>", " across 12 countries</h1>") };
@@ -359,40 +367,11 @@ test("the deck the App serves says on each slide what is not measured yet, and p
   const unmeasured: [boolean, string, string][] = [
     // With the pages not measured either, one sentence says both.
     [!data.results.passages.measured, "reading", data.results["pages-read-well"].measured ? s.reading.passagesNone : s.reading.bothNone],
-    [!data.results["award-rows-by-year"].measured, "gap", s.gap.noneLine],
     [!data.results["benchmark-passed"].measured || !data.results["must-refuse"].measured, "checks", s.checks.none.split("{checks}")[0]],
-    [!data.results["hindsight-caught"].measured, "hindsight", s.hindsight.titleNone],
-    [!data.results["azure-spend"].measured, "spend", s.spend.noSpend],
   ];
   for (const [, id, sentence] of unmeasured.filter(([missing]) => missing)) await expect(text(id), id).toContainText(sentence);
-  // A test that has not run is described as planned, never in the past tense as if it had run.
-  if (!data.results["hindsight-caught"].measured) {
-    await expect(text("hindsight")).not.toContainText(s.hindsight.method.split("{coders}")[0]);
-    await expect(text("hindsight")).toContainText(s.hindsight.methodPlanned.split("{coders}")[0]);
-  }
   expect(numberCheck(pieces)).toEqual([]);
   expect(unknownKeys(sourceKeys(pieces), data)).toEqual([]);
-});
-
-test("the award gap chart sits whole inside its card, clear of the points beside it, and its key names only the years it draws", async ({ page }) => {
-  await present(page, 1);
-  const gap = await numberOf(page, "gap");
-  await page.goto(`/present/${gap}`);
-  const slide = slideById(page, "gap");
-  const card = (await slide.locator("figure[data-chart]").boundingBox())!;
-  const chart = (await slide.locator("[data-award-chart]").boundingBox())!;
-  expect(chart.x).toBeGreaterThanOrEqual(card.x);
-  expect(chart.x + chart.width).toBeLessThanOrEqual(card.x + card.width);
-  expect(chart.y + chart.height).toBeLessThanOrEqual(card.y + card.height);
-  // The points and the link beside the chart start right of the card.
-  for (const box of await slide.locator("[data-step], a").evaluateAll((items) => items.map((item) => item.getBoundingClientRect().left))) {
-    expect(box).toBeGreaterThanOrEqual(card.x + card.width);
-  }
-  // The key's names hold no fiscal years the chart does not draw.
-  const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
-  const drawn = (data.results["award-rows-by-year"].series ?? []).map((row) => Number(row.fiscal_year));
-  const named = [...(await slide.locator("[data-chart-key]").innerText()).matchAll(/FY(\d{2,4})/g)].map((found) => Number(found[1]));
-  for (const year of named) expect(drawn.some((one) => one % 100 === year % 100), `FY${year}`).toBe(true);
 });
 
 test("the demo slides follow one case: the plan check, then the package it flags, opened twice in a new tab, and the answer demo copies its question", async ({ page, context }) => {
@@ -505,10 +484,8 @@ test("below the size of the canvas the deck is a page that reflows, with every s
   const slide = page.locator("[data-reading-slide]").filter({ has: page.locator("[data-figure=layers]") });
   await expect(slide.getByRole("region", { name: deckCopy.reading.scrolls(figureCopy.layers.title) })).toBeVisible();
   await expect(slide.locator("[data-figure-text=layers]")).toBeVisible();
-  // A drawing cut at the column's edge says that it scrolls, and so does the award chart.
+  // A drawing cut at the column's edge says that it scrolls.
   await expect(slide.getByText(deckCopy.reading.scrollHint)).toBeVisible();
-  const gap = page.locator("[data-reading-slide]").filter({ has: page.locator("[data-award-chart]") });
-  await expect(gap.getByText(deckCopy.reading.scrollHint)).toBeVisible();
   // The close keeps what the navy close shows: the question to the room and the way into Strata.
   const close = page.locator("[data-reading-slide]").last();
   await expect(close).toContainText(deckCopy.slides.thanks.ask);
@@ -541,6 +518,28 @@ test("the ladder slide's showcase is the ground truth's: ISR 7's date and rating
   expect(text).toContain(`Report 7, P130164, ${formatDate(facts["isr-7-date"].value)};`);
   expect(text).toContain(`rated progress toward the objective ${facts["isr-7-rating"].value} in August 2016`);
   expect(text).toContain(`Report, P130164, ${formatDate(facts["icr-date"].value)}, paragraph ${facts["icr-para-78"].paragraph}, page ${facts["icr-para-78"].pdf_page}.`);
+});
+
+test("the deck asks for its password first: a wrong one is refused, the right one opens the deck, and it stays open", async ({ page }) => {
+  await serveDeck(page);
+  let open = false;
+  await page.route("**/api/deck/open", async (route) => {
+    if (route.request().method() === "POST") {
+      open = route.request().postDataJSON().password === "the right one";
+      await route.fulfill(open ? { status: 204 } : { status: 403, json: { error: "wrong_password" } });
+    } else await route.fulfill({ status: open ? 204 : 401 });
+  });
+  await page.goto("/present/1");
+  const input = page.locator("[data-door-password]");
+  await expect(input).toBeVisible();
+  await input.fill("not-the-password");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("alert")).toHaveText(copy.deckDoor.wrong);
+  await input.fill("the right one");
+  await page.keyboard.press("Enter");
+  await expect(page.locator("[data-deck=present]")).toBeVisible();
+  await page.reload();
+  await expect(page.locator("[data-deck=present]")).toBeVisible();
 });
 
 test("a deck that cannot load says so on the stage with a way to try again", async ({ page }) => {

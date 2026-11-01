@@ -89,7 +89,7 @@ export function Points({ lines, ask, at, mode, first = 1 }: { lines: ReactNode[]
 
 // Two to four tiles, a press each, each a head and a note, then an optional closing line under them.
 export function Tiles({ tiles, closing, at, mode }: { tiles: { head: ReactNode; body: ReactNode }[]; closing?: ReactNode; at: number; mode: Mode }) {
-  const columns = mode === "present" ? `repeat(${tiles.length === 4 ? 2 : tiles.length}, minmax(0, 1fr))` : undefined;
+  const columns = mode === "present" ? `repeat(${tiles.length === 4 ? 2 : Math.min(tiles.length, 3)}, minmax(0, 1fr))` : undefined;
   return (
     <div className="flex flex-col">
       <div className={cx("grid gap-6", mode === "read" && "md:grid-cols-3")} style={columns ? { gridTemplateColumns: columns } : undefined}>
