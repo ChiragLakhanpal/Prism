@@ -917,9 +917,12 @@ export const deckCopy = {
           q:
             "What does it cost to run?",
           a:
-            "On the October 27 snapshot, Azure spend was about 26 US dollars of a 197-dollar credit. Cost is " +
-            "capped, not just watched: every model deployment has a token limit, document reading has a daily " +
-            "page cap, the app's replicas are capped, and bulk model work runs on a cheaper batch deployment.",
+            "I paused the nightly job and the weekly evaluation on October 29 to stop the spend. By October 31, " +
+            "Azure spend had reached about 289 US dollars, past the 197-dollar credit. The caps bound the rate " +
+            "of spend, not the " +
+            "total: every model deployment has a token limit, document reading has a daily page cap, the app's " +
+            "replicas are capped, and bulk model work runs on a cheaper batch deployment. An Azure budget only " +
+            "sends warnings, so next I'd add a hard stop on the total.",
         },
       ],
       diagrams: ["arch_overview", "platform_map", "sql_everywhere"],
@@ -1078,6 +1081,13 @@ export const deckCopy = {
           a:
             "Data readiness measures that the nightly job writes to strata.ops.data_readiness, pulled into the " +
             "deck on October 27. The dashboard reads the same table.",
+        },
+        {
+          q:
+            "Why does the dashboard say more notices had contacts removed?",
+          a:
+            "The deck counts distinct notices held now. The dashboard counts every notice as each ingestion run " +
+            "took it in, so a notice fetched again counts again, and about a thousand were fetched twice.",
         },
       ],
       diagrams: ["sources_map", "record_journey", "supplier_resolution", "knowledge_graph", "link_score"],
@@ -1327,8 +1337,10 @@ export const deckCopy = {
         "advice. And when sources disagree, both sides show, with the side Strata leans on and why.",
         "Sentence A is shown. Sentence B is removed and listed under the answer with its reason. I think that's " +
         "the most important choice in the product: failure is visible.",
-        "The benchmark is 43 questions across SQL, time estimates, documents and refusals, with a must-refuse " +
-        "question for every refusal key. It hasn't been scored on the live stack yet, and the slide says so.",
+        "On screen is last night's live full gate, the whole benchmark run against the real agent, with an 85 " +
+        "percent target. It fell short, and I'd rather show you why than hide it. Every refusal held, three " +
+        "questions never got an answer because the call to the agent timed out, and Foundry's own evaluators " +
+        "scored every kept sentence as grounded in its sources.",
       ],
       asked: [
         {
@@ -1365,6 +1377,37 @@ export const deckCopy = {
             " English questions over the French Haiti report, and 0.80 for French questions over the English " +
             "India report, on only 5 questions. Precision at 10 is low by construction, since most questions have" +
             " one or two labeled passages.",
+        },
+        {
+          q:
+            "What did the benchmark show?",
+          a:
+            "Last night's live full gate, run full_gate-20261101T044224Z-242ee10b, passed 27 of 43 against an 85 " +
+            "percent target. SQL passed 6 of 11, documents 3 of 11, time estimates 7 of 10, and must-refuse 11 of" +
+            " 11. Three questions got no answer because the call to the Foundry agent timed out, which is " +
+            "infrastructure, not an answer. Two SQL misses are Genie returning the right numbers with an extra ID" +
+            " column, which the scorer's exact column match refuses. The documents misses mostly cited different " +
+            "passages than the expected ones, and get_lessons had no reports to draw on yet.",
+        },
+        {
+          q:
+            "What did Foundry's evaluators say?",
+          a:
+            "They ran for the first time last night, on the 25 answers that kept a sentence. Groundedness was 25 " +
+            "of 25, so every kept sentence was supported by its sources. That's the claim that matters for " +
+            "Strata, and it's the verifier's job. Relevance was 23 of 25, task adherence 18 of 25, and tool-call " +
+            "accuracy 11 of 25. That last one judges each call against the tool definitions, and the agent often " +
+            "makes exploratory calls, like search_passages twice, or project_records before the targeted tool. " +
+            "Tightening tool choice is the next prompt change I'd make.",
+        },
+        {
+          q:
+            "Doesn't the verifier catch a wrong number?",
+          a:
+            "Only a number no tool returned. Last night Genie got a Kenya contract count wrong, 0 where the " +
+            "records hold thousands. The verifier checks that a sentence's number matches a row a tool returned, " +
+            "so it can't know the row itself is wrong. That's the case for fixed, tested SQL tools over generated" +
+            " SQL, and for scoring answers against ground truth in the benchmark.",
         },
       ],
       diagrams: ["verifier_flow", "eval_layers", "retrieval_eval"],

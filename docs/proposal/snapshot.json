@@ -1,233 +1,233 @@
 {
-  "pulled_on": "2026-10-27",
+  "pulled_on": "2026-11-01",
   "source": "workspace",
   "results": {
     "award-rows-since-2020": {
       "measured": true,
-      "n": "296096",
-      "d": "296096",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "n": 296096,
+      "d": 296096,
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "award-rows-2001-2016": {
       "measured": true,
-      "n": "146802",
-      "d": "146802",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "n": 146802,
+      "d": 146802,
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "award-rows-by-year": {
-      "measured": false,
+      "measured": true,
       "series": [
         {
-          "fiscal_year": "2001",
+          "fiscal_year": 2001,
           "fiscal_year_label": "FY01",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "7896"
+          "award_rows": 7896
         },
         {
-          "fiscal_year": "2002",
+          "fiscal_year": 2002,
           "fiscal_year_label": "FY02",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "8322"
+          "award_rows": 8322
         },
         {
-          "fiscal_year": "2003",
+          "fiscal_year": 2003,
           "fiscal_year_label": "FY03",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "8065"
+          "award_rows": 8065
         },
         {
-          "fiscal_year": "2004",
+          "fiscal_year": 2004,
           "fiscal_year_label": "FY04",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "8199"
+          "award_rows": 8199
         },
         {
-          "fiscal_year": "2005",
+          "fiscal_year": 2005,
           "fiscal_year_label": "FY05",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "8254"
+          "award_rows": 8254
         },
         {
-          "fiscal_year": "2006",
+          "fiscal_year": 2006,
           "fiscal_year_label": "FY06",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "7733"
+          "award_rows": 7733
         },
         {
-          "fiscal_year": "2007",
+          "fiscal_year": 2007,
           "fiscal_year_label": "FY07",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "7348"
+          "award_rows": 7348
         },
         {
-          "fiscal_year": "2008",
+          "fiscal_year": 2008,
           "fiscal_year_label": "FY08",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "7538"
+          "award_rows": 7538
         },
         {
-          "fiscal_year": "2009",
+          "fiscal_year": 2009,
           "fiscal_year_label": "FY09",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "8876"
+          "award_rows": 8876
         },
         {
-          "fiscal_year": "2010",
+          "fiscal_year": 2010,
           "fiscal_year_label": "FY10",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "10958"
+          "award_rows": 10958
         },
         {
-          "fiscal_year": "2011",
+          "fiscal_year": 2011,
           "fiscal_year_label": "FY11",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "11432"
+          "award_rows": 11432
         },
         {
-          "fiscal_year": "2012",
+          "fiscal_year": 2012,
           "fiscal_year_label": "FY12",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "12117"
+          "award_rows": 12117
         },
         {
-          "fiscal_year": "2013",
+          "fiscal_year": 2013,
           "fiscal_year_label": "FY13",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "11731"
+          "award_rows": 11731
         },
         {
-          "fiscal_year": "2014",
+          "fiscal_year": 2014,
           "fiscal_year_label": "FY14",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "11753"
+          "award_rows": 11753
         },
         {
-          "fiscal_year": "2015",
+          "fiscal_year": 2015,
           "fiscal_year_label": "FY15",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "9778"
+          "award_rows": 9778
         },
         {
-          "fiscal_year": "2016",
+          "fiscal_year": 2016,
           "fiscal_year_label": "FY16",
           "dataset": "Contract awards, FY2001\u201316",
-          "award_rows": "6802"
+          "award_rows": 6802
         },
         {
-          "fiscal_year": "2017",
+          "fiscal_year": 2017,
           "fiscal_year_label": "FY17",
           "dataset": "Award notices, FY2017\u201319",
-          "award_rows": "561"
+          "award_rows": 561
         },
         {
-          "fiscal_year": "2018",
+          "fiscal_year": 2018,
           "fiscal_year_label": "FY18",
           "dataset": "Award notices, FY2017\u201319",
-          "award_rows": "937"
+          "award_rows": 937
         },
         {
-          "fiscal_year": "2019",
+          "fiscal_year": 2019,
           "fiscal_year_label": "FY19",
           "dataset": "Award notices, FY2017\u201319",
-          "award_rows": "1117"
+          "award_rows": 1117
         },
         {
-          "fiscal_year": "2020",
+          "fiscal_year": 2020,
           "fiscal_year_label": "FY20",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "35072"
+          "award_rows": 35072
         },
         {
-          "fiscal_year": "2021",
+          "fiscal_year": 2021,
           "fiscal_year_label": "FY21",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "44941"
+          "award_rows": 44941
         },
         {
-          "fiscal_year": "2022",
+          "fiscal_year": 2022,
           "fiscal_year_label": "FY22",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "40887"
+          "award_rows": 40887
         },
         {
-          "fiscal_year": "2023",
+          "fiscal_year": 2023,
           "fiscal_year_label": "FY23",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "43785"
+          "award_rows": 43785
         },
         {
-          "fiscal_year": "2024",
+          "fiscal_year": 2024,
           "fiscal_year_label": "FY24",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "45998"
+          "award_rows": 45998
         },
         {
-          "fiscal_year": "2025",
+          "fiscal_year": 2025,
           "fiscal_year_label": "FY25",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "45970"
+          "award_rows": 45970
         },
         {
-          "fiscal_year": "2026",
+          "fiscal_year": 2026,
           "fiscal_year_label": "FY26",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "34525"
+          "award_rows": 34525
         },
         {
-          "fiscal_year": "2027",
+          "fiscal_year": 2027,
           "fiscal_year_label": "FY27",
           "dataset": "Contract awards, since FY2020",
-          "award_rows": "4918"
+          "award_rows": 4918
         }
       ],
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "gap-contracts": {
       "measured": true,
-      "n": "2466",
-      "d": "2615",
-      "in_ten": "9",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "n": 1722,
+      "d": 2615,
+      "in_ten": 7,
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "linked-notice": {
       "measured": true,
-      "n": "8059",
-      "d": "283867",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "n": 8059,
+      "d": 283867,
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "supplier-ids": {
       "measured": true,
-      "n": "4957",
-      "d": "5488",
-      "in_ten": "9",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "n": 4957,
+      "d": 5488,
+      "in_ten": 9,
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "contacts-removed": {
       "measured": true,
-      "n": "12430",
-      "d": "32085",
-      "in_ten": "4",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "n": 12445,
+      "d": 32101,
+      "in_ten": 4,
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "contacts-left": {
       "measured": true,
-      "n": "0",
-      "d": "32087",
-      "value": "0",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "n": 0,
+      "d": 34087,
+      "value": 0,
+      "run_id": "372171259502463",
+      "measured_on": "2026-10-30"
     },
     "passages-linked": {
       "measured": true,
-      "n": "0",
-      "measured_on": "2026-10-27"
+      "n": 4928,
+      "measured_on": "2026-11-01"
     },
     "trail": {
       "measured": false
@@ -243,13 +243,13 @@
     },
     "passages": {
       "measured": true,
-      "n": "808",
-      "measured_on": "2026-10-27"
+      "n": 4154,
+      "measured_on": "2026-11-01"
     },
     "shelf-read": {
       "measured": false,
-      "n": "0",
-      "d": "0"
+      "n": 0,
+      "d": 0
     },
     "backtest-coverage": {
       "measured": false
@@ -262,56 +262,81 @@
     },
     "hazard-caught": {
       "measured": true,
-      "n": "27",
-      "d": "82",
-      "in_ten": "3",
+      "n": 27,
+      "d": 82,
+      "in_ten": 3,
       "run_id": "hazard_vs_signals-20261027T083508Z-9ec9766c",
       "measured_on": "2026-10-27"
     },
     "signals-caught": {
       "measured": true,
-      "n": "12",
-      "d": "82",
-      "in_ten": "1",
+      "n": 12,
+      "d": 82,
+      "in_ten": 1,
       "run_id": "hazard_vs_signals-20261027T083508Z-9ec9766c",
       "measured_on": "2026-10-27"
     },
     "retrieval-precision": {
-      "measured": false
+      "measured": true,
+      "value": 0.09,
+      "queries": 12,
+      "run_id": "retrieval-20261101T035520Z-7dec094c",
+      "measured_on": "2026-11-01"
     },
     "retrieval-recall": {
-      "measured": false
+      "measured": true,
+      "value": 0.96,
+      "queries": 12,
+      "run_id": "retrieval-20261101T035520Z-7dec094c",
+      "measured_on": "2026-11-01"
     },
     "retrieval-ndcg": {
-      "measured": false
+      "measured": true,
+      "value": 0.66,
+      "queries": 12,
+      "run_id": "retrieval-20261101T035520Z-7dec094c",
+      "measured_on": "2026-11-01"
     },
     "benchmark-passed": {
-      "measured": false
+      "measured": true,
+      "n": 27,
+      "d": 43,
+      "value": 27,
+      "run_id": "full_gate-20261101T044224Z-242ee10b",
+      "measured_on": "2026-11-01"
     },
     "must-refuse": {
-      "measured": false
+      "measured": true,
+      "n": 11,
+      "d": 11,
+      "run_id": "full_gate-20261101T044224Z-242ee10b",
+      "measured_on": "2026-11-01"
     },
     "sentences-removed": {
       "measured": true,
-      "n": "3",
-      "d": "4",
-      "value": "3",
-      "measured_on": "2026-10-27"
+      "n": 43,
+      "d": 118,
+      "value": 43,
+      "measured_on": "2026-11-01"
     },
     "answers-held-back": {
       "measured": true,
-      "n": "0",
-      "d": "3",
-      "value": "0",
-      "measured_on": "2026-10-27"
+      "n": 1,
+      "d": 42,
+      "value": 1,
+      "measured_on": "2026-11-01"
     },
     "groundedness": {
-      "measured": false
+      "measured": true,
+      "n": 25,
+      "d": 25,
+      "run_id": "full_gate-20261101T044224Z-242ee10b",
+      "measured_on": "2026-11-01"
     },
     "disagreements": {
       "measured": true,
-      "n": "20",
-      "measured_on": "2026-10-27"
+      "n": 144,
+      "measured_on": "2026-11-01"
     },
     "hindsight-caught": {
       "measured": false
@@ -324,53 +349,53 @@
     },
     "azure-spend": {
       "measured": true,
-      "n": "26.19",
-      "d": "197.0",
-      "value": "26.19",
-      "budget": "197.0",
-      "over": "0.0",
-      "latest": "2026-10-27",
+      "n": 288.92,
+      "d": 197.0,
+      "value": 288.92,
+      "budget": 197.0,
+      "over": 91.92,
+      "latest": "2026-10-31",
       "period": "the free credit, which ends November 10, 2026",
-      "measured_on": "2026-10-27"
+      "measured_on": "2026-10-31"
     },
     "loop-days-to-decision": {
       "measured": false,
       "text": "None yet",
       "target": "Within 10 business days",
       "against": "Not compared",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "loop-blamed-covered": {
       "measured": false,
       "text": "None yet",
       "target": "None set",
       "against": "Not compared",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "loop-wrong-passage-rate": {
-      "measured": false,
-      "text": "None yet",
+      "measured": true,
+      "text": "0 in 0 opened",
       "target": "None set",
       "against": "Not compared",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-19"
     },
     "loop-precision-recall": {
       "measured": false,
       "text": "None yet",
       "target": "No loss against the last run",
       "against": "Not compared",
-      "run_id": "857328369179393",
-      "measured_on": "2026-10-27"
+      "run_id": "323151740861898",
+      "measured_on": "2026-10-29"
     },
     "loop-rolling-coverage": {
       "measured": true,
       "text": "0 of 0",
       "target": "75\u201385%",
       "against": "Too few to compare",
-      "run_id": "857328369179393",
+      "run_id": "323151740861898",
       "measured_on": "2026-09-30"
     }
   }
