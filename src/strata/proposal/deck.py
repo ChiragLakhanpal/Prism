@@ -64,7 +64,8 @@ def _results(snapshot: dict | None, keys: tuple[str, ...]) -> dict[str, dict]:
                         "Add the result there, with its query, or read one that is there.")
     measured = (snapshot or {}).get("results", {})
     return {key: {**(measured.get(key) or {"measured": False}), "name": defined[key].name, "kind": defined[key].kind,
-                  "noun": defined[key].noun, "table": defined[key].table} for key in keys}
+                  "noun": defined[key].noun, "table": defined[key].table, "count_of": defined[key].count_of}
+            for key in keys}
 
 
 def _settings() -> dict[str, dict]:

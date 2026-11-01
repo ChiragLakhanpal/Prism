@@ -12,6 +12,9 @@ export type DeckResult = {
   kind: string;
   noun: string;
   table: string;
+  // The column a count shows, as the register says: n, or d when the count is the whole (gap-contracts counts every
+  // contract built from award notices, d, not the ones in local currency among them, n).
+  count_of?: "n" | "d";
   measured_on?: string;
   run_id?: string;
   n?: number;

@@ -8,21 +8,24 @@
    "name": "Numbered passages in the knowledge model",
    "kind": "Query",
    "noun": "passages",
-   "table": "strata.gold.passage"
+   "table": "strata.gold.passage",
+   "count_of": "n"
   },
   "documents-read": {
    "measured": false,
    "name": "Documents the passage reader read, through either route",
    "kind": "Data readiness measure",
    "noun": "documents",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "n"
   },
   "pages-read-well": {
    "measured": false,
    "name": "Document pages read well across both routes, out of every page of the documents read",
    "kind": "Data readiness measure",
    "noun": "pages",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "n"
   },
   "award-rows-by-year": {
    "measured": false,
@@ -195,7 +198,8 @@
    "name": "Contract award rows per fiscal year, by the dataset or the award notices they came from",
    "kind": "Data readiness measure",
    "noun": "contract award rows",
-   "table": "strata.ops.readiness_snapshot"
+   "table": "strata.ops.readiness_snapshot",
+   "count_of": "n"
   },
   "linked-notice": {
    "measured": true,
@@ -206,7 +210,8 @@
    "name": "Contract award rows since fiscal 2020 whose STEP reference a procurement notice also carries",
    "kind": "Data readiness measure",
    "noun": "contract award rows",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "n"
   },
   "backtest-years": {
    "measured": false,
@@ -216,7 +221,8 @@
    "name": "Test packages signed within the 8-in-10 point, by test year",
    "kind": "Backtest",
    "noun": "test packages",
-   "table": "strata.ops.evaluation_result"
+   "table": "strata.ops.evaluation_result",
+   "count_of": "n"
   },
   "award-rows-since-2020": {
    "measured": true,
@@ -227,7 +233,8 @@
    "name": "Contract award rows held from the dataset since fiscal 2020, out of the rows it reported",
    "kind": "Data readiness measure",
    "noun": "contract award rows",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "n"
   },
   "award-rows-2001-2016": {
    "measured": true,
@@ -238,7 +245,8 @@
    "name": "Contract award rows held from the dataset for fiscal 2001 to 2016",
    "kind": "Data readiness measure",
    "noun": "contract award rows",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "n"
   },
   "gap-contracts": {
    "measured": true,
@@ -250,7 +258,8 @@
    "name": "Contracts built from award notices for fiscal 2017 to 2019, which neither awards dataset covers",
    "kind": "Data readiness measure",
    "noun": "contracts",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "d"
   },
   "supplier-ids": {
    "measured": true,
@@ -262,7 +271,8 @@
    "name": "Awarded bidders whose award rows name them the same way and give the same STEP supplier ID",
    "kind": "Data readiness measure",
    "noun": "awarded bidders",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "n"
   },
   "contacts-removed": {
    "measured": true,
@@ -274,7 +284,8 @@
    "name": "Procurement notices that had contact details, which ingestion removed",
    "kind": "Data readiness measure",
    "noun": "notices",
-   "table": "strata.ops.data_readiness"
+   "table": "strata.ops.data_readiness",
+   "count_of": "n"
   },
   "contacts-left": {
    "measured": true,
@@ -286,7 +297,8 @@
    "name": "Notices in which the latest nightly check found an email or phone number that ingestion missed",
    "kind": "Query",
    "noun": "notices",
-   "table": "strata.ops.quality_checks"
+   "table": "strata.ops.quality_checks",
+   "count_of": "n"
   },
   "disagreements": {
    "measured": true,
@@ -295,42 +307,48 @@
    "name": "Disagreements found between two reports or records about the same thing",
    "kind": "Query",
    "noun": "disagreements",
-   "table": "strata.gold.disagreement"
+   "table": "strata.gold.disagreement",
+   "count_of": "n"
   },
   "benchmark-passed": {
    "measured": false,
    "name": "Benchmark questions that met their expected answer, citations, range or refusal, in the latest full gate",
    "kind": "Benchmark run",
    "noun": "benchmark questions",
-   "table": "strata.ops.evaluation_result"
+   "table": "strata.ops.evaluation_result",
+   "count_of": "n"
   },
   "must-refuse": {
    "measured": false,
    "name": "Must-refuse questions that Strata turned down, in the latest full gate",
    "kind": "Benchmark run",
    "noun": "must-refuse questions",
-   "table": "strata.ops.evaluation_result"
+   "table": "strata.ops.evaluation_result",
+   "count_of": "n"
   },
   "hindsight-caught": {
    "measured": false,
    "name": "Risks completion reports later blamed that Strata's risk tables showed at approval",
    "kind": "Hindsight test",
    "noun": "blamed risks",
-   "table": "strata.ops.evaluation_result"
+   "table": "strata.ops.evaluation_result",
+   "count_of": "n"
   },
   "hindsight-checklist": {
    "measured": false,
    "name": "The same blamed risks that a checklist of each sector's commonest risks named",
    "kind": "Hindsight test",
    "noun": "blamed risks",
-   "table": "strata.ops.evaluation_result"
+   "table": "strata.ops.evaluation_result",
+   "count_of": "n"
   },
   "hindsight-interval": {
    "measured": false,
    "name": "The interval around the share of blamed risks Strata's tables showed",
    "kind": "Hindsight test",
    "noun": "percent",
-   "table": "strata.ops.evaluation_result"
+   "table": "strata.ops.evaluation_result",
+   "count_of": "n"
   },
   "azure-spend": {
    "measured": true,
@@ -345,7 +363,8 @@
    "name": "Azure charges in the current budget period, against its budget",
    "kind": "Query",
    "noun": "US dollars",
-   "table": "strata.ops.azure_costs"
+   "table": "strata.ops.azure_costs",
+   "count_of": "n"
   }
  },
  "settings": {

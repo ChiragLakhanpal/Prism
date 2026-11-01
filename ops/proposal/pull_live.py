@@ -52,7 +52,10 @@ def main(argv=None) -> int:
     engine = WarehouseEngine(env["DATABRICKS_WAREHOUSE_ID"], http_transport(env["DATABRICKS_HOST"],
                                                                             env["DATABRICKS_TOKEN"]))
     try:
-        found = snapshot.pull(engine, dt.date.today(), source="workspace")
+        # The workspace dates its rows by the UTC day (public_from), so the pull measures as of that day too: in the
+        # evening on the US west coast the local day is a day behind, and a run of the new UTC day fell outside
+        # every window (the full gate of November 1, 2026, pulled at 9 pm Pacific on October 31).
+        found = snapshot.pull(engine, dt.datetime.now(dt.UTC).date(), source="workspace")
     except EngineError as error:
         print(f"I could not pull the measures: {error}")
         return 2

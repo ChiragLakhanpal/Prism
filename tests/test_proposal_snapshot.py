@@ -109,3 +109,11 @@ def test_the_retrieval_scores_name_the_run_and_day_they_came_from_when_a_tuning_
     # tests/dashboard_seed.py: the ICR Review citation set's scores came from run retrieval-1, on October 10.
     assert {key: (row["run_id"], row["measured_on"]) for key, row in found.items()} == {
         key: ("retrieval-1", "2026-10-10") for key in found}
+
+
+def test_the_live_pull_measures_as_of_the_workspace_s_utc_day():
+    # Pulled at 9 pm Pacific on October 31, 2026 with the local day, the snapshot left out the full gate of November 1
+    # (UTC), so benchmark-passed stayed unmeasured although the dashboard showed it.
+    script = (ROOT / "ops" / "proposal" / "pull_live.py").read_text()
+    assert "dt.date.today()" not in script
+    assert "snapshot.pull(engine, dt.datetime.now(dt.UTC).date(), " in script

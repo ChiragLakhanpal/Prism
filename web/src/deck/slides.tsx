@@ -71,7 +71,8 @@ function ratio(result: DeckResult, name: string) {
 }
 
 function count(result: DeckResult, name: string) {
-  return <ResultNum result={result} resultKey={name} value={{ count: Number(result.n ?? 0) }} />;
+  const counted = result.count_of === "d" ? result.d : result.n;
+  return <ResultNum result={result} resultKey={name} value={{ count: Number(counted ?? 0) }} />;
 }
 
 // A number in the speaker notes, plain text bound to its source.
