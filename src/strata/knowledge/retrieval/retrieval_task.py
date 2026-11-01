@@ -28,4 +28,5 @@ if __name__ == "__main__":
     from strata.knowledge.retrieval.weekly import main
     from strata.lakehouse.engine import SparkEngine
 
-    raise SystemExit(main(arguments, SparkEngine(SparkSession.builder.getOrCreate())))
+    # A serverless task counts any SystemExit as a failure, 0 included, so main() is called as the nightly's is.
+    main(arguments, SparkEngine(SparkSession.builder.getOrCreate()))

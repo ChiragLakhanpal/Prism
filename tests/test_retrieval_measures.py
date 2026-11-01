@@ -11,8 +11,11 @@ is 8.0 per 100, 1 "Not useful" is 4.0, and a week with one open has no rate.
 """
 
 import datetime as dt
+from pathlib import Path
 
 import pytest
+
+from strata.knowledge.retrieval import weekly
 
 from retrieval_scenario import ANA, DANIEL, KOFI, NOOR, PARAGRAPH_55, PRIYA, SARA, Loop
 
@@ -62,3 +65,13 @@ def test_reports_per_100_sources_opened_and_each_persons_fixed_and_recited_count
               for row in latest(loop, "strata.ops.retrieval_feedback_viewers")}
     # Priya's report is "Not useful", which the sentence does not count.
     assert people == {"id-ana.example@worldbank.org": (1, 1, 0, 0, 1), "id-kofi.example@worldbank.org": (1, 0, 1, 0, 0)}
+
+
+def test_the_weekly_job_s_entry_script_calls_main_without_raising_SystemExit():
+    """A serverless Python task counts any SystemExit as a failure, 0 included, so the weekly job's entry script calls
+    main() as the nightly, cost and cross-check tasks do. Before, every run that built the labeled set showed as failed
+    in Jobs (run 727856797404112 on October 31, 2026 built 47 queries and ended FAILED on "SystemExit: 0")."""
+    script = Path(weekly.__file__).with_name("retrieval_task.py").read_text()
+
+    assert "SystemExit(main(" not in script
+    assert "    main(arguments, SparkEngine(SparkSession.builder.getOrCreate()))" in script
