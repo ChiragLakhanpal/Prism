@@ -134,7 +134,7 @@ def test_the_week_a_sentence_names_is_the_newest_one_the_weekly_run_measured_aft
 
 
 def test_before_the_weekly_run_has_measured_a_finished_week_the_sentence_says_nothing_of_reports(empty):
-    assert said(empty, "ai")["Retrieval loop"] == ("No retrieval evaluation has run yet.", "Not yet")
+    assert said(empty, "ai")["Retrieval loop"] == ("No evaluation of the held-out set has run yet.", "Not yet")
 
 
 def test_each_reason_row_says_how_many_reasons_share_its_count_so_a_tie_is_a_query_column(written):

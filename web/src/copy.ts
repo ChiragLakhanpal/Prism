@@ -9053,7 +9053,9 @@ export const copy = {
         retrieval: {
           evaluated: "On the held-out set, in the evaluation of {day}, precision at 10 was {p} and recall at 20 was {r}.",
           fewQueries: "I'm not giving precision or recall for the held-out set, because it has only {queries} queries.",
-          none: "No retrieval evaluation has run yet.",
+          // Only the held-out set is reported here, and only the tuning gate scores it; a plain evaluation run fills the
+          // Retrieval evaluation table without one (October 31, 2026).
+          none: "No evaluation of the held-out set has run yet.",
           feedback: {
             one:
               "In the 7 days to {day}, people opened {opened} sources and marked {wrong} passage as wrong, or {rate} " +
