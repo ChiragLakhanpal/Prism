@@ -14,6 +14,7 @@ import { deckCopy, figureCopy } from "./copy";
 import { measured, type DeckData, type DeckResult } from "./data";
 import { Demo, NewTabLink, NotMeasured, Phases, Points, Step, Tiles } from "./layouts";
 import { NoteNum, ResultNum, RubricPoints, SettingWord } from "./nums";
+import { Hairline } from "../figures/Figure";
 import { type, type Mode } from "./ramp";
 import { recordingOf, type Recording } from "./Recorded";
 import type { Theme } from "./Frame";
@@ -70,7 +71,7 @@ function ratio(result: DeckResult, name: string) {
 }
 
 function count(result: DeckResult, name: string) {
-  return <ResultNum result={result} resultKey={name} value={{ value: result.n ?? 0, options: { compact: false } }} />;
+  return <ResultNum result={result} resultKey={name} value={{ count: Number(result.n ?? 0) }} />;
 }
 
 // A number in the speaker notes, plain text bound to its source.
@@ -83,6 +84,18 @@ const figureSteps = (id: FigureId) => FIGURES[id].steps;
 
 // The parts of the talk in order, slide by slide, without their numbers: buildSlides numbers them.
 type Draft = Omit<Slide, "n">;
+
+// The data slide's hairline figure: the awards record year by year, with its break. It mounts when its press comes,
+// so it plays its tour from rest as it appears, and the reading view shows it at rest. Its box keeps the drawing's
+// size all along, so the row never moves when it arrives.
+function AwardsGap({ live, mode }: { live: boolean; mode: Mode }) {
+  const width = mode === "present" ? 190 : 260;
+  return (
+    <div style={{ width, height: (width * 4) / 5 }}>
+      {live && <Hairline figureKey="awards-gap" play={mode === "present"} label={s.data.figure} />}
+    </div>
+  );
+}
 
 export function buildSlides(data: DeckData): Slide[] {
   const word = (name: string, capital = false) => <SettingWord data={data} settingKey={name} capital={capital} />;
@@ -341,11 +354,15 @@ export function buildSlides(data: DeckData): Slide[] {
       theme: "light",
       kind: "text",
       title: s.data.title,
-      steps: s.data.tiles.length,
+      steps: s.data.tiles.length + 1,
       body: (at, mode) => (
         <div className="flex flex-col gap-6">
           <Tiles
-            tiles={s.data.tiles.map((tile) => ({ head: tile.head, body: fact(tile) }))}
+            tiles={[
+              ...s.data.tiles.slice(0, 1).map((tile) => ({ head: tile.head, body: fact(tile) })),
+              { figure: <AwardsGap live={mode === "read" || at >= 2} mode={mode} /> },
+              ...s.data.tiles.slice(1).map((tile) => ({ head: tile.head, body: fact(tile) })),
+            ]}
             at={at}
             mode={mode}
           />

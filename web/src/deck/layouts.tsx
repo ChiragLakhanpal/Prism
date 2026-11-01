@@ -87,8 +87,18 @@ export function Points({ lines, ask, at, mode, first = 1 }: { lines: ReactNode[]
   );
 }
 
-// Two to four tiles, a press each, each a head and a note, then an optional closing line under them.
-export function Tiles({ tiles, closing, at, mode }: { tiles: { head: ReactNode; body: ReactNode }[]; closing?: ReactNode; at: number; mode: Mode }) {
+// Tiles, a press each, each a head and a note, or a drawing, then an optional closing line under them.
+export function Tiles({
+  tiles,
+  closing,
+  at,
+  mode,
+}: {
+  tiles: ({ head: ReactNode; body: ReactNode } | { figure: ReactNode })[];
+  closing?: ReactNode;
+  at: number;
+  mode: Mode;
+}) {
   const columns = mode === "present" ? `repeat(${tiles.length === 4 ? 2 : Math.min(tiles.length, 3)}, minmax(0, 1fr))` : undefined;
   return (
     <div className="flex flex-col">
@@ -99,14 +109,23 @@ export function Tiles({ tiles, closing, at, mode }: { tiles: { head: ReactNode; 
             n={index + 1}
             at={at}
             as="section"
-            className="flex flex-col rounded-md border border-line bg-surface p-6 [&[data-current]]:border-info-icon"
+            className={cx(
+              "flex flex-col rounded-md border border-line bg-surface [&[data-current]]:border-info-icon",
+              "figure" in tile ? "items-center justify-center p-2" : "p-6",
+            )}
           >
-            <h2 className="text-ink-heading" {...type("head", mode)}>
-              {tile.head}
-            </h2>
-            <p className="mt-2 text-ink-muted" {...type("note", mode)}>
-              {tile.body}
-            </p>
+            {"figure" in tile ? (
+              tile.figure
+            ) : (
+              <>
+                <h2 className="text-ink-heading" {...type("head", mode)}>
+                  {tile.head}
+                </h2>
+                <p className="mt-2 text-ink-muted" {...type("note", mode)}>
+                  {tile.body}
+                </p>
+              </>
+            )}
           </Step>
         ))}
       </div>

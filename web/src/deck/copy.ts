@@ -414,16 +414,11 @@ export const deckCopy = {
       title: "What the data looks like, and where it breaks",
       tiles: [
         {
-          head: "The awards datasets",
-          body: "{since} contract award rows since fiscal 2020, and {old} for fiscal 2001 to 2016.",
-          results: { since: "award-rows-since-2020", old: "award-rows-2001-2016" },
-          counts: ["since", "old"],
-        },
-        {
-          head: "The awards gap",
-          body: "No awards dataset covers fiscal 2017 to 2019, so Strata built {gap} contracts from award notices, kept in local currency.",
-          results: { gap: "gap-contracts" },
-          counts: ["gap"],
+          head: "The awards datasets, and the gap",
+          body: "{since} award rows since fiscal 2020 and {old} for 2001 to 2016. None cover 2017 to 2019, so Strata " +
+            "built {gap} contracts from award notices.",
+          results: { since: "award-rows-since-2020", old: "award-rows-2001-2016", gap: "gap-contracts" },
+          counts: ["since", "old", "gap"],
         },
         {
           head: "The missing key",
@@ -449,6 +444,7 @@ export const deckCopy = {
         },
       ] as { head: string; body: string; results: Record<string, string>; counts?: string[] }[],
       link: "Open the Data readiness page",
+      figure: "The awards record year by year, with a break that only award notices fill.",
       source: "Strata's Data readiness measures, pulled {date}.",
       notes:
         "Before any model touches this data, here's what it really looks like, including where it breaks. I'd " +
@@ -523,7 +519,8 @@ export const deckCopy = {
     "welcome": {
       cue:
         "Press F for full screen. Keep /present/notes open on your laptop. Check that the App's view pill says " +
-        "English. Aim for about 30 minutes, then questions.",
+        "English. Aim for about 30 minutes, then questions. If the App restarts, the deck asks for its password " +
+        "again.",
       asked: [
         {
           q:
@@ -714,9 +711,8 @@ export const deckCopy = {
         "can see exactly why each package is in.",
         "Hollow dots are packages still open. Most tools drop them, and every range looks shorter than it was. " +
         "Strata keeps them with a Kaplan-Meier estimate, so an open package counts as not signed yet.",
-        "And the time estimate lane is empty here, on purpose. No model has a long enough history on this " +
-        "workspace yet, so it says why instead of showing a number it can't back. I'd rather show you that than " +
-        "hide it.",
+        "And the time estimate lane is empty here, on purpose. No model has been trained on this workspace yet, " +
+        "so it says why instead of showing a number it can't back. I'd rather show you that than hide it.",
       ],
       asked: [
         {
@@ -747,10 +743,10 @@ export const deckCopy = {
           q:
             "Why is the time estimate empty?",
           a:
-            "There's no trained model on this workspace yet. The notice search API stops paging at 100,000 " +
-            "results, so the live notice history starts in 2024, and every backtest year had fewer than 20 " +
-            "packages to size a range on. The model and its gates are built and tested offline. It needs a longer" +
-            " notice history to train live.",
+            "No model has been trained on this workspace yet. When I ran the backtests on October 25, the notice " +
+            "search API's paging limit meant the notice history started in 2024, and every backtest year had " +
+            "fewer than 20 packages to size a range on, so the model abstained. The model and its gates are built" +
+            " and tested offline. It needs a longer notice history to train live.",
         },
       ],
       diagrams: ["two_lane", "time_estimate_flow"],
@@ -959,8 +955,8 @@ export const deckCopy = {
             "Why strip contact details?",
           a:
             "Notices carry names, emails and phone numbers, and Strata needs none of them to answer anything, so " +
-            "they never get past ingestion. On the October 27 snapshot, ingestion had removed them from 12,430 " +
-            "notices, and the nightly check found none left.",
+            "they never get past ingestion. A nightly check counts any that got through, and the data slide shows" +
+            " both numbers.",
         },
         {
           q:
@@ -1032,20 +1028,24 @@ export const deckCopy = {
     },
     "data": {
       adds: [
-        "Two separate awards datasets, 296,096 rows since fiscal 2020 and 146,802 for 2001 to 2016. Strata keeps " +
-        "track of which one each row came from.",
-        "Then a hole: no awards dataset covers fiscal 2017 to 2019. Award notices do, so Strata built 2,466 " +
-        "contracts from them. They're in local currency, so they stay apart from the US-dollar awards. Nothing is" +
-        " converted quietly.",
-        "This is the abnormality that shaped the most design. Only 8,059 of 283,867 award rows since 2020 match a" +
-        " notice by STEP reference. Many awards don't carry one, and the notice search API stops paging at " +
-        "100,000 results, so the notice history we hold starts in 2024. Strata never guesses that join.",
-        "Suppliers: 4,957 of 5,488 awarded bidders use one name with one STEP supplier ID. For the rest, a Splink" +
-        " model scores name pairs, a language model looks at the uncertain middle, and anything still unsure goes" +
-        " to a person. A STEP ID always wins, and two IDs are never merged by name.",
-        "Contact details: removed from 12,430 notices on that snapshot, and the nightly check found zero left.",
-        "And the reports: 808 passages on the October 27 snapshot. The workspace holds a little over 4,000 now, " +
-        "so read this as a dated snapshot. That's what the date on the source line is for.",
+        "The awards come as two separate datasets, one since fiscal 2020 and one for 2001 to 2016, and each row " +
+        "keeps the dataset it came from. Between them is a hole: no dataset covers 2017 to 2019. Award notices " +
+        "do, so Strata built contracts from them, in local currency, kept apart from the US-dollar awards.",
+        "Here's that hole as a picture: the record year by year, with the base broken where only award notices " +
+        "fill it. Why not interpolate, or convert the currency? Either way I'd be putting my own numbers into the" +
+        " record.",
+        "The missing key is the abnormality that shaped the most design. When I dug in on October 26 there were " +
+        "two causes: many awards carry no STEP reference, and the notice search API stops paging at 100,000 " +
+        "results, so the notices we held started in 2024. Strata never guesses that join. No reference, no link, " +
+        "and the coverage line says so.",
+        "For suppliers, a STEP supplier ID always wins, and two IDs are never merged by name. For names without " +
+        "an ID, a Splink model scores pairs, a language model looks at the uncertain middle, and anything still " +
+        "unsure goes to a person.",
+        "Contact details are stripped at ingestion, and the second number is the nightly check that looks for any" +
+        " that got through.",
+        "The passage count grows as the nightly job reads more reports, and the disagreements come from the batch" +
+        " model's dated assertions. The source line dates the whole slide, and that matters, because these " +
+        "numbers move every night.",
       ],
       asked: [
         {
@@ -1068,8 +1068,9 @@ export const deckCopy = {
           q:
             "Why is the link rate so low?",
           a:
-            "Two reasons. Many award rows carry no STEP reference, and the notice search API only pages back " +
-            "100,000 results, so the notices we hold start in 2024. A bulk notice export would fix most of it.",
+            "When I dug in on October 26, two causes. Many award rows carry no STEP reference, and the notice " +
+            "search API only pages back 100,000 results, so the notices we held started in 2024. A bulk notice " +
+            "export would fix most of it.",
         },
         {
           q:
@@ -1170,7 +1171,8 @@ export const deckCopy = {
         " choice decides the answer's.",
         "Same hybrid search. text-embedding-3-large is multilingual, so a French paragraph and an English " +
         "question land near each other by meaning, while the keyword side still matches names and IDs. There's no" +
-        " translation step anywhere, not for documents and not for the query.",
+        " translation step anywhere. Last night's live run scored it: English questions over the French Haiti " +
+        "report had a recall at 20 of 0.85.",
         "The agent writes in the person's language. Quotes stay in the language they were written in, by " +
         "instruction and by check.",
         "The verifier runs the same checks in every language. config/languages.toml teaches it how French writes " +
@@ -1184,11 +1186,11 @@ export const deckCopy = {
           q:
             "How well does it work across languages?",
           a:
-            "Not measured live yet, and I won't pretend otherwise. There's a 30-question bilingual set, English " +
-            "questions over a French completion report and French questions over an English one, but it's only " +
-            "been scored offline with a stand-in that can't cross languages. On the live dry runs, the English " +
-            "question kept 6 of 7 sentences and both quotes, and the French one kept all 4 sentences and all 3 " +
-            "quotes. Scoring the set live is next.",
+            "Measured live last night, in run retrieval-20261101T035520Z-7dec094c. English questions over the " +
+            "French Haiti completion report: recall at 20 of 0.85 and nDCG at 10 of 0.76, on 25 questions with 60" +
+            " labeled passages. French questions over the English India report: recall at 20 of 0.80, but that's " +
+            "only 5 questions, so I treat it as a smoke test. For comparison, ICR Review citations score 0.96. " +
+            "Precision at 10 is low by construction, because most questions have one or two labeled passages.",
         },
         {
           q:
@@ -1253,9 +1255,9 @@ export const deckCopy = {
         "Each night the champion scores every package and every what-if into strata.gold.time_estimate_score, so " +
         "the chart answers within 100 milliseconds. The app doesn't even install XGBoost. A small portable " +
         "learner walks the trees from the model's JSON, tested against XGBoost on every fixture package.",
-        "And the honest part: no champion exists on this workspace yet. Every backtest year abstained because the" +
-        " live notice history is too short. That's the pipeline doing its job. It refused to size a range on " +
-        "fewer than 20 packages.",
+        "And the honest part: no champion exists on this workspace yet. When I ran the backtests on October 25, " +
+        "every year abstained because the notice history was too short. That's the pipeline doing its job. It " +
+        "refused to size a range on fewer than 20 packages.",
       ],
       asked: [
         {
@@ -1305,8 +1307,8 @@ export const deckCopy = {
             "Splink, a Fellegi-Sunter model, for supplier names, with a language model on the uncertain band. An " +
             "experimental rebidding model, logistic regression against calibrated XGBoost, scored on Brier and " +
             "calibration error. And a discrete-time hazard model for project delay, in shadow only. On the " +
-            "snapshot it caught 27 of 82 cases against 12 for the fixed signals, but it stays in shadow until it " +
-            "passes its release test.",
+            "October 27 snapshot it caught 27 of 82 cases against 12 for the fixed signals, but it stays in " +
+            "shadow until it passes its release test.",
         },
       ],
       diagrams: ["time_estimate_flow", "backtest_timeline", "promotion_gates", "two_lane", "rebidding_flow"],
@@ -1357,9 +1359,12 @@ export const deckCopy = {
           q:
             "How do you evaluate retrieval?",
           a:
-            "Precision at 10, recall at 20 and nDCG at 10 on labeled query sets, including the bilingual set. " +
-            "Today those run only on the fixture with a stand-in embedder. Measuring them on the live stack is " +
-            "the next run I'd do.",
+            "Precision at 10, recall at 20 and nDCG at 10 on labeled query sets. The job is scheduled weekly on " +
+            "the live stack and paused since October 29 to save the Azure credit, so I ran it by hand last night." +
+            " Run retrieval-20261101T035520Z-7dec094c gave recall at 20 of 0.96 on ICR Review citations, 0.85 for" +
+            " English questions over the French Haiti report, and 0.80 for French questions over the English " +
+            "India report, on only 5 questions. Precision at 10 is low by construction, since most questions have" +
+            " one or two labeled passages.",
         },
       ],
       diagrams: ["verifier_flow", "eval_layers", "retrieval_eval"],
@@ -1405,7 +1410,8 @@ export const deckCopy = {
           q:
             "How many disagreements are there?",
           a:
-            "20 on the October 27 snapshot. The October 29 nightly run found 65 across the projects it read.",
+            "The data slide shows the count on the latest snapshot. The October 29 nightly run alone found 65 " +
+            "across the projects it read.",
         },
       ],
       diagrams: ["disagreement_flow"],
@@ -1532,8 +1538,10 @@ export const deckCopy = {
           q:
             "What would you build first?",
           a:
-            "Live evaluation. Score the benchmark and the bilingual set on the live stack every week, so every " +
-            "change after that comes with a number. Then amendment risk, if the records are there.",
+            "Evaluation in the loop. The first live retrieval run was last night, by hand. Its weekly job is " +
+            "paused to save the Azure credit, so I'd turn it back on, and run the benchmark against the live " +
+            "agent every week too, so every change comes with a number. Then amendment risk, if the records are " +
+            "there.",
         },
       ],
       diagrams: ["change_flow", "gate_lanes"],
