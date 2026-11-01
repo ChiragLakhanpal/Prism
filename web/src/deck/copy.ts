@@ -267,6 +267,11 @@ export const deckCopy = {
       notes:
         "I'll build the system from the bottom, one layer at a time.",
     },
+    architecture: {
+      title: "The whole system, from the public sources to the person asking",
+      notes:
+        "Here's every part on one page, in the order the data travels.",
+    },
     pipeline: {
       title: "Every night, World Bank open data become one dated knowledge model",
       notes:
@@ -728,6 +733,43 @@ export const deckCopy = {
           a:
             "Every passage is screened by Prompt Shields when it's read in. A passage with an attack in it is held back " +
             "from search, and the coverage line counts it.",
+        },
+      ],
+    },
+    "architecture": {
+      adds: [
+        "Everything Strata knows comes from these public APIs. Nothing is private.",
+        "It's one Databricks job that fetches only what changed since the last run.",
+        "The medallion tables in Unity Catalog. Gold is what every answer reads.",
+        "The search index, Genie and the models all sit on the same gold tables, so they can't disagree.",
+        "The app runs every tool as the viewer, and the verifier checks every sentence before anyone sees it.",
+        "The agent lives in Foundry and never touches the data. It asks, and the app runs the tool.",
+      ],
+      asked: [
+        {
+          q: "Why is the agent outside Databricks?",
+          a:
+            "So the model never holds a credential to the data. Foundry gives the agent, Azure OpenAI's quotas and the " +
+            "guardrail; Databricks keeps the data and its permissions. The app is the only bridge, and it runs every " +
+            "tool as the person asking.",
+        },
+        {
+          q: "What's Lakebase for?",
+          a:
+            "Postgres for the app's own state, like planned packages and clicks, so every page is fast. Analytical reads " +
+            "stay on the warehouse.",
+        },
+        {
+          q: "Why serverless for the nightly job?",
+          a:
+            "It runs once a night and only fetches what changed, so paying for an always-on cluster makes no sense. " +
+            "Each task picks up where the last run stopped.",
+        },
+        {
+          q: "What's champion and challenger?",
+          a:
+            "The time estimate model in production is the champion, and a new one is the challenger. The challenger only " +
+            "replaces it after winning the backtest and a quarter in shadow, and MLflow keeps both versions.",
         },
       ],
     },
@@ -1301,6 +1343,30 @@ export const figureCopy = {
       "through its reference in Systematic Tracking of Exchanges in Procurement (STEP). When a contract and a " +
       "paragraph of a completion report are about the same work, I say they appeared together. I never say one caused " +
       "the other. Every row keeps the date it became public, so I can answer as of a past date.",
+  },
+  architecture: {
+    title: "How Strata fits together",
+    heading: "How Strata fits together",
+    steps: [
+      "Public sources: Finances One for awards, IEG ratings, loans and credits, the search APIs for procurement" +
+        " notices and projects, the Documents API for appraisal documents, status reports, completion reports and" +
+        " plans, and the Indicators API for CPIA and WGI.",
+      "A nightly job on serverless compute fetches only what changed, in a chain of tasks, and writes it to " +
+        "bronze.",
+      "On Databricks, bronze keeps each page as received, silver types the rows and holds the passages, gold is" +
+        " the knowledge model, and ops keeps runs, answers and decisions.",
+      "On gold sit the AI Search index for hybrid search over gold.passage, the Genie space over the metric " +
+        "views, the time estimate models in MLflow as champion and challenger, and the AI/BI dashboard.",
+      "The Databricks App serves the web app and its API, runs the tools as the viewer with SQL on gold and " +
+        "search on the index, checks every sentence with the verifier and keeps drafts. Lakebase holds the app's " +
+        "state.",
+      "Microsoft Foundry runs the orchestrator agent and the writers on Azure OpenAI models, behind a " +
+        "guardrail, and trades tool calls and results with the app. People ask in the app.",
+    ],
+    caption:
+      "World Bank sources come in every night, and only what changed. Everything I know lives in one set of " +
+      "Databricks tables, and the search index, the Genie space and my models sit on them. I run every tool as you," +
+      " so you only see what you're allowed to see, and my verifier checks every sentence before you read it.",
   },
   retrieval: {
     title: "What happens behind one answer",

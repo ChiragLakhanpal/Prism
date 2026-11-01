@@ -279,6 +279,15 @@ export function buildSlides(data: DeckData): Slide[] {
       notes: s.layers.notes,
     },
     {
+      id: "architecture",
+      part: "built",
+      theme: "light",
+      kind: "figure",
+      title: s.architecture.title,
+      ...figure("architecture"),
+      notes: s.architecture.notes,
+    },
+    {
       id: "pipeline",
       part: "built",
       theme: "light",

@@ -19,6 +19,7 @@ export const PAGE_ORDER: FigureId[] = [
   "strata",
   "one-answer",
   "layers",
+  "architecture",
   "pipeline",
   "reading",
   "knowledge-model",

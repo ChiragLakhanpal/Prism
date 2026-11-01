@@ -276,16 +276,16 @@ test("the speaker notes open in their own window, follow the deck press by press
   await page.keyboard.press("ArrowRight");
   await expect(notes.locator(`[data-notes-view='${layers + 1}']`)).toBeVisible();
   await page.keyboard.press("ArrowRight");
-  await expect(notes.locator("[data-notes-press]")).toHaveText(deckCopy.pressOf("1", String(figureCopy.pipeline.steps.length)));
-  await expect(notes.locator("[data-notes-step]")).toHaveText(figureCopy.pipeline.steps[0]);
+  await expect(notes.locator("[data-notes-press]")).toHaveText(deckCopy.pressOf("1", String(figureCopy.architecture.steps.length)));
+  await expect(notes.locator("[data-notes-step]")).toHaveText(figureCopy.architecture.steps[0]);
   expect((await scan(notes)).violations.map((found) => found.id)).toEqual([]);
   // The notes' forward press moves the deck, and the preview beside the notes shows the slide on screen at that press.
   await notes.getByRole("button", { name: deckCopy.notesView.nextButton }).click();
-  await expect(slideById(page, "pipeline")).toHaveAttribute("data-step-current", "2");
-  const pipeline = await numberOf(page, "pipeline");
-  await expect(notes.locator("[data-notes-preview]").first()).toHaveAttribute("data-notes-preview", String(pipeline));
-  await expect(notes.locator(`[data-notes-preview='${pipeline}'] section[data-slide]`)).toHaveAttribute("data-step-current", "2");
-  await expect(notes.locator("[data-notes-preview]").nth(1)).toHaveAttribute("data-notes-preview", String(pipeline + 1));
+  await expect(slideById(page, "architecture")).toHaveAttribute("data-step-current", "2");
+  const next = await numberOf(page, "architecture");
+  await expect(notes.locator("[data-notes-preview]").first()).toHaveAttribute("data-notes-preview", String(next));
+  await expect(notes.locator(`[data-notes-preview='${next}'] section[data-slide]`)).toHaveAttribute("data-step-current", "2");
+  await expect(notes.locator("[data-notes-preview]").nth(1)).toHaveAttribute("data-notes-preview", String(next + 1));
 });
 
 // Every slide whole, its reading view and its notes, as /present/page and presentation mode draw them.

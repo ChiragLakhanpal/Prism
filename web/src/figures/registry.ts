@@ -33,6 +33,7 @@ const SLOT_OF: Record<FigureId, Slot> = {
   strata: "stage",
   "one-answer": "stage",
   layers: "stage",
+  architecture: "stage",
   pipeline: "stage",
   reading: "stage",
   "knowledge-model": "stage",

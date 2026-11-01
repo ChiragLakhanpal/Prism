@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="architecture-title architecture-desc" data-motion-root="" data-motion-mode="none" data-step-count="6" id="architecture-root">
+        <title id="architecture-title">How Strata fits together</title>
+        <desc id="architecture-desc">Public World Bank sources feed a nightly job on Databricks, which writes the bronze, silver, gold and ops tables. The AI Search index, the Genie space, the models in MLflow and the AI/BI dashboard sit on gold. The Databricks App runs the tools as each viewer, checks every sentence with the verifier and keeps drafts, with Lakebase for app state. Microsoft Foundry's agent trades tool calls and results with the app, and people ask in the app.</desc>
+        <defs>
+      <style>#architecture-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
+      #architecture-root .diagram-container { width: 100%; overflow-x: auto; }
+      @media print {
+#architecture-root .diagram-container { overflow-x: visible; }
+}</style>
+<marker id="architecture-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="architecture-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="architecture-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<g data-motion-item="" data-step="1" aria-label="Public sources: Finances One, the search APIs, the Documents API and the Indicators API">
+<rect x="8" y="8" width="132" height="316" rx="8" fill="none" stroke="#586e84" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="16" y="24" fill="#586e84" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Public sources</text>
+<rect x="16" y="34" width="116" height="62" rx="6" fill="#f5f7f9"/>
+<rect x="16" y="34" width="116" height="62" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="26" y="52" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Finances One</text>
+<text x="26" y="66" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">awards, IEG</text>
+<text x="26" y="77" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">ratings, loans</text>
+<text x="26" y="88" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">and credits</text>
+<rect x="16" y="104" width="116" height="62" rx="6" fill="#f5f7f9"/>
+<rect x="16" y="104" width="116" height="62" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="26" y="122" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Search APIs</text>
+<text x="26" y="136" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">procurement</text>
+<text x="26" y="147" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">notices, projects</text>
+<rect x="16" y="174" width="116" height="62" rx="6" fill="#f5f7f9"/>
+<rect x="16" y="174" width="116" height="62" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="26" y="192" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Documents API</text>
+<text x="26" y="206" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">PADs, ISRs, ICRs,</text>
+<text x="26" y="217" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">reviews, plans</text>
+<rect x="16" y="244" width="116" height="62" rx="6" fill="#f5f7f9"/>
+<rect x="16" y="244" width="116" height="62" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="26" y="262" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Indicators API</text>
+<text x="26" y="276" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">CPIA and WGI</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="A nightly job fetches only what changed and writes it to bronze">
+<rect x="162" y="118" width="104" height="100" rx="6" fill="#f5f7f9"/>
+<rect x="162" y="118" width="104" height="100" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="162" y="118" width="104" height="100" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="172" y="136" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Nightly job</text>
+<text x="172" y="150" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a chain of tasks</text>
+<text x="172" y="161" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">serverless</text>
+<text x="172" y="172" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">fetches only</text>
+<text x="172" y="183" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">what changed</text>
+<path d="M 141 168 L 161 168" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#architecture-arrow-accent)"/>
+<rect x="134.5" y="150" width="33" height="13" rx="2" fill="#f5f7f9"/>
+<text x="151" y="160" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">fetch</text>
+<path d="M 267 150 L 275 150 L 275 48 L 291 48" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#architecture-arrow-accent)"/>
+<rect x="264" y="98" width="33" height="13" rx="2" fill="#f5f7f9"/>
+<text x="268" y="108" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="end">write</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="On Databricks, bronze, silver, gold and ops">
+<rect x="282" y="8" width="200" height="332" rx="8" fill="none" stroke="#0071bc" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="290" y="24" fill="#0071bc" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Databricks: data and models</text>
+<rect x="292" y="32" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="32" width="180" height="32" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="302" y="46" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">bronze</text>
+<text x="302" y="58" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">pages as received</text>
+<rect x="292" y="69" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="69" width="180" height="32" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="302" y="83" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">silver</text>
+<text x="302" y="95" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">typed rows, passages</text>
+<rect x="292" y="106" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="106" width="180" height="32" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="292" y="106" width="180" height="32" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="302" y="120" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">gold</text>
+<text x="302" y="132" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">the knowledge model</text>
+<rect x="292" y="143" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="143" width="180" height="32" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="302" y="157" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">ops</text>
+<text x="302" y="169" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">runs, answers, decisions</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="On gold, the AI Search index, the Genie space, the models in MLflow and the AI/BI dashboard">
+<rect x="292" y="187" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="187" width="180" height="32" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="302" y="201" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">AI Search index</text>
+<text x="302" y="213" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">hybrid, on gold.passage</text>
+<rect x="292" y="224" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="224" width="180" height="32" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="302" y="238" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Genie space</text>
+<text x="302" y="250" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">over the metric views</text>
+<rect x="292" y="261" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="261" width="180" height="32" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="302" y="275" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Models in MLflow</text>
+<text x="302" y="287" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">champion and challenger</text>
+<rect x="292" y="298" width="180" height="32" rx="6" fill="#f5f7f9"/>
+<rect x="292" y="298" width="180" height="32" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="302" y="312" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">AI/BI dashboard</text>
+<text x="302" y="324" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">reads the gold tables</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="The Databricks App runs the tools as the viewer and checks every sentence">
+<rect x="512" y="8" width="160" height="206" rx="8" fill="none" stroke="#0071bc" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="520" y="24" fill="#0071bc" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Databricks App</text>
+<rect x="522" y="32" width="140" height="38" rx="6" fill="#f5f7f9"/>
+<rect x="522" y="32" width="140" height="38" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="532" y="50" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Web app and API</text>
+<text x="532" y="64" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">React and FastAPI</text>
+<rect x="522" y="78" width="140" height="38" rx="6" fill="#f5f7f9"/>
+<rect x="522" y="78" width="140" height="38" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="532" y="96" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Tools</text>
+<text x="532" y="110" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">run as the viewer</text>
+<rect x="522" y="124" width="140" height="38" rx="6" fill="#f5f7f9"/>
+<rect x="522" y="124" width="140" height="38" rx="6" fill="#ffffff" stroke="#0071bc" stroke-width="1"/>
+<rect x="522" y="124" width="140" height="38" rx="6" fill="#0071bc" fill-opacity="0.07"/>
+<text x="532" y="142" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Verifier</text>
+<text x="532" y="156" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">checks every sentence</text>
+<rect x="522" y="170" width="140" height="38" rx="6" fill="#f5f7f9"/>
+<rect x="522" y="170" width="140" height="38" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="532" y="188" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Drafts</text>
+<text x="532" y="202" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Draft to Exported</text>
+<path d="M 521 97 L 497 97 L 497 122 L 473 122" fill="none" stroke="#0071bc" stroke-width="1.2" marker-end="url(#architecture-arrow-accent)"/>
+<rect x="485.5" y="80" width="23" height="13" rx="2" fill="#f5f7f9"/>
+<text x="497" y="90" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">SQL</text>
+<path d="M 511 203 L 473 203" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#architecture-arrow)"/>
+<rect x="473" y="186" width="38" height="13" rx="2" fill="#f5f7f9"/>
+<text x="492" y="196" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">search</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Lakebase keeps the app&#x27;s state">
+<rect x="522" y="232" width="140" height="38" rx="6" fill="#f5f7f9"/>
+<rect x="522" y="232" width="140" height="38" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="532" y="250" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Lakebase</text>
+<text x="532" y="264" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">app state, fast clicks</text>
+<path d="M 592 215 L 592 231" fill="none" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#architecture-arrow)"/>
+</g>
+<g data-motion-item="" data-step="6" aria-label="Microsoft Foundry&#x27;s agent trades tool calls and results with the app">
+<rect x="712" y="232" width="140" height="78" rx="6" fill="#f5f7f9"/>
+<rect x="712" y="232" width="140" height="78" rx="6" fill="#ffffff" stroke="#01707e" stroke-width="1"/>
+<rect x="712" y="232" width="140" height="78" rx="6" fill="#01707e" fill-opacity="0.07"/>
+<text x="722" y="250" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Microsoft Foundry</text>
+<text x="722" y="264" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">orchestrator agent and</text>
+<text x="722" y="275" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">writers, Azure OpenAI</text>
+<text x="722" y="286" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">models, guardrail</text>
+<path d="M 673 140 L 690 140 L 690 271 L 711 271" fill="none" stroke="#01707e" stroke-width="1.2" marker-start="url(#architecture-arrow-link)" marker-end="url(#architecture-arrow-link)"/>
+<rect x="694" y="172" width="58" height="13" rx="2" fill="#f5f7f9"/>
+<text x="698" y="182" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">tool calls</text>
+<rect x="694" y="185" width="62" height="13" rx="2" fill="#f5f7f9"/>
+<text x="698" y="195" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">and results</text>
+</g>
+<g data-motion-item="" data-step="6" aria-label="People ask in the app">
+<rect x="712" y="32" width="140" height="64" rx="6" fill="#f5f7f9"/>
+<rect x="712" y="32" width="140" height="64" rx="6" fill="#ffffff" stroke="#181f25" stroke-width="1"/>
+<text x="722" y="50" fill="#181f25" font-size="11" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">People</text>
+<text x="722" y="64" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">staff, implementing</text>
+<text x="722" y="75" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">agencies, the public</text>
+<path d="M 663 51 L 711 51" fill="none" stroke="#0071bc" stroke-width="1.2" marker-start="url(#architecture-arrow-accent)" marker-end="url(#architecture-arrow-accent)"/>
+<rect x="675.5" y="34" width="23" height="13" rx="2" fill="#f5f7f9"/>
+<text x="687" y="44" fill="#4b5e71" font-size="9" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">ask</text>
+</g>
+      </svg>
