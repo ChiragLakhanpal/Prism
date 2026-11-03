@@ -2,7 +2,6 @@
 
 [![A 22-second silent film of Strata, made from real screens of the app: a question about a package, the cited answer and its checks, a borrower's plan checked row by row, and a timeline where reports disagree.](/docs/readme/strata-film.webp)](/docs/readme/strata-film.mp4)
 
-<p align="center"><sub>Silent, 22 seconds, real screens from the live app. Select the film to open the full-quality MP4.</sub></p>
 
 ## Ask about any package
 
