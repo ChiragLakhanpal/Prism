@@ -1,6 +1,6 @@
 -- project_records: the project's contracts signed after a date (the latest ISR's), public by the as-of date,
 -- oldest first, with the supplier as the award record names it. An individual consultant has no name
--- (gold.supplier), and Strata never names a person.
+-- (gold.supplier), and Prism never names a person.
 SELECT
   c.contract_id,
   c.source,

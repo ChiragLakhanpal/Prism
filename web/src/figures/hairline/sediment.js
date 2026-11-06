@@ -1,6 +1,6 @@
 /**
  * Sediment: a clear core standing in a foot, the core sample of the title
- * slide grown on (Strata's deck, the opener of How it grows;
+ * slide grown on (Prism's deck, the opener of How it grows;
  * .notes/deck2/brief.md, section 6). At its bottom lies the old core, the
  * sample's three bands in little; on it settle new thin layers, one a night,
  * each a little thicker or thinner than the last; above them, the nights still

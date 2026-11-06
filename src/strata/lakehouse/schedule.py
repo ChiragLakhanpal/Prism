@@ -1,6 +1,6 @@
 """Nightly windows, and whether two of them overlap on any day.
 
-Strata and fairshare share one workspace, one daily compute quota and five concurrent job tasks,
+Prism and fairshare share one workspace, one daily compute quota and five concurrent job tasks,
 so their nightly jobs run at different hours (docs/PLAN.md section 2). A window is a daily start
 time in a time zone and how long the job may run. Two windows overlap on a day when their runs
 share any minute, with each run taken as [start, start + length). Time zones matter, because
@@ -40,7 +40,7 @@ class Window:
 
 def as_utc(value) -> dt.datetime | None:
     """A moment as either engine gives it, with its zone: DuckDB gives a datetime, the SQL warehouse text such as
-    2026-10-24T07:30:00.000Z. A moment with no zone is in UTC, as Strata's tables keep it. None stays None."""
+    2026-10-24T07:30:00.000Z. A moment with no zone is in UTC, as Prism's tables keep it. None stays None."""
     if value is None:
         return None
     if not isinstance(value, dt.datetime):

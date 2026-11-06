@@ -283,10 +283,10 @@ def test_when_get_disagreements_fails_the_newest_isr_keeps_its_mark_and_no_sente
 
     assert body["disagreements"]["status"] == "failed"
     assert placed(body, kind="band") == [] and placed(body, kind="disagreement") == []
-    # The ISRs Strata read still have a report to open: the newest, named by its own sequence number.
+    # The ISRs Prism read still have a report to open: the newest, named by its own sequence number.
     (isr,) = placed(body, kind="report", type="isr")
     assert (isr["sequence"], isr["date"], isr["rating"]) == (13, truth("isr-13-date"), None)
-    # No sentence says Strata has no ratings: it could not read them.
+    # No sentence says Prism has no ratings: it could not read them.
     alt = text_of(body["alt"])
     assert "I have no ISR ratings" not in alt
     assert "I couldn't read this project's ISR ratings just now." in alt
@@ -604,7 +604,7 @@ def test_going_back_to_strata_s_choice_adds_a_row_and_deletes_nothing(keeping):
         kept = engine.run("SELECT kept_assertion_id, reason FROM strata.ops.disagreement_choices ORDER BY made_at").rows
     assert [tuple(row) for row in kept] == [(isr_7, "First reason."), (icr, None)]
     assert get(app, f"{path}?run_id=run-0001").json()["choice"]["kept_assertion_id"] == icr
-    # A new answer starts from Strata's choice.
+    # A new answer starts from Prism's choice.
     assert get(app, f"{path}?run_id=run-0002").json() == {"choice": None}
 
 

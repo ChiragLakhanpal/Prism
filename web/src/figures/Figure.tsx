@@ -34,7 +34,7 @@ function hairlineKernel(): HairlineApi {
   return kernel;
 }
 
-// The hairline figure files beside the kernel, by name. How Strata works draws only core-sample; the deck adds its
+// The hairline figure files beside the kernel, by name. How Prism works draws only core-sample; the deck adds its
 // openers' figures when it loads (registerHairlines), so they stay out of the app's first download, which a cold
 // load on the 3G budget pays for (home.spec.ts, hub.spec.ts).
 const HAIRLINE_SOURCES: Record<string, string> = { "core-sample": coreSampleSource };
@@ -158,7 +158,7 @@ export function Hairline({
   );
 }
 
-// The core sample as How Strata works shows it, with its read-out in the copy file's words.
+// The core sample as How Prism works shows it, with its read-out in the copy file's words.
 export function HairlineFigure({ onFail, className }: { onFail: () => void; className?: string }) {
   const [read, setRead] = useState(figureCopy["core-sample"].readout.rest);
   const readout = figureCopy["core-sample"].readout as Record<string, string>;

@@ -59,7 +59,7 @@ test("P130164's header reads as the wireframe's one line with its implementing a
   expect(Object.keys(copy.projectPage.tab)).toEqual(["summary", "procurement", "timeline", "documents", "connections"]);
   await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections"]);
   await expect(tabs(page).first()).toHaveAttribute("aria-current", "page");
-  await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Summary | Strata");
+  await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Summary | Prism");
   // The current crumb names the project as the h1 does, with its ID in plain mono: the h1's P-code just
   // below it is the one link to this page, so Tab reaches it once.
   const crumb = page.getByRole("navigation", { name: "Breadcrumb" }).locator("[aria-current=page]");
@@ -144,7 +144,7 @@ test("switching tabs keeps the header in place and focus on the tab, says which 
   await expect(page.getByRole("status").filter({ hasText: "Showing Documents." })).toHaveCount(1);
   // The header did not redraw: it is the same element, and the project was read once.
   await expect(main(page).locator("h1[data-same-element]")).toHaveCount(1);
-  await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Documents | Strata");
+  await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Documents | Prism");
 
   await page.goBack();
   await expect(page).toHaveURL(/\/projects\/P130164$/);
@@ -389,7 +389,7 @@ test("the Summary's record marker shows the value it cites, and the lead says ho
   await summary.locator("[data-fact=ea_category] [data-citation]").click();
   const record = page.getByRole("dialog").locator("[data-record]");
   await expect(record).toContainText("Environmental Assessment CategoryB");
-  await expect(record).toContainText("Sector, as Strata groups itTransportation");
+  await expect(record).toContainText("Sector, as Prism groups itTransportation");
   await expect(record).toContainText("Sector and shareRural and Inter-Urban Roads: 97%");
   await page.keyboard.press("Escape");
 
@@ -610,7 +610,7 @@ test("the source view opens the ICR at page 23 with paragraph 54 highlighted and
     "href",
     "https://documents.worldbank.org/curated/en/258481572631321132/pdf/India-Rajasthan-Road-Sector-Modernization-Project.pdf#page=23",
   );
-  await expect(page).toHaveTitle("ICR of Oct 10, 2019, page 23 | Strata");
+  await expect(page).toHaveTitle("ICR of Oct 10, 2019, page 23 | Prism");
   // The project crumb is a link, so its P-code is plain mono inside it, never a link inside a link.
   await expect(page.locator("a a")).toHaveCount(0);
   await expect(page.getByRole("navigation", { name: "Breadcrumb" }).getByRole("link", { name: "Rajasthan Road Sector Modernization (P130164)" })).toHaveAttribute("href", "/projects/P130164");
@@ -746,7 +746,7 @@ test("axe finds no WCAG 2.2 AA violations on Summary, Documents and the source v
 
 test("a source page's table, or a plan's STEP rows, is a table in a frame a keyboard can reach from 768 px and one card per row below, and axe passes at each width", async ({ page }) => {
   // The 21 design review, round 3: B1 (the frame takes focus) and F2 (cards below 768 px, as every table
-  // in Strata becomes, so nothing scrolls sideways on a phone).
+  // in Prism becomes, so nothing scrolls sideways on a phone).
   for (const [path, caption, rows] of [
     ["/projects/P130164/documents/pad-2013-10-01?page=65", "Annex 4 - Operational Risk Assessment Framework (ORAF), a table on page 65, as I read it into rows.", 2],
     [`/projects/P161305/documents/${KENHA_PLAN}?page=3`, "The activities on page 3, as I read them from the plan's table.", 13],
@@ -1066,7 +1066,7 @@ test("when only the comparison fails, the change line says so and links the sect
   await expect(section).toContainText("If it fails again, send the data team this reference: 0af7651916cd43dd8448eb211c80319c.");
   // The crumb names the project as its tabs do, and the window names the agency's plan.
   await expect(page.getByRole("navigation", { name: "Breadcrumb" })).toContainText("Water and Sanitation Development (P156634)");
-  await expect(page).toHaveTitle("Northern Water Works Development Agency, plan of Oct 9, 2026 | Strata");
+  await expect(page).toHaveTitle("Northern Water Works Development Agency, plan of Oct 9, 2026 | Prism");
 });
 
 test("the earliest version has no change list, and its change line says why", async ({ page }) => {
@@ -1109,9 +1109,9 @@ test("after Save as the baseline, a check reports delay against the baseline and
   // The reasons now name both measures, each labeled: the first published planned date and the baseline.
   await expect(signed).toContainText("Signed January 3, 2022, 186 days after its first published planned date, at US$1,245,092.76, about 4 times its estimate.");
   await expect(signed.locator("[data-baseline-delay=late]")).toHaveText("That was 186 days after its baseline date of July 1, 2021.");
-  // How I measure delay opens the What Strata found column's window since ticket 126.
-  await page.locator("[data-view=table] thead").getByRole("button", { name: "What Strata found" }).click();
-  await expect(page.getByRole("dialog", { name: "What Strata found" }).locator("[data-method-sentence]")).toContainText(
+  // How I measure delay opens the What Prism found column's window since ticket 126.
+  await page.locator("[data-view=table] thead").getByRole("button", { name: "What Prism found" }).click();
+  await expect(page.getByRole("dialog", { name: "What Prism found" }).locator("[data-method-sentence]")).toContainText(
     "I measure delay two ways: from the first published planned date, because each plan update can move the planned dates, and from the baseline, the plan of July 21, 2025.",
   );
   await page.keyboard.press("Escape");

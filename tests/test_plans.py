@@ -3,7 +3,7 @@
 The gate builds the fixture database by running the plan reader over the recorded plans
 (gates/build_fixture.py), so most tests read what that run wrote. Every value quoted from a plan
 comes from tests/ground_truth/values.toml, which quotes the plans with their PDF pages, never from
-Strata's code. The cap test's stopping page follows from how many table pages each recorded plan has.
+Prism's code. The cap test's stopping page follows from how many table pages each recorded plan has.
 """
 
 import datetime as dt

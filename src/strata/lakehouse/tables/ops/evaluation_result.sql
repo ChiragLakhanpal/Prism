@@ -13,7 +13,7 @@
 -- measure           what the value counts or measures, such as n, m or error_estimate_months
 -- value             the number, at the scorer's rounding; empty for a measure given as text
 -- value_text        a measure that is text, such as a date or a JSON list of feature ranges
--- cutoff            the date Strata was frozen at for this segment: every input was public by then
+-- cutoff            the date Prism was frozen at for this segment: every input was public by then
 -- outcomes_through  the date the outcomes were read as of: what became public later
 -- mlflow_run_id     the MLflow run that holds this segment's parameters, metrics and model
 -- ran_at            when the run wrote the row, in UTC

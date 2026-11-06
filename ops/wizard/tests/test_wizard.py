@@ -132,7 +132,7 @@ FIRST_RUN = [
     "https://dbc-1234.cloud.databricks.com/genie/rooms/01f0abc?o=99",  # 3. Genie space
     "",                                                      # 4. Press Enter to open the sign-in page
     "",                                                      # 5. Press Enter to sign in to Azure
-    "y",                                                     #    this is the subscription for Strata
+    "y",                                                     #    this is the subscription for Prism
     "",                                                      # 6. Press Enter when the project is open
     "",                                                      #    project endpoint: Enter takes the default
     "",                                                      #    Azure OpenAI endpoint: Enter takes the default
@@ -295,7 +295,7 @@ def test_stage_seven_names_each_deployment_from_the_model_file_and_says_azure_co
     done = run_wizard(place, FIRST_RUN)
     models = load_models()
     assert f"Deploy {models['batch'].deployment} as Global Batch, named {models['batch'].deployment}." in done.stdout
-    assert (f"Strata asks {models['embed'].deployment} for {models['embed'].dimensions:,} dimensions in each request"
+    assert (f"Prism asks {models['embed'].deployment} for {models['embed'].dimensions:,} dimensions in each request"
             in done.stdout)
     assert "Azure shows capacity in thousands of tokens." in done.stdout
     assert "100 on a Global Standard deployment means 100,000 tokens per minute." in done.stdout

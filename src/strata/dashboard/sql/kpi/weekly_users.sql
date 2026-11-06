@@ -1,4 +1,4 @@
--- KPI weekly_users (config/kpis.toml): people who opened at least one page of Strata in the last full week, Monday to
+-- KPI weekly_users (config/kpis.toml): people who opened at least one page of Prism in the last full week, Monday to
 -- Sunday, that ends on or before the last day chosen, from the app's usage events (ticket 06). A visit records the
 -- page it starts on, so a page is a route outside /api. Each person counts once, whatever view they used, preview
 -- included. A count, so always shown, 0 included.

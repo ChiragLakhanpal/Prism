@@ -26,7 +26,7 @@ prints each set's precision at 10, recall at 20 and nDCG at 10.
 
 With --gate it runs the tuning gate instead: production's setup (config/models.toml, [search.setup]) against the
 candidate the flags describe, on the held-out queries. On AI Search only the reranker can change; the weights
-apply where Strata fuses the rankings itself. The hindsight set is ticket 34's, so the gate says it was not
+apply where Prism fuses the rankings itself. The hindsight set is ticket 34's, so the gate says it was not
 compared. It prints the verdict, and exits 0 when the candidate may ship, 1 when the gate blocks it and 2 when it
 could not run.
 

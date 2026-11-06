@@ -1,7 +1,7 @@
-"""The hindsight test at seam 5 (ticket 34): Strata frozen at a closed project's approval date, its top risks per
+"""The hindsight test at seam 5 (ticket 34): Prism frozen at a closed project's approval date, its top risks per
 package against the risks the completion report later blamed.
 
-The replay harness (src/strata/estimates/harness.py) freezes Strata at each project's approval date, runs the
+The replay harness (src/strata/estimates/harness.py) freezes Prism at each project's approval date, runs the
 risk-table builder (ticket 30) for the main packages of the project's first Procurement Plan, and stores what it
 showed beside the risks two coders found the ICR blamed. These tests run it two ways:
 
@@ -143,7 +143,7 @@ def test_a_row_public_after_the_cutoff_stops_the_replay(showcase):
 # ── The hand-made set ────────────────────────────────────────────────────
 #
 # Pilot projects (Kenya, Bangladesh, Vietnam and Pakistan; water and transport; approved in fiscal 2014 to 2018),
-# each with an ICR that Strata read, and a first Procurement Plan whose descriptions name the project, so the fake
+# each with an ICR that Prism read, and a first Procurement Plan whose descriptions name the project, so the fake
 # builders below know whose package they were asked about. HAND_MADE gives each gate-set project's approval date,
 # sector and the risks its ICR blamed.
 
@@ -561,7 +561,7 @@ def test_the_release_gate_runs_the_risk_table_builder_over_the_gate_set_and_says
     assert "could use nine" in printed and stored["run_id"] in printed
     assert all(record["mlflow_run_id"] in printed for record in projects.values())
     assert json.loads(projects["P900001"]["package_tables"])[0]["empty_reason"] == "no_comparables"
-    assert "P900010 (exposed to Strata)" in printed and "P900011 (not coded yet)" in printed
+    assert "P900010 (exposed to Prism)" in printed and "P900011 (not coded yet)" in printed
 
 
 def test_both_commands_stop_with_one_sentence_when_there_is_no_env_file(tmp_path, monkeypatch, capsys):

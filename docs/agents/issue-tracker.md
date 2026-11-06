@@ -4,7 +4,7 @@ Issues and specs for this repo live as markdown files in `.scratch/`, committed 
 
 ## Conventions
 
-- One feature per directory. Strata's build is `.scratch/strata/`.
+- One feature per directory. Prism's build is `.scratch/strata/`.
 - The spec is `.scratch/strata/spec.md`.
 - Implementation issues are one file per ticket at `.scratch/strata/issues/<NN>-<slug>.md`, numbered from `01`, never a single combined tickets file.
 - A ticket's state is the `Status:` line near the top of its file (role strings in `triage-labels.md`, build states below). Its blockers are the `Blocked by:` line.

@@ -1,4 +1,4 @@
-// How Strata writes numbers and dates (DESIGN.md section 6, Numbers, and section 7, rules 6,
+// How Prism writes numbers and dates (DESIGN.md section 6, Numbers, and section 7, rules 6,
 // 11, 12, 13 and 15). Num renders what these functions return; nothing else formats a number.
 // The words they use ("of", "in 10", "percent", month names aside) come from the copy file.
 import { copy } from "../copy";
@@ -54,7 +54,7 @@ function compact(value: number): string | null {
 }
 
 export type NumberOptions = {
-  // The tool's own rounding. Strata states a number at the rounding the tool returned.
+  // The tool's own rounding. Prism states a number at the rounding the tool returned.
   decimals?: number;
   // False writes the number in full with comma thousands. A STEP amount also passes
   // decimals: 2, so it shows its cents as STEP does.

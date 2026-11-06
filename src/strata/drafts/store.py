@@ -1,7 +1,7 @@
 """Where drafts are kept: strata.ops, written as the app's own service principal (ticket 35).
 
 Adapted from fairshare's server/drafts.py, which kept drafts in memory for two hours with two states,
-"draft" and fairshare's second state, which Strata leaves behind. Strata keeps them in four tables
+"draft" and fairshare's second state, which Prism leaves behind. Prism keeps them in four tables
 (src/strata/lakehouse/tables/ops/): the draft with its author's team, every state it has been in, each
 export with the evidence pack's snapshot, and the files each export made. Nothing is updated or deleted: a change of state is a new row, merged on
 the draft and its step, so it is written only while the state the person saw is still the latest, and

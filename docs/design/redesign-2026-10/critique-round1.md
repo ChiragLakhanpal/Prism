@@ -44,7 +44,7 @@ From 1 to 5, where 5 is best. For build risk, 5 means low risk.
 | Task flow | 3 | Only the package workspace is drawn. The plan check, Packages, Lessons, Drafts, Data and Home are prose only |
 | Progressive disclosure | 4 | Closed zones with a summary, the foot strip, "Show the table", sub-items only under the current section |
 | Accessibility | 4 | No axe violation. Focus is visible on the bar and in the sheet. Two standalone links are 20 px tall |
-| Copy | 4 | Plain and in Strata's voice. The drawer keeps its eyebrow and middle-dot strings |
+| Copy | 4 | Plain and in Prism's voice. The drawer keeps its eyebrow and middle-dot strings |
 | Build risk | 2 | DESIGN.md lands before the build, the frame ticket can't pass its own criteria, Task zone is built after two tickets that use it, the deck is missing from the token sweep |
 
 ## Evidence for each score below 4
@@ -112,7 +112,7 @@ These can follow the tickets and need no change to the plan's structure.
 - The stamp link in the sidebar's foot and the breadcrumb links are 20 px tall and not inside a sentence. DESIGN.md section 10 asks for 24 px ([WCAG 2.2, 2.5.8 Target Size (Minimum)](https://www.w3.org/TR/WCAG22/#target-size-minimum)). Give them a 24 px line box.
 - The sidebar ticket should name the current item on cross-section pages. One rule: the item named by the breadcrumb's first crumb, so the plan check reached from Packages lights Packages.
 - `design-md.md`'s Page head row says the line under the h1 is "either the purpose or an object's ID". Its Package header row, and the prototype, show both. Make the two rows agree.
-- Buttons with 4 px corners depart from worldbank.org's button token, which the lead's study reads as a pill (`--loop-button-border-radius`, in [components-variable.css](https://www.worldbank.org/ext/styles/components-variable.css)). Mark the Buttons bullet "Strata", not "WB", and give the reason.
+- Buttons with 4 px corners depart from worldbank.org's button token, which the lead's study reads as a pill (`--loop-button-border-radius`, in [components-variable.css](https://www.worldbank.org/ext/styles/components-variable.css)). Mark the Buttons bullet "Prism", not "WB", and give the reason.
 - Test Open Sans Light at 28 px on the demo laptop before the tokens ticket merges (`open.md` item 10).
 - "Advertised again" answers a different question from "How long it took". Consider giving it its own zone, with the Experimental badge in that zone's header.
 - The seven page tickets all edit `web/src/copy.ts`, `web/capture/shots.ts` and the sidebar's sub-item slot. Run them in two waves rather than seven at once, to cut merge conflicts.

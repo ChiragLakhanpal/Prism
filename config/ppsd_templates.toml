@@ -14,7 +14,7 @@
 #     header          the template's header, word for word
 #     value           its entry in tests/ground_truth/values.toml
 #     letter          the letter the Long Form puts above a rating column (A, B), which its score's header uses
-#     filled_by       strata (the writer fills it, with sources) or people (only a person sets it; Strata never does)
+#     filled_by       strata (the writer fills it, with sources) or people (only a person sets it; Prism never does)
 #     control         for a column people fill: text, rating (from [ratings]), score ([score]) or stage ([stages])
 #     hold            the export hold it counts toward in config/drafts.toml: owners or ratings, or none
 #     max_length      for a text control, the most characters it takes
@@ -124,7 +124,7 @@ levels = [
 ]
 
 # The Overall Risk Score: the Long Form template's header defines it as A*B, the likelihood times the impact,
-# each from 1 to 5, so a score runs from 1 to 25. A person types it; Strata never computes it, and the editor
+# each from 1 to 5, so a score runs from 1 to 25. A person types it; Prism never computes it, and the editor
 # never shows the product of the two ratings (the 36 brief, 4.3).
 [score]
 definition = "A*B"

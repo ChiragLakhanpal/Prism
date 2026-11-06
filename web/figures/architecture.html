@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>How Strata fits together</title>
-  <!-- Strata deck figure, second draft: diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
+  <title>How Prism fits together</title>
+  <!-- Prism deck figure, second draft: diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
        The architecture overview from the study guide (arch_overview), redrawn in the deck's style: the public sources,
        the nightly job, Databricks' data and models, the Databricks App and Lakebase, Microsoft Foundry and the people
        who ask, in six steps. Font source: system. The app self-hosts Open Sans and Roboto Mono, so this file loads no
@@ -25,10 +25,10 @@
 </head>
 <body>
   <div class="frame">
-    <h1>How Strata fits together</h1>
+    <h1>How Prism fits together</h1>
     <div class="diagram-container">
       <svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="architecture-title architecture-desc" data-motion-root="" data-motion-mode="none" data-step-count="6">
-        <title id="architecture-title">How Strata fits together</title>
+        <title id="architecture-title">How Prism fits together</title>
         <desc id="architecture-desc">Public World Bank sources feed a nightly job on Databricks, which writes the bronze, silver, gold and ops tables. The AI Search index, the Genie space, the models in MLflow and the AI/BI dashboard sit on gold. The Databricks App runs the tools as each viewer, checks every sentence with the verifier and keeps drafts, with Lakebase for app state. Microsoft Foundry's agent trades tool calls and results with the app, and people ask in the app.</desc>
         <defs>
 <marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto-start-reverse"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>

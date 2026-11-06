@@ -54,7 +54,7 @@ def preview(draft: Draft) -> Held | None:
 
 
 def owners(draft: Draft) -> Held | None:
-    """A suggested PPSD row with no Risk Owner yet. Only people set owners; Strata never does."""
+    """A suggested PPSD row with no Risk Owner yet. Only people set owners; Prism never does."""
     from strata.drafts import ppsd_rows
 
     return ppsd_rows.missing(draft, "owners")

@@ -4,8 +4,8 @@
     uv run --frozen python -m strata.dashboard --write --no-query-history
     uv run --frozen python -m strata.dashboard --write --test-only
 
-The first writes "Strata operations" and its test copy with the table of who queried what. If the workspace doesn't
-let Strata read its query history (docs/workspace-catchup.md), the second writes them with the dated text tile in its
+The first writes "Prism operations" and its test copy with the table of who queried what. If the workspace doesn't
+let Prism read its query history (docs/workspace-catchup.md), the second writes them with the dated text tile in its
 place (the 45 design brief, section 6.4); deploy and commit what it wrote. The third writes only the test copy, to try
 a new tile there before the dashboard people use gets it (section 9.6); the gate fails until both files are written.
 """

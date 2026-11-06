@@ -1,5 +1,5 @@
 -- KPI rolling_coverage (config/kpis.toml), the estimates loop's leading indicator: of the packages that finished
--- (signed) in the 12 months to each watched month, how many finished inside the 8-in-10 range Strata gave them before
+-- (signed) in the 12 months to each watched month, how many finished inside the 8-in-10 range Prism gave them before
 -- their first notice, as the monthly watch stored them (strata.ops.estimates_watch, coverage, segment all, each month
 -- from its newest watch; ticket 44). coverage_percent is a whole percent only from
 -- data_readiness.fewest_for_a_percentage packages (DESIGN.md section 7, rule 15), so the chart has no point below

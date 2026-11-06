@@ -1,4 +1,4 @@
-// The check pill (the 10 brief): how much Strata checked, such as "9 activities checked". Neutral and
+// The check pill (the 10 brief): how much Prism checked, such as "9 activities checked". Neutral and
 // not a control. It has no icon, which keeps it apart from a status badge; ticket 15 reuses it for
 // "23 numbers checked · 1 removed".
 import type { ReactNode } from "react";

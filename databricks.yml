@@ -1,4 +1,4 @@
-# Strata's Declarative Automation Bundle (the new name for Databricks Asset Bundles).
+# Prism's Declarative Automation Bundle (the new name for Databricks Asset Bundles).
 #
 # It declares the strata catalog, its four schemas and the bronze files volume (bundle/catalog.yml),
 # the nightly job (bundle/nightly.yml) and the AI/BI dashboard (bundle/dashboard.yml). Deploy it with the command in bundle/README.md, which
@@ -51,8 +51,8 @@ variables:
       DATABRICKS_WAREHOUSE_ID.
 
 targets:
-  # The Free Edition workspace that Strata shares with fairshare. The deploy command passes the
+  # The Free Edition workspace that Prism shares with fairshare. The deploy command passes the
   # host and the token from the main checkout's .env. There is no development mode: it would add
-  # a prefix to the schema names, and Strata's SQL names them strata.bronze, strata.silver and so on.
+  # a prefix to the schema names, and Prism's SQL names them strata.bronze, strata.silver and so on.
   shared:
     default: true

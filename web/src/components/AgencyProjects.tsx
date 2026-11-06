@@ -1,6 +1,6 @@
 // Your agency's projects (ticket 40; the 40 brief, 3.8 and 7.3): at the top of /projects in the implementing agency
 // view, for an officer and in the staff preview. It answers the roles table's "Your agency's projects, with signals
-// against your own plan" with the marks Strata already computes on each plan: GET /api/agency/projects runs check_plan
+// against your own plan" with the marks Prism already computes on each plan: GET /api/agency/projects runs check_plan
 // on the latest disclosed Procurement Plan of each project, and the finding is written from its counts in the same
 // words as the Check a plan page's (copy.checkPlan.finding), so the counts have one source. It adds no new measure.
 import { useId } from "react";

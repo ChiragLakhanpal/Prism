@@ -53,7 +53,7 @@ DANIEL = headers("daniel.okafor@worldbank.example")
 MEI = headers("mei.tanaka@worldbank.example")
 TOMAS = headers("tomas.rivera@worldbank.example")
 OMAR = headers("omar.haddad@worldbank.example")
-# More people who use Strata, for the rules for scale: none of them is in the roles file.
+# More people who use Prism, for the rules for scale: none of them is in the roles file.
 KOFI = headers("kofi.example@worldbank.org")
 SARA = headers("sara.example@worldbank.org")
 NOOR = headers("noor.example@worldbank.org")

@@ -232,7 +232,7 @@ key = "hazard_model"
 name = "The early-warning model"
 route = "/projects/P156634"
 paragraph = "m2-time-estimates"
-exists_now = "Strata shows fixed signals."
+exists_now = "Prism shows fixed signals."
 """
 
 

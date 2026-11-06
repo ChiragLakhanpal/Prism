@@ -151,7 +151,7 @@ def fetch(url):
 def test_the_uploaded_folder_starts_with_app_yaml_s_settings_and_serves_the_web_app(tmp_path):
     dist = tmp_path / "dist"
     dist.mkdir()
-    (dist / "index.html").write_text("<!doctype html><title>Strata</title>")
+    (dist / "index.html").write_text("<!doctype html><title>Prism</title>")
     folder = tmp_path / "strata-app"
     for name, content in deploy_app.package(dist).items():
         (folder / name).parent.mkdir(parents=True, exist_ok=True)
@@ -167,7 +167,7 @@ def test_the_uploaded_folder_starts_with_app_yaml_s_settings_and_serves_the_web_
             fetch(f"{address}/api/freshness")
 
     assert health == (200, '{"status":"ok"}')
-    assert page == (200, "<!doctype html><title>Strata</title>")
+    assert page == (200, "<!doctype html><title>Prism</title>")
     # No viewer was forwarded, so the stamp says so instead of reading anything.
     assert stamp == (401, '{"code":"no_identity"}')
 
@@ -190,7 +190,7 @@ def test_in_the_uploaded_folder_ask_genie_reads_its_space_and_the_tables_behind_
     # question, so it must find them in that folder, with only the lean requirements' packages.
     dist = tmp_path / "dist"
     dist.mkdir()
-    (dist / "index.html").write_text("<!doctype html><title>Strata</title>")
+    (dist / "index.html").write_text("<!doctype html><title>Prism</title>")
     folder = tmp_path / "strata-app"
     for name, content in deploy_app.package(dist).items():
         (folder / name).parent.mkdir(parents=True, exist_ok=True)

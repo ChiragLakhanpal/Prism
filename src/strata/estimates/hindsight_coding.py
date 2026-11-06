@@ -85,7 +85,7 @@ def _rows(engine: Engine, sql: str, **params) -> list[dict]:
 
 
 def reports(engine: Engine, projects: Iterable[str], as_of: dt.date) -> dict[str, dict]:
-    """Each project's approval date, country, sector, newest ICR (with the passages Strata read from it) and newest
+    """Each project's approval date, country, sector, newest ICR (with the passages Prism read from it) and newest
     ICR Review, by project ID (src/strata/estimates/sql/hindsight/reports.sql)."""
     wanted = ",".join(dict.fromkeys(projects))
     if not wanted:
@@ -134,7 +134,7 @@ def code(engine: Engine, project_id: str, coder: Coder, blamed: Iterable[str], *
         else (report["review_document_id"], report["review_version"])
     if document is None or document[0] in (None, ""):
         what = "an ICR" if reading == "icr" else "an ICR Review"
-        raise Refused(f"{project_id} has no {what} that Strata holds, so there is nothing to read.")
+        raise Refused(f"{project_id} has no {what} that Prism holds, so there is nothing to read.")
     if reading == "icr":
         others = sorted({coding["coder"] for coding in codings(engine, project_id)
                          if coding["reading"] == "icr" and coding["coder"] != coder.email})

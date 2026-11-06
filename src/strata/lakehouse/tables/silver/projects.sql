@@ -5,7 +5,7 @@
 -- implementing_agency    the agencies as the projects API lists them
 -- major_sector_code      the major sector with the largest share of the project, in either of the
 --                        projects API's two taxonomies (WX or WWX)
--- sector, sector_name    that code's sector in Strata's one taxonomy (config/sectors.toml); empty when
+-- sector, sector_name    that code's sector in Prism's one taxonomy (config/sectors.toml); empty when
 --                        the project lists no major sector or its code is not mapped
 -- total_commitment_usd   the current total commitment, in US dollars
 -- public_from            the public disclosure date, else the approval date, else the fetch day (ADR 0002)

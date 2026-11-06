@@ -1,4 +1,4 @@
-"""check_plan: Strata's fixed checks on every activity in one implementing agency's Procurement Plan.
+"""check_plan: Prism's fixed checks on every activity in one implementing agency's Procurement Plan.
 
 The registry (config/tools.toml) defines the tool's parameters and result shape; this module is
 its adapter. It reads the plan's own record, as the plan reader wrote it (silver.plan_versions,

@@ -1,6 +1,6 @@
 """The replay harness at seam 5: the time estimate's backtests, scored against what became public later.
 
-The harness freezes Strata at a cutoff date (ADR 0002), runs a scorer and writes its scores to
+The harness freezes Prism at a cutoff date (ADR 0002), runs a scorer and writes its scores to
 strata.ops.evaluation_result and to MLflow. These tests run it on a small hand-made set whose answers
 are known: tests/ground_truth/values.toml's [time_estimate_backtest] says how the set is made and how
 each expected score was computed, once, with lifelines and numpy, never the way the harness computes
@@ -179,7 +179,7 @@ def test_the_backtest_for_2021_stores_the_known_scores_of_the_hand_made_set(ran_
     assert year["training_through"] == KNOWN["cutoff"].isoformat()
     # The estimate's typical error (2.2 months) did not beat the past range's (2.0): the year records the loss.
     assert year["beat_past_range"] == 0
-    # Strata read no PAD for the hand-made project, so its packages count under no edition of the procurement rules
+    # Prism read no PAD for the hand-made project, so its packages count under no edition of the procurement rules
     # (ticket 44: a challenger's coverage must hold for each edition before it is promoted).
     assert (year["edition.none.n"], year["edition.none.m"]) == (KNOWN["n"], KNOWN["m"])
     assert not [measure for measure in year if measure.startswith("edition.") and ".none." not in measure]
@@ -321,7 +321,7 @@ def test_the_model_is_registered_as_champion_with_a_card_from_the_stored_results
     # Unity Catalog's description gives the track-record sentence the card was written with.
     assert tracker.models[MODEL][0].what == "time estimate"  # what Unity Catalog's description calls it
     assert tracker.models[MODEL][0].summary == backtest.track_record_sentence(engine) == (
-        "Of 23 packages from 2021 that Strata had not seen, 14 finished inside its 8-in-10 range, where a "
+        "Of 23 packages from 2021 that Prism had not seen, 14 finished inside its 8-in-10 range, where a "
         "well-sized range catches about 18.")
     for section in ("## Data", "## Features", "## What it never reads", "## Backtests", "## Coverage",
                     "## Track record", "## When it gives no range"):
@@ -333,7 +333,7 @@ def test_the_model_is_registered_as_champion_with_a_card_from_the_stored_results
     # 14 of 23 is 61 percent, under the 75 to 85 percent band: the card says so, and gives the cause the
     # stored middles show, in months: the packages it had not seen took longer than those that sized the range.
     assert (f"- 2021: {KNOWN['m']} of {KNOWN['n']} finished inside the 8-in-10 range (61 percent), outside the band. "
-            "Short of the band by 14 percentage points. A likely cause: half of the packages from 2021 that Strata "
+            "Short of the band by 14 percentage points. A likely cause: half of the packages from 2021 that Prism "
             "had not seen were signed within 6.6 months, against 4.4 months for the 20 packages that sized the 2021 "
             "model's range. A range sized on earlier years is short when cycle times grow.") in card
     # Each governance indicator is named, with its code (config/models.toml, time_estimate.governance_names).
@@ -370,7 +370,7 @@ def store_a_test_year(engine, year, n, m, ran_at=dt.datetime(2030, 1, 1, tzinfo=
 def test_the_track_record_comes_from_the_stored_backtest(ran_2021):
     engine, _, run = ran_2021
 
-    assert "Of 23 packages from 2021 that Strata had not seen, 14 finished inside its 8-in-10 range" in run.card
+    assert "Of 23 packages from 2021 that Prism had not seen, 14 finished inside its 8-in-10 range" in run.card
     assert backtest.track_record(engine) == {
         "year": 2021, "n": KNOWN["n"], "m": KNOWN["m"], "expected": KNOWN["expected"], "misses_early": 0,
         "misses_late": KNOWN["n"] - KNOWN["m"], "ran_on": backtest.stored_years(engine)[2021]["ran_at"].date(),
@@ -386,7 +386,7 @@ def test_the_track_record_is_read_from_the_latest_stored_run_never_typed(hand_ma
     record = backtest.track_record(engine)
     assert (record["year"], record["n"], record["m"], record["mlflow_run_id"]) == (2025, 31, 25, "mlflow-run-2031")
     assert backtest.track_record_sentence(engine) == (
-        "Of 31 packages from 2025 that Strata had not seen, 25 finished inside its 8-in-10 range, where a "
+        "Of 31 packages from 2025 that Prism had not seen, 25 finished inside its 8-in-10 range, where a "
         "well-sized range catches about 25.")
 
 
@@ -397,7 +397,7 @@ def test_the_track_record_abstains_when_the_latest_test_year_has_fewer_than_20_u
     assert backtest.track_record(engine) == {"year": 2025, "abstention": {
         "reason": "too_few_unseen_packages", "n": 19, "min_unseen_packages": 20}}
     assert backtest.track_record_sentence(engine) == (
-        "Strata has fewer than 20 packages from 2025 that it had not seen, so it gives no track record yet.")
+        "Prism has fewer than 20 packages from 2025 that it had not seen, so it gives no track record yet.")
 
 
 # ── Coverage in the model card ───────────────────────────────────────────
@@ -418,7 +418,7 @@ def test_a_year_outside_the_band_names_only_a_cause_its_stored_results_show(hand
     lines = model_card.coverage(backtest.stored_years(engine), backtest.load_thresholds())
 
     assert lines[2:] == [
-        "- 2022: Strata could score only seven packages it had not seen, and it needs 20 to judge coverage.",
+        "- 2022: Prism could score only seven packages it had not seen, and it needs 20 to judge coverage.",
         "- 2023: 12 of 20 finished inside the 8-in-10 range (60 percent), outside the band. Short of the band by 15 "
         "percentage points. The stored results do not show the cause.",
         "- 2024: 12 of 20 finished inside the 8-in-10 range (60 percent), outside the band. Short of the band by 15 "
@@ -426,7 +426,7 @@ def test_a_year_outside_the_band_names_only_a_cause_its_stored_results_show(hand
         "cutoff. Kaplan-Meier keeps them as not signed yet, but the range still rests mostly on packages that "
         "signed quickly, so it came out short.",
         "- 2025: 19 of 20 finished inside the 8-in-10 range (95 percent), outside the band. Above the band by 10 "
-        "percentage points. A likely cause: half of the packages from 2025 that Strata had not seen were signed "
+        "percentage points. A likely cause: half of the packages from 2025 that Prism had not seen were signed "
         "within 3.1 months, against 4.4 months for the 20 packages that sized the 2025 model's range, so the range "
         "was wider than it needed to be."]
 
@@ -452,7 +452,7 @@ def test_the_track_record_writes_a_count_under_ten_in_words(hand_made_engine):
     store_a_test_year(hand_made_engine, 2025, n=20, m=7)
 
     assert backtest.track_record_sentence(hand_made_engine) == (
-        "Of 20 packages from 2025 that Strata had not seen, seven finished inside its 8-in-10 range, where a "
+        "Of 20 packages from 2025 that Prism had not seen, seven finished inside its 8-in-10 range, where a "
         "well-sized range catches about 16.")
 
 

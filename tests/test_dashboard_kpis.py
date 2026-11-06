@@ -210,11 +210,11 @@ def test_each_loop_s_lagging_indicator_reads_its_stored_rows(engine):
         (dt.date(2026, 10, 10), 0.62, 0.71), (dt.date(2026, 9, 10), 0.6, 0.7)]
     assert [(row["plan_rows"], row["countries"], row["median_days_cell"], row["median_months_cell"])
             for row in rows(engine, "kpi_plan_accuracy")] == [
-        ("Dated within 14 days of a date I offered", "Using Strata", "12", "9.5"),
-        ("Dated within 14 days of a date I offered", "Not yet using Strata", "0 rows, too few for a median",
+        ("Dated within 14 days of a date I offered", "Using Prism", "12", "9.5"),
+        ("Dated within 14 days of a date I offered", "Not yet using Prism", "0 rows, too few for a median",
          "0 rows, too few for a median"),
-        ("Other plan rows", "Using Strata", "30", "1 row, too few for a median"),
-        ("Other plan rows", "Not yet using Strata", "41", "5 rows, too few for a median")]
+        ("Other plan rows", "Using Prism", "30", "1 row, too few for a median"),
+        ("Other plan rows", "Not yet using Prism", "41", "5 rows, too few for a median")]
 
 
 def test_weekly_use_and_drafts_come_from_usage_events_and_draft_states(engine):

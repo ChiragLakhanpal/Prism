@@ -1,5 +1,5 @@
 -- Each project's sectors with their shares, from the projects API's major_sectors, one row per sector
--- from each fetched page (ticket 21). gold.project keeps one sector in Strata's taxonomy, the major
+-- from each fetched page (ticket 21). gold.project keeps one sector in Prism's taxonomy, the major
 -- sector with the largest share; a project's Summary shows the shares beside it.
 --
 -- major_sector_code, major_sector_name   the major sector the sector sits under, word for word

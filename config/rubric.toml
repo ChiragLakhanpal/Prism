@@ -1,6 +1,6 @@
 # The rubric map (ticket 46; the 46 brief, section 7; docs/PLAN.md section 17): the assessment's four dimensions,
 # their points and their 13 criteria, with where the proposal answers each one and what the panel can open to see
-# it working. The proposal's "Where Strata earns each point" and the deck's rubric slide (ticket 47) read it, so the
+# it working. The proposal's "Where Prism earns each point" and the deck's rubric slide (ticket 47) read it, so the
 # points are written once, here, and cited to the assessment (docs/assessment.md, section 5).
 #
 # strata.config.load_rubric() reads it, and tests/test_proposal_registries.py checks it against the assessment's own
@@ -8,10 +8,10 @@
 #
 # source, anchor     the file and the heading the points cite
 # [[dimensions]]     in the rubric's order:
-#   name             the dimension as Strata writes it, in sentence case with "and" (GLOSSARY.md, DESIGN.md section 7)
+#   name             the dimension as Prism writes it, in sentence case with "and" (GLOSSARY.md, DESIGN.md section 7)
 #   rubric_name      the dimension word for word from the assessment's table
 #   points           its points, from that table
-#   summary          the one line under its name: where Strata earns it. {s:key} is a count or setting the proposal
+#   summary          the one line under its name: where Prism earns it. {s:key} is a count or setting the proposal
 #                    fills from docs/proposal/settings.toml, so a change drill can't leave it wrong
 #   [[dimensions.criteria]]
 #     rubric         the criterion word for word from the assessment's table

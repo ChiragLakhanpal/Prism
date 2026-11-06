@@ -1,4 +1,4 @@
-// Made-by window (ticket 126, the tuck-away inventory's pattern 1; DESIGN.md section 5): how Strata built a block, such
+// Made-by window (ticket 126, the tuck-away inventory's pattern 1; DESIGN.md section 5): how Prism built a block, such
 // as "I built this summary from World Bank records as of October 29, 2026. No model wrote it.", which a reader rarely
 // asks for, so it is one press away instead of on first sight. A lucide info icon button, a 24 px target in ink-muted,
 // sits after the last word of the sentence or heading it describes. Its accessible name says what it opens ("How I

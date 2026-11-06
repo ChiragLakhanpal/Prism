@@ -25,7 +25,7 @@ How it works, with its thresholds in config/thresholds.toml's [past_range] (CLAU
 - Procurement cycle time runs from a comparable's specific procurement notice to its signed
   contract. A package with no signed contract by the as-of date is still open: its days so far count
   as not signed yet (censored). A canceled package is left out and named in the coverage line,
-  unless canceled_as_still_open says to keep it as still open. A matching package Strata cannot
+  unless canceled_as_still_open says to keep it as still open. A matching package Prism cannot
   measure (no STEP reference to join notice to contract, no notice, signed before its notice, or no
   value for a criterion the call set) is counted in the coverage line with its reason.
 - The past range is Kaplan-Meier (src/strata/estimates/past_range.py): the months by which a
@@ -380,12 +380,12 @@ def _select(candidates: list[dict], unlinked: list[dict], criteria: dict, limits
     return rows, left_out, canceled
 
 
-# Every package from the earliest notice Strata holds: the period a call to every_package covers.
+# Every package from the earliest notice Prism holds: the period a call to every_package covers.
 EARLIEST = dt.date(1900, 1, 1)
 
 
 def every_package(engine, as_of: dt.date, limits: Limits) -> list[dict]:
-    """Every package Strata can measure as of a date, from every project, each as a comparable row: its
+    """Every package Prism can measure as of a date, from every project, each as a comparable row: its
     days from its specific procurement notice to its signed contract, or, still open, its days so far.
     The rules are the comparables' own, canceled_as_still_open included, so the time estimate learns
     from and is scored on exactly the packages the past range would count (ticket 25)."""

@@ -1,5 +1,5 @@
 # The language registry (ticket 42; CLAUDE.md rule 9): every language a source can be written in, and for
-# the four working languages, everything Strata needs to write answers and drafts in them and to check
+# the four working languages, everything Prism needs to write answers and drafts in them and to check
 # what it wrote. strata.config.load_languages() reads it, and strata.languages holds the one number and
 # date reader and writer that the verifier, the server and the drafts all use (CLAUDE.md rule 4).
 #
@@ -12,7 +12,7 @@
 #   api_name       the Documents API's lang field for it, word for word ("French")
 #   endonym        the language's own name, which the language choice shows beside the English name
 #   direction      ltr, or rtl for a script written right to left (the screens add dir="rtl")
-#   working        true for a working language: Strata writes answers and drafts in it. The others are
+#   working        true for a working language: Prism writes answers and drafts in it. The others are
 #                  languages a source can be written in.
 #
 # A working language other than English also has:
@@ -125,7 +125,7 @@ terms = { "past range" = "intervalo passado", "time estimate" = "estimativa de p
 reviewed_by = ""
 reviewed_on = ""
 
-# Languages a source can be written in, which Strata reads and quotes but does not write.
+# Languages a source can be written in, which Prism reads and quotes but does not write.
 [[language]]
 code = "ar"
 api_name = "Arabic"

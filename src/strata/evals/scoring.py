@@ -99,7 +99,7 @@ def score(asked: Asked, restricted: Iterable[str] = ()) -> Scored:
         return Scored(qid, kind, False, (f"It gave no answer: the stream ended with the error {errors[0]}.",))
     refused = [data.get("key") for event, data in asked.events if event == "refusal"]
     if refused:
-        problems.append(f"It refused with {refused[0]}, though the question asks for nothing Strata turns down.")
+        problems.append(f"It refused with {refused[0]}, though the question asks for nothing Prism turns down.")
     sentences = kept(asked.events)
     if not sentences:
         problems.append("It kept no sentence: the verifier removed every sentence it wrote, or it wrote none.")

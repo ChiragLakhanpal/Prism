@@ -1,5 +1,5 @@
 #!/bin/sh
-# Starts Strata's server and the web app's dev server together:
+# Starts Prism's server and the web app's dev server together:
 #
 #     scripts/dev
 #
@@ -20,5 +20,5 @@ uv run --frozen python -m strata.server &
 server=$!
 trap 'kill "$server" 2>/dev/null || true' EXIT INT TERM
 
-echo "Strata's web app is at http://127.0.0.1:$STRATA_WEB_PORT"
+echo "Prism's web app is at http://127.0.0.1:$STRATA_WEB_PORT"
 npm --prefix web run dev

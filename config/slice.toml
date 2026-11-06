@@ -1,4 +1,4 @@
-# The slice file: which projects Strata reads documents for.
+# The slice file: which projects Prism reads documents for.
 #
 # This is the one place for the slice's countries, sectors and fiscal years, the showcase project,
 # the demo plan and the stress shelf (spec, "Ten single places", item 4). Structured data covers
@@ -49,17 +49,17 @@ name = "Pakistan"
 iso2 = "PK"
 iso3 = "PAK"
 
-# The countries using Strata, each from the first day its World Bank staff used it (ticket 44; docs/PLAN.md
+# The countries using Prism, each from the first day its World Bank staff used it (ticket 44; docs/PLAN.md
 # section 11, "Loops through the world", and the rollout: World Bank staff in two countries first). The estimates
-# loop reports plan accuracy and duration for plan rows published once their country was using Strata, against
+# loop reports plan accuracy and duration for plan rows published once their country was using Prism, against
 # those from countries not yet using it (src/strata/estimates/watch.py). Onboarding a country is one entry:
 #
 # [[onboarded]]
 # iso2 = "KE"          one of the countries above
-# since = 2026-11-02   the first day its staff used Strata
+# since = 2026-11-02   the first day its staff used Prism
 #
 # No country is listed yet: which two countries come first, and from when, is the owner's call (a parked
-# decision, ticket 44). Until then every plan row counts as from a country not yet using Strata.
+# decision, ticket 44). Until then every plan row counts as from a country not yet using Prism.
 
 # The closed project whose disagreement (ISR 7 against ICR paragraph 78) and rebidding lesson
 # (ICR paragraph 54) the demo shows.

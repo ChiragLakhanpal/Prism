@@ -19,7 +19,7 @@ export const RETIRED_CLASSES: Record<string, string> = { "text-title": "text-h2"
 // inside them. Each one names where it is fixed.
 export const FIXED_TERMS = [
   // DESIGN.md section 8, the footer on every screen ("endorsed" is otherwise rule 19's).
-  "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it.",
+  "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it.",
   // DESIGN.md section 5, Draft bar, and section 7, rule 19: the bar's fixed sentence, which every kind's
   // lead sentence comes before ("clearance" and "no-objection" are otherwise rule 19's).
   "Exporting sends nothing and is not a World Bank review, clearance or no-objection.",

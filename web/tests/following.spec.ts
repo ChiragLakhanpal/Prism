@@ -369,7 +369,7 @@ test("each source of the brief says which record it is, and the disbursement tab
     await expect(titles.filter({ hasText: title }), title).toHaveCount(1);
   }
   await expect(page.locator("[data-sources] [data-source-item]").filter({ has: page.locator("[data-source-title]", { hasText: "Totals for P156634" }) }))
-    .toContainText("Strata's totals of this project's records, as of");
+    .toContainText("Prism's totals of this project's records, as of");
   await expect(page.locator("[data-brief-part=disbursement]")).toContainText(
     "In the loans and credits data, the amounts disbursed and canceled add up to more than the commitment.");
   await expect(page.getByText("I wrote each part from public records through October 23, 2026")).toBeVisible();

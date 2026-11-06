@@ -125,7 +125,7 @@ def _xlsx_sheets(data: bytes, limits: Uploads) -> list[tuple[str | None, list[li
                 cells: dict[int, object] = {}
                 for position, cell in enumerate(row.iter(f"{MAIN}c")):
                     index = _column_index(cell.get("r")) if cell.get("r") else position
-                    if index >= limits.max_columns:  # past the last column Strata reads
+                    if index >= limits.max_columns:  # past the last column Prism reads
                         continue
                     kind, value = cell.get("t"), cell.find(f"{MAIN}v")
                     if kind == "inlineStr":

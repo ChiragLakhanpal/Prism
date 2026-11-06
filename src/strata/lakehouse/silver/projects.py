@@ -8,7 +8,7 @@ credits normalized once (strata.lakehouse.clean), so a loan number in any of its
 project, and its IDA grants, trust funds and the other numbers the records name as written
 (IDA-H8060, TF-C3892), so none is left out (ticket 120). The team leader's name is not kept.
 
-Each project gets one sector in Strata's taxonomy (config/sectors.toml): the sector of the major
+Each project gets one sector in Prism's taxonomy (config/sectors.toml): the sector of the major
 sector with the largest share, whichever of the API's two taxonomies its codes come from. The API
 keeps only each project's latest ISR ratings and lists some of them twice; each is kept once. Each
 sector keeps its share, and a record that gives an Environmental Assessment Category or a risk rating

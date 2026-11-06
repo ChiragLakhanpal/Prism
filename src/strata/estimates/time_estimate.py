@@ -1,9 +1,9 @@
-"""The time estimate: Strata's own model of how long one package's procurement cycle takes, from its
+"""The time estimate: Prism's own model of how long one package's procurement cycle takes, from its
 specific procurement notice to its signed contract, with ranges for the middle half and 8 in 10.
 
 The model is XGBoost's survival model (accelerated failure time), and its ranges are conformal:
 
-- What it learns from. Every package Strata can measure as of the training date, by the past range's
+- What it learns from. Every package Prism can measure as of the training date, by the past range's
   own rules (strata.tools.find_comparables.every_package): signed packages with their days, packages
   still open with their days so far, kept as censored, and canceled packages counted the way
   config/thresholds.toml's past_range.canceled_as_still_open says, so lane 1 and lane 2 censor the
@@ -64,7 +64,7 @@ def agency(step_reference: str) -> str:
 
 @dataclass
 class Package:
-    """One package as the model sees it: its features as of its feature date, and, when Strata could
+    """One package as the model sees it: its features as of its feature date, and, when Prism could
     measure it on the reader's date, its days and whether it was signed."""
 
     step_reference: str
@@ -77,7 +77,7 @@ class Package:
 
 
 def packages_as_of(reader, settings: TimeEstimateSettings, only: str | None = None) -> dict[str, Package]:
-    """Every package Strata knew of on the reader's date, with its features and, where it could be
+    """Every package Prism knew of on the reader's date, with its features and, where it could be
     measured then, its days. The reader is the replay harness's (strata.estimates.harness.Reader), so
     nothing public after its date can reach the model. only keeps one package, by its STEP reference."""
     measured = {row["step_reference"]: row for row in reader.packages()}
@@ -327,7 +327,7 @@ def _ranges(packages: list[Package], names: tuple[str, ...]) -> dict[str, list[f
 
 def fit(training: list[Package], settings: TimeEstimateSettings, thresholds: Thresholds,
         training_through: dt.date) -> TimeEstimateModel:
-    """A model fitted on the packages Strata could measure by training_through, its ranges sized on
+    """A model fitted on the packages Prism could measure by training_through, its ranges sized on
     every calibration_every-th of them. Raises NoModel when the ranges cannot be sized."""
     ordered = sorted(training, key=lambda item: (item.notice_date, item.step_reference))
     every = settings.calibration_every

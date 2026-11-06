@@ -1,4 +1,4 @@
-# The sector file: Strata's one sector taxonomy, and the codes of the two taxonomies the projects
+# The sector file: Prism's one sector taxonomy, and the codes of the two taxonomies the projects
 # API uses that map to each sector (docs/PLAN.md section 3, "Quirks to handle on purpose").
 #
 # The projects API gives each project its major sectors, each with a code and its sectors' shares.

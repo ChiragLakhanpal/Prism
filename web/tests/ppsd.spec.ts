@@ -183,7 +183,7 @@ test("the Short Form shows exactly the template's three columns, with the counts
   await expect(table.locator("tbody tr")).toHaveCount(2);
   await expect(page.locator("[data-form-control]")).toHaveCount(0);
   await expect(page.locator("[data-form-caption]")).toContainText("I used the Short Form");
-  // Strata never wrote an owner: each owner cell holds the plus chip.
+  // Prism never wrote an owner: each owner cell holds the plus chip.
   await expect(table.locator("[data-fill-chip=risk_owner]")).toHaveText(["Set the owner", "Set the owner"]);
   await expect(page.locator("[data-progress] [data-numbers]")).toHaveText("0 of 2 risk owners set.");
   // Each footnote's Word text, built once on the server, in the ticket's forms.
@@ -242,7 +242,7 @@ test("above Table I the Long Form toggle shows, and the four columns it adds are
   await expect(permits.locator(":scope span.text-caption")).toHaveText(["Risk Owner", ...LONG_ADDED].sort((a, b) =>
     ["Likelihood Rating", "Impact Rating", "Overall Risk Score (A*B)", "Risk Owner", "Procurement Process Stage"].indexOf(a) -
     ["Likelihood Rating", "Impact Rating", "Overall Risk Score (A*B)", "Risk Owner", "Procurement Process Stage"].indexOf(b)));
-  // The row nobody rated: every field is empty, so Strata filled none.
+  // The row nobody rated: every field is empty, so Prism filled none.
   await expect(permits.locator("[data-fill-chip]")).toHaveText(["Set", "Set", "Set", "Set the owner", "Set"]);
   await expect(page.locator("[data-progress] [data-numbers]")).toHaveText("1 of 2 risk owners set. 1 of 2 rows rated.");
   await expect(holdLine(page)).toHaveText(
@@ -251,7 +251,7 @@ test("above Table I the Long Form toggle shows, and the four columns it adds are
   expect(await axe(page)).toEqual([]);
 });
 
-test("a warning disagreement holds export until you keep a report, and Keep with Strata's report saves at once", async ({ page }) => {
+test("a warning disagreement holds export until you keep a report, and Keep with Prism's report saves at once", async ({ page }) => {
   let kept = false;
   await page.setViewportSize({ width: 1440, height: 900 });
   await serve(page, {

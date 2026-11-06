@@ -1,5 +1,5 @@
 // The "Designed, not built" label (ticket 46; the 46 brief, section 12.2; DESIGN.md section 5): the Status badge,
-// then at once one first-person sentence saying what Strata does instead. It sits beside the heading of the part
+// then at once one first-person sentence saying what Prism does instead. It sits beside the heading of the part
 // that would hold the feature, as the Experimental badge does.
 //
 // Every label names its item in config/designed_not_built.toml, the one list the proposal's "Designed, not built"

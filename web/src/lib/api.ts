@@ -1,6 +1,6 @@
 import { withPageParams } from "./view";
 
-// Calls to Strata's server. Paths start with /api; in development Vite passes them on to the
+// Calls to Prism's server. Paths start with /api; in development Vite passes them on to the
 // server, and in the Databricks App the server serves them itself. Each call carries the
 // viewer's session through the App's proxy, so nothing here holds a token.
 
@@ -93,7 +93,7 @@ export type Paged<Row> = {
   rows: Row[];
 };
 
-// GET /api/projects?q=&page=: every project Strata holds a record for, active ones first, then by name.
+// GET /api/projects?q=&page=: every project Prism holds a record for, active ones first, then by name.
 export type ProjectRow = { project_id: string; project_name: string; country: string | null; status: string | null };
 export type ProjectList = Paged<ProjectRow> & { records_through: string | null };
 

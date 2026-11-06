@@ -490,8 +490,8 @@ def test_an_indicator_revised_in_place_keeps_both_versions_and_a_join_between_th
 def test_a_value_revised_under_the_same_lastupdated_date_is_public_from_the_day_strata_first_fetched_it():
     """Ticket 17's verify, F2. The API changed Kenya's 2025 estimate but kept the page's lastupdated date, so that
     date cannot say when the new value came out. Gold keeps both versions: the earlier one from its lastupdated date,
-    and the new one from the day Strata first fetched it, so a query as of a day between the two fetches returns the
-    value Strata held then."""
+    and the new one from the day Prism first fetched it, so a query as of a day between the two fetches returns the
+    value Prism held then."""
     from strata.lakehouse import governance
 
     first = recorded("api/indicators/wgi-ge-KEN-IND.json")

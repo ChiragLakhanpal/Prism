@@ -250,7 +250,7 @@ questions:
     kind: estimates
     tool: estimate_time
     question: >-
-      As of October 23, 2026, what is Strata's time estimate for KE-NWWDA-541055-CW-RFB, from its notice to a
+      As of October 23, 2026, what is Prism's time estimate for KE-NWWDA-541055-CW-RFB, from its notice to a
       signed contract, and what is its track record? What planned date should it put on each STEP step, and how
       late did comparable packages sign their contracts against their first published plans?
     arguments:
@@ -347,7 +347,7 @@ questions:
     ground_truth: tests/ground_truth/kenya_step_reference_link_rate.sql
     source: >-
       Kenya's 603 contracts and the 528 of them that carry a STEP reference, counted from the recorded
-      award files apart from Strata's code (tests/ground_truth/values.toml, counts.kenya). The fixture
+      award files apart from Prism's code (tests/ground_truth/values.toml, counts.kenya). The fixture
       records awards for Kenya only, so the awards source's row for every country holds Kenya's. The
       gap is PLAN.md section 3's: neither awards dataset covers fiscal 2017 to 2019.
 
@@ -355,7 +355,7 @@ questions:
     kind: sql
     tool: data_readiness_for
     question: >-
-      As of October 23, 2026, how many rated risks did Strata recover from the risk annex of the
+      As of October 23, 2026, how many rated risks did Prism recover from the risk annex of the
       P130164 Project Appraisal Document, and what did it count them against?
     arguments:
       as_of: "2026-10-23"
@@ -372,7 +372,7 @@ questions:
     tool: get_disagreements
     question: >-
       For P130164, did the reports disagree about how the project was progressing towards its
-      development objective, and which one does Strata lean on?
+      development objective, and which one does Prism lean on?
     arguments:
       subject_id: P130164
       attribute: pdo_progress
@@ -420,7 +420,7 @@ questions:
     kind: documents
     tool: get_lessons
     question: >-
-      What lessons does Strata's library hold on works cost estimates and rebidding, did IEG's
+      What lessons does Prism's library hold on works cost estimates and rebidding, did IEG's
       review of the completion report say the same, and how many completion reports of projects with
       a works package under Request for Bids like IN-RRSMP-7431-CW-RFB raised each risk?
     arguments:

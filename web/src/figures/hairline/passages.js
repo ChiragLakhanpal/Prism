@@ -1,7 +1,7 @@
 /**
  * Passages: a report of four pages, each page carrying three paragraph slabs
  * with lines of text on them, beside a low shelf with a row of three places
- * for each page, the page's number dotted at the row's end (Strata's deck, the
+ * for each page, the page's number dotted at the row's end (Prism's deck, the
  * opener of How it is built; .notes/deck2/brief.md, section 6). The pointer
  * opens the report at the page under it: the pages above lift away as one
  * block, staggered outwards from it, and the page's three passages lift off

@@ -124,7 +124,7 @@ class Imports(ast.NodeVisitor):
 
 def packages_imported(script: Path, path: tuple[Path, ...]) -> set[str]:
     """Every installed package whose modules the script's code imports, at any depth: the script, each module of
-    Strata's it imports, and theirs in turn. Imports inside functions count, because they run on the path that needs
+    Prism's it imports, and theirs in turn. Imports inside functions count, because they run on the path that needs
     them: splink inside the supplier matching, XGBoost inside the time estimate. A module that loads modules by name
     (the tool registry, the silver transforms, the draft writers) brings in every module of its own package. A
     package this environment lacks, which only a script or a job installs (databricks-sdk, MLflow), is left out."""

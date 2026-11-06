@@ -60,7 +60,7 @@ def test_a_plan_older_than_the_awards_data_compares_packages_from_the_data_s_sta
 
 
 def test_an_as_of_date_before_the_awards_data_matches_no_package_and_says_why_instead_of_a_range(india):
-    # The plan of June 20, 2018 is public by December 1, 2018, but the awards data Strata holds starts in 2019.
+    # The plan of June 20, 2018 is public by December 1, 2018, but the awards data Prism holds starts in 2019.
     result = find(india, as_of=dt.date(2018, 12, 1))
 
     assert result["criteria"]["period"] == "before_data"

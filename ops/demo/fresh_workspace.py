@@ -15,7 +15,7 @@ resource comes from its own deployer's plan, so this list cannot drift from them
   once it has one
 
 The order is the order to run them in: the bundle first, since everything else reads its catalog; the Genie space
-before the app, because the space deploy saves Strata's space id in the env file and the app deploy writes that id
+before the app, because the space deploy saves Prism's space id in the env file and the app deploy writes that id
 into app.yaml; the app before the nightly job's first run, because the app deploy saves the Azure keys the job's
 tasks read from the secret scope.
 """

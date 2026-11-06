@@ -302,7 +302,7 @@ test("each Start here link lands where it says", async ({ page }) => {
   await follow("Check a published plan (P156634)");
   await expect(page).toHaveURL(`${NWWDA}/2026-10-09`);
   await expect(page.locator("[data-check-plan-page=ready]")).toBeVisible();
-  // The notice names the seeded draft as Strata's example, never as one Ana started (the 41 brief, 5.12).
+  // The notice names the seeded draft as Prism's example, never as one Ana started (the 41 brief, 5.12).
   const notice = page.locator("[data-existing-draft]");
   await expect(notice).toHaveText("I set up review notes on this plan for you as an example on October 28, 2026.");
   await expect(page.locator("[data-existing-draft-example] [data-tag]")).toHaveText("Example");
@@ -352,7 +352,7 @@ test("Remove hides the strip with an undo row, and a later visit ends Home with 
 
   expect(asked).toEqual({ visible: false, view: "staff" });
   await expect(strip).toHaveCount(0);
-  await expect(page.getByText("You removed the examples Strata set up.")).toBeFocused();
+  await expect(page.getByText("You removed the examples Prism set up.")).toBeFocused();
   // The undo row brings the strip back in place, with focus on its name.
   await page.getByRole("button", { name: "Show the examples again" }).click();
   expect(asked).toEqual({ visible: true, view: "staff" });
@@ -366,7 +366,7 @@ test("Remove hides the strip with an undo row, and a later visit ends Home with 
   me.start_here_visible = false;
   await open(page, "/", { "/api/home": { body: JSON.stringify(home) }, "/api/me": { body: JSON.stringify(me) } });
   await expect(page.locator("[data-start-here]")).toHaveCount(0);
-  await expect(page.locator("[data-restore-line]")).toContainText("You removed the examples Strata set up.");
+  await expect(page.locator("[data-restore-line]")).toContainText("You removed the examples Prism set up.");
 
   // A viewer who is not World Bank staff never had the strip: the server sends no links, and Home never says they
   // removed it.
@@ -454,7 +454,7 @@ test("the agency preview and the public preview show the Home their column of th
   );
   await expect(page.locator("[data-waiting]")).toHaveCount(0);
   await expect(page.locator("[data-start-here]")).toHaveCount(0);
-  await expect(page).toHaveTitle("Home (public preview) | Strata");
+  await expect(page).toHaveTitle("Home (public preview) | Prism");
 });
 
 test("a plan that changed with no activity marked never reads as no plan changed below the briefing", async ({ page }) => {
@@ -556,7 +556,7 @@ test.describe(() => {
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Data");
     await throttle(page, api);
     const started = Date.now();
-    await page.getByRole("link", { name: "Strata", exact: true }).click();
+    await page.getByRole("link", { name: "Prism", exact: true }).click();
     await expect(page.locator("[data-home=ready]")).toBeVisible({ timeout: 10_000 });
     const warm = Date.now() - started;
     expect(warm, "from another page, in ms").toBeLessThanOrEqual(2000);

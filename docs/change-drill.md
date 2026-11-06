@@ -1,6 +1,6 @@
 # The change drill
 
-In round 2 the panel may ask for a live change to Strata. docs/PLAN.md section 15 lists the ten changes it is most likely to ask for, and each one lives in one registry or config file, so it lands in under ten minutes with the gate green. This runbook gives the steps for each change.
+In round 2 the panel may ask for a live change to Prism. docs/PLAN.md section 15 lists the ten changes it is most likely to ask for, and each one lives in one registry or config file, so it lands in under ten minutes with the gate green. This runbook gives the steps for each change.
 
 `config/change_drills.toml` is the one list of the ten changes, with the one place each lives and the file of the test that proves it. Each entry below starts with the same place and test, and `tests/test_change_drill.py` fails when they differ. How long each rehearsal took is in `docs/proposal/rehearsals.toml`, and the proposal's Module 4 table shows those times.
 
@@ -11,7 +11,7 @@ The change itself lives in one file. The gate also keeps some files in step with
 - Recorded answers. The screen tests serve recorded API answers from `tests/fixtures/api`, and a test checks that the server still gives each one. When a change alters what a route answers, a command under `tests/` writes the recordings again from the fixture database. Build the fixture first, with `uv run --frozen python gates/build_fixture.py`.
 - Tests that state the old value. Some tests type a planning document's value on purpose, such as PLAN.md section 5's order of the evidence ladder, or a screen's words in full. When the panel changes that value, the test changes with it.
 
-No drill edits `tests/ground_truth/values.toml`. That file holds what the World Bank's records say, and a change to Strata never changes a record.
+No drill edits `tests/ground_truth/values.toml`. That file holds what the World Bank's records say, and a change to Prism never changes a record.
 
 ## How to rehearse a drill
 
@@ -198,4 +198,4 @@ A must-refuse question, for a new refusal or for one that has a question already
 3. `tests/test_dashboard_pages.py`'s `test_governance_and_ai_quality_hold_the_brief_s_counters_in_order` states the 45 design brief's counters. Add the new one.
 4. Commit.
 
-**On the workspace.** Deploy the bundle, which deploys "Strata operations (test)" beside "Strata operations". Open the test copy and check the tile, then keep it or delete its entry and deploy again.
+**On the workspace.** Deploy the bundle, which deploys "Prism operations (test)" beside "Prism operations". Open the test copy and check the tile, then keep it or delete its entry and deploy again.

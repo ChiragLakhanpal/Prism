@@ -1,4 +1,4 @@
-/* Strata's theme: DESIGN.md sections 2, 3 and 4 in Tailwind v4. Every color, size, space,
+/* Prism's theme: DESIGN.md sections 2, 3 and 4 in Tailwind v4. Every color, size, space,
    breakpoint, curve and duration a component uses comes from here. Change a value in DESIGN.md
    first; the token test (web/tests/tokens.spec.ts) fails until this file matches it. */
 
@@ -169,7 +169,7 @@
   }
 }
 /* Reveals (DESIGN.md section 4, Motion; ticket 111): what a wait produced, entering once the wait ends. An answer's
-   "Strata, in short" block after its stream, and the plan check's finding after a narration of at least 400 ms, rise
+   "Prism, in short" block after its stream, and the plan check's finding after a narration of at least 400 ms, rise
    4 px as they fade in. */
 @utility animate-reveal {
   transition: opacity var(--motion-reveal) var(--ease-out), translate var(--motion-reveal) var(--ease-out);

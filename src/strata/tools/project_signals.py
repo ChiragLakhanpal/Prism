@@ -1,4 +1,4 @@
-"""project_signals: Strata's fixed signals for one project, a reason to look and never a finding (ticket 37).
+"""project_signals: Prism's fixed signals for one project, a reason to look and never a finding (ticket 37).
 
 The registry (config/tools.toml) defines the tool's parameters and result shape; this module is its
 adapter. It runs seven fixed checks on the project's public records, each only on what was public on

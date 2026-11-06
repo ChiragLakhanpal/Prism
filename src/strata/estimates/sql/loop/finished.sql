@@ -1,7 +1,7 @@
 -- The estimates loop's watch (ticket 44): the packages that finished (signed) after :window_start and by :as_of,
--- with a procurement cycle time to measure, each with the time estimate Strata gave it as described before its first
+-- with a procurement cycle time to measure, each with the time estimate Prism gave it as described before its first
 -- notice: the champion's newest score public on or before that day (strata.gold.time_estimate_score). A package
--- Strata never scored before its notice has no range given, and rolling coverage leaves it out.
+-- Prism never scored before its notice has no range given, and rolling coverage leaves it out.
 WITH finished AS (
   SELECT k.step_reference, k.first_notice_date, k.contract_signed_on, k.public_from
   FROM strata.gold.package AS k

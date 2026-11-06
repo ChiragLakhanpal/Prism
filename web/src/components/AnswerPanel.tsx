@@ -52,7 +52,7 @@ export const ANNOUNCE_GAP_MS = 500;
 const STILL_WORKING_MS = 30_000;
 export const DRAWER_ID = "evidence-drawer";
 
-// An ID in a line Strata writes: a P-code links to its project page (ticket 21), anything else is in mono.
+// An ID in a line Prism writes: a P-code links to its project page (ticket 21), anything else is in mono.
 // A P-code as the page header sets it; a STEP reference as the box sets it, by MonoWords, so "Asked within
 // KE-NWWDA-541055-CW-RFB." never breaks inside the reference while it fits a line (ticket 59).
 const mono = (text: string) => (/^P\d{6}$/.test(text) ? <IdText id={text} /> : <MonoWords text={text} />);
@@ -91,7 +91,7 @@ function stepLines(step: StepEvent, checks: ChecksEvent | null, refused = false)
   return { running: words.running, done: words.doneSix(written, formatCount(written), removed, formatCount(removed)) };
 }
 
-// A step's line with its project ID in mono, as every ID Strata writes (DESIGN.md section 3).
+// A step's line with its project ID in mono, as every ID Prism writes (DESIGN.md section 3).
 function withMonoId(text: string, id: string | null | undefined): ReactNode {
   if (!id || !text.includes(id)) return text;
   return text.split(id).flatMap((part, index) => (index === 0 ? [part] : [<Fragment key={index}>{mono(id)}</Fragment>, part]));

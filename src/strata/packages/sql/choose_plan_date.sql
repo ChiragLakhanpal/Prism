@@ -1,4 +1,4 @@
--- A viewer chose the plan date Strata drafts with for a package (ticket 26): its row in
+-- A viewer chose the plan date Prism drafts with for a package (ticket 26): its row in
 -- strata.app.plan_date_choices is made the first time and changed every time after. Nothing is deleted.
 MERGE INTO strata.app.plan_date_choices AS t
 USING (

@@ -1,5 +1,5 @@
--- Tile 21: who read Strata's tables, by day, person, way in and table, in the dates chosen, from the workspace's
--- lineage system table (system.access.table_lineage), where Free Edition lets Strata read it. It shows which tables
+-- Tile 21: who read Prism's tables, by day, person, way in and table, in the dates chosen, from the workspace's
+-- lineage system table (system.access.table_lineage), where Free Edition lets Prism read it. It shows which tables
 -- were read and how many statements read them, never the text of a query, because a query can carry a person's
 -- question. The app runs each query as the person using it through the SQL warehouse, which records no entity, so a
 -- read with no entity is the app's. The deploy checks whether the table can be read (docs/workspace-catchup.md).

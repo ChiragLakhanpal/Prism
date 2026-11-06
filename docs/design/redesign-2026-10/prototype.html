@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Strata shell redesign</title>
-<meta name="description" content="A picture of Strata's redesigned shell, round 3: the sidebar, the top bar with the box, and eight pages built as task zones, with the number tooltip, the evidence drawer, the check line and the removed box. Not production code.">
+<title>Prism shell redesign</title>
+<meta name="description" content="A picture of Prism's redesigned shell, round 3: the sidebar, the top bar with the box, and eight pages built as task zones, with the number tooltip, the evidence drawer, the check line and the removed box. Not production code.">
 <script>
   /* Read before the first paint, as web/index.html will: the page, the rail's resting state, the drawer's placement
      and the data switch. A person's own choice of open or rail is kept in local storage; the rail switch in the
@@ -705,7 +705,7 @@ html.clean .proto, html.clean .proto-banner { display: none; }
         <span class="menu-word">Menu</span>
       </button>
       <img class="logo" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTAiIGhlaWdodD0iNTAiIGZpbGw9Im5vbmUiPjxnIGNsaXAtcGF0aD0idXJsKCNhKSI+PG1hc2sgaWQ9ImIiIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgeD0iMCIgeT0iMCIgbWFza1VuaXRzPSJ1c2VyU3BhY2VPblVzZSIgc3R5bGU9Im1hc2stdHlwZTpsdW1pbmFuY2UiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0zMC4wNCA0MC41OGMzLjIyLS4wNCA2LjI3LS41MSA4Ljk3LTEuNDJhMjMuOCAyMy44IDAgMCAwIDEuOTUtLjc2IDExIDExIDAgMCAxLTMuMyA0LjUyIDIyLjIgMjIuMiAwIDAgMS05LjgzIDQuMDdjLjkxLTEuNTcgMS42NS0zLjggMi4yLTYuNE0xNC45IDQ1LjA0bC0uMjEtLjE1Yy0xLjI3LS42Mi0xLjc4LTMuNDMtMS4xMi03Ljc1YTQwLjMgNDAuMyAwIDAgMCAxNC4xNCAzLjRjLTEgNC4zNy0yLjMgNi42OC0zLjE2IDYuNjgtLjA1IDAtLjEgMC0uMTUuMDItMy40LS4wMi02LjYtLjgtOS40OS0yLjE4TTMuMTQgMzEuMDljLS4yLS43NS0uMzItMS41LS4zNy0yLjI3YTE5LjU0IDE5LjU0IDAgMCAwIDIuOCAzLjE3IDI3Ljk3IDI3Ljk3IDAgMCAwIDUuODYgNC4xYy0uNDYgMi41Mi0uNTggNC44LS4zIDYuNjRhMjIuMzQgMjIuMzQgMCAwIDEtNy45OC0xMS42NG0yOC4zMy02LjEzYzAtLjktLjAyLTEuNzgtLjA1LTIuNjdhMTcuNiAxNy42IDAgMCAwIDcuNjItMi4xNiAyNi44NyAyNi44NyAwIDAgMSAzLjA1IDEyLjAxYzAgMS4xNC0uMSAyLjIyLS4yNyAzLjI0QTE3LjEgMTcuMSAwIDAgMSAzOC4zIDM3YTI2Ljk3IDI2Ljk3IDAgMCAxLTcuODIgMS4yOWMuNjctNC4wNiAxLTguNzYgMS0xMy4zM20tOS41OSAxMi41Yy0yLjgyLS42LTUuNS0xLjUtNy45LTIuNjRhNTguMyA1OC4zIDAgMCAxIDQuNi0xMi43bDEuMDUtMi4wNWMxLjY0Ljc0IDMuNDIgMS4zMiA1LjMgMS43MiAxLjQxLjMgMi44My40NyA0LjIzLjUyLjAyLjg2LjA0IDEuNzQuMDQgMi42NSAwIDUuMzctLjQzIDkuODItMS4wNSAxMy4zYTM2LjgyIDM2LjgyIDAgMCAxLTYuMjUtLjhtLTE0LjgtNy4xNWExNC40NCAxNC40NCAwIDAgMS0zLjk0LTUuNTcgMTcuNjcgMTcuNjcgMCAwIDEgMy4xLTYuMjUgMjQuNzIgMjQuNzIgMCAwIDEgNS4zMy01LjE0Yy42IDEuMDcgMS40NCAyLjEzIDIuNSAzLjEzYTE4LjggMTguOCAwIDAgMCAzLjUyIDIuNTcgNjMuOTggNjMuOTggMCAwIDAtNS43IDE0LjcyIDI1LjQ0IDI1LjQ0IDAgMCAxLTQuOC0zLjQ1bTIyLjgtMjEuMmEzMC43OSAzMC43OSAwIDAgMSA4LjAyIDlBMTUuNiAxNS42IDAgMCAxIDMxLjMzIDIwYy0uMi0zLjkzLS42Ny03LjcyLTEuNDItMTAuODdNMjUuNCAxOS41N2EyNC4yNiAyNC4yNiAwIDAgMS00LjY2LTEuNSA0OC42NCA0OC42NCAwIDAgMSA2Ljc1LTkuMzUgNjAuNjEgNjAuNjEgMCAwIDEgMS41NyAxMS4zMWMtMS4yLS4wNS0yLjQ0LS4yLTMuNjUtLjQ2bS05Ljc1LTQuNzVjLS45NC0uODgtMS42Ni0xLjgtMi4xNC0yLjczQTMxLjMzIDMxLjMzIDAgMCAxIDI1LjA2IDhhNTMuNDYgNTMuNDYgMCAwIDAtNi4zNiA5LjA2IDE3LjA4IDE3LjA4IDAgMCAxLTMuMDQtMi4yMm0tNC45LTcuMjgtLjEuMzVhNy4xNCA3LjE0IDAgMCAwIC4wNyAzLjI3IDI3LjEgMjcuMSAwIDAgMC02LjI4IDUuOTRjLS41Mi42OS0uOTggMS4zOS0xLjQgMi4xYTIyLjM0IDIyLjM0IDAgMCAxIDcuNzEtMTEuNjZtMi4xNC44M2E1LjQ4IDUuNDggMCAwIDEgMi4wNi0zLjEyYzIuNjYtLjggNS43NS0uNiA5LjAxLjZhMzMuNCAzMy40IDAgMCAwLTExLjE1IDRjLS4wNS0uNS0uMDMtMSAuMDgtMS40OFptMTguNS0zYy43OC0uNTEgMS41LS44NiAyLjEtMSAxLjE0LjQ2IDIuMjcgMS4wNSAzLjM1IDEuNzgtMS43My0uNDMtMy41Ni0uNy01LjQ2LS43OFptLTMuODUtMi40NWMuOTIuMSAxLjkyLjI2IDIuOTMuNS0uNjMuMzQtMS4zLjc3LTEuOTcgMS4yOC0uMy0uNjctLjYyLTEuMjYtLjk2LTEuNzhabS0yLjQ3LjljLTEuMDQtLjM5LTIuMDUtLjctMy4wNS0uOTIuOC0uMDkgMS42Mi0uMTQgMi40NS0uMTQuMzggMCAuODYuNDcgMS4zNiAxLjM3bC0uNzUtLjNNMCAyNWMwIDIuMzMuMzMgNC41OS45NCA2LjcyLjA0LjE0LjA3LjI5LjEyLjQzbC4wMy4wOUEyNC41NiAyNC41NiAwIDAgMCAyNC41IDQ5LjUyYTI0LjQxIDI0LjQxIDAgMCAwIDE0LjUzLTQuNzggMjQuNTIgMjQuNTIgMCAwIDAgOC4wNS0yOS4yNiAxLjE1IDEuMTUgMCAwIDAtMS40OS0uNjFjLS41OC4yNS0uODUuOS0uNiAxLjQ5YTIyLjEgMjIuMSAwIDAgMSAxLjA5IDE0IDcuOTIgNy45MiAwIDAgMS0xLjc1IDIuOTdjLjAyLS4zOC4wMy0uNzcuMDMtMS4xOCAwLTQuMzgtMS4yLTktMy40NS0xMy4zM2E4LjggOC44IDAgMCAwIDMuMDYtNS4xMSAxLjEzIDEuMTMgMCAwIDAtLjkxLTEuMzMgMS4xMyAxLjEzIDAgMCAwLTEuMzMuOTEgNi40MyA2LjQzIDAgMCAxLTEuOTUgMy40OCAzMy4xNSAzMy4xNSAwIDAgMC04LTkuMWMzLjQzLjIzIDYuNiAxLjA2IDkuMTcgMi40OWExLjE0IDEuMTQgMCAwIDAgMS40NS0xLjdDMzguNzMgMy4zMyAzMi4zOC40OSAyNC41LjQ5IDEwLjk5LjUgMCAxMS41IDAgMjVaIi8+PC9tYXNrPjxnIG1hc2s9InVybCgjYikiPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik00OS4wMi41SDBWNDkuNWg0OS4wMlYuNDlaIi8+PC9nPjxwYXRoIGZpbGw9IiNmZmYiIGQ9Ik0yNDQuMzggMTcuODRjMy42MiAwIDUuNjIgMS43NSA1LjYyIDQuOTMgMCAzLTEuOTcgNC44LTUuMjYgNC44aC0yLjN2NC42aC0zLjA2VjE3Ljg0aDVabS0xLjk1IDcuMjNoMS44M2MxLjc3IDAgMi42Ny0uNzcgMi42Ny0yLjMgMC0xLjU0LS45OS0yLjQtMi43Ny0yLjRoLTEuNzN2NC43Wm0tOC42NyAxLjM2YzAgMi4xLS44IDMuMTItMi40NiAzLjEycy0yLjUzLTEuMDUtMi41My0zLjEydi04LjZoLTMuMDV2OC40YzAgMi4wNC41IDMuNiAxLjUyIDQuNjIuOTQuOTUgMi4zIDEuNDMgNC4wNiAxLjQzIDIuNTEgMCA1LjUxLTEuMDYgNS41MS02LjA3di04LjRoLTMuMDV2OC42MlpNMjE3LjQgMTcuN2MzLjEgMCA2LjQgMS45MiA2LjQgNy4zMSAwIDUuNC0zLjMgNy4yNy02LjQgNy4yNy0zLjEgMC02LjQzLTEuOS02LjQzLTcuMjcgMC01LjM2IDMuMzItNy4zIDYuNDMtNy4zWm0wIDExLjljMS4yIDAgMy4yNS0uNiAzLjI1LTQuNTkgMC00LTIuMDQtNC42LTMuMjUtNC42LTIuMTIgMC0zLjI3IDEuNjQtMy4yNyA0LjZzMS4xNiA0LjYgMy4yNyA0LjZabS05LjU4LTEuNzhjLjUxIDEuMDIuOTQgMS45MSAxLjk1IDEuOTFoLjcydjIuMzZsLS4xLjAzcy0uNTUuMTUtMS40OC4xNWMtMi40MSAwLTMuMTUtMS42Ni0zLjgtMy4xMy0uNTQtMS4yLTEtMi4yNC0yLjI2LTIuMjRoLTEuMzR2NS4yNmgtMy4wNVYxNy44NGg1LjA4YzMuNzEgMCA1LjQ0IDEuNDUgNS40NCA0LjU1IDAgMS45My0xLjE2IDMuMS0yLjMgMy42Mi41LjUuODMgMS4xNiAxLjE1IDEuODJtLTYuMzMtMy4zaDEuN2MxLjcgMCAyLjc2LS43OCAyLjc2LTIuMDcgMC0xLjMzLS45Mi0yLjEtMi41My0yLjFoLTEuOTJ2NC4xN2gtLjAxWm0tMTEuMTggMi40aDMuMTV2LjE1YzAgLjkzLS4zMyAyLjQ4LTIuNTMgMi40OC0yLjA3IDAtMy4zMS0xLjctMy4zMS00LjU1IDAtMi44NiAxLjE4LTQuNiAzLjI1LTQuNiAyLjQ1IDAgMi41NSAyLjQ5IDIuNTUgMi42di4xNmwyLjg1LS40NXYtLjEyYzAtMS4wNC0uOTItNC45LTUuNDMtNC45LTQuMDUgMC02LjM3IDIuNjYtNi4zNyA3LjMxIDAgNC42NSAyLjQgNy4yNyA2LjQxIDcuMjcgNC4wMiAwIDUuNDctMi44MiA1LjQ3LTUuMjJ2LTIuNWgtNi4wM3YyLjM3Wm0tOS4xNC05LjFoLTMuNjNsLTQuNzQgNi40NnYtNi40NWgtMy4xdjE0LjMzaDMuMXYtNi41OWw0Ljg2IDYuNmgzLjY4bC01LjU1LTcuMjMgNS4zOC03LjF2LS4wMVptLTE3LjI2IDguODYtNS4wMS04Ljg1aC0zLjF2MTQuMzNoMy4wNnYtOC41NWw0Ljk4IDguNTVoMy4xMlYxNy44NGgtMy4wNXY4Ljg1Wm0tMTQuMTUtOC43NiA1LjIyIDE0LjI0aC0zLjE3bC0xLjIyLTMuNWgtNC43OGwtMS4xNyAzLjVoLTMuMmw1LjI2LTE0LjMzaDMuMDNsLjAzLjFabS0xLjU1IDMuODEtMS41NiA0LjUyaDMuMTRsLTEuNTgtNC41MlptLTkuNiAyLjg3YTMuNDYgMy40NiAwIDAgMSAyLjU0IDMuNDdjMCAyLjYtMS44NCA0LjA4LTUuMDQgNC4wOGgtNi4wNVYxNy44M2g1LjQ3YzMuMSAwIDQuNjggMS4zIDQuNjggMy44NSAwIDEuOTctLjkgMi42OC0xLjYgMi45Mm0tMy40MS0uOWMxLjI3IDAgMS44Ni0uNTQgMS44Ni0xLjcgMC0xLjE0LS43Ni0xLjY0LTIuMjUtMS42NGgtMS43djMuMzNoMi4wOVptLTIuMDkgNS45NGgyLjRjMS41NiAwIDIuMjgtLjYgMi4yOC0xLjg1IDAtMS41NC0xLjI3LTEuODYtMi4zNS0xLjg2aC0yLjMydjMuN1ptLTE1LjYyLTExLjhjNC40NiAwIDcuMTIgMi43NiA3LjEyIDcuNCAwIDQuNjYtMi4zOCA2LjkzLTYuNTIgNi45M2gtNC44NlYxNy44NGg0LjI2Wm0tMS4yIDExLjhoMS43OGMyLjE5IDAgMy41LTEuNjYgMy41LTQuNDMgMC0zLjIxLTEuMzgtNC44NC00LjEzLTQuODRoLTEuMTV2OS4yN1ptLTEwLjY5LTExLjhoLTMuMDV2MTQuMzNoOS4yNXYtMi41M2gtNi4ydi0xMS44Wm0tNy4xNiA5Ljk5Yy41IDEuMDIuOTQgMS45MSAxLjk1IDEuOTFoLjcydjIuMzZsLS4xLjAzcy0uNTUuMTUtMS40OC4xNWMtMi40MSAwLTMuMTUtMS42Ni0zLjgtMy4xMy0uNTQtMS4yLTEtMi4yNC0yLjI2LTIuMjRoLTEuMzR2NS4yNmgtMy4wNlYxNy44NGg1LjA5YzMuNyAwIDUuNDQgMS40NSA1LjQ0IDQuNTUgMCAxLjkzLTEuMTYgMy4xLTIuMyAzLjYyLjUuNS44MyAxLjE2IDEuMTUgMS44Mm0tNi4zMi0zLjNoMS43YzEuNyAwIDIuNzUtLjc4IDIuNzUtMi4wNyAwLTEuMzMtLjkyLTIuMS0yLjUzLTIuMWgtMS45MnY0LjE3Wm0tMTEuMi02LjgyYzMuMSAwIDYuNCAxLjkyIDYuNCA3LjMxIDAgNS40LTMuMyA3LjI3LTYuNCA3LjI3LTMuMSAwLTYuNDItMS45LTYuNDItNy4yNyAwLTUuMzYgMy4zMi03LjMgNi40Mi03LjNabTAgMTEuOWMxLjIxIDAgMy4yNS0uNiAzLjI1LTQuNTkgMC00LTIuMDQtNC42LTMuMjUtNC42LTIuMTEgMC0zLjI3IDEuNjQtMy4yNyA0LjZzMS4xNiA0LjYgMy4yNyA0LjZaTTcwLjYzIDE3Ljg1aDMuNDVsLTQuMTIgMTQuMzNINjYuNWwtMi41LTguOTgtMi41NCA4Ljk4aC0zLjQ1TDUzLjkgMTcuODRoMy41NWwyLjQyIDEwLjQ1IDIuODgtMTAuNDVoMi41N2wyLjggMTAuNDUgMi41LTEwLjQ1aC4wMVoiLz48L2c+PGRlZnM+PGNsaXBQYXRoIGlkPSJhIj48cGF0aCBmaWxsPSIjZmZmIiBkPSJNMCAuNWgyNTBWNDkuNUgweiIvPjwvY2xpcFBhdGg+PC9kZWZzPjwvc3ZnPg==" alt="World Bank Group logo" width="120" height="24">
-      <a class="wordmark" href="?page=home">Strata</a>
+      <a class="wordmark" href="?page=home">Prism</a>
     </div>
     <div class="box-slot">
       <div class="box" role="search" data-box-band id="box">
@@ -851,7 +851,7 @@ html.clean .proto, html.clean .proto-banner { display: none; }
 
     <div class="zones">
       <section class="zone row unnumbered has-toggle tag-under" aria-labelledby="sh-name" data-view-show="staff" data-mode-hide="error">
-        <div class="zone-head"><h2 class="zone-name t-h2" id="sh-name">Start here</h2><span class="zone-tag">Examples Strata set up for you</span></div>
+        <div class="zone-head"><h2 class="zone-name t-h2" id="sh-name">Start here</h2><span class="zone-tag">Examples Prism set up for you</span></div>
         <div class="zone-body">
           <ul class="start-links">
             <li><a href="?page=plancheck">Check a published plan (<span class="mono">P156634</span>)</a></li>
@@ -993,7 +993,7 @@ html.clean .proto, html.clean .proto-banner { display: none; }
           <td data-label="Type">Plan check</td><td data-label="Country">Kenya</td><td data-label="Project"><a class="mono" href="#" data-undrawn>P156634</a></td><td data-label="Last worked on" class="tabular">Oct 27, 2026</td></tr>
       </tbody>
     </table>
-    <div class="foot" style="padding-left:24px"><p class="source"><b>Source:</b> your packages and plan checks, saved in Strata.</p></div>
+    <div class="foot" style="padding-left:24px"><p class="source"><b>Source:</b> your packages and plan checks, saved in Prism.</p></div>
   </section>
   <section class="zone row unnumbered" aria-labelledby="pk-empty" style="margin-top:32px" data-mode-show="empty">
     <div class="zone-head"><h2 class="zone-name t-h2" id="pk-empty">You have no packages or checked plans yet.</h2></div>
@@ -1044,7 +1044,7 @@ html.clean .proto, html.clean .proto-banner { display: none; }
         <thead><tr>
           <th scope="col" class="c-act">Activity</th><th scope="col" class="c-meth">Method and market approach</th><th scope="col" class="c-rev">Review</th>
           <th scope="col" class="r c-est">Estimated (US$)</th><th scope="col" class="c-stat">Process status</th>
-          <th scope="col" class="c-found"><button class="defn" type="button" data-window="w-found" aria-haspopup="dialog" aria-expanded="false">What Strata found</button></th>
+          <th scope="col" class="c-found"><button class="defn" type="button" data-window="w-found" aria-haspopup="dialog" aria-expanded="false">What Prism found</button></th>
         </tr></thead>
         <tbody id="pc-rows"></tbody>
       </table>
@@ -1054,8 +1054,8 @@ html.clean .proto, html.clean .proto-banner { display: none; }
         <p id="fold-body" class="t-caption" hidden style="flex-basis:100%">Prototype: the study did not record these three rows.</p>
       </div>
       <div class="foot">
-        <p class="source prose"><b>Source:</b> Procurement Plan, Northern Water Works Development Agency, <a href="#" data-undrawn class="mono">P156634</a>, version of October&nbsp;9,&nbsp;2026, disclosed October&nbsp;9,&nbsp;2026. Project closing date from the World Bank's projects API, record of April&nbsp;24,&nbsp;2024. Marks from Strata's fixed checks, as of October&nbsp;27,&nbsp;2026.</p>
-        <p class="source prose">Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in Systematic Tracking of Exchanges in Procurement (STEP).</p>
+        <p class="source prose"><b>Source:</b> Procurement Plan, Northern Water Works Development Agency, <a href="#" data-undrawn class="mono">P156634</a>, version of October&nbsp;9,&nbsp;2026, disclosed October&nbsp;9,&nbsp;2026. Project closing date from the World Bank's projects API, record of April&nbsp;24,&nbsp;2024. Marks from Prism's fixed checks, as of October&nbsp;27,&nbsp;2026.</p>
+        <p class="source prose">Not visible to Prism: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in Systematic Tracking of Exchanges in Procurement (STEP).</p>
       </div>
     </section>
     <section class="zone row unnumbered has-toggle" aria-labelledby="ch-name" id="changes" tabindex="-1">
@@ -1435,7 +1435,7 @@ html.clean .proto, html.clean .proto-banner { display: none; }
   <div class="head"><h1 class="t-h1 page-title" tabindex="-1" id="hidden-h1">Packages</h1></div>
   <section class="zone row unnumbered" aria-labelledby="hv-name" style="margin-top:32px">
     <div class="zone-head"><h2 class="zone-name t-h2" id="hv-name">This page isn't part of the public view.</h2></div>
-    <div class="zone-body"><p class="prose" id="hidden-body">Members of the public see projects, lessons and data in Strata. Leave the preview to see Packages again.</p>
+    <div class="zone-body"><p class="prose" id="hidden-body">Members of the public see projects, lessons and data in Prism. Leave the preview to see Packages again.</p>
       <p><a class="link24" href="?page=projects">Go to Projects</a></p></div>
   </section>
 </div>
@@ -1443,7 +1443,7 @@ html.clean .proto, html.clean .proto-banner { display: none; }
         </div>
       </main>
       <footer class="footer">
-        <div class="content"><p class="t-caption">Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it.</p></div>
+        <div class="content"><p class="t-caption">Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it.</p></div>
       </footer>
     </div>
 
@@ -1511,18 +1511,18 @@ html.clean .proto, html.clean .proto-banner { display: none; }
 <!-- The view switch's popover (DESIGN.md, Top navigation, ticket 40; copy.ts view.dialog, view.rows, view.date). The
      language choice under it is left out of this drawing. -->
 <template id="w-view"><h2>Your view</h2><div class="win-body">
-  <p class="t-label">See Strata as</p>
+  <p class="t-label">See Prism as</p>
   <div class="view-rows" style="margin-top:8px">
     <a href="?view=staff" data-view-row="staff"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><b>World Bank staff</b><span class="t-caption">Your own view, with everything I show.</span></a>
     <a href="?view=officer" data-view-row="officer"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><b>Implementing agency officer</b><span class="t-caption">A preview of what an officer at the Northern Water Works Development Agency (NWWDA) sees.</span></a>
     <a href="?view=public" data-view-row="public"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><b>The public</b><span class="t-caption">A preview of what a member of the public sees. It has projects, lessons and data only.</span></a>
   </div>
-  <div class="view-date"><label class="t-small" for="asof" style="font-weight:600;color:var(--color-ink-heading)">See Strata as of a past date</label>
+  <div class="view-date"><label class="t-small" for="asof" style="font-weight:600;color:var(--color-ink-heading)">See Prism as of a past date</label>
     <p class="t-caption" id="asof-hint">I show only what was disclosed by that date.</p>
     <div class="row"><input id="asof" type="date" aria-describedby="asof-hint"><button class="btn btn-secondary" type="button" data-inert-proto>Show this date</button></div></div>
 </div></template>
 <template id="w-lastworked"><h2>Last worked on</h2><div class="win-body"><p>When you last saved the package or opened the plan check.</p></div></template>
-<template id="w-found"><h2>What Strata found</h2><div class="win-body"><p>Needs a look and Watch are signals. A signal is a fixed check on public records. It gives a reason to look, never a finding. A data note means the record is missing a value or contradicts itself.</p></div></template>
+<template id="w-found"><h2>What Prism found</h2><div class="win-body"><p>Needs a look and Watch are signals. A signal is a fixed check on public records. It gives a reason to look, never a finding. A data note means the record is missing a value or contradicts itself.</p></div></template>
 <template id="w-how-answer"><h2>How I checked this answer</h2><div class="win-body">
   <p>I ran six checks on the three sentences I wrote and removed none.</p>
   <ol><li>5 of 5 numbers and dates matched a record or a quote.</li><li>3 of 3 sources I cited came back for this question.</li><li>2 of 2 quotes were word for word on their pages.</li><li>The three sentences I kept needed no model, because every number, date and quote in them matched a record or a page.</li><li>None of the sentences gave advice.</li><li>No sentence rested on a report that another report disagrees with.</li></ol>
@@ -1614,14 +1614,14 @@ html.clean .proto, html.clean .proto-banner { display: none; }
 
   /* ------------------------------------------------------------------ pages */
   const PAGES = {
-    home:      { section: "home", current: "page", title: "Your briefing | Strata", source: "Home is drawn from tests/fixtures/api/home.json (October 28, 2026). Its drafts differ from the Drafts page, which is drawn from drafts-list.json (October 23)." },
-    packages:  { section: "packages", current: "page", title: "Packages | Strata" },
-    plancheck: { section: "packages", current: "true", title: "Northern Water Works Development Agency, Procurement Plan of October 9, 2026 | Strata", chip: "P156634", placeholder: "Ask about this project" },
-    package:   { section: "packages", current: "true", title: "Package KE-NWWDA-541055-CW-RFB | Strata", chip: "KE-NWWDA-541055-CW-RFB", chipLong: "KE-UASIN GISHU COUNTY-571338-CW-RFB", placeholder: "Ask about this package", source: "The chart, the table and the dots are the 49 packages in comparables-ke-nwwda-541055.json." },
-    projects:  { section: "projects", sub: "projects", title: "All projects | Strata" },
-    lessons:   { section: "lessons", current: "page", title: "Lessons | Strata" },
-    drafts:    { section: "drafts", current: "page", title: "Drafts | Strata", source: "Drawn from tests/fixtures/api/drafts-list.json (October 23, 2026)." },
-    draft:     { section: "drafts", current: "true", title: "Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Strata", chip: "P156634", placeholder: "Ask about this project", source: "Drawn from tests/fixtures/api/drafts-review-notes-partial.json, the same draft as the Drafts page's row to check." },
+    home:      { section: "home", current: "page", title: "Your briefing | Prism", source: "Home is drawn from tests/fixtures/api/home.json (October 28, 2026). Its drafts differ from the Drafts page, which is drawn from drafts-list.json (October 23)." },
+    packages:  { section: "packages", current: "page", title: "Packages | Prism" },
+    plancheck: { section: "packages", current: "true", title: "Northern Water Works Development Agency, Procurement Plan of October 9, 2026 | Prism", chip: "P156634", placeholder: "Ask about this project" },
+    package:   { section: "packages", current: "true", title: "Package KE-NWWDA-541055-CW-RFB | Prism", chip: "KE-NWWDA-541055-CW-RFB", chipLong: "KE-UASIN GISHU COUNTY-571338-CW-RFB", placeholder: "Ask about this package", source: "The chart, the table and the dots are the 49 packages in comparables-ke-nwwda-541055.json." },
+    projects:  { section: "projects", sub: "projects", title: "All projects | Prism" },
+    lessons:   { section: "lessons", current: "page", title: "Lessons | Prism" },
+    drafts:    { section: "drafts", current: "page", title: "Drafts | Prism", source: "Drawn from tests/fixtures/api/drafts-list.json (October 23, 2026)." },
+    draft:     { section: "drafts", current: "true", title: "Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Prism", chip: "P156634", placeholder: "Ask about this project", source: "Drawn from tests/fixtures/api/drafts-review-notes-partial.json, the same draft as the Drafts page's row to check." },
   };
   const P = PAGES[PAGE];
   /* The public view hides Packages, a package, Drafts and a draft (config/roles.toml, [views.public].hidden): the page
@@ -1634,7 +1634,7 @@ html.clean .proto, html.clean .proto-banner { display: none; }
     if (hiddenHere === "Drafts") $("#hidden-body").textContent = "Leave the preview to see it again. Nothing on the page changed.";
   } else $(`.page[data-page="${PAGE}"]`).hidden = false;
   const VIEW_TITLE = { officer: " (implementing agency preview)", public: " (public preview)" };
-  document.title = VIEW === "staff" ? P.title : P.title.replace(" | Strata", (VIEW_TITLE[VIEW] || "") + " | Strata");
+  document.title = VIEW === "staff" ? P.title : P.title.replace(" | Prism", (VIEW_TITLE[VIEW] || "") + " | Prism");
   $$(".proto-pages a").forEach((a) => { if (a.getAttribute("href") === "?page=" + PAGE) a.setAttribute("aria-current", "page"); });
   $$(".item[data-section]").forEach((a) => {
     if (a.dataset.section !== P.section) return;

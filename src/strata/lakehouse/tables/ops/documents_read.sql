@@ -5,7 +5,7 @@
 -- run_id                   the document run
 -- document_type            the documents API's type, word for word
 -- fiscal_year              the World Bank fiscal year of its disclosure date, July to June (FY2020 runs
---                          from July 1, 2019); the day Strata first fetched it when the date is missing
+--                          from July 1, 2019); the day Prism first fetched it when the date is missing
 -- documents                how many documents of that type and year the run read
 -- pdf_pages                their pages, in the PDFs
 -- pages_route_a            the pages Route A read from the published text

@@ -2,7 +2,7 @@
 """The gate's secret scan. It reads the staged changes and the full history of HEAD, with no network.
 During a merge it also reads the history of the branch the merge brings in.
 
-It checks every added line for the key shapes that Strata's .env.example holds. Those are a
+It checks every added line for the key shapes that Prism's .env.example holds. Those are a
 Databricks personal access token, an Azure OpenAI key and an Application Insights connection
 string. It also checks a few other common shapes, such as Azure storage keys, private keys,
 GitHub tokens and a key assigned in code. It names the file and the commit but never prints

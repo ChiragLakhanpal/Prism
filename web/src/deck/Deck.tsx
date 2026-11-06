@@ -1,4 +1,4 @@
-// The deck at /present (ticket 47; the second draft's brief): Strata's story in five topics between the bookends,
+// The deck at /present (ticket 47; the second draft's brief): Prism's story in five topics between the bookends,
 // outside the app's frame, with nothing in the app linking to it. Its address lives in the proposal and the README.
 //
 // - /present and /present/{n}: presentation mode, the 960 by 540 canvas scaled as one unit, when the window can show
@@ -821,7 +821,7 @@ function ReadingChart({ chart, headingId }: { chart: NonNullable<Slide["chart"]>
   );
 }
 
-// The close's ways in, in the reading view: Strata itself, then the proposal, the dashboard and the code once their
+// The close's ways in, in the reading view: Prism itself, then the proposal, the dashboard and the code once their
 // addresses are set, each in a new tab, as the navy close lists them.
 function ReadingCloseLinks({ data }: { data: DeckData }) {
   const w = deckCopy.slides.thanks;

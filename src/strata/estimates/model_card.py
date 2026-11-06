@@ -3,7 +3,7 @@ registered model's description in Unity Catalog points to.
 
 render() writes it from the stored backtest results (strata.ops.evaluation_result) and the model the
 run trained, so every number in it, the track record's included, comes from a run and none is typed.
-It is a document about Strata, so it speaks of Strata in the third person. Its sections: what the
+It is a document about Prism, so it speaks of Prism in the third person. Its sections: what the
 model is for, the data, the features, what it never reads (the leakage exclusions), the backtests,
 coverage of the 8-in-10 range year by year, the track record, and when it gives no range (the
 abstention rule). A year outside the coverage band gets a likely cause only when its stored results
@@ -64,7 +64,7 @@ NO_CAUSE = "The stored results do not show the cause."
 
 
 def _middles(year: int, record: dict) -> str:
-    return (f"half of the packages from {year} that Strata had not seen were signed within "
+    return (f"half of the packages from {year} that Prism had not seen were signed within "
             f"{record['unseen_middle_months']:.1f} months, against {record['calibration_middle_months']:.1f} months "
             f"for the {record['calibration_packages']} packages that sized the {year} model's range")
 
@@ -98,7 +98,7 @@ def cause(year: int, record: dict, thresholds: Thresholds) -> str:
 def _too_few(count: int, fewest: int) -> str:
     scored = ("could score no package it had not seen" if count == 0 else
               f"could score only {_words(count)} package{'s' if count > 1 else ''} it had not seen")
-    return f"Strata {scored}, and it needs {fewest} to judge coverage."
+    return f"Prism {scored}, and it needs {fewest} to judge coverage."
 
 
 def coverage(years: dict[int, dict], thresholds: Thresholds) -> list[str]:
@@ -107,7 +107,7 @@ def coverage(years: dict[int, dict], thresholds: Thresholds) -> list[str]:
     low, high = thresholds.value("time_estimate.coverage_low"), thresholds.value("time_estimate.coverage_high")
     fewest = int(thresholds.value("time_estimate.min_unseen_packages"))
     lines = [f"The 8-in-10 range should hold from {whole(100 * Fraction(str(low)))} to "
-             f"{whole(100 * Fraction(str(high)))} percent of the packages Strata had not seen in each test year.", ""]
+             f"{whole(100 * Fraction(str(high)))} percent of the packages Prism had not seen in each test year.", ""]
     for year, record in sorted(years.items()):
         if "abstention" in record:
             lines.append(f"- {year}: the model gave no ranges, so coverage could not be measured.")
@@ -151,11 +151,11 @@ def track_record(years: dict[int, dict], thresholds: Thresholds) -> dict | None:
 def sentence(record: dict | None) -> str:
     """The track-record sentence, in the third person, filled from a track record."""
     if record is None:
-        return "Strata has no backtest results yet, so it gives no track record."
+        return "Prism has no backtest results yet, so it gives no track record."
     if record["abstention"] is not None:
-        return (f"Strata has fewer than {record['abstention']['min_unseen_packages']} packages from {record['year']} "
+        return (f"Prism has fewer than {record['abstention']['min_unseen_packages']} packages from {record['year']} "
                 "that it had not seen, so it gives no track record yet.")
-    return (f"Of {record['n']} packages from {record['year']} that Strata had not seen, {_words(record['m'])} finished "
+    return (f"Of {record['n']} packages from {record['year']} that Prism had not seen, {_words(record['m'])} finished "
             f"inside its 8-in-10 range, where a well-sized range catches about {_words(record['expected'])}.")
 
 
@@ -170,7 +170,7 @@ def render(years: dict[int, dict], model, no_model, settings: TimeEstimateSettin
         "",
         "## What it is for",
         "",
-        "This model gives Strata's time estimate: a range for how long one package's procurement takes, from its "
+        "This model gives Prism's time estimate: a range for how long one package's procurement takes, from its "
         "specific procurement notice to its signed contract. It gives the months by which a quarter, half, three "
         "quarters and 8 in 10 of packages like it were signed. The package workspace shows it beside the past "
         "range of comparable packages.",
@@ -180,34 +180,34 @@ def render(years: dict[int, dict], model, no_model, settings: TimeEstimateSettin
         "",
         "## Data",
         "",
-        f"- Every package Strata could measure as of {_written(trained_on)}: procurement notices and contract awards "
+        f"- Every package Prism could measure as of {_written(trained_on)}: procurement notices and contract awards "
         "for every country (strata.gold.notice, strata.gold.contract and strata.gold.package), joined on the STEP "
         "reference. A signed package counts its days from its specific procurement notice to its signed contract.",
         "- A package still open counts its days so far, kept as not signed yet (censored), as in the past range. "
         f"A canceled package is {canceled} (config/thresholds.toml, past_range.canceled_as_still_open).",
-        "- The Procurement Plans Strata has read (strata.silver.plan_rows and strata.silver.plan_step_delays), and "
+        "- The Procurement Plans Prism has read (strata.silver.plan_rows and strata.silver.plan_step_delays), and "
         "the Country Policy and Institutional Assessment (CPIA) and Worldwide Governance Indicators (WGI) scores "
         "(strata.gold.governance_score), each version as published.",
     ]
     if model is not None:
         every = ORDINALS.get(settings.calibration_every, f"{settings.calibration_every}th")
         total, still_open = model.training_packages, model.calibration_still_open
-        lines.append(f"- Strata could measure {total} packages. Every {every} one, in the order they were advertised, "
+        lines.append(f"- Prism could measure {total} packages. Every {every} one, in the order they were advertised, "
                      f"sized the ranges: {model.calibration_packages} packages, "
                      + ("none of them still open" if not still_open else f"{_words(still_open)} of them still open")
                      + f". The model learned from the other {model.proper_packages}.")
         lines.append("- " + _share_sentence(
             model.listed_packages, total,
-            all_of="A Procurement Plan Strata has read listed every one of them when it was advertised.",
-            none_of="No Procurement Plan Strata has read listed any of them when it was advertised, so none has plan "
+            all_of="A Procurement Plan Prism has read listed every one of them when it was advertised.",
+            none_of="No Procurement Plan Prism has read listed any of them when it was advertised, so none has plan "
                     "features.",
-            some_of="A Procurement Plan Strata has read listed {k} of the {n} when they were advertised; the others "
+            some_of="A Procurement Plan Prism has read listed {k} of the {n} when they were advertised; the others "
                     "have no plan features."))
         lines.append("- " + _share_sentence(
             model.governance_packages, total,
             all_of="Every one of them had a governance score published by the day it was advertised.",
             none_of="None of them had a governance score published by the day it was advertised, so the governance "
-                    "features were empty: the versions Strata holds were published after every one was advertised.",
+                    "features were empty: the versions Prism holds were published after every one was advertised.",
             some_of="Of them, {k} had a governance score published by the day they were advertised; for the others "
                     "the governance features were empty."))
     else:
@@ -243,7 +243,7 @@ def render(years: dict[int, dict], model, no_model, settings: TimeEstimateSettin
         "",
         "## Backtests",
         "",
-        "Each test year's model learned only from packages Strata could measure by January 1 of that year. It was "
+        "Each test year's model learned only from packages Prism could measure by January 1 of that year. It was "
         "tested on the packages a Procurement Plan public then listed and that were advertised during the year. "
         "Errors are medians in months: half of the packages were closer than this.",
         "",
@@ -264,7 +264,7 @@ def render(years: dict[int, dict], model, no_model, settings: TimeEstimateSettin
               "## Track record", "", sentence(track_record(years, thresholds)), "",
               "## When it gives no range", "",
               f"- Fewer than {value('time_estimate.min_comparables')} comparable packages, subgroups included: a "
-              f"what-if option needs {value('what_if.min_subgroup')} comparable packages that went with it. Strata "
+              f"what-if option needs {value('what_if.min_subgroup')} comparable packages that went with it. Prism "
               "shows the comparable packages instead.",
               "- An as-of date before the end of its training data"
               + (f", {_written(model.training_through)}" if model is not None else "") + ".",

@@ -1,5 +1,5 @@
--- The completion reports and IEG's reports Strata first fetched in a window, for the Lessons page's opening sentence
--- (strata.knowledge.lessons.page): each document of a type in :types (joined by commas) whose published text Strata
+-- The completion reports and IEG's reports Prism first fetched in a window, for the Lessons page's opening sentence
+-- (strata.knowledge.lessons.page): each document of a type in :types (joined by commas) whose published text Prism
 -- first fetched at or after :since and before :until, with its project.
 SELECT
   d.document_id,

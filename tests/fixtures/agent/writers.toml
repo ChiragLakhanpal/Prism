@@ -266,7 +266,7 @@ claims = [
 [[cases]]
 id = "ppsd-rows-writer-sets-an-owner"
 says = """The writer also answers with a risk owner, a likelihood and an actual date for the cost estimates row, in a \
-cell the message never asked for and in fields of a cell it did. The draft keeps only the two cells Strata writes, and \
+cell the message never asked for and in fields of a cell it did. The draft keeps only the two cells Prism writes, and \
 no field a person fills holds a value."""
 question = "Write suggested PPSD risk rows for Equipping of Exploratory Boreholes Project-Lot 1- Sarman - Tarbaj Water Supply."
 scope = "P156634"

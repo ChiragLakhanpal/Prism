@@ -350,7 +350,7 @@ export function App() {
     lastMode.current = { preview, asOf };
     if (was.preview === preview && was.asOf === asOf) return;
     // Two frames on, after the evidence drawer has given focus back to the mark that opened it (its onClosed waits one
-    // frame), so a change made from inside the drawer, such as "See Strata as of this date", still lands on the banner.
+    // frame), so a change made from inside the drawer, such as "See Prism as of this date", still lands on the banner.
     const later = (target: () => HTMLElement | null | undefined) =>
       requestAnimationFrame(() => requestAnimationFrame(() => target()?.focus()));
     if (asOf && asOf !== was.asOf) later(() => asOfBanner.current);

@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Builds one Strata ticket test-first in its own git worktree, on a branch based on the integration branch build/strata. Use for every ticket on the frontier, and to fix review findings in the same worktree. Follows the area brief named by the ticket's Area line and reports back with evidence for each acceptance criterion.
+description: Builds one Prism ticket test-first in its own git worktree, on a branch based on the integration branch build/strata. Use for every ticket on the frontier, and to fix review findings in the same worktree. Follows the area brief named by the ticket's Area line and reports back with evidence for each acceptance criterion.
 model: opus
 effort: xhigh
 color: blue

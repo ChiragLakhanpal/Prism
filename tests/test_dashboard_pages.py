@@ -1,4 +1,4 @@
-"""The dashboard "Strata operations" as code (ticket 45; the 45 design brief): three pages deployed by the bundle,
+"""The dashboard "Prism operations" as code (ticket 45; the 45 design brief): three pages deployed by the bundle,
 each tile's number from its defining query, one entry to add or remove a tile, and DESIGN.md section 6's rules.
 
 The deploy itself is a workspace step (docs/workspace-catchup.md). Here the dashboard files the bundle deploys are
@@ -39,7 +39,7 @@ def frame(tile) -> dict:
 def test_the_bundle_deploys_strata_operations_and_its_test_copy_from_the_files_the_definition_writes():
     declared = bundle.load().resources("dashboards")
 
-    assert declared["strata_dashboard"]["display_name"] == wording.at("dash.name") == "Strata operations"
+    assert declared["strata_dashboard"]["display_name"] == wording.at("dash.name") == "Prism operations"
     assert declared["strata_dashboard_test"]["display_name"] == wording.at("dash.testName")
     assert (ROOT / "bundle" / declared["strata_dashboard_test"]["file_path"]).resolve() == dashboard.TEST_FILE
     assert dashboard.FILE.read_text() == dashboard.written()
@@ -332,7 +332,7 @@ def test_where_it_can_who_queried_what_counts_statements_per_person_way_in_and_t
     assert result.columns == ("day", "person", "through", "table_read", "queries")
     assert list(result.rows) == [
         (dt.date(2026, 10, 22), "ana.example@worldbank.org", "Notebook", "strata.gold.package", 1),
-        (dt.date(2026, 10, 22), "ana.example@worldbank.org", "Strata app", "strata.gold.package", 2)]
+        (dt.date(2026, 10, 22), "ana.example@worldbank.org", "Prism app", "strata.gold.package", 2)]
 
 
 # ── Words ────────────────────────────────────────────────────────────────

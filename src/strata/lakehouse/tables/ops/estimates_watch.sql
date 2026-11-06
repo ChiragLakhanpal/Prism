@@ -6,7 +6,7 @@
 --
 -- The measures, by name:
 --   coverage            packages that finished (signed) in the coverage_window_months to month, inside the 8-in-10
---                       range Strata gave them before their first notice (count), out of those it gave one
+--                       range Prism gave them before their first notice (count), out of those it gave one
 --                       (denominator); value is empty, so no screen shows a share it did not compute
 --   error_estimate      the typical error, in months, of the time estimate's middle on those packages (value)
 --   error_past_range    the typical error of the past range's middle, as find_comparables gave it on each package's

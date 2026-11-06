@@ -239,7 +239,7 @@ def probe_app_in(apps):
 
 
 def test_an_app_the_probes_did_not_make_is_left_alone_even_with_no_deployment():
-    apps = FakeApps(description="Strata, the procurement intelligence app")
+    apps = FakeApps(description="Prism, the procurement intelligence app")
     with pytest.raises(SetupError, match="^The probes did not make the app strata, so I left it alone. Set names.app in "):
         probe_app_in(apps)
     assert apps.changed == []

@@ -200,7 +200,7 @@ test("a reading the judge said does not follow from your words is removed in its
   await expect(row).toContainText("I removed this comparison. The reason is in the box above.");
   await expect(row).not.toContainText(similar.reading);
   await expect(row.locator("[data-same-or-less]")).toHaveCount(0);
-  // The box quotes the reading whole, so "I" is plainly Strata's, then the reason about your words (ticket 58).
+  // The box quotes the reading whole, so "I" is plainly Prism's, then the reason about your words (ticket 58).
   await expect(section(page).locator("[data-section-checks]")).toContainText(`It said "${similar.reading}" Your words do not say this.`);
   await expect(section(page).locator("table [data-item=turnover]")).not.toContainText(copy.criteria.removedInPlace);
 });

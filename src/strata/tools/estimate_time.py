@@ -1,4 +1,4 @@
-"""estimate_time: Strata's time estimate for one package, its what-ifs, its track record and its plan dates.
+"""estimate_time: Prism's time estimate for one package, its what-ifs, its track record and its plan dates.
 
 The registry (config/tools.toml) defines the tool's parameters and result shape; this module is its adapter
 (ticket 26). It answers in one response everything the package workspace's lane 2, "Compare with", the track

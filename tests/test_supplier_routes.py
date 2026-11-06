@@ -5,7 +5,7 @@
 - POST /api/suppliers/review records a person's decision, merge or no merge, with the reviewer (the
   viewer the Databricks App forwarded) and the reason, as the app's own service principal (a DuckDB
   copy of the fixture here). The next run of resolution applies it.
-- GET /api/suppliers/labels gives the next candidate pairs to label, without where Strata sent them,
+- GET /api/suppliers/labels gives the next candidate pairs to label, without where Prism sent them,
   and how many are labeled; POST /api/suppliers/labels records a label.
 
 Expected names come from tests/ground_truth/values.toml, where each names its recorded record.

@@ -175,7 +175,7 @@ test("in the public preview the plan check is lit as Projects, its breadcrumb st
   // The finding holds the signals back, so its block's byline kind says so, with no visible words (DESIGN.md section 5,
   // Byline; ticket 126).
   await expect(page.locator("[data-finding-block]")).toHaveAttribute("data-byline", "heldBack");
-  await expect(page.locator("[data-finding-block]")).not.toContainText("Strata held back");
+  await expect(page.locator("[data-finding-block]")).not.toContainText("Prism held back");
   const head = page.locator("[data-plan-header]");
   await expect(head.locator("[data-check-pill]")).toHaveText("Nine activities checked");
   await expect(head.getByRole("button")).toHaveCount(0);
@@ -286,7 +286,7 @@ test("column names and values are STEP's, word for word", async ({ page }) => {
     "Review",
     "Estimated (US$)",
     "Process status",
-    "What Strata found",
+    "What Prism found",
   ]);
   const cells = table.locator('tr[id="KE-NWWDA-541055-CW-RFB"] td');
   await expect(cells.nth(0)).toHaveText("Request for Bids · Open - National");
@@ -323,7 +323,7 @@ test("the table follows DESIGN.md: title sentence, count line, surface-2 header,
     "Source: Procurement Plan, Northern Water Works Development Agency, P156634, version of October 9, 2026, disclosed October 9, 2026.",
   );
   // The marks are as of the date the page reads the records, not a date the checks ran.
-  await expect(source).toContainText("Marks from Strata's fixed checks, as of October 22, 2026.");
+  await expect(source).toContainText("Marks from Prism's fixed checks, as of October 22, 2026.");
   const [tableBox, sourceBox] = [await table.boundingBox(), await source.boundingBox()];
   expect(sourceBox!.y).toBeGreaterThan(tableBox!.y + tableBox!.height);
   await expect(page.getByRole("link", { name: "The plan on the World Bank's documents site (opens in a new tab)" })).toHaveAttribute(
@@ -347,17 +347,17 @@ test("marks are status badges with an icon and their name; Data note is neutral 
   ]);
 });
 
-test("the page says what Strata cannot see, as the wireframe does", async ({ page }) => {
+test("the page says what Prism cannot see, as the wireframe does", async ({ page }) => {
   await openPlan(page);
 
   await expect(page.locator("[data-not-visible]")).toHaveText(
     // The first time the page names STEP, so it is spelled out here (DESIGN.md section 7 rule 10).
-    "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. " +
+    "Not visible to Prism: the prior-review queue, complaints, contract amendments and contract management reports. " +
       "Those stay in Systematic Tracking of Exchanges in Procurement (STEP).",
   );
 });
 
-test("a number explains itself on focus, and What Strata found opens its definition", async ({ page }) => {
+test("a number explains itself on focus, and What Prism found opens its definition", async ({ page }) => {
   await openPlan(page);
   const days = view(page, "table").locator('tr[id="KE-NWWDA-229129-CW-RFB"] button[data-num]').filter({ hasText: "186" });
 
@@ -372,9 +372,9 @@ test("a number explains itself on focus, and What Strata found opens its definit
   await expect(tip).toHaveCount(0);
   await expect(days).toBeFocused();
 
-  const term = view(page, "table").getByRole("button", { name: "What Strata found" });
+  const term = view(page, "table").getByRole("button", { name: "What Prism found" });
   await term.click();
-  const definition = page.getByRole("dialog", { name: "What Strata found" });
+  const definition = page.getByRole("dialog", { name: "What Prism found" });
   await expect(definition).toContainText("A signal is a fixed check on public records. It gives a reason to look, never a finding.");
   await expect(definition).toContainText(
     "An activity needs a look when its planned completion passed with no signed contract. I mark it only when its estimate is US$1 million or more, or when the plan gives no estimate.",
@@ -420,14 +420,14 @@ test("below a table frame of 34rem a link whose hash names a folded activity ope
   await expect(view(page, "cards").getByRole("button", { name: "Hide them" })).toBeVisible();
 });
 
-test("below a table frame of 34rem the cards open the What Strata found definition from their head, since they have no column heads", async ({ page }) => {
+test("below a table frame of 34rem the cards open the What Prism found definition from their head, since they have no column heads", async ({ page }) => {
   await openPlan(page, 390);
-  const term = page.getByRole("button", { name: "What Strata found" });
+  const term = page.getByRole("button", { name: "What Prism found" });
   await expect(term).toHaveCount(1);
 
   await term.click();
 
-  const definition = page.getByRole("dialog", { name: "What Strata found" });
+  const definition = page.getByRole("dialog", { name: "What Prism found" });
   await expect(definition).toContainText("It gives a reason to look, never a finding.");
   // Ticket 126: the window opens on how I checked and how I measure delay, which sat under the finding until then.
   await expect(definition.locator("[data-method-sentence]")).toContainText(
@@ -837,7 +837,7 @@ test("while the check loads, skeletons hold its places and a status says so", as
     "Review",
     "Estimated (US$)",
     "Process status",
-    "What Strata found",
+    "What Prism found",
   ]);
   await page.clock.fastForward(2000);
   await expect(page.getByText(NARRATION.slow)).toBeVisible();
@@ -1176,10 +1176,10 @@ test("a link to a row's records on a check that failed says I found nothing, and
   await expect(drawer.locator("[data-skeleton]")).toHaveCount(0);
 });
 
-test("an account that can't read Strata's tables is told what to ask for, with no retry", async ({ page }) => {
+test("an account that can't read Prism's tables is told what to ask for, with no retry", async ({ page }) => {
   await openPlan(page, 1440, { status: 403, body: '{"code": "permission"}' });
 
-  await expect(page.getByRole("alert")).toHaveText("Your account can't read Strata's tables, so I can't show this plan.");
+  await expect(page.getByRole("alert")).toHaveText("Your account can't read Prism's tables, so I can't show this plan.");
   await expect(page.getByText("Ask your workspace admin for read access to the strata catalog.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
 });
@@ -1285,7 +1285,7 @@ const HOW_CHECKED = {
     "Source: The plan of October 9, 2026 and the projects API record of April 24, 2024.",
   ],
   compared: ["The plan of March 5, 2026. This version re-estimated two activities. See what changed", "Source: The two plans, compared row by row on their STEP references."],
-  baseline: ["No plan is saved as the baseline yet. Go to Baseline for delay", "Source: Strata's saved baselines, as of October 22, 2026."],
+  baseline: ["No plan is saved as the baseline yet. Go to Baseline for delay", "Source: Prism's saved baselines, as of October 22, 2026."],
 };
 const factText = (page: Page, label: string) =>
   checkedFact(page, label)
@@ -1339,7 +1339,7 @@ test("at 1440 and 1280 px How I checked sits beside the finding with the method,
   // That check was recorded as of October 23, 2026, the day the baseline was saved.
   expect(await factText(page, "Baseline")).toEqual([
     "The plan of July 21, 2025, saved by Ana Example on October 23, 2026. Go to Baseline for delay",
-    "Source: Strata's saved baselines, as of October 23, 2026.",
+    "Source: Prism's saved baselines, as of October 23, 2026.",
   ]);
   // Go to Baseline for delay lands on that row's heading, where its controls are, and focus goes with it: the browser
   // focuses a link's target that can take focus (the heading's tabIndex -1), so a screen reader lands where See what

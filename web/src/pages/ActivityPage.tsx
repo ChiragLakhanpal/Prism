@@ -12,7 +12,7 @@
 //
 // States: loading (real breadcrumb, skeletons sized to the trail, a status that says it is loading and, after two
 // seconds, that it still is), the trail, an activity no record holds, a service that didn't answer (with "Try
-// again" and the reference), and an account that can't read Strata's tables.
+// again" and the reference), and an account that can't read Prism's tables.
 import { useEffect, useRef, type ReactNode } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { EmptyState } from "../components/Card";

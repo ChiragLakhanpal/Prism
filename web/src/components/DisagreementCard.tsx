@@ -1,6 +1,6 @@
 // Disagreement card (DESIGN.md section 5; the 24 brief, section 4.4, and the 23 brief, section 5): two sources
 // that disagree, side by side in the order they were written, with equal weight: the same box, type and spacing on
-// both sides, and the role of each named only by a quiet source tag, "Strata leans on this" or "You kept this". A
+// both sides, and the role of each named only by a quiet source tag, "Prism leans on this" or "You kept this". A
 // heading names what they disagree about; one sentence states the evidence ladder's rule, a line says what you
 // would treat as true if you kept the other, and a keep line says where you can keep it.
 //
@@ -14,7 +14,7 @@
 //
 // Ticket 24 placed the card in an answer; ticket 23 gives it this look and the keep action (KeepChoice): a person
 // keeps the other report with a required reason, stored with their account and the answer or draft for the evidence
-// pack, and can go back to Strata's choice. Neither rewrites the answer.
+// pack, and can go back to Prism's choice. Neither rewrites the answer.
 import { createElement, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { copy } from "../copy";
 import { ApiError, getJson, postJson } from "../lib/api";
@@ -42,7 +42,7 @@ export type CardSide = {
   titleText: string;
   // "{date}. {written when}."
   meta: string;
-  // The side Strata leans on carries the tag.
+  // The side Prism leans on carries the tag.
   leaned: boolean;
   // What the source said: a rating under the report's own field name, or a quote.
   said: ReactNode;
@@ -199,7 +199,7 @@ export type KeepState =
   | { phase: "saving" }
   | { phase: "failed" }
   | { phase: "kept"; madeAt: string; reason: string }
-  // On a draft, its author kept the report Strata leans on (ticket 36).
+  // On a draft, its author kept the report Prism leans on (ticket 36).
   | { phase: "keptLean"; madeAt: string };
 
 // The text a person typed stays for the session, so reopening the form after Cancel restores it.
@@ -231,7 +231,7 @@ function KeepChoice({
   if (state.phase === "kept") leanKept.current = null;
   const [reason, setReason] = useState(() => drafts.get(key) ?? initialReason);
   const [said, setSaid] = useState("");
-  // Going back to Strata's choice failed: the kept choice stays, with a line that says so.
+  // Going back to Prism's choice failed: the kept choice stays, with a line that says so.
   const [backFailed, setBackFailed] = useState(initialBackFailed);
   const button = useRef<HTMLButtonElement>(null);
   const field = useRef<HTMLTextAreaElement>(null);
@@ -310,7 +310,7 @@ function KeepChoice({
     try {
       const answer = await save(keep.leanAssertionId, "");
       if (!answer.recorded) throw new ApiError(503, path);
-      // On a draft, going back to Strata's choice keeps the leaned report, so the card stays resolved.
+      // On a draft, going back to Prism's choice keeps the leaned report, so the card stays resolved.
       if (keep.draftChoice && answer.choice) {
         setState({ phase: "keptLean", madeAt: answer.choice.made_at });
         onKept(keep.leanAssertionId);

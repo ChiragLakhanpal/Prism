@@ -87,7 +87,7 @@ def test_the_thresholds_file_holds_table_i_word_for_word_in_us_dollars(category,
 
 
 def test_the_long_form_is_offered_from_the_lowest_table_i_threshold_of_the_package_s_category():
-    """Table I's thresholds depend on the procurement risk the Borrower and the World Bank agree, which Strata
+    """Table I's thresholds depend on the procurement risk the Borrower and the World Bank agree, which Prism
     cannot see, so it offers the Long Form from the lowest one: the High risk column."""
     limits = config.load_thresholds()
 

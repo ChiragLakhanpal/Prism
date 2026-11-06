@@ -259,13 +259,13 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await expect(sides.nth(0)).toContainText("Satisfactory");
   await expect(sides.nth(1)).toContainText("ICR, paragraph 78");
   await expect(sides.nth(1)).toContainText("October 10, 2019. Written after the project closed.");
-  await expect(sides.nth(1).locator("[data-source-tag]")).toHaveText("Strata leans on this");
+  await expect(sides.nth(1).locator("[data-source-tag]")).toHaveText("Prism leans on this");
   await expect(sides.nth(0).locator("[data-source-tag]")).toHaveCount(0);
   await expect(sides.nth(1)).toContainText(`"${ICR_78}"`);
   const looks = await sides.evaluateAll((all) => all.map((side) => [getComputedStyle(side).borderColor, getComputedStyle(side).backgroundColor]));
   expect(looks[0]).toEqual(looks[1]);
   // Why I lean on the ICR is in the tag's window since ticket 126; the tag's words stay on the card (rule 35).
-  await sides.nth(1).getByRole("button", { name: "Strata leans on this" }).click();
+  await sides.nth(1).getByRole("button", { name: "Prism leans on this" }).click();
   await expect(page.locator("[data-disagreement-rule]")).toHaveText(
     "For a judgment of how a project went, I lean on the later, more independent report, here the ICR, and I keep ISR 7 as the record of the earlier view.",
   );
@@ -288,7 +288,7 @@ test("the chart is one tab stop with arrow keys between marks, and the dashed li
   await item(page, EFFICIENCY).click();
   const second = dialog.locator("[data-disagreement]");
   // The rule is in the lean tag's window since ticket 126.
-  await second.getByRole("button", { name: "Strata leans on this" }).click();
+  await second.getByRole("button", { name: "Prism leans on this" }).click();
   await expect(page.locator("[data-disagreement-rule]")).toContainText("here the ICR Review, and I keep the ICR as the record of the earlier view.");
   await page.keyboard.press("Escape");
   await expect(second).toContainText('If you keep the ICR instead, I treat "efficiency rating" as');
@@ -527,7 +527,7 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
   await card.getByRole("button", { name: "Keep ISR 7" }).click();
   await expect(card.locator("[data-kept-line]")).toHaveText('You kept ISR 7 on October 23, 2026. Your reason: "The mission saw the works on site."');
   await expect(card.locator("[data-side=other] [data-source-tag]")).toHaveText("You kept this");
-  await expect(card.locator("[data-side=leaned] [data-source-tag]")).toHaveText("Strata leans on this");
+  await expect(card.locator("[data-side=leaned] [data-source-tag]")).toHaveText("Prism leans on this");
   expect(posted).toEqual([
     {
       kept_assertion_id: "strata.gold.passage:26733307/v1/s4#P130164/pdo_progress",
@@ -542,11 +542,11 @@ test("keeping ISR 7 under an answer that rests on it asks for a reason and store
   await card.evaluate((element) => element.scrollIntoView({ block: "center" }));
   expect(await axe(page, "[data-answer-panel]")).toEqual([]);
 
-  // Going back to Strata's choice that fails to save keeps the choice and says so to a screen reader too.
+  // Going back to Prism's choice that fails to save keeps the choice and says so to a screen reader too.
   await page.route("**/api/disagreements/*/choices**", (route) =>
     route.request().method() === "POST" ? route.fulfill({ status: 503, json: { code: "not_recorded" } }) : route.fulfill({ json: { choice: null } }),
   );
-  await card.getByRole("button", { name: "Go back to Strata's choice" }).click();
+  await card.getByRole("button", { name: "Go back to Prism's choice" }).click();
   await expect(card.locator("[aria-live=polite]")).toHaveText("I couldn't save that just now, so you still keep ISR 7.");
   await expect(card.locator("[data-kept-line]")).toBeVisible();
 });

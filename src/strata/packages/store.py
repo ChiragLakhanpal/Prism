@@ -164,7 +164,7 @@ class PackageStore:
 
     def choose_plan_date(self, viewer_id: str, package_kind: str, package_key: str, choice: str,
                          at: dt.datetime) -> None:
-        """Keep the plan date a viewer chose for the dates Strata drafts for a package (ticket 26): one row, made or
+        """Keep the plan date a viewer chose for the dates Prism drafts for a package (ticket 26): one row, made or
         changed with a MERGE."""
         with self._open() as engine:
             engine.run(_sql("choose_plan_date"), {"viewer_id": viewer_id, "package_kind": package_kind,

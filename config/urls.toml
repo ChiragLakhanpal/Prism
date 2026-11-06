@@ -1,4 +1,4 @@
-# Where the panel finds Strata, its deck, the dashboard, the repo and this proposal (ticket 46; the 46 brief, sections
+# Where the panel finds Prism, its deck, the dashboard, the repo and this proposal (ticket 46; the 46 brief, sections
 # 5 and 18). This is the one place each address is set: the proposal's data sheet, the README's "For the panel"
 # section and the deck's last slide (ticket 47) all read it through strata.config.load_urls().
 #
@@ -9,9 +9,9 @@
 #   app        the Databricks App's address, as `databricks apps get strata -o json` prints it (url). Set from the
 #              deploy of October 26, 2026 on the paid Azure workspace (docs/paid-workspace.md, command 4; the move's
 #              block in docs/workspace-catchup.md)
-#   dashboard  the published "Strata operations" dashboard's address, from its Share link in the workspace
+#   dashboard  the published "Prism operations" dashboard's address, from its Share link in the workspace
 #   repo       the GitHub repo's address, once its owner is chosen (docs/STATUS.md, decision 10)
 
 app = "https://strata-7405609289499029.9.azure.databricksapps.com"
 dashboard = ""
-repo = ""
+repo = "https://github.com/ChiragLakhanpal/Prism"

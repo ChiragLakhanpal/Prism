@@ -35,7 +35,7 @@ def registry():
 
 
 def language(code: str | None) -> Language:
-    """The registry's entry for a working language; English for None or a language Strata does not write in."""
+    """The registry's entry for a working language; English for None or a language Prism does not write in."""
     found = registry().get(code or ENGLISH)
     return found if found is not None and found.working else registry().get(ENGLISH)
 

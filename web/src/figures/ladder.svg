@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg viewBox="0 0 420 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ladder-title ladder-desc" data-motion-root="" data-motion-mode="none" data-step-count="5" id="ladder-root">
-        <title id="ladder-title">Which report Strata leans on</title>
+        <title id="ladder-title">Which report Prism leans on</title>
         <desc id="ladder-desc">For how a project turned out, the highest report on the ladder that speaks to the question wins, from an IEG review down to the completion report, the last status report and the appraisal document, and for a fact about a moment, the record made at that moment wins.</desc>
         <defs>
       <style>#ladder-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }

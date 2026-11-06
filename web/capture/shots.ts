@@ -2195,7 +2195,7 @@ export const SHOTS: Shot[] = [
   app("app--focus-skip-link", "/", {}, { act: (page) => page.keyboard.press("Tab") }),
 
   // The Data tab (ticket 16): every state of Data readiness and Sources and licenses, and its focus
-  // and hover states. The loading states are the gallery's readiness page. How Strata works left the
+  // and hover states. The loading states are the gallery's readiness page. How Prism works left the
   // tab in ticket 97, and its two pages became the sidebar's items under Data in ticket 104.
   data("readiness", "/data"),
   // Ticket 104: the finding, the two panels and the three closed rows, then the rows opened in place, and the page

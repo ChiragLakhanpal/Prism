@@ -5,7 +5,7 @@
 -- url           the address fetched
 -- content_hash  SHA-256 of the text
 -- text          the text, byte for byte as UTF-8
--- fetched_at    when Strata fetched it, in UTC
+-- fetched_at    when Prism fetched it, in UTC
 -- public_from   the document's disclosure date, or the day it was fetched where that date is
 --               missing or later than the fetch (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.bronze.document_texts (

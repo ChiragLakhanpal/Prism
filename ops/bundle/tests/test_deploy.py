@@ -37,7 +37,7 @@ INDEX_OBJECTS = ("strata.gold.passage_index", f"strata.gold.event_log_{INDEX_ID}
 
 
 class FakeWorkspace(WorkspaceStateFake):
-    """A workspace that holds fairshare's catalog and, once the bundle deploys, Strata's. With app, it also holds
+    """A workspace that holds fairshare's catalog and, once the bundle deploys, Prism's. With app, it also holds
     the app that ops/dayone/dayone.toml names, as apps get returns it."""
 
     def __init__(self, deploy_fails=False, touch_fairshare=False, app=None, **state):
@@ -62,7 +62,7 @@ class FakeWorkspace(WorkspaceStateFake):
         for schema in declared.schemas:
             self.duckdb.run(f"CREATE SCHEMA IF NOT EXISTS strata.{schema}")
         self.deployed = declared
-        # The bundle's grants replace every other grant on Strata's catalog, schemas and volume, the app's too.
+        # The bundle's grants replace every other grant on Prism's catalog, schemas and volume, the app's too.
         self.grants = {name: {who: list(what) for who, what in grants.items()}
                        for name, grants in declared.grants.items()}
         # The bundle rewrites a dashboard whose file changed, and the workspace stamps its update_time.
@@ -146,8 +146,8 @@ def test_the_first_deploy_creates_the_catalog_its_schemas_the_volume_the_tables_
                  "The table strata.ops.pipeline_runs is new.",
                  "The grants on strata are new.",
                  "The job strata nightly is new.",
-                 "The dashboard Strata operations is new.",
-                 "The dashboard Strata operations (test) is new."):
+                 "The dashboard Prism operations is new.",
+                 "The dashboard Prism operations (test) is new."):
         assert line in out
     assert ("fairshare's catalog lists the same before and after the deploy: "
             "one schema, one table and no volumes.") in out
@@ -253,7 +253,7 @@ def test_the_live_workspace_adds_the_app_s_privilege_and_removes_no_other_grant(
 
 @pytest.mark.parametrize("app, said", [
     ({"description": "Someone else's app", "principal": APP_PRINCIPAL},
-     "The app strata is not Strata's: its description is \"Someone else's app\". I granted nothing for it."),
+     "The app strata is not Prism's: its description is \"Someone else's app\". I granted nothing for it."),
     ({"description": deploy_app.DESCRIPTION, "principal": None},
      "The app strata has no service principal yet, so I granted nothing for it.")])
 def test_an_app_that_is_not_strata_s_or_has_no_service_principal_gets_no_grant(app, said, capsys):
@@ -399,7 +399,7 @@ def test_a_deploy_that_rewrote_both_dashboards_names_each_one_as_changed(capsys)
     changed = out.split("What changed:\n")[1].split("\n")
 
     assert code == 0
-    assert changed[:2] == ["   The dashboard Strata operations changed.", "   The dashboard Strata operations (test) changed."]
+    assert changed[:2] == ["   The dashboard Prism operations changed.", "   The dashboard Prism operations (test) changed."]
     assert "No changes." not in out
 
 
@@ -409,7 +409,7 @@ def test_the_live_listing_of_a_dashboard_holds_when_the_workspace_last_wrote_it(
     class Lakeview:
         def list(self):
             return [SimpleNamespace(display_name="Someone else's", dashboard_id="d0"),
-                    SimpleNamespace(display_name="Strata operations", dashboard_id="d1")]
+                    SimpleNamespace(display_name="Prism operations", dashboard_id="d1")]
 
         def get(self, dashboard_id):
             assert dashboard_id == "d1"
@@ -419,7 +419,7 @@ def test_the_live_listing_of_a_dashboard_holds_when_the_workspace_last_wrote_it(
     live = object.__new__(bundle_live.LiveWorkspace)
     live.w = SimpleNamespace(lakeview=Lakeview())
 
-    assert live.dashboard("Strata operations") == {"name": "Strata operations", "pages": ["Data readiness"],
+    assert live.dashboard("Prism operations") == {"name": "Prism operations", "pages": ["Data readiness"],
                                                    "warehouse_id": "wh-1", "update_time": "2026-10-26T10:21:52.000Z"}
 
 

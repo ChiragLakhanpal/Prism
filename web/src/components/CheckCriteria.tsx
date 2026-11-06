@@ -304,7 +304,7 @@ function PartOne({ comparison, readinessHref, steps, onRetry, asOf }: {
           <Alert state="info">{words.items.staleComparables}</Alert>
         </div>
       )}
-      {/* A failed save is said once, under the field. A content filter is no failure of Strata's: a plain
+      {/* A failed save is said once, under the field. A content filter is no failure of Prism's: a plain
           sentence (brief 14's pattern). Any other code has its own sentence and "Try again". */}
       {comparison.status === "error" && comparison.code === "content_filter" && (
         <p className="max-w-prose text-body text-ink" data-content-filter>{words.errors.content_filter}</p>

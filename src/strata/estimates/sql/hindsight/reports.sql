@@ -1,5 +1,5 @@
 -- The hindsight test (ticket 34): for each project named, its approval date, country and sector, its newest ICR
--- that no re-issue had replaced by :as_of, with how many of its passages Strata read, and its newest ICR Review
+-- that no re-issue had replaced by :as_of, with how many of its passages Prism read, and its newest ICR Review
 -- that no re-issue had replaced (a re-issue replaces the earlier version, as the evidence ladder says). A project
 -- with no such report comes back with an empty document id. :projects holds the project IDs, joined by commas;
 -- :icr and :icr_review are the documents API's types.

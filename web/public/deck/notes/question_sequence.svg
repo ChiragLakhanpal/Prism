@@ -4,7 +4,7 @@
 <text x="90.0" y="33.5" class="d-text b" text-anchor="middle">Browser</text>
 <line x1="90" y1="50" x2="90" y2="545" class="d-rule dash"/>
 <rect x="215" y="10" width="150" height="40" rx="8" class="d-box hi"/>
-<text x="290.0" y="33.5" class="d-text b" text-anchor="middle">Strata app</text>
+<text x="290.0" y="33.5" class="d-text b" text-anchor="middle">Prism app</text>
 <line x1="290" y1="50" x2="290" y2="545" class="d-rule dash"/>
 <rect x="425" y="10" width="150" height="40" rx="8" class="d-box violet"/>
 <text x="500.0" y="33.5" class="d-text b" text-anchor="middle">Foundry agent</text>

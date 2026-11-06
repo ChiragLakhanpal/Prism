@@ -1,6 +1,6 @@
 """Who is asking: the viewer identity a Databricks App forwards with each request.
 
-Strata runs as each viewer (ADR 0003). The App's proxy adds the viewer's email, user name,
+Prism runs as each viewer (ADR 0003). The App's proxy adds the viewer's email, user name,
 user id and access token to every request it passes on. Each request builds its own
 Viewer from those headers, and nothing about a viewer is kept in a module global
 (CLAUDE.md rule 7). Written from the description of fairshare's dbx.py in docs/PLAN.md

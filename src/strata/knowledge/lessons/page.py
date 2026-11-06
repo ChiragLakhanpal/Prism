@@ -6,7 +6,7 @@ compares versions, never decides a tier and never picks a count word (the 39 bri
 
 - digest() is the opening sentence and its count words, each with the items it counts. A visit is a session
   (strata.knowledge.lessons.visits); the window runs from the start of the previous visit to the start of this one.
-  Reports are the ICRs, ICR Reviews and PPARs Strata first fetched in the window; new, changed and retired lessons
+  Reports are the ICRs, ICR Reviews and PPARs Prism first fetched in the window; new, changed and retired lessons
   are the versions a lead decided in it; proposed lessons are those waiting in the review queue now, as a count only.
 - changed_where_used() is "Changed where you used it": one notice per lesson and cited version in the reader's own
   open drafts (strata.knowledge.lessons.notices decides the tier, as it does for the draft page and the nightly job).
@@ -167,7 +167,7 @@ class LessonsPage:
     # ── The digest ───────────────────────────────────────────────────────
 
     def reports(self, engine: Engine, since: dt.datetime, until: dt.datetime) -> list[dict]:
-        """The completion reports and IEG's reports Strata first fetched in the window, oldest first."""
+        """The completion reports and IEG's reports Prism first fetched in the window, oldest first."""
         found = []
         for row in _rows(engine, "reports_loaded", types=",".join(REPORT_TYPES.values()), since=since, until=until):
             template = template_for(row["document_type"] or "")

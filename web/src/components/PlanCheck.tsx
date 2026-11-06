@@ -5,7 +5,7 @@
 //   action. It sticks under the bar from a 1024 px window 50rem tall, and only while it holds that action.
 // - PlanCheck: the finding in the finding style, with "How I checked" beside it from a 75rem page area (ticket 130),
 //   then the activities panel: its name and count line, the rows in STEP's columns with each mark's badge and reason,
-//   the activities with no signals folded behind "Show them", and a foot strip with the source line and what Strata
+//   the activities with no signals folded behind "Show them", and a foot strip with the source line and what Prism
 //   cannot see. Below that page area "How I checked" follows the activities. Then the zones the page passes: "What
 //   changed" as a closed row and the baseline as a row.
 // - PlanCheckSkeleton: the same places while the check loads, under the real panel name and column heads.
@@ -303,7 +303,7 @@ function Finding({ result, onMark }: { result: CheckedPlan; onMark?: (mark: Mark
 }
 
 // How I checked and how I measure delay: "I checked every activity against its own dates, ... because each plan update
-// can move the planned dates." Since ticket 126 it opens the "What Strata found" column's window, since a reader who
+// can move the planned dates." Since ticket 126 it opens the "What Prism found" column's window, since a reader who
 // questions a delay opens that column, and no longer sits under the finding.
 function MethodSentence({ result }: { result: CheckedPlan }) {
   const phrases = result.checks_run.map((check) => words.checks[check as keyof typeof words.checks]).filter(Boolean);
@@ -407,10 +407,10 @@ function FoldButton({ count, open, controls, describedBy, onToggle }: {
 
 // The table's columns (DESIGN.md section 5, Plan check table; ticket 100). All six from a table frame of 60rem (the
 // plan container, inside the window's margins: a 1280 or 1440 px window with the rail); three below it, Activity,
-// Estimated (US$) and What Strata found, since a row's records show the rest in the drawer: a 1024 px window with
+// Estimated (US$) and What Prism found, since a row's records show the rest in the drawer: a 1024 px window with
 // the rail, or a wide window beside the drawer; and cards below 34rem (app.css, --container-plan-six and
 // --container-plan-cards). Estimated (US$) keeps a fixed 9rem, so "232,524,000.00" never wraps; Activity and What
-// Strata found share what is left in three columns. Each width is measured on the real and the longest values in
+// Prism found share what is left in three columns. Each width is measured on the real and the longest values in
 // the fixture, so no word in a cell breaks inside itself (web/tests/check-plan.spec.ts).
 const SIX = "hidden @plan-six/plan:table-cell";
 const COLUMNS: { key: string; header: ReactNode; width: string; numeric?: boolean; six?: boolean }[] = [
@@ -524,7 +524,7 @@ function Reference({ row, open, onOpen }: { row: Activity; open: boolean; onOpen
 }
 
 // Under a reference that breaks STEP's form and that the plan reader kept as it read it (ticket 131), so the reader
-// knows the odd characters come from the plan, not from Strata.
+// knows the odd characters come from the plan, not from Prism.
 function AsRead({ row }: { row: Activity }) {
   return row.reference_as_read ? <span className="block text-small text-ink-muted">{words.referenceAsRead}</span> : null;
 }
@@ -1135,7 +1135,7 @@ export function PlanCheckSkeleton({ slow, afterNarration, howChecked = false }: 
             for. The place is a typical finding, written from the copy file's templates in the finding's own style and
             never seen or heard, so it takes the lines the real one takes at every width (ticket 59). Its count words
             keep to the line's height (Num). Since ticket 126 the finding has no byline over it and no method sentence
-            under it, which moved into the "What Strata found" column's window; the place and the finding's block each
+            under it, which moved into the "What Prism found" column's window; the place and the finding's block each
             keep 16 px under the finding, which the narration's slow line fills at 1440 and 390 px. */}
         <div className="grid" data-plan-narration>
           <div aria-hidden="true" className="invisible col-start-1 row-start-1">
@@ -1237,7 +1237,7 @@ export function PlanCheckSkeleton({ slow, afterNarration, howChecked = false }: 
               </ul>
             </div>
           </div>
-          {/* The foot strip's places: the source line's bar, and what Strata cannot see, which reads the same before
+          {/* The foot strip's places: the source line's bar, and what Prism cannot see, which reads the same before
               the check arrives, so the panel ends as it will (ticket 100's design review, item 7). */}
           <FootStrip>
             <SkeletonLine className="text-caption" width="w-3/5" />

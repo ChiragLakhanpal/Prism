@@ -1,7 +1,7 @@
 """The lesson review queue at seam 3, through the HTTP routes (ticket 29; docs/PLAN.md section 11, "Lesson
 governance").
 
-Strata proposes; an accredited procurement specialist recommends; a different lead procurement specialist
+Prism proposes; an accredited procurement specialist recommends; a different lead procurement specialist
 decides, each with a reason; nobody recommends or decides on a lesson from their own project. The roles
 come from tests/fixtures/roles.toml, the viewer from the headers the Databricks App forwards, and the
 reviewers' acts go to a copy of the fixture database. Every read is the viewer's, and every act is written by

@@ -41,8 +41,8 @@ for (const width of WIDTHS) {
     await landed(page);
 
     // No byline words on screen; the answer's h3 keeps them for a screen reader, with its data-byline.
-    for (const words of ["Strata, in short", "Strata found", "Strata held back"]) expect(await seen(page, words), words).toBe(false);
-    const byline = panel(page).getByRole("heading", { level: 3, name: "Strata, in short" });
+    for (const words of ["Prism, in short", "Prism found", "Prism held back"]) expect(await seen(page, words), words).toBe(false);
+    const byline = panel(page).getByRole("heading", { level: 3, name: "Prism, in short" });
     await expect(byline).toHaveAttribute("data-byline", "inShort");
     const size = await byline.evaluate((element) => element.getBoundingClientRect());
     expect(size.width * size.height).toBeLessThanOrEqual(1);

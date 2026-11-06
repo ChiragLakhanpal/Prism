@@ -203,7 +203,7 @@ def shadow_check(engine: Engine, model: str, challenger: int, champion: int | No
 # ── Scoring in shadow ────────────────────────────────────────────────────
 
 def score_in_shadow(engine: Engine, run_id: str, scored_at: dt.datetime) -> int:
-    """The nightly score task's shadow scores: every package Strata knows, as described, with the newest challenger
+    """The nightly score task's shadow scores: every package Prism knows, as described, with the newest challenger
     kept in strata.gold.time_estimate_model, while it is newer than the champion. Returns the rows it appended to
     strata.ops.time_estimate_shadow, which no tool and no screen reads."""
     from strata.config import load_time_estimate

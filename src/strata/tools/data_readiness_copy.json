@@ -116,23 +116,23 @@
     "December"
   ],
   "dashboard": {
-    "name": "Strata",
+    "name": "Prism",
     "page": "Data readiness",
     "introHeading": "Data readiness",
-    "intro": "How fit each source is to support answers. These are the same measures as the Data readiness page in Strata. Pick a measure date to compare the two.",
+    "intro": "How fit each source is to support answers. These are the same measures as the Data readiness page in Prism. Pick a measure date to compare the two.",
     "measureDate": "Measure date",
     "measureDateAbout": "Every tile shows the newest measures taken on or before this date. It starts on today's date.",
     "headline": "What the measures say",
-    "headlineAbout": "The day's headline, written by the same code as the Data readiness page in Strata.",
+    "headlineAbout": "The day's headline, written by the same code as the Data readiness page in Prism.",
     "measuredOn": "Measured on",
     "headlineColumn": "Headline",
     "awardRows": "Contract-award rows per fiscal year, by dataset",
-    "awardRowsAbout": "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Strata counts them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for each contract, because Strata shows those years as a Gap with no count. A missing bar means no rows.",
+    "awardRowsAbout": "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Prism counts them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for each contract, because Prism shows those years as a Gap with no count. A missing bar means no rows.",
     "fiscalYear": "Fiscal year",
     "rows": "Rows",
     "dataset": "Dataset",
     "sourceRows": "Rows per fiscal year, by source",
-    "sourceRowsAbout": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts, then the documents I read of each type, by the fiscal year they were disclosed. Each source's rows are counted as its Coverage column in Strata counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of contract-award rows.",
+    "sourceRowsAbout": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts, then the documents I read of each type, by the fiscal year they were disclosed. Each source's rows are counted as its Coverage column in Prism counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of contract-award rows.",
     "documentRows": "{type}, documents read",
     "source": "Source",
     "links": "Share of rows that link, by link",
@@ -155,7 +155,7 @@
     "rank": "Rank",
     "fix": "Fix",
     "projects": "Projects it would add evidence to",
-    "notes": "Source: Strata's data readiness measures in strata.ops.",
+    "notes": "Source: Prism's data readiness measures in strata.ops.",
     "datasets": {
       "readiness_headline": "The day's headline",
       "award_rows_by_year": "Contract-award rows per fiscal year",
@@ -195,5 +195,5 @@
     "partial": "Partial",
     "gap": "Gap"
   },
-  "footer": "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+  "footer": "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
 }

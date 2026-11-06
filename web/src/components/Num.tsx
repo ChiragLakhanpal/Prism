@@ -1,4 +1,4 @@
-// Num: every number Strata shows. It writes the number by DESIGN.md sections 6 and 7 (through
+// Num: every number Prism shows. It writes the number by DESIGN.md sections 6 and 7 (through
 // web/src/lib/format.ts), with tabular numerals, so a ratio under 20 cases can never become a
 // percentage. A number with a check is a button with a dotted underline: hover or focus shows its
 // tooltip (DESIGN.md section 5, Number tooltip; ticket 96), which says what the number is, where it

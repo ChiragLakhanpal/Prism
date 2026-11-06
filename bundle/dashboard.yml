@@ -1,4 +1,4 @@
-# Strata's AI/BI dashboard, "Strata operations" (tickets 16 and 45; docs/PLAN.md section 9), and its test copy.
+# Prism's AI/BI dashboard, "Prism operations" (tickets 16 and 45; docs/PLAN.md section 9), and its test copy.
 # src/strata/dashboard defines their three pages and tiles in code and writes dashboards/strata.lvdash.json and
 # dashboards/strata_test.lvdash.json, which these resources deploy with the rest of the bundle, by the same one
 # command (bundle/README.md). The test copy is where a new tile is tried before it reaches the dashboard people use
@@ -11,12 +11,12 @@
 resources:
   dashboards:
     strata_dashboard:
-      display_name: Strata operations
+      display_name: Prism operations
       file_path: dashboards/strata.lvdash.json
       warehouse_id: ${var.warehouse_id}
       embed_credentials: false
     strata_dashboard_test:
-      display_name: Strata operations (test)
+      display_name: Prism operations (test)
       file_path: dashboards/strata_test.lvdash.json
       warehouse_id: ${var.warehouse_id}
       embed_credentials: false

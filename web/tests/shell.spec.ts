@@ -39,13 +39,13 @@ test("the navy bar carries the official World Bank Group logo, unaltered, 24 px 
 
   const bar = (await page.locator("[data-nav-bar]").boundingBox())!;
   const box = (await logo.boundingBox())!;
-  const wordmark = (await page.getByRole("link", { name: "Strata", exact: true }).boundingBox())!;
+  const wordmark = (await page.getByRole("link", { name: "Prism", exact: true }).boundingBox())!;
   expect([box.width, box.height]).toEqual([120, 24]);
   expect(box.y - bar.y).toBeGreaterThanOrEqual(12);
   expect(bar.y + bar.height - (box.y + box.height)).toBeGreaterThanOrEqual(12);
   // Ticket 93: the bar starts 16 px from the window's edge, beside the sidebar's icons.
   expect(Math.round(box.x)).toBe(16);
-  // 24 px to the wordmark, so the logo and "Strata" never read as one co-branded name.
+  // 24 px to the wordmark, so the logo and "Prism" never read as one co-branded name.
   expect(wordmark.x - (box.x + box.width)).toBeGreaterThanOrEqual(24);
 });
 
@@ -185,7 +185,7 @@ test("the focused skip link shows below the bar, over the page, and covers neith
     const link = (await skip.boundingBox())!;
     const bar = (await page.locator("[data-nav-bar]").boundingBox())!;
     expect(link.y, `${width} px`).toBeGreaterThanOrEqual(bar.y + bar.height);
-    for (const part of [page.locator("[data-nav-bar] img"), page.getByRole("link", { name: "Strata", exact: true })]) {
+    for (const part of [page.locator("[data-nav-bar] img"), page.getByRole("link", { name: "Prism", exact: true })]) {
       const box = (await part.boundingBox())!;
       const overlaps = link.x < box.x + box.width && box.x < link.x + link.width && link.y < box.y + box.height && box.y < link.y + link.height;
       expect(overlaps, `${width} px`).toBe(false);
@@ -549,7 +549,7 @@ test("the Menu button starts on the window's margin with no outline at rest, and
   await menu.click();
   await expect(menu).toHaveAttribute("aria-expanded", "true");
   await expect.poll(border).toBe("rgb(255, 255, 255)");
-  const wordmark = page.locator("[data-nav-bar] a").filter({ hasText: "Strata" });
+  const wordmark = page.locator("[data-nav-bar] a").filter({ hasText: "Prism" });
   expect(await wordmark.evaluate((element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight])).toEqual(["18px", "24px", "700"]);
 });
 
@@ -636,7 +636,7 @@ test("an account the warehouse refuses gets one error alert that says how to get
   await page.goto("/packages");
 
   await expect(page.getByRole("alert")).toHaveText(
-    "Your account can't read the data I hold yet; ask the person who shared Strata with you for access.",
+    "Your account can't read the data I hold yet; ask the person who shared Prism with you for access.",
   );
   await expect(page.locator("[data-stamp]")).toHaveText("I can't read the data date.");
 });
@@ -671,7 +671,7 @@ test("while the stamp tries again, the access alert stays where it is, so it is 
   expect(reads).toBe(2);
 });
 
-test("with no forwarded identity, one error alert says to open Strata from its link in the workspace", async ({ page }) => {
+test("with no forwarded identity, one error alert says to open Prism from its link in the workspace", async ({ page }) => {
   await mockShell(page, {
     me: { body: '{"email": null, "name": null, "signed_in": false, "has_token": false}' },
     freshness: { status: 401, body: await recorded("freshness-no-identity.json") },
@@ -680,7 +680,7 @@ test("with no forwarded identity, one error alert says to open Strata from its l
   await page.goto("/");
 
   await expect(page.getByRole("alert")).toHaveText(
-    "I can't tell who you are, so I can't read any data; open Strata from its link in the workspace.",
+    "I can't tell who you are, so I can't read any data; open Prism from its link in the workspace.",
   );
   await page.getByRole("button", { name: "View: World Bank staff" }).click();
   await expect(page.getByRole("dialog", { name: "Your view" })).toContainText("You are not signed in.");
@@ -723,7 +723,7 @@ test("at 390 px the Menu sheet's foot holds one view button under Data and the s
   const view = sheet.getByRole("button", { name: "View: World Bank staff", exact: true });
   await expect(view).toHaveAttribute("aria-expanded", "false");
   await expect(sheet.locator("[data-view-row]")).toHaveCount(0);
-  await expect(sheet.getByText("See Strata as", { exact: true })).toHaveCount(0);
+  await expect(sheet.getByText("See Prism as", { exact: true })).toHaveCount(0);
   // Data, then the stamp, then the view button, which ends the sheet.
   const data = (await sheet.locator("[data-nav-item=data]").boundingBox())!;
   const stamp = (await sheet.locator("[data-sidebar-stamp]").boundingBox())!;
@@ -748,7 +748,7 @@ test("at 390 px the Menu sheet's foot holds one view button under Data and the s
   await expect(view).toHaveAttribute("aria-expanded", "true");
   const popover = sheet.getByRole("dialog", { name: "Your view" });
   await expect(popover.locator("[data-view-row]")).toHaveCount(3);
-  await expect(popover.getByText("See Strata as", { exact: true })).toBeVisible();
+  await expect(popover.getByText("See Prism as", { exact: true })).toBeVisible();
   // Focus lands on the current view's row, as in the bar's popover.
   await expect(popover.locator("[data-view-row=staff]")).toBeFocused();
   await expect(popover.locator("[data-view-row=staff] svg")).toHaveCount(1);
@@ -798,12 +798,12 @@ test("at 320 x 568 the Menu sheet's view popover fits above its button and scrol
   expect(at.y + at.height, "the last language above the button").toBeLessThanOrEqual(button.y);
 });
 
-// Ticket 110, from the user's review of October 27, 2026: "See Strata as" names the group in the label style (DESIGN.md
+// Ticket 110, from the user's review of October 27, 2026: "See Prism as" names the group in the label style (DESIGN.md
 // section 3: 13/16, 600, ink-muted), so it no longer reads as a fourth view. It sits 16 px under the signed-in line
 // (between blocks) and 8 px above the first view row (a heading to its first line; section 4). DESIGN.md keeps 700 for
 // the h1 and the wordmark, so nothing in the panel is bold. The Menu sheet shows the same panel below 768 px.
 for (const width of [1440, 390]) {
-  test(`at ${width} px "See Strata as" is a label 16 px under the signed-in line and 8 px over the first view, and nothing in the panel is bold`, async ({ page }) => {
+  test(`at ${width} px "See Prism as" is a label 16 px under the signed-in line and 8 px over the first view, and nothing in the panel is bold`, async ({ page }) => {
     await mockShell(page);
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
@@ -812,7 +812,7 @@ for (const width of [1440, 390]) {
     // In the Menu sheet the view rows show once its view button is pressed (ticket 59).
     if (sheet) await page.locator("[data-menu-panel]").getByRole("button", { name: "View: World Bank staff", exact: true }).click();
     const panel = sheet ? page.locator("[data-menu-panel]") : page.getByRole("dialog", { name: "Your view" });
-    const label = panel.getByText("See Strata as", { exact: true });
+    const label = panel.getByText("See Prism as", { exact: true });
     await expect(label).toBeVisible();
     const look = await label.evaluate((el) => {
       const style = getComputedStyle(el);

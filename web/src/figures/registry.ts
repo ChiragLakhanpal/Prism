@@ -1,12 +1,12 @@
 // The structural figures (ticket 47; the second draft's brief, section 5), defined once for the deck at /present and
-// How Strata works. core-sample is a hairline figure (hairline-create, web/src/figures/hairline); the rest are
+// How Prism works. core-sample is a hairline figure (hairline-create, web/src/figures/hairline); the rest are
 // diagram-design figures under the strata-wb profile, drawn as HTML in web/figures/ and exported as SVG beside this
 // file with the skill's export_svg.py --system-fonts, so they use the app's own Open Sans and Roboto Mono. Each SVG's
 // viewBox is its slot, drawn 1:1. The words people read about each figure (its title, text version and caption) are
 // in web/src/deck/copy.ts under figureCopy, and tests/test_deck_figures.py checks every export against its source.
 //
 // A figure marks the parts a press brings in with data-motion-item and data-step (the skill's step markup, in its
-// static "none" mode), so the deck can show it one step at a time; the source stays complete, and How Strata works
+// static "none" mode), so the deck can show it one step at a time; the source stays complete, and How Prism works
 // shows it whole.
 import { PAGE_ORDER, SLOTS, type FigureId, type Slot } from "./order";
 

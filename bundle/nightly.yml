@@ -17,7 +17,7 @@ resources:
   jobs:
     nightly:
       name: strata nightly
-      description: Strata's nightly run. Each task records its run in strata.ops.pipeline_runs.
+      description: Prism's nightly run. Each task records its run in strata.ops.pipeline_runs.
       schedule:
         quartz_cron_expression: "0 0 3 * * ?"
         timezone_id: America/New_York

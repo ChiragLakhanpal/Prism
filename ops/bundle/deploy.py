@@ -2,7 +2,7 @@
 # requires-python = ">=3.12,<3.14"
 # dependencies = ["databricks-sdk==0.156.0", "pyyaml==6.0.3"]
 # ///
-"""Deploy Strata's catalog and nightly job to the shared workspace, and say what changed.
+"""Deploy Prism's catalog and nightly job to the shared workspace, and say what changed.
 
 Run it from the main checkout after the wizard:
 
@@ -116,14 +116,14 @@ def changes(before: dict, after: dict, kinds: dict[str, str] = KINDS) -> list[st
 def give_app_access(workspace) -> str:
     """Give the app's own service principal back its way in to the catalog and to strata.ops (deploy_app.ACCESS),
     which the bundle's grants replace, and say what I did (ticket 79). The app is the one ops/dayone/dayone.toml
-    names, as apps get returns it. No app yet, or an app that is not Strata's, gets nothing."""
+    names, as apps get returns it. No app yet, or an app that is not Prism's, gets nothing."""
     name = dayone.load_config()["names"]["app"]
     app = workspace.app(name)
     if app is None:
         return (f"I found no app named {name}, so I granted nothing for it. Its deploy, ops/app/deploy_app.py, "
                 "grants its service principal what it needs.")
     if not deploy_app.is_strata(app):
-        return f"The app {name} is not Strata's: its description is {app['description']!r}. I granted nothing for it."
+        return f"The app {name} is not Prism's: its description is {app['description']!r}. I granted nothing for it."
     principal = app.get("principal") or ""
     if not deploy_app.PRINCIPAL.fullmatch(principal):
         return f"The app {name} has no service principal yet, so I granted nothing for it."

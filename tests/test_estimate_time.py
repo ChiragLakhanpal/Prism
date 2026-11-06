@@ -1,6 +1,6 @@
 """The time estimate on screen (ticket 26) at seam 1, the lakehouse run, and seam 2, the tool contract.
 
-The nightly job's score task scores every package Strata knows, for every what-if combination, with the
+The nightly job's score task scores every package Prism knows, for every what-if combination, with the
 champion model the replay harness registered (ticket 25), into strata.gold.time_estimate_score, and keeps the
 champion it scored with in strata.gold.time_estimate_model. On this computer no workspace registry exists, so
 the task runs ticket 25's backtest first and scores with the champion it trains, as of the fixture's run day,

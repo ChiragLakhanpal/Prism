@@ -158,7 +158,7 @@ summary_fields = ["counts"]
 # project_signals (ticket 37): the fixed signals on a project that World Bank staff follow. The Following page
 # and the mission brief writer read it, and ticket 41's Home reads the same result.
 [tools.project_signals]
-description = """Runs Strata's seven fixed checks on one active project's public records and says which found \
+description = """Runs Prism's seven fixed checks on one active project's public records and says which found \
 a reason to look. A signal is a reason to look, never a finding. The checks: an activity in an implementing \
 agency's latest Procurement Plan passed its planned completion with no signed contract, leaving out an activity \
 a contract record or an award notice says was signed (moved on since the plan); a contract was signed \
@@ -314,7 +314,7 @@ returns the best passages first. A passage is one numbered paragraph, or a part 
 document, section, paragraph number and PDF page, so a citation can point to it. Its kind says what it is: \
 a paragraph (from the published text, or read by the layout parser from a scanned page), one row of a \
 table with its cells, a table's summary, or a section of a notice's text with the notice's id. A table's \
-summary is Strata's own words and never backs a number: cite the table's rows. Filter by project, \
+summary is Prism's own words and never backs a number: cite the table's rows. Filter by project, \
 document type, country, sector or the date a document became public. A report re-issued under the same \
 number replaces its earlier version, unless the as-of date comes before the re-issue. When Prompt Shields \
 found a prompt attack in a passage as it was read in, the passage is left out, and the coverage line says \
@@ -400,7 +400,7 @@ reasons = ["prompt_shields_hit", "not_screened", "ranked_below_limit"]
 abstentions = ["no_match", "unknown_document_type", "unknown_sector", "index_not_available"]
 
 [tools.data_readiness_for]
-description = """Says how fit each data source is to support answers, from Strata's data readiness \
+description = """Says how fit each data source is to support answers, from Prism's data readiness \
 measures: for each source, how many rows it holds and over how many fiscal years (coverage), how many \
 link to projects, notices or STEP references (linked), how many pages were read without losing their \
 paragraph numbers or table rows (read well), and when it was last fetched against how often it updates \
@@ -447,7 +447,7 @@ reasons = ["not_measured", "unknown_source"]
 abstentions = ["no_measures", "before_first_measure", "unknown_sources"]
 
 [tools.get_lessons]
-description = """Returns the lessons in Strata's library: procurement lessons from Implementation Completion \
+description = """Returns the lessons in Prism's library: procurement lessons from Implementation Completion \
 and Results Reports (ICRs), ICR Reviews and Project Performance Assessment Reports (PPARs), each quoted word \
 for word with its page, that an accredited procurement specialist recommended and a different lead \
 procurement specialist decided. Each lesson is at its current version, with its statement, its risk factors, \
@@ -499,7 +499,7 @@ type = "string"
 required = false
 description = """Comparable packages, by STEP reference separated by commas, such as find_comparables matched \
 for a package. With them, the result's reports count the completion reports (ICRs) of their projects that \
-Strata read, say why the other projects have none, and count how many of those reports raised each risk \
+Prism read, say why the other projects have none, and count how many of those reports raised each risk \
 factor, with the paragraph that raised it. Leave it out to count nothing."""
 
 [[tools.get_lessons.parameters]]
@@ -672,7 +672,7 @@ summary_fields = ["past_range", "plan", "frequencies", "counts", "coverage"]
 backs_advice = true
 
 [tools.estimate_time]
-description = """Gives Strata's time estimate for one package: the months by which a quarter, half, three quarters \
+description = """Gives Prism's time estimate for one package: the months by which a quarter, half, three quarters \
 and 8 in 10 of packages like it were signed, from its specific procurement notice to its signed contract, from the \
 survival model scored in batch every night. It picks the package's comparable packages by the same criteria as \
 find_comparables, which you give the same way, and counts them. Below {time_estimate.min_comparables} comparable \
@@ -856,12 +856,12 @@ summary_fields = ["estimate", "difference", "track_record", "plan_dates", "compa
                   "coverage", "step_dates"]
 
 [tools.get_disagreements]
-description = """Says where two sources disagree about a project or a package, and which one Strata leans on. \
+description = """Says where two sources disagree about a project or a package, and which one Prism leans on. \
 An assertion is a dated claim a source made: a rating in an ISR, an ICR, an ICR Review, a PPAR, a PAD or the IEG \
 ratings dataset, an account in a report of how the project was going at a named moment, or a contract's signing \
 date or amount in the awards, an award notice or a Procurement Plan. A disagreement is two assertions about the same thing, for \
 the same or an overlapping period, that cannot both be true. Each row gives both sides in the order they were \
-written, each with its value or quote, its date, its evidence tier and its evidence id; the side Strata leans \
+written, each with its value or quote, its date, its evidence tier and its evidence id; the side Prism leans \
 on and the id of the evidence ladder's rule that decided; and what you would \
 treat as true if you kept the other side. Ratings of successive periods, such as one ISR after another, are \
 a trajectory, not a disagreement, and come back under trajectories. A report re-issued under the same number \
@@ -906,7 +906,7 @@ version that was current then. Leave it out for today."""
 
 [tools.get_disagreements.result]
 row = """One disagreement: its subject, attribute and period, both sides in the order written, the side \
-Strata leans on with the rule that decided, and what you would treat as true if you kept the other side."""
+Prism leans on with the rule that decided, and what you would treat as true if you kept the other side."""
 row_fields = ["evidence_id", "public_from", "source", "disagreement_id", "subject_kind", "subject_id", "project_id",
               "attribute", "attribute_kind", "period", "sides", "lean_assertion_id", "other_assertion_id", "rule_id",
               "if_you_keep"]
@@ -1195,9 +1195,9 @@ summary_fields = ["m", "n", "past_range_total", "groups", "model", "coverage"]
 # Each record a row rests on is cited and dated like a row, so a claim can cite it.
 nested_rows = ["evidence"]
 
-# Ticket 33: structured questions through Strata's Genie space (config/genie.toml), as the viewer.
+# Ticket 33: structured questions through Prism's Genie space (config/genie.toml), as the viewer.
 [tools.ask_genie]
-description = """Asks Strata's Genie space a structured question about contracts and packages, in words, such \
+description = """Asks Prism's Genie space a structured question about contracts and packages, in words, such \
 as how many contracts a country signed in each fiscal year, and returns the rows of the query Genie wrote and \
 ran. Each row holds its values by column. Use it for counts and amounts across many records that no other tool \
 gives. Genie reads the records as they stand today, so for an as-of date before its newest record it gives no \

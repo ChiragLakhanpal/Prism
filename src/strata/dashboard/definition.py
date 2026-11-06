@@ -1,4 +1,4 @@
-"""The dashboard definition: the pages of "Strata operations" and their tiles, as code (the spec's tenth single place;
+"""The dashboard definition: the pages of "Prism operations" and their tiles, as code (the spec's tenth single place;
 ticket 45; the 45 design brief, sections 5 to 7).
 
 Each page is a list of tile entries in reading order. strata.dashboard.render places them on AI/BI's six-column grid,

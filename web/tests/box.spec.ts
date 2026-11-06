@@ -285,11 +285,11 @@ test("focused and empty, the box gives its hint; Escape closes the list, then em
 test("on a project page the box carries a removable scope chip, and Backspace in the empty box removes it", async ({ page }) => {
   await open(page, "/projects/P130164");
 
-  // Ticket 127: the field's name is "Ask Strata", not printed, and the sentence that was its name describes it; the
+  // Ticket 127: the field's name is "Ask Prism", not printed, and the sentence that was its name describes it; the
   // placeholder says the word.
-  await expect(box(page)).toHaveAccessibleName("Ask Strata");
+  await expect(box(page)).toHaveAccessibleName("Ask Prism");
   await expect(box(page)).toHaveAccessibleDescription("Questions you ask here cover P130164 only. Open a project or package, or ask a question");
-  await expect(page.locator("[data-box-slot]").getByText("Ask Strata about this project")).toBeVisible();
+  await expect(page.locator("[data-box-slot]").getByText("Ask Prism about this project")).toBeVisible();
   const remove = page.getByRole("button", { name: "Remove the scope P130164" });
   await expect(remove).toBeVisible();
 
@@ -380,15 +380,15 @@ for (const ref of ["KE-NWWDA-541055-CW-RFB", LONG_REF]) {
   });
 }
 
-// Ticket 127: from 768 px the package page's placeholder says "Strata", so the text field shares the chip's row only
-// while the whole "Ask Strata about this package" and the "/" hint fit beside it. References of 31 to 36 characters
+// Ticket 127: from 768 px the package page's placeholder says "Prism", so the text field shares the chip's row only
+// while the whole "Ask Prism about this package" and the "/" hint fit beside it. References of 31 to 36 characters
 // leave between 210 and 254 px there, the room the shorter placeholder needed and the room this one needs.
 test("at 768 px the text field shares the chip's row only while the whole placeholder and the / hint fit", async ({ page }) => {
   for (const length of [31, 33, 35, 36]) {
     const ref = LONG_REF.slice(0, length);
     await openPackage(page, ref, 768);
     const shown = await PLACEHOLDER(page);
-    expect(shown.text, ref).toBe("Ask Strata about this package");
+    expect(shown.text, ref).toBe("Ask Prism about this package");
     const cut = await page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true }).evaluate((el) => el.scrollWidth > el.clientWidth);
     expect(cut, `${ref}: the placeholder is cut`).toBe(false);
   }
@@ -478,13 +478,13 @@ test("a P-code's chip on a phone and a STEP reference's chip on a wide screen si
 
 // Ticket 127 (the design lead's Option A, refined after the Mobbin pass of October 29, 2026): the box has presence.
 // From 1024 px it is one row of 56 px, the navy bar's height; below 768 px a STEP reference's chip takes a row of its
-// own over a 40 px text row, 96 px in all. The field's name is "Ask Strata", never printed in the row (the owner's call
-// of October 29, 2026): the placeholder carries the word instead, "Ask Strata about this package" from 768 px and
+// own over a 40 px text row, 96 px in all. The field's name is "Ask Prism", never printed in the row (the owner's call
+// of October 29, 2026): the placeholder carries the word instead, "Ask Prism about this package" from 768 px and
 // today's short "Ask about this package" below it. A 1 px primary edge is drawn inside it, and DESIGN.md's shadow-float
 // sits under it. At rest the "/" hint holds the row's end; once the box holds text, an outlined 40 px Enter button
 // takes that place, named for the option Enter will choose.
 const PRIMARY_EDGE = "rgb(0, 67, 112) 0px 0px 0px 1px inset";
-test("the box is 56 px tall from 1024 px, named Ask Strata without printing it, with a primary edge and the float shadow, and typing swaps the / hint for an Enter button named for what Enter does", async ({ page }) => {
+test("the box is 56 px tall from 1024 px, named Ask Prism without printing it, with a primary edge and the float shadow, and typing swaps the / hint for an Enter button named for what Enter does", async ({ page }) => {
   const float = /`--shadow-float: ([^`]+)`/.exec(await shapeRow("Elevation"));
   expect(float, "DESIGN.md's Elevation row names shadow-float").not.toBeNull();
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -512,12 +512,12 @@ test("the box is 56 px tall from 1024 px, named Ask Strata without printing it, 
       await outer.evaluate((el) => getComputedStyle(el).boxShadow.split(/,\s*(?![^()]*\))/).filter((part) => !part.startsWith("rgba(0, 0, 0, 0)")).join(", ")),
       `${width} px: the primary edge and shadow-float`,
     ).toBe(`${PRIMARY_EDGE}, ${shadow}`);
-    await expect(box(page)).toHaveAccessibleName("Ask Strata");
+    await expect(box(page)).toHaveAccessibleName("Ask Prism");
     // The name is the field's own, never a label printed in the row; the placeholder says it.
     await expect(page.locator("[data-box-slot] label")).toHaveCount(0);
     const shown = (await PLACEHOLDER(page)).text;
-    expect(shown, `${width} px: the placeholder`).toBe(width >= 768 ? "Ask Strata about this package" : "Ask about this package");
-    await expect(outer.getByText("Ask Strata", { exact: true }), `${width} px: no printed name`).toHaveCount(0);
+    expect(shown, `${width} px: the placeholder`).toBe(width >= 768 ? "Ask Prism about this package" : "Ask about this package");
+    await expect(outer.getByText("Ask Prism", { exact: true }), `${width} px: no printed name`).toHaveCount(0);
     await expect(slash, `${width} px: the / hint at rest`).toBeVisible({ visible: width >= 768 });
     await expect(enter).toHaveCount(0);
 
@@ -571,8 +571,8 @@ for (const width of [390, 320]) {
     const home = await PLACEHOLDER(page);
     expect(home.text).toBe("Open a project or package, or ask");
     expect(home.width, `Home at ${width} px`).toBeLessThan(home.field);
-    // Ticket 127: the field's name is "Ask Strata", out of sight here, and the whole sentence describes it.
-    await expect(box(page)).toHaveAccessibleName("Ask Strata");
+    // Ticket 127: the field's name is "Ask Prism", out of sight here, and the whole sentence describes it.
+    await expect(box(page)).toHaveAccessibleName("Ask Prism");
     await expect(box(page)).toHaveAccessibleDescription("Open a project or package, or ask a question");
 
     await openPackage(page, "KE-NWWDA-541055-CW-RFB", width);
@@ -585,7 +585,7 @@ for (const width of [390, 320]) {
 // Ticket 59 (the 93 design review, follow-up 1): from 1024 px a reference that holds a space drops "Within", so the
 // package's placeholder beside its chip is never cut; a reference with no space keeps it, in a box of 35rem or more:
 // the work's 743 px at 1440 px, its 649 px at 1280 px and the 640 px box at 1024 px (ticket 127, once the box's name
-// left the row), beside "Ask Strata about this package". Beside a reference with a space, in a box under 42rem, the
+// left the row), beside "Ask Prism about this package". Beside a reference with a space, in a box under 42rem, the
 // placeholder takes its short form, "Ask about this package", so it stays whole there too.
 test("from 1024 px a chip whose reference holds a space drops Within, so the placeholder stays whole", async ({ page }) => {
   for (const [ref, within] of [["KE-UASIN GISHU COUNTY-571338-CW-RFB", false], ["KE-NWWDA-541055-CW-RFB", true]] as const) {
@@ -598,7 +598,7 @@ test("from 1024 px a chip whose reference holds a space drops Within, so the pla
         const shown = [...document.querySelectorAll<HTMLElement>("[data-box-slot] [data-placeholder]")].find((el) => el.getClientRects().length > 0)!;
         return { text: shown.textContent, cut: shown.scrollWidth > shown.clientWidth, need: shown.scrollWidth, has: shown.clientWidth };
       });
-      expect(shown.text, `${ref} at ${width} px`).toBe(within || width === 1440 ? "Ask Strata about this package" : "Ask about this package");
+      expect(shown.text, `${ref} at ${width} px`).toBe(within || width === 1440 ? "Ask Prism about this package" : "Ask about this package");
       expect(shown.cut, `${ref} at ${width} px: the placeholder is cut (${shown.need} in ${shown.has})`).toBe(false);
     }
   }

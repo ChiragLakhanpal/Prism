@@ -10,7 +10,7 @@ through the app's own routes so every example passes the same checks a person's 
   verifier;
 - package_rural_roads_kenya: a package planned from config/examples.toml's sentence;
 - ppsd_rows_demo_package: suggested PPSD risk rows for config/examples.toml's package, from its first risks in the
-  risk-table builder's order, in Draft, with no risk owner set: Strata never sets one;
+  risk-table builder's order, in Draft, with no risk owner set: Prism never sets one;
 - lesson_change: a version of one lesson those rows cite, with a changed wording, that only this viewer sees
   (strata.ops.example_lesson_versions). The library, the Lessons digest and every other viewer keep the lead's version.
   It is set up only when the rows cite a lesson.
@@ -197,7 +197,7 @@ def change_a_lesson(person: Panelist, examples: Examples, store: HomeStore, draf
            "was": json.dumps({"statement": latest["statement"]}), "now": json.dumps({"statement": changed}),
            "reason": examples.lesson_change_sentence,
            "item_id": f"example-{lesson_id}", "decided_on": moment.date().isoformat(), "decided_by": "strata",
-           "decided_by_name": "Strata", "published_on": None, "days_from_publication": None, "example": True}
+           "decided_by_name": "Prism", "published_on": None, "days_from_publication": None, "example": True}
     store.add_lesson_version(person.user_id, lesson_id, row["version"], row, moment)
     store.seed(person.user_id, LESSON_CHANGE, "lesson_version", f"{lesson_id}:{version}:{row['version']}", moment)
     return "set_up"

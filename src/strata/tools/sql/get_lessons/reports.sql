@@ -1,7 +1,7 @@
 -- get_lessons: the completion reports of the projects of the comparable packages a call names, as of a date
 -- (ticket 30). Each project of the packages (strata.gold.package, public on or before the as-of date) comes
 -- with its newest ICR public by then that no re-issue had replaced, its key in the source view's address, and
--- how many of that ICR's passages Strata read by then. A project with no such ICR comes back with an empty
+-- how many of that ICR's passages Prism read by then. A project with no such ICR comes back with an empty
 -- document_id. :packages holds the STEP references, joined by commas; :icr is the documents API's type for an
 -- ICR.
 WITH projects AS (

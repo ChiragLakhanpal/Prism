@@ -19,7 +19,7 @@ made, its public date, its source document and passage, and its evidence tier. T
   read from text is kept only when its quote is word for word in the passage it cites, on the page it
   cites; the rest go to strata.ops.assertion_rejections with their reason.
 
-The nightly job's detect_disagreements task runs run() for every project Strata holds documents or records
+The nightly job's detect_disagreements task runs run() for every project Prism holds documents or records
 for, and the fixture build runs it after the passage reader (gates/build_fixture.py). Every table it writes
 is rebuilt for each project of the run. The run sends every project's reports to the batch model in one call,
 so the live run waits for one batch. A request a finished batch did not answer, or a batch that can no longer

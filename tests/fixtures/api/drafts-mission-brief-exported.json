@@ -3439,17 +3439,17 @@
    {
     "name": "mission-brief-P156634-2026-10-23-evidence-pack.csv",
     "media_type": "text/csv",
-    "size": 1438
+    "size": 1437
    },
    {
     "name": "mission-brief-P156634-2026-10-23-evidence-pack.pdf",
     "media_type": "application/pdf",
-    "size": 24983
+    "size": 24980
    },
    {
     "name": "mission-brief-P156634-2026-10-23.docx",
     "media_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "size": 6387
+    "size": 6384
    }
   ],
   "files_available": true

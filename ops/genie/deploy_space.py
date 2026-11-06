@@ -1,4 +1,4 @@
-"""Deploy Strata's Genie space from code, and say what changed (ticket 33).
+"""Deploy Prism's Genie space from code, and say what changed (ticket 33).
 
 Run it from the main checkout, after the bundle deploy has made the metric views (ops/bundle/deploy.py):
 
@@ -8,7 +8,7 @@ It needs DATABRICKS_HOST, DATABRICKS_TOKEN and DATABRICKS_WAREHOUSE_ID in the en
 
 1. It reads the space from config/genie.toml, its trusted SQL from src/strata/genie/trusted/ and its benchmark
    questions from evals/benchmark.yaml (src/strata/genie/space.py).
-2. It finds Strata's space: the one GENIE_SPACE_ID names when its title is Strata's, or else the one with Strata's
+2. It finds Prism's space: the one GENIE_SPACE_ID names when its title is Prism's, or else the one with Prism's
    title. It never changes a space with another title, such as the wizard's throwaway space for day-one test 5,
    because the workspace is shared with fairshare. Then it creates the space, updates it, or leaves it as it is,
    and says which. A second run prints "No change."

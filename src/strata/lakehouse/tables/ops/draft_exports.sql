@@ -2,7 +2,7 @@
 -- checked it. The evidence pack's PDF and CSV are built from the same record, and its snapshot keeps,
 -- for every source the draft cites, whether the author opened it in the evidence drawer after the draft
 -- was saved and when they last did, as strata.ops.evidence_opened held it at the moment of export.
--- Strata sends nothing anywhere: the files are kept in strata.ops.draft_files for the author's team.
+-- Prism sends nothing anywhere: the files are kept in strata.ops.draft_files for the author's team.
 --
 -- draft_id     the draft, in strata.ops.drafts
 -- export_id    the export's id

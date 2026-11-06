@@ -138,7 +138,7 @@ export function Tiles({
   );
 }
 
-// A live demo: what it opens, in a box like Strata's own one box, with the link that opens that screen in a new tab in
+// A live demo: what it opens, in a box like Prism's own one box, with the link that opens that screen in a new tab in
 // the place of the box's button, and, for a question, a button that copies it. The box shows from the start; what to
 // watch for comes in a press a line. A demo with a recorded answer has a button that shows it, for when the App is
 // down (ticket 116): on the canvas the deck swaps it in for the box and the points, and in the reading view it opens
@@ -207,7 +207,7 @@ export function Demo({
   );
 }
 
-// A button that copies a demo's question, for pasting into Strata's box in the tab the demo link opens.
+// A button that copies a demo's question, for pasting into Prism's box in the tab the demo link opens.
 function CopyQuestion({ question }: { question: string }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const copyIt = () => {
@@ -238,7 +238,7 @@ export function NotMeasured({ children, n, at, mode }: { children: ReactNode; n:
   );
 }
 
-// The rollout's phases, a press each, left to right, each with who uses Strata and what is measured before the next;
+// The rollout's phases, a press each, left to right, each with who uses Prism and what is measured before the next;
 // the last phase has no next, so its label says what is measured during it.
 export function Phases({
   phases,

@@ -42,7 +42,7 @@ export type DraftNote = {
   table?: BriefRecord[];
   totals?: Record<string, any> | null;
   agencies_without_plans?: string[];
-  // A suggested PPSD row's cell (ticket 36): its key, the row it belongs to and which of Strata's two cells it is.
+  // A suggested PPSD row's cell (ticket 36): its key, the row it belongs to and which of Prism's two cells it is.
   cell_key?: string;
   row_key?: string;
   cell?: "risk_description" | "mitigation";
@@ -260,7 +260,7 @@ export type Draft = {
     footnotes: number;
     sources: number;
     opened: number;
-    // How many sources the author kept in place of one Strata leaned on, with a reason (ticket 23).
+    // How many sources the author kept in place of one Prism leaned on, with a reason (ticket 23).
     disagreements: number;
     files: DraftFile[];
     files_available: boolean;
@@ -295,7 +295,7 @@ export type DraftList = {
   total: number;
 };
 
-// example: the seed command set this draft up for the viewer (ticket 41), so the notice says Strata did.
+// example: the seed command set this draft up for the viewer (ticket 41), so the notice says Prism did.
 export type ExistingDraft = { draft_id: string; created_at: string; author: { name: string | null; you: boolean }; example?: boolean };
 // GET /api/drafts/existing: with a plan date, the open draft on that version; with none, the open draft on
 // each version of the agency's plans, by its date.

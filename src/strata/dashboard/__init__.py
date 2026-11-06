@@ -1,10 +1,10 @@
-"""Strata's AI/BI dashboard, "Strata operations", defined in code (the spec's tenth single place; docs/PLAN.md
+"""Prism's AI/BI dashboard, "Prism operations", defined in code (the spec's tenth single place; docs/PLAN.md
 section 9; tickets 16 and 45).
 
 strata.dashboard.definition holds the dashboard's three pages and their tiles: Data readiness (ticket 16),
 Governance and AI quality and adoption (ticket 45). strata.dashboard.render writes them as AI/BI dashboard files:
-bundle/dashboards/strata.lvdash.json, "Strata operations", and bundle/dashboards/strata_test.lvdash.json, the test
-copy "Strata operations (test)", which bundle/dashboard.yml declares, so the bundle's one deploy command
+bundle/dashboards/strata.lvdash.json, "Prism operations", and bundle/dashboards/strata_test.lvdash.json, the test
+copy "Prism operations (test)", which bundle/dashboard.yml declares, so the bundle's one deploy command
 (ops/bundle/deploy.py) deploys both. The gate checks that each file says what the definition says, and runs every
 dataset's query on DuckDB.
 

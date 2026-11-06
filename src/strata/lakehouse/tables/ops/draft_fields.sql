@@ -1,7 +1,7 @@
 -- Every value a person set on a draft's fields that only people fill (ticket 36): a suggested PPSD row's Risk
 -- Owner and, in the Long Form, its Likelihood Rating, Impact Rating, Overall Risk Score and Procurement Process
 -- Stage, and the risk table form the draft uses. One row per save, so the history is never rewritten: a removal
--- is a save with no value. strata.ops.draft_fields_latest gives each field's latest value. Strata never writes
+-- is a save with no value. strata.ops.draft_fields_latest gives each field's latest value. Prism never writes
 -- here; the draft routes (src/strata/server/drafts.py) save a person's own entry, from the author's session only,
 -- as the app's own service principal.
 --

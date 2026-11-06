@@ -193,7 +193,7 @@ def test_waiting_for_you_lists_the_viewers_drafts_to_check_with_their_progress_a
 
     assert [row["kind"] for row in waiting["rows"]] == ["ppsd_rows", "review_notes"]
     ppsd, notes = waiting["rows"]
-    # Strata never sets a risk owner, so the seeded rows start at none of two set (the 41 brief, 4.5).
+    # Prism never sets a risk owner, so the seeded rows start at none of two set (the 41 brief, 4.5).
     assert (ppsd["progress"]["owners_set"], ppsd["progress"]["total"]) == (0, 2)
     assert notes["opened"]["count"] == 0 and notes["opened"]["of"] > 0
     assert all(row["example"] for row in waiting["rows"])
@@ -458,7 +458,7 @@ EXISTING_ROWS = {"kind": "ppsd_rows", "package": "KE-NWWDA-541055-CW-RFB"}
 
 def test_the_existing_draft_notices_name_a_seeded_draft_an_example_for_its_viewer_alone(story):
     """The plan check the first Start here link opens, and the package workspace, name the open draft the team
-    started. For Ana's seeded drafts they say Strata set them up (the 41 brief, 5.12); Ben's view is unchanged."""
+    started. For Ana's seeded drafts they say Prism set them up (the 41 brief, 5.12); Ben's view is unchanged."""
     for query in (EXISTING_NOTES, EXISTING_ROWS):
         ana = story.get("/api/drafts/existing", **query).json()["draft"]
         ben = story.get("/api/drafts/existing", BEN, **query).json()["draft"]
@@ -572,7 +572,7 @@ def test_the_examples_registry_refuses_a_suggestion_with_an_unknown_page_or_fiel
 
 def suggestion_mistakes(examples) -> list[str]:
     """Each suggestion whose words the copy file lacks (copy.box.suggest in web/src/copy.ts), or whose benchmark question
-    evals/benchmark.yaml lacks, so every suggestion has words and is a question Strata has been measured on."""
+    evals/benchmark.yaml lacks, so every suggestion has words and is a question Prism has been measured on."""
     import re
 
     from strata.evals import benchmark

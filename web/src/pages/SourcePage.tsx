@@ -2,7 +2,7 @@
 // a document's own words, divided into the paragraphs the document numbers, with the paragraph a citation
 // names highlighted, and a link to the World Bank's PDF at that page. It is the last step of the answer,
 // the drawer and the page. It shows only the document's words and the rows read from its tables, never
-// Strata's summary of a table.
+// Prism's summary of a table.
 //
 // :doc is a document's key in its project, such as icr-2019-10-10; a bare type such as icr opens the one
 // current document of that type, and the address is rewritten to its key in place. A paragraph on another
@@ -13,7 +13,7 @@
 // States: loading (the page bar is real, with the page from the address), a page with a paragraph, a page
 // with none asked, a corrected address, a page not read, a page with no text, front matter, a document not
 // read, not found, ambiguous, not public by the as-of date, a service that didn't answer, and an account
-// that can't read Strata's tables.
+// that can't read Prism's tables.
 import { Lang } from "../components/Lang";
 import { useEffect, useId, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -338,7 +338,7 @@ function RowsTable({
   );
 }
 
-// A table on the page from a page area of 768 px, and one card per row below it, as every table in Strata
+// A table on the page from a page area of 768 px, and one card per row below it, as every table in Prism
 // becomes (DESIGN.md section 5, Tables; the 21 design review, round 3, F2): each card lists the column heads
 // in caption over their values, from one left edge, so nothing scrolls sideways on a phone. The table's frame
 // is a region named by its caption that takes focus, as Table's is, so a keyboard can scroll a table wider

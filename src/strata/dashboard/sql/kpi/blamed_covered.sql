@@ -2,7 +2,7 @@
 -- hindsight test (tile 27): the blamed risks, how many a lesson covered at approval, how many were shown when
 -- covered, hindsight recall (coverage times shown-when-covered, stored by ticket 34 with its counts), and what the
 -- checklist caught, from strata.ops.evaluation_result (scorer hindsight_test, segment_kind release). Projects exposed
--- to Strata were left out by the test itself. Newest first, in the dates chosen.
+-- to Prism were left out by the test itself. Newest first, in the dates chosen.
 WITH releases AS (
   SELECT
     run_id,

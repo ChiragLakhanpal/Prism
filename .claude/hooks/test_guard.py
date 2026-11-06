@@ -109,7 +109,7 @@ FILES_ALLOWED = [
     ("Write", {"file_path": f"{REPO}/pipelines/silver/contracts.sql",
                "content": "CREATE OR REPLACE TABLE strata.silver.contracts AS SELECT 1"}),
     ("Write", {"file_path": f"{REPO}/tests/test_sql_tool.py", "content": 'assert refuses("DROP TABLE strata.gold.x")'}),
-    ("Write", {"file_path": f"{REPO}/docs/proposal.md", "content": "Strata never runs DROP TABLE."}),
+    ("Write", {"file_path": f"{REPO}/docs/proposal.md", "content": "Prism never runs DROP TABLE."}),
     ("Write", {"file_path": os.path.expanduser("~/.claude/projects/strata/memory/note.md"), "content": "x"}),
     ("Read", {"file_path": os.path.join(os.path.dirname(REPO), "fairshare", "app.py")}),
 ]

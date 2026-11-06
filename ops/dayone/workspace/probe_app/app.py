@@ -1,7 +1,7 @@
-"""Strata's day-one probe app, for tests 1 and 10.
+"""Prism's day-one probe app, for tests 1 and 10.
 
 probe_hosts.py and probe_traces.py deploy it under the app name in ops/dayone/dayone.toml. The
-app shell ticket later deploys Strata itself under that name. Routes:
+app shell ticket later deploys Prism itself under that name. Routes:
 
   /dayone          the app's version and whether tracing is on
   /dayone/reach    asks each World Bank host once and returns each HTTP status (test 1)

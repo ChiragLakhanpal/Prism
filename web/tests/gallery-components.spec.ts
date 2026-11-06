@@ -207,8 +207,8 @@ test("Partial uses the warning state with triangle-alert, and Gap the neutral st
 });
 
 // Ticket 46 (the 46 brief, section 12.2): a part that is designed but not built carries a neutral badge with its own
-// icon, drafting-compass, and no visible border, followed at once by one sentence saying what Strata does instead.
-test("Designed, not built is a quiet neutral badge with drafting-compass, followed at once by what Strata does instead", async ({
+// icon, drafting-compass, and no visible border, followed at once by one sentence saying what Prism does instead.
+test("Designed, not built is a quiet neutral badge with drafting-compass, followed at once by what Prism does instead", async ({
   page,
 }) => {
   await page.goto("/gallery/badges");
@@ -547,13 +547,13 @@ test("in forced-colors mode the flush steps toggle keeps its side borders, and o
   expect(await sides()).toEqual(["2px", "2px"]);
 });
 
-// Ticket 126, criterion 1: an answer that held back keeps "Strata held back" as its h3, for a screen reader only. No
+// Ticket 126, criterion 1: an answer that held back keeps "Prism held back" as its h3, for a screen reader only. No
 // recorded stream abstains, so the gallery's abstained sample is the one place it is drawn.
-test("an answer that held back keeps Strata held back as a heading only a screen reader reads, at 1440 and 390 px", async ({ page }) => {
+test("an answer that held back keeps Prism held back as a heading only a screen reader reads, at 1440 and 390 px", async ({ page }) => {
   for (const width of [1440, 390]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/gallery/answer");
-    const byline = page.locator("[data-answer=abstained]").getByRole("heading", { level: 3, name: "Strata held back" });
+    const byline = page.locator("[data-answer=abstained]").getByRole("heading", { level: 3, name: "Prism held back" });
     await expect(byline, `${width} px`).toHaveAttribute("data-byline", "heldBack");
     const box = await byline.evaluate((element) => element.getBoundingClientRect());
     expect(box.width, `${width} px`).toBeLessThanOrEqual(1);
@@ -568,7 +568,7 @@ test("an answer that held back keeps Strata held back as a heading only a screen
         if (rect.width > 1 && rect.height > 1 && getComputedStyle(element).visibility !== "hidden") return true;
       }
       return false;
-    }, "Strata held back");
+    }, "Prism held back");
     expect(shown, `${width} px`).toBe(false);
   }
 });

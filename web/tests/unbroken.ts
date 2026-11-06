@@ -8,7 +8,7 @@ export const WHOLE = {
   // KE-MIGORI COUNTY-532367-CW-RFB. Its method is named, since the text of the element after it follows with no space
   // between. A reference may break at its own spaces, and only there (brokenReferences).
   reference: "[A-Z]{2}-[A-Z][A-Z0-9&.()]*(?: [A-Z][A-Z0-9&.()]*)*-\\d{3,7}-(?:CW|GO|CS|NC)-(?:INDV|QCBS|RFB|RFQ|RFP|CQS|DIR)",
-  // A date as Strata writes one in a table or a sentence: "Sep 30, 2026", "October 9, 2026" or "Nov 2022".
+  // A date as Prism writes one in a table or a sentence: "Sep 30, 2026", "October 9, 2026" or "Nov 2022".
   date: "(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\\.?\\s(?:\\d{1,2},\\s)?\\d{4}",
   page: "[Pp]age\\s\\d+",
   notChecked: "Not\\schecked:",

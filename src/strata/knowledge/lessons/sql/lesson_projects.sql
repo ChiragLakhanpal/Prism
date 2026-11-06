@@ -1,5 +1,5 @@
 -- The projects lessons come from: name, country, region and sector, and the newest ICR Review or PPAR
--- Strata holds for each, which says whether IEG has reviewed the project yet. :types holds the types IEG
+-- Prism holds for each, which says whether IEG has reviewed the project yet. :types holds the types IEG
 -- writes, joined by commas.
 SELECT
   pr.project_id,

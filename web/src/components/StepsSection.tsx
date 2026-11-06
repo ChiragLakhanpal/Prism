@@ -13,7 +13,7 @@
 //   section shows the steps and their counts with no dates and no controls, and so it does when no step has a date
 //   or days in either choice (the tool's none_dated), as on the fixture.
 // - Every count in a sentence is the tool's (dated_n, undated_n, few_n, dateable_n): the browser counts nothing.
-// - Strata writes planned dates only: no cell, caption or note holds an actual date.
+// - Prism writes planned dates only: no cell, caption or note holds an actual date.
 // - A count, a planned date, or the summary's "{n} of {m}" opens the evidence drawer at its list, and the row whose
 //   list is open takes the tint fill.
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from "react";

@@ -1,6 +1,6 @@
 ---
 name: merger
-description: Integrates a Strata ticket into build/strata once its reviewer, verifier and any design reviews have passed. Merges the ticket branch in the main checkout, keeps the gate green, runs the post-merge steps on the shared Databricks workspace, closes the ticket and removes the worktree.
+description: Integrates a Prism ticket into build/strata once its reviewer, verifier and any design reviews have passed. Merges the ticket branch in the main checkout, keeps the gate green, runs the post-merge steps on the shared Databricks workspace, closes the ticket and removes the worktree.
 model: opus
 effort: xhigh
 color: cyan

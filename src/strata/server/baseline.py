@@ -1,5 +1,5 @@
 """Saving and removing the baseline of an implementing agency's Procurement Plans (ticket 21; the 21 brief,
-section 5.2), the first shared record World Bank staff make in Strata.
+section 5.2), the first shared record World Bank staff make in Prism.
 
 A baseline is one version of one agency's plans for a project, saved as the plan agreed at negotiations.
 Every World Bank staff viewer who checks that agency's plans sees the same baseline and who saved it, and

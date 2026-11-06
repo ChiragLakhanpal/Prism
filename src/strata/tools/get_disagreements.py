@@ -1,4 +1,4 @@
-"""get_disagreements: where two sources disagree about a subject, and which one Strata leans on.
+"""get_disagreements: where two sources disagree about a subject, and which one Prism leans on.
 
 The registry (config/tools.toml) defines the tool's parameters and result shape; this module is its
 adapter. It reads what the nightly job's detect_disagreements task wrote (src/strata/knowledge/assertions.py):
@@ -12,7 +12,7 @@ A subject is a project, with its packages, or one package by its STEP reference.
   evidence tier and the evidence id a claim cites; a side that rests on a passage also gives the paragraph
   as the report numbers it, its document's key in the source view's address and the passage's text. Each
   side is a citable record of its own (config/tools.toml, nested_rows), so a claim can quote it. The row names the side
-  Strata leans on and the id of the ladder's rule that decided (config/evidence_ladder.toml), and under
+  Prism leans on and the id of the ladder's rule that decided (config/evidence_ladder.toml), and under
   if_you_keep the value you would treat as true if you kept the other side. The tool returns ids and
   values, never a sentence, as check_plan returns reason codes: the screens write the rule's sentence
   (web/src/copy.ts, disagreement.rule, keyed by the rule id), each side's "written when" line
@@ -123,7 +123,7 @@ def _side(assertion: Assertion, moment: dt.date | None, passage: dict) -> dict:
         "sequence": assertion.sequence,
         "passage_id": assertion.passage_id,
         "pdf_page": assertion.pdf_page,
-        # For a side that rests on a passage: the paragraph as the report numbers it (or Strata's own count,
+        # For a side that rests on a passage: the paragraph as the report numbers it (or Prism's own count,
         # s4, when paragraph_numbered is false, as in an ISR), its printed page, and the document's key in
         # the source view's address (/projects/:pid/documents/:doc_key). Empty for a record.
         "paragraph": passage.get("paragraph"),
@@ -294,7 +294,7 @@ def trajectories(held: list[Assertion]) -> list[dict]:
 
 
 def reads(project_id: str, as_of: dt.date, view: str) -> list[tuple[str, dict]]:
-    """The statements get_disagreements runs for a project, named as Strata holds it, as of the date and in the view,
+    """The statements get_disagreements runs for a project, named as Prism holds it, as of the date and in the view,
     for a page that sends its reads as one batch (the Timeline, ticket 125)."""
     common = {"subject_id": project_id, "package": "package"}
     return [(_sql("subject.sql"), {"project": "project", **common}),
@@ -327,7 +327,7 @@ def get_disagreements(call: Call, subject_id: str, attribute: str | None = None)
     subject_id = subject_id.strip()
     empty = {"rows": [], "coverage": {"matched": 0, "used": 0, "not_used": []}, "trajectories": [],
              "rejected": {"count": 0, "reasons": []}, **_grouped([])}
-    # A project ID or a STEP reference in any case, named from here on as Strata holds it (ticket 20's verification
+    # A project ID or a STEP reference in any case, named from here on as Prism holds it (ticket 20's verification
     # round 3, V2).
     held = _rows(call, "subject.sql", project="project", package="package", subject_id=subject_id)
     if not held:

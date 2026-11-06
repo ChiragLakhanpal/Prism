@@ -3,7 +3,7 @@ record (ticket 49).
 
 - The results register, docs/proposal/results.toml: each measured value the proposal cites, with the query that
   measures it. snapshot.pull() runs those queries; the build writes Annex 1 from this file and the snapshot.
-- The settings register, docs/proposal/settings.toml: each value Strata is set to, or that counts a registry, with
+- The settings register, docs/proposal/settings.toml: each value Prism is set to, or that counts a registry, with
   the file that sets it and the test that enforces it. settings() reads each value through strata.config's loaders,
   or from the caps Azure reported back (docs/day-one-results.md, written by ops/dayone/probe_caps.py), so a change
   drill changes the next build.
@@ -139,7 +139,7 @@ def load_settings(path: Path = SETTINGS_FILE) -> dict[str, Setting]:
             raise RegisterError(f"In {path.name}, settings.{key}.form must be one of: {', '.join(SETTING_FORMS)}.")
         setting = Setting(key=key, **entry)
         if not setting.planning_choice and not setting.enforced_by:
-            raise RegisterError(f"In {path.name}, settings.{key} needs enforced_by: the test that shows Strata keeps "
+            raise RegisterError(f"In {path.name}, settings.{key} needs enforced_by: the test that shows Prism keeps "
                                 "it. Only a planning choice (plan:) has none.")
         found[key] = setting
     return found

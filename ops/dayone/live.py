@@ -201,7 +201,7 @@ def run_on_serverless(w, config: dict, name: str, source: str, notebook: bool) -
 
 APP_DIR = WORKSPACE_SOURCES / "probe_app"
 # The probes give the app they make this description, so they can tell it from an app someone else made.
-PROBE_APP_DESCRIPTION = "Strata day-one probe app"
+PROBE_APP_DESCRIPTION = "Strata day-one probe app"  # the live probe app's, so it keeps the old name (ADR 0006)
 
 
 def app_headers(env: dict, config: dict) -> dict:
@@ -236,7 +236,7 @@ def ensure_probe_app(w, env: dict, config: dict) -> str:
 
     It refuses to deploy over an app whose last deployment came from somewhere else, or over an
     app with no deployment that the probes did not make, so a later run of a probe never replaces
-    Strata's own app.
+    Prism's own app.
     """
     import hashlib
 

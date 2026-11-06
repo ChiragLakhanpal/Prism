@@ -7,7 +7,7 @@
 --
 -- passage_id          the document, its version and the paragraph: 31525018/v1/54. A paragraph in an
 --                     annex adds the annex (annex2.3), a part adds its number (54/2), and a paragraph
---                     Strata numbered starts with s (s4). A table is table and the PDF page it starts
+--                     Prism numbered starts with s (s4). A table is table and the PDF page it starts
 --                     on (18381488/v1/table65, its summary), and its rows add their number
 --                     (18381488/v1/table65.2). A notice's section is the notice and the section's
 --                     number (OP00118817/v1/s3)
@@ -18,7 +18,7 @@
 -- section_path        the headings above it, by their ids: III.B, Annex 2.A, an ICR Review's section
 --                     number (10), or an ISR's heading
 -- paragraph           the paragraph's number as the report prints it (54, or 10.b in an ICR Review), or,
---                     for a paragraph the report does not number, s and Strata's count of them (s4)
+--                     for a paragraph the report does not number, s and Prism's count of them (s4)
 -- paragraph_numbered  whether the report itself prints that number
 -- part, parts         which part of its paragraph this is, and how many parts the paragraph has: a
 --                     paragraph over the token limit is divided at sentence ends
@@ -28,14 +28,14 @@
 -- printed_page        the page number printed on its first page, such as "19 of 62"
 -- language            the language of its text, as an ISO 639-1 code
 -- parse_route         A, the published text, or B, the layout parser
--- kind                paragraph, table_row, table_summary (Strata's summary of a table, which never
+-- kind                paragraph, table_row, table_summary (Prism's summary of a table, which never
 --                     backs a number) or notice_text
 -- scanned             whether the layout parser read it from a scanned page
 -- table_title         a table row's or summary's table: the line above it, such as WORKS or Annex 4 -
 --                     Operational Risk Assessment Framework (ORAF)
 -- table_row           a table row's number in its table, from 1
 -- cells               a table row's cells as JSON, [[column head, value], ...], blanks left out
--- sector              its project's one sector in Strata's taxonomy (strata.gold.project.sector, from
+-- sector              its project's one sector in Prism's taxonomy (strata.gold.project.sector, from
 --                     config/sectors.toml), which search filters on; empty when its project is not in
 --                     strata.gold.project or has no sector
 -- header              the short header prepended before embedding: ICR, P130164, India, roads, III.B, ¶54, p.23

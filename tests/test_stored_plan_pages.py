@@ -115,7 +115,7 @@ def written():
 
 
 def test_each_value_this_file_expects_is_printed_on_the_page_for_its_row():
-    """The values above come from the page's published text, not from Strata's code."""
+    """The values above come from the page's published text, not from Prism's code."""
     for reference, (method, amount, status, words) in PRINTED.items():
         block = printed_block(reference)
         assert squash(f"{method} ") in squash(block), reference

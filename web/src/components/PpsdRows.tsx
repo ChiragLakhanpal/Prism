@@ -3,12 +3,12 @@
 //
 // - The Short Form is the template's own three-column table from a 600 px document column: Risk Description (the row
 //   header), Description of mitigation and Risk Owner, with a fill-in chip in each empty owner cell.
-// - The Long Form, and the Short Form below 600 px, are row blocks: the risk's name as an h3, Strata's two cells, then
+// - The Long Form, and the Short Form below 600 px, are row blocks: the risk's name as an h3, Prism's two cells, then
 //   a band on the page fill with the fields people fill, in the template's order. The band is the line between what
-//   Strata wrote and what you commit to. Word always gets the template's table.
+//   Prism wrote and what you commit to. Word always gets the template's table.
 //
 // One layout is in the page at a time, chosen from the document column's width, so each chip has one id the bar's
-// hold line can link to. Each of Strata's sentences has one citation marker, which may carry several sources and
+// hold line can link to. Each of Prism's sentences has one citation marker, which may carry several sources and
 // becomes one Word footnote; the Sources list shows each footnote's Word text.
 import { useContext } from "react";
 import { Lang } from "./Lang";
@@ -36,7 +36,7 @@ const kind = copy.draft.kinds.ppsd_rows;
 const whole = (value: number) => formatNumber(value, { compact: false });
 // The table holds from a document column of 600 px (37.5rem): the owner column then holds the "Set the owner" chip.
 const TABLE_FROM = 600;
-// Strata's two cells sit side by side in a block whose content is at least 560 px wide.
+// Prism's two cells sit side by side in a block whose content is at least 560 px wide.
 const SIDE_BY_SIDE_FROM = 560;
 
 function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, number] {

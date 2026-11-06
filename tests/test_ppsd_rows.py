@@ -328,11 +328,11 @@ def test_a_value_outside_the_template_s_is_refused(story, field, value, code):
     assert (answer.status_code, answer.json()["code"]) == (422, code)
 
 
-# ── Criterion 3: Strata never writes an owner, a rating, a reference or an actual date ─────
+# ── Criterion 3: Prism never writes an owner, a rating, a reference or an actual date ─────
 
 def test_strata_never_writes_a_risk_owner_a_rating_a_reference_or_an_actual_date(story):
     """The writer answers with an owner, a likelihood, a reference and an actual date, in a cell it was never asked
-    for and in fields of a cell it was. The draft keeps only Strata's two cells, every field people fill is empty, and
+    for and in fields of a cell it was. The draft keeps only Prism's two cells, every field people fill is empty, and
     nothing was saved in strata.ops.draft_fields: only the author's own session writes there."""
     draft = suggested(story, "ppsd-rows-writer-sets-an-owner")
 
@@ -475,7 +475,7 @@ def test_the_word_file_has_the_template_s_headers_and_the_draft_s_footnotes(stor
     assert rows[0] == SHORT
     assert footnotes == [footnote["text"] for footnote in draft["footnotes"]]
     assert draft["export"]["footnotes"] == len(footnotes) == 4
-    # The owners are the author's own entries; Strata's cells hold its sentences.
+    # The owners are the author's own entries; Prism's cells hold its sentences.
     assert [row[2] for row in rows[1:]] == ["Implementing agency, procurement"] * 2
     assert rows[1][0].startswith("Cost estimates set below market rates can force rebidding")
     assert "Ana Example set the risk owners." in text
@@ -555,7 +555,7 @@ def test_an_officers_ppsd_rows_follow_the_short_form_and_long_form_rules_and_car
     changed = story.call("PUT", f"/api/drafts/{above}/form", json={"form": "long"}).json()
     assert [column["header"] for column in changed["ppsd"]["forms"]["long"]["columns"]] == LONG
     assert [(hold["key"], hold["left"]) for hold in changed["holds"]] == [("notChecked", 1), ("owners", 2), ("ratings", 2)]
-    # Strata writes the descriptions and mitigations with counts and sources as footnotes.
+    # Prism writes the descriptions and mitigations with counts and sources as footnotes.
     cost = RISK_TABLE["rows"][0]
     texts = [footnote["text"] for footnote in draft["footnotes"]]
     assert texts[0] == COUNT_FOOTNOTE.format(k=cost["k"], m=RISK_TABLE["m"])

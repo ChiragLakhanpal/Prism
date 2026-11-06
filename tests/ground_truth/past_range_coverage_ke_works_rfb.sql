@@ -9,7 +9,7 @@
 --                        canceled: values.toml's 45 signed and four still open
 --   canceled             of those, unsigned and marked Canceled in the newest plan that lists them
 --   no notice            a STEP reference signed in the period with no specific procurement notice
---                        Strata holds: the ten county and ICT packages of P176758 and P170941, whose
+--                        Prism holds: the ten county and ICT packages of P176758 and P170941, whose
 --                        award rows the fixture records but whose notices it does not
 --   no STEP reference    a contract in the awards dataset signed in the period whose reference is not
 --                        a STEP reference (LOT I, and two references with extra parts)

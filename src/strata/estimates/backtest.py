@@ -1,10 +1,10 @@
 """The time estimate's rolling backtests, the champion model and the track record.
 
-run() replays Strata at the start of each test year in config/models.toml (2021 to 2025) through the
-replay harness. Each year's model learns only from packages Strata could measure by January 1 of that
+run() replays Prism at the start of each test year in config/models.toml (2021 to 2025) through the
+replay harness. Each year's model learns only from packages Prism could measure by January 1 of that
 year, and is scored on the packages a Procurement Plan public then listed and that were advertised in
 the next 12 months, against their outcomes as of the outcomes date. Then it trains the champion on
-everything Strata can measure on the outcomes date, writes the model card from the stored results
+everything Prism can measure on the outcomes date, writes the model card from the stored results
 (strata.estimates.model_card), and registers the model in Unity Catalog: as champion when no version
 holds that alias yet, else as challenger, which must win its backtest before it replaces the champion.
 
@@ -224,7 +224,7 @@ class BacktestRun:
 
 
 def train(engine, as_of: dt.date, settings: TimeEstimateSettings, thresholds: Thresholds):
-    """The model trained on every package Strata can measure as of a date, frozen at that date."""
+    """The model trained on every package Prism can measure as of a date, frozen at that date."""
     known = packages_as_of(Reader(engine, as_of, thresholds), settings)
     training = [item for item in known.values() if item.notice_date is not None and item.days is not None]
     return fit(training, settings, thresholds, training_through=as_of)

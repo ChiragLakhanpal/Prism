@@ -14,7 +14,7 @@ import { expect, mockShell, recorded, test } from "./mocked";
 const REPO = fileURLToPath(new URL("../../", import.meta.url));
 
 // tests/ground_truth/values.toml's [stress_shelf.slice_projects]: the pilot projects and the projects whose reports
-// the fixture records, each counted there from data/fixture/sources.toml, never from Strata's code.
+// the fixture records, each counted there from data/fixture/sources.toml, never from Prism's code.
 function sliceProjects(): { count: number; pilot_projects_read: number; document_projects: string[] } {
   const read = spawnSync(
     "python3",
@@ -134,7 +134,7 @@ for (const width of [1440, 1024, 390]) {
     // DESIGN.md section 7: the screen never says "stress shelf", and spells the PAD out.
     await expect(shelf(page)).not.toContainText(/stress shelf|\bPAD\b/i);
     await expect(shelf(page)).toContainText(
-      "Strata's reading records, taken Oct 23, 2026. Documents from the World Bank's Documents and Reports.",
+      "Prism's reading records, taken Oct 23, 2026. Documents from the World Bank's Documents and Reports.",
     );
     // Nothing scrolls sideways.
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);

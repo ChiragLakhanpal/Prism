@@ -119,13 +119,13 @@ test("choosing a view in the popover opens the preview, with the filled pill and
   const pill = page.getByRole("button", { name: "Preview: Public" });
   await expect(pill).toHaveAttribute("data-preview", "public");
   await expect(page.getByRole("region", { name: "Preview" })).toBeFocused();
-  // The public view has only Home, Projects, Lessons and Data, and its own Home (ticket 41): how many projects Strata
+  // The public view has only Home, Projects, Lessons and Data, and its own Home (ticket 41): how many projects Prism
   // holds, and the closed projects whose contracts it holds, latest to close first.
   await expect(page.getByRole("navigation", { name: "Main" }).locator("[data-nav-item]")).toHaveText(["Home", "Projects", "Lessons", "Data"]);
   // Ticket 98: its h1 is "Home", with that sentence in lead under it.
   await expect(page.locator("main h1")).toHaveText("Home");
   await expect(page.locator("main [data-status-lead]")).toContainText("I hold records for 93 World Bank-financed projects.");
-  await expect(page).toHaveTitle("Home (public preview) | Strata");
+  await expect(page).toHaveTitle("Home (public preview) | Prism");
   expect(await violations(page)).toEqual([]);
 });
 
@@ -187,7 +187,7 @@ test("as of August 26, 2016, P130164's timeline ends at the date; ISR 7's drawer
   await expect(page.locator("[data-timeline=ready]")).toBeVisible();
   await page.locator('[data-item="doc:26733307"]').first().click();
   const action = page.getByRole("dialog").locator("[data-asof-action]");
-  await expect(action.getByRole("link", { name: "See Strata as of this date" })).toHaveAccessibleDescription(
+  await expect(action.getByRole("link", { name: "See Prism as of this date" })).toHaveAccessibleDescription(
     "It opens this project as it was on August 26, 2016, the day the World Bank disclosed this report.",
   );
   await action.getByRole("link").click();

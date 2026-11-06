@@ -325,13 +325,13 @@ def left_in_workspace(config: dict) -> list[str]:
         "## What the probes leave in the workspace\n",
         "The probes make these things and leave them in place. Most of them make a second run quicker. They "
         "change nothing else in the workspace.\n",
-        f"- The app `{names['app']}`, which runs the probe app until the app shell ticket deploys Strata "
+        f"- The app `{names['app']}`, which runs the probe app until the app shell ticket deploys Prism "
         "over it.\n"
         f"- The folder `{names['workspace_folder']}` in your user folder, with the code that the jobs and the "
         "app run.\n"
         f"- The schema `{names['schema']}`, with the volume `{last_part(names['volume'])}` for the PAD, the table "
         f"`{last_part(names['search_table'])}` and the index `{last_part(names['search_index'])}`.\n"
-        f"- The AI Search endpoint `{names['ai_search_endpoint']}`, which Strata keeps for its own index.\n"
+        f"- The AI Search endpoint `{names['ai_search_endpoint']}`, which Prism keeps for its own index.\n"
         "- One-time job runs whose names start with `strata-dayone`, in the workspace's job run history.\n"
         f"- A conversation in the Genie space that GENIE_SPACE_ID names, which asks \"{config['genie']['question']}\"\n"
         + secret_read_bullet(config),

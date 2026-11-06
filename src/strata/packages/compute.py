@@ -4,7 +4,7 @@
 Each rule reads its values from the file, never from code, and returns the value with the threshold, the
 rating it assumed and the file's source line, so the package workspace's computed note can state the rule
 and its source. Review type is computed from the whole package's estimated amount, never per lot, so the
-number of lots never changes it: Strata never suggests dividing a contract to stay under a review threshold.
+number of lots never changes it: Prism never suggests dividing a contract to stay under a review threshold.
 """
 
 from __future__ import annotations

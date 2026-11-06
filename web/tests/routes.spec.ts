@@ -113,7 +113,7 @@ for (const route of [...ROUTES, ...NOT_FOUND]) {
 
     const main = page.getByRole("main");
     await expect(main.getByRole("heading", { level: 1 })).toHaveText(route.h1);
-    await expect(page).toHaveTitle(`${route.h1} | Strata`);
+    await expect(page).toHaveTitle(`${route.h1} | Prism`);
     if (route.purpose) await expect(main.getByText(route.purpose, { exact: true })).toBeVisible();
     else await expect(main.locator("h1 + p")).toHaveCount(0);
     const card = main.locator("[data-empty-state]");
@@ -192,7 +192,7 @@ test("an item opens its page without reloading, moves focus to the new title and
   const title = page.getByRole("heading", { level: 1 });
   await expect(title).toHaveText("Lessons");
   await expect(title).toBeFocused();
-  await expect(page).toHaveTitle("Lessons | Strata");
+  await expect(page).toHaveTitle("Lessons | Prism");
   expect(new URL(page.url()).pathname).toBe("/lessons");
   expect(await page.evaluate(() => (window as unknown as { stillHere?: boolean }).stillHere)).toBe(true);
   expect(await page.evaluate(() => window.scrollY)).toBe(0);
@@ -349,7 +349,7 @@ const NO_GROUP = "grp-000000000000";
 const SHORT_STATES: [string, string, () => Promise<Record<string, Answer>>, string][] = [
   ["All projects, no match", "/projects?q=atlantis", async () => ({ "/api/projects": await answer("projects-no-match.json") }), "I found no projects that match your search."],
   ["All projects, error", "/projects", async () => ({ "/api/projects": SERVICE_DOWN }), "I couldn't load the list of projects because the data service didn't answer."],
-  ["the package page, not found", `/packages/${NO_PACKAGE}`, async () => ({ [`/api/packages/${NO_PACKAGE}`]: { status: 404, body: '{"code":"unknown_package"}' } }), "No package in Strata has the reference"],
+  ["the package page, not found", `/packages/${NO_PACKAGE}`, async () => ({ [`/api/packages/${NO_PACKAGE}`]: { status: 404, body: '{"code":"unknown_package"}' } }), "No package in Prism has the reference"],
   ["the package page, error", "/packages/KE-NWWDA-541055-CW-RFB", async () => ({ "/api/packages/KE-NWWDA-541055-CW-RFB": SERVICE_DOWN }), "I couldn't load this package."],
   ["Lessons, empty", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": await answer("lessons-page-empty.json") }), "The library has no lessons yet."],
   ["Lessons, error", "/lessons", async () => ({ "/api/lessons/me": await answer("lessons-me-viewer.json"), "/api/lessons/page": SERVICE_DOWN }), "I couldn't load the lessons because the data service didn't answer."],

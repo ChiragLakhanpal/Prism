@@ -16,7 +16,7 @@ evidence drawer shows it, so a citation marker opens at once:
   that passage), IEG's outcome and World Bank performance ratings (gold.ieg_rating), and the overall risk
   rating under the Environmental and Social Framework, or the Environmental Assessment Category of a
   project that has none;
-- who: the region, the project's one sector in Strata's taxonomy with the projects API's sectors and
+- who: the region, the project's one sector in Prism's taxonomy with the projects API's sectors and
   their shares, and the implementing agencies.
 
 Each read uses only what was public on or before the as-of date (ADR 0002). The projects API changes a
@@ -171,7 +171,7 @@ def _sector_shares(sectors: list[dict]) -> list[str]:
 def _project_record(row: dict, as_of: dt.date, environment: list[dict], sectors: list[dict]) -> dict:
     """The projects API's record as the drawer shows it, with every value the Summary cites it for: its
     dates, region and agencies, the ESF risk rating or Environmental Assessment Category, the sector in
-    Strata's taxonomy with the API's sector shares, and the commitment when no loan record gives it."""
+    Prism's taxonomy with the API's sector shares, and the commitment when no loan record gives it."""
     current = record_is_current(row, as_of)
     pid = row["project_id"]
     values = [("project_name", row["project_name"], "text"), ("country", row["country"], "text")]

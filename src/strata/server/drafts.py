@@ -451,7 +451,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
         examples: set[str] | None = None
 
         def named(draft: Saved) -> dict:
-            # A draft the seed command set up for this viewer (ticket 41) says Strata set it up, never "You started".
+            # A draft the seed command set up for this viewer (ticket 41) says Prism set it up, never "You started".
             nonlocal examples
             if examples is None:
                 examples = example_drafts(viewer) if example_drafts is not None else set()
@@ -500,7 +500,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     def project_paper_inputs(project_id: str = Query(pattern=r"^P\d{6}$"), viewer: Viewer = Depends(current_viewer)):
         """What the "Drafts from this check" panel says before the click (the 36 brief, 3.6 and 5.7): how many PPSD
         rows the viewer's team checked for this project's packages, in which drafts, and how many of the project's
-        implementing agencies published a Procurement Plan Strata read."""
+        implementing agencies published a Procurement Plan Prism read."""
         if not viewer.user_id:
             return refused(401, "no_identity")
         if not access.is_staff(viewer):
@@ -629,7 +629,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: DraftStore 
     @app.put("/api/drafts/{draft_id}/fields")
     def set_field(draft_id: str, body: FieldRequest, viewer: Viewer = Depends(current_viewer)):
         """A person's own value on a field only people fill, from the author's session: a risk owner, or in the Long
-        Form a rating, the overall risk score or the stage. Strata never writes one (CLAUDE.md rule 1)."""
+        Form a rating, the overall risk score or the stage. Prism never writes one (CLAUDE.md rule 1)."""
         if body.field == "form":
             return refused(422, "unknown_field")
         return set_value(viewer, draft_id, body.view, body.row_key, body.field, body.value)

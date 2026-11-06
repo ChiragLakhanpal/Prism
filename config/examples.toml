@@ -1,4 +1,4 @@
-# The examples registry (ticket 41; the 41 design brief, sections 4.3 and 4.5): the examples Strata sets up for the
+# The examples registry (ticket 41; the 41 design brief, sections 4.3 and 4.5): the examples Prism sets up for the
 # reviewing panel, and where each Start here link on Home lands. strata.config.load_examples() reads it; Home's route
 # (src/strata/server/home.py) and the seed command (python -m strata.seed_examples, src/strata/seed_examples.py) use
 # it, so a change to an example or a link is one edit here (CLAUDE.md rule 9).
@@ -9,7 +9,7 @@
 #   viewers   the key of the group in config/roles.toml whose people the seed command sets the examples up for
 #   follows   the projects each viewer follows, beside the demo plan's project: "showcase" names the showcase project
 #
-# [packages.<key>], a package planned from a sentence: the sentence Strata reads, the same one the Start here link
+# [packages.<key>], a package planned from a sentence: the sentence Prism reads, the same one the Start here link
 #                  "Plan a package from a sentence" fills into the box (/packages?box=plan&example=<key>)
 #
 # [ppsd_rows], the suggested PPSD rows the seed command drafts:
@@ -22,7 +22,7 @@
 # {demo_plan_date} and {lesson_notice} filled from the slice file and the seeded lesson change.
 #
 # [[ask]], one per question the box suggests while it is focused and empty (ticket 112), at most three a page, in the
-# list's order. Each is a question Strata has been measured on: the benchmark question it shortens, without its as-of
+# list's order. Each is a question Prism has been measured on: the benchmark question it shortens, without its as-of
 # date. GET /api/me lists them for World Bank staff in their own view, and none in a preview or as of a date.
 #   key        its words in the copy file (copy.box.suggest), with {id} the page's scope
 #   page       where it shows: package, project, plan_check, or home, which also serves every page with no scope

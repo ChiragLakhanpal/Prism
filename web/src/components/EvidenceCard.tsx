@@ -32,7 +32,7 @@ export function SourceNumber({ n }: { n: number }) {
 
 // A record's reference moves to the next line whole when it fits there, and breaks after its hyphens
 // only when it does not (DESIGN.md section 5, Page header; PageHeader.tsx's WithIds). A lesson is titled by
-// its statement, in the title font: its id is Strata's own and means nothing to a reader.
+// its statement, in the title font: its id is Prism's own and means nothing to a reader.
 export function sourceTitle(evidence: EvidenceEvent) {
   // A comparable package opened from the range chart is headed by its STEP reference alone (ticket 15).
   if (evidence.kind === "package") {
@@ -117,7 +117,7 @@ function briefRecordTitle(evidence: EvidenceEvent): ReactNode | null {
 export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEvent; className?: string }) {
   const source = recordSource(evidence);
   const words = copy.evidence;
-  // "Source: Strata's lesson library, version 1, decided on October 27, 2026."
+  // "Source: Prism's lesson library, version 1, decided on October 27, 2026."
   const lesson = lessonOf(evidence);
   if (lesson) {
     const version = <Num value={lesson.version} />;
@@ -155,7 +155,7 @@ export function RecordSourceLine({ evidence, className }: { evidence: EvidenceEv
       </Source>
     );
   }
-  // A tool's totals record, such as a mission brief's (ticket 37): "Strata's totals of the records above, as of ...".
+  // A tool's totals record, such as a mission brief's (ticket 37): "Prism's totals of the records above, as of ...".
   const tool = (evidence.row.source ?? {}) as Record<string, unknown>;
   if (typeof tool.tool === "string") {
     return (

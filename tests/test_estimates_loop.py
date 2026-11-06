@@ -1,9 +1,9 @@
 """The estimates loop (ticket 44; docs/PLAN.md section 11) at seam 1: the monthly watch reads the exposure log, the
-plan rows and the packages, and writes to strata.ops the plan rows dated within 14 days of a date Strata offered,
+plan rows and the packages, and writes to strata.ops the plan rows dated within 14 days of a date Prism offered,
 plan accuracy and duration by group, rolling coverage, and the retrains it raised.
 
 Every planned and actual date comes from tests/ground_truth/values.toml, with where it was read. The fixture's
-plans are all Kenya's, so a test that needs countries using Strata names Kenya in its own slice.
+plans are all Kenya's, so a test that needs countries using Prism names Kenya in its own slice.
 """
 
 import dataclasses
@@ -55,8 +55,8 @@ def rows(engine, sql: str, **params) -> list[dict]:
 
 @pytest.fixture(scope="module")
 def watched(fixture_db, tmp_path_factory):
-    """A copy of the fixture with two exposures, watched once as of October 31, 2026, with Kenya using Strata from
-    January 1, 2026. The day before each plan was published, Strata offered KE-NWWDA-541055-CW-RFB a date exactly
+    """A copy of the fixture with two exposures, watched once as of October 31, 2026, with Kenya using Prism from
+    January 1, 2026. The day before each plan was published, Prism offered KE-NWWDA-541055-CW-RFB a date exactly
     14 days after the planned signing date the plan then gave, and KE-NWWDA-229129-CW-RFB one 15 days after."""
     path = tmp_path_factory.mktemp("estimates-loop") / "fixture.duckdb"
     shutil.copy(fixture_db, path)
@@ -81,7 +81,7 @@ def test_of_two_plan_rows_the_one_within_14_days_of_a_date_offered_is_marked_and
     assert demo["days_from_plan"] == (DEMO_SIGNED - DEMO_PLANNED).days
     assert first["days_from_plan"] == VALUES["plan-229129-days-late"]["value"]
     # Only rows published after an exposure of their package are marked at all: the March 5, 2026 plan's row for
-    # KE-NWWDA-541055-CW-RFB came before Strata showed its range.
+    # KE-NWWDA-541055-CW-RFB came before Prism showed its range.
     assert all(row["published_on"] > row["exposed_on"] for row in marked.values())
     assert (DEMO, VALUES["plan-541055-estimated-2026-03-05"]["date"]) not in marked
 
@@ -99,7 +99,7 @@ def test_plan_accuracy_and_duration_are_reported_for_each_group_and_each_kind_of
         # Every plan row falls in exactly one of the four groups.
         assert sum(found[(measure, segment)]["denominator"] for segment in segments) == every_row
     # One row was dated within 14 days of a date offered: the October 9, 2026 plan's row for KE-NWWDA-541055-CW-RFB,
-    # published after Kenya started using Strata. Its package signed on June 22, 2026, so it has an actual date, and
+    # published after Kenya started using Prism. Its package signed on June 22, 2026, so it has an actual date, and
     # one row is too few for a median: only the counts are kept.
     anchored = found[("plan_accuracy", "anchored/using_strata")]
     assert (anchored["count"], anchored["denominator"], anchored["value"], anchored["reason"]) == (1, 1, None, "too_few_cases")
@@ -216,7 +216,7 @@ def test_a_retrain_is_due_each_quarter_and_after_a_raised_trigger(seeded):
 
 @pytest.mark.parametrize("cases, expected", [(20, (20, 20, 10.5, None)), (19, (19, 19, None, "too_few_cases"))])
 def test_plan_accuracy_is_the_median_days_between_planned_and_actual_signing_from_20_cases(seeded, cases, expected):
-    """Hand-made plan rows, in a country not yet using Strata and never offered a date. Against the June 1, 2026 its
+    """Hand-made plan rows, in a country not yet using Prism and never offered a date. Against the June 1, 2026 its
     plan gave, the packages signed 1 to 19 days early or late, in turn, and the twentieth 100 days late: the median of
     the 20 is 10.5 days (the mean would be 14.5), and 19 are too few for one."""
     from strata.tools.check_plan import SIGNING

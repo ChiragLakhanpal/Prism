@@ -1,4 +1,4 @@
--- The time estimate's features (ticket 25): every package Strata knew of on :as_of, each as it stood
+-- The time estimate's features (ticket 25): every package Prism knew of on :as_of, each as it stood
 -- on its feature date. A package's feature date is the day it was advertised, its specific
 -- procurement notice, or :as_of for a package that was planned but not yet advertised by then: the
 -- moment a package was planned or advertised, and never after :as_of (ADR 0002).

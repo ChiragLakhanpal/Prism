@@ -1,7 +1,7 @@
 -- The labeling tool's next pairs: candidate pairs of the latest run of name matching with no label yet on the
 -- pair's two names (a label given to the same key when it named other firms does not count),
 -- most likely first, so the pairs auto-merge decides are labeled early. It gives only what a person needs
--- to judge the pair, and not where Strata sent it, so a label is not swayed by Strata's own decision.
+-- to judge the pair, and not where Prism sent it, so a label is not swayed by Prism's own decision.
 SELECT
   p.pair_id,
   p.left_key,

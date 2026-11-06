@@ -1158,7 +1158,7 @@ function Populated({
         {lead && <div className="mb-4">{lead}</div>}
         {/* The finding, the page's largest type (DESIGN.md section 1, principle 6): or, below 20 comparable packages,
             the first-person sentence that holds back, with the count after it in body. It carries its byline's kind
-            as data only, what Strata found or that it held back (tickets 111 and 126), and shows no byline words. */}
+            as data only, what Prism found or that it held back (tickets 111 and 126), and shows no byline words. */}
         <p id={ids.title} className="max-w-[22.5em] text-finding text-balance text-ink-heading" data-finding data-byline={abstained ? "heldBack" : "found"}>
           {title}
         </p>

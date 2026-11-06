@@ -224,7 +224,7 @@ export function buildSlides(data: DeckData): Slide[] {
       notes: s.idea.notes,
     },
 
-    // ── 2. Strata at work ──
+    // ── 2. Prism at work ──
     opener("work", "work", "plan-rows", deckCopy.topics.work.line, s.workOpener.notes),
     {
       id: "demo-plan",

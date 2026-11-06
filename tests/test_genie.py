@@ -418,8 +418,8 @@ def test_a_space_whose_title_is_not_strata_s_is_never_changed_and_strata_gets_it
 
     assert deployed.action == "created" and deployed.space_id != TAXI
     assert api.spaces[TAXI] == taxi and api.updated == []
-    assert deployed.notes == [f"The space {TAXI} is titled Taxi trips, which is not Strata's, so I left it as it was."]
-    # The next deploy finds Strata's space by its title, even while the env file still names the taxi space.
+    assert deployed.notes == [f"The space {TAXI} is titled Taxi trips, which is not Prism's, so I left it as it was."]
+    # The next deploy finds Prism's space by its title, even while the env file still names the taxi space.
     again = genie_space.deploy(api, genie_space.load(), WAREHOUSE, TAXI)
     assert (again.action, again.space_id) == ("unchanged", deployed.space_id)
 
@@ -436,7 +436,7 @@ def test_an_env_file_that_names_a_deleted_space_gets_strata_a_new_one_through_th
             return {"spaces": [{"space_id": TAXI, "title": "Taxi trips"}]}
         if (method, path) == ("POST", "/api/2.0/genie/spaces"):
             return {"space_id": "fedcba9876543210fedcba9876543210", **body}
-        raise AssertionError(f"Strata's deploy sent {method} {path}")
+        raise AssertionError(f"Prism's deploy sent {method} {path}")
 
     deployed = genie_space.deploy(genie_space.RestSpaces(workspace), genie_space.load(), WAREHOUSE, deleted)
 

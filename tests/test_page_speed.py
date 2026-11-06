@@ -333,7 +333,7 @@ DEMO_PAGES = ["/api/projects/P156634", "/api/projects/P156634/summary", "/api/pr
 
 
 def the_app_itself():
-    return Viewer(name="Strata", user_id="strata-app", token="not-a-real-key")
+    return Viewer(name="Prism", user_id="strata-app", token="not-a-real-key")
 
 
 @pytest.fixture

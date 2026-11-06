@@ -41,7 +41,7 @@ def test_the_bundle_declares_the_catalog_its_four_schemas_and_the_bronze_files_v
 
 
 def test_only_the_bundle_names_the_catalog():
-    """Strata's SQL says strata. directly, so a setting that renamed the catalog would name one the deploy never makes."""
+    """Prism's SQL says strata. directly, so a setting that renamed the catalog would name one the deploy never makes."""
     repo = Path(__file__).resolve().parents[1]
     for path in (".env.example", "ops/wizard/strata-setup.sh"):
         assert "STRATA_CATALOG" not in (repo / path).read_text(), path

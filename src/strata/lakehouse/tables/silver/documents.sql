@@ -22,7 +22,7 @@
 --                 its date (icr-2019-10-10, isr-2016-08-26), with -2 for the second of a type on one date
 -- parse_parts     how many parts the layout parser reads it in: 1, or more for a document longer than
 --                 ingestion.parser_part_pages (config/thresholds.toml)
--- public_from     its disclosure date, or the day Strata first fetched it where that is missing or
+-- public_from     its disclosure date, or the day Prism first fetched it where that is missing or
 --                 later (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.documents (
   document_id STRING NOT NULL,

@@ -2,7 +2,7 @@
 --
 -- method_differs_from_reference: STEP builds an Activity Reference No. from the method chosen when
 -- the activity was created, so it can end in one method's code (KE-NWWDA-199461-GO-RFB) while the
--- Method column names another (Request for Quotations). Strata reads the method from the Method
+-- Method column names another (Request for Quotations). Prism reads the method from the Method
 -- column and notes the difference. The codes below are those whose STEP method name the fixture's
 -- plans show; a reference that ends in any other code never makes this note. Each method name is
 -- STEP's word for word, as src/strata/reader/step.py lists them in VALUES, and a test checks it.
@@ -14,7 +14,7 @@
 -- (US$) reads 0.00, so the record does not say what the contract cost.
 --
 -- method_unknown: a row whose Method cell is a name the method-name registry does not list
--- (config/method_names.toml; ticket 42), so method keeps the plan's words and Strata cannot match it to a
+-- (config/method_names.toml; ticket 42), so method keeps the plan's words and Prism cannot match it to a
 -- method in the Procurement Regulations.
 INSERT INTO strata.silver.plan_data_notes (
   document_id, project_id, activity_reference_no, note, reference_method_code, reference_method,

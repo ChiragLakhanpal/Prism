@@ -1,4 +1,4 @@
-// Steps: what Strata is doing while an answer is built. The step in progress is in the present
+// Steps: what Prism is doing while an answer is built. The step in progress is in the present
 // tense with a turning icon; done steps are in the past tense in ink-muted, with no check mark,
 // so nothing suggests a step verified anything. Steps still to come are listed in ink-muted as
 // "To do: ...", so the list keeps its height and turns each into a done step as it finishes

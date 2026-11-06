@@ -30,7 +30,7 @@ A template says:
                up to the next annex, go to Route B, whose rows each name a risk and its rating.
 - headings     for a report that numbers no paragraph, such as an ISR, its template's headings word
                for word, and in levels a pattern for the numbered headings of its later template.
-               Each section's text is then one paragraph, which Strata numbers.
+               Each section's text is then one paragraph, which Prism numbers.
 
 The patterns read lines of the text the World Bank publishes (src/strata/reader/passages.py).
 """

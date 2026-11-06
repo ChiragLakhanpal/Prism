@@ -4,7 +4,7 @@
 <text x="80.0" y="144.5" class="d-text b" text-anchor="middle">Viewer</text>
 <text x="80.0" y="159.5" class="d-text s" text-anchor="middle"><tspan x="80.0" dy="0">signs in; Databricks</tspan><tspan x="80.0" dy="14">forwards their token</tspan></text>
 <rect x="220" y="120" width="160" height="70" rx="8" class="d-box hi"/>
-<text x="300.0" y="144.5" class="d-text b" text-anchor="middle">Strata app</text>
+<text x="300.0" y="144.5" class="d-text b" text-anchor="middle">Prism app</text>
 <text x="300.0" y="159.5" class="d-text s" text-anchor="middle"><tspan x="300.0" dy="0">builds a Viewer per</tspan><tspan x="300.0" dy="14">request; keeps none</tspan></text>
 <path d="M150,155 L220,155" class="d-arrow hi" marker-end="url(#identity_flow-a-hi)"/>
 <rect x="460" y="20" width="420" height="110" rx="8" class="d-box hi"/>

@@ -8,7 +8,7 @@
 -- url           the PDF's address
 -- page_hash     SHA-256 of the page's text, which says whether a page already parsed has changed
 -- text          the page's text
--- fetched_at    when Strata fetched the PDF, in UTC
+-- fetched_at    when Prism fetched the PDF, in UTC
 -- public_from   as for the document's text (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.bronze.document_pages (
   document_id STRING NOT NULL,

@@ -1,6 +1,6 @@
 /**
  * Core sample: a drill core lifted out of the ground, cut into three bands, one
- * per stratum (Strata's deck, ticket 47; the 47 brief, section 4.2). From the
+ * per stratum (Prism's deck, ticket 47; the 47 brief, section 4.2). From the
  * bottom: Why, one dense block with a single seam, the way a bound report is;
  * How, thin stacked sheets with offset edges, the way plans and status reports
  * pile up; What, fine even grooves round it, row on row, the way records are.

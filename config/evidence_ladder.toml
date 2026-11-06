@@ -1,7 +1,7 @@
-# The evidence ladder: how Strata chooses the assertion it leans on when two disagree.
+# The evidence ladder: how Prism chooses the assertion it leans on when two disagree.
 #
 # This is the one place the ladder is defined (spec, "Ten single places", item 6). Both assertions
-# are always kept and shown; the ladder only says which one Strata leans on and by which rule.
+# are always kept and shown; the ladder only says which one Prism leans on and by which rule.
 # strata.config.load_ladder() reads it, the nightly job's detect_disagreements task applies it to each
 # disagreement it finds (src/strata/knowledge/assertions.py), and get_disagreements returns the rule
 # that decided. A change here takes effect at the next run, with no code change.
@@ -66,7 +66,7 @@ document_types = []
 #   class   judgment (an outcome judgment, decided by the outcome rule) or moment (a claim about one
 #           moment, decided by the moment rule)
 #   scale   for a rating, its scale in [scales]
-#   names   the field names that mean it, word for word, in the reports and records Strata reads
+#   names   the field names that mean it, word for word, in the reports and records Prism reads
 #
 # Progress towards the PDO is classed a judgment of how the project went, so ISR 7 and the ICR's
 # paragraph 78 are decided by the outcome rule, not the moment rule (a decision parked for the owner,

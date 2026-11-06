@@ -1,4 +1,4 @@
-"""App state: what people make in Strata and expect to find again, kept in Lakebase (ADR 0005).
+"""App state: what people make in Prism and expect to find again, kept in Lakebase (ADR 0005).
 
 The Lakebase probe chose Lakebase over strata.ops for app state (docs/app-state.md): a write and a read took
 145 ms there in the middle, against 2,293 ms on the SQL warehouse. Ticket 15 writes the first app state, the

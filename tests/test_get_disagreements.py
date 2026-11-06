@@ -2,7 +2,7 @@
 
 The tool is called by name through the registry (config/tools.toml), as a viewer, with an optional
 as-of date. For a subject it returns each disagreement with both sides in the order written, the side
-Strata leans on, the ladder's rule, and what changes if you keep the other, plus the trajectories and
+Prism leans on, the ladder's rule, and what changes if you keep the other, plus the trajectories and
 the count of assertions the run rejected. Expected values come from tests/ground_truth/values.toml,
 never from the code.
 """
@@ -50,7 +50,7 @@ def about(result, attribute: str) -> list[dict]:
 # ── The showcase disagreement ────────────────────────────────────────────
 
 def test_isr_7_and_the_icrs_paragraph_78_come_back_as_one_disagreement_leaning_on_the_icr(engine):
-    """Criterion 1: both sides in the order written, Strata leaning on the ICR under the outcome-judgment rule,
+    """Criterion 1: both sides in the order written, Prism leaning on the ICR under the outcome-judgment rule,
     and what changes if you keep ISR 7."""
     result = get_disagreements(engine, subject_id="P130164")
 
@@ -176,7 +176,7 @@ def test_a_disagreement_with_the_replaced_2020_icr_review_is_left_out_of_current
 def test_reordering_the_ladder_in_its_config_flips_the_side_strata_leans_on(fixture_db, tmp_path, old, new, rule):
     """Criterion 4: an edited copy of config/evidence_ladder.toml, and no code change. Ranking ISRs above the
     ICR, or classing progress towards the PDO as a fact about a moment (which ISR 7 recorded at that moment),
-    makes Strata lean on ISR 7 instead. The disagreements are decided again from the assertions held."""
+    makes Prism lean on ISR 7 instead. The disagreements are decided again from the assertions held."""
     ladder = tmp_path / "evidence_ladder.toml"
     text = (ROOT / "config" / "evidence_ladder.toml").read_text()
     assert old in text
@@ -474,7 +474,7 @@ def test_a_subject_strata_does_not_hold_is_an_abstention(engine):
 @pytest.mark.parametrize("asked", ["ke-mowasco-307378-go-rfb", "Ke-Mowasco-307378-Go-Rfb"])
 def test_a_step_reference_in_any_case_names_its_package_as_a_project_id_in_any_case_does(engine, asked):
     """Ticket 20's verification round 3, V2: a lowercase STEP reference was unknown_subject, while a lowercase project
-    ID was read. The subject is named as Strata holds it."""
+    ID was read. The subject is named as Prism holds it."""
     result = get_disagreements(engine, subject_id=asked)
 
     assert result["subject"] == {"kind": "package", "id": "KE-MOWASCO-307378-GO-RFB",

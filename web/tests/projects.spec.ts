@@ -450,7 +450,7 @@ test("a long list of implementing agencies keeps to one line until you show them
   await expect(page.getByRole("button", { name: "Show all agencies" })).toHaveCount(0);
 });
 
-test("a project's page says when the data service didn't answer, and when your account can't read Strata's tables", async ({ page }) => {
+test("a project's page says when the data service didn't answer, and when your account can't read Prism's tables", async ({ page }) => {
   const api = (answer: Answer) => ({ "/api/projects/P156634": answer });
   await open(page, "/projects/P156634", api({ status: 503, body: '{"code":"data_service","trace_id":"0af7651916cd43dd8448eb211c80319c"}' }), windowBeside(1100));
   await expect(page.getByRole("alert").locator("[data-alert-text]")).toHaveText("I couldn't load this project because the data service didn't answer.");
@@ -470,7 +470,7 @@ test("a project's page says when the data service didn't answer, and when your a
 
   await page.unrouteAll({ behavior: "ignoreErrors" });
   await open(page, "/projects/P156634", api({ status: 403, body: '{"code":"permission"}' }), 390);
-  await expect(page.getByRole("alert")).toHaveText("Your account can't read Strata's tables, so I can't show this project.");
+  await expect(page.getByRole("alert")).toHaveText("Your account can't read Prism's tables, so I can't show this project.");
   await expect(page.getByText("Ask your workspace admin for read access to the strata catalog.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
   expect(await axe(page), "permission at 390 px").toEqual([]);

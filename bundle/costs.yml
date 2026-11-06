@@ -1,4 +1,4 @@
-# The daily cost pull (ticket 45; src/strata/lakehouse/costs.py): Azure's charges for Strata's resource group, into
+# The daily cost pull (ticket 45; src/strata/lakehouse/costs.py): Azure's charges for Prism's resource group, into
 # strata.ops.azure_costs, for the dashboard's Governance page.
 #
 # It is a job of its own, not an eleventh nightly task, because tests/test_nightly.py keeps the nightly job to
@@ -12,7 +12,7 @@ resources:
   jobs:
     costs:
       name: strata cost pull
-      description: Each day, writes Azure's charges for Strata's resource group to strata.ops.azure_costs.
+      description: Each day, writes Azure's charges for Prism's resource group to strata.ops.azure_costs.
       schedule:
         quartz_cron_expression: "0 40 5 * * ?"
         timezone_id: America/New_York

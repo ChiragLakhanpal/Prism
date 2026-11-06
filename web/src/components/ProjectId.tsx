@@ -1,8 +1,8 @@
-// ProjectId (the 21 brief, section 9; DESIGN.md section 5): every P-code in Strata is a link to its
+// ProjectId (the 21 brief, section 9; DESIGN.md section 5): every P-code in Prism is a link to its
 // project page, in Roboto Mono 500 at the size of the text around it, primary and underlined. A link to
 // the page you are on carries aria-current="page", as the h1's P-code does on a project's Summary.
 //
-// linkProjectIds is the one helper for text Strata does not write itself, such as a passage, an answer
+// linkProjectIds is the one helper for text Prism does not write itself, such as a passage, an answer
 // sentence or a STEP description: it wraps every P and six digits in a ProjectId and changes no words.
 // The Playwright sweep in web/tests/sweep.spec.ts finds any P-code on any route that is not such a link,
 // outside the places PROJECT_ID_EXEMPT (web/src/lib/projectId.ts) names.
@@ -47,7 +47,7 @@ export function ProjectIdText({ pid }: { pid: string }) {
   return <span className="font-mono font-medium">{pid}</span>;
 }
 
-// An ID Strata writes, such as a scope: a P-code as a ProjectId link, anything else, such as a STEP
+// An ID Prism writes, such as a scope: a P-code as a ProjectId link, anything else, such as a STEP
 // reference, in Roboto Mono as it stands.
 export function IdText({ id }: { id: string }) {
   return /^P\d{6}$/.test(id) ? <ProjectId pid={id} /> : <span className="font-mono">{id}</span>;

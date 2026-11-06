@@ -28,7 +28,7 @@ from strata.tools import registry
 
 # Who the full gate asks as. It holds no token: on the workspace, ops/evals/full_gate.py gives run() a copy that
 # carries the env file's token for that one run, so its grants decide what the tools read (CLAUDE.md rule 7).
-GATE = Viewer(email="full-gate@strata", name="Strata's full gate", user_id="full-gate@strata")
+GATE = Viewer(email="full-gate@strata", name="Prism's full gate", user_id="full-gate@strata")
 
 
 def scope_of(question: dict) -> tuple[str | None, str | None]:

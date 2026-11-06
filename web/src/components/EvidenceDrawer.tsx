@@ -448,7 +448,7 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
   const listedCurrency = listed.find((field) => field.key === "currency")?.value;
   const currency = typeof row.currency === "string" ? row.currency : typeof listedCurrency === "string" ? listedCurrency : null;
   for (const field of listed) {
-    // A key is Strata's own name for a value, such as a rating's "pdo", which means nothing to a reader.
+    // A key is Prism's own name for a value, such as a rating's "pdo", which means nothing to a reader.
     if (field.kind === "key") continue;
     // A contract's signed amount carries its currency in its label (ticket 22): "Signed amount (INR)".
     const label =
@@ -509,7 +509,7 @@ function RecordView({ evidence }: { evidence: EvidenceEvent }) {
           </TextLink>
         </p>
       )}
-      {/* A notice, award notice, contract or plan row whose activity Strata holds opens its trail (ticket 22), unless
+      {/* A notice, award notice, contract or plan row whose activity Prism holds opens its trail (ticket 22), unless
           the drawer is open on that trail already. */}
       {typeof row.activity_href === "string" && row.activity_href !== here && (
         <p>

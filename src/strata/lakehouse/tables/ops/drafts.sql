@@ -1,4 +1,4 @@
--- One row for each draft Strata wrote for a person to check (ticket 35), saved only once its writer and
+-- One row for each draft Prism wrote for a person to check (ticket 35), saved only once its writer and
 -- the verifier finished: review notes on a plan, and the kinds later tickets add (config/drafts.toml).
 -- The draft runtime (src/strata/drafts/store.py) writes it as the app's own service principal, and every
 -- read goes through the one access rule in src/strata/server/access.py, which shows a draft only to its

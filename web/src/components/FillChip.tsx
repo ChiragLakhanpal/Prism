@@ -1,6 +1,6 @@
 // The fill-in chip (ticket 36; the 36 brief, section 4.3; DESIGN.md section 5): a field only a person fills, such as
 // a suggested PPSD row's Risk Owner, or in the Long Form its ratings, score and stage. It is brief 15's criterion
-// chip and chip editor, so Strata has one pattern for "choose this to set a value": empty, it is the plus chip
+// chip and chip editor, so Prism has one pattern for "choose this to set a value": empty, it is the plus chip
 // ("Set the owner", or "Set" under a column label); set, it is the typed chip with the value; open, it takes the tint
 // and an inset ring, so its size never changes. Its editor is a popover 8 px under it from a window of 768 px, and a
 // bottom sheet below that. A commit shows the value at once, closes the editor and gives focus back to the chip; a

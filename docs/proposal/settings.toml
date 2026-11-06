@@ -1,4 +1,4 @@
-# The settings register (ticket 46; the 46 brief, sections 9.1 and 9.4): every value the proposal states that Strata is
+# The settings register (ticket 46; the 46 brief, sections 9.1 and 9.4): every value the proposal states that Prism is
 # set to, or that counts a registry, with the file that sets it and the test that enforces it. The build fills each
 # {s:key} in docs/proposal/source.md from the file itself, through strata.config's loaders, so a change drill in round 2
 # changes the proposal's next build too (CLAUDE.md rules 4 and 9). Annex 2 lists them in order of first citation.
@@ -19,7 +19,7 @@
 #                as "75 to 85 percent"), money (whole US dollars), tokens or gigabytes
 #   second       for percent_band, the threshold that gives the band's top
 #   where        the file, and the key in it, as Annex 2's "Where it is set" names them
-#   enforced_by  the test that shows Strata keeps it, from the repo's root; left out for a planning choice
+#   enforced_by  the test that shows Prism keeps it, from the repo's root; left out for a planning choice
 #   enforces     what that test checks, in a few words
 
 [settings.source-count]
@@ -39,7 +39,7 @@ enforced_by = "tests/test_six_checks.py"
 enforces = "Every answer and draft gets every check"
 
 [settings.refusal-count]
-name = "Requests Strata turns down every time"
+name = "Requests Prism turns down every time"
 read = "count:refusals"
 form = "number"
 where = "src/strata/agent/refusals.py"

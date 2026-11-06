@@ -1,6 +1,6 @@
 """The ground-truth file, tests/ground_truth/values.toml, lists every value the spec's Testing
 Decisions name, with where each one came from. These tests prove that each value is really
-in the recorded fixture, read straight from the recorded files and never through Strata's
+in the recorded fixture, read straight from the recorded files and never through Prism's
 own code:
 
 - a quote is word for word on the stated PDF page of a recorded document, or in the stated

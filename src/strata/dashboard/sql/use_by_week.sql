@@ -1,4 +1,4 @@
--- Tiles 32 to 34: by week (its Monday) in the dates chosen, the people who opened a page of Strata (a route outside
+-- Tiles 32 to 34: by week (its Monday) in the dates chosen, the people who opened a page of Prism (a route outside
 -- /api in strata.ops.usage_events, each person once a week whatever view they used), the answers given
 -- (strata.ops.agent_runs), the drafts started (strata.ops.drafts), and the drafts their authors moved to checked and
 -- to exported that week (strata.ops.draft_states, each draft counted in the week it reached the state). Newest first.

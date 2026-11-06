@@ -233,7 +233,7 @@ test("the table keeps each planned date's sentence on one line, and the list set
   for (const gap of gaps) expect(gap, "a label's first line against its value's").toBeLessThanOrEqual(3);
 });
 
-test("Strata writes no actual date into a step: every date on screen is a planned date or the plan's own", async ({ page }) => {
+test("Prism writes no actual date into a step: every date on screen is a planned date or the plan's own", async ({ page }) => {
   const result = JSON.parse(await recorded("steps-ke-hand-900000.json"));
   const withActuals = JSON.stringify({ ...result, step_dates: { ...result.step_dates, actual_steps_count: 5 } });
   await serve(page, {

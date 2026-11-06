@@ -1,6 +1,6 @@
 # The fixture
 
-The fixture is a small, real, offline copy of the World Bank sources behind Strata's demo and showcase. Every offline test reads it, and the gate builds it into `data/out/fixture.duckdb` with no network.
+The fixture is a small, real, offline copy of the World Bank sources behind Prism's demo and showcase. Every offline test reads it, and the gate builds it into `data/out/fixture.duckdb` with no network.
 
 - The demo plan is the Northern Water Works Development Agency's Procurement Plan of October 9, 2026 for the Kenya Water and Sanitation Development Project (P156634). The project has many more plan versions than the fixture holds. It keeps only the ones the tests need:
   - the agency's plan of April 21, 2021, the first to list KE-NWWDA-229129-CW-RFB, and its version just before it, of December 7, 2020;
@@ -45,7 +45,7 @@ The gate loads these files into the schema `strata.recorded`. The `recorded` sch
 
 ## The stress shelf's documents (ticket 18)
 
-The stress shelf holds the hardest documents Strata reads (`config/slice.toml`, `[[stress_shelf]]`), and the fixture records what it needs of each:
+The stress shelf holds the hardest documents Prism reads (`config/slice.toml`, `[[stress_shelf]]`), and the fixture records what it needs of each:
 
 - The P130164 PAD, a scan of 100 PDF pages whose text layer is empty on pages 4, 6 and 12, with its words, so the offline layout parser reads every page and the risk annex, Annex 4, on PDF pages 65 to 70. The builder counted its eight rated risks from the scan's text layer (the recorded `.pages.txt`) on October 24, 2026, and quoted each rating on its page (`tests/ground_truth/values.toml`, `[stress_shelf.pad_risk_annex]`). A person has not yet checked the count against the page images, so `config/slice.toml` gives the shelf no hand count, and the page shows the risks recovered with nothing to check them against.
 - The longest PAD the fixture records is P156634's, with 103 PDF pages; the run picks it by its rule.

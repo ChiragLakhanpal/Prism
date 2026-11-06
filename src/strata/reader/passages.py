@@ -19,7 +19,7 @@ its PDF has, and the document type's template (src/strata/reader/templates.py), 
    separates the numbered paragraphs (54. Another lesson ...). The text between a numbered
    paragraph and the next belongs to it, across a page break too, until a heading or a short line
    standing alone, such as "Quality at Entry", ends it. Text that no number covers forms a paragraph
-   that Strata numbers itself, and says so.
+   that Prism numbers itself, and says so.
 5. It divides any paragraph over max_tokens tokens at sentence ends. The parts share the
    paragraph's number, and each part starts on its own PDF page.
 
@@ -54,7 +54,7 @@ DATA_SHEET, NO_TEXT, NOT_PAGED = "data_sheet", "no_text", "text_not_paged"
 SCANNED, RISK_TABLE = "scanned", "risk_table"  # a scan's page, and a page of a PAD's risk table
 TABLE_REASONS = (DATA_SHEET, RISK_TABLE)  # the pages whose tables Route B reads into rows
 # The kinds of passage, as silver.passages records them: a numbered paragraph (or a section, or a part
-# of one), one row of a table, the one summary of a table that Strata writes and that never backs a
+# of one), one row of a table, the one summary of a table that Prism writes and that never backs a
 # number (spec, "Reading documents"; the verifier reads it), and a section of a notice's text.
 PARAGRAPH, TABLE_ROW, TABLE_SUMMARY, NOTICE_TEXT = "paragraph", "table_row", "table_summary", "notice_text"
 
@@ -63,7 +63,7 @@ def tokens(text: str) -> int:
     """How many tokens a text has, counted as its words and its punctuation marks.
 
     The embedding model counts with its own tokenizer, which the offline gate cannot load, and on
-    English prose it gives about as many tokens as this count. It is the one count Strata uses."""
+    English prose it gives about as many tokens as this count. It is the one count Prism uses."""
     return len(TOKEN.findall(text))
 
 
@@ -88,7 +88,7 @@ class PageRoute:
 
 @dataclass(frozen=True)
 class Passage:
-    key: str  # unique in the document: the paragraph's number, annex2.3 in an annex, s4 when Strata numbers it
+    key: str  # unique in the document: the paragraph's number, annex2.3 in an annex, s4 when Prism numbers it
     section_path: str
     paragraph: str
     paragraph_numbered: bool
@@ -157,7 +157,7 @@ def _page_lines(lines: list[str], running: set[str], printed: str | None) -> lis
 @dataclass
 class _Paragraph:
     section_path: str
-    number: str | None  # the report's own number, or None when Strata numbers it
+    number: str | None  # the report's own number, or None when Prism numbers it
     key: str
     lines: list[tuple[int, str]] = field(default_factory=list)  # (PDF page, line)
 
@@ -367,7 +367,7 @@ def _passages(paragraph: _Paragraph, max_tokens: int, template: Template, printe
         offset = joined.index(part, offset)
         first, last = page_at(offset), page_at(offset + len(part) - 1)
         key = paragraph.key if len(parts) == 1 else f"{paragraph.key}/{number}"
-        shown = paragraph.number if paragraph.number is not None else paragraph.key  # s4 when Strata numbered it
+        shown = paragraph.number if paragraph.number is not None else paragraph.key  # s4 when Prism numbered it
         found.append(Passage(key, paragraph.section_path, shown, paragraph.number is not None, number,
                              len(parts), first, last, printed.get(first), part, tokens(part)))
         offset += len(part)

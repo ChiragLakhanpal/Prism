@@ -4,13 +4,13 @@
   order a project produces them (the appraisal document, Project Papers, ISRs, Procurement Plans, the
   completion report, its reviews, performance assessments, then the rest), newest first in each group,
   with the date on the document, the day the World Bank made it public (its public_from, ADR 0002) and
-  how many of its pages Strata read. A report re-issued under the same report number replaces its
+  how many of its pages Prism read. A report re-issued under the same report number replaces its
   earlier version in one row. The route counts each group and says which documents show before "Show
   all" (app.documents_shown), so the screen counts nothing. It also says whether the project is in the
-  set whose documents Strata fetches (config/slice.toml: the projects its criteria select and the ones it
+  set whose documents Prism fetches (config/slice.toml: the projects its criteria select and the ones it
   names), so a project outside that set is not told its documents are still to come.
 - source_page gives one PDF page of a document as the reader read it: its paragraphs as the document
-  numbers them and its tables' rows, never a table's summary, which is Strata's own words, with a
+  numbers them and its tables' rows, never a table's summary, which is Prism's own words, with a
   paragraph that runs onto the page from the one before. A page with none says why: it has no text
   (empty), it is the report's front matter, which the reader leaves out (front_matter), or the reader
   could not read it (unread). A

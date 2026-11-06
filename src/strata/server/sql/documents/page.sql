@@ -1,6 +1,6 @@
 -- The source view (the 21 brief, section 7): the passages on one PDF page of a document, those that start
 -- on it and one that runs onto it from the page before, in the order the reader made them: its paragraphs
--- as the document numbers them, and the rows of its tables. A table's summary is Strata's own words, so it
+-- as the document numbers them, and the rows of its tables. A table's summary is Prism's own words, so it
 -- is left out: the page shows only the document's. The route puts them in reading order.
 SELECT
   passage_id,

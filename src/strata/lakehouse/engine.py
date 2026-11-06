@@ -1,6 +1,6 @@
 """The engine adapter: one plain SQL query runs unchanged on Databricks and on DuckDB.
 
-Strata writes its SQL once, in Databricks SQL, because that is where it runs for real. Three
+Prism writes its SQL once, in Databricks SQL, because that is where it runs for real. Three
 engines run it, and all three take the same text and the same parameters:
 
 - WarehouseEngine runs it on the workspace's SQL warehouse through the Statement Execution API,
@@ -620,7 +620,7 @@ def typed(value: str | None, type_name: str | None) -> Any:
     the same column (ticket 128): BIGINT, INT, SMALLINT and TINYINT as int; DECIMAL as Decimal; DOUBLE and FLOAT as
     float; BOOLEAN as bool; DATE as date; TIMESTAMP as a datetime in UTC and TIMESTAMP_NTZ as one with no zone.
     STRING and every other type stay as written, null stays None, and text that does not read as its type stays as
-    written. This is the one place Strata reads the warehouse's text; Genie's results come through it too."""
+    written. This is the one place Prism reads the warehouse's text; Genie's results come through it too."""
     if value is None:
         return None
     kind = (type_name or "STRING").upper().split("(")[0].strip()

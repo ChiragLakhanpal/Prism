@@ -1,4 +1,4 @@
-// The figures' order on How Strata works and each slot's size (the second draft's brief, sections 4 and 5), apart
+// The figures' order on How Prism works and each slot's size (the second draft's brief, sections 4 and 5), apart
 // from the registry's drawings, so a screen test can read them without loading an SVG.
 import type { FigureCopyId } from "../deck/copy";
 
@@ -13,7 +13,7 @@ export const SLOTS: Record<Slot, { width: number; height: number }> = {
   hairline: { width: 400, height: 320 },
 };
 
-// How Strata works shows them in this order, one section each: the order the talk reaches them.
+// How Prism works shows them in this order, one section each: the order the talk reaches them.
 export const PAGE_ORDER: FigureId[] = [
   "core-sample",
   "strata",

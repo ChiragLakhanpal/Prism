@@ -1,5 +1,5 @@
-"""The hindsight test (ticket 34; docs/PLAN.md section 10): Strata replayed as of each closed pilot project's
-approval date, counting which risks its completion report later blamed Strata would have shown.
+"""The hindsight test (ticket 34; docs/PLAN.md section 10): Prism replayed as of each closed pilot project's
+approval date, counting which risks its completion report later blamed Prism would have shown.
 
 It is a scorer for the replay harness (strata.estimates.harness, the spec's seam 5). Each gate-set project is
 one window: the cutoff is its approval date, and the outcomes are read as of the run. For each project the scorer
@@ -13,7 +13,7 @@ one window: the cutoff is its approval date, and the outcomes are read as of the
 3. asks get_lessons, frozen the same way, whether a lesson in the library already covered each blamed risk.
 
 The library in a replay is the one decided by the run's date, with each lesson counted from the day the quotes
-it rests on became public (get_lessons, call.decided_by). Strata did not exist on a 2014 approval date, so
+it rests on became public (get_lessons, call.decided_by). Prism did not exist on a 2014 approval date, so
 counting lessons from their 2026 decisions would leave the library empty at every approval date.
 
 A project's blamed risks are the reconciled set the coding tool stored (strata.estimates.hindsight_coding):
@@ -23,7 +23,7 @@ any main package's table showed it.
 Around the scorer:
 
 - gate_set() picks the projects: the pilot projects (config/slice.toml) with an ICR, leaving out and listing
-  extraction examples (config/lessons.toml) and projects exposed to Strata (sql/hindsight/exposed.sql), and
+  extraction examples (config/lessons.toml) and projects exposed to Prism (sql/hindsight/exposed.sql), and
   listing those still waiting for their ICR to be read, their coding or their first plan.
 - run() replays the gate set for a release and stores each project's scores and the release's totals in
   strata.ops.evaluation_result and the tracker: blamed, covered at approval, shown, the checklist's catch, and
@@ -211,9 +211,9 @@ def _rows(engine: Engine, name: str, **params) -> list[dict]:
 def gate_set(engine: Engine, as_of: dt.date, lists: LessonLists | None = None, chosen: Slice | None = None,
              thresholds: Thresholds | None = None) -> GateSet:
     """The pilot projects (config/slice.toml) with an ICR, as of a date. A project the lesson extractor's
-    instructions use as an example (config/lessons.toml, [extraction]) or one exposed to Strata
-    (sql/hindsight/exposed.sql) is left out. One whose ICR Strata has not read, whose blamed risks are not reconciled
-    yet, or whose first Procurement Plan Strata has not read, waits."""
+    instructions use as an example (config/lessons.toml, [extraction]) or one exposed to Prism
+    (sql/hindsight/exposed.sql) is left out. One whose ICR Prism has not read, whose blamed risks are not reconciled
+    yet, or whose first Procurement Plan Prism has not read, waits."""
     from strata.estimates import hindsight_coding
     from strata.lakehouse.passages import select
 
@@ -245,7 +245,7 @@ def gate_set(engine: Engine, as_of: dt.date, lists: LessonLists | None = None, c
 
 
 REASON_WORDS = {"extraction_example": "an example in the lesson extractor's instructions",
-                "exposed": "exposed to Strata", "icr_not_read": "ICR not read yet", "not_coded": "not coded yet",
+                "exposed": "exposed to Prism", "icr_not_read": "ICR not read yet", "not_coded": "not coded yet",
                 "no_first_plan": "no Procurement Plan read"}
 
 

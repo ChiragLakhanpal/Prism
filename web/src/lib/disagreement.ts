@@ -1,7 +1,7 @@
 // The disagreement card's words, built once from either place a disagreement arrives (ticket 23): the answer
 // stream's disagreement event (ticket 24) and the evidence drawer's disagreement view (GET /api/evidence?id=
 // disagreement:{id}). Both give each side in the order it was written, with its kind of report, its field and
-// value or its quote, and the side Strata leans on; every sentence comes from the copy file and these values.
+// value or its quote, and the side Prism leans on; every sentence comes from the copy file and these values.
 import { copy } from "../copy";
 import { formatDate } from "./format";
 
@@ -78,7 +78,7 @@ export function subjectOf(attribute: string | null, event: string | null): strin
 }
 
 // "the ICR", "ISR 7": a side's report as a sentence names it, as the timeline does, never its paragraph, since the
-// rule is about which report Strata leans on. The what-changes line, the keep line and the keep button use it too,
+// rule is about which report Prism leans on. The what-changes line, the keep line and the keep button use it too,
 // so the card names the other report one way (the 23 brief, section 7.5, {other_short}).
 export function sideInSentence(side: SideData): string {
   const short = copy.timeline.short;

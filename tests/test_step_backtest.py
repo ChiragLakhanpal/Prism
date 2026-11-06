@@ -1,6 +1,6 @@
 """The planned dates' per-step backtests through the replay harness (spec, seam 5; ticket 27, criterion 1).
 
-Each test year freezes Strata on January 1, dates each step first planned in that year from the comparables
+Each test year freezes Prism on January 1, dates each step first planned in that year from the comparables
 public then, and scores it against the actual dates public by the outcomes date: how many came on or before the
 cautious and the middle date, and the typical error against each and against the plan. The known answer is
 tests/ground_truth/values.toml's [step_dates], on the hand-made set tests/step_set.py builds. MLflow is behind the

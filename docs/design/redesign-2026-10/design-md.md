@@ -1,6 +1,6 @@
 # DESIGN.md: the sections the shell redesign changes, grouped by the ticket that lands them
 
-Proposed text for DESIGN.md, round 3, finished after the second critic's review, written to paste in as it stands. It is grouped by ticket, in `tickets.md`'s order (block 1 by the tokens ticket, whose class sweep pastes nothing; block 12 in two parts by the two Data tickets; block 13 in two parts by the two citation chain tickets), because DESIGN.md describes the app as it is: each ticket pastes only its own block, in the same change, so polish tickets 56 to 63 never read a rule for a screen that does not exist yet. "(Strata, the shell redesign)" takes the ticket's number once the orchestrator files it.
+Proposed text for DESIGN.md, round 3, finished after the second critic's review, written to paste in as it stands. It is grouped by ticket, in `tickets.md`'s order (block 1 by the tokens ticket, whose class sweep pastes nothing; block 12 in two parts by the two Data tickets; block 13 in two parts by the two citation chain tickets), because DESIGN.md describes the app as it is: each ticket pastes only its own block, in the same change, so polish tickets 56 to 63 never read a rule for a screen that does not exist yet. "(Prism, the shell redesign)" takes the ticket's number once the orchestrator files it.
 
 Round 3 writes the new and much-changed components in the design-system skill's form (a description, then variants, states and accessibility notes, then what to do and not do), as a subsection of DESIGN.md section 5 under the heading "Shell and citation components". A component that already has a row in section 5's table keeps a one-line row that points to its subsection, so the table still lists every component once. Small changes to an existing row stay sentence edits.
 
@@ -25,7 +25,7 @@ The tokens ticket pastes this block, except the one sentence marked "pasted by t
 ### Section 2, Color: add after the theme block's note
 
 ```markdown
-The deck at /present uses the same five values (Strata, the shell redesign): `navy`, `primary`, `ink-heading`, `page`, and `info-icon` (#0071bc), which the deck calls its accent. The app keeps navy to the bar that carries the logo; the deck may set whole opener slides in navy. Neither adds a color the other lacks.
+The deck at /present uses the same five values (Prism, the shell redesign): `navy`, `primary`, `ink-heading`, `page`, and `info-icon` (#0071bc), which the deck calls its accent. The app keeps navy to the bar that carries the logo; the deck may set whole opener slides in navy. Neither adds a color the other lacks.
 ```
 
 ### Section 3, Typography: replace the families table's first row, the self-host sentence and the scale table, and add a note
@@ -35,7 +35,7 @@ The deck at /present uses the same five values (Strata, the shell redesign): `na
 ```
 
 ```markdown
-Self-host with `@fontsource/open-sans` (300, 400, 400 italic, 600 and 700) and `@fontsource/roboto-mono` (400, 500). Define `Open Sans Fallback` as `local(Arial)` with `size-adjust: 105.22%; ascent-override: 101.58%; descent-override: 27.84%` (FinancesOne's values) to prevent layout shift. Strata (the shell redesign): weight 300 is for the `finding` style only, as the World Bank's 2016 guide sets its large sentences in Andes ExtraLight.
+Self-host with `@fontsource/open-sans` (300, 400, 400 italic, 600 and 700) and `@fontsource/roboto-mono` (400, 500). Define `Open Sans Fallback` as `local(Arial)` with `size-adjust: 105.22%; ascent-override: 101.58%; descent-override: 27.84%` (FinancesOne's values) to prevent layout shift. Prism (the shell redesign): weight 300 is for the `finding` style only, as the World Bank's 2016 guide sets its large sentences in Andes ExtraLight.
 ```
 
 ```markdown
@@ -56,7 +56,7 @@ Self-host with `@fontsource/open-sans` (300, 400, 400 italic, 600 and 700) and `
 ```
 
 ```markdown
-Strata (the shell redesign): size says how much a line matters and weight says what kind of line it is. The finding is the only light text; the h1 and the wordmark are the only 700; names, labels and buttons are 600. A zone's name never outranks its finding. Tracking follows size: -0.01em on the finding, zero on text, +0.02em on the small uppercase chart label. `title` (18 / 700) is retired into `h2`, and `label` loses its uppercase and its tracking. An ID inside the finding, such as a P-code in an officer's briefing, takes Roboto Mono 400, so it does not outweigh the light sentence around it. Two old tokens stay until the deck branch moves its last uses: `--text-title` (with `h2`'s values) and `--radius-box`; the class lint lets only files under `web/src/deck/` use them, and the uppercase rule exempts the same folder until then, and also the files that use `uppercase` today, by one frozen list the class sweep empties.
+Prism (the shell redesign): size says how much a line matters and weight says what kind of line it is. The finding is the only light text; the h1 and the wordmark are the only 700; names, labels and buttons are 600. A zone's name never outranks its finding. Tracking follows size: -0.01em on the finding, zero on text, +0.02em on the small uppercase chart label. `title` (18 / 700) is retired into `h2`, and `label` loses its uppercase and its tracking. An ID inside the finding, such as a P-code in an officer's briefing, takes Roboto Mono 400, so it does not outweigh the light sentence around it. Two old tokens stay until the deck branch moves its last uses: `--text-title` (with `h2`'s values) and `--radius-box`; the class lint lets only files under `web/src/deck/` use them, and the uppercase rule exempts the same folder until then, and also the files that use `uppercase` today, by one frozen list the class sweep empties.
 ```
 
 Pasted by the class sweep, as the last sentence of the note above:
@@ -96,8 +96,8 @@ Theme block, the type, radius and motion lines:
 ### Section 4, Space, grid, shape: replace these three rows
 
 ```markdown
-| Space | 2, 4, 8, 12, 16, 24, 32, 40, 48, 64 px, named `space-0.5` to `space-16` by Tailwind's step. Roles (Strata, the shell redesign): 4 between a label and its value; 8 from a heading to its first line, a stage label to its zone, the breadcrumb to the h1, a tooltip's parts; 12 inside controls and from a zone's number to its name; 16 between blocks in a zone, between panels, a zone row's top and bottom padding; 24 a panel's padding and after a finding; 32 from the page head to the first zone and before a stage label; 40 the page margin from 1200 px | spacing tokens |
-| Radius | By role (Strata, the shell redesign: worldbank.org's button token is a pill; Strata keeps the pill for data so a control and a fact never share a shape). 4 (`radius-sm`): controls, meaning buttons, the box, inputs, selects, the view switch, sidebar items, key hints and tooltips. 8 (`radius-md`): containers, meaning panels, the side panel, cards, popovers, windows and the drawer's record cards. The pill (`radius-pill`): data, meaning status badges, citation markers, chips and the check pill. 16 (`radius-lg`): a bottom sheet's top corners. 2 (`radius-xs`): skeleton bars | border-radius tokens |
+| Space | 2, 4, 8, 12, 16, 24, 32, 40, 48, 64 px, named `space-0.5` to `space-16` by Tailwind's step. Roles (Prism, the shell redesign): 4 between a label and its value; 8 from a heading to its first line, a stage label to its zone, the breadcrumb to the h1, a tooltip's parts; 12 inside controls and from a zone's number to its name; 16 between blocks in a zone, between panels, a zone row's top and bottom padding; 24 a panel's padding and after a finding; 32 from the page head to the first zone and before a stage label; 40 the page margin from 1200 px | spacing tokens |
+| Radius | By role (Prism, the shell redesign: worldbank.org's button token is a pill; Prism keeps the pill for data so a control and a fact never share a shape). 4 (`radius-sm`): controls, meaning buttons, the box, inputs, selects, the view switch, sidebar items, key hints and tooltips. 8 (`radius-md`): containers, meaning panels, the side panel, cards, popovers, windows and the drawer's record cards. The pill (`radius-pill`): data, meaning status badges, citation markers, chips and the check pill. 16 (`radius-lg`): a bottom sheet's top corners. 2 (`radius-xs`): skeleton bars | border-radius tokens |
 | Elevation | Panels and cards: none, a 1px `line` edge on `page`. A zone row: no edge, only the 1px `line` under it. Tooltips, popovers, windows and the Menu sheet: 1px `line` and `0 5px 25px rgba(160,158,143,.25)`. The drawer beside the page: a 1px `line` edge and no shadow | worldbank.org section shadow |
 ```
 
@@ -106,7 +106,7 @@ Theme block, the type, radius and motion lines:
 ```markdown
 ### Motion
 
-Strata (the shell redesign), after Emil Kowalski's decision framework: should it move, what is the movement for, which curve, how long. Strata is read many times a day, so most things do not move. Every duration is 120 to 200 ms.
+Prism (the shell redesign), after Emil Kowalski's decision framework: should it move, what is the movement for, which curve, how long. Prism is read many times a day, so most things do not move. Every duration is 120 to 200 ms.
 
 | What | Movement | Curve | Time | Why |
 |---|---|---|---|---|
@@ -119,25 +119,25 @@ Strata (the shell redesign), after Emil Kowalski's decision framework: should it
 | The range chart's comparison | Lane 2 and the dots, as today | `ease-out` | 160 and 120 ms | The comparison changed |
 | The export success panel | Fade | `ease-out` | 200 ms | The screen's one entrance |
 
-Never moves: page loads and route changes; the sidebar's width; a zone row opening; rows, cards and lists entering; numbers (never counted up); charts on load or rerun; a drawer's content when its source changes; skeletons (static, no shimmer); focus rings; anything that closes (tooltips, popovers, windows and the drawer close at once). Only `transform` and `opacity` move, apart from the chart's SVG attributes. Anything a person can trigger again before it ends uses a CSS transition, never a keyframe animation, and entrances use `@starting-style`, so a browser without it shows the element at once. Input is never locked while something moves. Hover styles live inside `@media (hover: hover) and (pointer: fine)`. A tooltip never opens because the page scrolled its number under a resting pointer; it waits for the pointer to move. Under `prefers-reduced-motion: reduce` nothing moves and nothing fades. This is a deliberate departure from the common advice to keep a gentle fade (Emil Kowalski's review-animations standard 8, "gentler, not zero"): no state in Strata needs a fade to be understood, and one rule is one test.
+Never moves: page loads and route changes; the sidebar's width; a zone row opening; rows, cards and lists entering; numbers (never counted up); charts on load or rerun; a drawer's content when its source changes; skeletons (static, no shimmer); focus rings; anything that closes (tooltips, popovers, windows and the drawer close at once). Only `transform` and `opacity` move, apart from the chart's SVG attributes. Anything a person can trigger again before it ends uses a CSS transition, never a keyframe animation, and entrances use `@starting-style`, so a browser without it shows the element at once. Input is never locked while something moves. Hover styles live inside `@media (hover: hover) and (pointer: fine)`. A tooltip never opens because the page scrolled its number under a resting pointer; it waits for the pointer to move. Under `prefers-reduced-motion: reduce` nothing moves and nothing fades. This is a deliberate departure from the common advice to keep a gentle fade (Emil Kowalski's review-animations standard 8, "gentler, not zero"): no state in Prism needs a fade to be understood, and one rule is one test.
 ```
 
 ### Section 4: add a Phone baseline row
 
 ```markdown
-| Phone baseline | Strata (the shell redesign), after mobile-native practice: `-webkit-tap-highlight-color: transparent` on the root; `touch-action: manipulation` on buttons and links; text inputs at 16px at least, so a phone never zooms into them; `100dvh` with a `100vh` fallback for the page column's height; `viewport-fit=cover` with `env(safe-area-inset-bottom)` padding on the Menu sheet and the draft bar; `overscroll-behavior: contain` on the sidebar and the drawer; button labels not selectable | Strata |
+| Phone baseline | Prism (the shell redesign), after mobile-native practice: `-webkit-tap-highlight-color: transparent` on the root; `touch-action: manipulation` on buttons and links; text inputs at 16px at least, so a phone never zooms into them; `100dvh` with a `100vh` fallback for the page column's height; `viewport-fit=cover` with `env(safe-area-inset-bottom)` padding on the Menu sheet and the draft bar; `overscroll-behavior: contain` on the sidebar and the drawer; button labels not selectable | Prism |
 ```
 
 ### Section 5, Components: replace the Buttons bullet's first sentence and the Cards bullet
 
 ```markdown
-- **Buttons** (Strata, the shell redesign: worldbank.org's button token is a pill; Strata keeps the pill for data and gives controls 4px corners, so a control and a fact never share a shape). 4px corners, 1px border, 14px 600, at least 44px tall. Primary: `primary` fill, white text. Secondary: `primary` border and text on `surface`, `tint` hover. Ghost: `primary` text, `tint-hover` hover; on the `page` background a ghost button hovers to `tint` (`onPage`). A primary or secondary button scales to 0.98 while pressed (section 4, Motion).
+- **Buttons** (Prism, the shell redesign: worldbank.org's button token is a pill; Prism keeps the pill for data and gives controls 4px corners, so a control and a fact never share a shape). 4px corners, 1px border, 14px 600, at least 44px tall. Primary: `primary` fill, white text. Secondary: `primary` border and text on `surface`, `tint` hover. Ghost: `primary` text, `tint-hover` hover; on the `page` background a ghost button hovers to `tint` (`onPage`). A primary or secondary button scales to 0.98 while pressed (section 4, Motion).
 ```
 
 (The rest of the Buttons bullet, from "A ghost button in a column of text sits flush", stays.)
 
 ```markdown
-- **Cards and panels** (The Loop, with Strata's roles). `surface`, 1px `line`, 8px corners, no shadow. A card holds one item in a list; a panel holds open work: a block of evidence, a table or a form. Titles 80 characters or fewer, blurbs 140, eight cards per group at most. A panel never sits inside another panel.
+- **Cards and panels** (The Loop, with Prism's roles). `surface`, 1px `line`, 8px corners, no shadow. A card holds one item in a list; a panel holds open work: a block of evidence, a table or a form. Titles 80 characters or fewer, blurbs 140, eight cards per group at most. A panel never sits inside another panel.
 ```
 
 ### The two new components' tokens
@@ -151,7 +151,7 @@ The Number tooltip and the Evidence drawer use `--tooltip-width`, `--motion-popo
 ### Section 2, Color: add after the navy paragraph
 
 ```markdown
-Strata (the shell redesign): the sidebar sits on `page` with a 1px `line` right edge, so the only white surfaces are the work, the box and the drawer. An item hovers to `surface-2`. The current item is `tint` with a 3px `primary` bar on its left and its label in 600 `ink-heading`, the same current mark as the view rows, the box list's Enter option and a table row whose records are open.
+Prism (the shell redesign): the sidebar sits on `page` with a 1px `line` right edge, so the only white surfaces are the work, the box and the drawer. An item hovers to `surface-2`. The current item is `tint` with a 3px `primary` bar on its left and its label in 600 `ink-heading`, the same current mark as the view rows, the box list's Enter option and a table row whose records are open.
 ```
 
 ### Section 5, "Shell and citation components": add Sidebar and Menu sheet; replace the Tabs bullet's first two sentences
@@ -159,7 +159,7 @@ Strata (the shell redesign): the sidebar sits on `page` with a 1px `line` right 
 ```markdown
 #### Sidebar
 
-The navigation named "Main", beside the page from 1024px, sticky under the bar at the window's height. Home, then the applied view's sections among Packages, Projects, Lessons and Drafts, then at its foot Data, the data stamp and "Collapse the sidebar". Nouns navigate and verbs act, so the sidebar holds no verb but Collapse (Strata, the shell redesign).
+The navigation named "Main", beside the page from 1024px, sticky under the bar at the window's height. Home, then the applied view's sections among Packages, Projects, Lessons and Drafts, then at its foot Data, the data stamp and "Collapse the sidebar". Nouns navigate and verbs act, so the sidebar holds no verb but Collapse (Prism, the shell redesign).
 
 | Variant | Use when | Look |
 |---|---|---|
@@ -186,11 +186,11 @@ Accessibility. Role: `nav` named "Main". Keyboard: Tab through items; "Collapse 
 ```markdown
 #### Menu sheet
 
-Below 1024px the sidebar's content opens from the left as a modal dialog named "Menu", `min(320px, 100vw - 48px)` wide, over the scrim, with the page and the bar inert. It slides in over 200ms on `ease-drawer` and back out over 120ms (section 4, Motion). The labelled Menu button (its word hidden from sight below 360px, so it keeps its name) opens it with `aria-expanded` and `aria-controls`; focus moves to the current page's item; Escape, the 44px "Close the menu" button and a press on the scrim close it and return focus to the Menu button. Below 768px the view switch sits at its foot (Strata, the shell redesign).
+Below 1024px the sidebar's content opens from the left as a modal dialog named "Menu", `min(320px, 100vw - 48px)` wide, over the scrim, with the page and the bar inert. It slides in over 200ms on `ease-drawer` and back out over 120ms (section 4, Motion). The labelled Menu button (its word hidden from sight below 360px, so it keeps its name) opens it with `aria-expanded` and `aria-controls`; focus moves to the current page's item; Escape, the 44px "Close the menu" button and a press on the scrim close it and return focus to the Menu button. Below 768px the view switch sits at its foot (Prism, the shell redesign).
 ```
 
 ```markdown
-- **Tabs.** Only for sibling views of one object, such as a project's Summary, Procurement, Timeline, Documents and Connections; a section's own pages are sidebar items (Strata, the shell redesign). 14px 600, 40px tall, a 3px `primary` underline on the selected tab and a 3px `line-strong` underline on hover, on light surfaces only.
+- **Tabs.** Only for sibling views of one object, such as a project's Summary, Procurement, Timeline, Documents and Connections; a section's own pages are sidebar items (Prism, the shell redesign). 14px 600, 40px tall, a 3px `primary` underline on the selected tab and a 3px `line-strong` underline on hover, on light surfaces only.
 ```
 
 (The rest of the Tabs bullet, from "Five tabs at most", stays.)
@@ -204,7 +204,7 @@ Below 1024px the sidebar's content opens from the left as a modal dialog named "
 ```markdown
 Brand navy `#002244` (`navy`) is used only for the top bar, which carries the logo and the one box, as The Loop keeps it to "main navigation and WB logo"; text on it is white (about 16:1). Brand blue `#009fda` is used sparingly and never for text.
 
-On the bar (Strata, the shell redesign), the view switch has a 1px white border, hovers to a `primary-hover` fill and shows `focus-on-dark`; the box is `surface` with no border, since its edge is 16:1 on navy, and shows `focus-on-dark` around it while anything inside it has focus. A control inside the box shows `focus`.
+On the bar (Prism, the shell redesign), the view switch has a 1px white border, hovers to a `primary-hover` fill and shows `focus-on-dark`; the box is `surface` with no border, since its edge is 16:1 on navy, and shows `focus-on-dark` around it while anything inside it has focus. A control inside the box shows `focus`.
 ```
 
 If the deck's second draft (`deck/second-draft`) has merged and the user kept its navy slides, the first sentence keeps the deck's clause, as the deck session and the orchestrator agreed (`../deck-ticket.md`): "is used only for the top bar, which carries the logo and the one box, and the deck's navy slides, which carry the white logo (section 4, Deck frame)". Whichever of the two merges second writes it, and block 4's principle 2 follows.
@@ -212,14 +212,14 @@ If the deck's second draft (`deck/second-draft`) has merged and the user kept it
 ### Section 5, Components: replace the Top navigation bullet
 
 ```markdown
-- **Top bar** (WB navy; Strata, the shell redesign). The banner landmark. From 1024px one 56px row that sticks: the World Bank Group logo (section 9), 24px, the wordmark "Strata" (a link to Home), the one box, and the view switch ("View: World Bank staff ▾") 24px from the right edge. The box starts at the page's content edge when the sidebar is open and 32px after the wordmark when it is a rail, and is at most 640px wide; it keeps one row, and its scope chip drops "Within" when the box is narrower than 35rem. Below 1024px the bar does not stick and has two rows: the Menu button, the logo and the wordmark (and the view switch from 768px), then the box across the window. With a scope chip below 1024px the box's search icon hides, so the chip takes the first row and the text the second; below 360px the icon always hides. Below 768px the placeholder takes its short form ("Open a project or package, or ask", `box.placeholderShort`), so it is never cut, while the field's name keeps the whole sentence, and the "/" hint hides. The data stamp is not in the bar (see Freshness stamp). The view switch is a 32px control with 4px corners and a 1px white border; its popover, rows, past-date field, language choice and labels stay as ticket 40 set them, and a label may be at most 167px in the `button` style.
+- **Top bar** (WB navy; Prism, the shell redesign). The banner landmark. From 1024px one 56px row that sticks: the World Bank Group logo (section 9), 24px, the wordmark "Prism" (a link to Home), the one box, and the view switch ("View: World Bank staff ▾") 24px from the right edge. The box starts at the page's content edge when the sidebar is open and 32px after the wordmark when it is a rail, and is at most 640px wide; it keeps one row, and its scope chip drops "Within" when the box is narrower than 35rem. Below 1024px the bar does not stick and has two rows: the Menu button, the logo and the wordmark (and the view switch from 768px), then the box across the window. With a scope chip below 1024px the box's search icon hides, so the chip takes the first row and the text the second; below 360px the icon always hides. Below 768px the placeholder takes its short form ("Open a project or package, or ask", `box.placeholderShort`), so it is never cut, while the field's name keeps the whole sentence, and the "/" hint hides. The data stamp is not in the bar (see Freshness stamp). The view switch is a 32px control with 4px corners and a 1px white border; its popover, rows, past-date field, language choice and labels stay as ticket 40 set them, and a label may be at most 167px in the `button` style.
 ```
 
 ### Section 5, the component table: replace the first sentences of two rows
 
 ```markdown
 | Scope chip | Inside the box, before the text, on a project or package page: 32px tall, pill, 1px `line-strong` border, "Within" in `small` `ink-muted` and the ID in mono (the ID only below 768px, and whenever the box is narrower than 35rem), and a 24px round remove button. From 1024px the box keeps one row. ...
-| Freshness stamp | At the sidebar's foot, under Data, on the label's left edge; in the Data item's tooltip when the sidebar is a rail; at the Menu sheet's foot below 1024px (Strata, the shell redesign). `caption` in `ink-muted` with tabular numerals, a link to the Data page with a dotted underline, in a 24px line box. ...
+| Freshness stamp | At the sidebar's foot, under Data, on the label's left edge; in the Data item's tooltip when the sidebar is a rail; at the Menu sheet's foot below 1024px (Prism, the shell redesign). `caption` in `ink-muted` with tabular numerals, a link to the Data page with a dotted underline, in a 24px line box. ...
 ```
 
 (Each row keeps the rest of its text.)
@@ -227,7 +227,7 @@ If the deck's second draft (`deck/second-draft`) has merged and the user kept it
 ### Section 10, Accessibility: add
 
 ```markdown
-- The bar (Strata, the shell redesign). One banner landmark (the bar) holds the search landmark (the box) and the view switch. A skip link leads every page and shows below the bar, over the page, so it never covers the logo. When a resize below 768px hides the focused view switch, focus moves to the Menu button.
+- The bar (Prism, the shell redesign). One banner landmark (the bar) holds the search landmark (the box) and the view switch. A skip link leads every page and shows below the bar, over the page, so it never covers the logo. When a resize below 768px hides the focused view switch, focus moves to the Menu button.
 ```
 
 ---
@@ -245,10 +245,10 @@ With the deck's navy slides kept (block 3 above), "navy only in the bar that car
 ### Section 4, Space, grid, shape: replace the Grid and Breakpoints rows, edit the Document column row, and add two rows
 
 ```markdown
-| Grid | 12 columns; gutter 16 / 24 / 32 px (below 768 / from 768 / from 1024); margin 16 / 32 / 40 px (below 768 / from 768 / from 1200), set by the window, never by the page area, so the evidence drawer never moves the page's left edge; content at most 1280px wide, left aligned beside the sidebar. Strata (the shell redesign) | grid tokens |
-| Breakpoints | 768, 1024 (1200, 1400 for wide tables), written in rem (48rem, 64rem, 75rem, 87.5rem). Strata: 360 (22.5rem) is used only by the Menu button's label and the box's icon, and 1440 (90rem) only by the sidebar's default. The bar follows the window. Under the bar, a page lays out by the page area's width (`@md/page:`, `@lg/page:`, `@xl/page:`), because the evidence drawer narrows it; a page that keeps its place beside the drawer lays out by the frame's width (`@container frame`, the window minus the sidebar) | worldbank.org media queries |
-| Shell | Strata (the shell redesign). Bar 56px. Sidebar 224px open, 64px as a rail. `frame-top`, where sticky parts stick: 56px from 1024px, 0 below. `main` holds at least the window's height minus the bar | Strata |
-| Page layouts | Strata (the shell redesign). **Wide**: lists, tables, dashboards and the plan check use all 12 columns, and when the drawer opens the page narrows and keeps its left edge. A page head that sets its title beside its actions does so by the page area (from 46rem), so a narrowed page stacks them | Strata |
+| Grid | 12 columns; gutter 16 / 24 / 32 px (below 768 / from 768 / from 1024); margin 16 / 32 / 40 px (below 768 / from 768 / from 1200), set by the window, never by the page area, so the evidence drawer never moves the page's left edge; content at most 1280px wide, left aligned beside the sidebar. Prism (the shell redesign) | grid tokens |
+| Breakpoints | 768, 1024 (1200, 1400 for wide tables), written in rem (48rem, 64rem, 75rem, 87.5rem). Prism: 360 (22.5rem) is used only by the Menu button's label and the box's icon, and 1440 (90rem) only by the sidebar's default. The bar follows the window. Under the bar, a page lays out by the page area's width (`@md/page:`, `@lg/page:`, `@xl/page:`), because the evidence drawer narrows it; a page that keeps its place beside the drawer lays out by the frame's width (`@container frame`, the window minus the sidebar) | worldbank.org media queries |
+| Shell | Prism (the shell redesign). Bar 56px. Sidebar 224px open, 64px as a rail. `frame-top`, where sticky parts stick: 56px from 1024px, 0 below. `main` holds at least the window's height minus the bar | Prism |
+| Page layouts | Prism (the shell redesign). **Wide**: lists, tables, dashboards and the plan check use all 12 columns, and when the drawer opens the page narrows and keeps its left edge. A page head that sets its title beside its actions does so by the page area (from 46rem), so a narrowed page stacks them | Prism |
 ```
 
 In the **Document column** row, replace "In a window of 1200 px or more the column is measured against the window, not the page area the drawer narrows" with:
@@ -268,7 +268,7 @@ From a frame of 1200 px the column is measured against the frame (the window min
 ### Section 10, Accessibility: add
 
 ```markdown
-- Sticky parts (Strata, the shell redesign): the bar from 1024px, the sidebar, the side panel, the drawer, a page head that holds the page's primary action, and the draft bar. The frame owns `frame-top` and one hook sets `scroll-padding-top` to the bar plus any sticky head, plus 8px, so a focused element is never under them.
+- Sticky parts (Prism, the shell redesign): the bar from 1024px, the sidebar, the side panel, the drawer, a page head that holds the page's primary action, and the draft bar. The frame owns `frame-top` and one hook sets `scroll-padding-top` to the bar plus any sticky head, plus 8px, so a focused element is never under them.
 - Short states never pull the footer into view: `main` holds at least the window's height minus the bar.
 ```
 
@@ -279,7 +279,7 @@ From a frame of 1200 px the column is measured against the frame (the window min
 ### Section 1, Principles: add 6, 7 and 8
 
 ```markdown
-6. **The finding leads.** A page has at most one finding: the sentence that answers what the page is for, or, when Strata holds back (section 7, rule 16), the first-person sentence that says so. It is the largest type on the page, inside the first screen at 390 by 844 and 1024 by 768, and nothing else uses its style. A status sentence, such as a first visit or a first run, is not a finding: it takes `lead`.
+6. **The finding leads.** A page has at most one finding: the sentence that answers what the page is for, or, when Prism holds back (section 7, rule 16), the first-person sentence that says so. It is the largest type on the page, inside the first screen at 390 by 844 and 1024 by 768, and nothing else uses its style. A status sentence, such as a first visit or a first run, is not a finding: it takes `lead`.
 7. **A panel only around open work.** The frame is grey and the work is white. A white panel holds evidence, a table or a form; a zone with only a sentence, one action or nothing yet is a row on the grey.
 8. **Each person's next step first.** A page shows what the person who comes to it needs for the step they are on. The rest is one click away, on the thing it explains (a number, a row, a source line, a zone's name), never in a menu and never on another page.
 ```
@@ -295,7 +295,7 @@ From a frame of 1200 px the column is measured against the frame (the window min
 ```markdown
 #### Page head
 
-Every page starts with it, in the work's columns (Strata, the shell redesign; replaces Page header).
+Every page starts with it, in the work's columns (Prism, the shell redesign; replaces Page header).
 
 | Part | Rule |
 |---|---|
@@ -313,7 +313,7 @@ States: loading keeps the real breadcrumb and holds the h1's lines with skeleton
 ```markdown
 #### Task zone
 
-One step of a page's work (Strata, the shell redesign).
+One step of a page's work (Prism, the shell redesign).
 
 | Variant | Use when | Look |
 |---|---|---|
@@ -341,24 +341,24 @@ Accessibility: each zone is a `section` named by its `h2`; a link to a zone's id
 ```markdown
 #### Foot strip
 
-The end of each block of evidence in a panel: the panel's full width, `page` background, a 1px `line` top edge, padding 16 and 24 (16 below 768px), on the body's left edge. It holds the block's Note, its coverage line and its source line, in `caption`, 8 apart, each at most 65 characters a line. A line that holds a checkable number, such as the coverage line's "49 of 65", is 24px tall, as section 10 keeps an inline number's line. Provenance always has this place (Strata, the shell redesign).
+The end of each block of evidence in a panel: the panel's full width, `page` background, a 1px `line` top edge, padding 16 and 24 (16 below 768px), on the body's left edge. It holds the block's Note, its coverage line and its source line, in `caption`, 8 apart, each at most 65 characters a line. A line that holds a checkable number, such as the coverage line's "49 of 65", is 24px tall, as section 10 keeps an inline number's line. Provenance always has this place (Prism, the shell redesign).
 ```
 
 ```markdown
 #### Stage label
 
-The stage of the zones that follow ("Planning", "Tender design"), in `label` on `page`, with a 1px `line` rule from 12px after its word to the column's right edge, 8px above the first zone of its stage and 32px after the zone before it. Once where the stage changes, never on every zone (Strata, the shell redesign; replaces the package sections' eyebrows).
+The stage of the zones that follow ("Planning", "Tender design"), in `label` on `page`, with a 1px `line` rule from 12px after its word to the column's right edge, 8px above the first zone of its stage and 32px after the zone before it. Once where the stage changes, never on every zone (Prism, the shell redesign; replaces the package sections' eyebrows).
 ```
 
 ```markdown
 #### Side panel
 
-An object's facts or state beside its work, in columns 9 to 12 of a workspace page from a frame of 75rem: a panel with 24px padding, an `h2` naming what it holds ("From the plan row", "State of this draft", "Waiting for you"), a definition list (labels in `label` over values in `small`, 16 apart; two columns when the panel's content is at least 18rem wide, long values across both), and its source line with a citation marker under a hairline where it has one. It sticks under the bar, 24px down. It hides while the drawer is open, because the drawer opens in its place. While its object loads, its labels stand over value bars and its source line keeps its space. A side panel that holds only a sentence, such as Waiting for you with no drafts, is a row in the side column, not a panel (Strata, the shell redesign).
+An object's facts or state beside its work, in columns 9 to 12 of a workspace page from a frame of 75rem: a panel with 24px padding, an `h2` naming what it holds ("From the plan row", "State of this draft", "Waiting for you"), a definition list (labels in `label` over values in `small`, 16 apart; two columns when the panel's content is at least 18rem wide, long values across both), and its source line with a citation marker under a hairline where it has one. It sticks under the bar, 24px down. It hides while the drawer is open, because the drawer opens in its place. While its object loads, its labels stand over value bars and its source line keeps its space. A side panel that holds only a sentence, such as Waiting for you with no drafts, is a row in the side column, not a panel (Prism, the shell redesign).
 ```
 
 ```markdown
-| Page header | See Page head (Strata, the shell redesign). |
-| Collapsed section | Now the closed form of a Task zone (Strata, the shell redesign). Its rules for focus, the section link that opens it, its loading, error and no-content states, and its live region stay as ticket 31 set them; its look is the Task zone's row. |
+| Page header | See Page head (Prism, the shell redesign). |
+| Collapsed section | Now the closed form of a Task zone (Prism, the shell redesign). Its rules for focus, the section link that opens it, its loading, error and no-content states, and its live region stay as ticket 31 set them; its look is the Task zone's row. |
 ```
 
 ---
@@ -368,18 +368,18 @@ An object's facts or state beside its work, in columns 9 to 12 of a workspace pa
 ### Section 4: replace the Home's blocks row
 
 ```markdown
-| Home's blocks | Strata (ticket 41; the shell redesign): Home uses the workspace layout. "Worth knowing" takes columns 1 to 7 and "Waiting for you" is the side panel in 9 to 12, from a frame of 75rem; below it they stack, "Worth knowing" first, so the reading and focus order never change. | Strata |
+| Home's blocks | Prism (ticket 41; the shell redesign): Home uses the workspace layout. "Worth knowing" takes columns 1 to 7 and "Waiting for you" is the side panel in 9 to 12, from a frame of 75rem; below it they stack, "Worth knowing" first, so the reading and focus order never change. | Prism |
 ```
 
 ### Section 5: replace the first sentence of the Briefing heading row, the Start here strip row, and the Worth knowing title
 
 ```markdown
-| Briefing heading | Home's `h1` (Strata, ticket 41; the shell redesign): a sentence-case date line in `label` ("Your briefing for Wednesday, October 28"), then one to five sentences the server builds from copy templates, in the `finding` style; the first-run and quiet sentences, which report a state, take `lead`. The public view's h1 is "Home", with its one sentence in `lead`. When an answer opens on Home, the sentences fold to the date line and the first sentence in `body`, with a flush ghost "Show the briefing" (`aria-expanded`) under them; closing the answer unfolds them. ...
-| Start here strip | Strata (ticket 41; restyled by the shell redesign). A Task zone row under the briefing: "Start here" as its name, "Examples Strata set up for you" as its tag under the name at every width, Remove at the row's right in the place of the zone's Hide button, then the six example links in the ticket's order, each at least 32px tall. Its rules for who sees it, Remove, the undo row and "Show the examples again" stay as ticket 41 set them. |
+| Briefing heading | Home's `h1` (Prism, ticket 41; the shell redesign): a sentence-case date line in `label` ("Your briefing for Wednesday, October 28"), then one to five sentences the server builds from copy templates, in the `finding` style; the first-run and quiet sentences, which report a state, take `lead`. The public view's h1 is "Home", with its one sentence in `lead`. When an answer opens on Home, the sentences fold to the date line and the first sentence in `body`, with a flush ghost "Show the briefing" (`aria-expanded`) under them; closing the answer unfolds them. ...
+| Start here strip | Prism (ticket 41; restyled by the shell redesign). A Task zone row under the briefing: "Start here" as its name, "Examples Prism set up for you" as its tag under the name at every width, Remove at the row's right in the place of the zone's Hide button, then the six example links in the ticket's order, each at least 32px tall. Its rules for who sees it, Remove, the undo row and "Show the examples again" stay as ticket 41 set them. |
 ```
 
 ```markdown
-Worth knowing's name is "Worth knowing", and "Fixed checks, no model" is its tag at the panel's right, in `caption` `ink-muted`, replacing the middle dot that joined them; the public view's panel is "Closed projects" with the tag "Contracts traced from public records" the same way (Strata, the shell redesign). With no lines, Worth knowing is a Task zone row with its first-run or quiet sentence and its one link, and Waiting for you is a row in the side column with its empty sentence and "Go to Packages".
+Worth knowing's name is "Worth knowing", and "Fixed checks, no model" is its tag at the panel's right, in `caption` `ink-muted`, replacing the middle dot that joined them; the public view's panel is "Closed projects" with the tag "Contracts traced from public records" the same way (Prism, the shell redesign). With no lines, Worth knowing is a Task zone row with its first-run or quiet sentence and its one link, and Waiting for you is a row in the side column with its empty sentence and "Go to Packages".
 ```
 
 ---
@@ -389,13 +389,13 @@ Worth knowing's name is "Worth knowing", and "Fixed checks, no model" is its tag
 ### Section 5: replace the sentences of the Project header row about the agency line and the Follow control, and add to the Fact table row
 
 ```markdown
-Under it, the implementing agency line in `body` `ink-muted`, kept to one line with a ghost "Show all agencies" when it needs more. The ID, country and status in the h1's line are weight 400. For World Bank staff the Follow control sits at the head's right when the page area allows, and under the agency line otherwise (Strata, the shell redesign).
+Under it, the implementing agency line in `body` `ink-muted`, kept to one line with a ghost "Show all agencies" when it needs more. The ID, country and status in the h1's line are weight 400. For World Bank staff the Follow control sits at the head's right when the page area allows, and under the agency line otherwise (Prism, the shell redesign).
 ```
 
 Append to the **Fact table** row:
 
 ```markdown
-On Summary, the tables sit two side by side from a page area of 75rem (Dates beside Money, Ratings beside Sectors and implementing agencies) and in one column below; their widths are measured on the page area beside the sidebar (Strata, the shell redesign).
+On Summary, the tables sit two side by side from a page area of 75rem (Dates beside Money, Ratings beside Sectors and implementing agencies) and in one column below; their widths are measured on the page area beside the sidebar (Prism, the shell redesign).
 ```
 
 ---
@@ -407,11 +407,11 @@ On Summary, the tables sit two side by side from a page area of 75rem (Dates bes
 Append to the **Plan check table** row:
 
 ```markdown
-Strata (the shell redesign): the plan check belongs to the Packages section (its address does not change), and its breadcrumb starts at Packages. Its order is the head, the finding with its method and change lines, the activities panel, "What changed" as a closed row that "See what changed" opens, and the baseline as a row with its action. A row's reference is a button that opens the row's records in the drawer: the reason, "What I checked", "From the plan row", the source, and "Open the activity" and "See the past range" as links; the row keeps the current mark while they show. The finding's count words mark the rows they count with `tint` and move focus to the first one's reference. The table has six columns from a page area of 60rem, three (Activity, Estimated (US$), What Strata found) from 40rem, since an open row shows the rest in the drawer, and cards headed by the badge below; no word in a cell breaks inside itself. The column head reads "Method and market approach". "What Strata found" opens its definition in a window. With no activity marked by a signal, the finding reads "No activity needs a look or is worth watching" (with its data notes), the head holds the check pill and no action, so it does not stick, and only data-note rows are marked. In a view without Packages (the public view), the plan check is lit as Projects and its breadcrumb starts at the project.
+Prism (the shell redesign): the plan check belongs to the Packages section (its address does not change), and its breadcrumb starts at Packages. Its order is the head, the finding with its method and change lines, the activities panel, "What changed" as a closed row that "See what changed" opens, and the baseline as a row with its action. A row's reference is a button that opens the row's records in the drawer: the reason, "What I checked", "From the plan row", the source, and "Open the activity" and "See the past range" as links; the row keeps the current mark while they show. The finding's count words mark the rows they count with `tint` and move focus to the first one's reference. The table has six columns from a page area of 60rem, three (Activity, Estimated (US$), What Prism found) from 40rem, since an open row shows the rest in the drawer, and cards headed by the badge below; no word in a cell breaks inside itself. The column head reads "Method and market approach". "What Prism found" opens its definition in a window. With no activity marked by a signal, the finding reads "No activity needs a look or is worth watching" (with its data notes), the head holds the check pill and no action, so it does not stick, and only data-note rows are marked. In a view without Packages (the public view), the plan check is lit as Projects and its breadcrumb starts at the project.
 ```
 
 ```markdown
-Its text starts on the text edge of the panel it sits in, with no indent, on a `surface-2` block with 12px padding (Strata, the shell redesign; settles ticket 59's indent item).
+Its text starts on the text edge of the panel it sits in, with no indent, on a `surface-2` block with 12px padding (Prism, the shell redesign; settles ticket 59's indent item).
 ```
 
 ---
@@ -427,13 +427,13 @@ Its text starts on the text edge of the panel it sits in, with no indent, on a `
 Append to the **Range chart** row:
 
 ```markdown
-Strata (the shell redesign): when the time estimate holds back, lane 2 keeps its label in `chart-label` and the first-person sentence sits under the chart in `body`, with the neutral dashed-circle icon, never inside the lane. A number in the finding or the summary opens "Show the table" filtered to the rows it counts, scrolls the table's title under the bar and moves focus to the count line, which repeats the pressed number and no other ("Showing the 2 of 49 packages signed within 1.5 months."; "Showing the packages in the middle half, from 3.3 to 7.9 months."), with a flush ghost "Show all {total}" after it; the first counted row is then inside the first screen at 1440 by 900 and 390 by 844. A number and its "months" never break apart. Below 20 comparable packages the first-person sentence that holds back ("I'm not giving a range: only seven comparable packages. Here are all seven.") is zone 1's finding, in the `finding` style, the count follows in `body`, and the table opens with the page. A dot's tooltip sits above every dot in the lane, or below them all.
+Prism (the shell redesign): when the time estimate holds back, lane 2 keeps its label in `chart-label` and the first-person sentence sits under the chart in `body`, with the neutral dashed-circle icon, never inside the lane. A number in the finding or the summary opens "Show the table" filtered to the rows it counts, scrolls the table's title under the bar and moves focus to the count line, which repeats the pressed number and no other ("Showing the 2 of 49 packages signed within 1.5 months."; "Showing the packages in the middle half, from 3.3 to 7.9 months."), with a flush ghost "Show all {total}" after it; the first counted row is then inside the first screen at 1440 by 900 and 390 by 844. A number and its "months" never break apart. Below 20 comparable packages the first-person sentence that holds back ("I'm not giving a range: only seven comparable packages. Here are all seven.") is zone 1's finding, in the `finding` style, the count follows in `body`, and the table opens with the page. A dot's tooltip sits above every dot in the lane, or below them all.
 ```
 
 Append to the **Tables** row:
 
 ```markdown
-In a card (Strata, the shell redesign), the row's name is its heading with no label over it, and the other values share a grid of 120px columns.
+In a card (Prism, the shell redesign), the row's name is its heading with no label over it, and the other values share a grid of 120px columns.
 ```
 
 ---
@@ -443,7 +443,7 @@ In a card (Strata, the shell redesign), the row's name is its heading with no la
 ### Section 5: add a row
 
 ```markdown
-| Lessons page | Strata (ticket 39; the shell redesign). A wide page: the head, then the digest sentence as the page's finding (rule 43), or on a first visit its status sentence in `lead`, its caption and the sources note, then "Changed where you used it", "New", "Your reports" and "The library" in that order, each a Task zone: a panel when it holds lessons or reports, a row when it holds only its sentence. The reviewer pages are sidebar items under Lessons, not sub-tabs. A review page uses the workspace layout, with its history list as the side panel where it has one. |
+| Lessons page | Prism (ticket 39; the shell redesign). A wide page: the head, then the digest sentence as the page's finding (rule 43), or on a first visit its status sentence in `lead`, its caption and the sources note, then "Changed where you used it", "New", "Your reports" and "The library" in that order, each a Task zone: a panel when it holds lessons or reports, a row when it holds only its sentence. The reviewer pages are sidebar items under Lessons, not sub-tabs. A review page uses the workspace layout, with its history list as the side panel where it has one. |
 ```
 
 ---
@@ -455,22 +455,22 @@ In a card (Strata, the shell redesign), the row's name is its heading with no la
 Append to the **State stepper** row:
 
 ```markdown
-Strata (the shell redesign): on a draft's page it sits in the side panel "State of this draft", with what the draft was made from, when it was drafted and, once checked, "Checked by you on {date}."; below the workspace threshold the stepper takes one line in the page head, under the subtitle, and the rest of the side panel follows the draft.
+Prism (the shell redesign): on a draft's page it sits in the side panel "State of this draft", with what the draft was made from, when it was drafted and, once checked, "Checked by you on {date}."; below the workspace threshold the stepper takes one line in the page head, under the subtitle, and the rest of the side panel follows the draft.
 ```
 
 Append to the **Draft bar** row:
 
 ```markdown
-It spans the work's columns (Strata, the shell redesign). Before the act its first row says what exporting does, as today; after "Mark as checked" the hold line gives way to the decided line in `small` 600 `ink-heading`, "Checked by you on {date}." by role (`draft.tab.checkedYou`), Export to Word becomes the primary button and takes focus, and a polite status says "You marked these notes as checked. You can export them now." Nothing fades.
+It spans the work's columns (Prism, the shell redesign). Before the act its first row says what exporting does, as today; after "Mark as checked" the hold line gives way to the decided line in `small` 600 `ink-heading`, "Checked by you on {date}." by role (`draft.tab.checkedYou`), Export to Word becomes the primary button and takes focus, and a polite status says "You marked these notes as checked. You can export them now." Nothing fades.
 ```
 
 ```markdown
-| Drafts list | Strata (the shell redesign). One panel holding three groups, To check, Checked and Exported, each an `h2` with its count line in `caption` after it ("One draft.") and its rows: the draft's title as a link, then its project and the drafted, checked or exported line in `small`, then its notes and opened count in `caption`. Discarded drafts fold under the groups. With no drafts, a Task zone row with "You have no drafts to check.", its sentence and "Go to Packages". |
+| Drafts list | Prism (the shell redesign). One panel holding three groups, To check, Checked and Exported, each an `h2` with its count line in `caption` after it ("One draft.") and its rows: the draft's title as a link, then its project and the drafted, checked or exported line in `small`, then its notes and opened count in `caption`. Discarded drafts fold under the groups. With no drafts, a Task zone row with "You have no drafts to check.", its sentence and "Go to Packages". |
 ```
 
 ---
 
-## 12a. How Strata works leaves Data (the refusal window ticket)
+## 12a. How Prism works leaves Data (the refusal window ticket)
 
 ### Section 5: replace the Refusal row
 
@@ -481,14 +481,14 @@ It spans the work's columns (Strata, the shell redesign). Before the act its fir
 ### Section 5: add to the Readiness tables row
 
 ```markdown
-Strata (the shell redesign): How Strata works is no longer a page: the deck at /present shows its figures, the refusal window holds "What I don't do", and `/data/how-strata-works` opens Data readiness.
+Prism (the shell redesign): How Prism works is no longer a page: the deck at /present shows its figures, the refusal window holds "What I don't do", and `/data/how-strata-works` opens Data readiness.
 ```
 
 ### Sections 7, 9 and 11: edit the lines that name the page
 
-- Section 7, the deck paragraph: "How Strata works keeps rule 5" becomes "The refusal window keeps rule 5".
-- Section 9, third bullet: "Proposal figures and How Strata works figures carry no logo" becomes "Proposal figures carry no logo".
-- Section 11, the deck paragraph: "For the deck and How Strata works" becomes "For the deck".
+- Section 7, the deck paragraph: "How Prism works keeps rule 5" becomes "The refusal window keeps rule 5".
+- Section 9, third bullet: "Proposal figures and How Prism works figures carry no logo" becomes "Proposal figures carry no logo".
+- Section 11, the deck paragraph: "For the deck and How Prism works" becomes "For the deck".
 
 ---
 
@@ -509,7 +509,7 @@ The Data pages lay out by the page area, never the window. Data readiness's head
 ```markdown
 #### Number tooltip
 
-The tooltip of every checkable number and every range chart dot: a Num in an answer, a draft, a section or a briefing, a Measure number on Data readiness, and a Dot (Strata, the shell redesign, after the user's earlier app). It says what the number is, where it came from, and what a click does, in that order, so a reader can trust a number before opening anything.
+The tooltip of every checkable number and every range chart dot: a Num in an answer, a draft, a section or a briefing, a Measure number on Data readiness, and a Dot (Prism, the shell redesign, after the user's earlier app). It says what the number is, where it came from, and what a click does, in that order, so a reader can trust a number before opening anything.
 
 | Part | Text | Style |
 |---|---|---|
@@ -557,7 +557,7 @@ Accessibility. Role: `tooltip`, the number's description (`aria-describedby`), n
 ### Section 5: replace the Check line row's first sentences and add the window, and edit the Removed box row
 
 ```markdown
-| Check line | Neutral, never green, in one `surface-2` block with the removed box under it, both on the block's text edge (Strata, the shell redesign): "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages." "Not checked: whether these are the right comparables." Then a flush text button, "How was that checked?", in `small` 600 `primary` with a dotted underline and `aria-haspopup="dialog"`, which opens a window titled "How I checked this answer" (or "this draft"). When the verifier removed a sentence, the window opens on "These counts include the two sentences I removed. The check line counts only the sentences I kept.", because the window counts every sentence written and the line only those on screen. Then the verifier's done line ("I ran six checks on the six sentences I wrote and removed two."), the six checks as an ordered list in the steps' own words (a draft's step 2 says "came back for this draft"), "A number passes only when a record holds it at the same rounding.", and the Answer ID, or "Draft ID {id}, run {run}", in mono, breaking anywhere. ...
+| Check line | Neutral, never green, in one `surface-2` block with the removed box under it, both on the block's text edge (Prism, the shell redesign): "Checked: 5 of 5 numbers match records; 2 of 2 quotes are on their pages." "Not checked: whether these are the right comparables." Then a flush text button, "How was that checked?", in `small` 600 `primary` with a dotted underline and `aria-haspopup="dialog"`, which opens a window titled "How I checked this answer" (or "this draft"). When the verifier removed a sentence, the window opens on "These counts include the two sentences I removed. The check line counts only the sentences I kept.", because the window counts every sentence written and the line only those on screen. Then the verifier's done line ("I ran six checks on the six sentences I wrote and removed two."), the six checks as an ordered list in the steps' own words (a draft's step 2 says "came back for this draft"), "A number passes only when a record holds it at the same rounding.", and the Answer ID, or "Draft ID {id}, run {run}", in mono, breaking anywhere. ...
 ```
 
 (The row keeps the rest of its text, from "Its counts are the answer stream's".)
@@ -573,7 +573,7 @@ Open by default, under the check line in the same `surface-2` block, after a 1px
 ```markdown
 #### Evidence drawer: placement, head and motion
 
-The drawer holds the record or passage behind a claim, beside the claim (Strata, the shell redesign).
+The drawer holds the record or passage behind a claim, beside the claim (Prism, the shell redesign).
 
 | Variant | Use when | Look |
 |---|---|---|
@@ -597,7 +597,7 @@ Accessibility. Role: a non-modal dialog named by its title from 768px; a modal s
 ```
 
 ```markdown
-| Evidence drawer | See "Evidence drawer: placement, head and motion" above for where it opens, its head and its motion (Strata, the shell redesign). Opens at what was clicked, with a switcher for the claim's other sources, ...
+| Evidence drawer | See "Evidence drawer: placement, head and motion" above for where it opens, its head and its motion (Prism, the shell redesign). Opens at what was clicked, with a switcher for the claim's other sources, ...
 ```
 
 (The row keeps the rest of its text, from "Opens at what was clicked".)

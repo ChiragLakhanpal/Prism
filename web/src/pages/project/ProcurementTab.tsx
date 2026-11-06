@@ -6,7 +6,7 @@
 // is the route's, so the screen counts nothing.
 //
 // States: loading, populated, an agency with no plan, a project with no plans, a service that didn't
-// answer, and an account that can't read Strata's tables; and for Packages, no match and its own error.
+// answer, and an account that can't read Prism's tables; and for Packages, no match and its own error.
 import { useId, useState, type ReactNode } from "react";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";

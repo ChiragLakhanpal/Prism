@@ -1,5 +1,5 @@
 -- One document's passages, as the lesson extractor reads them and as its quote check finds them: each
--- paragraph or part, with the PDF pages it spans and its words. Table summaries are Strata's own words,
+-- paragraph or part, with the PDF pages it spans and its words. Table summaries are Prism's own words,
 -- so they are left out.
 SELECT
   p.passage_id,

@@ -84,7 +84,7 @@ def test_add_to_mission_brief_writes_five_parts_with_numbers_from_tools_and_cita
         ("In it, KE-NWWDA-541055-CW-RFB passed its planned completion of July 31, 2026 with no signed contract.",
          "id_not_returned")]
     # The awards part rests on KE-CWSB-567630-CW-DIR's contract record, which the agency's plan of August 17, 2026
-    # contradicts, so check 6 shows both sides; Strata leans on the contract record (values.toml, award-567630-signed).
+    # contradicts, so check 6 shows both sides; Prism leans on the contract record (values.toml, award-567630-signed).
     [card] = draft["disagreements"]
     assert card["key"] == "awards" and card["changes_answer"]
     assert {side["evidence_id"]: side["leaned"] for side in card["sides"]} == {
@@ -133,7 +133,7 @@ def test_the_brief_moves_through_the_draft_states_and_exports_a_word_file_with_i
     assert "Kenya. Public records through October 23, 2026." in document
     assert "The loans and credits data reports more disbursed and canceled than committed for this project." in document
     footnotes = zipfile.ZipFile(io.BytesIO(word)).read("word/footnotes.xml").decode()
-    assert "Strata's totals of this project's records, as of October 23, 2026." in footnotes
+    assert "Prism's totals of this project's records, as of October 23, 2026." in footnotes
     assert "API. P156634" not in footnotes
 
 

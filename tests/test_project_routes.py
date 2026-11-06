@@ -1,7 +1,7 @@
 """The project routes at seam 3: the All projects list and one project's page, which the Projects tab,
 the project page and its Procurement tab ask for, as the viewer.
 
-GET /api/projects lists every project Strata holds records for, active ones first and then by name.
+GET /api/projects lists every project Prism holds records for, active ones first and then by name.
 GET /api/projects/{project_id} gives the project page's header (name, country, status and implementing
 agencies, from the projects API's record) and the Procurement tab: each implementing agency's
 Procurement Plan versions, newest first, with how many activities each read version lists. Each route

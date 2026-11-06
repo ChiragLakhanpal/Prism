@@ -216,11 +216,11 @@ test("the label check fails on a label with no entry, an entry with no label at 
     { route: "/data", key: "teams_channel" },
   ];
   expect(labelProblems(labels, items, ["/projects/P156634", "/data"])).toEqual([
-    'teams_channel is labeled "Designed, not built" in Strata at /data but is missing from the proposal\'s list.',
+    'teams_channel is labeled "Designed, not built" in Prism at /data but is missing from the proposal\'s list.',
     "word_add_in is in the proposal's list at /drafts/new, which web/tests/sweep.spec.ts does not open. Add the route to ROUTES there.",
   ]);
   expect(labelProblems([], [items[0]], ["/projects/P156634"])).toEqual([
-    "hazard_model is in the proposal's list, but Strata shows no label at /projects/P156634.",
+    "hazard_model is in the proposal's list, but Prism shows no label at /projects/P156634.",
   ]);
   expect(labelProblems(labels.slice(0, 1), items.slice(0, 1), ["/projects/P156634"])).toEqual([]);
 });

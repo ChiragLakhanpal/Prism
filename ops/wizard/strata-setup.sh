@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Strata setup wizard: credentials, Azure caps and the day-one tests (ticket 03).
+# Prism setup wizard: credentials, Azure caps and the day-one tests (ticket 03).
 #
 # Run it in your own terminal, from the main checkout:
 #
@@ -287,7 +287,7 @@ ask_required() {
   while true; do
     ask "$1" "$2" || return 1
     if [[ -n "${!1}" ]]; then return 0; fi
-    warn "Strata needs this value. Please paste it."
+    warn "Prism needs this value. Please paste it."
   done
 }
 
@@ -296,7 +296,7 @@ ask_secret_required() {
   while true; do
     ask_secret "$1" "$2" || return 1
     if [[ -n "${!1}" ]]; then return 0; fi
-    warn "Strata needs this value. Please paste it."
+    warn "Prism needs this value. Please paste it."
   done
 }
 
@@ -526,11 +526,11 @@ RESOURCE_GROUP=$(setting names.resource_group)
 FOUNDRY_RESOURCE=$(setting names.foundry_resource)
 DEADLINE_LONG=$(setting payg.deadline_long)
 
-banner "Strata setup: credentials, Azure caps and the day-one tests"
+banner "Prism setup: credentials, Azure caps and the day-one tests"
 
 # ── Stage 1 ───────────────────────────────────────────────────────────────
 stage "Your Databricks workspace and a personal access token (test 7)"
-say "Strata reaches your Databricks workspace with a personal access token. This stage also"
+say "Prism reaches your Databricks workspace with a personal access token. This stage also"
 say "answers day-one test 7, which asks whether you can make a token or a service principal."
 say ""
 ask_required DATABRICKS_HOST "Paste your workspace address, such as https://dbc-1234abcd-5678.cloud.databricks.com:"
@@ -552,7 +552,7 @@ fi
 
 # ── Stage 2 ───────────────────────────────────────────────────────────────
 stage "The Databricks SQL warehouse"
-say "Strata's queries run on the workspace's SQL warehouse. Free Edition has one."
+say "Prism's queries run on the workspace's SQL warehouse. Free Edition has one."
 found=""
 if (( DBX_OK )); then
   found=$(dbx warehouses list -o json 2>/dev/null \
@@ -571,13 +571,13 @@ write_env DATABRICKS_WAREHOUSE_ID "$DATABRICKS_WAREHOUSE_ID"
 # An empty saved value counts as none, so a copy of .env.example still gets the default.
 AI_SEARCH_ENDPOINT=$(_existing AI_SEARCH_ENDPOINT || true)
 [[ -n "$AI_SEARCH_ENDPOINT" ]] || AI_SEARCH_ENDPOINT=$(setting names.ai_search_endpoint)
-say "Strata's AI Search endpoint will be named $AI_SEARCH_ENDPOINT."
+say "Prism's AI Search endpoint will be named $AI_SEARCH_ENDPOINT."
 write_env AI_SEARCH_ENDPOINT "$AI_SEARCH_ENDPOINT"
 
 # ── Stage 3 ───────────────────────────────────────────────────────────────
 stage "A Genie space for test 5"
 say "Test 5 checks that Genie answers a question as the person whose token asks it."
-say "It needs a Genie space to ask. Later, ops/genie/deploy_space.py builds Strata's own space"
+say "It needs a Genie space to ask. Later, ops/genie/deploy_space.py builds Prism's own space"
 say "from code and adds its ID to your env file, and the probe asks that space from then on."
 say ""
 open_url "$DATABRICKS_HOST/genie"
@@ -635,7 +635,7 @@ write_env FOUNDRY_TENANT_ID "$FOUNDRY_TENANT_ID"
 
 # ── Stage 6 ───────────────────────────────────────────────────────────────
 stage "The Foundry project $(setting names.foundry_project) on $FOUNDRY_RESOURCE"
-say "Strata's agent, guardrails, evaluations and traces live in a Foundry project named"
+say "Prism's agent, guardrails, evaluations and traces live in a Foundry project named"
 say "$(setting names.foundry_project), on the Foundry resource $FOUNDRY_RESOURCE in the resource group $RESOURCE_GROUP."
 say ""
 open_url "https://ai.azure.com"
@@ -660,7 +660,7 @@ put_scope_secret AZURE_OPENAI_API_KEY "$AZURE_OPENAI_API_KEY"
 
 # ── Stage 7 ───────────────────────────────────────────────────────────────
 stage "Four model deployments, each with a cap (test 8)"
-say "Strata uses four model deployments. Each one gets a cap, because a budget only sends email."
+say "Prism uses four model deployments. Each one gets a cap, because a budget only sends email."
 say "This stage also answers day-one test 8, which asks whether the four models deploy within"
 say "your quota."
 say ""
@@ -670,8 +670,8 @@ step "Deploy $(model_value agent) as $(setting caps.deployments.agent.deployment
 step "Deploy $(model_value draft) as $(setting caps.deployments.draft.deployment_type), named $(model_value draft), with a limit of $(with_commas "$(setting caps.deployments.draft.tokens_per_minute)") tokens per minute."
 step "Deploy $(model_value batch) as $(setting caps.deployments.batch.deployment_type), named $(model_value batch). If the page offers an enqueued-token limit, set it to $(with_commas "$(setting caps.deployments.batch.enqueued_tokens)")."
 step "Deploy $(model_value embed) as $(setting caps.deployments.embed.deployment_type), named $(model_value embed), with a limit of $(with_commas "$(setting caps.deployments.embed.tokens_per_minute)") tokens per minute."
-note "Strata asks $(model_value embed) for $(with_commas "$(model_value embed dimensions)") dimensions in each request, so that deployment needs no setting for it."
-note "Give each deployment the name shown. Strata reads the names from config/models.toml, so a deployment with another name means a change to that file."
+note "Prism asks $(model_value embed) for $(with_commas "$(model_value embed dimensions)") dimensions in each request, so that deployment needs no setting for it."
+note "Give each deployment the name shown. Prism reads the names from config/models.toml, so a deployment with another name means a change to that file."
 note "If a deployment fails because the quota is too small, note what the page says. That answers test 8."
 pause "Press Enter when you have tried all four."
 deployments=$(az cognitiveservices account deployment list -g "$RESOURCE_GROUP" -n "$FOUNDRY_RESOURCE" -o json 2>/dev/null || true)
@@ -801,7 +801,7 @@ if payg_done; then
   say "The subscription already moved to pay-as-you-go, so this stage has nothing to do."
 else
   say "The free Azure credit ends on $DEADLINE_LONG. Before then, the subscription moves to"
-  say "pay-as-you-go, so Strata keeps running. The caps and the budget limit what it can spend."
+  say "pay-as-you-go, so Prism keeps running. The caps and the budget limit what it can spend."
   say ""
   open_url "https://portal.azure.com/#view/Microsoft_Azure_Billing/SubscriptionsBladeV2"
   step "Open your subscription. On its Overview page, click Upgrade, and follow the steps."

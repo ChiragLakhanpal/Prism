@@ -8,7 +8,7 @@
 export const galleryCopy = {
   title: "Design gallery",
   purpose:
-    "This page shows every Strata component in each of its states, for building screens and for design reviews. Only development builds have it.",
+    "This page shows every Prism component in each of its states, for building screens and for design reviews. Only development builds have it.",
   sampleNote: "Everything on this page is sample content for checking the design. None of it is a finding.",
   listLabel: "Components",
   allComponents: "All components",
@@ -192,7 +192,7 @@ export const galleryCopy = {
     icons: {
       title: "Icons",
       purpose:
-        "Strata uses these lucide icons at 16 px. Each one is hidden from screen readers when a word beside it says the same thing.",
+        "Prism uses these lucide icons at 16 px. Each one is hidden from screen readers when a word beside it says the same thing.",
     },
   },
 
@@ -360,7 +360,7 @@ export const galleryCopy = {
     currentPage: "On the project's own page",
     otherPage: "On another page",
     french: "A passage in French",
-    rest: "At rest on a package page, at the work's width: the placeholder names Strata, and the / hint ends the row",
+    rest: "At rest on a package page, at the work's width: the placeholder names Prism, and the / hint ends the row",
     hint: "Focused and empty: the hint, and the keys in the list's foot",
     project: "A project ID",
     loan: "A loan number",
@@ -457,8 +457,8 @@ export const galleryCopy = {
     readiness: "Data readiness",
     planChecks: "Plan checks",
     estimates: "Experimental estimates",
-    designedNotBuilt: "Designed, not built, with what Strata does instead",
-    // The 46 brief's example of what Strata does instead (section 12.2), for the label's gallery state.
+    designedNotBuilt: "Designed, not built, with what Prism does instead",
+    // The 46 brief's example of what Prism does instead (section 12.2), for the label's gallery state.
     designedNotBuiltSample: "I don't run this model yet, so these signals come from fixed checks.",
     breadcrumb: "The trail above a project's pages",
     pill: "Check pill",
@@ -1051,7 +1051,7 @@ export const galleryCopy = {
     info: "I can't show the public preview yet, so you are seeing the World Bank staff view.",
     success: "You exported the draft to Word.",
     warning: "Two reports disagree about the closing date.",
-    error: "Your account can't read the data I hold yet, so ask the person who shared Strata with you for access.",
+    error: "Your account can't read the data I hold yet, so ask the person who shared Prism with you for access.",
     neutral: "I removed one sentence because no record supports its number.",
     numTooltip: "Matches paragraph 54 of the completion report for P000000.",
     // Its From line (DESIGN.md section 5, Number tooltip; ticket 96).

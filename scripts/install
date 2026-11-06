@@ -1,5 +1,5 @@
 #!/bin/sh
-# Installs what Strata needs to run and to pass its gate, then turns the gate on.
+# Installs what Prism needs to run and to pass its gate, then turns the gate on.
 # Run it once after cloning, and again in each new worktree, from anywhere in the repo:
 #
 #     scripts/install
@@ -21,4 +21,4 @@ echo "Installing the Chromium browser for the Playwright tests."
 echo "Turning on the gate. Git will run it before every commit and every merge commit."
 git config core.hooksPath .githooks
 
-echo "Strata is installed. Run the gate with .githooks/pre-commit, and start the app with scripts/dev."
+echo "Prism is installed. Run the gate with .githooks/pre-commit, and start the app with scripts/dev."

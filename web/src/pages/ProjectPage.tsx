@@ -14,8 +14,8 @@
 // follow control: following is an occasional act, not the page's task (the 37 brief, section 6.1).
 //
 // States: loading (the h1 names the project for a screen reader, and bars stand in for the line and the
-// agency line, while the tab row is real), populated, a project Strata has no record of, a service that
-// didn't answer, and an account that can't read Strata's tables. Each tab draws its own states.
+// agency line, while the tab row is real), populated, a project Prism has no record of, a service that
+// didn't answer, and an account that can't read Prism's tables. Each tab draws its own states.
 import { useEffect, useRef, useState } from "react";
 import { Breadcrumb } from "../components/Breadcrumb";
 import { EightColumns } from "../components/EightColumns";

@@ -129,7 +129,7 @@ Command: `uv run --script ops/dayone/probe_parse_pad.py --env-file .env`
 
 An AI Search endpoint and a hybrid index can be created.
 
-- If it passes: Strata's own AI Search endpoint holds a hybrid index of passages.
+- If it passes: Prism's own AI Search endpoint holds a hybrid index of passages.
 - If it fails: PLAN.md section 14 names no gap fill, so the user decides.
 
 Command: `uv run --script ops/dayone/probe_ai_search.py --env-file .env`
@@ -141,7 +141,7 @@ Command: `uv run --script ops/dayone/probe_ai_search.py --env-file .env`
   - Endpoint strata-search: ONLINE.
   - Index workspace.strata_dayone.passages_index: ready, three rows, over workspace.strata_dayone.passages. Index is currently online, pipeline update is pending setup of pipeline resources. Check latest status: https://adb-7405609289499029.9.azuredatabricks.net/explore/data/workspace/strata_dayone/passages_index
   - Hybrid query "advertised again after the bids were rejected" returned p1, p2, p3, best first.
-- Chosen path: Default. Strata's own AI Search endpoint holds a hybrid index of passages.
+- Chosen path: Default. Prism's own AI Search endpoint holds a hybrid index of passages.
 - Last run: October 26, 2026
 <!-- /dayone:test-4 -->
 
@@ -208,7 +208,7 @@ Command: `bash ops/wizard/strata-setup.sh`
 
 The four models deploy within the subscription's quota.
 
-- If it passes: The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
+- If it passes: The four deployments named in `config/models.toml` serve Prism, each with the cap set in `ops/dayone/dayone.toml`.
 - If it fails: PLAN.md section 14 names no gap fill, so the user decides.
 
 Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
@@ -221,7 +221,7 @@ Command: `uv run --script ops/dayone/probe_caps.py --env-file .env`
   - gpt-5.4: 30,000 tokens per minute, as Global Standard.
   - gpt-5.4-nano: 2,000,000 enqueued tokens, as Global Standard. A Global Standard deployment has no tokens-per-minute limit, so Azure caps the tokens it holds in the queue instead.
   - text-embedding-3-large: 150,000 tokens per minute, as Global Standard.
-- Chosen path: Default. The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`.
+- Chosen path: Default. The four deployments named in `config/models.toml` serve Prism, each with the cap set in `ops/dayone/dayone.toml`.
 - Last run: October 26, 2026
 <!-- /dayone:test-8 -->
 
@@ -268,10 +268,10 @@ Command: `uv run --script ops/dayone/probe_traces.py --env-file .env`
 
 The probes make these things and leave them in place. Most of them make a second run quicker. They change nothing else in the workspace.
 
-- The app `strata`, which runs the probe app until the app shell ticket deploys Strata over it.
+- The app `strata`, which runs the probe app until the app shell ticket deploys Prism over it.
 - The folder `strata-dayone` in your user folder, with the code that the jobs and the app run.
 - The schema `workspace.strata_dayone`, with the volume `files` for the PAD, the table `passages` and the index `passages_index`.
-- The AI Search endpoint `strata-search`, which Strata keeps for its own index.
+- The AI Search endpoint `strata-search`, which Prism keeps for its own index.
 - One-time job runs whose names start with `strata-dayone`, in the workspace's job run history.
 - A conversation in the Genie space that GENIE_SPACE_ID names, which asks "How many contracts were signed in each fiscal year, and for how much in US dollars?"
 - Read access for the app `strata` to the secret scope `strata`. The app reads only `APPLICATIONINSIGHTS_CONNECTION_STRING`, but Databricks grants access to the whole scope, which also holds `AZURE_OPENAI_API_KEY`.

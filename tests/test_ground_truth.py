@@ -2,7 +2,7 @@
 and must return the rows its `-- expect:` lines list, header first.
 
 The SQL is written once, in Databricks SQL, and reaches DuckDB through the engine adapter's
-transpile step, the same way every Strata query does. `-- param: name = value` lines bind
+transpile step, the same way every Prism query does. `-- param: name = value` lines bind
 parameters. The expected rows come from an independent source named in each file, never from
 the code.
 """

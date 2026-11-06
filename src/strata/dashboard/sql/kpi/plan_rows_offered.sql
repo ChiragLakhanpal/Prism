@@ -1,4 +1,4 @@
--- KPI plan_rows_offered (config/kpis.toml): plan rows published after Strata showed a past range or time estimate for
+-- KPI plan_rows_offered (config/kpis.toml): plan rows published after Prism showed a past range or time estimate for
 -- their package whose planned signing date fell within estimates_loop.anchored_within_days of a date offered, out of
 -- those rows, as the latest monthly watch in the dates chosen stored them (strata.ops.estimates_watch, anchored_rows,
 -- segment all; ticket 44). Ranges shown in a preview are not exposures, so they never count. Always one row.

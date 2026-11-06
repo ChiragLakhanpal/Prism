@@ -9,7 +9,7 @@
 -- project_name         the project's name in strata.gold.project
 -- country_code         the project's ISO 3166 two-letter code, which search filters on
 -- country_name         the country's name, as the header writes it
--- sector               the project's one sector in Strata's taxonomy (config/sectors.toml), which search filters on
+-- sector               the project's one sector in Prism's taxonomy (config/sectors.toml), which search filters on
 -- document_type        the documents API's type, word for word, or a notice's type
 -- document_date        the document's date (docdt), or a notice's date
 -- report_number        the report number, such as ICRR0021929; empty when it has none

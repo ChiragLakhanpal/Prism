@@ -426,7 +426,7 @@ def test_a_save_that_fails_part_way_leaves_nothing_a_reader_can_find(make, state
 
 def test_an_excel_file_with_one_header_row_is_read_like_the_csv(make):
     """An .xlsx upload with each step column as "{step} (Planned)", read by the same registry, with an unreadable date
-    noted on its row and a column Strata does not use listed."""
+    noted on its row and a column Prism does not use listed."""
     header = ["Activity Reference No.", "Description", "Method", "Market Approach", "Estimated Amount (US$)",
               "Signed Contract (Planned)", "Contract Completion (Planned)", "Remarks"]
     rows = [header, ["KE-NWWDA-541055-CW-RFB", "Equipping of boreholes, lot 1", "Request for Bids", "Open - National",

@@ -1,4 +1,4 @@
-"""The demo-ready command (ticket 48): one command makes Strata ready for a review.
+"""The demo-ready command (ticket 48): one command makes Prism ready for a review.
 
 It starts a stopped app, restarts a running one only when its last start or deploy is restart_after_hours old
 (ticket 77), and waits for its health route, warms the SQL warehouse and Genie through ask_genie, asks one smoke
@@ -130,7 +130,7 @@ def ops_tables() -> list[str]:
 
 
 class FakeWorkspace(WorkspaceStateFake):
-    """Strata's app, stopped or running, with the time of its last start or deploy (None when the Apps API gives
+    """Prism's app, stopped or running, with the time of its last start or deploy (None when the Apps API gives
     none; a start sets it to NOW), whose health route answers after a number of tries once it runs; the SQL
     warehouse as the fixture database or a copy; the stand-in agent; the examples' seed command, which may write
     rows; and a listing that holds the app, the strata.ops tables the workspace has, and their row counts, counted
@@ -370,7 +370,7 @@ def test_the_app_step_checks_the_databricks_app_whatever_day_one_test_6_chose_an
 
 def test_a_stopped_app_whose_deployment_the_platform_dropped_is_started_and_deployed_again(fixture_db):
     """On October 27, 2026 (11:35 and 18:48 UTC) the platform stopped the App's compute "due to workspace or account
-    status" and dropped its deployment, so a start alone runs nothing. The step starts the compute, deploys Strata
+    status" and dropped its deployment, so a start alone runs nothing. The step starts the compute, deploys Prism
     again with ops/app/deploy_app.py --keep-secrets, then waits for the health route (ticket 109)."""
     workspace = FakeWorkspace(fixture_db, running=False, deployed=False, health_after=2)
 
@@ -379,8 +379,8 @@ def test_a_stopped_app_whose_deployment_the_platform_dropped_is_started_and_depl
     assert outcome.state == "passed", outcome
     assert workspace.calls == [("start", "strata"), ("redeploy", "strata"), ("health", URL), ("health", URL)]
     assert ("   The app strata's compute was stopped and it had no active deployment, so a start alone would run "
-            "nothing. I started its compute and deployed Strata again with ops/app/deploy_app.py --keep-secrets.") in said
-    assert outcome.summary.startswith("I deployed Strata again, since the platform had dropped its deployment. It "
+            "nothing. I started its compute and deployed Prism again with ops/app/deploy_app.py --keep-secrets.") in said
+    assert outcome.summary.startswith("I deployed Prism again, since the platform had dropped its deployment. It "
                                       "answered its health route after ")
 
 
@@ -647,7 +647,7 @@ def test_two_runs_in_a_row_both_succeed_and_the_second_leaves_nothing_different(
     assert "6. What changed on the workspace.\n   The app strata runs now, and was stopped before.\n   Genie" in first
     assert "less than a minute ago. That is less than the 12 hours in [demo_ready] restart_after_hours, so I left it running." in second
     assert "6. What changed on the workspace.\n   No changes." in second
-    assert first.rstrip().splitlines()[-1] == second.rstrip().splitlines()[-1] == "Strata is ready for the demo."
+    assert first.rstrip().splitlines()[-1] == second.rstrip().splitlines()[-1] == "Prism is ready for the demo."
 
 
 # ── The workspace's state, read first (ticket 81) ───────────────────────
@@ -713,7 +713,7 @@ def test_the_live_adapter_reads_the_app_s_compute_and_the_warehouse_as_the_fake_
 
 
 def test_a_restart_is_listed_as_a_change_with_the_time_the_app_started_again():
-    app = {"description": "Strata", "running": True, "source": "/Workspace/strata-app", "url": URL}
+    app = {"description": "Prism", "running": True, "source": "/Workspace/strata-app", "url": URL}
     before = {("apps", "strata"): {**app, "started": NOW - dt.timedelta(hours=20)}}
     after = {("apps", "strata"): {**app, "started": NOW}}
 
@@ -798,7 +798,7 @@ def test_a_failed_smoke_question_and_a_slow_genie_exit_with_an_error_naming_each
     code, out = failing_run
 
     assert code == 1
-    assert out.rstrip().splitlines()[-1] == ("Strata is not ready for the demo. These steps failed: Genie, the smoke "
+    assert out.rstrip().splitlines()[-1] == ("Prism is not ready for the demo. These steps failed: Genie, the smoke "
                                              "question and the workspace listing.")
     assert "I could not list the workspace: RuntimeError: PERMISSION_DENIED on strata.ops" in out
     assert "The next Genie call took 1 second, longer than the 0.5-second limit" in out
@@ -839,7 +839,7 @@ def test_the_dry_run_lists_every_resource_from_code_alone_with_the_command_that_
                 names["ai_search_endpoint"], tomllib.loads((ROOT / "config" / "models.toml").read_text())["search"]["index"],
                 tomllib.loads((ROOT / "config" / "genie.toml").read_text())["space"]["title"],
                 *(agent["name"] for agent in agents.values())]
-    # The order that works: the Genie space before the app, because the space deploy saves Strata's space id in the
+    # The order that works: the Genie space before the app, because the space deploy saves Prism's space id in the
     # env file and the app deploy writes that id into app.yaml (ops/genie/deploy_space.py, ops/app/deploy_app.py).
     commands = ["uv run --script ops/bundle/deploy.py --env-file .env",
                 "uv run --script ops/dayone/probe_ai_search.py --env-file .env",

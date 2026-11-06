@@ -101,8 +101,8 @@ class FakeWorkspace(WorkspaceStateFake):
 def built(dist):
     def build():
         (dist / "assets").mkdir(parents=True, exist_ok=True)
-        (dist / "index.html").write_text("<!doctype html><title>Strata</title>")
-        (dist / "assets" / "app-1a2b.js").write_text("console.log('Strata')")
+        (dist / "index.html").write_text("<!doctype html><title>Prism</title>")
+        (dist / "assets" / "app-1a2b.js").write_text("console.log('Prism')")
         return 0, ""
     return build
 
@@ -122,11 +122,11 @@ def test_one_command_uploads_the_app_with_its_lean_requirements_deploys_it_and_p
     assert workspace.uploaded["folder"] == "/Workspace/Users/owner@example.org/strata-app"
     assert files["app.yaml"] == (REPO / "ops" / "app" / "app.yaml").read_bytes()
     assert files["requirements.txt"] == (REPO / "ops" / "app" / "requirements.txt").read_bytes()
-    assert files["web/dist/index.html"] == b"<!doctype html><title>Strata</title>"
+    assert files["web/dist/index.html"] == b"<!doctype html><title>Prism</title>"
     assert "src/strata/server/app.py" in files and "config/thresholds.toml" in files
     assert not [name for name in files if "__pycache__" in name or name.startswith(("tests/", "data/", "web/src/"))]
     assert workspace.deployed == [("strata", "/Workspace/Users/owner@example.org/strata-app")]
-    assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
+    assert out.rstrip().splitlines()[-1] == "Prism is running at https://strata-1.aws.databricksapps.com"
     assert "The app existed before this deploy." not in out  # a first deploy has no old sessions to warn about
     # Step 6 names the lesson review record's tables (ticket 29) and the retrieval loop's (ticket 32) that it grants.
     assert ("6. Letting the app's own service principal write usage events, agent runs, opened sources and drafts to "
@@ -417,11 +417,11 @@ def test_the_deploy_replaces_the_day_one_probe_app_and_starts_a_stopped_app(tmp_
     assert code == 0
     assert workspace.started == ["strata"]
     assert workspace.apps["strata"]["source"] == "/Workspace/Users/owner@example.org/strata-app"
-    assert "Strata is running at" in out
+    assert "Prism is running at" in out
     # The probe app's address was open in a browser before it had the sql scope (ticket 83): the deploy says what to do.
     assert "The app existed before this deploy." in out
     assert "sign out of the app once" in out
-    assert out.rstrip().splitlines()[-1].startswith("Strata is running at")
+    assert out.rstrip().splitlines()[-1].startswith("Prism is running at")
 
 
 def test_the_deploy_leaves_an_app_someone_else_made_alone(tmp_path, capsys):
@@ -439,7 +439,7 @@ def test_the_deploy_leaves_an_app_someone_else_made_alone(tmp_path, capsys):
 def test_a_web_app_that_does_not_build_stops_the_deploy_before_the_workspace(tmp_path, capsys):
     workspace = FakeWorkspace()
 
-    code, out = deploy(workspace, tmp_path, capsys, build=lambda: (1, "error TS2304: Cannot find name 'Strata'."))
+    code, out = deploy(workspace, tmp_path, capsys, build=lambda: (1, "error TS2304: Cannot find name 'Prism'."))
 
     assert code == 1
     assert "TS2304" in out
@@ -521,7 +521,7 @@ def test_with_keep_secrets_the_deploy_writes_no_secret_and_gives_the_app_what_a_
     expected = " ".join(out.split()).split("I expect these secrets in the scope strata: ")[1].split(".")[0]
     assert expected.split(", ") == [APPINSIGHTS, *keys]
     assert not [value for value in keys.values() if value in out]
-    assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
+    assert out.rstrip().splitlines()[-1] == "Prism is running at https://strata-1.aws.databricksapps.com"
 
 
 @pytest.mark.parametrize(("lacks", "like"), [("FOUNDRY_TENANT_ID", ENV | JUDGE), ("AZURE_OPENAI_API_KEY", ENV | FOUNDRY)],
@@ -547,7 +547,7 @@ def test_with_keep_secrets_a_secret_the_scope_lacks_is_named_and_the_app_deploys
     assert workspace.configured == without_the_key.configured
     assert workspace.uploaded == without_the_key.uploaded and workspace.deployed == without_the_key.deployed
     assert "not-a-real-key" not in out
-    assert out.endswith("Strata is running at https://strata-1.aws.databricksapps.com")
+    assert out.endswith("Prism is running at https://strata-1.aws.databricksapps.com")
 
 
 def test_with_keep_secrets_a_scope_without_the_connection_string_gives_an_app_that_sends_no_traces(tmp_path, capsys):
@@ -748,7 +748,7 @@ def test_after_step_5_the_deploy_names_the_new_deployment_that_succeeded(tmp_pat
     assert code == 0
     assert out.split("5. Deploying the app. This takes a few minutes.\n")[1].splitlines()[0] == (
         "   The deployment 01f0b2deploy0001, made at 14:59:33 UTC on October 26, 2026, succeeded.")
-    assert out.rstrip().splitlines()[-1] == "Strata is running at https://strata-1.aws.databricksapps.com"
+    assert out.rstrip().splitlines()[-1] == "Prism is running at https://strata-1.aws.databricksapps.com"
 
 
 def test_a_new_deployment_that_failed_stops_the_deploy_at_step_5_with_its_state_and_message(tmp_path, capsys):
@@ -821,7 +821,7 @@ def test_a_deployment_still_in_progress_after_step_5_is_read_again_until_it_succ
         "read its state again every 10 seconds, for up to 20 minutes.",
         f"   The deployment {COLD_START}, made at 15:01:38 UTC on October 26, 2026, succeeded."]
     assert slept == [10, 10, 10] and workspace.reads == 4
-    assert workspace.statements and "Strata is running at" in out
+    assert workspace.statements and "Prism is running at" in out
 
 
 def test_a_deployment_still_in_progress_when_the_wait_ends_stops_at_step_5_and_says_how_to_check_it(tmp_path, capsys):
@@ -908,7 +908,7 @@ def test_a_statement_the_warehouse_refuses_in_step_6_is_named_after_the_warehous
         "I stopped at step 6, so the app's own service principal may lack some of its grants. Deploy again once the "
         "SQL warehouse runs."]
     assert out.index("was STOPPED") < out.index("TABLE_DOES_NOT_EXIST")
-    assert "7. Masking" not in out and "Strata is running at" not in out
+    assert "7. Masking" not in out and "Prism is running at" not in out
 
 
 def test_a_statement_a_running_warehouse_refuses_is_named_as_the_statement_s_own_error(tmp_path, capsys):

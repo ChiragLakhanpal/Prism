@@ -1,4 +1,4 @@
-# The draft-kind registry: each kind of draft Strata writes for a person to check, and what makes it
+# The draft-kind registry: each kind of draft Prism writes for a person to check, and what makes it
 # differ from the others (CLAUDE.md rule 9; the 35 design brief, section 1). One draft page, one draft
 # bar, one stepper, one Sources list and one set of files serve every kind. This file says, for each
 # kind, which workflow writes it, what its page shows, which holds keep it from export and how its
@@ -86,7 +86,7 @@ staff_only = true
 
 # The suggest-PPSD-rows workflow (ticket 36): suggested risk rows for the borrower's PPSD, started from the package
 # workspace's "Suggest {n} PPSD risk rows". Its columns are the template registry's (config/ppsd_templates.toml) in
-# the form the person chose; this list names the Short Form's, the default. Strata writes the Risk Description and
+# the form the person chose; this list names the Short Form's, the default. Prism writes the Risk Description and
 # the Description of mitigation; only people set the owners and, in the Long Form, the ratings, which hold export.
 # Ticket 38 registers the implementing agency's own variant, which changes only the words.
 [kinds.ppsd_rows]

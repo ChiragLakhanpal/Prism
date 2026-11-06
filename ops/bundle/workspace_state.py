@@ -1,4 +1,4 @@
-"""Whether the workspace can run Strata now: the App's compute and the SQL warehouse, read through the SDK before a
+"""Whether the workspace can run Prism now: the App's compute and the SQL warehouse, read through the SDK before a
 command changes anything (ticket 81).
 
 On October 26, 2026 Free Edition's daily limit stopped the SQL warehouse at 12:53 UTC and the App's compute at 12:57.

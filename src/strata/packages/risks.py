@@ -7,7 +7,7 @@ through the tool registry and keeps every row they return in its own Facts, as a
 
 1. find_comparables, with the package's criteria, for its comparable packages: every package the criteria
    match, the ones section 1 times and the ones it can only count (no notice, canceled).
-2. get_lessons with those packages, for the completion reports (ICRs) of their projects that Strata read and
+2. get_lessons with those packages, for the completion reports (ICRs) of their projects that Prism read and
    how many of them raised each risk factor, in its summary record. Every count the section states is a value
    there (CLAUDE.md rule 1).
 3. get_lessons again for each risk factor the reports raised, for the current lesson that fits the package

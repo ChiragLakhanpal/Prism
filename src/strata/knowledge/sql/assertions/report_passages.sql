@@ -1,6 +1,6 @@
 -- The passages of the run's reports that the batch model is given (:documents, their document ids joined by
 -- commas, which no document id contains): every paragraph and table row, but not a table's summary, which is
--- Strata's own words, and not a passage in which Prompt Shields found an attack. The run reads them for all its
+-- Prism's own words, and not a passage in which Prompt Shields found an attack. The run reads them for all its
 -- reports at once, in parts that fit the warehouse's limit (ticket 135), so each report costs no statement of its own.
 SELECT
   p.document_id,

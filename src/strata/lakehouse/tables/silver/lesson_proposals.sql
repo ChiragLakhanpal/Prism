@@ -27,7 +27,7 @@
 -- model         the deployment that proposed it
 -- batch_id      the batch its answer came in
 -- proposed_on   the day its answer came back, in UTC
--- public_from   proposed_on: the day Strata made the proposal (ADR 0002)
+-- public_from   proposed_on: the day Prism made the proposal (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.lesson_proposals (
   proposal_id STRING NOT NULL,
   document_id STRING NOT NULL,

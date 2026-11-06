@@ -8,7 +8,7 @@ so the tool reads the decided versions in strata.ops.lesson_versions and the evi
   what was public by then (ADR 0002). A lesson whose current version retired it is left out and counted.
 - The hindsight test's replays (ticket 34) set call.decided_by, the replay's own date. The library is then
   the one decided by that date, and each lesson version counts from the day every quote it rests on was
-  public, not from its decision: Strata did not exist on a 2014 approval date, but the reports its lessons
+  public, not from its decision: Prism did not exist on a 2014 approval date, but the reports its lessons
   come from did. A version whose quotes were not all public by the as-of date is not in that library yet.
 - Each lesson carries its evidence ids (the passages its quotes are in), the edition of the procurement
   rules its project followed (config/editions.toml, from the project's PAD), and ieg_status, one field for
@@ -108,9 +108,9 @@ def _report(row: dict) -> dict:
 def reports(call: Call, packages: str, lists) -> dict:
     """The completion reports of the comparable packages' projects, and the risk factors they raised (ticket 30).
 
-    projects is how many projects the packages belong to, read how many of them have an ICR Strata read by the
+    projects is how many projects the packages belong to, read how many of them have an ICR Prism read by the
     as-of date, and missing why the rest do not: no_report (no ICR public by then) or not_read (an ICR with no
-    passage Strata read). Each risk factor any counted report raised comes with k, how many of the counted
+    passage Prism read). Each risk factor any counted report raised comes with k, how many of the counted
     reports raised it, and each of those reports with the passage that raised it. Every count is a value here,
     so a sentence that states one cites this summary (CLAUDE.md rule 1)."""
     wanted = ",".join(dict.fromkeys(ref.strip() for ref in packages.split(",") if ref.strip()))

@@ -135,7 +135,7 @@ test("the workspace names the package, lists its facts in STEP's field names, an
 
   await expect(main.getByRole("heading", { level: 1 })).toContainText("Equipping of Exploratory");
   await expect(main.locator("[data-page-head]")).toContainText(REF);
-  await expect(page).toHaveTitle(`Package ${REF} | Strata`);
+  await expect(page).toHaveTitle(`Package ${REF} | Prism`);
   const crumbs = main.getByRole("navigation", { name: "Breadcrumb" });
   await expect(crumbs.getByRole("link", { name: "Packages" })).toHaveAttribute("href", "/packages");
   // The crumb names the project as Check a plan's crumb and the project's header do, by the server's display_name (the
@@ -1007,7 +1007,7 @@ test("a quantile dot the curve never reached is pinned at the plot's edge, so th
   }
 });
 
-// Ticket 111 marked Strata's own words with its byline; ticket 126 took the words "Strata found" and "Strata held back"
+// Ticket 111 marked Prism's own words with its byline; ticket 126 took the words "Prism found" and "Prism held back"
 // off the screen and kept the mark. On this page it is on section 1's finding alone: "found", or "heldBack" on its
 // abstention, and the finding itself carries no words but its own.
 test("section 1's finding carries the found mark, its abstention the held-back mark, and nothing else on the page has one", async ({ page }) => {
@@ -1017,7 +1017,7 @@ test("section 1's finding carries the found mark, its abstention the held-back m
   await expect(bylines).toHaveCount(1);
   await expect(bylines).toHaveAttribute("data-byline", "found");
   await expect(bylines).toHaveText(FINDING);
-  await expect(page.locator("main")).not.toContainText("Strata found");
+  await expect(page.locator("main")).not.toContainText("Prism found");
 
   await openPackage(page, {
     comparables: { body: await recorded("comparables-ke-nwwda-541055-prior.json") },
@@ -1026,7 +1026,7 @@ test("section 1's finding carries the found mark, its abstention the held-back m
   await ready(page);
   await expect(section(page).locator("[data-finding]")).toHaveText("I'm not giving a range from only seven comparable packages. Here are all seven.");
   await expect(bylines).toHaveAttribute("data-byline", "heldBack");
-  await expect(page.locator("main")).not.toContainText("Strata held back");
+  await expect(page.locator("main")).not.toContainText("Prism held back");
 });
 
 // Ticket 59, item 59, as the design review of round 1 settled it: on the 0 to 12 axis under 400 px wide, where the label
@@ -1152,13 +1152,13 @@ test("with no comparable package the link names Data readiness as the coverage l
 
 test("a reference no plan lists stays whole in the not-found sentence at phone width", async ({ page }) => {
   await openPackage(page, { width: 390, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
-  const reference = page.locator("main p", { hasText: "No package in Strata has the reference" }).locator(".font-mono");
+  const reference = page.locator("main p", { hasText: "No package in Prism has the reference" }).locator(".font-mono");
 
   await expect(reference).toHaveText(REF);
   // The lines its text sits on: one.
   expect(await lineCount(reference)).toBe(1);
   // The next step is the box, which opens a project by its ID or name (ticket 58).
-  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" })).toContainText(
+  await expect(page.locator("main p", { hasText: "No package in Prism has the reference" })).toContainText(
     "Check the reference in STEP, or find its project in the box at the bottom of the page.",
   );
 });
@@ -1167,7 +1167,7 @@ test("a reference no plan lists stays whole in the not-found sentence at phone w
 // so the box draws no chip for it and does not offer to ask about it.
 test("the not-found package page's box has no scope chip and offers nothing about the package", async ({ page }) => {
   await openPackage(page, { pkg: { status: 404, body: '{"code":"unknown_package"}' } });
-  await expect(page.locator("main p", { hasText: "No package in Strata has the reference" })).toBeVisible();
+  await expect(page.locator("main p", { hasText: "No package in Prism has the reference" })).toBeVisible();
 
   const box = page.locator("[data-box-slot]");
   await expect(box.locator("[data-scope-chip]")).toHaveCount(0);
@@ -1182,7 +1182,7 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
   expect(long).toHaveLength(40);
   for (const width of [320, 390]) {
     await openPackage(page, { width, ref: long, pkg: { status: 404, body: '{"code":"unknown_package"}' } });
-    const sentence = page.locator("main p", { hasText: "No package in Strata has the reference" });
+    const sentence = page.locator("main p", { hasText: "No package in Prism has the reference" });
     await expect(sentence.locator(".font-mono").first()).toHaveText(long);
 
     await page.evaluate(() => document.fonts.ready);
@@ -1219,7 +1219,7 @@ test("a reference too long for the line breaks after a hyphen, so the not-found 
 
   // A reference with a county's name breaks at its space first.
   await openPackage(page, { width: 320, ref: "KE-MIGORI COUNTY-532367-CW-RFB", pkg: { status: 404, body: '{"code":"unknown_package"}' } });
-  const county = page.locator("main p", { hasText: "No package in Strata has the reference" });
+  const county = page.locator("main p", { hasText: "No package in Prism has the reference" });
   await expect(county).toContainText("reference KE-MIGORI COUNTY-532367-CW-RFB. Check");
   // The reference's two parts, leaving out the Roboto Mono space between them.
   const parts = county.locator(".font-mono", { hasText: /\S/ });

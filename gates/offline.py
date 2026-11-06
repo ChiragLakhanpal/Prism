@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Strata's offline gate, which CLAUDE.md rule 6 requires. Git runs it through .githooks/.
+"""Prism's offline gate, which CLAUDE.md rule 6 requires. Git runs it through .githooks/.
 
 It runs the steps listed in gates/steps.toml from the root of the tree it was started in.
 A step with no lane runs alone, after everything before it has finished. Neighbouring steps

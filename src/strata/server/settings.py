@@ -173,7 +173,7 @@ def _warm(environ: Mapping[str, str], thresholds) -> Warm | None:
     if not (host and warehouse and client_id and secret) or environ.get("STRATA_DATABASE_FILE", "").strip():
         return None
     token = app_token(host, client_id, secret)
-    return Warm(load_demo(), lambda: Viewer(name="Strata", user_id=client_id, token=token()),
+    return Warm(load_demo(), lambda: Viewer(name="Prism", user_id=client_id, token=token()),
                 thresholds.value("app.warm_every_seconds"))
 
 

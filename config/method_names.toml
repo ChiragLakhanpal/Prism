@@ -5,7 +5,7 @@
 #
 # A source may write a method by a name from before the July 2016 Procurement Regulations (International
 # Competitive Bidding, ICB), by the French plan template's names and codes (Appel d'Offres International, AOI),
-# or by STEP's own French names (Appel d'offres). Strata accepts each one on input, stores the current name
+# or by STEP's own French names (Appel d'offres). Prism accepts each one on input, stores the current name
 # beside the words the source used, and writes the current name back. A name the registry does not list is
 # kept as written and gets a Data note, never a guess.
 #

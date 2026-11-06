@@ -1,4 +1,4 @@
--- Wilson's interval around the share of blamed risks Strata's tables showed, from the newest hindsight test (ticket
+-- Wilson's interval around the share of blamed risks Prism's tables showed, from the newest hindsight test (ticket
 -- 34), as whole percents, with its level. Only from data_readiness.fewest_for_a_percentage blamed risks, since a
 -- percentage rests on at least that many cases (DESIGN.md section 7, rule 15).
 WITH latest AS (

@@ -23,7 +23,7 @@ from strata.lakehouse.engine import DuckDBEngine
 ROOT = Path(__file__).resolve().parents[1]
 TRUTH = tomllib.loads((ROOT / "tests" / "ground_truth" / "values.toml").read_text())
 VALUES = {value["id"]: value for value in TRUTH["value"]}
-KENYA = TRUTH["counts"]["kenya"]  # Kenya's rows, counted from the recorded files apart from Strata's code
+KENYA = TRUTH["counts"]["kenya"]  # Kenya's rows, counted from the recorded files apart from Prism's code
 RECORDED = ROOT / "data" / "fixture" / "recorded"
 
 # The recorded files of the three sources this run ingests, for Kenya.

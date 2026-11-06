@@ -90,7 +90,7 @@ test("someone who is not a lesson reviewer sees no reviewer page under Lessons, 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Lessons");
   await expect(subTabs(page)).toHaveCount(0);
   await expect(lessonsItems(page)).toHaveCount(0);
-  await expect(page).toHaveTitle("Lessons | Strata");
+  await expect(page).toHaveTitle("Lessons | Prism");
 });
 
 test("a lesson reviewer finds Waiting for review under Lessons in the sidebar with its count in a badge, and the queue grouped for them", async ({ page }) => {
@@ -127,7 +127,7 @@ test("a lesson reviewer finds Waiting for review under Lessons in the sidebar wi
   // As the current item, in its heavier weight, the label and its badge still keep to one line, so the sidebar stays put.
   expect((await queue.boundingBox())!.height).toBeLessThanOrEqual(32);
   await expect(subTabs(page)).toHaveCount(0);
-  await expect(page).toHaveTitle("Waiting for review, Lessons | Strata");
+  await expect(page).toHaveTitle("Waiting for review, Lessons | Prism");
 
   // An item's review page sits inside Waiting for review, so its item keeps the mark.
   await page.locator(`[data-queue-row=${REBIDDING}] h3 a`).click();
@@ -235,7 +235,7 @@ test("the quote is the one highlighted thing on the review page, checked on its 
   await page.goto(`/lessons/review/${REBIDDING}`);
 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Base works estimates on market rates to avoid rebidding");
-  await expect(page).toHaveTitle("Base works estimates on market rates to avoid rebidding, Waiting for review | Strata");
+  await expect(page).toHaveTitle("Base works estimates on market rates to avoid rebidding, Waiting for review | Prism");
   const cards = page.locator("[data-lesson-evidence]");
   await expect(cards).toHaveCount(2);
   await expect(cards.first().locator("mark")).toHaveText("Highlight starts. 108 of 328 cases had to go through rebidding. Highlight ends.");
@@ -294,7 +294,7 @@ test("when a review page's one read fails, its alert is in the alert slot and it
   await expect(page.locator("[data-alert-slot] [role=alert]")).toBeVisible();
   await expect(page.locator("main nav[aria-label] a").last()).toHaveText("Waiting for review");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("A lesson waiting for review");
-  await expect(page).toHaveTitle("Waiting for review, Lessons | Strata");
+  await expect(page).toHaveTitle("Waiting for review, Lessons | Prism");
 });
 
 test("a recommendation needs a reason, sends the stage the reviewer saw, and ends on the outcome panel", async ({ page }) => {
@@ -595,7 +595,7 @@ test("a likely repeat's citation of a library lesson opens the drawer at the les
   // The drawer's head is its title, with no eyebrow and no middle dot (ticket 94).
   await expect(drawer.locator("[data-drawer-header]")).not.toContainText("·");
   const source = drawer.locator("[data-source]");
-  await expect(source).toHaveText("Source: Strata's lesson library, version 1, decided on October 27, 2026.");
+  await expect(source).toHaveText("Source: Prism's lesson library, version 1, decided on October 27, 2026.");
   await expect(source).not.toContainText(", ,");
   await expect(source).not.toContainText("lesson-");
 });

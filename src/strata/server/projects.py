@@ -1,6 +1,6 @@
 """The project routes' reads, which the app runs as the viewer: All projects, and one project's page.
 
-All projects lists every project Strata holds a record for, active ones first and then by name, one
+All projects lists every project Prism holds a record for, active ones first and then by name, one
 page at a time (config/thresholds.toml's app.page_size), and searches them by part of a name, a
 project ID (with or without its P) or a country, ignoring case and accents. An exact project ID comes
 first. The route counts the matches and the page's range, so the screen never does.

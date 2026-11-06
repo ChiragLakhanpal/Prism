@@ -35,8 +35,8 @@ test("Ask this streams the answer into the panel under the band: steps one at a 
   await expect(panel(page).locator("[data-asked]")).toHaveCount(0);
   // Ticket 111: the answer's h3 is its byline, for a screen reader only since ticket 126. The project page's records,
   // the steps, the check line and the removed box have none.
-  await expect(panel(page).getByRole("heading", { level: 3, name: "Strata, in short" })).toHaveClass(/sr-only/);
-  await expect(page.locator("[data-byline]")).toHaveText(["Strata, in short"]);
+  await expect(panel(page).getByRole("heading", { level: 3, name: "Prism, in short" })).toHaveClass(/sr-only/);
+  await expect(page.locator("[data-byline]")).toHaveText(["Prism, in short"]);
   await expect(panel(page).locator("[data-in-short]")).toContainText("108 of 328 cases had to go through rebidding");
   await expect(marker(page, 1)).toHaveAccessibleName("Source 1: Implementation Completion and Results Report, October 10, 2019, paragraph 54");
   await expect(panel(page).locator("[data-check-line]")).toHaveText(CHECK_LINE);
@@ -98,7 +98,7 @@ test("the panel sits at the top of the page column under the bar, on columns 1 t
   // The sentences in lead (18/28, 400), DESIGN.md sections 3 and 5. Since ticket 126 the byline over them is the
   // answer's h3 for a screen reader only, a 1 px box that takes no room (ticket 111's label line went).
   const style = (element: Element) => [getComputedStyle(element).fontSize, getComputedStyle(element).lineHeight, getComputedStyle(element).fontWeight];
-  const byline = panel(page).getByRole("heading", { level: 3, name: "Strata, in short" });
+  const byline = panel(page).getByRole("heading", { level: 3, name: "Prism, in short" });
   const box = (await byline.boundingBox())!;
   expect(box.width * box.height).toBeLessThanOrEqual(1);
   expect(await panel(page).locator("[data-in-short]").evaluate(style)).toEqual(["18px", "28px", "400"]);
@@ -319,7 +319,7 @@ test("Back closes a drawer the page opened, and the answer stays", async ({ page
 // drawn at once everywhere else. The transitions are the browser's own, as it ran them.
 const byProperty = (moved: Omit<Moved, "on">[]) => [...moved].sort((a, b) => a.property.localeCompare(b.property));
 
-test("a streamed answer's Strata, in short block enters over 200 ms and the check line's tick reveals 120 ms later; Back shows both at once", async ({ page }) => {
+test("a streamed answer's Prism, in short block enters over 200 ms and the check line's tick reveals 120 ms later; Back shows both at once", async ({ page }) => {
   await recordTransitions(page);
   await open(page, { stream: "ask-ke-nwwda-541055-past-range.sse" });
   await askFromTheBox(page);

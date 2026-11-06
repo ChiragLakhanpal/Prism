@@ -951,7 +951,7 @@ export const PAGES: GalleryPage[] = [
           </Inline>
         ),
       })),
-      // Ticket 46: the label a part designed but not built carries, with what Strata does instead.
+      // Ticket 46: the label a part designed but not built carries, with what Prism does instead.
       { id: t.designedNotBuilt, title: t.designedNotBuilt, body: <DesignedNotBuilt item="sample" instead={t.designedNotBuiltSample} /> },
     ],
   },

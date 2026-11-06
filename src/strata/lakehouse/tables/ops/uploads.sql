@@ -1,4 +1,4 @@
--- One row for each Procurement Plan an implementing agency team uploaded and Strata read and checked (ticket 38).
+-- One row for each Procurement Plan an implementing agency team uploaded and Prism read and checked (ticket 38).
 -- An upload is Official Use Only: the app writes it as its own service principal, only after the file was read
 -- and checked, and every read goes through the one access rule in src/strata/server/access.py, which shows an
 -- upload only to its uploader and the team they were on. The file itself is never kept: its activities are in

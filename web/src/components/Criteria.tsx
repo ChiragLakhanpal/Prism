@@ -1,5 +1,5 @@
 // The "What I understood" card of a package planned from a sentence (the 15 brief, sections 4, 5 and 7.4):
-// the sentence the person wrote, then what Strata read from it as criterion chips in three groups (What,
+// the sentence the person wrote, then what Prism read from it as criterion chips in three groups (What,
 // Where, How), then the computed note with its source line. Nothing here names a field: each chip is one
 // field of the package form schema (config/package_form.toml), drawn in its group and order by its kind, so
 // adding a field to the schema adds a chip and removing it removes the chip.

@@ -190,7 +190,7 @@ def test_the_screen_tests_deck_data_is_built_from_the_fixture(fixture_deck):
 
 
 def test_a_count_carries_the_column_the_register_counts(fixture_deck):
-    # The data slide said Strata built 2,466 contracts from award notices, then 1,722: those were the ones in local
+    # The data slide said Prism built 2,466 contracts from award notices, then 1,722: those were the ones in local
     # currency (n). The register counts every contract built from the notices (count_of = "d"), as the proposal does.
     assert fixture_deck["results"]["gap-contracts"]["count_of"] == "d"
     assert fixture_deck["results"]["passages"]["count_of"] == "n"

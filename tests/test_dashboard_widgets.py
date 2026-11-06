@@ -1,9 +1,9 @@
 """Every widget the dashboard writer produces has a shape AI/BI's own dashboards carry (ticket 68).
 
-The deployed "Strata operations" showed "Invalid widget definition is imported." on some tiles on October 25, 2026.
+The deployed "Prism operations" showed "Invalid widget definition is imported." on some tiles on October 25, 2026.
 tests/fixtures/dashboard/widget_shapes.json holds known-good widgets by kind, each copied from a dashboard file that
 Databricks publishes or that a workspace's dashboard editor exported, with its repository, commit and path named.
-Here every widget strata.dashboard writes, on every page of "Strata operations" and its test copy, with and without
+Here every widget strata.dashboard writes, on every page of "Prism operations" and its test copy, with and without
 the query history, is checked against its kind: the version for its widget type, the fields every known-good widget
 of its kind carries, and no field or value that no known-good widget of its kind carries.
 """

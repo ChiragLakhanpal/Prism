@@ -1,10 +1,10 @@
 {
   "attribution": "The World Bank: {dataset}: {source}. License: {license}.",
   "terms": "Terms of use: https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
-  "changes": "Strata joined these records, read the documents, and summarized them. These changes are Strata's own.",
+  "changes": "Prism joined these records, read the documents, and summarized them. These changes are Prism's own.",
   "caveat": "The World Bank does not guarantee the accuracy of the data.",
   "authorizes": "The World Bank Group authorizes the use of this material subject to the terms and conditions on its website, Legal.",
   "trailLegend": "A solid line joins records that share a key, such as the STEP reference. A dashed line joins the contract to report paragraphs that appeared together with it.",
   "designedNotBuilt": "Designed, not built",
-  "footer": "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+  "footer": "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
 }

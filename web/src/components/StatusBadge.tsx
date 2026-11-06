@@ -10,7 +10,7 @@
 // Rebidding risk (ticket 28): Experimental, neutral with a flask, no visible border and an 8 px icon gap, the one
 // quiet mark of an estimate the blueprint labels experimental (the 28 brief, section 4.2). Designed, not built (ticket
 // 46): Experimental's quiet look with drafting-compass, the mark of a part the proposal describes but the app does
-// not have yet (the 46 brief, section 12.2); DesignedNotBuilt sets it beside what Strata does instead.
+// not have yet (the 46 brief, section 12.2); DesignedNotBuilt sets it beside what Prism does instead.
 import { Circle, CircleDashed, DraftingCompass, FlaskConical, History, Info, TriangleAlert, type LucideIcon } from "lucide-react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";

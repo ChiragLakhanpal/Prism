@@ -1,6 +1,6 @@
 """Which engine runs a viewer's queries, made fresh for each request.
 
-Strata acts as each viewer (ADR 0003): in the Databricks App, every query goes to the SQL warehouse
+Prism acts as each viewer (ADR 0003): in the Databricks App, every query goes to the SQL warehouse
 with the token the App forwarded for the person asking, so each viewer sees only what their own
 grants allow. Nothing about a viewer is kept between requests (CLAUDE.md rule 7). The environment
 decides the engine once, when the app starts:

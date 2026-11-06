@@ -11,9 +11,9 @@ genie.py, because fairshare could not be read on the build machine, with two cha
   changes nothing changes no id.
 - Every list is sorted by its id or identifier, and there is exactly one text instruction.
 
-deploy() makes the workspace's space match: it finds Strata's space by the id it was given or by its title,
+deploy() makes the workspace's space match: it finds Prism's space by the id it was given or by its title,
 compares what Genie holds (get_space with include_serialized_space) with what the repo says, and creates,
-updates or leaves it. It never changes a space whose title is not Strata's, because the workspace is shared with
+updates or leaves it. It never changes a space whose title is not Prism's, because the workspace is shared with
 fairshare, and the throwaway space the setup wizard made for day-one test 5 is one of those. The field names of
 the serialized form follow Genie's API as its documentation gives them; they have not been sent from this repo
 yet, which the workspace step in docs/workspace-catchup.md does.
@@ -35,7 +35,7 @@ from strata.lakehouse.engine import EngineError, Transport
 
 ROOT = Path(__file__).resolve().parents[3]
 TRUSTED = Path(__file__).resolve().parent / "trusted"
-# The namespace of every id in Strata's space: uuid5 of this and an item's key gives the same id each time.
+# The namespace of every id in Prism's space: uuid5 of this and an item's key gives the same id each time.
 NAMESPACE = uuid.UUID("5d1f3c1e-2b7a-4c8e-9a64-7f0e5b3d2c10")
 GENIE = "/api/2.0/genie/spaces"
 PARAMETER = re.compile(r"(?<![:\w]):([a-z_][a-z0-9_]*)")
@@ -239,14 +239,14 @@ def _found(api: Spaces, space_id: str) -> dict | None:
 
 
 def deploy(api: Spaces, space: Space, warehouse_id: str, known_id: str | None) -> Deployed:
-    """Make the workspace's Strata space match the repo. known_id is the env file's GENIE_SPACE_ID, if any."""
+    """Make the workspace's Prism space match the repo. known_id is the env file's GENIE_SPACE_ID, if any."""
     body, notes, current = request(space, warehouse_id), [], None
     if known_id:
         found = _found(api, known_id)
         if found is not None and found.get("title") == space.title:
             current = found
         elif found is not None:
-            notes.append(f"The space {known_id} is titled {found.get('title')}, which is not Strata's, so I left it "
+            notes.append(f"The space {known_id} is titled {found.get('title')}, which is not Prism's, so I left it "
                          "as it was.")
     if current is None:
         named = [item for item in api.list_spaces() if item.get("title") == space.title]

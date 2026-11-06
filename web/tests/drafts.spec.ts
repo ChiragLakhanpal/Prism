@@ -240,7 +240,7 @@ test("drafting shows the marked activities at once, then becomes the saved draft
   await expect(page).toHaveURL(DRAFT);
   await expect(page.locator("[data-draft-page=draft]")).toBeVisible();
   await expect(page.locator("[data-page-status]")).toHaveText("The draft is ready. I wrote three notes.");
-  await expect(page).toHaveTitle("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Strata");
+  await expect(page).toHaveTitle("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Prism");
   expect(asked.filter((call) => call === "POST /api/drafts")).toHaveLength(1);
   await page.goBack();
   await expect(page).toHaveURL(PLAN);
@@ -356,7 +356,7 @@ test("the draft's notes cite their plan rows, and the bar says what exporting do
     `${sentence} You opened 0 of 4 sources. Mark the notes as checked before you export them.`,
   );
   await expect(page.locator("[data-sources-caption]")).toHaveText("You opened 0 of 4."); // the Word file shows its footnotes (ticket 126, R48)
-  await expect(page).toHaveTitle("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Strata");
+  await expect(page).toHaveTitle("Review notes on the Northern Water Works Development Agency plan of Oct 9, 2026 | Prism");
 });
 
 // Ticket 103 (plan 7.8; DESIGN.md section 5, State stepper): a draft's page takes the workspace layout. From a frame of
@@ -838,12 +838,12 @@ for (const [width, height] of [[1440, 900], [390, 844]]) {
     await page.waitForTimeout(250);
     expect((await transitionsOn(page, "decidedLine")).length + (await transitionsOn(page, "stepState")).length).toBe(0);
     expect(await page.evaluate(() => document.getAnimations().filter((one) => (one as CSSTransition).transitionProperty === "opacity").length)).toBe(0);
-    // Marking as checked sends nothing anywhere: the only act was the check, to Strata's own server.
+    // Marking as checked sends nothing anywhere: the only act was the check, to Prism's own server.
     expect(asked.filter((call) => call.startsWith("POST"))).toEqual(["POST /api/drafts/draft-0001/check"]);
   });
 }
 
-test("Export downloads the Word file, ends on a success that names it and its footnotes, and reaches nothing outside Strata", async ({ page }) => {
+test("Export downloads the Word file, ends on a success that names it and its footnotes, and reaches nothing outside Prism", async ({ page }) => {
   await openDraft(page, {
     file: "drafts-review-notes-checked.json",
     answers: {

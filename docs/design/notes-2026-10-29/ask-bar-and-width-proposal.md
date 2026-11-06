@@ -37,13 +37,13 @@ The numbers behind those two sentences, from the local copy at http://127.0.0.1:
 | How much of it lies over the work | 415 of 640 px | 401 of 640 px | all | all |
 | With the evidence drawer open | x 151 to 791, so its left edge moves 281 px; the work stays at x 104 to 847 | | | |
 
-Its look: `surface` (#ffffff) on `page` (#f5f7f9) is 1.07:1, so the fill does not separate it, and over a white panel or a table row the fill is the same white. What separates it is a 1 px inset `line-strong` edge and `0 5px 25px rgba(160,158,143,.25)`, a warm grey at 25 percent that nearly vanishes over white. It is 40 px tall, under the 44 px of every button on the page, and its words are a 16 px placeholder in `ink-muted` beside a 16 px `ink-muted` icon. Nothing in it says "Strata", so it reads as one more field.
+Its look: `surface` (#ffffff) on `page` (#f5f7f9) is 1.07:1, so the fill does not separate it, and over a white panel or a table row the fill is the same white. What separates it is a 1 px inset `line-strong` edge and `0 5px 25px rgba(160,158,143,.25)`, a warm grey at 25 percent that nearly vanishes over white. It is 40 px tall, under the 44 px of every button on the page, and its words are a 16 px placeholder in `ink-muted` beside a 16 px `ink-muted` icon. Nothing in it says "Prism", so it reads as one more field.
 
 The page today, the package workspace at 1440 by 900, scrolled into the zones:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | ...zone 1's chart and its foot strip...                 +------------------------+ |
 |(H)|                                                         | From the plan row      | |
@@ -83,7 +83,7 @@ At 1440, the package workspace:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | Packages > Water and Sanitation Development (P156634)   +------------------------+ |
 |(H)| Drilling of 4 Number Exploratory Boreholes ...          | From the plan row      | |
@@ -91,7 +91,7 @@ At 1440, the package workspace:
 |(F)|                                                         | Request for Open -     | |
 |   | +----------------------------------------------+        | ...                    | |
 |(P)| | 1  How long it took                          |        | Source ... (1)         | |
-|   | |    Strata found                              |        +------------------------+ |
+|   | |    Prism found                              |        +------------------------+ |
 |(L)| |    2 of 48 comparable packages, fewer than   |                                   |
 |   | |    1 in 10, were signed within the plan's    |   the side column stays clear     |
 |(D)| |    2.1 months.                               |   of the box                      |
@@ -103,7 +103,7 @@ At 1440, the package workspace:
 |   | +----------------------------------------------+                                   |
 |   |                                                                                    |
 |   | +==============================================+                                   |
-|   | | Q  Ask Strata | (KE-NWWDA-229129-CW-RFB x)   |                                   |
+|   | | Q  Ask Prism | (KE-NWWDA-229129-CW-RFB x)   |                                   |
 |   | |                 Ask about this package  [/]  |                                   |
 |   | +==============================================+                                   |
 |   | x 104 to 847, the work's columns 1 to 7, 56 px tall,                               |
@@ -115,7 +115,7 @@ At 1440, a wide page (Packages, and the same on the plan check):
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | Packages                                        [Check a plan] [Plan a package]    |
 |(H)| +--------------------------------------------------------------------------------+ |
@@ -124,7 +124,7 @@ At 1440, a wide page (Packages, and the same on the plan check):
 |   | +--------------------------------------------------------------------------------+ |
 |(P)|                                                                                    |
 |   |               +=====================================================+              |
-|(L)|               | Q Ask Strata | Open a project or package, or ask [/]|              |
+|(L)|               | Q Ask Prism | Open a project or package, or ask [/]|              |
 |   |               +=====================================================+              |
 |(D)| x 325 to 1,179: columns 3 to 10, centered on the content                           |
 +---+------------------------------------------------------------------------------------+
@@ -134,7 +134,7 @@ At 390:
 
 ```
 +-------------------------------------+
-| = Menu  WBG  Strata                 |
+| = Menu  WBG  Prism                 |
 +-------------------------------------+
 | < Water and Sanitation Developme... |
 | Drilling of 4 Number Exploratory    |
@@ -143,7 +143,7 @@ At 390:
 |                                     |
 | +---------------------------------+ |
 | | 1 How long it took              | |
-| | Strata found                    | |
+| | Prism found                    | |
 | | 2 of 48 comparable              | |
 | | packages, fewer than            | |
 | | 1 in 10, were signed...         | |
@@ -162,7 +162,7 @@ The look, left to right:
 - `surface` fill, `radius-sm` corners (it stays a control), and a 1 px `primary` edge in place of `line-strong`. That is the secondary button's edge, which reads as "act here" (10.31:1 on `surface`, 9.60:1 on `page`).
 - A new elevation step, `shadow-float`: `0 1px 2px rgba(0,34,68,.12), 0 8px 24px rgba(0,34,68,.16)`, tinted from brand navy, under the bar alone. Today's popover shadow stays on popovers.
 - A lucide `search` icon at 20 px in `primary`.
-- The name "Ask Strata" in `button` (14/20, 600) `ink-heading`, then a 24 px `line` divider, 12 px on each side. It pairs with the answer's byline. You ask under "Ask Strata", and the answer opens under "Strata, in short" (DESIGN.md section 1, principle 6). The name hides when the box is narrower than 40rem, as "Within" already hides below 35rem, and below 768 px.
+- The name "Ask Prism" in `button` (14/20, 600) `ink-heading`, then a 24 px `line` divider, 12 px on each side. It pairs with the answer's byline. You ask under "Ask Prism", and the answer opens under "Prism, in short" (DESIGN.md section 1, principle 6). The name hides when the box is narrower than 40rem, as "Within" already hides below 35rem, and below 768 px.
 - The scope chip and the field as today, the field in `body` (16 px).
 - At rest, the "/" Key hint at the end. Once the box holds text, the hint's place holds the Enter button: 40 by 40, `radius-sm`, a 1 px `primary` border, a 16 px lucide `corner-down-left` in `primary`, `tint` on hover. It does what Enter does, and its name says so ("Ask this", "Open P130164"). It is never filled, so each page keeps one solid button (the blueprint's Von Restorff row).
 
@@ -174,12 +174,12 @@ What changes in `web/src`:
 - `components/OneBox.tsx`: the 56 px row, the name and divider, the 20 px `primary` icon, the `primary` edge, and the Enter button in the "/" hint's slot.
 - `components/IntentBox.tsx`: hands OneBox the selected option's label for the Enter button's name.
 - `lib/sticky.ts`: while a page's foot bar sticks, writes `--ask-inset-start` and `--ask-inset-end` from that bar's edges, so the box centers over it (113's deferred item 1, as the critique wrote it).
-- `copy.ts` and `gallery/copy.ts`: `box.name` ("Ask Strata") and the Enter button's name. `gallery/pages.tsx`: the gallery's box.
+- `copy.ts` and `gallery/copy.ts`: `box.name` ("Ask Prism") and the Enter button's name. `gallery/pages.tsx`: the gallery's box.
 - Tests: the place and size checks in `web/tests/shell.spec.ts` and `box.spec.ts`, the draft bar case in `drafts.spec.ts`, and `axe.ts`.
 
 Accessibility:
 
-- The field gets a visible label, "Ask Strata", and its accessible name starts with those words (WCAG 3.3.2 and 2.5.3). The placeholder sentence becomes its description.
+- The field gets a visible label, "Ask Prism", and its accessible name starts with those words (WCAG 3.3.2 and 2.5.3). The placeholder sentence becomes its description.
 - The Enter button is 40 by 40 (2.5.8), named by the option Enter will choose, and shows only while the box holds text, so it never needs a held state.
 - The focus ring stays: 2 px `focus`, 2 px outside the box, while anything in it has focus.
 - The bar covers 72 px of the window's foot instead of 56. `useStickyPadding` measures the part, so the bottom scroll padding grows with it and Tab never leaves a focused element under the box (2.4.11).
@@ -198,10 +198,10 @@ At 1440, a content page:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | +----------------------------------------------+  the band: surface, 64 px,        |
-|(H)| | Q Ask Strata (KE-NWWDA-229129-CW-RFB x) Ask /|  a line under it; sticks with     |
+|(H)| | Q Ask Prism (KE-NWWDA-229129-CW-RFB x) Ask /|  a line under it; sticks with     |
 |   | +----------------------------------------------+  the bar from 1024 px             |
 |(F)|------------------------------------------------------------------------------------|
 |   | Packages > Water and Sanitation Development (P156634)                              |
@@ -210,7 +210,7 @@ At 1440, a content page:
 |(L)|                                                         | Method      Market     | |
 |   | +----------------------------------------------+        | ...                    | |
 |(D)| | 1  How long it took                          |        | Source ... (1)         | |
-|   | |    Strata found                              |        +------------------------+ |
+|   | |    Prism found                              |        +------------------------+ |
 |   | |    2 of 48 comparable packages, fewer than   |                                   |
 |   | |    1 in 10, were signed within the plan's    |                                   |
 |   | |    2.1 months.                               |                                   |
@@ -225,14 +225,14 @@ At 1440, Home:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | Your briefing for Thursday, October 29                  +------------------------+ |
 |(H)| One plan changed in the past 15 days. One of            | Waiting for you        | |
 |   | its activities needs a look.         (finding)          | ...                    | |
 |(F)|                                                         | Go to Drafts           | |
 |   | +==============================================+        +------------------------+ |
-|(P)| | Q Ask Strata | Open a project or package [/] |                                   |
+|(P)| | Q Ask Prism | Open a project or package [/] |                                   |
 |   | +==============================================+                                   |
 |(L)|   Ask, for example                                                                 |
 |   |   > How long did works contracts in Kenya take?                                    |
@@ -249,7 +249,7 @@ At 390, a content page:
 
 ```
 +-------------------------------------+
-| = Menu  WBG  Strata                 |
+| = Menu  WBG  Prism                 |
 +-------------------------------------+
 | +---------------------------------+ |
 | | Q Open a project or package..   | |
@@ -261,7 +261,7 @@ At 390, a content page:
 |                                     |
 | +---------------------------------+ |
 | | 1 How long it took              | |
-| | Strata found                    | |
+| | Prism found                    | |
 | | 2 of 48 comparable              | |
 | +---------------------------------+ |
 |                                     |
@@ -301,13 +301,13 @@ At 1440, the sheet open on a package page:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | Packages > Water and Sanitation Development (P156634)                              |
 |[Q]| Drilling of 4 Number Exploratory ...   (the page, under the scrim)                 |
 |   |                                                                                    |
 |(H)|                 +------------------------------------------------+                 |
-|   |                 | Q  Ask Strata | (KE-NWWDA-229129-CW-RFB x)     |                 |
+|   |                 | Q  Ask Prism | (KE-NWWDA-229129-CW-RFB x)     |                 |
 |(F)|                 |                 Ask about this package         |                 |
 |   |                 |------------------------------------------------|                 |
 |(P)|                 | Ask about this package                         |                 |
@@ -331,11 +331,11 @@ At 390, the launcher in the bar and the sheet open:
 
 ```
 +-------------------------------------+
-| = Menu  WBG  Strata        [Q Ask]  |
+| = Menu  WBG  Prism        [Q Ask]  |
 +-------------------------------------+
 |                                     |
 |+-----------------------------------+|
-|| Ask Strata                  [x]   ||
+|| Ask Prism                  [x]   ||
 ||                                   ||
 || +-------------------------------+ ||
 || | (P156634 x) Ask about thi..   | ||
@@ -354,8 +354,8 @@ At 390, the launcher in the bar and the sheet open:
 
 The parts:
 
-- The launcher in the rail: 40 by 40, `surface`, a 1 px `primary` edge, a 20 px `primary` `search` icon, `radius-sm`, and the rail's tooltip "Ask Strata" with the "/" Key hint. With the sidebar open, a 40 px row that looks like a field: "Ask Strata" and the "/" hint. Below 1024 px, a 44 px "Ask" button in the navy bar with the view switch's white edge.
-- The sheet: a modal dialog named "Ask Strata", at most 720 px wide (the frame less its margins), centered on the frame, its top 96 px down the window; `surface`, `radius-md`, 1 px `line`, the popover shadow, over `scrim`. The box sits at its top (56 px, no edge of its own, a `line` under it), the One box list fills the body and scrolls inside, and a foot in the Foot strip's look (`page`, a 1 px `line` top) names the keys with Key hints ("Enter chooses", "Up and Down move", "Escape closes").
+- The launcher in the rail: 40 by 40, `surface`, a 1 px `primary` edge, a 20 px `primary` `search` icon, `radius-sm`, and the rail's tooltip "Ask Prism" with the "/" Key hint. With the sidebar open, a 40 px row that looks like a field: "Ask Prism" and the "/" hint. Below 1024 px, a 44 px "Ask" button in the navy bar with the view switch's white edge.
+- The sheet: a modal dialog named "Ask Prism", at most 720 px wide (the frame less its margins), centered on the frame, its top 96 px down the window; `surface`, `radius-md`, 1 px `line`, the popover shadow, over `scrim`. The box sits at its top (56 px, no edge of its own, a `line` under it), the One box list fills the body and scrolls inside, and a foot in the Foot strip's look (`page`, a 1 px `line` top) names the keys with Key hints ("Enter chooses", "Up and Down move", "Escape closes").
 - Below 768 px the sheet fills the screen and rises from the bottom with `radius-lg` top corners, over `motion-sheet` on `ease-drawer`, as the Menu sheet does, with a 44 px close button.
 - From 768 px it opens with the popover motion (opacity and scale 0.97 to 1, 160 ms, `ease-out`) and closes at once.
 
@@ -374,7 +374,7 @@ What changes in `web/src`:
 
 Accessibility:
 
-- The launcher is a button named "Ask Strata", with `aria-haspopup="dialog"`, `aria-expanded` and `aria-keyshortcuts="/"`.
+- The launcher is a button named "Ask Prism", with `aria-haspopup="dialog"`, `aria-expanded` and `aria-keyshortcuts="/"`.
 - The sheet is a modal dialog: focus goes to the field, the rest of the page is inert, and Escape or the close button returns focus to the launcher, or to where focus was when "/" was pressed.
 - After "Ask this", focus moves to the question's heading in the answer panel. "Close the answer" returns it to the launcher, since the box is gone.
 - Nothing rests at the foot, so no focused element can sit under the box (2.4.11), and the bottom scroll padding goes.
@@ -394,7 +394,7 @@ At 1440, the package workspace:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | Packages > Water and Sanitation Development (P156634)   Method       Market App.   |
 |(H)| Drilling of 4 Number Exploratory Boreholes ...          Request for  Open - Nat.   |
@@ -404,7 +404,7 @@ At 1440, the package workspace:
 |(P)|                                                                                    |
 |   | +--------------------------------------------------------------------------------+ |
 |(L)| | 1  How long it took                                                            | |
-|   | |    Strata found                                       Planned months [ 2.1 ]   | |
+|   | |    Prism found                                       Planned months [ 2.1 ]   | |
 |(D)| |    2 of 48 comparable packages, fewer than                                     | |
 |   | |    1 in 10, were signed within the plan's             Dates I draft            | |
 |   | |    2.1 months.                                        (8.1 middle)(x 15.4)     | |
@@ -428,7 +428,7 @@ At 390 (as below a frame of 75rem today):
 
 ```
 +-------------------------------------+
-| = Menu  WBG  Strata                 |
+| = Menu  WBG  Prism                 |
 +-------------------------------------+
 | < Water and Sanitation Developme... |
 | Drilling of 4 Number Exploratory    |
@@ -484,7 +484,7 @@ At 1440, the package workspace:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | Packages > Water and Sanitation Development (P156634)   +------------------------+ |
 |(H)| Drilling of 4 Number Exploratory Boreholes ...          | From the plan row      | |
@@ -492,7 +492,7 @@ At 1440, the package workspace:
 |(F)|                                                         | Request for Open -     | |
 |   | +----------------------------------------------+        | Source ... (1)         | |
 |(P)| | 1  How long it took                          |        +------------------------+ |
-|   | |    Strata found                              |        +------------------------+ |
+|   | |    Prism found                              |        +------------------------+ |
 |(L)| |    2 of 48 comparable packages, fewer than   |        | Where the steps stand  | |
 |   | |    1 in 10, were signed within the plan's    |        | (v) Bid invitation     | |
 |(D)| |    2.1 months.                               |        |  |  Done Sep 17, 2021  | |
@@ -507,7 +507,7 @@ At 1440, the package workspace:
 |   |                                                         +------------------------+ |
 |   |                                                                                    |
 |   | +==============================================+                                   |
-|   | | Q  Ask Strata | (KE-NWWDA-229129-CW-RFB x)   |                                   |
+|   | | Q  Ask Prism | (KE-NWWDA-229129-CW-RFB x)   |                                   |
 |   | |                 Ask about this package  [/]  |                                   |
 |   | +==============================================+                                   |
 +---+------------------------------------------------------------------------------------+
@@ -517,13 +517,13 @@ At 1440, the plan check:
 
 ```
 +----------------------------------------------------------------------------------------+
-| WBG  Strata                                                [View: World Bank staff v]  |
+| WBG  Prism                                                [View: World Bank staff v]  |
 +---+------------------------------------------------------------------------------------+
 |   | Packages > Water and Sanitation Development (P156634)                              |
 |(H)| Northern Water Works Development Agency     (Nine checked) [Draft review notes]    |
 |   | Procurement Plan of October 9, 2026                                                |
 |(F)| ---------------------------------------------------------------------------------- |
-|   | Strata found                                            +------------------------+ |
+|   | Prism found                                            +------------------------+ |
 |(P)| One activity needs a look and two are                   | How I checked          | |
 |   | worth watching; three have data notes.                  | Checked: 9 activities  | |
 |(L)|                                                         | Delay from: the first  | |
@@ -544,7 +544,7 @@ At 390, the package workspace (as today):
 
 ```
 +-------------------------------------+
-| = Menu  WBG  Strata                 |
+| = Menu  WBG  Prism                 |
 +-------------------------------------+
 | < Water and Sanitation Developme... |
 | Drilling of 4 Number Exploratory    |
@@ -592,7 +592,7 @@ Risk: the step tracker that ticket 115 built as a row becomes a list at the widt
 
 ## 4. Recommendation
 
-**The ask bar: Option A.** It keeps the owner's October 27 placement and the one box's behavior, and answers "more umf" with things a reader sees at once: a bar as tall as the navy bar, the name "Ask Strata" that pairs with the answer's "Strata, in short", a `primary` edge that says "act here", and a navy-tinted shadow kept for the one part that floats. Putting its edges on the grid matters as much as the look. On a workspace page it sits under the work instead of straddling the work and the empty column, it no longer moves 281 px when the drawer opens, and the same rule centers it over the draft bar, which closes the alignment item left from ticket 113. Option B gives the clearest place, but it undoes the owner's request on most pages and stacks 120 px of chrome over the work. Option C clears the page but hides the box at rest, which is the opposite of what the owner asked for.
+**The ask bar: Option A.** It keeps the owner's October 27 placement and the one box's behavior, and answers "more umf" with things a reader sees at once: a bar as tall as the navy bar, the name "Ask Prism" that pairs with the answer's "Prism, in short", a `primary` edge that says "act here", and a navy-tinted shadow kept for the one part that floats. Putting its edges on the grid matters as much as the look. On a workspace page it sits under the work instead of straddling the work and the empty column, it no longer moves 281 px when the drawer opens, and the same rule centers it over the draft bar, which closes the alignment item left from ticket 113. Option B gives the clearest place, but it undoes the owner's request on most pages and stacks 120 px of chrome over the work. Option C clears the page but hides the box at rest, which is the opposite of what the owner asked for.
 
 **The width: Option W2.** It keeps the workspace's promise that nothing moves when the drawer opens, and it fills the right column with what a reader needs on every screen of a package: where its steps stand. Today the tracker shows once, between zone 1 and zone 2, squeezed into 743 px with "Late by 1,840 days" broken over two lines. In the right column it stays in view beside the zones that explain it. On the plan check, the same move fills the empty block beside the finding with how the check was done and the baseline, which today sit at the page's end. Option W1 gives the chart more room, but the zones lay out again whenever a source opens, and it leaves the plan check's empty block. With Option A, the page reads as two columns: the work and its ask bar on the left, the package's state on the right.
 

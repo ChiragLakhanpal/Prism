@@ -6,7 +6,7 @@
   window (the projects they follow), the new project-level signals project_signals found in it, the lesson notices on
   their own open drafts (strata.knowledge.lessons.page, the same function as the Lessons tab), and their own drafts in
   Draft. An implementing agency officer, and the agency preview, get the activities behind their planned dates in the
-  team's latest plans. The public preview gets the closed projects whose contracts Strata holds, latest to close first,
+  team's latest plans. The public preview gets the closed projects whose contracts Prism holds, latest to close first,
   with how many of their contracts it traced. As of a past date, the window ends on that date and the lesson lines, the drafts and the strip are left
   out. A preview can only take things away, and a read records nothing.
 - POST /api/home/start-here {"visible": false} removes the strip for the viewer, and {"visible": true} shows it again:

@@ -1,5 +1,5 @@
 // What a page shows when its read fails (the 10 brief, section 6). A viewer whose account can't read
-// Strata's tables gets that sentence and what to ask for, with no retry, because trying again can't
+// Prism's tables gets that sentence and what to ask for, with no retry, because trying again can't
 // help. Any other failure gets one alert block: the page's sentence, "Try again" under it and the
 // reference that finds the details in the server's log, inside the alert, as the shell redesign's plan
 // (8.5), the prototype and the gallery draw it (ticket 60). Each failed try announces the alert again,

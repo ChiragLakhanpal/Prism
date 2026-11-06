@@ -1,6 +1,6 @@
 // The source line that ends a table, a card or a passage (DESIGN.md principle 1 and section 5):
 // "Source:" in bold, then where the rows or words came from, in caption ink-muted with
-// tabular numerals. Every source line in Strata is drawn here, so a change lands once.
+// tabular numerals. Every source line in Prism is drawn here, so a change lands once.
 import type { ReactNode } from "react";
 import { copy } from "../copy";
 import { cx } from "../lib/cx";

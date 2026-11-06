@@ -1,7 +1,7 @@
 """The word a passage's header uses for its project's sector, from the projects API's sector codes.
 
 A passage's header names the sector in a word ("ICR, P130164, India, roads, III.B, ¶54, p.23"). The
-passage's sector, which search_passages filters on, is its project's one sector in Strata's
+passage's sector, which search_passages filters on, is its project's one sector in Prism's
 taxonomy (strata.gold.project.sector, from config/sectors.toml), so this table only picks the word.
 
 Each code is the projects API's sector code (sectorcode) with its name in the 2016 taxonomy, as the

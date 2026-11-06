@@ -95,7 +95,7 @@ def test_ai_quality_says_how_the_answers_did_and_how_each_loop_is_learning(writt
         "October 1, because coverage stayed outside the target for two months. Plan rows dated within 14 days of a "
         "date I offered were a median of 12 days from their actual dates, against 30 days for other plan rows.")
     assert found["Adoption"][0] == (
-        "In the week of Monday, October 12, two people used Strata. In the 90 days to October 23, authors marked two "
+        "In the week of Monday, October 12, two people used Prism. In the 90 days to October 23, authors marked two "
         "drafts as checked and exported one. Of the nine plan rows published after I showed a range for their package, "
         "four were dated within 14 days of a date I offered.")
 
@@ -184,7 +184,7 @@ def test_before_anything_happened_each_finding_says_what_will_fill_it_and_measur
     assert ai["Benchmark"] == ("No full gate has run yet. Each run of the full gate command adds its results here.",
                                "Not yet")
     assert ai["Estimates loop"][0] == "No monthly watch of the time estimate has run yet."
-    assert ai["Adoption"][0] == "No one used Strata in the week of Monday, October 12."
+    assert ai["Adoption"][0] == "No one used Prism in the week of Monday, October 12."
     assert {row["latest"] for row in rows(empty, "loop_indicators")} == {"None yet"}
     assert {row["against"] for row in rows(empty, "loop_indicators")} == {"Not compared"}
 

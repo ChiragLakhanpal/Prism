@@ -217,7 +217,7 @@ test("the copy lint allows DESIGN.md section 8's footer sentence word for word, 
   expect(lint({ copy: copyWith(footer) }).code).toBe(0);
   expect(lint({ copy: copyWith("You still need the Bank's no-objection.") }).code).toBe(0);
   // Changed by one word, the sentence is no longer the fixed one, and "endorsed" is caught.
-  expect(lint({ copy: copyWith(footer.replace("Strata is", "This is")) }).code).toBe(1);
+  expect(lint({ copy: copyWith(footer.replace("Prism is", "This is")) }).code).toBe(1);
 });
 
 test("the copy lint allows the draft bar's fixed sentence and the Word file's origin sentence word for word", () => {
@@ -225,7 +225,7 @@ test("the copy lint allows the draft bar's fixed sentence and the Word file's or
   // last sentence of the Word file's origin paragraph.
   const draftBar =
     "A working draft of your review notes on the borrower's Procurement Plan. Exporting sends nothing and is not a World Bank review, clearance or no-objection.";
-  const word = "Strata is an independent demo built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.";
+  const word = "Prism is an independent demo built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.";
   for (const text of [draftBar, word]) {
     const passed = lint({ copy: copyWith(text) });
     expect(passed.output).toBe("");
@@ -260,7 +260,7 @@ test("the gate fails when a component renders a string that is not from the copy
     `export const A = () => <img alt="World Bank logo" src="/logo.svg" />;`,
     `export const A = () => <Card title={\`Plan \${1}\`} />;`,
     // Any prop that is not on rules.ts's NON_COPY_PROPS list is read as copy, so the props of
-    // Strata's own components are covered without listing them.
+    // Prism's own components are covered without listing them.
     `export const A = () => <EmptyState title={copy.x} body="Plans appear once they load." />;`,
     `export const A = () => <CoverageLine part={3} whole={4} noun="matching packages" href="#data" />;`,
     // Strings inside an object or an array given to a prop are judged by their own key.
@@ -292,7 +292,7 @@ test("the gate fails when a component renders a string that is not from the copy
     `export const A = () => <Card {...{ title: "Nothing here yet." }} />;`,
     `const props = { title: "Nothing here yet." }; export const A = () => <Card {...props} />;`,
     // Words a component writes into the page itself, outside JSX.
-    `export function A() { document.title = "Packages, Strata"; return null; }`,
+    `export function A() { document.title = "Packages, Prism"; return null; }`,
     `export function A({ el }: { el: HTMLElement }) { el.textContent = "Nothing here yet."; return null; }`,
     // Ticket 02's review round 10 and verification round 12, N3: a string in a template's slot, one behind a non-null
     // assertion, a DOM text property written by its name in brackets, a field's value, and words joined with concat.

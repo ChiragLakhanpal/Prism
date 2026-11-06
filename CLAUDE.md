@@ -1,4 +1,4 @@
-# Strata: rules for working in this repo
+# Prism: rules for working in this repo
 
 Procurement intelligence on World Bank open data: every claim cited to a record or a numbered paragraph, every number from a tool. Built for a World Bank interview panel that will also ask for live code changes.
 
@@ -11,9 +11,9 @@ Procurement intelligence on World Bank open data: every claim cited to a record 
 
 ## Rules
 
-1. **Numbers come from tools.** Strata states only numbers a tool returned, at the same rounding; a derived figure is a tool column. The verifier runs on every answer and is never bypassed.
+1. **Numbers come from tools.** Prism states only numbers a tool returned, at the same rounding; a derived figure is a tool column. The verifier runs on every answer and is never bypassed.
 2. **Every claim cites its source**: a query result, or a numbered paragraph with its page. A sentence that can't be checked is removed and shown.
-3. **Glossary words, World Bank usage.** Use `GLOSSARY.md` terms and STEP's field names; `DESIGN.md` section 7 lists the words Strata never writes.
+3. **Glossary words, World Bank usage.** Use `GLOSSARY.md` terms and STEP's field names; `DESIGN.md` section 7 lists the words Prism never writes.
 4. **One source of truth per definition.** Each measure and each tool contract is defined once; changing one means updating its benchmark question in the same change.
 5. **Nothing destructive.** `CREATE OR REPLACE` changes a table; rows leave only through a `DELETE` with a `WHERE`. `.claude/hooks/guard.py` enforces rules 5, 6, 7 and 10 before every tool call; when it blocks you, follow the reason it gives.
 6. **The gate runs before every commit** (`.githooks/pre-commit`): the ground-truth SQL and the offline test suite, in under 150 seconds (two minutes until October 26, 2026; back to two minutes after the polish pass trims the tests).

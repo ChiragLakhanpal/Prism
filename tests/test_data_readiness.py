@@ -100,7 +100,7 @@ def test_every_number_in_the_sources_table_is_the_latest_measure_behind_its_cell
 
 
 def test_the_awards_row_shows_kenya_s_award_rows_and_its_step_reference_link_rate(engine):
-    """values.toml counts Kenya's rows from the recorded award files, apart from Strata's code."""
+    """values.toml counts Kenya's rows from the recorded award files, apart from Prism's code."""
     result = readiness(engine)
     [awards] = [row for row in result["sources"] if row["id"] == "awards"]
 

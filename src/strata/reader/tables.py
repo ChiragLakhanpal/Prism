@@ -6,7 +6,7 @@ starts at the foot of a page carries on at the top of the next with no name or r
 read() joins the pages of one document's tables into whole tables, each with its rows, and each row
 with its cells labelled by the table's column heads, so a citation can point at one row.
 
-Each table also gets one summary passage, which says what the table is and names its rows. Strata
+Each table also gets one summary passage, which says what the table is and names its rows. Prism
 writes the summary, not the document, so it never backs a number (spec, "Reading documents"): the
 verifier (src/strata/agent/verifier.py) never lets a number rest on it alone.
 """
@@ -106,7 +106,7 @@ def _listed(items: list[str]) -> str:
 
 
 def summary(table: WholeTable, document_type: str) -> str:
-    """The table's one summary passage, in Strata's words: what the table is, where, its columns and
+    """The table's one summary passage, in Prism's words: what the table is, where, its columns and
     the first cell of each row (with a risk's rating). It is never the document's own words; its kind,
     table_summary, says so, and the evidence drawer's caption says who wrote it, so the text starts with
     the table (design review r2 P2)."""

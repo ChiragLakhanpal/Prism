@@ -55,5 +55,5 @@ def test_a_registered_model_s_description_says_what_the_caller_says_it_is(monkey
                                what="rebidding model (experimental)")
 
     assert version == 3
-    assert set(described) == {"Strata's rebidding model (experimental). The model card is model_card.md in MLflow run "
+    assert set(described) == {"Prism's rebidding model (experimental). The model card is model_card.md in MLflow run "
                               "run-1. Its track record."}

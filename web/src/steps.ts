@@ -7,7 +7,7 @@
 // - label is the blueprint's "Step labels taken from STEP", word for word.
 // - step_name is STEP's own column name, copied from the fixtures' exports, and equal to one of
 //   src/strata/reader/step.py's STEPS. tests/test_step_registry.py ties the two, so each name is defined once.
-// - phrase and stage are Strata's plain English. The copy lint checks them, and every label, like the copy file.
+// - phrase and stage are Prism's plain English. The copy lint checks them, and every label, like the copy file.
 // - A family's first step has no stage: nothing leads up to it.
 //
 // The family rule, in two parts:

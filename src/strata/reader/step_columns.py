@@ -2,7 +2,7 @@
 and as the STEP rows CSV is written.
 
 STEP's names live in src/strata/reader/step.py (COLUMNS for the descriptive columns, STEPS for the steps, with
-STEP_ALIASES for an older name), and config/uploads.toml says what Strata does with each: whether the reading needs
+STEP_ALIASES for an older name), and config/uploads.toml says what Prism does with each: whether the reading needs
 it, and whether the CSV fills it with a planned date, copies the officer's value or leaves it empty for people and
 STEP. This module joins the two, so no name is written a third time (CLAUDE.md rule 4), and checks that the
 registry lists every one of STEP's columns, in order.
@@ -72,7 +72,7 @@ class Registry:
         return columns
 
     def left_to_people(self) -> list[str]:
-        """The CSV's columns Strata leaves empty, by name, in order."""
+        """The CSV's columns Prism leaves empty, by name, in order."""
         return [column.name for column in self.csv_columns() if column.fill == "left"]
 
     def header_names(self) -> dict[str, str]:

@@ -81,7 +81,7 @@ export function ClaimLine({ text, warning, disagreementId }: { text: string; war
   );
 }
 
-// "See Strata as of this date" (ticket 40; the 40 brief, 3.6): the Timeline as of the day this report was disclosed,
+// "See Prism as of this date" (ticket 40; the 40 brief, 3.6): the Timeline as of the day this report was disclosed,
 // so the mark you came from is still on it. The drawer closes, since the link drops ?evidence=, and the view and the
 // language stay. Left out when the page already shows that date.
 function AsOfAction({ row }: { row: Record<string, any> }) {

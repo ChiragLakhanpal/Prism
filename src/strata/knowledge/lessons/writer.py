@@ -52,7 +52,7 @@ NOTE_COLUMNS = ("item_id", "written_at", "status", "content", "library_versions"
 ROOT = Path(__file__).resolve().parents[4]
 RECORDED_CASES = ROOT / "tests" / "fixtures" / "agent" / "lesson_review.toml"
 # Whom check 6 asks get_disagreements as: the workflow itself, which reads public reports for every reviewer.
-WRITER = Viewer(email="lesson-review-writer@strata", name="Strata's lesson review writer",
+WRITER = Viewer(email="lesson-review-writer@strata", name="Prism's lesson review writer",
                 user_id="lesson-review-writer@strata")
 
 

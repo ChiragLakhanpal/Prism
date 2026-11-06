@@ -57,14 +57,14 @@ def test_the_number_check_passes_on_the_built_proposal_and_its_links_all_land(bu
 
 def test_the_number_check_fails_when_an_unlinked_number_is_planted_in_a_copy(built):
     planted = built.markdown.replace(paragraph(built.markdown, 3), paragraph(built.markdown, 3)
-                                     + " Strata read 4,812 pages in a day.", 1)
+                                     + " Prism read 4,812 pages in a day.", 1)
     found = numbers.unsourced(planted)
     assert [(problem.where, problem.number) for problem in found] == [("Paragraph 3", "4,812")]
     assert proposal_problems(planted)[0].startswith("The number check failed. Paragraph 3 has a number with no source")
 
 
 def test_a_number_typed_into_the_source_stops_the_build_and_the_gate(snap):
-    planted = SOURCE.replace("{#summary-how} Strata keeps its data", "{#summary-how} In 14 months, Strata keeps its data")
+    planted = SOURCE.replace("{#summary-how} Prism keeps its data", "{#summary-how} In 14 months, Prism keeps its data")
     with pytest.raises(build.BuildError, match=r"Paragraph 3 has a number with no source: \"In 14 months"):
         build.build(planted, inputs(snap))
     assert any('has a number with no source: "In 14 months' in problem for problem in source_problems(planted))
@@ -114,7 +114,7 @@ def test_a_figure_with_no_drawing_stops_the_build(snap):
 def test_the_sections_follow_the_assessments_four_modules_in_order(built):
     headings = re.findall(r"^## (.+)$", built.markdown, re.M)
     assert headings == [
-        "Summary", "Where Strata earns each point", "Module 1: Ingestion and knowledge representation",
+        "Summary", "Where Prism earns each point", "Module 1: Ingestion and knowledge representation",
         "Module 2: Estimates and agentic retrieval", "Module 3: Guardrails, faithfulness and attribution",
         "Module 4: Learning loops and implementation", "Designed, not built", "Annex 1: Results register",
         "Annex 2: Settings and counts", "Annex 3: Data sources and licenses", "Annex 4: Words and abbreviations"]
@@ -129,7 +129,7 @@ def test_paragraphs_are_numbered_from_the_summary_without_gaps_and_the_annexes_h
 
 
 def test_the_rubric_map_lists_each_dimension_with_its_points_and_the_sections_that_earn_them(built):
-    rubric_map = built.markdown.split("## Where Strata earns each point")[1].split("## Module 1")[0]
+    rubric_map = built.markdown.split("## Where Prism earns each point")[1].split("## Module 1")[0]
     # docs/assessment.md, section 5: the four dimensions and their points, linked to the rubric.
     for name, points in (("System and knowledge architecture", 30), ("Analytical and AI methodology", 30),
                          ("Domain alignment and data use", 25), ("Operationalization and scalability", 15)):
@@ -208,7 +208,7 @@ def rehearsed(minutes: dict[str, int]) -> dict[str, register.Rehearsal]:
 
 
 def drill_section(markdown: str) -> str:
-    return markdown.split("### Changing Strata in round 2")[1].split("## Designed, not built")[0]
+    return markdown.split("### Changing Prism in round 2")[1].split("## Designed, not built")[0]
 
 
 CHANGES = [drill.change for drill in config.load_change_drills()]
@@ -238,7 +238,7 @@ def test_a_rehearsed_drill_shows_its_minutes_linked_to_its_row_in_annex_1_and_th
     assert "| 6 | Oct 26, 2026 | Rehearsal; branch `drill/05-example`, commit `0000000`" in row
     # The 49 review's B1: the row splits the time into the edits and the gate's run.
     assert "the edits were done after 40 seconds, then the gate passed in 130.5 seconds" in row
-    assert '[The section "Changing Strata in round 2"](#sec-m4-drill)' in row  # as every Cited in cell
+    assert '[The section "Changing Prism in round 2"](#sec-m4-drill)' in row  # as every Cited in cell
     # The P3 phase gate's finding: the ten-minute claim links to its target in Annex 2, and the times are cited.
     assert re.search(r"so it can land in under \[10\]\(#s-drill-target [^)]*\) minutes with the gate green\.", section)
     assert "The table gives the minutes each one took when it was rehearsed" in section
@@ -304,7 +304,7 @@ def test_the_spend_sentence_writes_money_as_the_dashboards_sentence_does(built):
     # tests/test_dashboard_findings.py: the dashboard says "had cost US$7.80 of the US$197.00 budget for the free
     # credit" from the same made-up cost pull. The 46 brief, section 11.3: the proposal and the dashboard agree.
     spend = shown_words(next(line for line in built.markdown.splitlines() if "the latest day with cost data" in line))
-    assert "Strata's Azure resources had cost US$7.80 of the US$197.00 budget for the free credit" in spend
+    assert "Prism's Azure resources had cost US$7.80 of the US$197.00 budget for the free credit" in spend
 
 
 def test_spend_past_the_budget_says_how_far_past_as_the_dashboards_over_sentence_does(snap):
@@ -317,10 +317,10 @@ def test_spend_past_the_budget_says_how_far_past_as_the_dashboards_over_sentence
 
 
 def test_with_no_cost_data_yet_the_spend_paragraph_and_its_summary_row_say_so_instead_of_stopping_the_build(snap):
-    # The 46 brief, section 15, "No cost data yet": brief 45's words, with the dashboard's "I" made "Strata".
+    # The 46 brief, section 15, "No cost data yet": brief 45's words, with the dashboard's "I" made "Prism".
     none = {**snap, "results": {**snap["results"], "azure-spend": {"measured": False}}}
     markdown = build.build(SOURCE, inputs(none)).markdown
-    said = ("Strata has no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them.")
+    said = ("Prism has no Azure cost data yet. The daily cost pull adds each day's charges once Azure reports them.")
     spend = next(line for line in markdown.splitlines() if line.startswith('<a id="p') and "Azure cost data" in line)
     assert said in spend
     summary = markdown.split("### What the build measured")[1].split("**Source:**")[0]
@@ -328,7 +328,7 @@ def test_with_no_cost_data_yet_the_spend_paragraph_and_its_summary_row_say_so_in
     assert "the latest day with cost data" not in markdown
     assert proposal_problems(markdown) == []
     # With cost data, the no-cost words are left out.
-    assert "Strata has no Azure cost data yet" not in build.build(SOURCE, inputs(snap)).markdown
+    assert "Prism has no Azure cost data yet" not in build.build(SOURCE, inputs(snap)).markdown
 
 
 def test_the_gate_names_a_measured_condition_whose_result_is_not_in_the_register():
@@ -341,21 +341,21 @@ def test_the_gate_names_a_measured_condition_whose_result_is_not_in_the_register
 
 def test_with_nothing_designed_but_unbuilt_the_list_says_so_and_the_summary_leaves_it_out(built):
     section = built.markdown.split("## Designed, not built")[1].split("## Annex 1")[0]
-    assert 'Everything this proposal describes is built. Strata shows no "Designed, not built" labels.' in section
-    assert "These parts of Strata are designed" not in section
+    assert 'Everything this proposal describes is built. Prism shows no "Designed, not built" labels.' in section
+    assert "These parts of Prism are designed" not in section
     assert 'Anything marked "Designed, not built"' not in built.markdown.split("## Summary")[0]
-    assert "designed but not built" not in built.markdown.split("## Where Strata earns")[0]
+    assert "designed but not built" not in built.markdown.split("## Where Prism earns")[0]
 
 
 def test_each_item_designed_but_not_built_gets_its_row_and_the_summary_names_the_list(snap):
     item = config.DesignedNotBuilt("hazard_model", "The early-warning model", "/projects/P156634",
-                                   "m2-signals", "Strata shows fixed signals.")
+                                   "m2-signals", "Prism shows fixed signals.")
     markdown = build.build(SOURCE, inputs(snap, designed=(item,))).markdown
     section = markdown.split("## Designed, not built")[1].split("## Annex 1")[0]
-    assert ('| <a id="dnb-hazard_model"></a>The early-warning model | Strata shows fixed signals. | '
+    assert ('| <a id="dnb-hazard_model"></a>The early-warning model | Prism shows fixed signals. | '
             "[/projects/P156634](https://strata-1.aws.databricksapps.com/projects/P156634) |") in section
-    assert "Some parts of Strata are designed but not built" in markdown.split("## Where Strata earns")[0]
-    assert "These parts of Strata are designed, and this proposal describes them, but they are not in the app yet." \
+    assert "Some parts of Prism are designed but not built" in markdown.split("## Where Prism earns")[0]
+    assert "These parts of Prism are designed, and this proposal describes them, but they are not in the app yet." \
         in section
     assert 'Anything marked "Designed, not built"' in markdown.split("## Summary")[0]
 
@@ -379,7 +379,7 @@ def test_annex_3_credits_every_dataset_and_the_fixed_lines_word_for_word_from_de
     for row in registry_page()["datasets"]:
         assert template.format(dataset=row["dataset_name"], source=row["data_source"], license=row["license"]) in annex
     for fixed in ("Terms of use: https://www.worldbank.org/ext/en/legal/terms-conditions/datasets",
-                  "Strata joined these records, read the documents, and summarized them. These changes are Strata's own.",
+                  "Prism joined these records, read the documents, and summarized them. These changes are Prism's own.",
                   "The World Bank does not guarantee the accuracy of the data.",
                   "The World Bank Group authorizes the use of this material subject to the terms and conditions on its "
                   "website, Legal."):

@@ -1,7 +1,7 @@
 /**
  * Filter: a column of six filter plates on three posts over a base, open at
  * the front, one plate for each of the verifier's checks, top to bottom
- * (Strata's deck, the opener of How it answers; .notes/deck2/brief.md, section
+ * (Prism's deck, the opener of How it answers; .notes/deck2/brief.md, section
  * 6). Each plate is perforated and has a slot the sentences drop through; the
  * fourth, the check for support, runs out to one side as a ledge. Five sentence
  * slabs of different lengths lie in a pile. The pointer's height picks the

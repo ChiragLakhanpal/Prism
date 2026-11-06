@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="architecture-title architecture-desc" data-motion-root="" data-motion-mode="none" data-step-count="6" id="architecture-root">
-        <title id="architecture-title">How Strata fits together</title>
+        <title id="architecture-title">How Prism fits together</title>
         <desc id="architecture-desc">Public World Bank sources feed a nightly job on Databricks, which writes the bronze, silver, gold and ops tables. The AI Search index, the Genie space, the models in MLflow and the AI/BI dashboard sit on gold. The Databricks App runs the tools as each viewer, checks every sentence with the verifier and keeps drafts, with Lakebase for app state. Microsoft Foundry's agent trades tool calls and results with the app, and people ask in the app.</desc>
         <defs>
       <style>#architecture-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }

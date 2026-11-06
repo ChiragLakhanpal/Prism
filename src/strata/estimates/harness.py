@@ -1,4 +1,4 @@
-"""The replay harness (spec, seam 5): freeze Strata at a cutoff date, run a scorer, and score the result
+"""The replay harness (spec, seam 5): freeze Prism at a cutoff date, run a scorer, and score the result
 against what became public later.
 
 Given a cutoff and a scorer, replay() hands the scorer two readers: one frozen at the cutoff, for
@@ -34,7 +34,7 @@ TABLE = "strata.ops.evaluation_result"
 COLUMNS = ("run_id", "scorer", "model", "segment_kind", "segment", "measure", "value", "value_text", "cutoff",
            "outcomes_through", "mlflow_run_id", "ran_at", "public_from")
 # Who the harness's tool calls run as: the harness itself, never a viewer.
-HARNESS = Viewer(name="Strata's replay harness")
+HARNESS = Viewer(name="Prism's replay harness")
 
 LATEST_RUN = """
 SELECT run_id
@@ -67,7 +67,7 @@ class LeakageError(RuntimeError):
 
 @dataclass(frozen=True)
 class Window:
-    """One replay: the cutoff Strata is frozen at, and the date the outcomes are read as of."""
+    """One replay: the cutoff Prism is frozen at, and the date the outcomes are read as of."""
 
     cutoff: dt.date
     outcomes_through: dt.date
@@ -123,7 +123,7 @@ class Reader:
         return rows
 
     def packages(self) -> list[dict]:
-        """Every package Strata could measure on this date, by the past range's rules
+        """Every package Prism could measure on this date, by the past range's rules
         (strata.tools.find_comparables.every_package)."""
         from strata.tools.find_comparables import Limits, every_package
 

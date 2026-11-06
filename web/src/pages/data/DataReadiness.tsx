@@ -469,7 +469,7 @@ function MadeByHeadline({ result }: { result: Readiness }) {
   );
 }
 
-// Under a headline Strata doesn't give, the caption says when the measures were taken, and no "this".
+// Under a headline Prism doesn't give, the caption says when the measures were taken, and no "this".
 function Provenance({ result }: { result: Readiness }) {
   if (!result.measured || result.headline !== null) return null;
   const { first, last } = result.measured;

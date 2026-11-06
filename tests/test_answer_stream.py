@@ -516,7 +516,7 @@ def claim(sentence, **fields):
 
 
 def test_the_middle_half_and_the_middle_one_name_parts_of_a_past_range_not_amounts():
-    """Strata's own words for a past range (web/src/copy.ts, pastRange): "the middle half" is the band
+    """Prism's own words for a past range (web/src/copy.ts, pastRange): "the middle half" is the band
     between the quarter and three-quarter points, and "the middle one" is the package at the middle, so
     neither is an amount a row must hold. "Half of the packages" and "one bid" still are."""
     parsed = events(ask_with(create_app(runner=answer_runner(lambda turn: Answers(

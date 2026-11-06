@@ -106,7 +106,7 @@ def test_a_task_that_recorded_no_quality_checks_fails(capsys, monkeypatch):
 def test_a_run_longer_than_the_window_fails(capsys, monkeypatch):
     from strata.lakehouse.schedule import Window
 
-    monkeypatch.setattr(check.nightly, "window", lambda bundle=None: Window("Strata's nightly job", None, "UTC", -1))
+    monkeypatch.setattr(check.nightly, "window", lambda bundle=None: Window("Prism's nightly job", None, "UTC", -1))
 
     code, out = checked(["job-run"], FakeWorkspace(), capsys)
 
@@ -256,7 +256,7 @@ def test_schedules_that_never_meet_pass_and_the_notes_record_both(tmp_path, caps
     block = notes.read_text()
     assert "- fairshare's job: fairshare nightly, daily at 02:00 UTC. Its longest of the last two runs took " \
            "35 minutes." in block
-    assert "- Strata's job: strata nightly, daily at 05:00 America/New_York. Its longest of the last three " \
+    assert "- Prism's job: strata nightly, daily at 05:00 America/New_York. Its longest of the last three " \
            "runs took six minutes, and it stops after 150 minutes." in block
     assert "- Overlap: none." in block
     assert block.count("<!-- bundle:schedules -->") == 1
@@ -275,7 +275,7 @@ def test_a_job_with_one_finished_run_is_described_as_one_run(tmp_path, capsys):
     assert code == 0
     block = notes.read_text()
     assert "- fairshare's job: fairshare nightly, daily at 02:00 UTC. Its one finished run took 20 minutes." in block
-    assert "- Strata's job: strata nightly, daily at 05:00 America/New_York. Its one finished run took two " \
+    assert "- Prism's job: strata nightly, daily at 05:00 America/New_York. Its one finished run took two " \
            "minutes, and it stops after 150 minutes." in block
     assert "the last one run" not in block
 

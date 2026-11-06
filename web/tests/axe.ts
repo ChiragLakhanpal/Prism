@@ -7,7 +7,7 @@
 // from another origin inside a frame can be checked too. That blank page roughly doubled the cost
 // of every scan, and the axe scans set most of the Playwright tests' time. Legacy mode runs the same
 // rules inside the page it checks and finds the same violations (tests/axe.spec.ts compares the
-// two), but it cannot check a frame from another origin. Strata's pages hold no frames, so a scan of
+// two), but it cannot check a frame from another origin. Prism's pages hold no frames, so a scan of
 // a page that holds one fails, and whoever adds a frame must check it another way.
 import AxeBuilder from "@axe-core/playwright";
 import type { Page } from "@playwright/test";

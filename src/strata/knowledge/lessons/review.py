@@ -1,7 +1,7 @@
 """Lesson review: who may act on each item of the queue, the business-day clock, and the acts that move a
 lesson through its states (ticket 29; docs/PLAN.md section 11, "Lesson governance").
 
-Strata proposes (strata.knowledge.lessons.propose). An accredited procurement specialist recommends, and a
+Prism proposes (strata.knowledge.lessons.propose). An accredited procurement specialist recommends, and a
 different lead procurement specialist decides, each with a reason. Nobody recommends or decides on a lesson
 from a project they work on. A lead may recommend, and then another lead decides. Who is who comes from the
 roles file (config/roles.toml), for the viewer the Databricks App forwarded; the server decides every act

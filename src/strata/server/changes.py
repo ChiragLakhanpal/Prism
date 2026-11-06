@@ -16,7 +16,7 @@ screens say it lists the same activities with no planned date moved and no estim
 and estimates are the same (ticket 21's verify, finding 4).
 
 The version before is silver.plan_versions' previous_document_id: the agency's version just before it
-among the versions Strata holds. When the layout parser did not read that version's tables, there is
+among the versions Prism holds. When the layout parser did not read that version's tables, there is
 nothing to compare, and the answer says so (previous_not_read), as it does for the agency's earliest
 version (earliest). The route counts each kind and works out each moved date and changed amount here,
 so the screen never counts or subtracts (CLAUDE.md rule 1). Each read uses only what was public on or

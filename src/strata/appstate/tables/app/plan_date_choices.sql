@@ -1,4 +1,4 @@
--- The plan date a viewer chose for the dates Strata drafts for a package (ticket 26; the 26 design brief,
+-- The plan date a viewer chose for the dates Prism drafts for a package (ticket 26; the 26 design brief,
 -- section 6.3, and the 27 brief, section 6.3): the time estimate's middle or its 8-in-10 point. The package
 -- workspace's "Dates I draft for this package", under section 1's chart, and section 2's "Date each step with"
 -- (ticket 27) are one choice, so both read and write this row. One row per viewer and package, made the first

@@ -5,7 +5,7 @@ as passages too, so criteria can be compared").
 The registry (config/tools.toml) defines the tool's parameters and result shape; this module is its adapter.
 
 - The comparables are the STEP references the call names, as find_comparables returned them. A package not
-  signed by the as-of date may be a tender that is still open, and Strata never comments on one (the refusal
+  signed by the as-of date may be a tender that is still open, and Prism never comments on one (the refusal
   live_tenders), so its notice is never read: it is left out and counted (still_open).
 - A comparable's criteria are public when the passages of its specific procurement notice (ticket 18's notice
   passages, strata.gold.passage of kind notice_text) set a requirement for at least one criterion item of the

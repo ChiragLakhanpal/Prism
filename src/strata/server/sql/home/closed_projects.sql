@@ -1,4 +1,4 @@
--- The closed projects whose contracts Strata holds, most recently closed first, by a date, with how many of their
+-- The closed projects whose contracts Prism holds, most recently closed first, by a date, with how many of their
 -- contracts it holds and how many it traced from notice to signature (ticket 41's public Home): a contract with a
 -- signing date whose STEP reference a notice of the same project carries, the link the contract trail follows
 -- (sql/trail/notices.sql). A closed project with no contract, such as a Development Policy Operation, has no trail

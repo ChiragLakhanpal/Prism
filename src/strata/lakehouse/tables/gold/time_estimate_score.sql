@@ -1,4 +1,4 @@
--- The time estimate of every package Strata knows, for every what-if combination, scored in batch by the
+-- The time estimate of every package Prism knows, for every what-if combination, scored in batch by the
 -- nightly job's score task with the champion model (ticket 26; src/strata/estimates/scoring.py), so
 -- estimate_time answers from stored rows and the chart answers within 100 ms. Each run appends its rows
 -- under its own run_id; estimate_time reads the latest run public on its as-of date (ADR 0002), because a

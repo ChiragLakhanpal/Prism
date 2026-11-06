@@ -13,16 +13,16 @@ ai_search_endpoint = "strata-search"
 # The resource group and the Azure budget's name are in config/budget.toml, the budget's one home (ticket 45);
 # dayone.py reads them in as names.resource_group and names.budget.
 foundry_resource = "wb-strata"
-foundry_project = "Strata"
+foundry_project = "Strata"  # the Foundry project's name (ADR 0006)
 appinsights_resource = "wb-strata-insights"
-# The probe app takes Strata's own app slot. The app shell ticket deploys the real app over it.
+# The probe app takes Prism's own app slot. The app shell ticket deploys the real app over it.
 app = "strata"
 # The Lakebase database instance that holds app state (ADR 0005), which ops/app/deploy_app.py makes or starts
 # and gives the app. The Lakebase probe uses an instance of its own, strata-state-probe, and stops it.
 app_state_instance = "strata-state"
 workspace_folder = "strata-dayone"  # under /Workspace/Users/<you>/
 # The probes keep their test files in a schema of their own, so nothing lands in workspace.default,
-# which fairshare may use. Strata's own catalog comes with ticket 04.
+# which fairshare may use. Prism's own catalog comes with ticket 04.
 schema = "workspace.strata_dayone"
 volume = "workspace.strata_dayone.files"
 search_table = "workspace.strata_dayone.passages"
@@ -91,7 +91,7 @@ max_downloads = 6
 min_pages = 120
 search_api = "https://search.worldbank.org/api/v3/wds"
 
-# Test 5: the question the probe asks the Genie space. Strata's own space (config/genie.toml, ticket 33) holds it
+# Test 5: the question the probe asks the Genie space. Prism's own space (config/genie.toml, ticket 33) holds it
 # as trusted SQL, so the probe keeps working once ops/genie/deploy_space.py has added that space's ID to .env. The
 # first run asked the wizard's throwaway space on samples.nyctaxi.trips "How many trips are in the table?"
 [genie]
@@ -125,7 +125,7 @@ gap_fill = "Content Understanding `prebuilt-layout` reads route B pages."
 title = "An AI Search endpoint and a hybrid index"
 question = "An AI Search endpoint and a hybrid index can be created."
 command = "uv run --script ops/dayone/probe_ai_search.py --env-file .env"
-default_path = "Strata's own AI Search endpoint holds a hybrid index of passages."
+default_path = "Prism's own AI Search endpoint holds a hybrid index of passages."
 gap_fill = ""
 
 [tests.5]
@@ -153,7 +153,7 @@ gap_fill = ""
 title = "The four models within the subscription's quota"
 question = "The four models deploy within the subscription's quota."
 command = "uv run --script ops/dayone/probe_caps.py --env-file .env"
-default_path = "The four deployments named in `config/models.toml` serve Strata, each with the cap set in `ops/dayone/dayone.toml`."
+default_path = "The four deployments named in `config/models.toml` serve Prism, each with the cap set in `ops/dayone/dayone.toml`."
 gap_fill = ""
 
 [tests.9]

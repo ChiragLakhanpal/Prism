@@ -1,4 +1,4 @@
-"""A made-up month of Strata's operations for the dashboard's tests (ticket 45).
+"""A made-up month of Prism's operations for the dashboard's tests (ticket 45).
 
 The fixture database holds what the nightly run and the plan reader write, and nothing of what people, the full
 gate, the replay harness or the cost pull do. These rows stand in for those, written into an empty catalog built

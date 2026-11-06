@@ -26,7 +26,7 @@ alert_percents = [50, 80, 100]
 forecast_percent = 100
 
 [pull]
-# The resource group whose charges the daily cost pull asks Azure Cost Management for: every resource Strata
+# The resource group whose charges the daily cost pull asks Azure Cost Management for: every resource Prism
 # runs in Azure is in it.
 resource_group = "WorldBank-demo"
 # How many days back each pull asks for. Azure revises the last few days' charges, so each pull asks again for

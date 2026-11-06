@@ -1,17 +1,17 @@
-// Every word of the deck at /present, its speaker notes and the figures it shares with How Strata works (ticket 47;
+// Every word of the deck at /present, its speaker notes and the figures it shares with How Prism works (ticket 47;
 // the second draft's brief, .notes/deck2/brief.md). The copy lint reads this file as it reads web/src/copy.ts
 // (COPY_FILES in web/lint/run.ts).
 //
-// Voice: slides name Strata in the third person, because the presenter speaks as "I"; speaker notes are the
-// presenter's "I"; How Strata works keeps Strata's own "I" (DESIGN.md section 7, rule 5). Figure text versions name
+// Voice: slides name Prism in the third person, because the presenter speaks as "I"; speaker notes are the
+// presenter's "I"; How Prism works keeps Prism's own "I" (DESIGN.md section 7, rule 5). Figure text versions name
 // no speaker, so the deck and the page share them.
 //
 // {name} slots are filled through Fill. A slot that holds a number is filled by the deck's number components, which
 // bind it to its key in the measures snapshot, a setting or the rubric, so the number check can trace it. Nothing
-// here is a number Strata measured: the words "one" to "nine" that count something come from a setting.
+// here is a number Prism measured: the words "one" to "nine" that count something come from a setting.
 
-// What a figure says about itself wherever it draws, on a slide or on How Strata works. It sits apart from deckCopy,
-// so How Strata works, which is in the app's first download, carries no slide's words.
+// What a figure says about itself wherever it draws, on a slide or on How Prism works. It sits apart from deckCopy,
+// so How Prism works, which is in the app's first download, carries no slide's words.
 export const figureStates = {
   failed: "This figure didn't load, so here it is as text.",
 };
@@ -20,9 +20,9 @@ export const figureStates = {
 export type Speaker = { cue?: string; adds?: (string | null)[]; asked?: { q: string; a: string }[]; diagrams?: string[] };
 
 export const deckCopy = {
-  title: (n: string, total: string) => `Slide ${n} of ${total} | Strata deck`,
-  readingTitle: "Strata deck",
-  notesTitle: (n: string, total: string) => `Speaker notes, slide ${n} of ${total} | Strata deck`,
+  title: (n: string, total: string) => `Slide ${n} of ${total} | Prism deck`,
+  readingTitle: "Prism deck",
+  notesTitle: (n: string, total: string) => `Speaker notes, slide ${n} of ${total} | Prism deck`,
   // The deck's chrome, which the number check leaves out (data-chrome): the counter, the slide and press lines, and
   // the agenda's and openers' topic numbers.
   counter: (n: string, total: string) => `${n} of ${total}`,
@@ -31,7 +31,7 @@ export const deckCopy = {
   noPresses: "No presses on this slide",
   announce: (n: string, total: string, title: string) => `Slide ${n} of ${total}: ${title}`,
   roleSlide: "slide",
-  wordmark: "Strata",
+  wordmark: "Prism",
   // The artwork reads WORLD BANK GROUP, so its text alternative names the Group (DESIGN.md section 9).
   logo: "World Bank Group logo",
   topicsLabel: "Topics of the talk",
@@ -108,7 +108,7 @@ export const deckCopy = {
     setting: (name: string, where: string) => `${name}. Set in ${where}.`,
     rubric: "Points the assessment brief gives this dimension, in its section 5.",
     definition: (kind: string, table: string) => `${kind}, read from ${table} in the measures snapshot the proposal cites.`,
-    settingDefinition: (kind: string) => `${kind}: a value Strata is set to, read from the file that sets it.`,
+    settingDefinition: (kind: string) => `${kind}: a value Prism is set to, read from the file that sets it.`,
     rows: {
       counted: "Counted",
       outOf: "Out of",
@@ -128,8 +128,8 @@ export const deckCopy = {
       line: "A procurement plan needs records, operational documents and evaluations, and today they sit apart.",
     },
     work: {
-      name: "Strata at work",
-      line: "Strata checks a borrower's plan, sizes a package it marks Watch and answers a question about it, live.",
+      name: "Prism at work",
+      line: "Prism checks a borrower's plan, sizes a package it marks Watch and answers a question about it, live.",
     },
     built: {
       name: "How it is built",
@@ -141,7 +141,7 @@ export const deckCopy = {
     },
     grows: {
       name: "How it grows",
-      line: "Strata learns while people decide each change, and a pilot would grow in phases.",
+      line: "Prism learns while people decide each change, and a pilot would grow in phases.",
     },
   },
 
@@ -151,12 +151,12 @@ export const deckCopy = {
       line: "Built for the World Bank Group's procurement intelligence assessment.",
       figure: "A core sample with its layers one under the other, for the three strata of evidence.",
       notes:
-        "Thank you for having me. I built Strata to answer a question procurement specialists ask all the time: " +
+        "Thank you for having me. I built Prism to answer a question procurement specialists ask all the time: " +
         "what happened to packages like this one before? I'll show it working on a live project first, then open " +
         "the hood and walk you through the data, the agent, the checks, and the tradeoffs I made along the way.",
     },
     agenda: {
-      title: "The problem, a live demo, then how Strata is built, answers and grows",
+      title: "The problem, a live demo, then how Prism is built, answers and grows",
       notes:
         "Here's the plan. A few minutes on the problem, then a live demo, which is the spine of the talk. " +
         "Everything after the demo explains what you just saw.",
@@ -186,7 +186,7 @@ export const deckCopy = {
         "made.",
     },
     who: {
-      title: "The borrower owns the plan, and Strata helps both sides check it",
+      title: "The borrower owns the plan, and Prism helps both sides check it",
       tiles: [
         {
           head: "World Bank staff",
@@ -201,19 +201,19 @@ export const deckCopy = {
           body: "They follow a contract from its notice to its completion report, in neutral words. Active projects show them no signals or estimates.",
         },
       ],
-      closing: "Strata drafts, and people decide. Exporting sends nothing, and nothing Strata writes is a World Bank decision.",
+      closing: "Prism drafts, and people decide. Exporting sends nothing, and nothing Prism writes is a World Bank decision.",
       notes:
-        "The borrower owns the plan, and Strata never changes that. It helps both sides look at the same " +
+        "The borrower owns the plan, and Prism never changes that. It helps both sides look at the same " +
         "evidence.",
     },
     idea: {
-      title: "Strata joins the three strata once, so one question gets one cited answer",
+      title: "Prism joins the three strata once, so one question gets one cited answer",
       notes:
         "The idea is easy to say and hard to build. Join the three strata once, so one question gets one answer, " +
         "and every sentence in that answer can be checked.",
     },
 
-    // ── Strata at work ──
+    // ── Prism at work ──
     workOpener: {
       notes:
         "Enough slides. Let me show you one real package, from the plan to a checked answer.",
@@ -223,12 +223,12 @@ export const deckCopy = {
       box: "{agency}'s Procurement Plan of {date}, {project}",
       action: "Open the plan check",
       lines: [
-        "Strata checks each activity against past ranges, review thresholds and the plan's own dates.",
+        "Prism checks each activity against past ranges, review thresholds and the plan's own dates.",
         "A signal is a reason to look, never a finding, and it names the record behind it.",
       ],
       source: "the Procurement Plan of {date} for {project}, as published in Systematic Tracking of Exchanges in Procurement (STEP).",
       notes:
-        "Here's an agency's Procurement Plan, read row by row from its latest published version. Strata checks " +
+        "Here's an agency's Procurement Plan, read row by row from its latest published version. Prism checks " +
         "every activity, and one of them, {step}, is marked Watch. That's the package we'll follow for the rest " +
         "of the talk.",
     },
@@ -246,9 +246,9 @@ export const deckCopy = {
       notes:
         "Now the package itself, next to the packages that came before it. Every dot is a real package, and you " +
         "can click through to its records.",
-      // The recorded answer (ticket 116): the comparable packages Strata found for the demo plan's package, recorded
+      // The recorded answer (ticket 116): the comparable packages Prism found for the demo plan's package, recorded
       // on the workspace. This line goes first under its chart, before the package workspace's own lines.
-      recorded: "Recorded on {date}, for {step}, a package in the Procurement Plan Strata checked.",
+      recorded: "Recorded on {date}, for {step}, a package in the Procurement Plan Prism checked.",
       cueRecorded:
         "Click Open the package, then come back and press. If the App is down, press Show the recorded answer " +
         "instead. It's the same chart for {step}, recorded on {date}.",
@@ -264,7 +264,7 @@ export const deckCopy = {
       ],
       note: "the verifier runs on every answer and is never bypassed.",
       notes:
-        "Last part of the demo. I'll ask Strata a question about this package and let it answer live. Watch the " +
+        "Last part of the demo. I'll ask Prism a question about this package and let it answer live. Watch the " +
         "steps it shows while it works.",
     },
 
@@ -295,12 +295,12 @@ export const deckCopy = {
     reading: {
       title: "Every document becomes numbered passages, each with its paragraph and page",
       passages: "{passages} passages from {documents} documents, each with its paragraph number and page.",
-      passagesNone: "Strata has not counted its passages yet.",
-      pages: "Strata read {ratio} pages without errors.",
-      pagesNone: "Strata has not measured how well it read its pages yet.",
+      passagesNone: "Prism has not counted its passages yet.",
+      pages: "Prism read {ratio} pages without errors.",
+      pagesNone: "Prism has not measured how well it read its pages yet.",
       // Neither measured yet: one sentence, not two that start the same way.
-      bothNone: "Strata has not counted its passages or measured how well it read its pages yet.",
-      source: "Strata's data readiness measures, taken {date}.",
+      bothNone: "Prism has not counted its passages or measured how well it read its pages yet.",
+      source: "Prism's data readiness measures, taken {date}.",
       notes:
         "Here's how a PDF becomes evidence you can cite. The trick is to treat each page on its merits, and to " +
         "end with numbered passages that keep their paragraph and their page.",
@@ -319,17 +319,17 @@ export const deckCopy = {
     },
     languages: {
       title: "A question in one language can find evidence in another, and every quote stays in its own words",
-      action: "Open P127203 in Strata",
+      action: "Open P127203 in Prism",
       notes:
         "I know you wanted to see the cross-language side, so here it is. The rule is simple: search across " +
         "languages, answer in yours, and never translate a quote.",
     },
     estimate: {
       title: "Comparable packages give the past range, and a survival model gives the time estimate",
-      few: "Under {min} comparable packages, Strata shows every package and gives no range.",
-      backtest: "In {year}, {ratio} packages that Strata had not seen were signed within its 8-in-10 point.",
+      few: "Under {min} comparable packages, Prism shows every package and gives no range.",
+      backtest: "In {year}, {ratio} packages that Prism had not seen were signed within its 8-in-10 point.",
       backtestNone: "The backtest has not run on the workspace yet, so the model's track record is not shown here.",
-      source: "Strata's backtest, measured {date}.",
+      source: "Prism's backtest, measured {date}.",
       notes:
         "Now the models. A time estimate starts from comparable packages, and every step is allowed to say it " +
         "doesn't know. Under {min} comparable packages, there's no range at all.",
@@ -338,41 +338,41 @@ export const deckCopy = {
       title: "Every sentence meets {checks} checks before anyone sees it",
       heading: "In the latest benchmark run,",
       passed: "{ratio} benchmark questions passed.",
-      refused: "Strata turned down {ratio} questions it must refuse.",
+      refused: "Prism turned down {ratio} questions it must refuse.",
       none: "The benchmark has not run with all {checks} checks yet, so there are no results to show.",
-      source: "Strata's benchmark run of {date}.",
+      source: "Prism's benchmark run of {date}.",
       notes:
         "Every sentence passes these checks before anyone sees it. Let me walk a pair of sentences through them, " +
         "one that passes and one that doesn't.",
     },
     ladder: {
-      title: "When reports disagree, both stay on screen, and Strata says which it leans on",
+      title: "When reports disagree, both stay on screen, and Prism says which it leans on",
       point:
-        "For how a project turned out, Strata leans on the most independent report written after the project " +
+        "For how a project turned out, Prism leans on the most independent report written after the project " +
         "closed. For a fact about a moment, the record made at that moment wins.",
       // {project} is the showcase project (config/slice.toml [showcase]), whose disagreement the slide quotes.
       example:
         "In {project}, a status report rated progress toward the objective Satisfactory in August 2016. The " +
         "completion report later said the mid-term review had found part of the objective compromised by major " +
-        "delays. Strata shows both and leans on the completion report.",
+        "delays. Prism shows both and leans on the completion report.",
       action: "Open the timeline",
       source:
         "Implementation Status and Results Report 7, {project}, August 26, 2016; Implementation Completion and " +
         "Results Report, {project}, October 10, 2019, paragraph 78, page 27.",
       notes:
-        "Reports disagree more often than you'd think. Strata doesn't pick a side quietly. Both sides stay on " +
+        "Reports disagree more often than you'd think. Prism doesn't pick a side quietly. Both sides stay on " +
         "screen, and it says which one it leans on, and why.",
     },
 
     // ── How it grows ──
     growsOpener: {
       notes:
-        "Last section: how Strata gets better without anyone retraining it by hand, and how I'd roll it out.",
+        "Last section: how Prism gets better without anyone retraining it by hand, and how I'd roll it out.",
     },
     loops: {
       title: "{loops} loops learn on their own schedules, and people decide each change",
       notes:
-        "Strata improves through loops that run on their own schedules, and a person decides every change. " +
+        "Prism improves through loops that run on their own schedules, and a person decides every change. " +
         "Nothing updates itself quietly.",
     },
     rollout: {
@@ -386,7 +386,7 @@ export const deckCopy = {
         {
           name: "Second",
           who: "Implementing agencies in the same countries",
-          measured: "Plan accuracy with Strata's ranges against plans made without them, and days from a new completion report to a decided lesson",
+          measured: "Plan accuracy with Prism's ranges against plans made without them, and days from a new completion report to a decided lesson",
         },
         {
           name: "Third",
@@ -394,7 +394,7 @@ export const deckCopy = {
           measured: "Contract trails opened for closed projects. Active projects show the public no signals, estimates or disagreements.",
         },
       ],
-      whoLabel: "Who uses Strata",
+      whoLabel: "Who uses Prism",
       measuredLabel: "Measured before the next phase",
       measuredLastLabel: "Measured during this phase",
       notes:
@@ -415,7 +415,7 @@ export const deckCopy = {
       tiles: [
         {
           head: "The awards datasets, and the gap",
-          body: "{since} award rows since fiscal 2020 and {old} for 2001 to 2016. None cover 2017 to 2019, so Strata " +
+          body: "{since} award rows since fiscal 2020 and {old} for 2001 to 2016. None cover 2017 to 2019, so Prism " +
             "built {gap} contracts from award notices.",
           results: { since: "award-rows-since-2020", old: "award-rows-2001-2016", gap: "gap-contracts" },
           counts: ["since", "old", "gap"],
@@ -445,7 +445,7 @@ export const deckCopy = {
       ] as { head: string; body: string; results: Record<string, string>; counts?: string[] }[],
       link: "Open the Data readiness page",
       figure: "The awards record year by year, with a break that only award notices fill.",
-      source: "Strata's Data readiness measures, pulled {date}.",
+      source: "Prism's Data readiness measures, pulled {date}.",
       notes:
         "Before any model touches this data, here's what it really looks like, including where it breaks. I'd " +
         "rather show you the gaps than have you find them.",
@@ -455,7 +455,7 @@ export const deckCopy = {
       tiles: [
         {
           head: "Spanish and Portuguese",
-          body: "Strata can already write both. A speaker still has to review each word list, French's too, and the slice " +
+          body: "Prism can already write both. A speaker still has to review each word list, French's too, and the slice " +
             "needs reports in them.",
         },
         {
@@ -502,11 +502,11 @@ export const deckCopy = {
     },
     thanks: {
       title: "Thank you",
-      figure: "Every night, new reports settle on the core as a new layer, and Strata keeps every layer.",
+      figure: "Every night, new reports settle on the core as a new layer, and Prism keeps every layer.",
       ask: "What would you like to ask?",
-      links: { app: "Open Strata", proposal: "Read the proposal", dashboard: "Open the dashboard", repo: "Read the code" },
+      links: { app: "Open Prism", proposal: "Read the proposal", dashboard: "Open the dashboard", repo: "Read the code" },
       notes:
-        "That's Strata: one question, three strata, and one answer you can check. Thank you. I'd love your " +
+        "That's Prism: one question, three strata, and one answer you can check. Thank you. I'd love your " +
         "questions, and if you'd like a change made live, I'm ready.",
       notesAfterLimits:
         "Thank you. I'm glad to take your questions, or to make a change live, here in the room.",
@@ -524,7 +524,7 @@ export const deckCopy = {
       asked: [
         {
           q:
-            "What is Strata, in one sentence?",
+            "What is Prism, in one sentence?",
           a:
             "A procurement assistant on World Bank open data that answers questions about projects and packages, " +
             "and checks every number and quote against the records before you see the answer.",
@@ -586,7 +586,7 @@ export const deckCopy = {
         "paragraph nobody searched.",
         "A specification that misses the market gets few bids or none. What the market can deliver is written in " +
         "past awards, if you can find the comparable ones.",
-        "Lessons are written with care and read rarely. That's the gap Strata closes.",
+        "Lessons are written with care and read rarely. That's the gap Prism closes.",
         "Ask it, then pause and let them answer. The usual honest answer is from memory, or from a colleague who " +
         "was there.",
       ],
@@ -595,7 +595,7 @@ export const deckCopy = {
           q:
             "How often does this happen?",
           a:
-            "I won't quote a rate I haven't measured. What Strata shows is per package: the comparable packages, " +
+            "I won't quote a rate I haven't measured. What Prism shows is per package: the comparable packages, " +
             "how long they took, and the paragraphs that explain the slow ones.",
         },
       ],
@@ -603,13 +603,13 @@ export const deckCopy = {
     },
     "who": {
       adds: [
-        "Staff review plans and prepare missions. Strata drafts their review notes and mission brief, every line " +
+        "Staff review plans and prepare missions. Prism drafts their review notes and mission brief, every line " +
         "cited, and a draft stays a draft until a person exports it.",
         "Agency officers write the plan. They get a planned date for each step and the risks other projects ran " +
         "into, with the paragraph behind each one.",
         "The public gets a read-only trail from notice to completion report. On active projects they see no " +
         "signals or time estimates. Signals are for the people who can act on them.",
-        "And the boundary: Strata drafts, people decide. Exporting sends nothing anywhere. That's held in the " +
+        "And the boundary: Prism drafts, people decide. Exporting sends nothing anywhere. That's held in the " +
         "copy by a lint, and in the agent by a fixed list of refusals.",
       ],
       asked: [
@@ -658,7 +658,7 @@ export const deckCopy = {
           a:
             "STEP is Systematic Tracking of Exchanges in Procurement, where Procurement Plans are kept. Each " +
             "package has a reference like KE-NWWDA-541055-CW-RFB, and notices and awards carry it too. When it's " +
-            "there it's an exact key. When it isn't, Strata says so instead of guessing.",
+            "there it's an exact key. When it isn't, Prism says so instead of guessing.",
         },
       ],
       diagrams: ["lifecycle", "step_flow"],
@@ -676,7 +676,7 @@ export const deckCopy = {
         "step's dates from plan_steps, and its baselines from strata.ops.plan_baselines. Each row is checked " +
         "against the past range for comparable packages, the review thresholds, and the plan's own dates.",
         "This one says Watch because it's still pending after its project closed on October 31. Notice the words." +
-        " There's a list of words Strata never writes about an agency, and a lint over every copy file fails the " +
+        " There's a list of words Prism never writes about an agency, and a lint over every copy file fails the " +
         "build if one appears.",
       ],
       asked: [
@@ -710,7 +710,7 @@ export const deckCopy = {
         "category and country, from July 2019 on. No embedding, no model. I chose exact matching so a reviewer " +
         "can see exactly why each package is in.",
         "Hollow dots are packages still open. Most tools drop them, and every range looks shorter than it was. " +
-        "Strata keeps them with a Kaplan-Meier estimate, so an open package counts as not signed yet.",
+        "Prism keeps them with a Kaplan-Meier estimate, so an open package counts as not signed yet.",
         "And the time estimate lane is empty here, on purpose. No model has been trained on this workspace yet, " +
         "so it says why instead of showing a number it can't back. I'd rather show you that than hide it.",
       ],
@@ -721,7 +721,7 @@ export const deckCopy = {
           a:
             "Exact matches on stated criteria: the package's method, category and country by default, plus market" +
             " approach, review type and a size band if you set them, over notices since July 2019. It's stricter " +
-            "than a fuzzy match, but every package in the set is explainable. Under 20 matches, Strata shows the " +
+            "than a fuzzy match, but every package in the set is explainable. Under 20 matches, Prism shows the " +
             "packages and gives no range.",
         },
         {
@@ -957,7 +957,7 @@ export const deckCopy = {
           q:
             "Why strip contact details?",
           a:
-            "Notices carry names, emails and phone numbers, and Strata needs none of them to answer anything, so " +
+            "Notices carry names, emails and phone numbers, and Prism needs none of them to answer anything, so " +
             "they never get past ingestion. A nightly check counts any that got through, and the data slide shows" +
             " both numbers.",
         },
@@ -994,7 +994,7 @@ export const deckCopy = {
             "What is the layout parser?",
           a:
             "ai_parse_document, a Databricks SQL function that reads a page's layout: text blocks, tables and " +
-            "their cells. Strata sends it only the pages the router picks: scans, data sheets and tables.",
+            "their cells. Prism sends it only the pages the router picks: scans, data sheets and tables.",
         },
         {
           q:
@@ -1033,13 +1033,13 @@ export const deckCopy = {
       adds: [
         "The awards come as two separate datasets, one since fiscal 2020 and one for 2001 to 2016, and each row " +
         "keeps the dataset it came from. Between them is a hole: no dataset covers 2017 to 2019. Award notices " +
-        "do, so Strata built contracts from them, in local currency, kept apart from the US-dollar awards.",
+        "do, so Prism built contracts from them, in local currency, kept apart from the US-dollar awards.",
         "Here's that hole as a picture: the record year by year, with the base broken where only award notices " +
         "fill it. Why not interpolate, or convert the currency? Either way I'd be putting my own numbers into the" +
         " record.",
         "The missing key is the abnormality that shaped the most design. When I dug in on October 26 there were " +
         "two causes: many awards carry no STEP reference, and the notice search API stops paging at 100,000 " +
-        "results, so the notices we held started in 2024. Strata never guesses that join. No reference, no link, " +
+        "results, so the notices we held started in 2024. Prism never guesses that join. No reference, no link, " +
         "and the coverage line says so.",
         "For suppliers, a STEP supplier ID always wins, and two IDs are never merged by name. For names without " +
         "an ID, a Splink model scores pairs, a language model looks at the uncertain middle, and anything still " +
@@ -1223,7 +1223,7 @@ export const deckCopy = {
           q:
             "What about Spanish and Portuguese?",
           a:
-            "Strata can write both, and the number and date readers are there. But no report in the current " +
+            "Prism can write both, and the number and date readers are there. But no report in the current " +
             "projects is in either, and no speaker has reviewed the word lists yet, French's included. So French " +
             "is end to end, and the other two are ready but unproven.",
         },
@@ -1232,7 +1232,7 @@ export const deckCopy = {
             "What does the person see when a source is in another language?",
           a:
             "The evidence drawer says In French on a French passage. Under a passage in a different language from" +
-            " the answer, it says Strata quotes sources only in the language they were written in. And the check " +
+            " the answer, it says Prism quotes sources only in the language they were written in. And the check " +
             "line says when a model-judged sentence cites a source in another language.",
         },
       ],
@@ -1242,7 +1242,7 @@ export const deckCopy = {
       adds: [
         "Comparable packages come from exact-match SQL, as you saw in the demo. No model here on purpose: the set" +
         " has to make sense to a reviewer.",
-        "The floor is 20, in config/thresholds.toml. Under it, Strata shows every package and gives no range. The" +
+        "The floor is 20, in config/thresholds.toml. Under it, Prism shows every package and gives no range. The" +
         " same floor covers subgroups and the calibration set. It's a defensible minimum, and it's one line to " +
         "change.",
         "The past range is Kaplan-Meier, written by hand with exact fractions so a share that lands exactly on a " +
@@ -1334,7 +1334,7 @@ export const deckCopy = {
         "follows from its sources. It's gpt-5.4 in one batched call, it sees only what code couldn't prove, and " +
         "it can remove sentences but never add them.",
         "Advice needs a lesson or comparable packages behind it. Only get_lessons and find_comparables can back " +
-        "advice. And when sources disagree, both sides show, with the side Strata leans on and why.",
+        "advice. And when sources disagree, both sides show, with the side Prism leans on and why.",
         "Sentence A is shown. Sentence B is removed and listed under the answer with its reason. I think that's " +
         "the most important choice in the product: failure is visible.",
         "On screen is last night's live full gate, the whole benchmark run against the real agent, with an 85 " +
@@ -1395,7 +1395,7 @@ export const deckCopy = {
           a:
             "They ran for the first time last night, on the 25 answers that kept a sentence. Groundedness was 25 " +
             "of 25, so every kept sentence was supported by its sources. That's the claim that matters for " +
-            "Strata, and it's the verifier's job. Relevance was 23 of 25, task adherence 18 of 25, and tool-call " +
+            "Prism, and it's the verifier's job. Relevance was 23 of 25, task adherence 18 of 25, and tool-call " +
             "accuracy 11 of 25. That last one judges each call against the tool definitions, and the agent often " +
             "makes exploratory calls, like search_passages twice, or project_records before the targeted tool. " +
             "Tightening tool choice is the next prompt change I'd make.",
@@ -1476,7 +1476,7 @@ export const deckCopy = {
         "One dated store keeps every version. Answers and drafts cite the version they used, so an old answer can" +
         " be reproduced even after a lesson changes.",
         "And a subtle one: plans made from the time estimates change the outcomes the models later learn from. So" +
-        " Strata logs every time estimate it shows, in strata.ops.exposures, so retraining can account for it.",
+        " Prism logs every time estimate it shows, in strata.ops.exposures, so retraining can account for it.",
       ],
       asked: [
         {
@@ -1516,7 +1516,7 @@ export const deckCopy = {
         "First, World Bank procurement specialists and task team leaders. We measure weekly users, drafts checked" +
         " and exported, and Wrong passage reports. If people don't come back weekly, nothing else matters.",
         "Second, implementing agencies in the same countries. The measure that matters is whether plans made with" +
-        " Strata's ranges turn out more accurate than plans made without them.",
+        " Prism's ranges turn out more accurate than plans made without them.",
         "Third, the public, read-only, with contract trails for closed projects. Active projects show the public " +
         "no signals, time estimates or disagreements.",
       ],
@@ -1526,7 +1526,7 @@ export const deckCopy = {
             "How would you measure the pilot?",
           a:
             "Use first: weekly users, drafts checked and exported. Then quality: Wrong passage reports and " +
-            "sentences removed per answer. Then the outcome: plan accuracy against plans made without Strata's " +
+            "sentences removed per answer. Then the outcome: plan accuracy against plans made without Prism's " +
             "ranges.",
         },
         {
@@ -1633,9 +1633,9 @@ export const deckCopy = {
   } as Record<string, Speaker>,
 };
 
-// The structural figures (ticket 47; the second draft's brief, section 5), which the deck and How Strata works
+// The structural figures (ticket 47; the second draft's brief, section 5), which the deck and How Prism works
 // share. title is the SVG's <title> (60 characters at most); steps its text version in reading order, one line per
-// press on the slide, voice-neutral; heading the page section's h2; caption the first-person paragraph How Strata
+// press on the slide, voice-neutral; heading the page section's h2; caption the first-person paragraph How Prism
 // works sets above it. A step text holds no number: the number check reads it on the slide.
 export const figureCopy = {
   "core-sample": {
@@ -1683,15 +1683,15 @@ export const figureCopy = {
       "put them into one answer, and every sentence names its source.",
   },
   layers: {
-    title: "Strata's layers and where each runs",
+    title: "Prism's layers and where each runs",
     heading: "Where I run",
     steps: [
       "World Bank open data and documents arrive every night and land in bronze, silver and gold tables on Databricks.",
       "The knowledge model is a set of Unity Catalog tables with an edge table, numbered passages and dated assertions.",
       "The tools are fixed SQL on the gold tables, hybrid search over passages, a Genie space for open questions, and the time estimates.",
-      "The Strata agent in Microsoft Foundry picks the tools and writes each claim with the IDs of its evidence.",
+      "The Prism agent in Microsoft Foundry picks the tools and writes each claim with the IDs of its evidence.",
       "The verifier checks every sentence against the rows and passages before anyone sees it.",
-      "The Strata app, a Databricks App, runs each tool with the viewer's own permissions.",
+      "The Prism app, a Databricks App, runs each tool with the viewer's own permissions.",
       "The data, search and tools run on Databricks. The agent runs in Microsoft Foundry, and the language models are Azure OpenAI.",
     ],
     caption:
@@ -1700,7 +1700,7 @@ export const figureCopy = {
       "only what your account may see, and I keep every row an answer used so that I can check it.",
     caption2:
       "Each time you open a page, I record who you are, which page and view you opened, and when. When you ask a " +
-      "question, I also keep the steps I took, so the people who run Strata can check my work.",
+      "question, I also keep the steps I took, so the people who run Prism can check my work.",
   },
   pipeline: {
     title: "Where the knowledge model comes from",
@@ -1735,10 +1735,10 @@ export const figureCopy = {
       "and tables first go through a tool that reads page layouts.",
   },
   "knowledge-model": {
-    title: "Strata's knowledge model",
+    title: "Prism's knowledge model",
     heading: "How records and documents connect",
     steps: [
-      "A project has packages. Each package has its STEP reference and becomes contracts. Strata matches each contract's supplier on its STEP supplier ID. They are strata.gold.project, package, contract and supplier.",
+      "A project has packages. Each package has its STEP reference and becomes contracts. Prism matches each contract's supplier on its STEP supplier ID. They are strata.gold.project, package, contract and supplier.",
       "Documents describe a project, and each document has numbered passages, in strata.silver.documents and strata.gold.passage.",
       "A lesson quotes a passage, word for word. Its versions are in strata.ops.lesson_versions.",
       "A passage can be the source of an assertion, such as a rating on a date. Two assertions about the same thing, for the same time, that cannot both be true make a disagreement. They are strata.gold.assertion and strata.gold.disagreement.",
@@ -1752,8 +1752,8 @@ export const figureCopy = {
       "the other. Every row keeps the date it became public, so I can answer as of a past date.",
   },
   architecture: {
-    title: "How Strata fits together",
-    heading: "How Strata fits together",
+    title: "How Prism fits together",
+    heading: "How Prism fits together",
     steps: [
       "Public sources: Finances One for awards, IEG ratings, loans and credits, the search APIs for procurement" +
         " notices and projects, the Documents API for appraisal documents, status reports, completion reports and" +
@@ -1801,7 +1801,7 @@ export const figureCopy = {
     steps: [
       "The person asks in the app. The request carries the question, the page's scope and as-of date, and" +
         " the view, and the app knows the viewer from the headers the Databricks App proxy forwards.",
-      "The app sends the Strata agent in Microsoft Foundry one message of data. Its instructions and tool" +
+      "The app sends the Prism agent in Microsoft Foundry one message of data. Its instructions and tool" +
         " list live in a versioned prompt agent synced from the repo, never in the message.",
       "The agent asks for tools, such as find_comparables. The app runs each one with the viewer's own " +
         "token: fixed SQL on the warehouse, hybrid search on strata.gold.passage_index, or the Genie space.",
@@ -1827,7 +1827,7 @@ export const figureCopy = {
     steps: [
       "Comparable packages come from exact-match SQL on the stated criteria, over strata.gold.package, " +
         "notice and contract. No model picks them, so anyone can see why a package is in.",
-      "If there are too few comparable packages, Strata shows every one and gives no range.",
+      "If there are too few comparable packages, Prism shows every one and gives no range.",
       "Otherwise the past range is a Kaplan-Meier curve. Packages still open stay in as not signed yet, " +
         "so the slow cases don't drop out.",
       "The time estimate is an XGBoost survival model, an accelerated failure time model, trained only on" +
@@ -1863,7 +1863,7 @@ export const figureCopy = {
       "that fails is taken out, and I list it under the answer with the reason.",
   },
   ladder: {
-    title: "Which report Strata leans on",
+    title: "Which report Prism leans on",
     heading: "When two reports disagree",
     steps: [
       "At the bottom is the appraisal document, written before the project started.",
@@ -1887,7 +1887,7 @@ export const figureCopy = {
       "The retrieval loop runs monthly. A report of a wrong passage becomes a label only after a person checks it. Search changes only if it loses nothing on held-out tests.",
       "The estimates loop runs quarterly. A new model replaces the old one only after it wins its backtest and a quarter in shadow.",
       "One dated store keeps every version, and answers and drafts cite the version they used.",
-      "Plans made from the time estimates change the outcomes the models later learn from, so Strata logs every estimate it shows.",
+      "Plans made from the time estimates change the outcomes the models later learn from, so Prism logs every estimate it shows.",
     ],
     caption:
       "New reports arrive every night. When one holds a lesson, I propose it with its exact quote and page, and two " +

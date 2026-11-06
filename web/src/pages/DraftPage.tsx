@@ -695,7 +695,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
           }
         />
         {agencyDraft && <AccessLabel className="mt-2" />}
-        {/* A draft the seed command set up for you (ticket 41): what Strata set up and what is real. */}
+        {/* A draft the seed command set up for you (ticket 41): what Prism set up and what is real. */}
         {d.example && (
           <ExampleNote className="mt-2">
             {(d.kind === "review_notes" ? copy.home.exampleNotes.review_notes : isPpsdKind(d.kind) ? copy.home.exampleNotes.ppsd_rows : copy.home.exampleNotes.draft)(day(d.created_at))}
@@ -835,7 +835,7 @@ function Draft({ draftId, view }: { draftId: string; view: string | null }) {
             />
           </div>
         )}
-        {/* What Strata can't see sits at the column's foot, beside the sources, as the plan check's foot strip has it
+        {/* What Prism can't see sits at the column's foot, beside the sources, as the plan check's foot strip has it
             (ticket 126). */}
         <p className="mt-2 max-w-[72ch] text-caption text-ink-muted" data-not-visible>
           {copy.checkPlan.notVisible}

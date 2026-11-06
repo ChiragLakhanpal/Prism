@@ -14,7 +14,7 @@
 // States: loading (the group titles and table heads are real, with skeleton rows as many as P130164's),
 // populated, a value missing from its record, a source not loaded for this project (the closing date
 // history), no ratings yet, a project before the Environmental and Social Framework, pipeline or
-// dropped, a service that didn't answer, and an account that can't read Strata's tables.
+// dropped, a service that didn't answer, and an account that can't read Prism's tables.
 import { useEffect, type ReactNode } from "react";
 import { CitationMarker } from "../../components/CitationMarker";
 import { EightColumns } from "../../components/EightColumns";

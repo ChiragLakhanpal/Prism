@@ -17,7 +17,7 @@ The states the fixture cannot reach (the Long Form above Table I, a package with
 track record) are made up from the real answers, each named *-made-up-*.json and saying so in its made_up field. They
 are never served as findings: the screen tests use them for layout and states only. A rows draft with a warning
 disagreement card is made up the same way, from the card check 6 attached to a recorded answer
-(ask-p130164-isr-7-rating.sse), and the server answers for it: its holds, keeping Strata's report through the card,
+(ask-p130164-isr-7-rating.sse), and the server answers for it: its holds, keeping Prism's report through the card,
 and the draft after that.
 """
 
@@ -99,7 +99,7 @@ def recorded_card() -> dict:
 
 
 def with_a_card(story) -> dict[str, str]:
-    """A new rows draft with a warning card, its holds as the server gives them, keeping Strata's report through the
+    """A new rows draft with a warning card, its holds as the server gives them, keeping Prism's report through the
     card's own route (POST /api/disagreements/{id}/choices with the draft's id), and the draft after that."""
     _, made = story.suggest("ppsd-rows-ke-nwwda-541055", "ppsd-4")
     store = DraftStore(lambda: DuckDBEngine.open(story.state_db))

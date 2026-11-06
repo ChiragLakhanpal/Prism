@@ -1,5 +1,5 @@
--- get_disagreements: whether Strata holds the subject, as a project or as a package by its STEP reference,
--- the project it belongs to, and its id as Strata holds it. A project ID or a STEP reference is matched whatever
+-- get_disagreements: whether Prism holds the subject, as a project or as a package by its STEP reference,
+-- the project it belongs to, and its id as Prism holds it. A project ID or a STEP reference is matched whatever
 -- its case, as check_plan matches an agency, so ke-mowasco-307378-go-rfb names KE-MOWASCO-307378-GO-RFB.
 SELECT
   :project AS subject_kind,

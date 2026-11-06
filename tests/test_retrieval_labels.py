@@ -3,7 +3,7 @@ labels from the documents the fixture holds, the ICR Review's "ICR para N" citat
 sections, and records each query set's size.
 
 The expected counts and pages are in tests/ground_truth/values.toml ([silver_labels]), read from the recorded
-documents apart from Strata's code; the first two tests check them word for word on their pages.
+documents apart from Prism's code; the first two tests check them word for word on their pages.
 """
 
 import re

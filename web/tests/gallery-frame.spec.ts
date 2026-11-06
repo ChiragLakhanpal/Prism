@@ -21,11 +21,11 @@ test("the navy bar is 56 px tall with the logo slot, the wordmark and the view s
   expect(box.height).toBe(56);
   expect(await bar.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe(NAVY);
   // Ticket 92: the sections are the sidebar's, beside the page.
-  await expect(bar.getByRole("link")).toHaveText(["Skip to main content", "Strata"]);
+  await expect(bar.getByRole("link")).toHaveText(["Skip to main content", "Prism"]);
 
   // Logo at least 24 px tall, with clear space of half its height on every side.
   const logo = (await page.locator("[data-logo]").boundingBox())!;
-  const wordmark = (await page.getByRole("link", { name: "Strata", exact: true }).boundingBox())!;
+  const wordmark = (await page.getByRole("link", { name: "Prism", exact: true }).boundingBox())!;
   expect(logo.height).toBeGreaterThanOrEqual(24);
   const clear = logo.height / 2;
   expect(logo.y - box.y).toBeGreaterThanOrEqual(clear);
@@ -123,13 +123,13 @@ test("the box floats on columns 3 to 10 at the page column's foot, the stamp sit
 
   await page.locator("h1").click();
   await page.keyboard.press("/");
-  await expect(page.locator("[data-box-slot]").getByRole("combobox", { name: "Ask Strata" })).toBeFocused();
+  await expect(page.locator("[data-box-slot]").getByRole("combobox", { name: "Ask Prism" })).toBeFocused();
   // While anything in it has focus, the box shows the focus ring around it.
   expect(await box.evaluate((el) => [getComputedStyle(el).outlineStyle, getComputedStyle(el).outlineColor])).toEqual(["solid", "rgb(182, 73, 12)"]);
 });
 
 // Ticket 93: on a package page the box keeps one row from 1024 px, with the chip's reference and its placeholder,
-// "Ask Strata about this package" since ticket 127, uncut, and the page never scrolls sideways.
+// "Ask Prism about this package" since ticket 127, uncut, and the page never scrolls sideways.
 test("on a package page the box keeps one row from 1024 px, with the chip's reference and its placeholder uncut", async ({ page }) => {
   await mockApi(page, {
     "/api/me": { body: await recorded("me.json") },
@@ -147,7 +147,7 @@ test("on a package page the box keeps one row from 1024 px, with the chip's refe
     await expect(chip, `${width} px`).toContainText(PACKAGE);
     expect((await chip.boundingBox())!.height, `${width} px: the reference on one line`).toBe(32);
     const placeholder = page.locator("[data-box-slot] [data-placeholder]").filter({ visible: true });
-    await expect(placeholder).toHaveText("Ask Strata about this package");
+    await expect(placeholder).toHaveText("Ask Prism about this package");
     expect(await placeholder.evaluate((el) => el.scrollWidth <= el.clientWidth), `${width} px: the placeholder is cut`).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth), `${width} px`).toBeLessThanOrEqual(width);
   }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Strata's PreToolUse guard: CLAUDE.md rules 5, 6, 7 and 10, made deterministic.
+"""Prism's PreToolUse guard: CLAUDE.md rules 5, 6, 7 and 10, made deterministic.
 
 Claude Code runs this before every Bash, Read, Grep, Write and Edit call. Exit
 code 2 blocks the call and shows Claude the reason. Blocked:

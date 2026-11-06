@@ -80,7 +80,7 @@ export function isDay(text: string): boolean {
 export const DATA_PAGES = { dataSources: "sources" } as const;
 export const DATA_HREF = { data: "/data", dataSources: "/data/sources" } as const;
 // Addresses under /data that were pages once, and the page each opens now, through a replace, so an old link lands
-// somewhere true and Back never returns to it. Ticket 97: How Strata works left Data, because the deck at /present
+// somewhere true and Back never returns to it. Ticket 97: How Prism works left Data, because the deck at /present
 // shows its figures and the refusal window under an answer lists what I turn down.
 const RETIRED_DATA_PAGES: Readonly<Record<string, string>> = { "how-strata-works": DATA_HREF.data };
 

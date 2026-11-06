@@ -1,7 +1,7 @@
 /**
  * Plan rows: a borrower's Procurement Plan as seven thin row slabs on a
- * clipboard, under a clip at the head of the board (Strata's deck, the opener
- * of Strata at work; .notes/deck2/brief.md, section 6). Short creases cut every
+ * clipboard, under a clip at the head of the board (Prism's deck, the opener
+ * of Prism at work; .notes/deck2/brief.md, section 6). Short creases cut every
  * row into the plan's columns, the same on each row, so the slabs read as one
  * table, and each row has a check box at its head. A row stands off the board
  * by how much it asks for: rows on time lie flat with a dim dot in the box,

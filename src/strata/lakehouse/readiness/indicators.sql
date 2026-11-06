@@ -1,7 +1,7 @@
 -- The governance indicators' data readiness measures, for every country (subject all). CPIA and
 -- WGI share this file; :source is the one being measured.
 --   coverage_years   years with a score, of the years from the first to the last
---   linked_country   countries with a score that Strata holds as a borrowing country, of all the
+--   linked_country   countries with a score that Prism holds as a borrowing country, of all the
 --                    countries and groups with a score: the API also scores regions and income groups
 -- Its coverage_rows and freshness are written for every source at once (strata.lakehouse.readiness).
 WITH scored AS (

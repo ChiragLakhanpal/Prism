@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The SQL lint, a gate step: every query names its tables in three parts and binds its values.
 
-Strata's SQL runs on the workspace and on DuckDB, as each viewer, so two rules hold everywhere
+Prism's SQL runs on the workspace and on DuckDB, as each viewer, so two rules hold everywhere
 (docs/agents/areas/data.md; spec, "Security and privacy"):
 
 1. Every table is named in three parts, in the strata catalog: strata.<schema>.<table> (or

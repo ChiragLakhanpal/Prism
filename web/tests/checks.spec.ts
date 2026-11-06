@@ -486,7 +486,7 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   await expect(sides.nth(0)).toContainText("Satisfactory");
   await expect(sides.nth(1)).toContainText("Implementation Completion and Results Report (ICR), paragraph 78");
   await expect(sides.nth(1)).toContainText("October 10, 2019. Written after the project closed.");
-  await expect(sides.nth(1)).toContainText("Strata leans on this");
+  await expect(sides.nth(1)).toContainText("Prism leans on this");
   // The whole sentence of paragraph 78 that holds the quote (values.toml, icr-para-78), as the drawer's card shows it.
   await expect(sides.nth(1)).toContainText(
     '"Indeed, it was clearly identified at the MTR that the achievement of part of the PDO was compromised by the major delays in implementing activities under Components 2 and 3 and lack of endorsement from relevant stakeholders."',
@@ -504,7 +504,7 @@ test("ICR paragraph 78 shows under ISR 7's sentence with both sides, though the 
   // The sentence's own source keeps number 1, and the other side gets the next.
   await expect(card.locator("[data-citation]")).toHaveText(["[1]", "[2]"]);
   // Why I lean on the ICR is in the tag's window since ticket 126.
-  await card.getByRole("button", { name: "Strata leans on this" }).click();
+  await card.getByRole("button", { name: "Prism leans on this" }).click();
   await expect(page.locator("[data-disagreement-rule]")).toHaveText(
     "For a judgment of how a project went, I lean on the later, more independent report, here the ICR, and I keep ISR 7 as the record of the earlier view.",
   );
@@ -580,7 +580,7 @@ test("a disagreement the draft already showed is the same card, as an info note"
   await expectCurrentRatingMarked(page);
 });
 
-// Ticket 97: "See everything I turn down" opens the window that lists every refusal with its reason, which How Strata
+// Ticket 97: "See everything I turn down" opens the window that lists every refusal with its reason, which How Prism
 // works' "What I don't do" did before. Since ticket 126 the refusal itself says what I don't do and what I can do
 // instead, and its reason is one click away in that window. The words are the copy file's refusal keys, written out
 // here from the 24 brief so the test checks the copy file against its source.

@@ -14,7 +14,7 @@ The app ran every tool the agent asked for, so it holds every row and passage th
    A natural frequency ("8 in 10", "about 3 in 10", "fewer than 1 in 10") is one value, which only a frequency
    the record holds with the same words backs: a frequencies pair, a field named in10, or the q80 that "8 in
    10" names (ticket 12's review P3, ticket 28's verify F2); those back no other number. A
-   table's summary passage is Strata's own words about the table, so a number it alone holds, quoted
+   table's summary passage is Prism's own words about the table, so a number it alone holds, quoted
    or not, is removed with a reason of its own (number_only_in_table_summary): the table's rows back
    numbers, its summary never does.
    The numbers and dates are read from the sentence itself, so one the agent left off its list is
@@ -364,7 +364,7 @@ def _declared(claim: Claim, stated: list[Mention], language: str = ENGLISH) -> l
 # ── Values in a row ──────────────────────────────────────────────────────
 
 NOT_VALUES = {"text", "header", "rank", "score", "public_from", "frequencies"}  # a passage's words, the search's own
-# ranking, the day a record became public in Strata (ADR 0002), which says when a source could be read, not what it
+# ranking, the day a record became public in Prism (ADR 0002), which says when a source could be read, not what it
 # says, and the pairs a natural frequency states, which back only that frequency (frequency_backs)
 ISO_DAY = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T ].*)?$")
 PLAIN_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
@@ -778,7 +778,7 @@ def _is_passage(row: Mapping | None) -> bool:
 
 
 def _summary(row: Mapping | None) -> bool:
-    """Whether a cited row is a table's summary passage, which Strata wrote and which backs no number."""
+    """Whether a cited row is a table's summary passage, which Prism wrote and which backs no number."""
     return _is_passage(row) and row.get("kind") == TABLE_SUMMARY
 
 
@@ -916,7 +916,7 @@ def check(index: int, claim: Claim, facts: Facts, language: str = ENGLISH) -> Ch
         checked[mention.kind].append((mention, found))
         # A number inside quoted words that are not on the page, or whose page did not come back, gets no
         # reason of its own: the quote's or the id's reason explains it. A number only a cited table
-        # summary holds says so, since the summary is Strata's words, not the table's rows.
+        # summary holds says so, since the summary is Prism's words, not the table's rows.
         if found is None and not (inside is None and explained):
             only_summary = mention.kind == "number" and any(
                 _summary(facts.get(evidence)) and _holds_number(facts.get(evidence), mention)
@@ -1253,7 +1253,7 @@ def _side(side: Mapping, leaned: str | None) -> dict:
 
 def disagreement_event(found: Attached) -> Event:
     """A disagreement check 6 shows under the sentence it concerns, with both sides in the order they were
-    written, the side Strata leans on, the evidence ladder's rule and what you would treat as true if you kept
+    written, the side Prism leans on, the evidence ladder's rule and what you would treat as true if you kept
     the other side. The screen writes every sentence of it from these values and the copy file.
 
     One shape carries what both cards read (tickets 23 and 24): after, the sentence the card follows;

@@ -182,7 +182,7 @@ table = "strata.ops.stress_shelf"
 # ── Module 2 ─────────────────────────────────────────────────────────────
 
 [results.backtest-coverage]
-name = "Test packages, 2021 to 2025, signed within the 8-in-10 point of the range Strata gave them"
+name = "Test packages, 2021 to 2025, signed within the 8-in-10 point of the range Prism gave them"
 module = 2
 kind = "Backtest"
 noun = "test packages"
@@ -272,7 +272,7 @@ form = "ratio"
 table = "strata.ops.evaluation_result"
 
 [results.must-refuse]
-name = "Must-refuse questions that Strata turned down, in the latest full gate"
+name = "Must-refuse questions that Prism turned down, in the latest full gate"
 module = 3
 kind = "Benchmark run"
 noun = "must-refuse questions"
@@ -292,7 +292,7 @@ form = "ratio"
 table = "strata.ops.agent_runs"
 
 [results.answers-held-back]
-name = "Answers where Strata held back, out of the answers it gave, in the 90 days to the pull"
+name = "Answers where Prism held back, out of the answers it gave, in the 90 days to the pull"
 module = 3
 kind = "Query"
 noun = "answers"
@@ -323,7 +323,7 @@ table = "strata.gold.disagreement"
 # ── Module 4 ─────────────────────────────────────────────────────────────
 
 [results.hindsight-caught]
-name = "Risks completion reports later blamed that Strata's risk tables showed at approval"
+name = "Risks completion reports later blamed that Prism's risk tables showed at approval"
 module = 4
 kind = "Hindsight test"
 noun = "blamed risks"
@@ -344,7 +344,7 @@ form = "ratio"
 table = "strata.ops.evaluation_result"
 
 [results.hindsight-interval]
-name = "The interval around the share of blamed risks Strata's tables showed"
+name = "The interval around the share of blamed risks Prism's tables showed"
 module = 4
 kind = "Hindsight test"
 noun = "percent"

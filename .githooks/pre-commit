@@ -1,5 +1,5 @@
 #!/bin/sh
-# Strata's offline gate (CLAUDE.md rule 6). Git runs it before every commit once
+# Prism's offline gate (CLAUDE.md rule 6). Git runs it before every commit once
 # core.hooksPath is .githooks, which scripts/install sets. Run it by hand the same way:
 #
 #     .githooks/pre-commit

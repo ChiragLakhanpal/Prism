@@ -7,7 +7,7 @@
       "review_notes": {
         "heading": "Review notes on the {agency} plan of {date}",
         "line": "{project_name} ({project_id}). Procurement Plan of {date}.",
-        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.",
+        "origin": "Drafted with Prism on {created} and checked by {checker} on {checked}. Prism is an independent demo built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.",
         "columns": [
           "Activity",
           "Review note"
@@ -16,7 +16,7 @@
       "mission_brief": {
         "heading": "Mission brief for {project_name} ({project_id})",
         "line": "{country}. Public records through {date}.",
-        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo built on World Bank open data. This brief is not a World Bank review, clearance or no-objection.",
+        "origin": "Drafted with Prism on {created} and checked by {checker} on {checked}. Prism is an independent demo built on World Bank open data. This brief is not a World Bank review, clearance or no-objection.",
         "parts": {
           "plans": "Latest Procurement Plans",
           "awards": "Awards since the last ISR",
@@ -90,7 +90,7 @@
         "noReference": "No STEP reference yet",
         "project": "{project_name} ({project_id}).",
         "form": "{form_name}.",
-        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. {author} set the {set_what}. Strata is an independent demo built on World Bank open data. These are suggested rows for the borrower's PPSD and are not a World Bank review, clearance or no-objection.",
+        "origin": "Drafted with Prism on {created} and checked by {checker} on {checked}. {author} set the {set_what}. Prism is an independent demo built on World Bank open data. These are suggested rows for the borrower's PPSD and are not a World Bank review, clearance or no-objection.",
         "setOwners": "risk owners",
         "setOwnersRatings": "risk owners and ratings",
         "footnote": {
@@ -103,7 +103,7 @@
       "project_paper": {
         "heading": "Procurement summary for the Project Paper",
         "line": "{project_name} ({project_id}). {agency}, Procurement Plan of {date}.",
-        "origin": "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo built on World Bank open data. This summary is not a World Bank review, clearance or no-objection.",
+        "origin": "Drafted with Prism on {created} and checked by {checker} on {checked}. Prism is an independent demo built on World Bank open data. This summary is not a World Bank review, clearance or no-objection.",
         "parts": {
           "plan": "The Procurement Plan",
           "record": "The implementing agency's track record",
@@ -339,15 +339,15 @@
     "awards_fy2001_2016": "World Bank contract awards data, fiscal 2001 to 2016, contract signed {date}.",
     "projects_api_ratings": "World Bank projects API, ratings from the ISR of {date}.",
     "isr_ratings": "The overall ratings table of the ISR of {date}, as I read it.",
-    "plan_baseline": "Strata's baseline, saved by World Bank staff on {date}.",
+    "plan_baseline": "Prism's baseline, saved by World Bank staff on {date}.",
     "plans": "Procurement Plan of {date}, from the World Bank documents API."
   },
-  "toolSource": "Strata's totals of this project's records, as of {date}.",
+  "toolSource": "Prism's totals of this project's records, as of {date}.",
   "passageSource": "{doc}, {pid}, {date}, {place}, page {page}.",
   "passageParagraph": "paragraph {para}",
   "passageSection": "section {section}",
-  "countsSource": "Strata's count of comparable completion reports, as of {date}.",
-  "lessonSource": "Strata's lesson library, version {version}, decided on {date}.",
+  "countsSource": "Prism's count of comparable completion reports, as of {date}.",
+  "lessonSource": "Prism's lesson library, version {version}, decided on {date}.",
   "pill": {
     "pill": "{doc} {pcode} {locator}",
     "pillNoProject": "{doc} {locator}",
@@ -478,6 +478,6 @@
       "joined": "it failed a check"
     }
   },
-  "notVisible": "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in Systematic Tracking of Exchanges in Procurement (STEP).",
-  "footer": "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+  "notVisible": "Not visible to Prism: the prior-review queue, complaints, contract amendments and contract management reports. Those stay in Systematic Tracking of Exchanges in Procurement (STEP).",
+  "footer": "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
 }

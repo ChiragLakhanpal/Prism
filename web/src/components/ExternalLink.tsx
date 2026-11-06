@@ -1,4 +1,4 @@
-// External link (DESIGN.md section 5; the 14 and 18 briefs): a link that leaves Strata, such as the
+// External link (DESIGN.md section 5; the 14 and 18 briefs): a link that leaves Prism, such as the
 // World Bank's PDF at a page or a notice's page on the World Bank's site. It is small, primary and
 // underlined, with lucide's external-link icon at 16 px after its last word, tied to it by a word joiner
 // so the two wrap together, and a visually hidden ", opens in a new tab" at the end of its name. It

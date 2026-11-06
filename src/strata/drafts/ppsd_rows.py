@@ -46,7 +46,7 @@ TOOL = "get_lessons"
 TOOLS = ("find_comparables", "get_lessons")  # the tools the check line names: the builder's
 KEY = "cell_key"  # what names each note in the writer's answer: a row's risk key and its cell
 VIEW_KEY = "ppsd"  # where the draft page finds what view() adds
-CELLS = ("risk_description", "mitigation")  # the cells Strata writes, by their registry keys
+CELLS = ("risk_description", "mitigation")  # the cells Prism writes, by their registry keys
 FORM = ("", "form")  # the field that holds the form the person chose
 
 
@@ -173,7 +173,7 @@ def message(facts: Facts, language: str = "en") -> dict:
 
 
 def written_rows(cells: list[str]) -> int:
-    """How many rows the writer wrote a cell of, for the writing step's "I wrote two rows." Only the cells Strata
+    """How many rows the writer wrote a cell of, for the writing step's "I wrote two rows." Only the cells Prism
     writes count: a cell key the message never named is dropped."""
     return len({key.split("/", 1)[0] for key in cells if key.split("/", 1)[-1] in CELLS})
 
@@ -185,7 +185,7 @@ def cited_rows(facts: Facts) -> list[tuple[dict, str]]:
 
 
 def items(facts: Facts) -> list[dict]:
-    """Two items per row, one per cell Strata writes, each with the records its sentences may cite."""
+    """Two items per row, one per cell Prism writes, each with the records its sentences may cite."""
     counts_id = facts.table.payload["counts_evidence_id"]
     found = []
     for row in facts.selected:
@@ -348,7 +348,7 @@ def missing(draft, hold: str):
 
 def check_value(content: dict, row_key: str, field: str, value: str | None) -> str | None:
     """Why a person's value for a field cannot be saved, as an error code, or None when it can. Only the fields
-    people fill (filled_by = "people") take a value; Strata's own cells never do."""
+    people fill (filled_by = "people") take a value; Prism's own cells never do."""
     templates = load_ppsd_templates()
     if row_key == "" and field == "form":
         if value not in templates.forms:

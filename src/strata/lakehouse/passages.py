@@ -264,7 +264,7 @@ def project(engine: Engine, project_id: str) -> Project:
     found = _rows(engine, PROJECT, project_id=project_id)
     if not found:
         return Project(project_id, None, None)
-    sector = found[0]["sector"]  # its one sector in Strata's taxonomy (config/sectors.toml)
+    sector = found[0]["sector"]  # its one sector in Prism's taxonomy (config/sectors.toml)
     code = main_sector(found[0]["sector_codes"], sector)
     return Project(project_id, found[0]["country_name"], code.word if code else None, sector)
 

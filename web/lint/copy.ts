@@ -1,4 +1,4 @@
-// The copy lint: the words DESIGN.md section 7 and GLOSSARY.md say Strata never writes.
+// The copy lint: the words DESIGN.md section 7 and GLOSSARY.md say Prism never writes.
 // It checks one string at a time and returns a plain sentence for each problem it finds.
 import { readFileSync } from "node:fs";
 import { CAUSAL_WORDS, FIXED_TERMS, GLOSSARY_AVOID, REGION_CODES, WHAT_IF_WORDS } from "./rules.ts";

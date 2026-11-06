@@ -75,7 +75,7 @@ _SOURCED_ANCHOR = re.compile(r"<a\s[^>]*href=\"(?:#[rs]-[^\"]*|[^\"]*" + re.esca
                              re.S)
 _SOURCED_ELEMENT = re.compile(r"<(\w+)\b[^>]*\bdata-source-key=\"[^\"]*\"[^>]*>.*?</\1>", re.S)
 # The deck's chrome (ticket 47; the 47 brief, section 6.3): slide numbers and the notes view's timer, which count
-# slides and minutes, not anything Strata measured. The element holds no other element.
+# slides and minutes, not anything Prism measured. The element holds no other element.
 _CHROME = re.compile(r"<(\w+)\b[^>]*\bdata-chrome\b[^>]*>[^<]*</\1>")
 # In HTML, a style or script block holds no words a reader reads, such as an inlined figure's CSS.
 _STYLE = re.compile(r"<(style|script)\b[^>]*>.*?</\1>", re.S | re.I)

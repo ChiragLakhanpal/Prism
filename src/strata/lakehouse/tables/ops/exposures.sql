@@ -5,7 +5,7 @@
 -- same tools and never write here: only the server's routes do (src/strata/estimates/exposures.py): the estimate
 -- and comparables routes, and POST /api/ask for each range a sentence the verifier kept cited.
 --
--- This is the one place "exposed to Strata" is defined (CLAUDE.md rule 4): the hindsight test's gate set
+-- This is the one place "exposed to Prism" is defined (CLAUDE.md rule 4): the hindsight test's gate set
 -- (src/strata/estimates/sql/hindsight/exposed.sql) and the estimates loop's anchored plan rows
 -- (src/strata/estimates/watch.py, marked_rows) both read it. The app writes it as its own service principal,
 -- with the viewer's user id, never their email, because every account user can read strata.ops. Rows only join.

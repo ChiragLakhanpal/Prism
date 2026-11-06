@@ -1,9 +1,9 @@
-// Every string a person reads in Strata, in one place (DESIGN.md section 7), so it can be
+// Every string a person reads in Prism, in one place (DESIGN.md section 7), so it can be
 // reviewed and translated together. Components take their words from here; the gate's string
 // lint fails when a component renders text of its own, and its copy lint checks every string
 // below against DESIGN.md section 7 and GLOSSARY.md (web/lint/run.ts).
 //
-// Strata says "I" and the reader is "you". Evidence is in the past tense, and Strata's own
+// Prism says "I" and the reader is "you". Evidence is in the past tense, and Prism's own
 // state in the present. Numbers come from tools and are written by web/src/lib/format.ts.
 // The one exception: Term shows GLOSSARY.md's definitions, read by web/src/glossary.ts, so
 // each definition keeps one home.
@@ -124,7 +124,7 @@ const PPSD_ROWS = {
     columns: {} as Record<string, string>,
     tableCaption: (form: string, _date: string) =>
       `Suggested risk rows for the borrower's PPSD, ${form}, one row per risk you selected`,
-    // A cell of Strata's that nothing passed the checks for; Word leaves it empty for the borrower.
+    // A cell of Prism's that nothing passed the checks for; Word leaves it empty for the borrower.
     abstain: "I couldn't write this cell so that it passed my checks. The sentences I removed are listed above.",
     refused: {
       out_of_scope: "I didn't write this cell, because it would need more than this risk's records show.",
@@ -176,7 +176,7 @@ const PPSD_ROWS = {
       no_plan: "I couldn't find this package, so I wrote nothing and saved nothing.",
       nothing_marked: "None of the risks you selected is in the table now, so I wrote nothing and saved nothing.",
       permission:
-        "Your account can't read this package's records in Strata's tables, so I can't write PPSD rows. Ask your " +
+        "Your account can't read this package's records in Prism's tables, so I can't write PPSD rows. Ask your " +
         "workspace admin for read access to the strata catalog.",
       internal: "Something went wrong on my side, so I couldn't write the PPSD rows. I saved nothing.",
       dropped: "The connection dropped before I finished the PPSD rows. I saved nothing.",
@@ -188,14 +188,14 @@ const PPSD_ROWS = {
 };
 
 export const copy = {
-  appName: "Strata",
+  appName: "Prism",
   skipLink: "Skip to main content",
   // DESIGN.md section 8, word for word.
   footer:
-    "Strata is an independent demo built on World Bank open data. It is not a World Bank product, " +
+    "Prism is an independent demo built on World Bank open data. It is not a World Bank product, " +
     "and the World Bank has not reviewed or endorsed it.",
   // The browser tab's title: the page's h1, then the app's name.
-  pageTitle: (title: string) => `${title} | Strata`,
+  pageTitle: (title: string) => `${title} | Prism`,
 
   // Every route's title, its purpose of one or two short sentences where the title and the first block don't say what
   // the page is for (ticket 126), and its empty state (the 06 design brief, with
@@ -334,7 +334,7 @@ export const copy = {
       purpose: "I checked every activity in the Procurement Plan your team uploaded.",
     },
     // The Data tab's two pages share one title, and each names itself in the browser tab (the 16 design brief, section
-    // 2). How Strata works left the tab in ticket 97.
+    // 2). How Prism works left the tab in ticket 97.
     data: {
       title: "Data",
       documentTitle: "Data readiness",
@@ -358,8 +358,8 @@ export const copy = {
 
   // The alert slot above every page's title. Each alert is one sentence; errors come first.
   alerts: {
-    noAccess: "Your account can't read the data I hold yet; ask the person who shared Strata with you for access.",
-    noIdentity: "I can't tell who you are, so I can't read any data; open Strata from its link in the workspace.",
+    noAccess: "Your account can't read the data I hold yet; ask the person who shared Prism with you for access.",
+    noIdentity: "I can't tell who you are, so I can't read any data; open Prism from its link in the workspace.",
     // What the address asks for that the server could not apply (the 40 brief, 6.3). The banners for a view and a
     // date it did apply are under view.banner.
     viewUnknown: "I don't know the view in this link, so you are seeing the World Bank staff view.",
@@ -398,11 +398,11 @@ export const copy = {
       publicAsOf: (date: string) => `Public preview, as of ${date}.`,
     },
     title: {
-      piu: (title: string) => `${title} (implementing agency preview) | Strata`,
-      public: (title: string) => `${title} (public preview) | Strata`,
-      asOf: (title: string, date: string) => `${title} (as of ${date}) | Strata`,
-      piuAsOf: (title: string, date: string) => `${title} (implementing agency preview, as of ${date}) | Strata`,
-      publicAsOf: (title: string, date: string) => `${title} (public preview, as of ${date}) | Strata`,
+      piu: (title: string) => `${title} (implementing agency preview) | Prism`,
+      public: (title: string) => `${title} (public preview) | Prism`,
+      asOf: (title: string, date: string) => `${title} (as of ${date}) | Prism`,
+      piuAsOf: (title: string, date: string) => `${title} (implementing agency preview, as of ${date}) | Prism`,
+      publicAsOf: (title: string, date: string) => `${title} (public preview, as of ${date}) | Prism`,
     },
     status: {
       leftPreview: "You left the preview. You are seeing the World Bank staff view.",
@@ -415,7 +415,7 @@ export const copy = {
       title: (viewName: string) => `This page isn't part of the ${viewName} view.`,
       body: "Leave the preview to see it again. Nothing on the page changed.",
       link: "Go to Projects",
-      packagesBody: "Members of the public see projects, lessons and data in Strata. Leave the preview to see Packages again.",
+      packagesBody: "Members of the public see projects, lessons and data in Prism. Leave the preview to see Packages again.",
     },
     // The reason the server gives, and the held control shows, for an act whose screen no preview shows.
     actPreview: "This is a preview, so I don't record anything you do here.",
@@ -490,8 +490,8 @@ export const copy = {
       signedIn: (email: string) => `Signed in as ${email}`,
       identityError: "I can't tell which account you signed in with.",
       signedOut: "You are not signed in.",
-      // The views the popover offers, as link rows (the 40 brief, 3.3). "See Strata as" keeps the ticket's words.
-      group: "See Strata as",
+      // The views the popover offers, as link rows (the 40 brief, 3.3). "See Prism as" keeps the ticket's words.
+      group: "See Prism as",
       rows: {
         staff: { label: "World Bank staff", desc: "Your own view, with everything I show." },
         piu: {
@@ -502,7 +502,7 @@ export const copy = {
         public: { label: "The public", desc: "A preview of what a member of the public sees. It has projects, lessons and data only." },
       },
       date: {
-        label: "See Strata as of a past date",
+        label: "See Prism as of a past date",
         hint: "I show only what was disclosed by that date.",
         submit: "Show this date",
         errorEmpty: "Choose a date first.",
@@ -517,11 +517,11 @@ export const copy = {
   box: {
     // Ticket 127: the field's accessible name, never printed in the Ask bar (the owner's call of October 29, 2026);
     // the placeholders from 768 px carry the word instead. label is its description.
-    name: "Ask Strata",
+    name: "Ask Prism",
     label: "Open a project or package, or ask a question",
-    placeholderWide: "Open a project or package, or ask Strata a question",
-    placeholderProject: "Ask Strata about this project",
-    placeholderPackage: "Ask Strata about this package",
+    placeholderWide: "Open a project or package, or ask Prism a question",
+    placeholderProject: "Ask Prism about this project",
+    placeholderPackage: "Ask Prism about this package",
     // Below 768 px (ticket 93), so they are never cut; the field's description stays label.
     placeholderShort: "Open a project or package, or ask",
     placeholderProjectShort: "Ask about this project",
@@ -639,7 +639,7 @@ export const copy = {
     notChecked: "Not checked",
     dataNote: "Data note",
     // Ticket 132: the plan still says pending, and a later record says the contract was signed. The badge keeps to one
-    // short word pair, as Watch does, so the What Strata found column fits beside the drawer; the finding and the reason
+    // short word pair, as Watch does, so the What Prism found column fits beside the drawer; the finding and the reason
     // say "since the plan".
     movedOn: "Moved on",
     partial: "Partial",
@@ -842,7 +842,7 @@ export const copy = {
         item: "It cited a quote but did not show the quoted words.",
         joined: "it cited a quote but did not show the quoted words",
       },
-      // Ticket 18: a number that only Strata's own summary of a table holds, not the table's rows.
+      // Ticket 18: a number that only Prism's own summary of a table holds, not the table's rows.
       number_only_in_table_summary: {
         item: "This number came only from my summary of a table, not from the table's rows.",
         joined: "that number came only from my summary of a table, not from the table's rows",
@@ -1039,11 +1039,11 @@ export const copy = {
       },
     },
   },
-  // Strata's byline (ticket 111; DESIGN.md section 1, principle 6): since ticket 126 it shows no words, and only a
-  // screen reader hears it, as the answer's h3. It names Strata in the third person, as the fixed label "Strata leans on
+  // Prism's byline (ticket 111; DESIGN.md section 1, principle 6): since ticket 126 it shows no words, and only a
+  // screen reader hears it, as the answer's h3. It names Prism in the third person, as the fixed label "Prism leans on
   // this" does (section 7, rule 35). A finding that runs no model keeps only its data-byline attribute.
   byline: {
-    strata: "Strata",
+    strata: "Prism",
     // Over an answer.
     inShort: "{strata}, in short",
     // Over an answer that abstains, the sign that the verifier let an uncited sentence stand on a tool's abstention.
@@ -1230,7 +1230,7 @@ export const copy = {
     // What a record the contract trail opens is called, by the kind its row names (ticket 22), since one table
     // holds every type of notice.
     recordKindsByKey: { notice: "Notice", award_notice: "Award notice", contract: "Contract", activity: "Activity" } as Record<string, string>,
-    // "Open the activity" on a notice, award notice, contract or plan row whose activity Strata holds (ticket 22).
+    // "Open the activity" on a notice, award notice, contract or plan row whose activity Prism holds (ticket 22).
     openActivity: "Open the activity",
     openActivityFor: (ref: string) => ` ${ref}`,
     // The one caption sentence under a plan check row's reference in the drawer's head, saying what the records are
@@ -1275,7 +1275,7 @@ export const copy = {
       awards_fy2001_2016: "World Bank contract awards data, fiscal 2001 to 2016, contract signed {date}.",
       projects_api_ratings: "World Bank projects API, ratings from the ISR of {date}.",
       isr_ratings: "The overall ratings table of the ISR of {date}, as I read it.",
-      plan_baseline: "Strata's baseline, saved by World Bank staff on {date}.",
+      plan_baseline: "Prism's baseline, saved by World Bank staff on {date}.",
       // A mission brief's records (ticket 37). Its award records use awards above.
       plans: "Procurement Plan of {date}, from the World Bank documents API.",
     } as Record<string, string>,
@@ -1307,7 +1307,7 @@ export const copy = {
       isr_date: "ISR date",
       esf_risk: "Environmental and social risk",
       ea_category: "Environmental Assessment Category",
-      sector_name: "Sector, as Strata groups it",
+      sector_name: "Sector, as Prism groups it",
       sector_share: "Sector and share",
       total_commitment_usd: "Total commitment (US$)",
       plan_date: "Plan date",
@@ -1371,11 +1371,11 @@ export const copy = {
       review_type: "Review Type",
       process_status: "Process Status",
     } as Record<string, string>,
-    // A lesson in Strata's library, which an answer or the lesson review writer cites by version: the
+    // A lesson in Prism's library, which an answer or the lesson review writer cites by version: the
     // drawer's eyebrow, its source line and the marker's name ("Source 2: Lesson, version 1, Put forest and
     // other permits in place before awarding contracts").
-    lessonSource: "Strata's lesson library, version {version}, decided on {date}.",
-    lessonSourceUndated: "Strata's lesson library, version {version}.",
+    lessonSource: "Prism's lesson library, version {version}, decided on {date}.",
+    lessonSourceUndated: "Prism's lesson library, version {version}.",
     markerLesson: (version: string, statement: string) => `Lesson, version ${version}, ${statement}`,
     switcherLesson: (version: string) => `Lesson, version ${version}`,
     // The record view's fields keep STEP's own names; the description's is STEP's "Description".
@@ -1386,13 +1386,13 @@ export const copy = {
     recordSource: "{doc}, {agency}, {pid}, version of {date}, page\u00a0{page}.",
     recordSourceShort: "{doc}, {pid}, {date}.",
     // A tool's totals record, such as the mission brief's totals (ticket 37), as a footnote names it.
-    toolSource: "Strata's totals of this project's records, as of {date}.",
+    toolSource: "Prism's totals of this project's records, as of {date}.",
     // Ticket 36: a passage a lesson rests on, the count of comparable completion reports, and a lesson version, as
     // the evidence pack and a Word footnote name them.
     passageSource: "{doc}, {pid}, {date}, {place}, page {page}.",
     passageParagraph: "paragraph {para}",
     passageSection: "section {section}",
-    countsSource: "Strata's count of comparable completion reports, as of {date}.",
+    countsSource: "Prism's count of comparable completion reports, as of {date}.",
     // The heading when no source could be shown.
     untitled: "Source",
     // The excerpt sits in straight quotes, as the paragraph's own words.
@@ -1601,7 +1601,7 @@ export const copy = {
     // kind (config/project_page.toml's document groups).
     placeWord: { icr_review: "section" } as Record<string, string>,
     placeWordOther: "paragraph",
-    lean: "Strata leans on this",
+    lean: "Prism leans on this",
     // A report's abbreviation by its kind (config/project_page.toml's document groups), for its short name.
     shortType: {
       pad: "PAD",
@@ -1679,11 +1679,11 @@ export const copy = {
         saving: "Saving",
         empty: "Write a reason, so the evidence pack says why you kept {other}.",
         failed: "I couldn't save your reason just now. Your text is still here.",
-        // Going back to Strata's choice did not save: the kept choice stands.
+        // Going back to Prism's choice did not save: the kept choice stands.
         backFailed: "I couldn't save that just now, so you still keep {other}.",
         retry: "Try again",
         kept: "You kept {other} on {date}. Your reason: \"{reason}\"",
-        undo: "Go back to Strata's choice",
+        undo: "Go back to Prism's choice",
         preview: "This is a preview, so I don't record choices here.",
         saved: "Saved. You kept {other}, and your reason goes into the evidence pack.",
         // A warning card on a draft (ticket 36; the 36 brief, 5.6): the author keeps one report before export.
@@ -1692,7 +1692,7 @@ export const copy = {
         lean: "Keep {lean}",
         keptLean: "You kept {lean} on {date}.",
         savedLean: "Saved. You kept {lean}.",
-        wentBack: "Saved. You went back to Strata's choice. Your earlier reason stays in the record.",
+        wentBack: "Saved. You went back to Prism's choice. Your earlier reason stays in the record.",
       },
       loadFailed: "I couldn't load these two reports.",
     },
@@ -1806,7 +1806,7 @@ export const copy = {
       "shows when each source last ran.",
     emptyLink: "Data readiness",
     error: "I couldn't load the list of projects because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't list the projects.",
+    permission: "Your account can't read Prism's tables, so I can't list the projects.",
   },
 
   // Your agency's projects, at the top of /projects in the implementing agency view (ticket 40; the 40 brief, 6.5).
@@ -1818,7 +1818,7 @@ export const copy = {
     none: (agency: string) => `The World Bank hasn't disclosed a Procurement Plan from ${agency} yet.`,
     item: (date: string) => `Procurement Plan of ${date}`,
     caption: "{name} ({pid}).",
-    source: (agency: string) => `Procurement Plans that the World Bank disclosed for ${agency}. Marks from Strata's fixed checks.`,
+    source: (agency: string) => `Procurement Plans that the World Bank disclosed for ${agency}. Marks from Prism's fixed checks.`,
     sourceAsOf: (agency: string, date: string) =>
       `Procurement Plans that the World Bank disclosed for ${agency}. Records as of ${date}.`,
     loading: "Loading your agency's plans.",
@@ -1944,7 +1944,7 @@ export const copy = {
     emptyBody: "Open a project and choose Follow this project. I check the projects you follow every night and list them here with their signals.",
     emptyLink: "Go to All projects",
     error: "I couldn't load the projects you follow because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show the projects you follow.",
+    permission: "Your account can't read Prism's tables, so I can't show the projects you follow.",
     notStaffTitle: "I show Following only to World Bank staff.",
     notStaffBody: "Your account is not in the World Bank staff group, so I can't show signals on projects. You can still find any project in All projects.",
     notStaffLink: "Go to All projects",
@@ -2210,7 +2210,7 @@ export const copy = {
     tab: { summary: "Summary", procurement: "Procurement", timeline: "Timeline", documents: "Documents", connections: "Connections" },
     loading: "Loading this project.",
     error: "I couldn't load this project's Procurement Plans because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show this project.",
+    permission: "Your account can't read Prism's tables, so I can't show this project.",
     notFoundTitle: "I don't have a project with the ID {pid}.",
     notFoundBody: "Check the ID, or find the project in All projects.",
     notFoundLink: "All projects",
@@ -2325,7 +2325,7 @@ export const copy = {
     // The section's heading when the comparison failed, so the version before is not known.
     titleUnknown: "What changed in this plan",
     lead: "This version {change_list}.",
-    // The page spells STEP out once, in "Not visible to Strata", above this note.
+    // The page spells STEP out once, in "Not visible to Prism", above this note.
     matchNote: "I match activities on their STEP reference. If an activity's reference changed, it shows here as dropped and added.",
     overlapNote: "An activity can appear in more than one table.",
     tableTitle: {
@@ -2430,7 +2430,7 @@ export const copy = {
       esf_rating: "Environmental and social risk",
       ea_category: "Environmental Assessment Category",
       region: "Region",
-      sector: "Sector, as Strata groups it",
+      sector: "Sector, as Prism groups it",
       sectors: "Sectors in the project record",
       agency: "Implementing agency",
       agencies: "Implementing agencies",
@@ -2489,7 +2489,7 @@ export const copy = {
       "so I have no ratings to show.",
     loading: "Loading this summary.",
     error: "I couldn't load this summary because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show this summary.",
+    permission: "Your account can't read Prism's tables, so I can't show this summary.",
   },
 
   // A project's Documents tab (the 21 brief, section 6): one table grouped by type, in the order a project
@@ -2571,7 +2571,7 @@ export const copy = {
     outsideLink: "Data readiness",
     loading: "Loading this project's documents.",
     error: "I couldn't load this project's documents because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't list this project's documents.",
+    permission: "Your account can't read Prism's tables, so I can't list this project's documents.",
   },
 
   // The source view (the 21 brief, section 7): one page of a document's own words, at a page and paragraph.
@@ -2662,7 +2662,7 @@ export const copy = {
     asofBody: "The World Bank disclosed it on {date}, after that date.",
     loading: (page: string) => `Loading page ${page}.`,
     error: "I couldn't load this page because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show this document.",
+    permission: "Your account can't read Prism's tables, so I can't show this document.",
     documentTitle: "{doc}, page {page}",
   },
 
@@ -2705,7 +2705,7 @@ export const copy = {
     failed: "I couldn't make that change because the data service didn't answer.",
     tryAgain: "Try again",
     permission:
-      "Your account can't save to Strata's tables, so I can't save the baseline. Ask your workspace admin for write " +
+      "Your account can't save to Prism's tables, so I can't save the baseline. Ask your workspace admin for write " +
       "access to the strata catalog.",
     piuSet: "The baseline is the plan of {baseline_date}, saved on {saved_date} as the plan agreed at negotiations. Only World Bank staff can change it.",
     piuNone: "No plan from this agency is saved as the baseline.",
@@ -2796,7 +2796,7 @@ export const copy = {
       thisPlanUnnamed: "This plan, saved on {saved_date}.",
       // The baseline row at the page's end holds its save and change controls (Baseline for delay).
       baselineLink: "Go to Baseline for delay",
-      baselineSource: "Strata's saved baselines, as of {date}.",
+      baselineSource: "Prism's saved baselines, as of {date}.",
     },
     // The panel that holds the activities' table (ticket 100; DESIGN.md section 5, Plan check table).
     activitiesTitle: "Activities in this plan",
@@ -2842,7 +2842,7 @@ export const copy = {
       review: "Review",
       estimated: "Estimated (US$)",
       status: "Process status",
-      found: "What Strata found",
+      found: "What Prism found",
     },
     // "Request for Bids · Open - National", as STEP gives the two values. The dot is tied to the
     // Method with a no-break space, so a line never starts with it.
@@ -2881,7 +2881,7 @@ export const copy = {
       hide: (count: number) => (count === 1 ? "Hide it" : "Hide them"),
     },
     notVisible:
-      "Not visible to Strata: the prior-review queue, complaints, contract amendments and contract management reports. " +
+      "Not visible to Prism: the prior-review queue, complaints, contract amendments and contract management reports. " +
       "Those stay in " +
       STEP_SPELLED +
       ".",
@@ -2889,7 +2889,7 @@ export const copy = {
       plan: "Procurement Plan, {agency}, {pid}, version of {date}, disclosed {disclosed}.",
       closing: "Project closing date from the World Bank's projects API, record of {date}.",
       // {date} is the date the page reads the records as of, not a date the checks ran.
-      marks: "Marks from Strata's fixed checks, as of {date}.",
+      marks: "Marks from Prism's fixed checks, as of {date}.",
       open: "The plan on the World Bank's documents site",
     },
     // The visually hidden status that announces steps, not rows.
@@ -3002,7 +3002,7 @@ export const copy = {
     noPlanAsOfTitle: (date: string) => `I have no plan from this agency that was public on ${date}.`,
     latestLink: (date: string) => `Plan of ${date}`,
     error: "I couldn't load this plan's check because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show this plan.",
+    permission: "Your account can't read Prism's tables, so I can't show this plan.",
     // The draft action in the header's free slot (the 35 brief, section 5.1). {n} is check_plan's count of
     // the activities with a signal.
     draftAction: {
@@ -3063,7 +3063,7 @@ export const copy = {
     access: { lead: "Official Use Only", dot: "·", comma: ",", rest: "visible to your team" },
     accessCompact: "Official Use Only",
     privacy: (agency: string) =>
-      `Strata shows this upload, and every draft I make from it, only to your team at ${agency}. I keep it out of the ` +
+      `Prism shows this upload, and every draft I make from it, only to your team at ${agency}. I keep it out of the ` +
       "search that answers other people's questions.",
     kept: "I keep the activities I read from your file, not the file itself.",
     projectLabel: "Project",
@@ -3078,7 +3078,7 @@ export const copy = {
     projectError: "Choose the project this plan belongs to.",
     fileLabel: "Procurement Plan file",
     // Which hint shows is config/uploads.toml's format: step_export once a STEP export is confirmed, published_tables
-    // while Strata reads the column names of a published plan's tables (the STEP export check, docs/PLAN.md section 18).
+    // while Prism reads the column names of a published plan's tables (the STEP export check, docs/PLAN.md section 18).
     format: {
       step_export: (formats: string, size: string) => `Choose the plan you exported from STEP, as ${formats}. Files up to ${size}.`,
       published_tables: (formats: string, size: string) =>
@@ -3122,7 +3122,7 @@ export const copy = {
       too_many_rows: (name: string, n: string, max: string) =>
         `${name} lists ${n} activities, and I check up to ${max} at a time. I kept nothing.`,
       service: (name: string) => `I read ${name} but couldn't check it, because the data service didn't answer. I kept nothing.`,
-      permission: (_name: string) => "Your account can't save to Strata's tables, so I can't keep a check of your plan. I kept nothing.",
+      permission: (_name: string) => "Your account can't save to Prism's tables, so I can't keep a check of your plan. I kept nothing.",
       dropped: (name: string) => `The connection dropped while I was uploading ${name}. I kept nothing.`,
       type: (name: string) => `I can read an Excel file (.xlsx) or a CSV file, and ${name} is neither. I kept nothing.`,
       empty: (name: string) => `${name} is empty. I kept nothing.`,
@@ -3148,7 +3148,7 @@ export const copy = {
     noProjectTitle: (agency: string) => `I can't find a project for ${agency} in the World Bank's project records.`,
     noProjectBody:
       "I need the project to check a plan against its closing date and its comparable packages. Ask the person who shared " +
-      "Strata with you to add the project to your team.",
+      "Prism with you to add the project to your team.",
   },
   // The upload's check (the 38 brief, section 5.4): brief 10's page, with these lines added.
   uploadCheck: {
@@ -3203,7 +3203,7 @@ export const copy = {
         // The breadcrumb's last step and the Drafts tab's row title, with the short date.
         crumb: (date: string) => `Review notes on the plan of ${date}`,
         rowTitle: (agency: string, date: string) => `Review notes on the ${agency} plan of ${date}`,
-        // The browser tab, before " | Strata".
+        // The browser tab, before " | Prism".
         pageTitle: (agency: string, date: string) => `Review notes on the ${agency} plan of ${date}`,
         // Under the h1: "Northern Water Works Development Agency, Procurement Plan of October 9, 2026".
         subtitle: "{agency}, Procurement Plan of {date}",
@@ -3283,7 +3283,7 @@ export const copy = {
           nothing_marked: "No activity in this plan needs a look or is worth watching, so I saved nothing.",
           // The viewer's own read of the plan's check was refused.
           permission:
-            "Your account can't read this plan's check in Strata's tables, so I can't write review notes. Ask your " +
+            "Your account can't read this plan's check in Prism's tables, so I can't write review notes. Ask your " +
             "workspace admin for read access to the strata catalog.",
           internal: "Something went wrong on my side, so I couldn't write the review notes. I saved nothing.",
           dropped: "The connection dropped before I finished the review notes. I saved nothing.",
@@ -3367,7 +3367,7 @@ export const copy = {
           no_plan: "I don't hold a record of this project, so I wrote nothing and saved nothing.",
           nothing_marked: "I found nothing to write about, so I saved nothing.",
           permission:
-            "Your account can't read this project's records in Strata's tables, so I can't write a mission brief. Ask your " +
+            "Your account can't read this project's records in Prism's tables, so I can't write a mission brief. Ask your " +
             "workspace admin for read access to the strata catalog.",
           internal: "Something went wrong on my side, so I couldn't write the mission brief. I saved nothing.",
           dropped: "The connection dropped before I finished the mission brief. I saved nothing.",
@@ -3450,7 +3450,7 @@ export const copy = {
           draft_store: "I couldn't save the draft, because I can't write to my drafts tables right now. I saved nothing.",
           no_plan: "I couldn't find this plan, so I dated nothing and saved nothing.",
           permission:
-            "Your account can't read the records I date from in Strata's tables, so I can't draft planned dates. Ask your " +
+            "Your account can't read the records I date from in Prism's tables, so I can't draft planned dates. Ask your " +
             "workspace admin for read access to the strata catalog.",
           internal: "Something went wrong on my side, so I couldn't draft the planned dates. I saved nothing.",
           dropped: "The connection dropped before I finished the planned dates. I saved nothing.",
@@ -3563,7 +3563,7 @@ export const copy = {
           no_plan: "I couldn't find this version of the plan, so I wrote nothing and saved nothing.",
           nothing_marked: "I found nothing to write about, so I saved nothing.",
           permission:
-            "Your account can't read this plan's check in Strata's tables, so I can't write a Project Paper summary. Ask " +
+            "Your account can't read this plan's check in Prism's tables, so I can't write a Project Paper summary. Ask " +
             "your workspace admin for read access to the strata catalog.",
           internal: "Something went wrong on my side, so I couldn't write the Project Paper summary. I saved nothing.",
           dropped: "The connection dropped before I finished the Project Paper summary. I saved nothing.",
@@ -3701,7 +3701,7 @@ export const copy = {
       notFoundLink: "Go to Drafts",
       error: "I couldn't load this draft because the data service didn't answer.",
       draftStore: "I can't show this draft, because I can't read my drafts tables right now.",
-      permission: "Your account can't read Strata's tables, so I can't show this draft.",
+      permission: "Your account can't read Prism's tables, so I can't show this draft.",
       publicTitle: "The public view has no drafts.",
       publicBody: "Drafts belong to the team that made them. Leave the preview to see yours.",
     },
@@ -3739,7 +3739,7 @@ export const copy = {
       loading: "Loading your team's drafts.",
       error: "I couldn't load your team's drafts because the data service didn't answer.",
       draftStore: "I can't list your team's drafts, because I can't read my drafts tables right now.",
-      permission: "Your account can't read Strata's tables, so I can't list your team's drafts.",
+      permission: "Your account can't read Prism's tables, so I can't list your team's drafts.",
     },
     // The export's files (section 6.7), which the server writes from src/strata/drafts/copy.json
     // (node web/lint/server-copy.ts --write). Word's text speaks in the document's voice: no "I" or
@@ -3752,7 +3752,7 @@ export const copy = {
           heading: "Review notes on the {agency} plan of {date}",
           line: "{project_name} ({project_id}). Procurement Plan of {date}.",
           origin:
-            "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo " +
+            "Drafted with Prism on {created} and checked by {checker} on {checked}. Prism is an independent demo " +
             "built on World Bank open data. These notes are not a World Bank review, clearance or no-objection.",
           columns: ["Activity", "Review note"],
         },
@@ -3761,7 +3761,7 @@ export const copy = {
           heading: "Mission brief for {project_name} ({project_id})",
           line: "{country}. Public records through {date}.",
           origin:
-            "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo " +
+            "Drafted with Prism on {created} and checked by {checker} on {checked}. Prism is an independent demo " +
             "built on World Bank open data. This brief is not a World Bank review, clearance or no-objection.",
           parts: {
             plans: "Latest Procurement Plans",
@@ -3817,8 +3817,8 @@ export const copy = {
           project: "{project_name} ({project_id}).",
           form: "{form_name}.",
           origin:
-            "Drafted with Strata on {created} and checked by {checker} on {checked}. {author} set the {set_what}. " +
-            "Strata is an independent demo built on World Bank open data. These are suggested rows for the borrower's " +
+            "Drafted with Prism on {created} and checked by {checker} on {checked}. {author} set the {set_what}. " +
+            "Prism is an independent demo built on World Bank open data. These are suggested rows for the borrower's " +
             "PPSD and are not a World Bank review, clearance or no-objection.",
           setOwners: "risk owners",
           setOwnersRatings: "risk owners and ratings",
@@ -3836,7 +3836,7 @@ export const copy = {
           heading: "Procurement summary for the Project Paper",
           line: "{project_name} ({project_id}). {agency}, Procurement Plan of {date}.",
           origin:
-            "Drafted with Strata on {created} and checked by {checker} on {checked}. Strata is an independent demo " +
+            "Drafted with Prism on {created} and checked by {checker} on {checked}. Prism is an independent demo " +
             "built on World Bank open data. This summary is not a World Bank review, clearance or no-objection.",
           parts: {
             plan: "The Procurement Plan",
@@ -4007,12 +4007,12 @@ export const copy = {
     missing: "Not in the plan row",
     loading: "Loading this package.",
     error: "I couldn't load this package.",
-    permission: "Your account can't read Strata's tables, so I can't show this package.",
+    permission: "Your account can't read Prism's tables, so I can't show this package.",
     notFoundTitle: "I can't find a package with this reference",
     // {ref} carries its own full stop, so the two move to a new line together.
     // The box opens a project by its ID or name, so the next step is the box, at the bottom of every page since ticket
     // 113 (ticket 58; the 12 brief's "search for its project in the box").
-    notFoundBody: "No package in Strata has the reference {ref} Check the reference in STEP, or find its project in the box at the bottom of the page.",
+    notFoundBody: "No package in Prism has the reference {ref} Check the reference in STEP, or find its project in the box at the bottom of the page.",
     notFoundLink: "All projects",
     // The package's facts beside its zones, from a frame of 75rem (DESIGN.md section 5, Side panel; ticket 101).
     factsTitle: "From the plan row",
@@ -4042,7 +4042,7 @@ export const copy = {
     heading: "How long it took",
     loading: "Loading the comparable packages.",
     error: "I couldn't load the comparable packages for this section.",
-    permission: "Your account can't read Strata's tables, so I can't show the comparable packages.",
+    permission: "Your account can't read Prism's tables, so I can't show the comparable packages.",
     // The finding, at the plan row's own months. A number keeps its "months" and a share of 10 its words, with no-break
     // spaces, and Fill keeps a pressed number with the full stop after it (ticket 101's design review).
     title: {
@@ -4108,7 +4108,7 @@ export const copy = {
       period: "had notices from {from} to {to}",
       // A plan older than the period's start runs the period to the as-of date, in a sentence of its own that says why
       // (ticket 137; web/src/lib/period.ts picks it from find_comparables' criteria.period). periodOlder names the
-      // dataset whose first day starts the period (past_range.period_from), because Strata also holds awards from
+      // dataset whose first day starts the period (past_range.period_from), because Prism also holds awards from
       // before it (fiscal 2001 to 2016, and award notices of fiscal 2017 to 2019).
       periodOlder:
         "The plan is older than the contract awards data since fiscal 2020, so I compared packages with notices from {from} to {to}.",
@@ -4314,7 +4314,7 @@ export const copy = {
       // A period that would end before it starts names no range: it says why no package can match (ticket 137). Its
       // start is past_range.period_from, the first day of the contract awards data since fiscal 2020; the awards of
       // fiscal 2001 to 2016 and the award notices of fiscal 2017 to 2019 come before it, so the sentence names the
-      // period's start, never the start of every award Strata holds.
+      // period's start, never the start of every award Prism holds.
       noneBeforeData:
         "The period of notices starts on {from}, when the contract awards data since fiscal 2020 begin. That is after the as-of " +
         "date of {asOf}, so no past package can match.",
@@ -4754,7 +4754,7 @@ export const copy = {
       // A source the owner has not yet checked against a dated table.
       sourceUndated: "{source}.",
       // A threshold's tooltip names its entry in the thresholds file and its source.
-      thresholdTip: (entry: string, source: string) => `From ${entry} in Strata's thresholds file. ${source}.`,
+      thresholdTip: (entry: string, source: string) => `From ${entry} in Prism's thresholds file. ${source}.`,
       noRule: "I can compute review type and market approach once you add the category, the estimated amount and the country.",
     },
     // Its first clause is the refusal's lead, so the two never drift apart (the 24 brief, section 5.6).
@@ -5001,7 +5001,7 @@ export const copy = {
     // {names} lists the records' sources and the lesson library last, with one "and" (the 58 critique, round 3).
     sourceLine: "{names}. Records run through {date}.",
     sourceLineAsOf: "{names}. Records as of {date}.",
-    lessonLibrary: "Strata's lesson library",
+    lessonLibrary: "Prism's lesson library",
     empty: {
       missing: "Add {list} above, and I'll look for the risks that came up for comparable packages.",
       noComparables: "I found no comparable packages, so I have no completion reports to look in.",
@@ -5843,11 +5843,11 @@ export const copy = {
     provenanceName: "How I built this headline",
     provenance: "I built this from the measures below, taken {date}. No model wrote it.",
     provenanceRange: "I built this from the measures below, taken {from} to {to}. No model wrote it.",
-    // Under a headline Strata doesn't give, where "this" would point at nothing.
+    // Under a headline Prism doesn't give, where "this" would point at nothing.
     provenanceAbstained: "I took the measures below on {date}.",
     provenanceAbstainedRange: "I took the measures below from {from} to {to}.",
     // The source line under each table.
-    sourceLine: "Strata's data readiness measures, taken {date}.",
+    sourceLine: "Prism's data readiness measures, taken {date}.",
     // Each column head opens its definition; no line restates the heads under them or under the title (ticket 126).
     kinds: {
       title: "What you can ask",
@@ -5991,7 +5991,7 @@ export const copy = {
       show: "Show the documents",
       hide: "Hide the documents",
       caption: "Each row says what makes the document hard, what I recovered, and the page where you can compare the two.",
-      sourceLine: "Strata's reading records, taken {date}. Documents from the World Bank's Documents and Reports.",
+      sourceLine: "Prism's reading records, taken {date}. Documents from the World Bank's Documents and Reports.",
       columns: {
         document: { label: "Document" },
         hard: { label: "What makes it hard", about: "why I chose it" },
@@ -6085,14 +6085,14 @@ export const copy = {
         } as Record<string, string>,
         read: { title: "Pages read so far", definition: "How many of the document's pages I have read, from either route, out of its pages in the PDF." },
         longest: { title: "The longest document I read", definition: "How many pages the longest document I read has, in its PDF." },
-        // Strata's own settings, not measures, so each has a tooltip and no window (design review r2 P4).
+        // Prism's own settings, not measures, so each has a tooltip and no window (design review r2 P4).
         limit: "The most pages I send the layout parser at once. It is my own setting, not a measure.",
         cap: "The most pages I send the layout parser in one day. It is my own setting, not a measure.",
       },
       windowRows: { from: "Counted against", parser: "Layout parser" },
       // A parser's name a reader can follow, by its registry name (src/strata/reader/layout.py, PARSERS). A parser not
       // named here shows its registry name in mono, as the live ai_parse_document does (the 58 critique, round 2, 8).
-      // The offline parser is a substitute for ai_parse_document: Strata's own code rebuilds each page's tables from
+      // The offline parser is a substitute for ai_parse_document: Prism's own code rebuilds each page's tables from
       // the words recorded from the PDF's text layer. It is not a copy of the live parser's results (58 round 3, B1).
       parserNames: { "recorded words": "My offline substitute" } as Record<string, string>,
       noHandCount: "I have no count of the annex's risks to check this against.",
@@ -6255,10 +6255,10 @@ export const copy = {
       timeout: "I couldn't load the measures, because the database didn't answer within {seconds} seconds. Try again in a minute.",
       permission:
         "I couldn't load the measures, because your account doesn't have access to them. Ask the person who runs " +
-        "Strata to give your account access.",
+        "Prism to give your account access.",
       other:
         "I couldn't load the measures, because the server returned an error. Try again. If it fails again, tell the " +
-        "person who runs Strata.",
+        "person who runs Prism.",
       tryAgain: "Try again",
     },
     // Each number's tooltip and the window a click opens (the 16 brief, section 5.8). The tooltip's first part says what
@@ -6308,7 +6308,7 @@ export const copy = {
         after: ".",
       },
       terms: { before: "Terms of use: ", link: "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets" },
-      changes: "Strata joined these records, read the documents, and summarized them. These changes are Strata's own.",
+      changes: "Prism joined these records, read the documents, and summarized them. These changes are Prism's own.",
       caveat: "The World Bank does not guarantee the accuracy of the data.",
       empty: "I haven't been set up to read any datasets yet.",
       emptyBody: "Each dataset appears here, credited the way the World Bank asks, once I'm set up to read it.",
@@ -6459,23 +6459,23 @@ export const copy = {
       // states a number, because a title is fixed when the dashboard is deployed; the day's finding
       // is the headline in its own tile. DESIGN.md section 6 records why.
       dashboard: {
-        name: "Strata",
+        name: "Prism",
         page: "Data readiness",
         introHeading: "Data readiness",
         intro:
           "How fit each source is to support answers. These are the same measures as the Data readiness page in " +
-          "Strata. Pick a measure date to compare the two.",
+          "Prism. Pick a measure date to compare the two.",
         measureDate: "Measure date",
         measureDateAbout: "Every tile shows the newest measures taken on or before this date. It starts on today's date.",
         headline: "What the measures say",
-        headlineAbout: "The day's headline, written by the same code as the Data readiness page in Strata.",
+        headlineAbout: "The day's headline, written by the same code as the Data readiness page in Prism.",
         measuredOn: "Measured on",
         headlineColumn: "Headline",
         awardRows: "Contract-award rows per fiscal year, by dataset",
         awardRowsAbout:
-          "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Strata counts " +
+          "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Prism counts " +
           "them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for " +
-          "each contract, because Strata shows those years as a Gap with no count. A missing bar means no rows.",
+          "each contract, because Prism shows those years as a Gap with no count. A missing bar means no rows.",
         fiscalYear: "Fiscal year",
         rows: "Rows",
         dataset: "Dataset",
@@ -6483,7 +6483,7 @@ export const copy = {
         sourceRowsAbout:
           "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the " +
           "Independent Evaluation Group (IEG) ratings, with exact counts, then the documents I read of each type, " +
-          "by the fiscal year they were disclosed. Each source's rows are counted as its Coverage column in Strata " +
+          "by the fiscal year they were disclosed. Each source's rows are counted as its Coverage column in Prism " +
           "counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to " +
           "2019 count one row for each contract. It is the table for the chart of contract-award rows.",
         // A row of documents of one type, after the sources' rows (ticket 18).
@@ -6520,7 +6520,7 @@ export const copy = {
         rank: "Rank",
         fix: "Fix",
         projects: "Projects it would add evidence to",
-        notes: "Source: Strata's data readiness measures in strata.ops.",
+        notes: "Source: Prism's data readiness measures in strata.ops.",
         // What each dataset is, by its name in src/strata/dashboard, as AI/BI shows it in its data panel.
         datasets: {
           readiness_headline: "The day's headline",
@@ -6602,7 +6602,7 @@ export const copy = {
       outOfRangeBodyOne: "The library has one page.",
       firstPage: "Go to the first page",
       error: "I couldn't load the library because the data service didn't answer.",
-      permission: "Your account can't read Strata's tables, so I can't show the library.",
+      permission: "Your account can't read Prism's tables, so I can't show the library.",
       list: "Lessons in the library",
     },
     card: {
@@ -6669,7 +6669,7 @@ export const copy = {
         "and a decision.",
       emptyLink: "Go to Lessons",
       error: "I couldn't load the review queue because the data service didn't answer.",
-      permission: "Your account can't read Strata's tables, so I can't show the review queue.",
+      permission: "Your account can't read Prism's tables, so I can't show the review queue.",
       noAccessTitle: "I show this page only to lesson reviewers.",
       noAccessBody:
         "Lesson reviewers are the accredited and lead procurement specialists named for each region. Your account " +
@@ -6681,7 +6681,7 @@ export const copy = {
       decidedNoun: "decisions, newest first",
       decidedNounOne: "decision, newest first",
       decidedCaption: "Lessons decided in the last {days} days",
-      decidedSource: "Strata's lesson review records.",
+      decidedSource: "Prism's lesson review records.",
       columns: { lesson: "Lesson", outcome: "Outcome", decided: "Decided", days: "Days from publication" },
       daysDefinition: "report public to decision",
       // Cards have no column heads, so the days' definition ends the count line's row once.
@@ -6767,7 +6767,7 @@ export const copy = {
       notFoundBody: "Check the link, or find the lesson in Waiting for review.",
       notFoundLink: "Go to Waiting for review",
       error: "I couldn't load this lesson because the data service didn't answer.",
-      permission: "Your account can't read Strata's tables, so I can't show this lesson.",
+      permission: "Your account can't read Prism's tables, so I can't show this lesson.",
       pageTitle: "{statement}, Waiting for review",
       clockRegion: "{clock} {region}.",
       decidedOn: "Decided on {date}, {days} days after the report became public.",
@@ -7068,7 +7068,7 @@ export const copy = {
   lessonsPage: {
     loading: "Loading the lessons.",
     error: "I couldn't load the lessons because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show the lessons.",
+    permission: "Your account can't read Prism's tables, so I can't show the lessons.",
     firstCaption: "From your next visit, I start this page with what came in since this one.",
     previewNote:
       "This is a preview, so I leave out what is about you: the drafts you wrote, your reports and the proposed lessons.",
@@ -7302,7 +7302,7 @@ export const copy = {
     loading: "Loading this activity.",
     stillLoading: "Still loading this activity.",
     error: "I couldn't load this activity. The data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show this activity.",
+    permission: "Your account can't read Prism's tables, so I can't show this activity.",
     notFoundTitle: "I have no activity {stepRef} in {pid}.",
     notFoundBody: "Check the STEP reference, or find the activity in the project's Procurement Plans.",
     notFoundLink: "Procurement Plans for {pid}",
@@ -7516,13 +7516,13 @@ export const copy = {
     noneDetail: "I keep a link only when its score reaches {threshold}.",
     coverage: "I have read {read} of the project's {total} documents.",
     source:
-      "Procurement Plans, procurement notices and contract awards from the World Bank's APIs, and this project's documents, through {data_through}. The links are Strata's own, scored {scored_date}.",
+      "Procurement Plans, procurement notices and contract awards from the World Bank's APIs, and this project's documents, through {data_through}. The links are Prism's own, scored {scored_date}.",
     sourceUnscored:
       "Procurement Plans, procurement notices and contract awards from the World Bank's APIs, and this project's documents, through {data_through}.",
     loading: "Loading this project's connections.",
     stillLoading: "Still loading this project's connections.",
     error: "I couldn't load this project's connections. The data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show this project's connections.",
+    permission: "Your account can't read Prism's tables, so I can't show this project's connections.",
     emptyTitle: "I have no packages or documents for {pid} yet.",
     emptyBody: "Once I load this project's Procurement Plans and documents, this tab shows how they connect.",
     emptyLink: "Data readiness",
@@ -7728,15 +7728,15 @@ export const copy = {
       left_lower: "Left ranked lower",
       restored: "Ranking restored",
     } as Record<string, string>,
-    source: "Strata's passage report records.",
+    source: "Prism's passage report records.",
     emptyTitle: "No one has reported a passage yet.",
     emptyBody: "When someone marks a passage as wrong or not useful in the evidence drawer, the report appears here for review.",
     loading: "Loading the passage reports.",
     error: "I couldn't load the passage reports because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show the passage reports.",
+    permission: "Your account can't read Prism's tables, so I can't show the passage reports.",
     noAccessTitle: "I show this page only to passage reviewers.",
     noAccessBody:
-      "Passage reviewers are named in Strata's roles file. Your account isn't one of them, so the reports stay hidden " +
+      "Passage reviewers are named in Prism's roles file. Your account isn't one of them, so the reports stay hidden " +
       "from you.",
     noAccessLink: "Go to Lessons",
     // One passage's reports (section 5.4).
@@ -7862,7 +7862,7 @@ export const copy = {
     progressOther: { not_started: "Other judge: Not started", started: "Other judge: Started", finished: "Other judge: Finished" } as Record<string, string>,
     matched: "{agree} of {pool}",
     notYet: "Not yet",
-    source: "Strata's labeled set of queries, written from award notices published by the World Bank.",
+    source: "Prism's labeled set of queries, written from award notices published by the World Bank.",
     emptyToJudgeTitle: "You have judged every query.",
     emptyToJudgeBody: "The other judge has finished {done} of {total}.",
     emptyToJudgeLink: "Show the queries you both finished",
@@ -7876,10 +7876,10 @@ export const copy = {
     error: "I couldn't load the queries because the data service didn't answer.",
     // LoadError says what to ask for under the alert (copy.service.permissionBody), so the alert does not (the 58
     // critique, round 3).
-    permission: "Your account can't read Strata's tables, so I can't show the queries.",
+    permission: "Your account can't read Prism's tables, so I can't show the queries.",
     noAccessTitle: "I show this page only to query judges.",
     noAccessBody:
-      "Query judges are named in Strata's roles file. Your account isn't one of them, so the queries stay hidden from you.",
+      "Query judges are named in Prism's roles file. Your account isn't one of them, so the queries stay hidden from you.",
     noAccessLink: "Go to Lessons",
     // One query (section 5.6).
     breadcrumb: "Query {n}",
@@ -7952,7 +7952,7 @@ export const copy = {
     // reports disagree (ticket 126).
     subtitleNoLines: "Each mark is a {report} report, an {event} event or a {record} record.",
     subtitleList: "Each item is a report, an event or a record, in date order.",
-    // The lanes' nouns (ticket 126 dropped Strata's three-layer prefixes, "Why · evaluations" and the like).
+    // The lanes' nouns (ticket 126 dropped Prism's three-layer prefixes, "Why · evaluations" and the like).
     lane: { why: "Evaluations", how: "Operations", what: "Records" } as Record<string, string>,
     // The lane's word inside an item's name and the table's Stratum column.
     laneWord: { why: "Evaluations", how: "Operations", what: "Records" } as Record<string, string>,
@@ -8144,7 +8144,7 @@ export const copy = {
         contract_awards: "the contract award record",
         award_notice: "the award notice of {date}",
       } as Record<string, string>,
-      // The record Strata leans on, with no date.
+      // The record Prism leans on, with no date.
       leanName: { plan: "the plan", contract_awards: "the contract award record", award_notice: "the award notice" } as Record<string, string>,
       // The plan still says the contract is not signed, and a record says it was: the plan check's moved-on row. {status}
       // is the plan check's stillSays word for the plan's Process Status, or STEP's value word for word.
@@ -8183,7 +8183,7 @@ export const copy = {
     loading: "Loading the timeline.",
     stillLoading: "Still loading the timeline.",
     error: "I couldn't load this project's timeline because the data service didn't answer.",
-    permission: "Your account can't read Strata's tables, so I can't show this project's timeline.",
+    permission: "Your account can't read Prism's tables, so I can't show this project's timeline.",
     // The evidence drawer's views a timeline mark opens (the 23 brief, sections 6 and 7.4).
     drawer: {
       fromTimeline: "From the timeline",
@@ -8223,7 +8223,7 @@ export const copy = {
         heading: "{label}, {date}",
         labels: { type: "Document type", number: "Report number", date: "Document date", disclosed: "Disclosed", pages: "Pages" },
         // The as-of action (ticket 40; the 40 brief, 3.6): it opens the Timeline as of the day the report was disclosed.
-        asofAction: "See Strata as of this date",
+        asofAction: "See Prism as of this date",
         asofCaption: (date: string) => `It opens this project as it was on ${date}, the day the World Bank disclosed this report.`,
         ratings: "Ratings in this report",
         ratingsCols: { rating: "Rating", value: "Value", where: "Where" },
@@ -8269,7 +8269,7 @@ export const copy = {
         ratings: "ISR ratings of progress went from {first} to {last} over {count} ISRs.",
         ratingsSame: "ISR ratings of progress stayed {rating} over {count} ISRs.",
         noRatings: "I have no ISR ratings for this project.",
-        // When get_disagreements did not answer: Strata could not read the ratings, which is not having none.
+        // When get_disagreements did not answer: Prism could not read the ratings, which is not having none.
         ratingsFailed: "I couldn't read this project's ISR ratings just now.",
         line: "A dashed line joins {side1} and {side2}, which disagree.",
         // A line for several pairs (ticket 136): "A dashed line marks where the PAD and 13 ISRs disagree."
@@ -8321,7 +8321,7 @@ export const copy = {
     },
   },
 
-  // The AI/BI dashboard "Strata operations" (ticket 45; the 45 design brief), which src/strata/dashboard builds from
+  // The AI/BI dashboard "Prism operations" (ticket 45; the 45 design brief), which src/strata/dashboard builds from
   // code. These words never render in the web app: `node web/lint/server-copy.ts --write` copies dash and kpi into
   // src/strata/dashboard/copy.json, which the dashboard generator reads for titles, descriptions and text tiles, the
   // dashboard's queries read as SQL text, and the nightly job reads to write "What the measures say". So the copy
@@ -8329,11 +8329,11 @@ export const copy = {
   // than one (one and other), and the Python sentence builder writes one to nine in words (DESIGN.md section 7,
   // rule 12). {slots} are filled from the measures.
   dash: {
-    name: "Strata operations",
-    testName: "Strata operations (test)",
-    testLine: "This copy is for testing deploys. The dashboard people use is Strata operations.",
+    name: "Prism operations",
+    testName: "Prism operations (test)",
+    testLine: "This copy is for testing deploys. The dashboard people use is Prism operations.",
     warehouse:
-      "These tiles read Strata's tables through the SQL warehouse. If they are blank at first, the warehouse is " +
+      "These tiles read Prism's tables through the SQL warehouse. If they are blank at first, the warehouse is " +
       "starting, which can take up to a minute.",
     sourceLabel: "Source:",
     noteLabel: "Note:",
@@ -8378,16 +8378,16 @@ export const copy = {
     },
     // The Data readiness page's notes (the 45 brief, section 5, tile 10).
     readiness: {
-      source: "Strata's data readiness measures in strata.ops.",
+      source: "Prism's data readiness measures in strata.ops.",
     },
     gov: {
       page: "Governance",
       intro:
         "This page shows whether each nightly run passed its quality checks, what Azure has cost against the " +
-        "budget, and what personal data I removed at ingestion. It also shows who read Strata's tables, and traces " +
+        "budget, and what personal data I removed at ingestion. It also shows who read Prism's tables, and traces " +
         "any answer back through its tool calls to its sources.",
       source:
-        "Strata's pipeline runs, quality checks, agent runs and Azure cost records in strata.ops, and the " +
+        "Prism's pipeline runs, quality checks, agent runs and Azure cost records in strata.ops, and the " +
         "workspace's query history where Free Edition shows it.",
       budgetPeriod: {
         title: "Budget period",
@@ -8415,7 +8415,7 @@ export const copy = {
           "deployment, a daily page cap on reading documents, and at most two copies of anything hosted.",
         personal: "Personal data removed at ingestion",
         queries: "Who queried what",
-        queriesText: "Strata's app runs every query as the person using it, so their name appears here, not the app's.",
+        queriesText: "Prism's app runs every query as the person using it, so their name appears here, not the app's.",
         lineage: "Lineage from an answer to its sources",
         lineageText:
           "Leave Run ID empty to see the latest answer, or paste a run ID from Recent answer runs, at the end of this " +
@@ -8423,10 +8423,10 @@ export const copy = {
       },
       removeWhy:
         "I remove the contact person's name, email address and phone number from every procurement notice as I take " +
-        "it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and " +
+        "it in, before it reaches any table that answers or this dashboard can read. Prism never shows them and " +
         "never answers questions about them. The counter above counts any email addresses, phone numbers and " +
         "names after \"Attention\" that got through.",
-      // Tile 21 when the workspace doesn't let Strata read its query history (the 45 brief, section 6.4). {date} is
+      // Tile 21 when the workspace doesn't let Prism read its query history (the 45 brief, section 6.4). {date} is
       // the day the dashboard was deployed.
       noHistory:
         "I can't show who queried what, because this workspace doesn't let me read its query history. I checked " +
@@ -8497,7 +8497,7 @@ export const copy = {
           last: "Last removed",
         },
         queries: {
-          title: "Queries on Strata's tables, by person and day",
+          title: "Queries on Prism's tables, by person and day",
           about:
             "One row per person, day, way in and table, in the dates chosen above. It shows which tables were read, " +
             "never the text of a query, because a query can carry a person's question.",
@@ -8605,13 +8605,13 @@ export const copy = {
         queries: {
           readable: {
             one:
-              "In the 7 days to {day}, {people} person ran {queries} queries on Strata's tables, {appQueries} of them " +
+              "In the 7 days to {day}, {people} person ran {queries} queries on Prism's tables, {appQueries} of them " +
               "through the app, which runs each query as the person asking.",
             other:
-              "In the 7 days to {day}, {people} people ran {queries} queries on Strata's tables, {appQueries} of them " +
+              "In the 7 days to {day}, {people} people ran {queries} queries on Prism's tables, {appQueries} of them " +
               "through the app, which runs each query as the person asking.",
           },
-          none: "No one queried Strata's tables in the 7 days to {day}.",
+          none: "No one queried Prism's tables in the 7 days to {day}.",
           notReadable: "I can't show who queried what, because this workspace doesn't let me read its query history.",
         },
         lineage: {
@@ -8627,7 +8627,7 @@ export const copy = {
           },
           oneIncomplete:
             "The one answer run in the 7 days to {day} has no record of the tables its tool calls read.",
-          none: "No answer runs were recorded in the 7 days to {day}. Ask a question in Strata, and its run appears under Lineage.",
+          none: "No answer runs were recorded in the 7 days to {day}. Ask a question in Prism, and its run appears under Lineage.",
         },
       },
       // What each failed check found, in tile 11 and in the finding (the 45 brief, section 6.3).
@@ -8685,9 +8685,9 @@ export const copy = {
         emails: "Email addresses",
         phones: "Phone numbers",
       } as Record<string, string>,
-      // How a query reached Strata's tables, by the workspace's own entity type (tile 21).
+      // How a query reached Prism's tables, by the workspace's own entity type (tile 21).
       through: {
-        app: "Strata app",
+        app: "Prism app",
         genie: "Genie",
         dashboard: "Dashboard",
         sql_editor: "SQL editor",
@@ -8709,9 +8709,9 @@ export const copy = {
       intro:
         "This page shows how my answers did on the benchmark, in Microsoft Foundry's evaluations and in my own six " +
         "checks. It also shows the leading and lagging indicators of the knowledge, retrieval and estimates loops, " +
-        "and how people used Strata. Each tile's description defines its measure.",
+        "and how people used Prism. Each tile's description defines its measure.",
       source:
-        "Strata's evaluation results, agent runs, feedback, lesson decisions, exposure logs, usage events and draft " +
+        "Prism's evaluation results, agent runs, feedback, lesson decisions, exposure logs, usage events and draft " +
         "states in strata.ops.",
       about: {
         benchmark: "Benchmark",
@@ -8732,7 +8732,7 @@ export const copy = {
           "quarterly.",
         adoption: "Adoption",
         adoptionText:
-          "Who used Strata, which drafts their authors finished, and how often a plan row was dated within 14 days of " +
+          "Who used Prism, which drafts their authors finished, and how often a plan row was dated within 14 days of " +
           "a date I offered.",
       },
       // Tile 20 spells these out once on the page (DESIGN.md section 7, rules 10 and 22), before the definitions.
@@ -8858,7 +8858,7 @@ export const copy = {
           title: "Hindsight test, per release",
           about:
             "Hindsight recall is coverage times shown-when-covered: the blamed risks I showed in the top five for their " +
-            "package, out of all blamed risks. Projects exposed to Strata are left out.",
+            "package, out of all blamed risks. Projects exposed to Prism are left out.",
           release: "Release",
           projects: "Projects",
           blamed: "Blamed risks",
@@ -8896,15 +8896,15 @@ export const copy = {
           months: "Median months from notice to signing",
           offered: "Dated within 14 days of a date I offered",
           other: "Other plan rows",
-          using: "Using Strata",
-          notYet: "Not yet using Strata",
+          using: "Using Prism",
+          notYet: "Not yet using Prism",
           tooFew: {
             one: "{n} row, too few for a median",
             other: "{n} rows, too few for a median",
           },
         },
         usersChart: {
-          title: "People who used Strata, by week",
+          title: "People who used Prism, by week",
           about: "People. Each person counts once a week, whatever view they used.",
           week: "Week of",
           people: "People",
@@ -9107,16 +9107,16 @@ export const copy = {
         adoption: {
           used: {
             one:
-              "In the week of Monday, {week}, {people} person used Strata. In the 90 days to {day}, authors marked " +
+              "In the week of Monday, {week}, {people} person used Prism. In the 90 days to {day}, authors marked " +
               "{checked} drafts as checked and exported {exported}.",
             other:
-              "In the week of Monday, {week}, {people} people used Strata. In the 90 days to {day}, authors marked " +
+              "In the week of Monday, {week}, {people} people used Prism. In the 90 days to {day}, authors marked " +
               "{checked} drafts as checked and exported {exported}.",
           },
           planRows:
             "Of the {rows} plan rows published after I showed a range for their package, {anchored} were dated within " +
             "14 days of a date I offered.",
-          none: "No one used Strata in the week of Monday, {week}.",
+          none: "No one used Prism in the week of Monday, {week}.",
         },
       },
       // Each loop's indicators (tile 19; the 45 brief, section 7.4). Every cell has words, never a blank.
@@ -9210,7 +9210,7 @@ export const copy = {
     weekly_users: {
       name: "Weekly users",
       definition:
-        "People who opened at least one page of Strata in the last full week in the dates chosen above, Monday to " +
+        "People who opened at least one page of Prism in the last full week in the dates chosen above, Monday to " +
         "Sunday. Each person counts once, whatever view they used.",
       outof: "A count of people, with no total.",
     },
@@ -9272,7 +9272,7 @@ export const copy = {
       definition:
         "The median number of days between a plan row's planned signing date and the actual one, early or late. I " +
         "report it for plan rows dated within 14 days of a date I offered and for all other plan rows, and separately " +
-        "for countries not yet using Strata.",
+        "for countries not yet using Prism.",
       outof: "Out of the plan rows with an actual date.",
     },
   },
@@ -9298,7 +9298,7 @@ export const copy = {
     loading: "Loading your briefing.",
     error: "I couldn't load your briefing because the data service didn't answer.",
     errorReference: (reference: string) => `If it fails again, send the data team this reference: ${reference}.`,
-    permission: "Your account can't read Strata's tables, so I can't show your briefing.",
+    permission: "Your account can't read Prism's tables, so I can't show your briefing.",
     tryAgain: "Try again",
     // The Start here strip (5.5) and what follows Remove (5.6). The caption and button keep the ticket's words.
     // The zone's name and each row's Example badge say whose examples they are, so it has no tag (ticket 126).
@@ -9307,7 +9307,7 @@ export const copy = {
       remove: "Remove",
       removeName: "Remove the Start here examples",
       removing: "Removing",
-      removed: "You removed the examples Strata set up.",
+      removed: "You removed the examples Prism set up.",
       showAgain: "Show the examples again",
       showing: "Showing",
       removeFailed: "I couldn't remove the examples just now. They are still here.",
@@ -9662,7 +9662,7 @@ export const copy = {
   // The deck's password, asked before the deck loads (web/src/deck/door.tsx). The words live here, not in the deck's
   // copy file, because the server keeps the deck's copy until the password is given.
   deckDoor: {
-    title: "Strata deck",
+    title: "Prism deck",
     line: "Enter the password to open the deck.",
     label: "Password",
     open: "Open the deck",

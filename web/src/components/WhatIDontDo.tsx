@@ -4,7 +4,7 @@
 // the same keys the refusal itself is written from. It is DESIGN.md's window, as the Measure number's: focus moves to
 // its title as it opens, and Escape or its 44 px close button closes it and returns focus to the button. A long list
 // scrolls inside the window, which keeps to the screen. WhatIDontDo, the window's body, was the last section of How
-// Strata works until that page left the Data tab.
+// Prism works until that page left the Data tab.
 import { useId, useRef, useState } from "react";
 import * as RadixPopover from "@radix-ui/react-popover";
 import { List } from "lucide-react";

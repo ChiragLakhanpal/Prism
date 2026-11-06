@@ -449,10 +449,10 @@ def _datasheet(build: _Build) -> str:
     rows = [("Dated", long_date(pulled)),
             ("Results measured", f"{short_date(days[0])[:-6]} to {short_date(days[-1])}, at commit "
                                  f"<code>{escape(build.inputs.commit[:7])}</code>"),
-            ("Strata", f'<a href="{app}">{app}</a><br>Open it with the account your invitation went to.'),
+            ("Prism", f'<a href="{app}">{app}</a><br>Open it with the account your invitation went to.'),
             ("The deck", f'<a href="{deck}">{deck}</a>'),
             ("The repo", f'<a href="{repo}">{repo}</a>'),
-            ("The dashboard", f'<a href="{dashboard}">Strata operations</a>'),
+            ("The dashboard", f'<a href="{dashboard}">Prism operations</a>'),
             ("The assessment", '<a href="assessment.md">docs/assessment.md</a>')]
     body = "\n".join(f'<tr><th scope="row">{name}</th><td>{text}</td></tr>' for name, text in rows)
     return f"<table>\n<tbody>\n{body}\n</tbody>\n</table>"
@@ -502,9 +502,9 @@ def _rubric_map(build: _Build) -> str:
 def _designed_list(build: _Build) -> str:
     items = build.inputs.designed
     if not items:
-        return (f'Everything this proposal describes is built. Strata shows no "{build.inputs.copy["designedNotBuilt"]}" '
+        return (f'Everything this proposal describes is built. Prism shows no "{build.inputs.copy["designedNotBuilt"]}" '
                 "labels.")
-    rows = ["| What | What exists now | Where Strata labels it |", "|---|---|---|"]
+    rows = ["| What | What exists now | Where Prism labels it |", "|---|---|---|"]
     for item in items:
         rows.append(f'| <a id="dnb-{item.key}"></a>{_cell(item.name)} | {_cell(item.exists_now)} | '
                     f"[{item.route}]({build.app(item.route)}) |")
@@ -520,15 +520,15 @@ def _ladder(build: _Build) -> str:
             raise BuildError("The proposal did not build. The evidence ladder names a tier the proposal has no words "
                              "for. Add it to TIERS in src/strata/proposal/build.py.")
         if rule.applies_to == "judgment":
-            lines.append(f"{number}. For a judgment of how a project went, Strata leans on the later, more independent "
+            lines.append(f"{number}. For a judgment of how a project went, Prism leans on the later, more independent "
                          f"report, in this order: {', '.join(names[:-1])} and {names[-1]}.")
         else:
-            lines.append(f"{number}. For something that happened at one moment, Strata leans on {names[0]}.")
+            lines.append(f"{number}. For something that happened at one moment, Prism leans on {names[0]}.")
     ties = [TIES.get(tie) for tie in ladder.ties]
     if None in ties:
         raise BuildError("The proposal did not build. The evidence ladder names a tie the proposal has no words for. "
                          "Add it to TIES in src/strata/proposal/build.py.")
-    lines.append(f"{len(lines) + 1}. When sources rank the same, Strata leans on {' and then on '.join(ties)}.")
+    lines.append(f"{len(lines) + 1}. When sources rank the same, Prism leans on {' and then on '.join(ties)}.")
     return "\n".join(lines)
 
 
@@ -667,7 +667,7 @@ def _register(build: _Build) -> str:
     return "\n\n".join(out)
 
 
-DRILL_MODULE = 4  # the change drill's table is in Module 4, "Changing Strata in round 2"
+DRILL_MODULE = 4  # the change drill's table is in Module 4, "Changing Prism in round 2"
 REHEARSALS_LINK = "[rehearsals.toml](../docs/proposal/rehearsals.toml)"
 
 
@@ -800,18 +800,18 @@ def _figure_data(build: _Build, slug: str) -> tuple[dict, str | None]:
         _, caught = build.result("hindsight-caught")
         _, checklist = build.result("hindsight-checklist")
         interval = build.results.get("hindsight-interval", {})
-        strata_row = {"name": "Strata's risk tables", "n": caught["n"], "d": caught["d"]}
+        strata_row = {"name": "Prism's risk tables", "n": caught["n"], "d": caught["d"]}
         if interval.get("measured"):
             build.result("hindsight-interval")
             strata_row |= {"low": interval["low"], "high": interval["high"]}
         rows_ = [strata_row, {"name": "The sector checklist", "n": checklist["n"], "d": checklist["d"]}]
-        alt = (f"Dot chart: Strata's risk tables showed {caught['n']} of {caught['d']} blamed risks; the sector "
+        alt = (f"Dot chart: Prism's risk tables showed {caught['n']} of {caught['d']} blamed risks; the sector "
                f"checklist named {checklist['n']} of {checklist['d']}.")
         table = ["| Who | Blamed risks caught |", "|---|---:|",
-                 f"| Strata's risk tables | {build.result_link('hindsight-caught')} |",
+                 f"| Prism's risk tables | {build.result_link('hindsight-caught')} |",
                  f"| The sector checklist | {build.result_link('hindsight-checklist')} |"]
         if interval.get("measured"):
-            table.append(f"| Strata's interval | {build.result_link('hindsight-interval')} |")
+            table.append(f"| Prism's interval | {build.result_link('hindsight-interval')} |")
         return {"rows": rows_, "alt": alt}, "\n".join(table)
     return {}, None
 
@@ -837,7 +837,7 @@ def build(source: str, inputs: Inputs) -> Built:
             work.where = (f"Paragraph {block.number}", f"#p{block.number}")
         elif not text.startswith("{figure:"):
             scope = block.subsection or block.section
-            work.where = (f"The section \"{work.headings.get(scope, scope or 'Strata: a technical proposal')}\"",
+            work.where = (f"The section \"{work.headings.get(scope, scope or 'Prism: a technical proposal')}\"",
                           f"#sec-{scope}" if scope else "#")
         if text.strip() == "{datasheet}":
             out.append(_datasheet(work))

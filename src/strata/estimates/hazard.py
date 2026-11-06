@@ -14,7 +14,7 @@ abstains (too_few_periods, one_outcome).
 - score_in_shadow() is the nightly score task's: it trains the model as of the night and scores every open project
   with a loan history into strata.ops.hazard_scores.
 - compare() is the replay harness's model-backtest adapter for it (the spec's seam 5): on each of the signals' track
-  record dates it freezes Strata at that date, runs project_signals and the model trained then on every project the
+  record dates it freezes Prism at that date, runs project_signals and the model trained then on every project the
   track record counts, lets the model pick as many projects as the signals did (Needs a look or Watch), and counts the
   projects each caught among those whose closing date then moved later. The model beats the signals only with at
   least track_record_min projects, more caught, and McNemar's exact test on the discordant projects below

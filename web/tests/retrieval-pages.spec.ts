@@ -167,7 +167,7 @@ test("one passage's reports name each sender by role, and Rank it lower needs a 
   ]);
 });
 
-// An account that can't read Strata's tables reads what to ask for once: the alert says what failed, and the line under
+// An account that can't read Prism's tables reads what to ask for once: the alert says what failed, and the line under
 // it what to ask (the 58 critique, round 3, "Seen outside this ticket's code").
 test("Judging without read access says once what to ask the workspace admin for", async ({ page }) => {
   await serve(page, {
@@ -176,7 +176,7 @@ test("Judging without read access says once what to ask the workspace admin for"
   });
   await page.goto("/lessons/judging");
   const failed = page.locator("[data-load-error=permission]");
-  await expect(failed.getByRole("alert")).toHaveText("Your account can't read Strata's tables, so I can't show the queries.");
+  await expect(failed.getByRole("alert")).toHaveText("Your account can't read Prism's tables, so I can't show the queries.");
   expect((await failed.textContent())!.split("Ask your workspace admin").length - 1).toBe(1);
 });
 

@@ -1,6 +1,6 @@
 // Following (ticket 37; the 37 brief, sections 3 to 5 and 10.1), at /projects/following: the projects a World Bank
 // staff member follows, each with its status first, the signals that put it there one line each, and one next
-// step. Projects with no signals fold away with a count, the page says what Strata cannot see, and "How I check the
+// step. Projects with no signals fold away with a count, the page says what Prism cannot see, and "How I check the
 // projects you follow" gives the method and the track record the replay harness stored. No model writes the list:
 // every status, signal, count and date is project_signals' (GET /api/following), and the page counts nothing.
 //
@@ -305,7 +305,7 @@ export function FollowingBody({ data }: { data: Following }) {
         <Source className="mt-2">
           {data.data_through ? <Fill template={words.source} slots={{ date: formatDate(data.data_through) }} /> : words.sourceUndated}
         </Source>
-        {/* What Strata can't see sits beside the source line, as the plan check's foot strip has it (ticket 126). */}
+        {/* What Prism can't see sits beside the source line, as the plan check's foot strip has it (ticket 126). */}
         <p className="mt-1 max-w-[72ch] text-caption text-ink-muted" data-not-visible>
           {copy.checkPlan.notVisible}
         </p>

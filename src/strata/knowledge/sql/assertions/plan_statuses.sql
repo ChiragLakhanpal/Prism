@@ -3,7 +3,7 @@
 -- PENDING_STATUSES defines) and whose Signed Contract step has no actual date. Each comes with its plan's date, the
 -- day the next version of the same agency's plan replaced it (as records.sql gives a plan row's), and the PDF page
 -- of its row. A package with more than one contract in the awards datasets or more than one award notice is left
--- out, as records.sql leaves it out: Strata cannot tell which contract a plan's one row is about.
+-- out, as records.sql leaves it out: Prism cannot tell which contract a plan's one row is about.
 -- :every_project true reads every project at once (the nightly run, ticket 43); false reads the projects in
 -- :projects, joined by commas, which no project id contains (one project's page).
 WITH several AS (

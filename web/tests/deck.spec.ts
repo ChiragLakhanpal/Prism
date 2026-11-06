@@ -97,7 +97,7 @@ test("/present serves the talk outside the app's frame: the bookends, five topic
   expect(new URL(page.url()).pathname).toBe(`/present/${count}`);
   // The keyboard moves the deck, so the control bar has no move buttons: on a slide with no chart it holds none.
   await expect(page.locator("[data-deck-bar] button")).toHaveCount(0);
-  await expect(page).toHaveTitle(`Slide ${count} of ${count} | Strata deck`);
+  await expect(page).toHaveTitle(`Slide ${count} of ${count} | Prism deck`);
   const ids = await page.locator("section[data-slide]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-slide-id")));
   expect(ids[0]).toBe("welcome");
   expect(ids[1]).toBe("agenda");
@@ -486,7 +486,7 @@ test("below the size of the canvas the deck is a page that reflows, with every s
   await expect(slide.locator("[data-figure-text=layers]")).toBeVisible();
   // A drawing cut at the column's edge says that it scrolls.
   await expect(slide.getByText(deckCopy.reading.scrollHint)).toBeVisible();
-  // The close keeps what the navy close shows: the question to the room and the way into Strata.
+  // The close keeps what the navy close shows: the question to the room and the way into Prism.
   const close = page.locator("[data-reading-slide]").last();
   await expect(close).toContainText(deckCopy.slides.thanks.ask);
   await expect(close.getByRole("link", { name: deckCopy.slides.thanks.links.app })).toHaveAttribute("href", "/");

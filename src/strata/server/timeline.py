@@ -6,7 +6,7 @@ timeline() gives GET /api/projects/{pid}/timeline everything the Timeline tab dr
 
 - items, in the order the arrow keys and the table follow (date order across the lanes; ties go Why, How,
   What, with marks before bands; each disagreement right after its later side):
-  - reports (circles): the PAD, the ICR, its reviews and a PPAR in the Why lane, from the documents Strata read
+  - reports (circles): the PAD, the ICR, its reviews and a PPAR in the Why lane, from the documents Prism read
     (strata.silver.documents), each version on its own date; a version a later one replaced by the as-of date is
     marked replaced, and a re-issue says so. ISRs sit in the How lane, but only those isr_marks() picks.
   - events (diamonds) in the How lane: the mid-term review and the restructuring, each dated by the earliest
@@ -19,7 +19,7 @@ timeline() gives GET /api/projects/{pid}/timeline everything the Timeline tab dr
     that share a report, from those of its rows whose two sides are both reports on the chart. The line joins the
     group's one report (its anchor) to the nearest of the others and names them all (group), so the PAD against
     13 ISRs is one line, not 13 lines on top of one another. Each line keeps its drawn pair's sides in the order
-    they were written and the side Strata leans on.
+    they were written and the side Prism leans on.
 - records_disagree: get_disagreements' rows about a package whose two sides are both records (a plan row, a
   contract record, an award notice), which no dashed line can join, listed under the chart (ticket 132).
 - table: the same items with every contract on its own row and every pair of reports that disagree on its own
@@ -69,7 +69,7 @@ from strata.tools.withheld import WITHHELD, withheld_in
 SQL = Path(__file__).resolve().parent / "sql" / "timeline"
 DOC, RATINGS, CONTRACTS, DISAGREEMENT = "doc", "ratings", "contracts", "disagreement"
 LANES = ("why", "how", "what")
-# The lane of each kind of report Strata reads, by its group in config/project_page.toml.
+# The lane of each kind of report Prism reads, by its group in config/project_page.toml.
 REPORT_LANES = {"pad": "why", "isr": "how", "icr": "why", "icr_review": "why", "ppar": "why"}
 PAGE = load_project_page()
 GROUPS = PAGE.document_groups
@@ -178,10 +178,10 @@ def _counted(n: int, forms: dict) -> list[dict]:
 def isr_marks(points: list[dict], isrs: list[dict], sides: set[str], side_of: Callable[[str], str | None]) -> set[str]:
     """Which ISRs get their own circle, by document id: each ISR that is one side of a disagreement on the chart,
     and each ISR whose rating of progress moved to the other side of the scale from the ISR before it. When no
-    ISR passes, as when get_disagreements gives no ratings, the newest ISR Strata read does, so the How lane always
+    ISR passes, as when get_disagreements gives no ratings, the newest ISR Prism read does, so the How lane always
     has a report to open. The band row shows every rated ISR.
 
-    This is the 23 brief's rule ("an ISR gets a circle when Strata has read it"), narrowed because the fixture
+    This is the 23 brief's rule ("an ISR gets a circle when Prism has read it"), narrowed because the fixture
     records all 13 of P130164's ISRs as documents: 13 circles would crowd the How lane and drop labels. A
     decision parked for the owner."""
     marked = {point["document_id"] for point in points if point["document_id"] in sides}
@@ -292,7 +292,7 @@ def series(engine: Engine, project_id: str, as_of: dt.date, found: dict, attribu
     rating whose page has no passage to cite, so on October 30, 2026 P161305's assertions stopped at ISR 12 while the
     table and the Summary held ISR 13. The series is the fuller of the two: the one whose last ISR is later, then the
     one with more ISRs, and the assertions on a tie; source names the table it came from. The band row names each ISR
-    by its number, so an ISR whose number Strata could not read is left out of both. Its runs come from the function
+    by its number, so an ISR whose number Prism could not read is left out of both. Its runs come from the function
     the tool's trajectories use (get_disagreements.runs_of)."""
     trajectory = next((one for one in found.get("trajectories") or []
                        if one["attribute"] == attribute and one["evidence_tier"] == BANDED_TIER
@@ -409,7 +409,7 @@ def records_disagree(rows: list[dict]) -> list[dict]:
     """Where the records disagree (ticket 132): get_disagreements' rows about a package whose two sides are both
     records, such as a plan row that still says pending and the contract awards that say the contract was signed,
     which no dashed line on the chart joins. Each gives its STEP reference, its attribute and both sides in the order
-    they were written, with each side's record, field name, value, date and evidence id, and the side Strata leans
+    they were written, with each side's record, field name, value, date and evidence id, and the side Prism leans
     on: a plan that still says pending first, then the newest first. The plan check cites the same disagreement by
     its id, so both pages name one fact (CLAUDE.md rule 4)."""
     found = []
@@ -613,7 +613,7 @@ def _project(engine: Engine, project_id: str, as_of: dt.date) -> dict | None:
 
 def timeline(engine: Engine, viewer: Viewer, project_id: str, as_of: dt.date, view: str = "staff",
              asked: dt.date | None = None) -> dict | None:
-    """The Timeline tab's answer, or None when Strata has no record of the project as of then."""
+    """The Timeline tab's answer, or None when Prism has no record of the project as of then."""
     project = _project(engine, project_id, as_of)
     if project is None:
         return None

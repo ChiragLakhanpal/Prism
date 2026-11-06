@@ -7,7 +7,7 @@
 -- there. It was signed on its first contract in the awards dataset, which is public from its signing
 -- date, or, when it has none there, on the Contract Signature Date of its Contract Award notice,
 -- which is public from the day the notice was published. A package falls in the period by its
--- notice's date, or, when Strata holds no notice for it, by its signing date, so the coverage line
+-- notice's date, or, when Prism holds no notice for it, by its signing date, so the coverage line
 -- can count it as matching but not measurable.
 --
 -- Process Status, Market Approach and Review Type come from the newest plan version public on the

@@ -169,7 +169,7 @@ def test_the_descriptions_say_what_the_agent_needs_to_know_in_plain_sentences():
 
 
 def never_written() -> list[str]:
-    """DESIGN.md section 7, rule 19's list of words Strata never writes, read from the file, as the
+    """DESIGN.md section 7, rule 19's list of words Prism never writes, read from the file, as the
     copy lint (web/lint/copy.ts) reads it."""
     import re
 

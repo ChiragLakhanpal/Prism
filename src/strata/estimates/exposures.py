@@ -1,4 +1,4 @@
-"""The exposure log (ticket 44; docs/PLAN.md section 11, "Loops through the world"): what Strata showed whom, so its
+"""The exposure log (ticket 44; docs/PLAN.md section 11, "Loops through the world"): what Prism showed whom, so its
 influence on plans can be told apart from its accuracy.
 
 An exposure is one past range (find_comparables) or one time estimate (estimate_time) the server sent a viewer for a
@@ -22,7 +22,7 @@ So:
 
 Each row keeps the range shown (q25 to q80, in months and days), the option chosen (the plan-date choice, middle or
 eight_in_ten, with the cautious eight_in_ten when none is saved: the 26 design brief, section 6.3), the viewer's user
-id and the day, and the two dates Strata offered: the middle and the 8-in-10 point counted in days from the
+id and the day, and the two dates Prism offered: the middle and the 8-in-10 point counted in days from the
 package's first specific procurement notice when it had been published by the as-of date, or else from the
 planned notice date of its newest public plan row. A later plan row is "dated within 14 days of a date I offered"
 when its planned signing date falls within estimates_loop.anchored_within_days of either

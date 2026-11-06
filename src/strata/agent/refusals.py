@@ -1,4 +1,4 @@
-"""The requests Strata turns down every time (docs/PLAN.md section 6, Refusals; spec, "The agent and the answer
+"""The requests Prism turns down every time (docs/PLAN.md section 6, Refusals; spec, "The agent and the answer
 contract").
 
 Each refusal has a key, defined here once. The agent answers a request on the list with the key and never with
@@ -7,7 +7,7 @@ the app renders the key's sentences from the copy file, so every refusal says ex
 key is named in three more places, and a test fails when any of them lacks one or holds another
 (tests/test_refusals.py):
 
-- web/src/copy.ts, refusals: each key's lead (what I don't do), instead (what I can do) and why (for How Strata
+- web/src/copy.ts, refusals: each key's lead (what I don't do), instead (what I can do) and why (for How Prism
   works' "What I don't do").
 - the orchestrator's instructions (src/strata/agent/instructions/orchestrator.md), under "What you turn down",
   with when the agent uses it.
@@ -52,7 +52,7 @@ INDIVIDUAL_CONSULTANT = "INDIVIDUAL CONSULTANT"
 
 def restricted_values(recorded: Path) -> set[str]:
     """Every value no response may hold, read from the recorded API files (data/fixture/recorded/api), not from
-    Strata's code: every notice's contact name, email and phone number, and each individual consultant's supplier
+    Prism's code: every notice's contact name, email and phone number, and each individual consultant's supplier
     id or name. The offline gate (tests/test_refusals.py) and the live check (ops/agent/refuse_live.py) scan for
     the same values."""
     values = set()

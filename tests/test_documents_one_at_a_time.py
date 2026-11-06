@@ -224,7 +224,7 @@ def run_live(monkeypatch):
 
 def test_a_stop_that_left_a_thousand_documents_or_more_writes_the_count_with_its_comma():
     """The readers' notes write one to nine in words and larger counts as numerals with commas, as every other count
-    in Strata (ticket 86's review, F2): "1,234 documents", never "1234 documents"."""
+    in Prism (ticket 86's review, F2): "1,234 documents", never "1234 documents"."""
     assert plans.left_words(1234, 12) == "1,234 documents and 12 projects' document lists"
     assert plans.left_words(1, 1) == "one document and one project's document list"
 

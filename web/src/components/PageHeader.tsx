@@ -1,4 +1,4 @@
-// The page header (DESIGN.md section 5, Strata components): every page's h1 and, under it, one or
+// The page header (DESIGN.md section 5, Prism components): every page's h1 and, under it, one or
 // two short sentences that say what the page is for, so someone arriving from a link is never
 // stranded.
 // The h1 takes focus when a route change moves to it (tabindex -1); it is not a control, so it

@@ -73,7 +73,7 @@ function withoutWordJoiners(event: ClipboardEvent<HTMLDivElement>) {
 
 // wide: the children are blocks that keep their own measure, so a disagreement card can take the
 // answer's full width while its paragraphs stay at about 65 characters a line.
-// kind: the byline, "Strata, in short" over an answer and "Strata held back" over one that abstains (ticket 111), on a
+// kind: the byline, "Prism, in short" over an answer and "Prism held back" over one that abstains (ticket 111), on a
 // screen-reader-only h3 since ticket 126, so the answer opens on its own first-person sentences.
 // reveal: the block replaces the stream's skeleton, so it enters: opacity and a 4 px rise over 200 ms, once.
 function InShort({ children, wide = false, kind = "inShort", reveal = false }: { children: ReactNode; wide?: boolean; kind?: "inShort" | "heldBack"; reveal?: boolean }) {
@@ -145,7 +145,7 @@ function ChecksBlock({ checks, reveal = false }: { checks: Checks; reveal?: bool
   );
 }
 
-// reveal: the answer just streamed in this panel (ticket 111), so its "Strata, in short" block enters and the check
+// reveal: the answer just streamed in this panel (ticket 111), so its "Prism, in short" block enters and the check
 // line's tick draws; an answer shown again, such as by Back, is drawn at once.
 export function Answer({ state, reveal = false }: { state: AnswerState; reveal?: boolean }) {
   switch (state.status) {

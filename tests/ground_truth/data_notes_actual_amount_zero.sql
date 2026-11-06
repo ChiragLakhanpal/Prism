@@ -1,5 +1,5 @@
 -- Two packages in the demo plan are Signed or Completed with an Actual Amount of 0.00, which
--- Strata shows as a data note. Source: tests/ground_truth/values.toml, plan-503455-actual-zero and
+-- Prism shows as a data note. Source: tests/ground_truth/values.toml, plan-503455-actual-zero and
 -- plan-541061-actual-zero, from page 3 of the Northern Water Works Development Agency's
 -- October 9, 2026 Procurement Plan for P156634. The plan reader writes the notes
 -- (src/strata/lakehouse/sql/plans/plan_data_notes.sql). ops/bundle/check.py same-rows checks it on

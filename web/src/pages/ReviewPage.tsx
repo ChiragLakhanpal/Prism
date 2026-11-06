@@ -636,7 +636,7 @@ export function ReviewSkeleton() {
 
 export function ReviewPage({ itemId }: { itemId: string }) {
   const [load, retry] = useLoad<ReviewItem>(`/api/lessons/review/${encodeURIComponent(itemId)}`);
-  // Someone who is not a lesson reviewer reads the page as the library's: "Lessons | Strata".
+  // Someone who is not a lesson reviewer reads the page as the library's: "Lessons | Prism".
   const denied = load.status === "error" && load.error?.status === 403;
   useEffect(() => {
     if (denied) setPageTitle(copy.pages.lessons.title);

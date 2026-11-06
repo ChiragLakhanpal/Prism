@@ -2,7 +2,7 @@
 -- reference, in the run's data readiness measure and in gold.
 --
 -- The expected counts are tests/ground_truth/values.toml's [counts.kenya], counted from the
--- recorded award files apart from Strata's code: 603 contracts (contracts = 603), of which 528
+-- recorded award files apart from Prism's code: 603 contracts (contracts = 603), of which 528
 -- carry a STEP reference (with_step_reference = 528).
 -- expect: counted_in,with_step_reference,contracts
 -- expect: gold,528,603

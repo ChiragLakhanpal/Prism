@@ -1,5 +1,5 @@
 // All projects (the 10 brief, section 4, and the 21 brief, section 8), at /projects?q=&page=: every
-// project Strata holds a record for, 20 a page, in the order the route gives (an exact project ID first,
+// project Prism holds a record for, 20 a page, in the order the route gives (an exact project ID first,
 // then active projects, then by name). A List search filters them on the server as you type, by part of a
 // name, a project ID with or without its P, or a country; the route counts the matches and the page's
 // range, so the screen counts nothing. Each project ID is a ProjectId link to its page.
@@ -13,7 +13,7 @@
 // searching), no match (the panel keeps its name and the search keeps the query, and the no-match sentence, its body
 // and "Show all projects" take the list's place, with no count line, table or pages), no records at all (a row with
 // one sentence and one link, since there is nothing to search), a service that didn't answer and an account that can't
-// read Strata's tables (the panel keeps its name and its search, and the alert takes the list's place).
+// read Prism's tables (the panel keeps its name and its search, and the alert takes the list's place).
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { EmptyState } from "../components/Card";
 import { Fill } from "../components/Fill";

@@ -1,6 +1,6 @@
 """Batch scoring (ticket 26): the nightly job's score task.
 
-It scores every package Strata knows, as of the run's day, with the champion model the replay harness
+It scores every package Prism knows, as of the run's day, with the champion model the replay harness
 registered (ticket 25), for the package as described and for every combination of the what-if levers the
 model reads (config/models.toml's [what_if]: market approach and qualification), and appends the rows to
 strata.gold.time_estimate_score under the run's id. estimate_time then answers from stored rows, so the
@@ -109,7 +109,7 @@ def _row(item: dict, run_id: str, kept: portable.Kept, scored_at: dt.datetime) -
 
 def score(engine, run_id: str, scored_at: dt.datetime, kept: portable.Kept, settings: TimeEstimateSettings,
           thresholds: Thresholds, levers: tuple[Lever, ...]) -> int:
-    """Score every package Strata knows on the run's day and append the rows. Returns how many it wrote."""
+    """Score every package Prism knows on the run's day and append the rows. Returns how many it wrote."""
     day = scored_at.astimezone(dt.UTC).date()
     known = packages_as_of(Reader(engine, day, thresholds), settings)
     rows = [_row(item, run_id, kept, scored_at) for item in scored(kept.model, [known[key] for key in sorted(known)], levers)]

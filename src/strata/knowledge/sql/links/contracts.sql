@@ -1,5 +1,5 @@
 -- The link scorer's contracts (ticket 22): every contract of a project whose reports the passage reader holds,
--- with what the scorer matches a paragraph against, its project's sector in Strata's taxonomy (which the
+-- with what the scorer matches a paragraph against, its project's sector in Prism's taxonomy (which the
 -- passages carry too) and the project's sector with the largest share, from its newest projects API page.
 WITH sectors AS (
   SELECT project_id, sector_code, sector_name

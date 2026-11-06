@@ -2,7 +2,7 @@
 // data-freshness stamp. The box floats at the foot of the page column (Frame.tsx's ask bar; ticket 113, which moved it
 // out of the navy bar), on the grid from a frame of 75rem (ticket 127). It has presence (ticket 127, the design lead's
 // Option A after the Mobbin pass): white, a 1 px primary edge drawn inside it, 4 px corners and shadow-float; one row of
-// 56 px from 1024 px, led by the search icon in primary. Its field is named "Ask Strata" without printing it, and the
+// 56 px from 1024 px, led by the search icon in primary. Its field is named "Ask Prism" without printing it, and the
 // placeholder says the word (the owner's call of October 29, 2026). The stamp sits at the sidebar's foot, under Data
 // (Sidebar.tsx).
 //
@@ -181,7 +181,7 @@ export function OneBox({
   const showList = open && value.trim().length > 0 && options.length > 0;
   const showNotes = open && value.trim().length > 0 && notes.length > 0;
   const showSuggestions = Boolean(showHint && suggestions && suggestions.options.length > 0);
-  // The field's name is "Ask Strata", not printed (ticket 127). The sentence that was its name describes it wherever
+  // The field's name is "Ask Prism", not printed (ticket 127). The sentence that was its name describes it wherever
   // the hint or a mode's help line does not, last.
   const described = [(showHint || modeHelp) && hintId, scope && scopedId, showNotes && notesId, !(showHint || modeHelp) && sentenceId]
     .filter(Boolean)
@@ -229,7 +229,7 @@ export function OneBox({
       )}
     </li>
   );
-  // From 768 px the placeholder says "Strata" (ticket 127); below it the short form, so it is never cut. A mode's
+  // From 768 px the placeholder says "Prism" (ticket 127); below it the short form, so it is never cut. A mode's
   // placeholder may have no short form.
   const placeholder =
     modePlaceholder ??
@@ -290,7 +290,7 @@ export function OneBox({
         {/* The text field and its "/" hint wrap together, so the hint never takes a row of its own. Below 1024 px the
             field goes under the chip when less than 176 px is left beside it, the width of a package page's whole
             placeholder, so "Ask about this package" is never cut; from 768 px, where the "/" hint shows after the
-            field, less than 254 px, "Ask Strata about this package" and the hint (tickets 113 and 127, since the box
+            field, less than 254 px, "Ask Prism about this package" and the hint (tickets 113 and 127, since the box
             is at most 640 px wide). */}
         <div className="flex min-h-10 min-w-0 flex-[1_1_176px] items-center gap-2 md:flex-[1_1_254px]">
           <div className="relative min-w-0 flex-1">

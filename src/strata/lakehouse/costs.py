@@ -1,4 +1,4 @@
-"""The daily cost pull: Azure's charges for Strata's resource group, into strata.ops (ticket 45).
+"""The daily cost pull: Azure's charges for Prism's resource group, into strata.ops (ticket 45).
 
 The Governance page shows Azure spend against the budget (the 45 brief, section 6.2, tiles 6 and 13 to 16; spec
 story 121). Azure budgets only send email, so the dashboard reads the charges themselves. The pull runs as its own

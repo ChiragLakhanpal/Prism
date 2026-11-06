@@ -16,7 +16,7 @@ check_public_from() looks at every table in the catalog, whatever made it, and s
 the column or gives it another type. It reads the tables through listed_tables(), which the nightly's
 table sizes measure reads too (strata.lakehouse.storage). Views hold no rows of their own, so the
 listing leaves out plain views and the metric views that Genie reads. It also leaves out the search
-index's own objects, which the AI Search service makes in the index's schema and Strata never defines:
+index's own objects, which the AI Search service makes in the index's schema and Prism never defines:
 the index that config/models.toml names, and every table of these two shapes, the event log and the view
 an index serves from, which carry an index's id in their names, whichever index made them (ticket 87).
 Nothing else is left out. The fixture build skips its
@@ -177,7 +177,7 @@ def defined_names() -> frozenset[str]:
 def is_index_object(schema: str, table: str, index: str) -> bool:
     """Whether strata.<schema>.<table> is one of the search index's own objects: the index config/models.toml
     names, or a table the AI Search service made beside it in its schema with the index's id in its name. The
-    service makes them and Strata never defines them, so none holds a public_from column (ticket 87)."""
+    service makes them and Prism never defines them, so none holds a public_from column (ticket 87)."""
     index_catalog, index_schema, index_name = index.split(".")
     if (index_catalog, index_schema) != (CATALOG, schema):
         return False

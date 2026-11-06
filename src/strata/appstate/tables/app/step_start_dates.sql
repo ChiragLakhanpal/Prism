@@ -1,6 +1,6 @@
 -- The date of the first step a viewer gave a package whose plan gives no planned dates, on the package workspace's
 -- section 2, "Planned date for each step" (ticket 27; the 27 brief, section 6.2). estimate_time dates every later
--- step from it, so the date is the person's own and Strata never invents one. One row per viewer and package, made
+-- step from it, so the date is the person's own and Prism never invents one. One row per viewer and package, made
 -- the first time and changed with a MERGE each time after, so nothing is deleted. A package from a STEP row keeps
 -- a date per viewer and STEP reference; a package from a sentence keeps its author's date. It is app state, read
 -- each time the workspace opens, so it lives in Lakebase (ADR 0005). The server writes it as the app's own service

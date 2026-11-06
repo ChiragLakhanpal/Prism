@@ -18,7 +18,7 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
                      group, and the groups that review lessons, with the people in them, their
                      regions and their projects (ticket 29)
 - load_ladder()      config/evidence_ladder.toml, the evidence ladder: the rules that choose the
-                     assertion Strata leans on when two disagree, the evidence tiers, the attributes
+                     assertion Prism leans on when two disagree, the evidence tiers, the attributes
                      an assertion can be about and their rating scales
 - load_lesson_lists() config/lessons.toml, the lesson lists: the closed lists of risk factors, stages
                      and kinds, and the extractor's example projects (ticket 29)
@@ -28,7 +28,7 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
 - load_uploads()     config/uploads.toml, the upload and STEP row registry: what an implementing agency's
                      upload may be and the STEP columns its reader and the STEP rows CSV use (ticket 38)
 - load_languages()   config/languages.toml, the language registry: each language a source can be
-                     written in, and how Strata writes and checks the four working languages (ticket 42)
+                     written in, and how Prism writes and checks the four working languages (ticket 42)
 - load_method_names() config/method_names.toml, the method-name registry: the current Procurement
                      Regulations' names and every other name a source writes for one (ticket 42)
 - load_references()  config/references.toml, the STEP reference registry: the kinds and method codes a
@@ -37,7 +37,7 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
                      monthly budget after it, for the daily cost pull and the wizard (ticket 45)
 - load_kpis()        config/kpis.toml, the KPI registry: each KPI the dashboard shows, defined once by
                      its query, with its kind, rounding, target and copy keys (ticket 45)
-- load_urls()        config/urls.toml, the panel's addresses: Strata, the dashboard and the repo, and the
+- load_urls()        config/urls.toml, the panel's addresses: Prism, the dashboard and the repo, and the
                      deck and the proposal that follow from them (ticket 46)
 - load_rubric()      config/rubric.toml, the rubric map: the assessment's dimensions, points and criteria,
                      and where the proposal answers each one (ticket 46)
@@ -194,7 +194,7 @@ class ReadinessColumn:
     # and the one that counts the slice's projects whose documents were read, out of the slice's projects.
     projects: str | None = None
     slice_read: str | None = None
-    # For a check of what Strata found, in place of lack: what it found none of on a row that falls short, so the gap
+    # For a check of what Prism found, in place of lack: what it found none of on a row that falls short, so the gap
     # says "where I found no paragraph numbers" (ticket 58).
     not_found: str | None = None
 
@@ -543,7 +543,7 @@ class Country:
 
 @dataclass(frozen=True)
 class Onboarded:
-    """A country using Strata, from the first day its World Bank staff used it (ticket 44)."""
+    """A country using Prism, from the first day its World Bank staff used it (ticket 44)."""
 
     iso2: str
     since: dt.date
@@ -606,10 +606,10 @@ class Slice:
     stress_shelf: tuple[ShelfItem, ...]
     planned_projects: int | None = None  # docs/PLAN.md section 3's planning figure, never shown as a finding
     notice_types: tuple[str, ...] = ()  # the notice types whose scope and qualification text become passages
-    onboarded: tuple[Onboarded, ...] = ()  # the countries using Strata and since when (ticket 44)
+    onboarded: tuple[Onboarded, ...] = ()  # the countries using Prism and since when (ticket 44)
 
     def using_strata(self, iso2: str | None, on: dt.date) -> bool:
-        """Whether a country was using Strata on a day: it is onboarded, from its since date on."""
+        """Whether a country was using Prism on a day: it is onboarded, from its since date on."""
         return any(country.iso2 == iso2 and country.since <= on for country in self.onboarded)
 
     @property
@@ -731,7 +731,7 @@ def load_slice(path: Path = CONFIG_DIR / "slice.toml") -> Slice:
 
 @dataclass(frozen=True)
 class Sectors:
-    """Strata's one sector taxonomy: each sector's key and name, and the major sector codes of both
+    """Prism's one sector taxonomy: each sector's key and name, and the major sector codes of both
     of the projects API's taxonomies that map to it."""
 
     keys: tuple[str, ...]
@@ -996,7 +996,7 @@ class Lever:
     values: tuple[str, ...]  # the values the score task scores, in STEP's words; empty for a lever not scored
 
 
-# The levers whose comparables' values Strata can read from the records (strata.tools.estimate_time).
+# The levers whose comparables' values Prism can read from the records (strata.tools.estimate_time).
 LEVERS = ("market_approach", "lots", "prequalification")
 
 
@@ -1565,7 +1565,7 @@ ROLE_ACTS = ("recommend", "decide", "cross_check")
 
 @dataclass(frozen=True)
 class Group:
-    """One workspace group and what its members may do in Strata."""
+    """One workspace group and what its members may do in Prism."""
 
     key: str
     workspace_group: str
@@ -1692,7 +1692,7 @@ def load_roles(path: Path = CONFIG_DIR / "roles.toml") -> Roles:
         for name, given, allowed in (("pages", pages, ROLE_PAGES), ("acts", acts, ROLE_ACTS)):
             unknown = [item for item in given if item not in allowed]
             if unknown:
-                entry._fail(name, f"names {', '.join(unknown)}, which Strata does not know. Use only these: "
+                entry._fail(name, f"names {', '.join(unknown)}, which Prism does not know. Use only these: "
                                   f"{', '.join(allowed)}")
         groups[key] = Group(key, entry.text("workspace_group"), entry.text("role"), pages, acts)
     people, seen = [], set()
@@ -2441,7 +2441,7 @@ class PackageForm:
 
 def load_package_form(path: Path = CONFIG_DIR / "package_form.toml") -> PackageForm:
     """The package form schema, checked: each field in a group the file defines, with a kind, a source and, for a
-    computed field, a rule the thresholds file has. Nothing else in Strata names a field, so adding an entry to
+    computed field, a rule the thresholds file has. Nothing else in Prism names a field, so adding an entry to
     the file adds a chip and removing one removes it."""
     data = _read(path)
 
@@ -2566,13 +2566,13 @@ ENGLISH = "en"
 
 @dataclass(frozen=True)
 class Language:
-    """One language a source can be written in, and for a working language, how Strata writes and checks it."""
+    """One language a source can be written in, and for a working language, how Prism writes and checks it."""
 
     code: str  # ISO 639-1, as passages carry it and the screens' lang attribute takes it
     api_name: str  # the Documents API's lang field, word for word
     endonym: str
     direction: str  # ltr or rtl
-    working: bool  # Strata writes answers and drafts in it
+    working: bool  # Prism writes answers and drafts in it
     word_locale: str | None = None
     number_locale: str | None = None
     decimal: str = "."
@@ -2991,7 +2991,7 @@ class AskSuggestion:
 
 @dataclass(frozen=True)
 class Examples:
-    """The examples Strata sets up for the reviewing panel, and where Start here's links land (config/examples.toml).
+    """The examples Prism sets up for the reviewing panel, and where Start here's links land (config/examples.toml).
     The showcase project and the demo plan come from the slice file, so they are not repeated here."""
 
     viewers: str  # the roles file's group whose people get the examples
@@ -3085,7 +3085,7 @@ URL_KEYS = ("app", "dashboard", "repo")
 
 @dataclass(frozen=True)
 class Urls:
-    """Where the panel finds Strata, the deck, the dashboard, the repo and the proposal (config/urls.toml). An
+    """Where the panel finds Prism, the deck, the dashboard, the repo and the proposal (config/urls.toml). An
     address that isn't known yet is None, and so is any address that follows from it."""
 
     app: str | None
@@ -3226,7 +3226,7 @@ DESIGNED_KEY = re.compile(r"[a-z][a-z0-9_]*")
 
 @dataclass(frozen=True)
 class DesignedNotBuilt:
-    """A part of Strata that is designed but not built, where the app labels it and the proposal describes it."""
+    """A part of Prism that is designed but not built, where the app labels it and the proposal describes it."""
 
     key: str
     name: str
@@ -3236,7 +3236,7 @@ class DesignedNotBuilt:
 
     @property
     def copy_key(self) -> str:
-        """The app's first-person sentence in web/src/copy.ts, saying what Strata does instead."""
+        """The app's first-person sentence in web/src/copy.ts, saying what Prism does instead."""
         return f"designedNotBuilt.items.{self.key}"
 
 

@@ -1,4 +1,4 @@
--- The evidence drawer's document view (ticket 23): one version of a report Strata read, by its documents API id,
+-- The evidence drawer's document view (ticket 23): one version of a report Prism read, by its documents API id,
 -- public on the as-of date (ADR 0002).
 SELECT
   d.document_id,

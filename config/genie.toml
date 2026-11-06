@@ -14,10 +14,10 @@
 
 [space]
 title = "Strata: World Bank procurement records"
-description = """Signed contracts and procurement packages on World Bank-financed projects, from Strata's \
+description = """Signed contracts and procurement packages on World Bank-financed projects, from Prism's \
 gold tables. Ask in plain words, such as how many contracts a country signed in a fiscal year."""
 # The space's one text instruction. Genie reads it with every question. Rules live here, never in a question.
-instruction = """These are World Bank procurement records from Strata's gold tables. A contract is one signed \
+instruction = """These are World Bank procurement records from Prism's gold tables. A contract is one signed \
 contract, from the contract awards datasets or from a Contract Award notice. A package is one STEP reference: \
 one procurement activity in a Procurement Plan. Fiscal years run from July 1 to June 30, so fiscal 2021 began on \
 July 1, 2020. Amounts are in US dollars, with their cents. Use the measures of the metric views with MEASURE(). \

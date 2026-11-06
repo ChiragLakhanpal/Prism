@@ -11,7 +11,7 @@ SurvfuncRight.quantile follow. It is None when the curve never gets there, becau
 packages are still open.
 
 Months are days divided by 30.4375 (365.25 / 12), rounded to one decimal, half up. That is the one
-rounding every month Strata states takes, so a dot, a quantile and the plan line agree.
+rounding every month Prism states takes, so a dot, a quantile and the plan line agree.
 """
 
 from __future__ import annotations

@@ -1,7 +1,7 @@
 # The upload and STEP row registry (ticket 38; CLAUDE.md rule 9): what an implementing agency's private upload
-# of its Procurement Plan may be, the STEP columns Strata reads from it, and the columns of the STEP rows CSV a
+# of its Procurement Plan may be, the STEP columns Prism reads from it, and the columns of the STEP rows CSV a
 # draft of planned dates exports. strata.config.load_uploads() reads it, and src/strata/reader/step_columns.py
-# turns it into STEP's column names. Changing the layout Strata reads or writes is a change here.
+# turns it into STEP's column names. Changing the layout Prism reads or writes is a change here.
 #
 # STEP's names are not written here. Each column is named by its key in src/strata/reader/step.py's COLUMNS,
 # which holds STEP's descriptive columns word for word and in STEP's order, and each step comes from STEPS there
@@ -13,7 +13,7 @@
 #   web search of the World Bank's public pages found no description of an export. The Procurement Plan
 #   template the World Bank publishes (the "Textual Part", September 2025) holds no table: its text says the plan
 #   tables live in STEP. No Excel file from STEP is recorded, so no parsed sample exists.
-# - So Strata reads the fallback: the columns of the plan tables STEP prints in every published Procurement Plan,
+# - So Prism reads the fallback: the columns of the plan tables STEP prints in every published Procurement Plan,
 #   which src/strata/reader/step.py records word for word from the fixture's plans. A file may set them out as
 #   the published plans do (a section title such as WORKS, a header row of column and step names, then a row of
 #   Planned and Actual under each step), or in one header row that writes each step column as
@@ -25,13 +25,13 @@
 #
 # [uploads]
 #   accept          the file name endings a person may choose, which the file field offers
-#   max_size_bytes  the largest file Strata reads
+#   max_size_bytes  the largest file Prism reads
 #   max_rows        the most activities one upload may list
 #   max_unzipped_bytes  the most an Excel file may hold once unzipped; a larger one is refused as unreadable
-#   max_columns     the last column Strata reads on a sheet; a cell further right is left unread, so a file cannot
+#   max_columns     the last column Prism reads on a sheet; a cell further right is left unread, so a file cannot
 #                   make every row as wide as Excel's 16,384 columns
 #   format          which hint the upload page shows: step_export when a STEP export is confirmed, or
-#                   published_tables when Strata reads the published tables' columns (the answer above)
+#                   published_tables when Prism reads the published tables' columns (the answer above)
 #
 # [columns.<key>], one per key of step.py's COLUMNS, in its order:
 #   need     true when the reading stops without it. Activity Reference No. / Description is needed, or its
@@ -87,7 +87,7 @@ csv = "copied"
 [columns.prequalification]
 csv = "copied"
 
-# A risk rating the officer and the World Bank set together, so Strata never fills it.
+# A risk rating the officer and the World Bank set together, so Prism never fills it.
 [columns.high_sea_sh_risk]
 csv = "left"
 

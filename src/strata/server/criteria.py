@@ -10,7 +10,7 @@ sentence, under /api/planned-packages/{package_id}/criteria:
   text/event-stream: step events, then a package_run event, or an error event, and last a done event.
 - POST .../criteria/compare takes {"text": "...", "view": "staff", "asof": null} and streams the comparison: a
   saved event once the text is kept, step events, then a comparison event (with the refusal key when the text
-  asks for something Strata does not do), or an error event with a code from COMPARE_ERRORS, and a done event.
+  asks for something Prism does not do), or an error event with a code from COMPARE_ERRORS, and a done event.
 
 The pasted text arrives only in a request body, never in an address, and is kept with its owner (CLAUDE.md rule 8):
 only the person who pasted it reads it back. A preview can read the section but compares nothing: 403 preview. A

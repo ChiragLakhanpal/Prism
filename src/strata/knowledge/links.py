@@ -12,7 +12,7 @@ each numbered paragraph of its project's reports and scores five parts, each wor
 config/thresholds.toml's [links] gives it, rounded to two decimals:
 
 - project: the two come from the same project, as every pair does;
-- sector: the paragraph's project sector in Strata's taxonomy is the contract's project's;
+- sector: the paragraph's project sector in Prism's taxonomy is the contract's project's;
 - time: the document's date is close to the signing, falling in a straight line to nothing at
   time_window_months apart. A month is 365.25 / 12 days, and months_apart is rounded to the nearest month;
 - text: the share of the words of the contract's description the paragraph holds (stemmed as search stems them,

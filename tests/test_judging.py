@@ -1,5 +1,5 @@
 """The judging tool (ticket 32), at seam 3: two query judges grade the passages pooled for each query written from an
-award notice, each on their own and in an order of their own, and Strata records both judges' grades and their
+award notice, each on their own and in an order of their own, and Prism records both judges' grades and their
 agreement. The fixture's three queries are in evals/retrieval_queries.toml; Mei and Tomas are the two judges
 (tests/fixtures/roles.toml).
 

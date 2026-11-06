@@ -1,7 +1,7 @@
 -- The FY2001 to FY2016 awards' data readiness measures, for every country (subject all):
 --   coverage_years   fiscal years with contracts, of the fiscal years from the first to the last
 --   linked_project   contracts whose project record is held, of all its contracts
---   linked_country   contracts whose country Strata knows by its code, of all its contracts: the
+--   linked_country   contracts whose country Prism knows by its code, of all its contracts: the
 --                    dataset names a country only in words
 -- Its coverage_rows and freshness are written for every source at once (strata.lakehouse.readiness).
 WITH contracts AS (

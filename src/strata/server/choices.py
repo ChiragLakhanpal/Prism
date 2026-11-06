@@ -1,9 +1,9 @@
 """Keeping the other report of a disagreement (ticket 23; the 23 brief, section 5.5).
 
-A person who reads a disagreement under an answer or in a draft can keep the side Strata does not lean on, with a
-reason, and later go back to Strata's choice. Each choice is one new row in strata.ops.disagreement_choices, which
+A person who reads a disagreement under an answer or in a draft can keep the side Prism does not lean on, with a
+reason, and later go back to Prism's choice. Each choice is one new row in strata.ops.disagreement_choices, which
 the evidence pack (ticket 35) reads: the latest row per viewer, disagreement and answer or draft, with every reason
-given. Nothing is changed or deleted (CLAUDE.md rule 5), and the answer or draft is never rewritten: Strata states
+given. Nothing is changed or deleted (CLAUDE.md rule 5), and the answer or draft is never rewritten: Prism states
 only what its tools returned.
 
 ChoiceLog writes and reads those rows as the app's own service principal, as the evidence drawer's OpenedLog does,
@@ -49,7 +49,7 @@ def _iso(value) -> str | None:
 
 
 def sides(engine: Engine, disagreement_id: str) -> dict | None:
-    """The disagreement's two sides and the one Strata leans on, read as the viewer, or None."""
+    """The disagreement's two sides and the one Prism leans on, read as the viewer, or None."""
     result = engine.run(_query("disagreement"), {"disagreement_id": disagreement_id})
     if not result.rows:
         return None

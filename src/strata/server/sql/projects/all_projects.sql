@@ -1,4 +1,4 @@
--- All projects (the 10 brief, section 4): every project Strata holds a record for, public by the
+-- All projects (the 10 brief, section 4): every project Prism holds a record for, public by the
 -- as-of date, active projects first and then by name, A to Z whatever the case, so Kenya comes
 -- before KTDA. The route sorts; the browser does not.
 --

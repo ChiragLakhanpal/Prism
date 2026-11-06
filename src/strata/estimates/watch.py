@@ -1,21 +1,21 @@
 """The estimates loop's monthly watch (ticket 44; docs/PLAN.md section 11, "Three loops" and "Retraining").
 
-Once a month, from the nightly job's score task, the watch measures how Strata's ranges are doing and what they do
+Once a month, from the nightly job's score task, the watch measures how Prism's ranges are doing and what they do
 to the plans they inform, as of the last day of the month, and stores every measure as a count with its denominator
 in strata.ops (the 45 design brief, sections 7.3 and 7.4):
 
-- Plan rows dated within estimates_loop.anchored_within_days of a date Strata offered. A plan row is one Signed
+- Plan rows dated within estimates_loop.anchored_within_days of a date Prism offered. A plan row is one Signed
   Contract Planned date in one plan version. It counts when its version was published after an exposure of its
   package (strata.ops.exposures, ticket 44's one definition of an exposure), and it is dated within the window when
   its planned signing date is that close to the middle or the 8-in-10 point that exposure offered. Each such row
   goes to strata.ops.anchored_plan_rows, with the nearest offered date.
 - Plan accuracy and duration, for four groups: rows dated within the window of a date offered and all other rows,
-  each split by whether the row's country was using Strata when its plan was published (config/slice.toml's
+  each split by whether the row's country was using Prism when its plan was published (config/slice.toml's
   [[onboarded]]). Plan accuracy is the median days between a row's planned signing date and the package's actual
   one, early or late; duration is the median months from the package's first notice to its signing (procurement
   cycle time). The actual dates come from strata.gold.package, never from a plan's Actual column.
 - Rolling coverage: of the packages that finished in the estimates_loop.coverage_window_months to the month, those
-  inside the 8-in-10 range Strata gave them before their first notice (the champion's batch score), out of those it
+  inside the 8-in-10 range Prism gave them before their first notice (the champion's batch score), out of those it
   gave one; and on the same packages the typical error of the time estimate's middle and of the past range's middle
   as find_comparables gave it on the notice's day.
 - The input mix: for each input in estimates_loop.drift_inputs, Pearson's chi-square test of the mix the champion
@@ -104,7 +104,7 @@ class Settings:
                    inputs)
 
 
-# ── Plan rows and the dates Strata offered ──────────────────────────────
+# ── Plan rows and the dates Prism offered ──────────────────────────────
 
 def marked_rows(engine: Engine, month: dt.date, settings: Settings, the_slice: Slice) -> list[dict]:
     """Every plan row public by month, each with the nearest date an earlier exposure of its package offered (or
@@ -203,7 +203,7 @@ def finished_measures(engine: Engine, run_id: str, month: dt.date, settings: Set
                       measured_at: dt.datetime) -> list[tuple]:
     """Rolling coverage of the 8-in-10 range, and the typical errors of the time estimate's middle and the past
     range's middle, on the packages that finished in the coverage window to month and got a range before their
-    first notice. The past range is find_comparables' as Strata would have shown it on that notice's day, through a
+    first notice. The past range is find_comparables' as Prism would have shown it on that notice's day, through a
     reader frozen there (the replay harness's, so nothing published later reaches it)."""
     from strata.estimates.harness import Reader
     from strata.tools.project_signals import months_before

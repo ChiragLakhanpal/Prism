@@ -59,7 +59,7 @@ def status_as_of(row: dict, history: list[dict], as_of: dt.date) -> tuple[str | 
 
 
 def project_status(engine, project_id: str, as_of: dt.date) -> str | None:
-    """Whether the project was active, closed, pipeline or dropped on the as-of date, or None when Strata held no
+    """Whether the project was active, closed, pipeline or dropped on the as-of date, or None when Prism held no
     record of it then."""
     found = _rows(engine, "project.sql", project_id=project_id.strip().upper(), as_of=as_of)
     if not found:
@@ -69,7 +69,7 @@ def project_status(engine, project_id: str, as_of: dt.date) -> str | None:
 
 
 def statuses_between(rows: Callable[..., list[dict]], first: str, last: str, as_of: dt.date) -> dict[str, str | None]:
-    """project_status on the as-of date of every project whose ID sorts from first to last that Strata held a
+    """project_status on the as-of date of every project whose ID sorts from first to last that Prism held a
     record of then, read with two statements in all, for a replay that asks about many projects on one date (ticket
     89). rows runs a query with first and last bound and as_of bound to the same date, as the replay harness's frozen
     reader does, which also checks each row's public date."""
@@ -87,7 +87,7 @@ def lacks(view: str, capability: str) -> bool:
 
 
 def reads(view: str, capability: str, project_id: str, as_of: dt.date) -> list[tuple[str, dict]]:
-    """The statements withheld_in runs for a project named as Strata holds it, none when the view keeps the
+    """The statements withheld_in runs for a project named as Prism holds it, none when the view keeps the
     capability, for a page that sends its reads as one batch (ticket 125)."""
     if not lacks(view, capability):
         return []

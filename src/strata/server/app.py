@@ -20,7 +20,7 @@
   stay in the server log. Each run is written to strata.ops.agent_runs (src/strata/agent/runs.py). Each past range
   or time estimate a kept sentence cited, for a package with a STEP reference in the World Bank staff view, is an
   exposure (ticket 44; src/strata/estimates/exposures.py), written to strata.ops.exposures beside the run row.
-- GET /api/projects lists every project Strata holds a record for, and GET /api/projects/{project_id}
+- GET /api/projects lists every project Prism holds a record for, and GET /api/projects/{project_id}
   gives a project page's header and each agency's Procurement Plan versions (src/strata/server/
   projects.py), as the viewer and as of ?asof=; an unknown project gets 404 with the code
   unknown_project.
@@ -28,7 +28,7 @@
   its reports, events and records in three lanes, the ISRs' rating bands and the disagreements get_disagreements
   found, as the viewer, as of ?asof= and in ?view=, whose public view shows no disagreement on an active project.
 - POST /api/disagreements/{id}/choices keeps one side of a disagreement for an answer (run_id) or a draft
-  (draft_id), with a reason when it is the side Strata does not lean on: one new row in
+  (draft_id), with a reason when it is the side Prism does not lean on: one new row in
   strata.ops.disagreement_choices with the forwarded viewer, written as the app's own service principal. A preview
   records nothing ({"recorded": false}). GET with ?run_id= or ?draft_id= gives the latest choice
   (src/strata/server/choices.py).
@@ -79,7 +79,7 @@
   person made on it, read as the viewer. POST
   /api/suppliers/review records a person's decision on one, merge or no merge with a reason, and the
   viewer as the reviewer; the next nightly run applies it. GET /api/suppliers/labels gives the labeling
-  tool's next unlabeled pairs, without where Strata sent them, and POST /api/suppliers/labels records a
+  tool's next unlabeled pairs, without where Prism sent them, and POST /api/suppliers/labels records a
   label (src/strata/server/suppliers.py). A write needs a signed-in viewer (401 no_identity) and a pair
   the latest run found (404 unknown_pair), and is made as the app's own service principal; without it,
   nothing is recorded (503 not_recorded). No roles file names reviewers yet, so any signed-in viewer
@@ -451,7 +451,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     def officer(viewer: Viewer) -> bool:
         return access.agency(viewer) is not None
 
-    app = FastAPI(title="Strata", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan,
+    app = FastAPI(title="Prism", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan,
                   dependencies=[Depends(view_routes.make_guard(lambda: view_rules, officer))])
     app.add_exception_handler(view_routes.ViewRefused, lambda _request, refusal: JSONResponse(
         refusal.body, status_code=refusal.status, headers={"Cache-Control": "no-store"}))
@@ -926,7 +926,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     @app.post("/api/disagreements/{disagreement_id}/choices")
     def keep_a_side(disagreement_id: str, body: ChoiceRequest, viewer: Viewer = Depends(current_viewer)):
         """Keep one side of a disagreement for an answer or a draft (ticket 23): one new row, with the viewer and the
-        reason. Keeping the side Strata does not lean on needs a reason; keeping Strata's side is going back to it.
+        reason. Keeping the side Prism does not lean on needs a reason; keeping Prism's side is going back to it.
         A preview of another view records nothing: the view switch's guard answers {"recorded": false} first."""
         if not viewer.token or not viewer.user_id:
             return refused(401, "no_identity")
@@ -957,7 +957,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
             return {"choice": None}
         try:
             return {"choice": choices.latest(viewer.user_id, disagreement_id, run_id, draft_id)}
-        except Exception:  # the page shows Strata's choice, as for a new answer
+        except Exception:  # the page shows Prism's choice, as for a new answer
             log.exception("I could not read %s's choice on disagreement %s.", viewer.user_id, disagreement_id)
             return {"choice": None}
 

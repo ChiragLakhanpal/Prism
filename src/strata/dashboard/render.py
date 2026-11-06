@@ -498,7 +498,7 @@ def _display_name(name: str, pages: tuple[Page, ...]) -> str:
 def render(pages: tuple[Page, ...], test: bool = False, today: dt.date | None = None,
            query_history: bool = True) -> dict:
     """The whole dashboard as an AI/BI dashboard file holds it. test writes the test copy, whose introductions say
-    so; query_history says whether the workspace lets Strata read its query history (the 45 brief, section 6.4)."""
+    so; query_history says whether the workspace lets Prism read its query history (the 45 brief, section 6.4)."""
     today = today or dt.date.today()
     names = list(dict.fromkeys(name for page in pages for name in page_datasets(page, query_history)))
     datasets = []

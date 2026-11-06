@@ -211,7 +211,7 @@ def test_every_assertion_from_a_field_keeps_a_field_name_the_evidence_ladder_lis
 
 
 def test_the_run_reads_the_records_of_every_project_it_holds_records_for(engine):
-    """A project's records are read whether or not Strata has read its documents (ticket 43 brought the
+    """A project's records are read whether or not Prism has read its documents (ticket 43 brought the
     record-only projects back, once each family is read with one query for every project)."""
     with_records = {row["project_id"] for row in rows(
         engine, "SELECT DISTINCT project_id FROM strata.gold.contract WHERE step_reference IS NOT NULL "

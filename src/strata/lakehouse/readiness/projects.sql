@@ -4,7 +4,7 @@
 --                        Every page bronze holds counts, as for every search source
 --                        (strata.lakehouse.pages.reads_every_page).
 --   coverage_years       approval fiscal years with projects, of the fiscal years from the first to the last
---   linked_sector        projects mapped to one sector of Strata's taxonomy (config/sectors.toml), of
+--   linked_sector        projects mapped to one sector of Prism's taxonomy (config/sectors.toml), of
 --                        all projects. A project is left out when its record lists no major sector, or
 --                        a code the sector file does not map.
 --   fresh_fetched        per country: the day of the last fetch, with the source's cadence

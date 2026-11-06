@@ -137,7 +137,7 @@ def test_the_narrower_criteria_give_no_range_and_no_share_and_return_every_compa
     # A count of real cases is allowed below 20: none of the seven took 1.5 months or less.
     assert result["plan"]["within"] == 0
     # A package with no review type in any record is counted as not usable, never dropped unseen: the
-    # two signed only in award notices and the four still open, which no plan Strata holds lists.
+    # two signed only in award notices and the four still open, which no plan Prism holds lists.
     no_review = sorted(package_id(c["reference"]) for c in COMPARABLES if "review_type" not in c and "canceled_in" not in c)
     assert left_out(result, "no_review_type") == no_review
     # The three canceled packages have no contract, but their plan rows state Post, so none matches Prior.
@@ -452,7 +452,7 @@ def test_a_reference_no_public_plan_lists_is_an_unknown_package(engine):
 def test_criteria_no_package_meets_give_an_empty_answer_and_unmeasurable_ones_say_how_many_matched(engine):
     # No Indian works package under Request for Bids has a notice or a contract in the period.
     nothing = find(engine, country="IN")
-    # Kenya's non-consulting services under Request for Bids were signed, but Strata holds no notice for any.
+    # Kenya's non-consulting services under Request for Bids were signed, but Prism holds no notice for any.
     unmeasured = find(engine, category="Non-consulting Services")
 
     assert nothing["abstention"] == {"reason": "no_comparables", "matched": 0}

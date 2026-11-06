@@ -7,7 +7,7 @@
 -- url           the address fetched
 -- content_hash  SHA-256 of the response, which decides whether it changed
 -- response      the response as JSON text
--- fetched_at    when Strata fetched it, in UTC
+-- fetched_at    when Prism fetched it, in UTC
 -- public_from   the day it was fetched: the list has no date of its own (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.bronze.document_lists (
   source STRING NOT NULL,

@@ -319,7 +319,7 @@ def backtest(context: dict) -> str:
 
 
 def hindsight(context: dict) -> str:
-    """Figure 9: Strata's risk tables against the checklist, each a dot for the share caught, with Strata's interval
+    """Figure 9: Prism's risk tables against the checklist, each a dot for the share caught, with Prism's interval
     as a line when there are enough blamed risks for one."""
     rows = context["rows"]
     left, right = 180, WIDTH - 40

@@ -163,7 +163,7 @@ class Definitions:
 
 @dataclass(frozen=True)
 class QueryHistory:
-    """Who queried what (the 45 brief, tile 21): the table of queries where the workspace lets Strata read its query
+    """Who queried what (the 45 brief, tile 21): the table of queries where the workspace lets Prism read its query
     history, or a dated text tile saying it doesn't (section 6.4)."""
 
     table: Table

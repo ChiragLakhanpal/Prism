@@ -144,7 +144,7 @@ class LiveDemo:
                 "deployed": deployed(found)}
 
     def redeploy_app(self, name: str) -> tuple[int, str]:
-        """Deploy Strata again with ops/app/deploy_app.py --keep-secrets, from this checkout, after the platform dropped
+        """Deploy Prism again with ops/app/deploy_app.py --keep-secrets, from this checkout, after the platform dropped
         the App's deployment (ticket 109), and give back its exit code and what it printed. The App's name is the one
         ops/dayone/dayone.toml gives, which the deploy reads itself. It takes about 12 minutes after a cold start."""
         done = subprocess.run(redeploy_command(self.env_path), cwd=REPO, capture_output=True, text=True, timeout=3600)
@@ -180,7 +180,7 @@ class LiveDemo:
     # ── The listing before and after ──
 
     def snapshot(self) -> dict:
-        """The app, Strata's catalog with its jobs and dashboard as the bundle deploy lists them, the Genie space,
+        """The app, Prism's catalog with its jobs and dashboard as the bundle deploy lists them, the Genie space,
         and how many rows each table in strata.ops holds (ops_rows)."""
         from strata.lakehouse import bundle
 

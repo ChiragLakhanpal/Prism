@@ -3,7 +3,7 @@
 -- (strata.gold.notice), and the Signed Contract step and Actual Amount of every plan version read
 -- (strata.silver.plan_rows and plan_steps), each with the day the next version of the same agency's plan
 -- replaced it and the PDF page of its row. A package with more than one contract in the awards datasets or
--- more than one such notice is left out: Strata cannot tell which notice is which lot, nor what a plan's one
+-- more than one such notice is left out: Prism cannot tell which notice is which lot, nor what a plan's one
 -- row covers. A contract the awards datasets do not cover, which gold.contract takes from its award notice,
 -- comes in once, as its notice.
 -- :every_project true reads every project at once (the nightly run, ticket 43); false reads the projects in

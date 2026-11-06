@@ -399,7 +399,7 @@ export function EvidenceTrail({
         <g data-band-row>
           {layout.bands.length === 0 && (
             <text x={PAD} y={ROWS.how.band! + 16} className="fill-chart-text-subtle">
-              {/* When get_disagreements did not answer, Strata could not read the ratings: that is not having none. */}
+              {/* When get_disagreements did not answer, Prism could not read the ratings: that is not having none. */}
               {data.disagreements.status === "failed" ? words.ratingsFailed : words.noRatings}
             </text>
           )}

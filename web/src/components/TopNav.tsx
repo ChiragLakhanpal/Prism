@@ -1,5 +1,5 @@
 // The top bar (DESIGN.md section 5, Top bar; ticket 93): the navy banner that carries the World Bank Group logo, the
-// Strata wordmark (a link to Home) and the view switch. Nouns navigate. The sections are the sidebar beside the page
+// Prism wordmark (a link to Home) and the view switch. Nouns navigate. The sections are the sidebar beside the page
 // (Sidebar.tsx, ticket 92), and the data stamp sits at its foot. The one box floats at the page column's foot (Frame.tsx,
 // ticket 113).
 //
@@ -211,7 +211,7 @@ function DateForm({ mode, onDone }: { mode: NavMode; onDone: () => void }) {
 }
 
 // The view panel: who is signed in, the views as link rows, the past-date field. A viewer whose identity failed sees
-// only the error line (the 40 brief, 7.1). "See Strata as" names the group in the label style, so it never reads as a
+// only the error line (the 40 brief, 7.1). "See Prism as" names the group in the label style, so it never reads as a
 // fourth view: 16 px under the signed-in line, as between blocks, and 8 px over the first row (ticket 110). Nothing in
 // the panel is bold, since DESIGN.md keeps 700 for the h1 and the wordmark.
 export function ViewPanel({

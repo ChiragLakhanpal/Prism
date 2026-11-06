@@ -271,7 +271,7 @@ quote = { text = "Percentage Value 67.00 67.00 80.00", passage_id = "strata.gold
 [[cases]]
 id = "p130164-number-from-a-table-summary"
 says = """The agent finds the PAD's risk annex, a table read from the scan by the layout parser, and states how many \
-risks it rated from the table's summary. The summary is Strata's own words about the table, not its rows, so the \
+risks it rated from the table's summary. The summary is Prism's own words about the table, not its rows, so the \
 verifier removes that sentence and says the number came only from the summary (ticket 18)."""
 question = "Why were works contracts in P130164 advertised again?"
 scope = "P130164"

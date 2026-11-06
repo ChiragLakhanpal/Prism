@@ -1,5 +1,5 @@
 // The Data tab at seam 4 (ticket 16; the 16 design brief): Data readiness and Sources and licenses,
-// against the mocked API, and the old How Strata works address, which opens Data readiness (ticket 97).
+// against the mocked API, and the old How Prism works address, which opens Data readiness (ticket 97).
 // The answers are the server's own on the fixture,
 // recorded in tests/fixtures/api by tests/record_api.py, so every number the page shows is checked
 // against the measure the server returned. Fixed words come from the brief and DESIGN.md section 8,
@@ -79,7 +79,7 @@ test("the sidebar lists Data readiness and Sources and licenses under Data, and 
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Data");
   // No purpose under the title (ticket 126): a specialist knows what the tab is for.
   await expect(page.locator("main h1 + p")).toHaveCount(0);
-  await expect(page).toHaveTitle("Data readiness | Strata");
+  await expect(page).toHaveTitle("Data readiness | Prism");
   await expect(page.getByRole("navigation", { name: "Data pages" })).toHaveCount(0);
   await expect(page.locator("main nav")).toHaveCount(0);
   const sidebar = page.getByRole("navigation", { name: "Main" });
@@ -92,24 +92,24 @@ test("the sidebar lists Data readiness and Sources and licenses under Data, and 
 
   await items.nth(1).click();
   await expect(page).toHaveURL(/\/data\/sources$/);
-  await expect(page).toHaveTitle("Sources and licenses | Strata");
+  await expect(page).toHaveTitle("Sources and licenses | Prism");
   await expect(items.nth(1)).toHaveAttribute("aria-current", "page");
   await expect(items.first()).not.toHaveAttribute("aria-current");
   await expect(page.locator("main [data-lead]")).toBeFocused();
   await items.first().click();
-  await expect(page).toHaveTitle("Data readiness | Strata");
+  await expect(page).toHaveTitle("Data readiness | Prism");
   await expect(page.locator("main [data-lead]")).toBeFocused();
 });
 
-// Ticket 97: How Strata works is no longer a page (the deck at /present shows its figures). An old link to it lands on
+// Ticket 97: How Prism works is no longer a page (the deck at /present shows its figures). An old link to it lands on
 // Data readiness, and the address is replaced, so Back goes to the page before it, never to the old address.
-test("the old How Strata works address opens Data readiness and replaces the address", async ({ page }) => {
+test("the old How Prism works address opens Data readiness and replaces the address", async ({ page }) => {
   await mockData(page, FULL);
   await open(page, "/data/sources");
   await page.goto("/data/how-strata-works#what-i-dont-do");
 
   await expect(page).toHaveURL(/\/data$/);
-  await expect(page).toHaveTitle("Data readiness | Strata");
+  await expect(page).toHaveTitle("Data readiness | Prism");
   await expect(page.locator("[data-readiness=ready]")).toBeVisible();
   await expect(page.locator("[data-sub-items=data] [data-sub-item=data]")).toHaveAttribute("aria-current", "page");
   await page.goBack();
@@ -267,7 +267,7 @@ test("badges appear only on Partial and Gap cells, freshness reads like Oct 23 Â
   await expect(cell(page, "cpia:coverage")).toContainText("264scores heldIDA countries onlyin 21 fiscal years");
   // A share breaks only after its comma: its count and its frequency each stay on one line.
   await expect(cell(page, "reports:read_well").locator("[data-num] .whitespace-nowrap")).toHaveText(["625 of 650,", "96%"]);
-  // CPIA and WGI scores are a source's own values; no score of Strata's rates a source.
+  // CPIA and WGI scores are a source's own values; no score of Prism's rates a source.
   expect(await page.locator("main").textContent()).not.toMatch(/composite|\bscore\b|overall/i);
 });
 
@@ -921,8 +921,8 @@ test("a date before the first measure says when the measures start and links to 
 
 for (const [name, file, status, text, retry] of [
   ["a timeout", "data-readiness-timeout.json", 504, "I couldn't load the measures, because the database didn't answer within 30 seconds. Try again in a minute.", true],
-  ["no access", "data-readiness-no-access.json", 403, "I couldn't load the measures, because your account doesn't have access to them. Ask the person who runs Strata to give your account access.", false],
-  ["a server error", "data-readiness-error.json", 502, "I couldn't load the measures, because the server returned an error. Try again. If it fails again, tell the person who runs Strata.", true],
+  ["no access", "data-readiness-no-access.json", 403, "I couldn't load the measures, because your account doesn't have access to them. Ask the person who runs Prism to give your account access.", false],
+  ["a server error", "data-readiness-error.json", 502, "I couldn't load the measures, because the server returned an error. Try again. If it fails again, tell the person who runs Prism.", true],
 ] as const) {
   test(`after ${name}, an error alert takes the headline's place and no table shows`, async ({ page }) => {
     await mockData(page, { file, status });
@@ -1048,7 +1048,7 @@ test("Sources and licenses credits every dataset in the World Bank's format, wit
   await expect(lines.first().getByRole("link")).toHaveAttribute("href", sources.datasets[0].catalog_url);
   await expect(page.locator("[data-terms]")).toHaveText(fixed("Terms of use: "));
   await expect(page.locator("[data-terms] a")).toHaveAttribute("href", "https://www.worldbank.org/ext/en/legal/terms-conditions/datasets");
-  await expect(page.locator("[data-changes]")).toHaveText(fixed("Strata joined these records"));
+  await expect(page.locator("[data-changes]")).toHaveText(fixed("Prism joined these records"));
   await expect(page.locator("[data-caveat]")).toHaveText(fixed("The World Bank does not guarantee"));
   await expect(page.getByText(fixed("The World Bank Group authorizes the use of this material"))).toBeVisible();
 });

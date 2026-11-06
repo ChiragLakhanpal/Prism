@@ -3,7 +3,7 @@
 #
 # The kinds of question. A passage report is about one passage for one kind of question, and a passage
 # reviewer's "Rank it lower" changes only questions of that kind, so one person's report never moves a
-# passage for every question. Strata picks a question's kind by its words: the kind whose words the question
+# passage for every question. Prism picks a question's kind by its words: the kind whose words the question
 # holds most often, the first in this file on a tie, and the fallback when it holds none. This is the loop's
 # own classification. It is not the tool registry's "kind of question" on the Data readiness page, which
 # names what each tool answers.

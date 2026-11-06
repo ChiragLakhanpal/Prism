@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="knowledge-model-title knowledge-model-desc" data-motion-root="" data-motion-mode="none" data-step-count="6" id="knowledge-model-root">
-        <title id="knowledge-model-title">Strata's knowledge model</title>
+        <title id="knowledge-model-title">Prism's knowledge model</title>
         <desc id="knowledge-model-desc">Projects link packages, contracts and suppliers on STEP keys, and documents, passages, lessons and assertions, a contract and a passage about the same work are linked as having appeared together, and every row keeps the date it became public.</desc>
         <defs>
       <style>#knowledge-model-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }

@@ -16,10 +16,10 @@ Then read() turns what the parser read into passages:
   PAD keeps its numbered paragraphs, with the PDF page of each. These passages are paragraphs read
   by the layout parser from a scanned page.
 - The pages of a table (a data sheet, a risk table) give one passage per row, each row's cells
-  labelled by the table's column heads, and one summary passage per table, which Strata writes and
+  labelled by the table's column heads, and one summary passage per table, which Prism writes and
   which never backs a number (src/strata/reader/tables.py).
 - A page with no published text, such as a figure, gives the parser's text blocks, each a passage
-  Strata numbers.
+  Prism numbers.
 
 A page the parser has not read yet (the cap stopped the run, or it failed today) gives nothing, and
 the next run reads it.
@@ -125,7 +125,7 @@ def read(routes: tuple[route_a.PageRoute, ...], found: dict[int, Layout], templa
                                numbering_found=numbered[route.pdf_page].numbering_found,
                                passages=numbered[route.pdf_page].passages) for route in routes)
     else:
-        # A page with no published text, such as a figure: each of the parser's text blocks, numbered by Strata.
+        # A page with no published text, such as a figure: each of the parser's text blocks, numbered by Prism.
         for route in routes:
             if route.reason == route_a.NO_TEXT and route.pdf_page in found:
                 blocks = [route_a.words(block) for block in found[route.pdf_page].text.split("\n\n")]

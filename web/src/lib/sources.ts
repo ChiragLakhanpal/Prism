@@ -110,7 +110,7 @@ export function recordReference(evidence: EvidenceEvent): string {
   return String(row.activity_reference_no ?? row.reference ?? evidence.id.split(":").slice(1).join(":"));
 }
 
-// A lesson in Strata's library (get_lessons and the lesson review writer cite it by version): its
+// A lesson in Prism's library (get_lessons and the lesson review writer cite it by version): its
 // statement, version and decision date, from the row the tool returned. Null for any other source.
 export const LESSON_TABLE = "strata.ops.lesson_versions";
 export type LessonRecord = { statement: string; version: number; decidedOn: string | null };

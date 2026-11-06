@@ -4,7 +4,7 @@
 -- project_id             its project
 -- activity_reference_no  Activity Reference No.
 -- note                   method_differs_from_reference: the reference ends in one method's code
---                        and the Method column names another (Strata uses the Method column);
+--                        and the Method column names another (Prism uses the Method column);
 --                        actual_amount_zero: a Signed or Completed row's Actual Amount reads 0.00
 -- reference_method_code  the method code the reference ends in, such as RFB
 -- reference_method       the method that code stands for, such as Request for Bids

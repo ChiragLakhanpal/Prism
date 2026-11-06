@@ -850,7 +850,7 @@
         "SELECT\n",
         "  event_date AS day,\n",
         "  created_by AS person,\n",
-        "  CASE through_key WHEN 'app' THEN 'Strata app' WHEN 'genie' THEN 'Genie' WHEN 'dashboard' THEN 'Dashboard' WHEN 'sql_editor' THEN 'SQL editor' WHEN 'notebook' THEN 'Notebook' WHEN 'job' THEN 'Job' WHEN 'other' THEN 'Another way' ELSE through_key END AS through,\n",
+        "  CASE through_key WHEN 'app' THEN 'Prism app' WHEN 'genie' THEN 'Genie' WHEN 'dashboard' THEN 'Dashboard' WHEN 'sql_editor' THEN 'SQL editor' WHEN 'notebook' THEN 'Notebook' WHEN 'job' THEN 'Job' WHEN 'other' THEN 'Another way' ELSE through_key END AS through,\n",
         "  source_table_full_name AS table_read,\n",
         "  count(DISTINCT statement_id) AS queries\n",
         "FROM reads\n",
@@ -2014,8 +2014,8 @@
         "  segment,\n",
         "  CASE WHEN segment LIKE 'anchored/%' THEN 'Dated within 14 days of a date I offered'\n",
         "       ELSE 'Other plan rows' END AS plan_rows,\n",
-        "  CASE WHEN segment LIKE '%/using_strata' THEN 'Using Strata'\n",
-        "       ELSE 'Not yet using Strata' END AS countries,\n",
+        "  CASE WHEN segment LIKE '%/using_strata' THEN 'Using Prism'\n",
+        "       ELSE 'Not yet using Prism' END AS countries,\n",
         "  with_actual,\n",
         "  median_days,\n",
         "  CASE\n",
@@ -2053,7 +2053,7 @@
     },
     {
       "name": "use_by_week",
-      "displayName": "People who used Strata, by week",
+      "displayName": "People who used Prism, by week",
       "queryLines": [
         "WITH people AS (\n",
         "  SELECT CAST(date_trunc('WEEK', public_from) AS DATE) AS week_start, count(DISTINCT viewer_id) AS people\n",
@@ -2179,9 +2179,9 @@
             "multilineTextboxSpec": {
               "lines": [
                 "## Data readiness\n",
-                "This copy is for testing deploys. The dashboard people use is Strata operations.\n",
-                "How fit each source is to support answers. These are the same measures as the Data readiness page in Strata. Pick a measure date to compare the two.\n",
-                "These tiles read Strata's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute."
+                "This copy is for testing deploys. The dashboard people use is Prism operations.\n",
+                "How fit each source is to support answers. These are the same measures as the Data readiness page in Prism. Pick a measure date to compare the two.\n",
+                "These tiles read Prism's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute."
               ]
             }
           },
@@ -2383,7 +2383,7 @@
                 "showTitle": true,
                 "title": "What the measures say",
                 "showDescription": true,
-                "description": "The day's headline, written by the same code as the Data readiness page in Strata."
+                "description": "The day's headline, written by the same code as the Data readiness page in Prism."
               }
             }
           },
@@ -2476,7 +2476,7 @@
                 "showTitle": true,
                 "title": "Contract-award rows per fiscal year, by dataset",
                 "showDescription": true,
-                "description": "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Strata counts them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for each contract, because Strata shows those years as a Gap with no count. A missing bar means no rows."
+                "description": "Rows per fiscal year. Each awards dataset's rows are counted as the Coverage column in Prism counts them, one for each joint-venture member. The award notices for fiscal 2017 to 2019 count one row for each contract, because Prism shows those years as a Gap with no count. A missing bar means no rows."
               },
               "mark": {
                 "colors": [
@@ -2575,7 +2575,7 @@
                 "showTitle": true,
                 "title": "Rows per fiscal year, by source",
                 "showDescription": true,
-                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts, then the documents I read of each type, by the fiscal year they were disclosed. Each source's rows are counted as its Coverage column in Strata counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of contract-award rows."
+                "description": "Rows in each fiscal year for the contract awards, the procurement notices, the projects and the Independent Evaluation Group (IEG) ratings, with exact counts, then the documents I read of each type, by the fiscal year they were disclosed. Each source's rows are counted as its Coverage column in Prism counts them, so its years add up to that number on the same date. The award notices for fiscal 2017 to 2019 count one row for each contract. It is the table for the chart of contract-award rows."
               }
             }
           },
@@ -2966,9 +2966,9 @@
             "name": "notes",
             "multilineTextboxSpec": {
               "lines": [
-                "**Source:** Strata's data readiness measures in strata.ops.\n",
+                "**Source:** Prism's data readiness measures in strata.ops.\n",
                 "**Note:** I give no percentage, median, rate per 100 or range from fewer than 20 cases. Where a tile has fewer, it shows the count instead.\n",
-                "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+                "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
               ]
             }
           },
@@ -2992,9 +2992,9 @@
             "multilineTextboxSpec": {
               "lines": [
                 "## Governance\n",
-                "This copy is for testing deploys. The dashboard people use is Strata operations.\n",
-                "This page shows whether each nightly run passed its quality checks, what Azure has cost against the budget, and what personal data I removed at ingestion. It also shows who read Strata's tables, and traces any answer back through its tool calls to its sources.\n",
-                "These tiles read Strata's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute."
+                "This copy is for testing deploys. The dashboard people use is Prism operations.\n",
+                "This page shows whether each nightly run passed its quality checks, what Azure has cost against the budget, and what personal data I removed at ingestion. It also shows who read Prism's tables, and traces any answer back through its tool calls to its sources.\n",
+                "These tiles read Prism's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute."
               ]
             }
           },
@@ -4246,7 +4246,7 @@
             "name": "remove_why",
             "multilineTextboxSpec": {
               "lines": [
-                "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses, phone numbers and names after \"Attention\" that got through."
+                "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Prism never shows them and never answers questions about them. The counter above counts any email addresses, phone numbers and names after \"Attention\" that got through."
               ]
             }
           },
@@ -4263,7 +4263,7 @@
             "multilineTextboxSpec": {
               "lines": [
                 "### Who queried what\n",
-                "Strata's app runs every query as the person using it, so their name appears here, not the app's."
+                "Prism's app runs every query as the person using it, so their name appears here, not the app's."
               ]
             }
           },
@@ -4350,7 +4350,7 @@
               },
               "frame": {
                 "showTitle": true,
-                "title": "Queries on Strata's tables, by person and day",
+                "title": "Queries on Prism's tables, by person and day",
                 "showDescription": true,
                 "description": "One row per person, day, way in and table, in the dates chosen above. It shows which tables were read, never the text of a query, because a query can carry a person's question."
               }
@@ -4886,9 +4886,9 @@
             "name": "governance_notes",
             "multilineTextboxSpec": {
               "lines": [
-                "**Source:** Strata's pipeline runs, quality checks, agent runs and Azure cost records in strata.ops, and the workspace's query history where Free Edition shows it.\n",
+                "**Source:** Prism's pipeline runs, quality checks, agent runs and Azure cost records in strata.ops, and the workspace's query history where Free Edition shows it.\n",
                 "**Note:** I give no percentage, median, rate per 100 or range from fewer than 20 cases. Where a tile has fewer, it shows the count instead.\n",
-                "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+                "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
               ]
             }
           },
@@ -4912,9 +4912,9 @@
             "multilineTextboxSpec": {
               "lines": [
                 "## AI quality and adoption\n",
-                "This copy is for testing deploys. The dashboard people use is Strata operations.\n",
-                "This page shows how my answers did on the benchmark, in Microsoft Foundry's evaluations and in my own six checks. It also shows the leading and lagging indicators of the knowledge, retrieval and estimates loops, and how people used Strata. Each tile's description defines its measure.\n",
-                "These tiles read Strata's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute."
+                "This copy is for testing deploys. The dashboard people use is Prism operations.\n",
+                "This page shows how my answers did on the benchmark, in Microsoft Foundry's evaluations and in my own six checks. It also shows the leading and lagging indicators of the knowledge, retrieval and estimates loops, and how people used Prism. Each tile's description defines its measure.\n",
+                "These tiles read Prism's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute."
               ]
             }
           },
@@ -5526,7 +5526,7 @@
                 "showTitle": true,
                 "title": "Weekly users",
                 "showDescription": true,
-                "description": "People who opened at least one page of Strata in the last full week in the dates chosen above, Monday to Sunday. Each person counts once, whatever view they used."
+                "description": "People who opened at least one page of Prism in the last full week in the dates chosen above, Monday to Sunday. Each person counts once, whatever view they used."
               }
             }
           },
@@ -6386,7 +6386,7 @@
                 "- **Wrong-passage reports per 100 sources opened.** How many passages people marked as wrong for every 100 sources they opened from an answer. Reports sent in a preview, and reports that were withdrawn, don't count.\n",
                 "- **Precision at 10 and recall at 20.** On the held-out set of labeled queries, precision at 10 is the share of my top 10 passages that a person labeled as right, and recall at 20 is the share of the right passages that appear in my top 20. Both use only documents published before each query's date. Normalized discounted cumulative gain at 10 (nDCG at 10) is in the table beside them.\n",
                 "- **Rolling coverage of the 8-in-10 range.** Of the packages that finished in the last 12 months, the share that finished inside the 8-in-10 range I gave them. A well-sized range catches about 8 in 10, so the target is 75 to 85 percent. Coverage outside it for 2 months in a row raises a retrain.\n",
-                "- **Plan accuracy.** The median number of days between a plan row's planned signing date and the actual one, early or late. I report it for plan rows dated within 14 days of a date I offered and for all other plan rows, and separately for countries not yet using Strata.\n"
+                "- **Plan accuracy.** The median number of days between a plan row's planned signing date and the actual one, early or late. I report it for plan rows dated within 14 days of a date I offered and for all other plan rows, and separately for countries not yet using Prism.\n"
               ]
             }
           },
@@ -7067,7 +7067,7 @@
                 "showTitle": true,
                 "title": "Hindsight test, per release",
                 "showDescription": true,
-                "description": "Hindsight recall is coverage times shown-when-covered: the blamed risks I showed in the top five for their package, out of all blamed risks. Projects exposed to Strata are left out."
+                "description": "Hindsight recall is coverage times shown-when-covered: the blamed risks I showed in the top five for their package, out of all blamed risks. Projects exposed to Prism are left out."
               }
             }
           },
@@ -7395,7 +7395,7 @@
             "multilineTextboxSpec": {
               "lines": [
                 "### Adoption\n",
-                "Who used Strata, which drafts their authors finished, and how often a plan row was dated within 14 days of a date I offered."
+                "Who used Prism, which drafts their authors finished, and how often a plan row was dated within 14 days of a date I offered."
               ]
             }
           },
@@ -7458,7 +7458,7 @@
               },
               "frame": {
                 "showTitle": true,
-                "title": "People who used Strata, by week",
+                "title": "People who used Prism, by week",
                 "showDescription": true,
                 "description": "People. Each person counts once a week, whatever view they used."
               },
@@ -7803,9 +7803,9 @@
             "name": "ai_quality_notes",
             "multilineTextboxSpec": {
               "lines": [
-                "**Source:** Strata's evaluation results, agent runs, feedback, lesson decisions, exposure logs, usage events and draft states in strata.ops.\n",
+                "**Source:** Prism's evaluation results, agent runs, feedback, lesson decisions, exposure logs, usage events and draft states in strata.ops.\n",
                 "**Note:** I give no percentage, median, rate per 100 or range from fewer than 20 cases. Where a tile has fewer, it shows the count instead.\n",
-                "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+                "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
               ]
             }
           },

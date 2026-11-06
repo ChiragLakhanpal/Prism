@@ -2,7 +2,7 @@
 # the blueprint's Check a plan wireframe shows, the comparable works packages, and the awkward
 # cases the lakehouse must handle on purpose.
 #
-# Each value is a literal copied once from its source, never computed by Strata's code. Each
+# Each value is a literal copied once from its source, never computed by Prism's code. Each
 # one says where it came from:
 #   - a document: document (the recorded file, without .txt), document_type, project, date,
 #     section and paragraph where there are any, and pdf_page (PDF pages count from 1);
@@ -225,7 +225,7 @@ quote = "2019-11-02T07:01:08Z"
 record = "api/documents/P130164.json"
 at = "documents.D31525018.disclosure_date"
 
-# The day the World Bank approved P130164, the date the hindsight test freezes Strata at (ticket 30's second
+# The day the World Bank approved P130164, the date the hindsight test freezes Prism at (ticket 30's second
 # acceptance criterion; ticket 34).
 [[value]]
 id = "approval-p130164"
@@ -2770,7 +2770,7 @@ says = "IN-RRSMP-7431-CW-RFB was signed on June 15, 2017 (FY2017). The FY2001 to
 awards = "api/awards/P130164-fy2001-2016.json"
 reference = "IN-RRSMP-7431-CW-RFB"
 
-# Kenya's rows in the fixture, counted from the recorded files apart from Strata's code. The lakehouse
+# Kenya's rows in the fixture, counted from the recorded files apart from Prism's code. The lakehouse
 # run's data readiness measures and tests/ground_truth/kenya_contracts_with_a_step_reference.sql
 # must agree with them.
 
@@ -2791,7 +2791,7 @@ notices_counted = "The distinct notice ids in the three notice files whose proje
 
 # Awarded bidders' STEP supplier IDs against the awards dataset's supplier_id, over every Contract
 # Award notice in the fixture (ticket 19). Counted on October 24, 2026 from the recorded files by a
-# script written apart from Strata's code: it took each notice's text with its HTML tags as line
+# script written apart from Prism's code: it took each notice's text with its HTML tags as line
 # breaks, kept the lines between an "Awarded ..." heading and the next Evaluated, Rejected or
 # Beneficial Ownership heading that end with an ID of three or more digits in brackets, and matched
 # each notice's bid_reference_no to the award rows' borrower_contract_reference_number by the STEP
@@ -2809,15 +2809,15 @@ on_award_counted = "Those whose notice's STEP reference is also on award rows."
 agrees = 137
 agrees_counted = "Those whose ID is one of the supplier_id values on the award rows of that STEP reference."
 same_name = 157
-same_name_counted = "Those whose name, in capitals with only letters and digits kept, is a supplier's name on the award rows of that STEP reference: 158 in the recorded files, less the awarded bidder of OP00131058, whose name the fetch removes as a person's contact detail, so Strata never reads it."
+same_name_counted = "Those whose name, in capitals with only letters and digits kept, is a supplier's name on the award rows of that STEP reference: 158 in the recorded files, less the awarded bidder of OP00131058, whose name the fetch removes as a person's contact detail, so Prism never reads it."
 same_name_agrees = 128
 same_name_agrees_counted = "Those whose ID is the supplier_id the award rows give that same name. The other 29 carry another ID, such as TRADECON (MSA) LTD (supplier-id-tradecon-notice and supplier-id-tradecon-award)."
 
 # P130164's contracts as the public Home counts them (ticket 41), counted on October 26, 2026 from the recorded
-# files apart from Strata's code. A contract is traced from notice to signature when it has a signing date and a
+# files apart from Prism's code. A contract is traced from notice to signature when it has a signing date and a
 # notice of the same project carries its STEP reference, the link the contract trail follows.
 [counts.p130164_trail]
-says = "Strata holds eight contracts of P130164 and traced one of them from notice to signature."
+says = "Prism holds eight contracts of P130164 and traced one of them from notice to signature."
 awards = ["api/awards/P130164-fy2001-2016.json"]
 notice_files = ["api/notices/P130164.json"]
 contracts = 8
@@ -2857,8 +2857,8 @@ codes = ["AAX", "AX", "BBX", "BX", "CX", "DDX", "DX", "EEX", "EX", "FFX", "FX", 
          "LLX", "LX", "MX", "NNX", "NX", "PX", "QX", "SSX", "SX", "TTX", "TX", "UX", "VX", "WWX", "WX", "XX",
          "YX", "YYX"]
 
-# The stress shelf (ticket 18; docs/PLAN.md section 3): the hardest documents Strata reads. Each count
-# and page below was read from the recorded files, apart from Strata's code. tests/test_ground_truth_values.py
+# The stress shelf (ticket 18; docs/PLAN.md section 3): the hardest documents Prism reads. Each count
+# and page below was read from the recorded files, apart from Prism's code. tests/test_ground_truth_values.py
 # checks each quote on its PDF page.
 
 # The P130164 PAD's Annex 4, the Operational Risk Assessment Framework (ORAF), set in two columns on
@@ -3027,7 +3027,7 @@ bids = [
 ]
 
 # The retrieval loop's silver labels (ticket 32; the spec's "Evaluation"), read from the recorded documents
-# by the builder on October 24, 2026, apart from Strata's code, with the page of each in the recorded
+# by the builder on October 24, 2026, apart from Prism's code, with the page of each in the recorded
 # .pages.txt. tests/test_retrieval_labels.py checks each quote on its page and that the weekly retrieval
 # run finds the same counts.
 #

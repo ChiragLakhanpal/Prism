@@ -8,7 +8,7 @@
 --               while its earliest row does
 -- name          the firm's name as its records write it, or its members' names for a joint venture.
 --               Empty for an individual consultant: the awards dataset names them only as INDIVIDUAL
---               CONSULTANT, and Strata never names a person (spec, user story 115).
+--               CONSULTANT, and Prism never names a person (spec, user story 115).
 -- kind          firm, joint venture, or individual consultant
 -- member_count  how many members a joint venture has; 1 for anyone else
 -- resolved_on   step_supplier_id when the supplier, or every member of a joint venture, has a STEP

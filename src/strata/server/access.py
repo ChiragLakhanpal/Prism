@@ -1,4 +1,4 @@
-"""The one access rule for what Strata keeps for a team (ticket 35; the 38 design brief, section 11).
+"""The one access rule for what Prism keeps for a team (ticket 35; the 38 design brief, section 11).
 
 A draft keeps the team its author was on when it was saved. An author always sees their own drafts. A
 teammate sees the drafts saved while the author was on their team, and can open them and their files;

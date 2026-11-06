@@ -4,7 +4,7 @@ run over the fixture.
 The gate builds the fixture database by running the document slice over the recorded documents
 (gates/build_fixture.py), so these tests read what that run wrote. Every count and page they expect
 comes from tests/ground_truth/values.toml ([stress_shelf]), which quotes the recorded documents with
-their PDF pages, never from Strata's code.
+their PDF pages, never from Prism's code.
 """
 
 import datetime as dt
@@ -218,7 +218,7 @@ def test_the_risk_annex_has_one_summary_passage_which_the_verifier_never_lets_ba
                          "WHERE document_id = :document_id AND kind = 'table_summary'", document_id=annex["document_id"])
 
     assert summary["passage_id"] == f"{annex['document_id']}/v1/table{annex['first_pdf_page']}"
-    # The summary starts with the table; its kind, and the drawer's caption, say Strata wrote it.
+    # The summary starts with the table; its kind, and the drawer's caption, say Prism wrote it.
     assert summary["text"].startswith(f"The table on PDF pages {annex['first_pdf_page']} to {annex['last_pdf_page']} of "
                                       f"the Project Appraisal Document is titled {annex['title']['quote']}. It has "
                                       f"{annex['risks']} rows")

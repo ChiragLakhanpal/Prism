@@ -1,6 +1,6 @@
 """Lakebase, the app state store on the App (ADR 0005): a Postgres database the app reaches as itself.
 
-LakebaseEngine runs Strata's SQL, written once in Databricks SQL with three-part names and :name parameters,
+LakebaseEngine runs Prism's SQL, written once in Databricks SQL with three-part names and :name parameters,
 on Lakebase: one transpile step (sqlglot, from Databricks SQL to Postgres) rewrites each statement, leaves
 out its comments, drops the catalog part (the app state database holds the schema app, and no catalog
 called strata), and turns each :name into a bound psycopg parameter. No value is ever written into the SQL

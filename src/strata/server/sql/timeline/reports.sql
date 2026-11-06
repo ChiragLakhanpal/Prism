@@ -1,5 +1,5 @@
--- A project's timeline (ticket 23): every report Strata read for the project, each version of it public on the
--- as-of date (ADR 0002), oldest first. A version a later one replaced by then is drawn as replaced. A report Strata
+-- A project's timeline (ticket 23): every report Prism read for the project, each version of it public on the
+-- as-of date (ADR 0002), oldest first. A version a later one replaced by then is drawn as replaced. A report Prism
 -- read in two languages is drawn once, in :language when it has that version. An ISR carries
 -- the sequence number its first page prints (strata.silver.isr_ratings), so it keeps its name when get_disagreements,
 -- which gives the ratings, does not answer.

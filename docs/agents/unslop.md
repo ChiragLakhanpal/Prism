@@ -1,6 +1,6 @@
 # Writing rules: unslop
 
-Everything a person reads in Strata, in the product and in the repo, follows these rules and reads at a 10th-grade level: short words, full sentences, one idea per sentence. The rules below are copied word for word from the unslop skill at https://github.com/cursor/plugins/tree/main/pstack/skills/unslop so every agent and every worktree can find them at this path. The rule numbers are stable ids; a gap in the numbering is on purpose.
+Everything a person reads in Prism, in the product and in the repo, follows these rules and reads at a 10th-grade level: short words, full sentences, one idea per sentence. The rules below are copied word for word from the unslop skill at https://github.com/cursor/plugins/tree/main/pstack/skills/unslop so every agent and every worktree can find them at this path. The rule numbers are stable ids; a gap in the numbering is on purpose.
 
 Edit text to remove AI patterns. Scan for the patterns below, then rewrite. Preserve meaning and match the intended tone.
 

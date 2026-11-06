@@ -210,7 +210,7 @@ def _relink(run: Run) -> int:
 
 
 def _detect_disagreements(run: Run) -> int:
-    """The assertions of every project Strata holds documents or a Procurement Plan for, rebuilt, and the
+    """The assertions of every project Prism holds documents or a Procurement Plan for, rebuilt, and the
     disagreements between them, each decided by the evidence ladder (ticket 20). Only a run that fetches from the live APIs
     asks the live batch model to read the reports, with the keys the task reads from the job's secret scope.
     Without them it replays the answers bronze holds from the batch role's deployment, such as those
@@ -257,7 +257,7 @@ def _propose_lessons(run: Run) -> int:
 
 
 def _time_estimates(run: Run) -> int:
-    """The time estimate of every package Strata knows, and of every what-if combination, scored with the champion
+    """The time estimate of every package Prism knows, and of every what-if combination, scored with the champion
     model into strata.gold.time_estimate_score (ticket 26; strata.estimates.scoring). A run on the recorded fixture has
     no workspace registry, so it runs ticket 25's backtest first and scores with the champion that trains; a live run
     scores with the champion the live backtest registered, or with none."""
@@ -282,7 +282,7 @@ def _challenger_in_shadow(run: Run) -> int:
 
 
 def _monthly_watch(run: Run) -> int:
-    """The monthly watch of each whole month not watched yet, which marks plan rows dated near a date Strata offered,
+    """The monthly watch of each whole month not watched yet, which marks plan rows dated near a date Prism offered,
     measures plan accuracy and rolling coverage and raises the retrains they call for (ticket 44;
     strata.estimates.watch)."""
     from strata.estimates import watch
@@ -677,7 +677,7 @@ def most_at_once(bundle=None) -> int:
 def window(bundle=None) -> Window:
     """When the job runs: its daily start, its time zone and how long it may run before it stops."""
     job = _job(bundle)
-    return Window("Strata's nightly job", daily_start(job["schedule"]["quartz_cron_expression"]),
+    return Window("Prism's nightly job", daily_start(job["schedule"]["quartz_cron_expression"]),
                   job["schedule"]["timezone_id"], int(job["timeout_seconds"]) // 60)
 
 

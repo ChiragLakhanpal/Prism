@@ -1,5 +1,5 @@
 """Exporting review notes at seam 3 (ticket 35): the Word file with one footnote per citation, the evidence pack
-as a PDF and a CSV listing every source and whether its author opened it, and no call out of Strata.
+as a PDF and a CSV listing every source and whether its author opened it, and no call out of Prism.
 
 The draft is written by the scripted writer on the fixture database, as in tests/test_drafts.py, checked and
 exported through the routes. The files are read back as a person's software would: the Word file as the
@@ -95,7 +95,7 @@ def test_the_word_file_has_the_two_columns_each_activity_and_its_origin_in_word_
     assert rows[0] == ["Activity", "Review note"]
     assert [row[0][:len(ref)] for row, ref in zip(rows[1:], MARKED, strict=True)] == MARKED
     assert paragraphs[0] == "Review notes on the Northern Water Works Development Agency plan of October 9, 2026"
-    assert paragraphs[2].startswith("Drafted with Strata on October 23, 2026 and checked by Ana Example on October 23, 2026.")
+    assert paragraphs[2].startswith("Drafted with Prism on October 23, 2026 and checked by Ana Example on October 23, 2026.")
     assert paragraphs[2].endswith("These notes are not a World Bank review, clearance or no-objection.")
     assert 'w:ascii="Arial"' in styles and '<w:sz w:val="22"/>' in styles and "Table Grid" in styles
 
@@ -174,6 +174,6 @@ def test_export_makes_no_call_out_of_strata_and_only_offers_the_files(drafting, 
 
     assert exported.status_code == 200 and exported.json()["state"] == "exported"
     assert attempts == []
-    # The answer offers the files by name, for the browser to download from Strata's own server.
+    # The answer offers the files by name, for the browser to download from Prism's own server.
     assert all(re.fullmatch(rf"{STEM}(-evidence-pack)?\.(docx|pdf|csv)", file["name"])
                for file in exported.json()["export"]["files"])

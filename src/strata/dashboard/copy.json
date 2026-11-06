@@ -1,9 +1,9 @@
 {
   "dash": {
-    "name": "Strata operations",
-    "testName": "Strata operations (test)",
-    "testLine": "This copy is for testing deploys. The dashboard people use is Strata operations.",
-    "warehouse": "These tiles read Strata's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute.",
+    "name": "Prism operations",
+    "testName": "Prism operations (test)",
+    "testLine": "This copy is for testing deploys. The dashboard people use is Prism operations.",
+    "warehouse": "These tiles read Prism's tables through the SQL warehouse. If they are blank at first, the warehouse is starting, which can take up to a minute.",
     "sourceLabel": "Source:",
     "noteLabel": "Note:",
     "note": "I give no percentage, median, rate per 100 or range from fewer than {fewest} cases. Where a tile has fewer, it shows the count instead.",
@@ -35,12 +35,12 @@
       "creditName": "the free credit, which ends {date}"
     },
     "readiness": {
-      "source": "Strata's data readiness measures in strata.ops."
+      "source": "Prism's data readiness measures in strata.ops."
     },
     "gov": {
       "page": "Governance",
-      "intro": "This page shows whether each nightly run passed its quality checks, what Azure has cost against the budget, and what personal data I removed at ingestion. It also shows who read Strata's tables, and traces any answer back through its tool calls to its sources.",
-      "source": "Strata's pipeline runs, quality checks, agent runs and Azure cost records in strata.ops, and the workspace's query history where Free Edition shows it.",
+      "intro": "This page shows whether each nightly run passed its quality checks, what Azure has cost against the budget, and what personal data I removed at ingestion. It also shows who read Prism's tables, and traces any answer back through its tool calls to its sources.",
+      "source": "Prism's pipeline runs, quality checks, agent runs and Azure cost records in strata.ops, and the workspace's query history where Free Edition shows it.",
       "budgetPeriod": {
         "title": "Budget period",
         "about": "The free credit, then each month after it, newest first. It sets the Azure spend tiles."
@@ -63,11 +63,11 @@
         "spendText": "Azure budgets only send alerts. The limits come from caps: a tokens-per-minute limit on each model deployment, a daily page cap on reading documents, and at most two copies of anything hosted.",
         "personal": "Personal data removed at ingestion",
         "queries": "Who queried what",
-        "queriesText": "Strata's app runs every query as the person using it, so their name appears here, not the app's.",
+        "queriesText": "Prism's app runs every query as the person using it, so their name appears here, not the app's.",
         "lineage": "Lineage from an answer to its sources",
         "lineageText": "Leave Run ID empty to see the latest answer, or paste a run ID from Recent answer runs, at the end of this section. If the tables stay empty, no answer run has that ID."
       },
-      "removeWhy": "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Strata never shows them and never answers questions about them. The counter above counts any email addresses, phone numbers and names after \"Attention\" that got through.",
+      "removeWhy": "I remove the contact person's name, email address and phone number from every procurement notice as I take it in, before it reaches any table that answers or this dashboard can read. Prism never shows them and never answers questions about them. The counter above counts any email addresses, phone numbers and names after \"Attention\" that got through.",
       "noHistory": "I can't show who queried what, because this workspace doesn't let me read its query history. I checked when this dashboard was deployed on {date}. If Free Edition adds it later, deploying the dashboard again adds the table here.",
       "tiles": {
         "checksChart": {
@@ -134,7 +134,7 @@
           "last": "Last removed"
         },
         "queries": {
-          "title": "Queries on Strata's tables, by person and day",
+          "title": "Queries on Prism's tables, by person and day",
           "about": "One row per person, day, way in and table, in the dates chosen above. It shows which tables were read, never the text of a query, because a query can carry a person's question.",
           "day": "Day",
           "person": "Person",
@@ -215,10 +215,10 @@
         },
         "queries": {
           "readable": {
-            "one": "In the 7 days to {day}, {people} person ran {queries} queries on Strata's tables, {appQueries} of them through the app, which runs each query as the person asking.",
-            "other": "In the 7 days to {day}, {people} people ran {queries} queries on Strata's tables, {appQueries} of them through the app, which runs each query as the person asking."
+            "one": "In the 7 days to {day}, {people} person ran {queries} queries on Prism's tables, {appQueries} of them through the app, which runs each query as the person asking.",
+            "other": "In the 7 days to {day}, {people} people ran {queries} queries on Prism's tables, {appQueries} of them through the app, which runs each query as the person asking."
           },
-          "none": "No one queried Strata's tables in the 7 days to {day}.",
+          "none": "No one queried Prism's tables in the 7 days to {day}.",
           "notReadable": "I can't show who queried what, because this workspace doesn't let me read its query history."
         },
         "lineage": {
@@ -229,7 +229,7 @@
             "other": "Of the {runs} answer runs in the 7 days to {day}, {complete} lead back to their tool calls and the tables those calls read. The other {missing} have no record of the tables they read."
           },
           "oneIncomplete": "The one answer run in the 7 days to {day} has no record of the tables its tool calls read.",
-          "none": "No answer runs were recorded in the 7 days to {day}. Ask a question in Strata, and its run appears under Lineage."
+          "none": "No answer runs were recorded in the 7 days to {day}. Ask a question in Prism, and its run appears under Lineage."
         }
       },
       "check": {
@@ -289,7 +289,7 @@
         "phones": "Phone numbers"
       },
       "through": {
-        "app": "Strata app",
+        "app": "Prism app",
         "genie": "Genie",
         "dashboard": "Dashboard",
         "sql_editor": "SQL editor",
@@ -308,8 +308,8 @@
     },
     "ai": {
       "page": "AI quality and adoption",
-      "intro": "This page shows how my answers did on the benchmark, in Microsoft Foundry's evaluations and in my own six checks. It also shows the leading and lagging indicators of the knowledge, retrieval and estimates loops, and how people used Strata. Each tile's description defines its measure.",
-      "source": "Strata's evaluation results, agent runs, feedback, lesson decisions, exposure logs, usage events and draft states in strata.ops.",
+      "intro": "This page shows how my answers did on the benchmark, in Microsoft Foundry's evaluations and in my own six checks. It also shows the leading and lagging indicators of the knowledge, retrieval and estimates loops, and how people used Prism. Each tile's description defines its measure.",
+      "source": "Prism's evaluation results, agent runs, feedback, lesson decisions, exposure logs, usage events and draft states in strata.ops.",
       "about": {
         "benchmark": "Benchmark",
         "foundry": "Foundry evaluations",
@@ -325,7 +325,7 @@
         "loops": "The three loops",
         "loopsText": "Each loop has a leading indicator, which moves first, and a lagging indicator, which confirms it later. Lessons are decided weekly, search is tuned at most monthly, and the time estimate model is retrained quarterly.",
         "adoption": "Adoption",
-        "adoptionText": "Who used Strata, which drafts their authors finished, and how often a plan row was dated within 14 days of a date I offered."
+        "adoptionText": "Who used Prism, which drafts their authors finished, and how often a plan row was dated within 14 days of a date I offered."
       },
       "abbreviations": "Implementation Completion and Results Report (ICR), Project Performance Assessment Report (PPAR), normalized discounted cumulative gain at 10 (nDCG at 10). ICR Review is the World Bank's own name.",
       "tiles": {
@@ -441,7 +441,7 @@
         },
         "hindsight": {
           "title": "Hindsight test, per release",
-          "about": "Hindsight recall is coverage times shown-when-covered: the blamed risks I showed in the top five for their package, out of all blamed risks. Projects exposed to Strata are left out.",
+          "about": "Hindsight recall is coverage times shown-when-covered: the blamed risks I showed in the top five for their package, out of all blamed risks. Projects exposed to Prism are left out.",
           "release": "Release",
           "projects": "Projects",
           "blamed": "Blamed risks",
@@ -479,15 +479,15 @@
           "months": "Median months from notice to signing",
           "offered": "Dated within 14 days of a date I offered",
           "other": "Other plan rows",
-          "using": "Using Strata",
-          "notYet": "Not yet using Strata",
+          "using": "Using Prism",
+          "notYet": "Not yet using Prism",
           "tooFew": {
             "one": "{n} row, too few for a median",
             "other": "{n} rows, too few for a median"
           }
         },
         "usersChart": {
-          "title": "People who used Strata, by week",
+          "title": "People who used Prism, by week",
           "about": "People. Each person counts once a week, whatever view they used.",
           "week": "Week of",
           "people": "People"
@@ -649,11 +649,11 @@
         },
         "adoption": {
           "used": {
-            "one": "In the week of Monday, {week}, {people} person used Strata. In the 90 days to {day}, authors marked {checked} drafts as checked and exported {exported}.",
-            "other": "In the week of Monday, {week}, {people} people used Strata. In the 90 days to {day}, authors marked {checked} drafts as checked and exported {exported}."
+            "one": "In the week of Monday, {week}, {people} person used Prism. In the 90 days to {day}, authors marked {checked} drafts as checked and exported {exported}.",
+            "other": "In the week of Monday, {week}, {people} people used Prism. In the 90 days to {day}, authors marked {checked} drafts as checked and exported {exported}."
           },
           "planRows": "Of the {rows} plan rows published after I showed a range for their package, {anchored} were dated within 14 days of a date I offered.",
-          "none": "No one used Strata in the week of Monday, {week}."
+          "none": "No one used Prism in the week of Monday, {week}."
         }
       },
       "loops": {
@@ -741,7 +741,7 @@
     },
     "weekly_users": {
       "name": "Weekly users",
-      "definition": "People who opened at least one page of Strata in the last full week in the dates chosen above, Monday to Sunday. Each person counts once, whatever view they used.",
+      "definition": "People who opened at least one page of Prism in the last full week in the dates chosen above, Monday to Sunday. Each person counts once, whatever view they used.",
       "outof": "A count of people, with no total."
     },
     "drafts_exported": {
@@ -781,7 +781,7 @@
     },
     "plan_accuracy": {
       "name": "Plan accuracy",
-      "definition": "The median number of days between a plan row's planned signing date and the actual one, early or late. I report it for plan rows dated within 14 days of a date I offered and for all other plan rows, and separately for countries not yet using Strata.",
+      "definition": "The median number of days between a plan row's planned signing date and the actual one, early or late. I report it for plan rows dated within 14 days of a date I offered and for all other plan rows, and separately for countries not yet using Prism.",
       "outof": "Out of the plan rows with an actual date."
     }
   },
@@ -810,5 +810,5 @@
     "November",
     "December"
   ],
-  "footer": "Strata is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
+  "footer": "Prism is an independent demo built on World Bank open data. It is not a World Bank product, and the World Bank has not reviewed or endorsed it."
 }

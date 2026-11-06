@@ -2,8 +2,8 @@
 // version for the agency's latest plan. It asks the server for check_plan's result as the viewer and
 // shows one of these states (section 6): loading, the populated check, an agency with no plan, a
 // plan with no activities, a version the agency never published, a version not public by the as-of
-// date, a project Strata has no record of, a service that didn't answer, and an account that can't
-// read Strata's tables.
+// date, a project Prism has no record of, a service that didn't answer, and an account that can't
+// read Prism's tables.
 //
 // The header sticks from 1024 px, so the frame keeps a focused control from hiding under it (DESIGN.md section 10;
 // lib/sticky.ts). A visually hidden status says

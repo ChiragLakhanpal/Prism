@@ -27,7 +27,7 @@ export function FollowControl({ pid, name, sample }: {
   const start = sample ? (sample.unread ? "unread" : sample.following === null ? "loading" : sample.following ? "on" : "off") : "loading";
   // unread: reading whether you follow it failed, so no button claims a state until it is read again.
   const [state, setState] = useState<"loading" | "off" | "on" | "unread">(start);
-  // A follow the seed command made for you (ticket 41): the sentence says Strata made it, until you change it.
+  // A follow the seed command made for you (ticket 41): the sentence says Prism made it, until you change it.
   const [example, setExample] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(sample?.busy ?? false);

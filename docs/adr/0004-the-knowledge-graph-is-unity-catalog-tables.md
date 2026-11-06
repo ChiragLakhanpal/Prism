@@ -1,6 +1,6 @@
 # The knowledge graph is Unity Catalog tables, not a graph database
 
-Projects, packages, notices, contracts, suppliers, documents, passages, lessons and assertions are Delta tables with declared keys, and the links between strata, such as a contract informed by a completion-report paragraph, are rows in one edge table. Strata's paths are at most four hops, which joins and recursive SQL handle. Search, SQL and the models read the same rows under one set of permissions and one lineage graph, and every row keeps its public date for as-of answers (ADR 0002). For users, the app shows an evidence trail per project (What, How and Why on one time axis) and a one-hop neighbourhood of at most about 20 nodes, not a free-form graph, which stops being readable past about 20 nodes.
+Projects, packages, notices, contracts, suppliers, documents, passages, lessons and assertions are Delta tables with declared keys, and the links between strata, such as a contract informed by a completion-report paragraph, are rows in one edge table. Prism's paths are at most four hops, which joins and recursive SQL handle. Search, SQL and the models read the same rows under one set of permissions and one lineage graph, and every row keeps its public date for as-of answers (ADR 0002). For users, the app shows an evidence trail per project (What, How and Why on one time axis) and a one-hop neighbourhood of at most about 20 nodes, not a free-form graph, which stops being readable past about 20 nodes.
 
 ## Considered options
 

@@ -1,6 +1,6 @@
 """Writes the recorded answers for find_comparables' period of notices in tests/fixtures/api (ticket 137).
 
-The period starts with the awards data Strata holds, July 1, 2019 (config/thresholds.toml, past_range.period_from),
+The period starts with the awards data Prism holds, July 1, 2019 (config/thresholds.toml, past_range.period_from),
 and by default ends on the plan's date, or on the as-of date for a plan older than its start. The screen tests build
 section 1's note from these answers, and tests/test_comparables_period.py checks that the tool still gives them, so the
 note and the tool cannot drift apart. Build the fixture database first, then run:

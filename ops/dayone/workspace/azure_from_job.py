@@ -1,4 +1,4 @@
-"""Strata day-one test 2: reach the Foundry and Azure OpenAI endpoints from a Databricks job.
+"""Prism day-one test 2: reach the Foundry and Azure OpenAI endpoints from a Databricks job.
 
 probe_azure_from_job.py uploads this file as a job's Python file, with the endpoints and the
 secret scope written in where SETTINGS is read. It reads the Azure OpenAI key from the app's

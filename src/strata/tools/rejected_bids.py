@@ -3,7 +3,7 @@
 The registry (config/tools.toml) defines the tool's parameters and result shape; this module is its adapter. An
 award notice lists its rejected bidders, each with a Reason for Rejection. The tool reads only that field, word
 for word (strata.criteria.reading.rejection_reasons), and never a bidder: a list of reasons across packages with
-names beside them would be a supplier profile, which Strata refuses (the 31 brief, section 6.7). The award
+names beside them would be a supplier profile, which Prism refuses (the 31 brief, section 6.7). The award
 notice itself, opened in the evidence drawer, shows the record as published.
 
 - m is the comparables with an award notice published by the as-of date: award notices are where rejected bids

@@ -1,4 +1,4 @@
-# How the Databricks App starts Strata (ticket 06). ops/app/deploy_app.py uploads this file with
+# How the Databricks App starts Prism (ticket 06). ops/app/deploy_app.py uploads this file with
 # the code, laid out as in the repo: src/strata, config and web/dist.
 #
 # The platform sets DATABRICKS_APP_PORT, DATABRICKS_HOST, and the app's own DATABRICKS_CLIENT_ID and

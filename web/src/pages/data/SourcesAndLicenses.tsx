@@ -1,5 +1,5 @@
-// Sources and licenses (the 16 design brief, section 7): every dataset Strata reads, credited in the
-// World Bank's format, the document collections, the terms of use, the sentence on Strata's own
+// Sources and licenses (the 16 design brief, section 7): every dataset Prism reads, credited in the
+// World Bank's format, the document collections, the terms of use, the sentence on Prism's own
 // changes and the data caveat, word for word from DESIGN.md section 8. It reads only the source
 // registry (GET /api/data/sources), so it renders while the warehouse is down.
 import { Fill } from "../../components/Fill";

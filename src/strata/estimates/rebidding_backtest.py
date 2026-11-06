@@ -1,6 +1,6 @@
 """The rebidding models' rolling backtests, the champion, its batch scores and its natural frequency (ticket 28).
 
-run() replays Strata at the start of each test year in config/models.toml (2021 to 2025) through the replay
+run() replays Prism at the start of each test year in config/models.toml (2021 to 2025) through the replay
 harness. In each year both learners (strata.estimates.rebidding_model) learn from the packages advertised before
 January 1 whose outcome the records public then gave (advertised again, or signed; strata.estimates.rebidding),
 each with its features as advertised. They are tested on the packages a Procurement Plan public on January 1
@@ -267,7 +267,7 @@ def render_card(years: dict[int, dict], best: str | None, model: RebiddingModel 
     lines = [
         "# Rebidding model (experimental): model card",
         "",
-        "Experimental. No field in the World Bank's records says a package was advertised again, so Strata works the "
+        "Experimental. No field in the World Bank's records says a package was advertised again, so Prism works the "
         "labels out from three sources, and they may miss or miscount some packages.",
         "",
         "## What it is for",

@@ -1,4 +1,4 @@
-# The agent registry: each Foundry prompt agent Strata runs, and the guardrail it runs under.
+# The agent registry: each Foundry prompt agent Prism runs, and the guardrail it runs under.
 #
 # This is the one place an agent is defined (CLAUDE.md rule 9). Its rules are its instructions file, in
 # src/strata/agent/instructions/, versioned with the code. The sync builds the agent's definition in
@@ -105,7 +105,7 @@ name = "strata-package-reader"
 role = "draft"
 instructions = "package_reader.md"
 guardrail = "strata"
-description = "Reads a sentence that describes a procurement package into the criteria of Strata's package form."
+description = "Reads a sentence that describes a procurement package into the criteria of Prism's package form."
 tools = []
 
 # The review-proposed-lessons workflow's writer (ticket 29): a summary of each lesson review item's evidence and
@@ -121,7 +121,7 @@ tools = []
 
 # The check-your-criteria workflow's reader (ticket 31): one structured call that reads the qualification criteria a
 # person pasted into the items of the item registry (config/criteria_items.toml) that the app hands it, with one
-# "I read this as ..." sentence each, or a refusal key when the text asks Strata to judge a live tender's bids or a
+# "I read this as ..." sentence each, or a refusal key when the text asks Prism to judge a live tender's bids or a
 # review decision. The app checks each excerpt is in the person's text, each number against the excerpt, and runs
 # the verifier on each reading before anyone sees it (src/strata/criteria/workflow.py).
 [agents.criteria_reader]
@@ -129,7 +129,7 @@ name = "strata-criteria-reader"
 role = "draft"
 instructions = "criteria_reader.md"
 guardrail = "strata"
-description = "Reads pasted qualification criteria into the items Strata compares with comparable packages' notices."
+description = "Reads pasted qualification criteria into the items Prism compares with comparable packages' notices."
 tools = []
 
 [guardrails.strata]

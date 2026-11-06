@@ -677,7 +677,7 @@ text_url = "https://documents.worldbank.org/curated/en/099050423040030393/text/P
 pdf_url = "https://documents.worldbank.org/curated/en/099050423040030393/pdf/P1301640b1a4d202008b910ba796c7180f1.pdf"
 about = "IEG's ICR Review for P130164 re-issued under the same number on May 4, 2023 (ICRR0021929). Documents API id 34056616."
 
-# The stress shelf's documents (ticket 18): the hardest documents Strata reads, each with a recorded
+# The stress shelf's documents (ticket 18): the hardest documents Prism reads, each with a recorded
 # outcome on the Data readiness page.
 
 [[source]]

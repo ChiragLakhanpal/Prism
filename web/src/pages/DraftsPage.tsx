@@ -42,7 +42,7 @@ const PANEL_ROW = cx("pt-3 pb-4", SIDES);
 // when it was checked.
 function lineTwo(row: Row): string {
   const author = row.author.name ?? "";
-  // A draft the seed command set up (ticket 41): no person drafted it, so the row says Strata set it up.
+  // A draft the seed command set up (ticket 41): no person drafted it, so the row says Prism set it up.
   if (row.example && row.state === "draft") return copy.home.exampleSetUp(day(row.created_at));
   const checked = row.checked ?? row.changed;
   const exported = row.exported ?? row.changed;

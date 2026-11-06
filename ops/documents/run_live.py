@@ -211,7 +211,7 @@ def main(argv=None) -> int:
 
     name = load_layout_parser()
     if name not in PARSERS:
-        print(f"config/models.toml names the layout parser {name}, and Strata has no adapter for it. "
+        print(f"config/models.toml names the layout parser {name}, and Prism has no adapter for it. "
               f"Name one of these: {', '.join(sorted(PARSERS))}.")
         return 2
     workspace = LiveWorkspace(env)

@@ -1,4 +1,4 @@
-"""ask_genie: a structured question through Strata's Genie space, as the viewer (ticket 33; spec, "The tool
+"""ask_genie: a structured question through Prism's Genie space, as the viewer (ticket 33; spec, "The tool
 registry and the tools").
 
 The registry (config/tools.toml) defines the tool; this module is its adapter. It asks the Genie space that

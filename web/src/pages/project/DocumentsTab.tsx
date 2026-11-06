@@ -12,7 +12,7 @@
 // Every date and count is the route's. Below 768 px each group is a heading and a list of cards.
 //
 // States: loading, populated, some documents not read, partly read, no documents, a service that didn't
-// answer, and an account that can't read Strata's tables.
+// answer, and an account that can't read Prism's tables.
 import { useId, useState, type ReactNode } from "react";
 import { Button } from "../../components/Button";
 import { EmptyState } from "../../components/Card";

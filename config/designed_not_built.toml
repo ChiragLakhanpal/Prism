@@ -1,10 +1,10 @@
 # What is designed but not built (ticket 46; the 46 brief, section 12; the spec, "Designed, not built"). One entry
-# per part of Strata that the proposal describes but the app does not have yet. The app's labels and the proposal's
+# per part of Prism that the proposal describes but the app does not have yet. The app's labels and the proposal's
 # short list both read this file, so they cannot disagree:
 #
 # - In the app, the part's page shows <DesignedNotBuilt item="<key>" /> beside the heading that would hold it: the
 #   Status badge "Designed, not built", then the first-person sentence at copy.designedNotBuilt.items.<key> in
-#   web/src/copy.ts, saying what Strata does instead.
+#   web/src/copy.ts, saying what Prism does instead.
 # - In the proposal, the list after Module 4 has one row per entry, and the paragraph that describes it starts with
 #   the lead-in "Designed, not built.".
 #

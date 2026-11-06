@@ -1,4 +1,4 @@
-"""Make Strata ready for a review, and say what changed: ticket 48's demo-ready command.
+"""Make Prism ready for a review, and say what changed: ticket 48's demo-ready command.
 
 Run it from the main checkout before every demo (README, "Before a demo"):
 
@@ -12,10 +12,10 @@ the SDK. When the workspace stopped the app's compute ("due to workspace or acco
 deployment, or the warehouse is stopped and will not start when asked, it says so in one sentence and exits 2 before
 it changes anything (ticket 81). Otherwise it lists the workspace, then takes these steps, in order:
 
-1. The app. It finds the app ops/dayone/dayone.toml names and leaves it alone unless it runs Strata's code from
+1. The app. It finds the app ops/dayone/dayone.toml names and leaves it alone unless it runs Prism's code from
    ops/app/deploy_app.py's folder. When the app's compute is stopped and it has no active deployment, as the platform
    left it twice on October 27, 2026 (11:35 and 18:48 UTC, "due to workspace or account status"), a start alone runs
-   nothing, so it starts the compute and deploys Strata again with ops/app/deploy_app.py --keep-secrets from this
+   nothing, so it starts the compute and deploys Prism again with ops/app/deploy_app.py --keep-secrets from this
    checkout (ticket 109). It starts any other stopped app. An app stops 24 hours after each start or deploy
    (docs/PLAN.md section 16), so it restarts a running app whose last start or deploy, as the Apps API reports it,
    was [demo_ready] restart_after_hours ago or earlier, and leaves a more recent one running, since a restart takes
@@ -44,7 +44,7 @@ it changes anything (ticket 81). Otherwise it lists the workspace, then takes th
    the seed writes with DATABRICKS_TOKEN instead, and this step repeats the line the seed printed (ticket 129).
 6. It lists the workspace again and prints what changed. A second run prints "No changes."
 
-Then it prints one line per step and exits 0 when no step failed, with the last line "Strata is ready for the
+Then it prints one line per step and exits 0 when no step failed, with the last line "Prism is ready for the
 demo.", 1 naming each step that failed, and 2 when the env file is not ready or the workspace stopped the app or the
 warehouse. A step that is not built yet is not a failure.
 
@@ -228,13 +228,13 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
     say(f"1. The app {name}.")
     app = workspace.app(name)
     if app is None:
-        return Outcome(step, FAILED, f"I found no app named {name}. Deploy Strata first: uv run --script "
+        return Outcome(step, FAILED, f"I found no app named {name}. Deploy Prism first: uv run --script "
                                      "ops/app/deploy_app.py --env-file .env")
     source = (app.get("source") or "").rstrip("/")
     lost = dropped(app)
     if app.get("description") != deploy_app.DESCRIPTION or not (lost or source.endswith(f"/{deploy_app.FOLDER}")):
-        return Outcome(step, FAILED, f"The app {name} runs {source or 'nothing yet'}, not Strata's code from the "
-                                     f"{deploy_app.FOLDER} folder, so I left it alone. Deploy Strata with "
+        return Outcome(step, FAILED, f"The app {name} runs {source or 'nothing yet'}, not Prism's code from the "
+                                     f"{deploy_app.FOLDER} folder, so I left it alone. Deploy Prism with "
                                      "ops/app/deploy_app.py, or set names.app in ops/dayone/dayone.toml.")
     # Which of four things to do, and why: deploy again an app whose deployment the platform dropped, start a stopped
     # app, leave running one that started recently, or restart one that started restart_after_hours ago or earlier,
@@ -251,7 +251,7 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
         code, printed = workspace.redeploy_app(name)
         last = (printed or "").strip().splitlines()[-1:] or ["nothing"]
         say(f"   The app {name}'s compute was stopped and it had no active deployment, so a start alone would run "
-            "nothing. I started its compute and deployed Strata again with ops/app/deploy_app.py --keep-secrets.")
+            "nothing. I started its compute and deployed Prism again with ops/app/deploy_app.py --keep-secrets.")
         # The deploy exits 1 both when it never deployed (the web app did not build) and when its deployment was
         # still IN_PROGRESS as its wait ended (October 27, 2026, 12:31 UTC), so the app itself says which.
         if not (workspace.app(name) or {}).get("deployed", True):
@@ -260,7 +260,7 @@ def app_step(workspace, setup: Setup, say) -> Outcome:
         if code != 0:
             say(f"   The deploy exited {code}, and its last line said: {last[0]} I waited for the health route anyway, "
                 "since a deployment after a cold start can outlast the deploy's own wait.")
-        done = "I deployed Strata again, since the platform had dropped its deployment"
+        done = "I deployed Prism again, since the platform had dropped its deployment"
     elif not app.get("running"):
         workspace.start_app(name)
         say(f"   The app {name} was stopped, so I started it. It runs for 24 hours from now.")
@@ -759,9 +759,9 @@ def ready(workspace, setup: Setup, say: Callable[[str], None] = print) -> int:
     failed = [outcome.step for outcome in outcomes if outcome.state == FAILED]
     if failed:
         which = "This step" if len(failed) == 1 else "These steps"
-        say(f"Strata is not ready for the demo. {which} failed: {listed(failed)}.")
+        say(f"Prism is not ready for the demo. {which} failed: {listed(failed)}.")
         return 1
-    say("Strata is ready for the demo.")
+    say("Prism is ready for the demo.")
     return 0
 
 

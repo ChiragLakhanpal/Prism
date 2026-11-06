@@ -2,7 +2,7 @@
 # requires-python = ">=3.12,<3.14"
 # dependencies = ["databricks-sdk==0.156.0", "pyyaml==6.0.3"]
 # ///
-"""Build Strata's web app and deploy Strata as the Databricks App that acts as each viewer.
+"""Build Prism's web app and deploy Prism as the Databricks App that acts as each viewer.
 
 Run it from the main checkout after the wizard and the bundle deploy (ops/bundle/deploy.py):
 
@@ -114,6 +114,7 @@ from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 from strata.config import Roles, load_roles  # noqa: E402
 from strata.lakehouse.masks import FILTERED, MASK, MASKED, row_filter  # noqa: E402
 
+# The live App's description is how a deploy knows the app is this repo's, so it keeps the old name (ADR 0006).
 DESCRIPTION = "Strata, procurement intelligence on World Bank open data"
 PROBE_DESCRIPTION = "Strata day-one probe app"  # ops/dayone/live.py's PROBE_APP_DESCRIPTION
 FOLDER = "strata-app"
@@ -222,8 +223,8 @@ ACCESS = (("catalog", "strata", "USE_CATALOG"), ("schema", "strata.ops", "USE_SC
 
 
 def is_strata(app: dict) -> bool:
-    """Whether the app that ops/dayone/dayone.toml names is Strata's, or the day-one probe app it replaces, by its
-    description. Strata leaves an app that someone else made alone."""
+    """Whether the app that ops/dayone/dayone.toml names is Prism's, or the day-one probe app it replaces, by its
+    description. Prism leaves an app that someone else made alone."""
     return app["description"] in (DESCRIPTION, PROBE_DESCRIPTION)
 
 
@@ -463,7 +464,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
         app = workspace.app(name)
         print(f"   I made the app {name}.")
     elif not is_strata(app):
-        print(f"The app {name} is not Strata's: its description is {app['description']!r} and it runs "
+        print(f"The app {name} is not Prism's: its description is {app['description']!r} and it runs "
               f"{app['source'] or 'nothing yet'}. I left it alone. Set names.app in ops/dayone/dayone.toml "
               "to a free app name.")
         return 1
@@ -561,7 +562,7 @@ def deploy(workspace, env: dict, build_web: Callable[[], tuple[int, str]] = buil
         print("   The app existed before this deploy. Anyone who opened its address earlier, before it had the user "
               "authorization scopes, keeps that window's old session: the pages say the account cannot read the data until "
               "they sign out of the app once, or clear the site's cookies, and open it again from the workspace's Apps page.")
-    print(f"Strata is running at {url}")
+    print(f"Prism is running at {url}")
     return 0
 
 

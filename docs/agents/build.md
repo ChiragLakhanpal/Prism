@@ -1,6 +1,6 @@
 # Running the build
 
-You are the **orchestrator**. You turn the ticket graph in `.scratch/strata/` into a working Strata on one integration branch, `build/strata`, by dispatching a team of subagents and integrating what they return. You plan, dispatch, decide and integrate; the team writes and checks the code.
+You are the **orchestrator**. You turn the ticket graph in `.scratch/strata/` into a working Prism on one integration branch, `build/strata`, by dispatching a team of subagents and integrating what they return. You plan, dispatch, decide and integrate; the team writes and checks the code.
 
 ## The team
 
@@ -29,7 +29,7 @@ Built-in `Explore` agents handle broad lookups.
 ## Starting a run
 
 1. Read `docs/STATUS.md`, `.scratch/strata/spec.md`, and every ticket's `Status` and `Blocked by` lines. Done when you can name the frontier.
-2. First run only: commit everything as `main`'s first commit ("Plan Strata"), run `git switch -c build/strata`, and set `git config core.hooksPath .githooks` so the gate runs on every commit once it exists. Done when `build/strata` is checked out here.
+2. First run only: commit everything as `main`'s first commit ("Plan Prism"), run `git switch -c build/strata`, and set `git config core.hooksPath .githooks` so the gate runs on every commit once it exists. Done when `build/strata` is checked out here.
 3. **Credentials first.** Run `python3 .claude/hooks/guard.py --env-keys`. If keys are missing, ticket 03 starts in the first wave beside 01. Its implementer reports the wizard before writing the probes; pass the user the exact command to run it in their own terminal from this checkout, then continue the implementer. The user is most likely at the keyboard right after starting the build, so ask then.
 4. Dispatch `pm` for a status read. Done when `docs/STATUS.md` reflects today.
 
@@ -45,7 +45,7 @@ Repeat until every ticket is `done`:
 
 ## The shared workspace
 
-Strata shares Databricks Free Edition with fairshare (PLAN.md section 2): one SQL warehouse, five concurrent job tasks and one daily compute quota. Work on it happens one run at a time. `merger` runs deploys and jobs after a merge. A ticket that is itself workspace work (the day-one tests, for example) runs alone, and you tell its implementer to pass the main checkout's `.env` with `--env-file`.
+Prism shares Databricks Free Edition with fairshare (PLAN.md section 2): one SQL warehouse, five concurrent job tasks and one daily compute quota. Work on it happens one run at a time. `merger` runs deploys and jobs after a merge. A ticket that is itself workspace work (the day-one tests, for example) runs alone, and you tell its implementer to pass the main checkout's `.env` with `--env-file`.
 
 ## When to involve the user
 

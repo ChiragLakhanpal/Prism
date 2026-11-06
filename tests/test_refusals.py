@@ -6,7 +6,7 @@ to, and the app renders that key's sentences: the model never writes a refusal's
 defined once (src/strata/agent/refusals.py), and these tests hold the copy file, the instructions and the
 benchmark file to them.
 
-What a response must never hold comes from the recorded files, not from Strata's code: every notice's contact
+What a response must never hold comes from the recorded files, not from Prism's code: every notice's contact
 name, email and phone number (data/fixture/recorded/api/notices; values.toml's awkward.contact_details names
 OP00146683, whose contacts ingestion strips), and the supplier id of every contract with an individual
 consultant (data/fixture/recorded/api/awards; values.toml's individual-consultant, KE-NWWDA-207796-CS-INDV,

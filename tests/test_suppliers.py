@@ -571,7 +571,7 @@ def label_all(engine, wrong=0, also=()):
     return merged
 
 
-# The 95% Wilson score intervals below were computed apart from Strata's code on October 24, 2026, with
+# The 95% Wilson score intervals below were computed apart from Prism's code on October 24, 2026, with
 # statsmodels 0.14.4: proportion_confint(k, n, alpha=0.05, method="wilson").
 WILSON = {(29, 30): (0.8332960900859081, 0.9940914096183875), (30, 30): (0.8864866068260311, 1.0)}
 
@@ -720,7 +720,7 @@ def test_the_supplier_tables_expose_no_score_rank_or_rating_column(fixture):
 
 def test_no_tool_in_the_registry_returns_a_supplier_profile():
     """Criterion 7, through the tool registry (config/tools.toml), which generates the agent's tool list. A
-    supplier profile would take a supplier and return what Strata holds about it: no tool takes a supplier
+    supplier profile would take a supplier and return what Prism holds about it: no tool takes a supplier
     as a parameter, and no tool's row is a supplier or carries a field about one."""
     from strata.config import load_tools
     from strata.tools.registry import agent_tools

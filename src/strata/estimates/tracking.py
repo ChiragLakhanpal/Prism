@@ -165,7 +165,7 @@ class MlflowTracker:
         backtest logged; Unity Catalog's descriptions say what the model is (what, the caller's words), point
         to the card, whatever its length, and give the track-record sentence."""
         version = self.mlflow.register_model(self._models[run_id], name)
-        pointer = f"Strata's {what}. The model card is {MODEL_CARD} in MLflow run {run_id}. {summary}"
+        pointer = f"Prism's {what}. The model card is {MODEL_CARD} in MLflow run {run_id}. {summary}"
         self.client.update_registered_model(name, description=pointer)
         self.client.update_model_version(name, version.version, description=pointer)
         return int(version.version)

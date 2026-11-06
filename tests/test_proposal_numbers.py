@@ -22,14 +22,14 @@ def test_a_number_linked_to_its_register_row_passes():
 
 
 def test_a_setting_linked_to_annex_2_passes_and_so_do_its_words():
-    text = '<a id="p3"></a>**3.** Strata gives no range from fewer than [20](#s-fewest-comparables) comparables, and it checks every sentence [six](#s-check-count) ways.'
+    text = '<a id="p3"></a>**3.** Prism gives no range from fewer than [20](#s-fewest-comparables) comparables, and it checks every sentence [six](#s-check-count) ways.'
     assert sentences(text) == []
 
 
 def test_an_unlinked_number_fails_with_its_paragraph_and_an_excerpt():
-    text = '<a id="p7"></a>**7.** Strata read 4,812 pages well.'
+    text = '<a id="p7"></a>**7.** Prism read 4,812 pages well.'
     assert sentences(text) == [
-        'The number check failed. Paragraph 7 has a number with no source: "Strata read 4,812 pages well.". '
+        'The number check failed. Paragraph 7 has a number with no source: "Prism read 4,812 pages well.". '
         "Link it to Annex 1 or Annex 2, or add it to the allow list with a reason."]
 
 
@@ -67,7 +67,7 @@ def test_the_rubric_points_link_to_the_assessment():
 
 
 def test_fixed_names_on_the_allow_list_pass():
-    assert sentences('<a id="p1"></a>**1.** Strata keeps the three strata apart, as the four modules ask, inside the 8-in-10 range.') == []
+    assert sentences('<a id="p1"></a>**1.** Prism keeps the three strata apart, as the four modules ask, inside the 8-in-10 range.') == []
 
 
 def test_link_urls_code_and_html_attributes_hold_no_numbers_the_check_counts():
@@ -84,7 +84,7 @@ def test_a_number_in_a_table_names_the_heading_above_it():
 
 
 def test_the_check_reads_html_where_a_sourced_number_carries_its_snapshot_key():
-    html = ('<p>Strata caught <span data-source-key="caught">12</span> of <a href="#r-blamed">30</a> risks, '
+    html = ('<p>Prism caught <span data-source-key="caught">12</span> of <a href="#r-blamed">30</a> risks, '
             "and 5 more.</p>")
     assert [p.number for p in numbers.unsourced(html, form="html")] == ["5"]
 
@@ -96,8 +96,8 @@ def test_images_carry_no_links_so_their_alt_text_is_left_to_the_build():
 # ── The deck (ticket 47; the 47 brief, section 6.3) ──────────────────────
 
 def test_deck_chrome_marked_data_chrome_is_exempt_but_a_number_beside_it_is_not():
-    html = ('<footer><p>Strata is an independent demo.</p><p data-chrome="">4 of 16</p></footer>'
-            "<p>Strata read 12 reports.</p>")
+    html = ('<footer><p>Prism is an independent demo.</p><p data-chrome="">4 of 16</p></footer>'
+            "<p>Prism read 12 reports.</p>")
     assert [p.number for p in numbers.unsourced(html, form="html")] == ["12"]
 
 
@@ -108,7 +108,7 @@ def test_a_sourced_chart_that_spans_block_elements_is_taken_out_whole():
 
 
 def test_an_inlined_figures_style_block_holds_no_number_the_check_counts():
-    html = '<svg><style>#pipeline-root { width: 100%; }</style><title>Where Strata runs</title></svg>'
+    html = '<svg><style>#pipeline-root { width: 100%; }</style><title>Where Prism runs</title></svg>'
     assert numbers.unsourced(html, form="html") == []
 
 

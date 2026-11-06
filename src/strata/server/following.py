@@ -4,7 +4,7 @@
   viewer follows it ({"following": true}). Follows are saved per viewer in strata.ops.follows, written as the
   app's own service principal (FollowStore); unfollowing writes a new row and never removes one. The change is
   made only for a signed-in viewer (401 no_identity) with the World Bank staff role (403 not_staff), in the
-  World Bank staff view (403 preview: a preview can only take things away), on a project Strata holds a record
+  World Bank staff view (403 preview: a preview can only take things away), on a project Prism holds a record
   for (404 unknown_project).
 - GET /api/following?asof= runs the tool registry's project_signals on each project the viewer follows, as the
   viewer and as of the page's date (today's follows, with signals as the checks would have run on that date), and
@@ -212,7 +212,7 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: FollowStore
             return refused(503, "data_service", trace_id=ref)
 
     def known(viewer: Viewer, project_id: str) -> bool:
-        """Whether Strata holds a record of the project, read as the viewer, without running the checks."""
+        """Whether Prism holds a record of the project, read as the viewer, without running the checks."""
         with engine_for(viewer) as engine:
             return bool(engine.run(_query("known"), {"project_id": project_id, "as_of": today()}).rows)
 

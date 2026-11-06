@@ -9,8 +9,8 @@
 --                    with its value and where the value came from (sentence, default, guess, computed or
 --                    you), and the review type and market approach that changed because of this save
 -- plan_months        the person's plan, in months from bid notice to signed contract, or empty
--- plan_before_range  whether the person entered the plan before Strata showed them the past range, for the
---                    share of plans anchored on Strata's ranges; empty until they enter one
+-- plan_before_range  whether the person entered the plan before Prism showed them the past range, for the
+--                    share of plans anchored on Prism's ranges; empty until they enter one
 -- saved_at           when it was saved, in UTC
 -- public_from        the day it was saved, in UTC (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.app.planned_package_saves (

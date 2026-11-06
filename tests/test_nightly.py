@@ -316,7 +316,7 @@ def test_a_live_score_task_replays_the_signals_on_their_weekly_day_and_an_offlin
 # ── Concurrency ──────────────────────────────────────────────────────────
 
 def test_the_job_never_runs_more_tasks_at_once_than_the_workspace_allows():
-    """docs/PLAN.md section 2: the shared workspace runs five job tasks at once, for Strata and fairshare together.
+    """docs/PLAN.md section 2: the shared workspace runs five job tasks at once, for Prism and fairshare together.
     The tasks form one chain and the job allows one run at a time, so it never runs more than one."""
     allowed = config.load_thresholds().value("nightly.max_concurrent_tasks")
 

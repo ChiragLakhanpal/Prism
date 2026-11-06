@@ -183,7 +183,7 @@ def _tell_apart(chips: list[dict]) -> None:
 
 
 def neighbourhood(engine: Engine, project_id: str, as_of: dt.date, limits: Thresholds | None = None) -> dict | None:
-    """A project's one-hop neighbourhood as of the page's date, or None for a project Strata has no record of."""
+    """A project's one-hop neighbourhood as of the page's date, or None for a project Prism has no record of."""
     limits = limits or load_thresholds()
     tab = documents.documents_tab(engine, project_id, as_of, 0)
     if tab is None:

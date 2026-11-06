@@ -159,7 +159,7 @@ def personal(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
 
 
 def queries(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
-    """Who queried Strata's tables in the 7 days to today, where the workspace lets Strata read its history (6.3)."""
+    """Who queried Prism's tables in the 7 days to today, where the workspace lets Prism read its history (6.3)."""
     try:
         found = _rows(engine, "queries", today - dt.timedelta(days=6), today)
     except Exception:  # noqa: BLE001 - no query history to read here, as on DuckDB or a workspace that hides it:
@@ -442,7 +442,7 @@ def coverage(engine: Engine, today: dt.date) -> dict | None:
 
 
 def accuracy(engine: Engine, today: dt.date) -> dict | None:
-    """Plan accuracy in countries using Strata: rows dated within 14 days of a date offered against other rows."""
+    """Plan accuracy in countries using Prism: rows dated within 14 days of a date offered against other rows."""
     rows = {row["segment"]: row for row in _rows(engine, "kpi_plan_accuracy", EPOCH, today)}
     if not rows:
         return None
@@ -484,7 +484,7 @@ def estimates(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
 
 
 def adoption(engine: Engine, today: dt.date) -> tuple[str, dt.date | None]:
-    """Who used Strata in the last full week, drafts checked and exported in 90 days, and plan rows (7.3)."""
+    """Who used Prism in the last full week, drafts checked and exported in 90 days, and plan rows (7.3)."""
     users = _rows(engine, "kpi_weekly_users", EPOCH, today)[0]
     week = say.day(_date(users["week_start"]), today)
     people = int(users["numerator"] or 0)

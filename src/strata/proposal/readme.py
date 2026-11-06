@@ -31,9 +31,9 @@ def links(urls: Urls) -> str:
         "(`python -m strata.proposal build`). It follows the assessment's modules, and every number in it links to "
         "the result the build measured.",
         "- The deck: " + _address(urls.deck, not_set.format(key="app") + " The deck is the app's address followed by "
-                                  "`/present`.") + " The deck is not linked from inside Strata, so this is where to "
+                                  "`/present`.") + " The deck is not linked from inside Prism, so this is where to "
         "find it.",
-        "- Strata: " + _address(urls.app, not_set.format(key="app")) + " Open it with the account your invitation "
+        "- Prism: " + _address(urls.app, not_set.format(key="app")) + " Open it with the account your invitation "
         "went to.",
         "- The dashboard: " + _address(urls.dashboard, not_set.format(key="dashboard")),
         "- The repo: " + _address(urls.repo, not_set.format(key="repo")),

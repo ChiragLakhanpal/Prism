@@ -1,4 +1,4 @@
--- Keeping a side of a disagreement (ticket 23): the disagreement's two sides and the one Strata leans on, read as
+-- Keeping a side of a disagreement (ticket 23): the disagreement's two sides and the one Prism leans on, read as
 -- the viewer, so the route accepts only one of its own sides.
 SELECT
   d.disagreement_id,

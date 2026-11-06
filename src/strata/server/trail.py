@@ -7,7 +7,7 @@ in the Procurement Plan, the notices, the bids the award notices list, the contr
 with a record gives each record with its evidence id, its public date and its source line's fields; a stage with
 none gives a reason code instead, which the copy file turns into one first-person sentence:
 
-- plan: not_read (no plan Strata read lists it), after_asof (a plan listing it was public only later);
+- plan: not_read (no plan Prism read lists it), after_asof (a plan listing it was public only later);
 - notice: method_no_notice and approach_no_notice (its Method or Market Approach uses none), none_found,
   after_asof;
 - bids: individual_consultant (the name is withheld here, never by the browser), direct_selection, none_found,

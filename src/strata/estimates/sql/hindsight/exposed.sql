@@ -1,4 +1,4 @@
--- The hindsight test (ticket 34): every project exposed to Strata by :as_of, with the first day it was, which the
+-- The hindsight test (ticket 34): every project exposed to Prism by :as_of, with the first day it was, which the
 -- gate set leaves out and lists. The exposure log, strata.ops.exposures (ticket 44), is the one place an exposure is
 -- defined and written: a past range or a time estimate the server showed for one of the project's packages in the
 -- World Bank staff view. The recall KPI is the stored hindsight recall of a run over this gate set, so it leaves

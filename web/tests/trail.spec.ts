@@ -196,7 +196,7 @@ test("the activity page's loading, service error and permission states", async (
 
   await mockApi(page, { ...(await trailApi()), [`/api${KENYA_PATH}`]: { status: 403, body: '{"code":"permission"}' } });
   await page.goto(KENYA_PATH);
-  await expect(page.getByRole("alert")).toHaveText("Your account can't read Strata's tables, so I can't show this activity.");
+  await expect(page.getByRole("alert")).toHaveText("Your account can't read Prism's tables, so I can't show this activity.");
   await expect(page.getByRole("button", { name: "Try again" })).toHaveCount(0);
 
   await page.route(`**/api${KENYA_PATH}`, () => undefined);

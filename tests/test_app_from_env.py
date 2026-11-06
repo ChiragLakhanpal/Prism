@@ -224,8 +224,8 @@ def test_on_this_computer_uploads_are_kept_in_the_app_state_file(fixture_db, tmp
 
 def test_on_this_computer_the_app_reads_the_fixture_database_and_serves_the_built_web_app(fixture_db, tmp_path):
     (tmp_path / "assets").mkdir()
-    (tmp_path / "index.html").write_text("<!doctype html><title>Strata</title>")
-    (tmp_path / "assets" / "app-1a2b.js").write_text("console.log('Strata')")
+    (tmp_path / "index.html").write_text("<!doctype html><title>Prism</title>")
+    (tmp_path / "assets" / "app-1a2b.js").write_text("console.log('Prism')")
 
     stamp, page, asset, missing = serve(
         app_from_env({"STRATA_DATABASE_FILE": str(fixture_db), "STRATA_WEB_DIST": str(tmp_path)}),
@@ -233,9 +233,9 @@ def test_on_this_computer_the_app_reads_the_fixture_database_and_serves_the_buil
 
     assert stamp.json() == json.loads((RECORDED / "freshness.json").read_text())
     # Every page is the web app's index, which routes the address itself.
-    assert page.status_code == 200 and page.text == "<!doctype html><title>Strata</title>"
+    assert page.status_code == 200 and page.text == "<!doctype html><title>Prism</title>"
     assert page.headers["cache-control"] == "no-cache"
-    assert asset.text == "console.log('Strata')"
+    assert asset.text == "console.log('Prism')"
     assert "immutable" in asset.headers["cache-control"]
     assert missing.status_code == 404 and missing.json() == {"detail": "Not Found"}
 

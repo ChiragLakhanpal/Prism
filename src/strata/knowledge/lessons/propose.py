@@ -11,7 +11,7 @@ A run:
 2. Rebuilds, for each project with an answer, the proposals (strata.silver.lesson_proposals), the
    restatements (strata.silver.lesson_restatements) and the evidence (strata.silver.lesson_evidence). A
    proposal passes only when the passage it cites exists, its quote is word for word on the cited PDF page
-   as Strata read it (the published text's page, as Route A read it, or the layout parser's) and in that
+   as Prism read it (the published text's page, as Route A read it, or the layout parser's) and in that
    passage, and its tags are on the closed lists. The check uses the
    verifier's own quote matcher (strata.agent.verifier.find_quote), which ignores only whitespace,
    line-end hyphenation and whether a quote mark is curly or straight. It rejects and never repairs: a
@@ -132,7 +132,7 @@ def request(document: dict, passages: list[dict], model: str, lists: LessonLists
 # ── The quote check ──────────────────────────────────────────────────────
 
 class Pages:
-    """A document's PDF pages as Strata read them: the published text divided on its form feeds, as Route A
+    """A document's PDF pages as Prism read them: the published text divided on its form feeds, as Route A
     read it, or, for a document whose published text does not divide into its pages, each page the layout
     parser read, else the PDF's text layer."""
 

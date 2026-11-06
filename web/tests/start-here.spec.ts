@@ -158,7 +158,7 @@ test("with all six done the item says so and leads to the strip, and after Remov
     route.fulfill({ status: 200, contentType: "application/json", body: await recorded("start-here-removed.json") }),
   );
   await page.getByRole("button", { name: "Remove the Start here examples" }).click();
-  await expect(page.getByText("You removed the examples Strata set up.")).toBeFocused();
+  await expect(page.getByText("You removed the examples Prism set up.")).toBeFocused();
   await expect(item).toHaveCount(0);
   await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Data", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Data");

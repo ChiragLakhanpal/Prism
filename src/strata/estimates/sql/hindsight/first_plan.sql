@@ -1,5 +1,5 @@
 -- The hindsight test (ticket 34): the packages of a project's first Procurement Plan, largest first. The first
--- plan is the project's earliest plan version Strata read, by plan date, of any implementing agency. Each row is
+-- plan is the project's earliest plan version Prism read, by plan date, of any implementing agency. Each row is
 -- a package the replay asks the risk-table builder about, with what its criteria are read from: its section (the
 -- procurement category), its Method and its project's country. The replay reads it as of the release, since the
 -- packages are the question; the answer is frozen at the approval date.

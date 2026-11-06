@@ -3,7 +3,7 @@
 The gate builds the fixture database by running the passage reader over the recorded documents
 (gates/build_fixture.py), so most tests read what that run wrote. Every quoted paragraph, page and
 section comes from tests/ground_truth/values.toml, which quotes the documents with their PDF pages,
-or from the ticket, never from Strata's code.
+or from the ticket, never from Prism's code.
 """
 
 import re

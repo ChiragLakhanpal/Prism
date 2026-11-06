@@ -12,7 +12,7 @@ brief's draft as of October 23, as tests/test_drafts.py writes drafts): Ana, Wor
 team, follows P156634 and P130164, opens Following, opens it as of June 30, 2024, and writes a mission brief on
 P156634, which she checks and exports. The brief's awards rest on KE-CWSB-567630-CW-DIR's contract record, which
 disagrees with the agency's plan of August 17, 2026 that still says Pending Implementation (ticket 132), so check 6
-attaches that disagreement and Ana keeps the contract record, the side Strata leans on, before she exports
+attaches that disagreement and Ana keeps the contract record, the side Prism leans on, before she exports
 (drafts-mission-brief-kept.json). Ben, also staff, follows nothing. Cy is not staff.
 
 The states the fixture cannot reach (a Watch row, a Not checked row, a partly checked row, a pipeline row, many quiet
@@ -107,7 +107,7 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB, files: dict | None = No
             await get("drafts-write-mission-brief.sse", "/api/drafts", method="POST",
                       json={"kind": "mission_brief", "project_id": "P156634", "idempotency_key": "brief-1"})
             await get("drafts-mission-brief-draft.json", "/api/drafts/draft-0001")
-            # Each disagreement check 6 attached holds the export until Ana keeps a side: here Strata's.
+            # Each disagreement check 6 attached holds the export until Ana keeps a side: here Prism's.
             for card in json.loads(found["drafts-mission-brief-draft.json"])["disagreements"]:
                 lean = next(side["assertion_id"] for side in card["sides"] if side["leaned"])
                 await client.post(f"/api/disagreements/{card['disagreement_id']}/choices", headers=ANA,

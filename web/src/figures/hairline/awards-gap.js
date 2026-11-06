@@ -1,5 +1,5 @@
 /**
- * Awards gap: the contract awards record as a row of year blocks on its base (Strata's deck, the data slide). The
+ * Awards gap: the contract awards record as a row of year blocks on its base (Prism's deck, the data slide). The
  * older awards dataset's blocks stand on one base and the newer dataset's taller blocks on another; between them the
  * base breaks, and three thin plates lie on the ground where only award notices fill the years no dataset covers,
  * each with a dot, and a dashed outline of the block that is missing behind it. The middle plate holds the bright

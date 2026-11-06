@@ -31,7 +31,7 @@ same-rows  Runs each ground-truth query marked for databricks (tests/ground_trut
 readiness  Builds the Data readiness page on the SQL warehouse with data_readiness_for, as the app
            does, and checks that its awards row's rows held and contracts with a STEP reference
            match a direct query on strata.ops.data_readiness. It also prints Kenya's own measures.
-schedules  Reads fairshare's nightly job and Strata's, with how long their recent runs took, and
+schedules  Reads fairshare's nightly job and Prism's, with how long their recent runs took, and
            checks that the two never run at the same time on any day of the next year. With
            --write it records both schedules in the bundle's notes, bundle/README.md.
 
@@ -277,7 +277,7 @@ def _measured(facts: dict) -> str:
 def schedules_block(strata: dict, fairshare: dict, today: dt.date) -> tuple[bool, list[str]]:
     """Whether the two jobs never meet, and the lines the bundle's notes record."""
     days = [today + dt.timedelta(days=n) for n in range(366)]
-    strata_line = (f"- Strata's job: {strata['name']}, {_when(strata)}. {_measured(strata)}, and it stops after "
+    strata_line = (f"- Prism's job: {strata['name']}, {_when(strata)}. {_measured(strata)}, and it stops after "
                    f"{dayone.count_words(strata['timeout_minutes'], 'minute')}.")
     measured_line = (f"- Measured: {dayone.long_date(today)}, with `uv run --script ops/bundle/check.py schedules "
                      "--env-file .env --write`.")
@@ -297,12 +297,12 @@ def schedules_block(strata: dict, fairshare: dict, today: dt.date) -> tuple[bool
         lines.append(f"- Overlap: on {len(measured)} of the 366 days {span}, starting "
                      f"{dayone.long_date(measured[0])}. Move one of the two schedules.")
     elif limit:
-        lines.append(f"- Overlap: none with the measured durations, {span}. If Strata's job ran to its limit, "
+        lines.append(f"- Overlap: none with the measured durations, {span}. If Prism's job ran to its limit, "
                      f"the two would meet on {dayone.count_words(len(limit), 'day')}, starting "
                      f"{dayone.long_date(limit[0])}.")
     else:
         lines.append(f"- Overlap: none. With these durations the two jobs share no minute on any day {span}, "
-                     "and the same holds if Strata's job runs to its limit.")
+                     "and the same holds if Prism's job runs to its limit.")
     lines.append(measured_line)
     return not measured, lines
 
@@ -328,7 +328,7 @@ def schedules(workspace, fairshare_job: str | None, write: bool, notes: Path, to
     for facts in (fairshare, strata):
         if facts.get("quartz") and not facts["durations"]:
             print(f"{facts['name']} has no finished runs to measure. Run it once by hand, then check again. "
-                  "For Strata's job: uv run --script ops/bundle/check.py job-run --env-file .env")
+                  "For Prism's job: uv run --script ops/bundle/check.py job-run --env-file .env")
             return 2
     try:
         apart, lines = schedules_block(strata, fairshare, today)
@@ -367,7 +367,7 @@ def parse(argv: list[str] | None = None) -> argparse.Namespace:
                         help="Run the sample queries on DuckDB and on the SQL warehouse.")
     commands.add_parser("readiness", parents=[shared],
                         help="Check the Data readiness page's awards row against a direct query.")
-    times = commands.add_parser("schedules", parents=[shared], help="Check fairshare's and Strata's nightly schedules.")
+    times = commands.add_parser("schedules", parents=[shared], help="Check fairshare's and Prism's nightly schedules.")
     times.add_argument("--fairshare-job", help="fairshare's nightly job, when its name does not contain fairshare.")
     times.add_argument("--write", action="store_true", help="Record both schedules in bundle/README.md.")
     times.add_argument("--notes", type=Path, default=NOTES, help=argparse.SUPPRESS)

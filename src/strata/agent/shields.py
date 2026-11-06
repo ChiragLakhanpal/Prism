@@ -1,7 +1,7 @@
 """The shield set: real passages with rule-like sentences must reach the agent as tool results without a
 Prompt Shields refusal (evals/shield_passages.toml; spec, "Security and privacy").
 
-fairshare hit false refusals when rules rode in the data. Strata keeps rules in the agent's instructions and
+fairshare hit false refusals when rules rode in the data. Prism keeps rules in the agent's instructions and
 data in messages, and this check guards that: tool_result() asks search_passages for each passage by its
 own sentence, as the agent would, and check() asks the agent a question, answers its tool call with that
 result, and records whether the agent took it. A content filter or Prompt Shields refusal fails the check.

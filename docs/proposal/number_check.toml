@@ -5,7 +5,7 @@
 
 [[allow]]
 phrase = "the three strata"
-reason = "GLOSSARY.md defines the strata as What, How and Why: three by definition, not a count Strata measured."
+reason = "GLOSSARY.md defines the strata as What, How and Why: three by definition, not a count Prism measured."
 
 [[allow]]
 phrase = "three strata"
@@ -61,4 +61,4 @@ reason = "The name of the retrieval loop's leading indicator, as ticket 32 named
 
 [[allow]]
 phrase = "about US$15 million"
-reason = "The words a person types to plan a package from a sentence, the examples registry's sentence (config/examples.toml, packages.rural_roads_kenya), which the deck's package demo shows in its box: an input, not a number Strata measured. A new sentence there means a new line here, and the number check says so."
+reason = "The words a person types to plan a package from a sentence, the examples registry's sentence (config/examples.toml, packages.rural_roads_kenya), which the deck's package demo shows in its box: an input, not a number Prism measured. A new sentence there means a new line here, and the number check says so."

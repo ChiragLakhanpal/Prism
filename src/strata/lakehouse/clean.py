@@ -11,7 +11,7 @@ Each rule is defined once here, and every silver transform uses it:
   each one and returns None for anything else, never a guess.
 - World Bank fiscal years run July to June, so a date from July 1 on falls in the next year's FY.
 - A row's public_from is the date its source published it or, when that date is missing or later
-  than the fetch, the day Strata first fetched it (ADR 0002).
+  than the fetch, the day Prism first fetched it (ADR 0002).
 - A STEP reference (KE-NWWDA-541055-CW-RFB) is parsed into its parts. Sources write it with stray
   spaces (KE- WASREB-...) or slashes (KE/TAVEVO/82746/GO/RFB), and both normalize to hyphens. The
   method is never read from the reference: its last part is kept only for the data note. Its kinds
@@ -88,7 +88,7 @@ def plain_text(markup) -> str:
 def as_written(value) -> str | None:
     """A field's text exactly as the source wrote it, spaces inside it included, with only the spaces at its ends
     taken off, or None when it is empty or says it is (NOT_GIVEN). For the columns that keep a source's own words
-    beside Strata's name for them, such as procurement_method_as_written."""
+    beside Prism's name for them, such as procurement_method_as_written."""
     written = str(value).strip() if value is not None else ""
     return None if written.lower() in NOT_GIVEN else written or None
 

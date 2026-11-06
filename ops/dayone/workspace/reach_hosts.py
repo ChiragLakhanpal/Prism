@@ -1,5 +1,5 @@
 # Databricks notebook source
-"""Strata day-one test 1: ask each World Bank host once from this Databricks compute.
+"""Prism day-one test 1: ask each World Bank host once from this Databricks compute.
 
 probe_hosts.py uploads this file twice, as a notebook and as a job's Python file, with the hosts
 written in where SETTINGS is read. It prints one line that starts with STRATA_DAYONE_RESULT and,

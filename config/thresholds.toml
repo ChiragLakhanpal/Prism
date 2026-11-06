@@ -265,12 +265,12 @@ canceled_as_still_open = false
 no_notice_methods = ["Direct Selection"]
 no_notice_market_approaches = ["Limited", "Direct"]
 
-# The time estimate (ticket 25): Strata's own model of procurement cycle time, with ranges for the
+# The time estimate (ticket 25): Prism's own model of procurement cycle time, with ranges for the
 # middle half and 8 in 10, and its backtests (src/strata/estimates/). The backtests and the model card
 # read these, and ticket 26's estimate_time returns the values it used, so no screen writes one itself.
 [time_estimate]
 # Below this many comparables (find_comparables' count), the time estimate gives no range and says
-# why. Source: docs/PLAN.md section 7 ("Strata abstains below 20 comparables, subgroups included"),
+# why. Source: docs/PLAN.md section 7 ("Prism abstains below 20 comparables, subgroups included"),
 # DESIGN.md section 7, rules 6 and 15, and the 26 design brief, which names the key. It is the same
 # rule as past_range.min_comparables, kept as its own key so the two can be told apart.
 min_comparables = 20
@@ -403,7 +403,7 @@ track_record_window_months = 12
 track_record_min = 20
 # The night of the week, in UTC, on which the nightly job's score task replays the checks for the track record and
 # compares the hazard model with them (strata.lakehouse.nightly; strata.lakehouse.schedule.weekly_due). The replay
-# reads Strata as it was on the dates above, so its counts change only when a record newly fetched turns out public
+# reads Prism as it was on the dates above, so its counts change only when a record newly fetched turns out public
 # before one of them, and it reads every project with a loan history on each date, which is too long to repeat
 # every night inside the job's window. A record never replayed is replayed the first night, and a replay whose
 # night passed without it, because the night failed or the score task's minutes ran out first, runs the next
@@ -424,7 +424,7 @@ track_record_batch_projects = 500
 # package's Review Type from its category and its whole estimated amount, never per lot, so dividing a
 # package never changes it (strata.packages.compute). A package whose estimated amount is at or above its
 # category's threshold goes to Prior review; below it, Post. The thresholds depend on the implementing
-# agency's procurement risk rating, which Strata cannot know at concept stage, so it assumes risk_rating
+# agency's procurement risk rating, which Prism cannot know at concept stage, so it assumes risk_rating
 # and says so beside the review type. The computed note quotes source as its source line, and as_of
 # after it once the owner has checked the values against the World Bank's table and gives that table's
 # date. Source: the blueprint's Package workspace wireframe ("works of US$10 million or more go to prior
@@ -461,7 +461,7 @@ Works = 15_000_000
 # tests/ground_truth/values.toml (ppsd-table-i-*). The table gives US$ millions; these are US dollars.
 # tests/test_ppsd_templates.py checks every amount against the quotes.
 #
-# The threshold depends on the procurement risk rating the Borrower and the World Bank agree, which Strata
+# The threshold depends on the procurement risk rating the Borrower and the World Bank agree, which Prism
 # cannot see. So the suggested PPSD rows offer the Long Form once a package's cost estimate reaches the threshold
 # of offer_long_form_at, the lowest one, and the caption names that threshold. Short Form stays the default.
 # The whole package's cost estimate is compared, never a lot's (src/strata/drafts/ppsd_rows.py, table_i).
@@ -553,7 +553,7 @@ model_pairs_per_run = 500
 # pairs"). docs/STATUS.md decision 5, on labeling time, is still open.
 precision_target = 0.98
 labeled_pairs_target = 1000
-# Below this many labeled auto-merged pairs, Strata reports counts only, with no precision and no
+# Below this many labeled auto-merged pairs, Prism reports counts only, with no precision and no
 # interval. Source: DESIGN.md section 7, rules 6 and 15 (no percentage or range from fewer than 20 cases).
 min_labeled_pairs_for_precision = 20
 # The z value of the precision's 95% Wilson score interval. Source: the normal distribution's
@@ -842,7 +842,7 @@ rows_per_group = 5
 # diagram (Guo and others, 2017, "On Calibration of Modern Neural Networks"); a starting value to confirm.
 calibration_bins = 10
 
-# The hindsight test (ticket 34; docs/PLAN.md section 10): Strata frozen at each pilot project's approval date,
+# The hindsight test (ticket 34; docs/PLAN.md section 10): Prism frozen at each pilot project's approval date,
 # its top risks per package against the risks the completion report later blamed. src/strata/estimates/hindsight.py
 # reads these with the replay harness. How many risks each package shows is package_risks.max_rows above, and the
 # coders' agreement is withheld below retrieval.min_pairs, the agreement floor ticket 32 set.
@@ -885,7 +885,7 @@ row_count_max = 10_000_000
 # The tables the job fills every night, which must never be empty, and the ones that may pass ten million rows.
 row_counts = { "strata.bronze.api_pages" = [1, 200_000], "strata.gold.country" = [1, 1_000], "strata.gold.project" = [1, 200_000], "strata.gold.notice" = [1, 5_000_000], "strata.gold.contract" = [1, 5_000_000], "strata.gold.package" = [1, 5_000_000], "strata.gold.edge" = [1, 50_000_000], "strata.ops.data_readiness" = [1, 50_000_000] }
 
-# How long after the nightly checks last finished the freshness stamp and the stale alerts call Strata's data
+# How long after the nightly checks last finished the freshness stamp and the stale alerts call Prism's data
 # stale (ticket 43; briefs 06, 37 and 41). The job runs once a day, so a stamp older than a day and a half means
 # a night was missed. Source: bundle/nightly.yml's daily schedule, with half a day's room for a late or rerun
 # night; a starting value for the owner to confirm.
@@ -953,13 +953,13 @@ poll_seconds = 10
 wait_seconds = 1800
 
 # The estimates loop (ticket 44; docs/PLAN.md section 11, "Three loops" and "Retraining"): the exposure log, the plan
-# rows dated near a date Strata offered, the monthly watch that raises a retrain, the challenger's promotion and the
+# rows dated near a date Prism offered, the monthly watch that raises a retrain, the challenger's promotion and the
 # hazard model in shadow. src/strata/estimates/watch.py, promotion.py and hazard.py read these. The coverage band,
 # 75 to 85 percent, is time_estimate.coverage_low and coverage_high, set once for the backtest and this watch.
 [estimates_loop]
-# A plan row published after Strata showed a range for its package is dated within this many days of a date Strata
+# A plan row published after Prism showed a range for its package is dated within this many days of a date Prism
 # offered when its planned signing date is this close to the middle or the 8-in-10 point offered, early or late.
-# Source: docs/PLAN.md section 11 ("later plan rows within 14 days of Strata's value are marked as anchored") and
+# Source: docs/PLAN.md section 11 ("later plan rows within 14 days of Prism's value are marked as anchored") and
 # the 45 design brief, section 7.2, tile 9.
 anchored_within_days = 14
 # Below this many cases a measure gives only its counts: no median, no rate and no coverage share, and no trigger

@@ -1,5 +1,5 @@
 -- KPI plan_accuracy (config/kpis.toml), the estimates loop's lagging indicator, with plan duration (tile 30): for plan
--- rows dated within 14 days of a date Strata offered and for the other plan rows, in countries using Strata and in
+-- rows dated within 14 days of a date Prism offered and for the other plan rows, in countries using Prism and in
 -- countries not yet using it, the rows with an actual signing date, the median days between planned and actual
 -- signing, and the median months from first notice to signing, as the latest monthly watch in the dates chosen
 -- stored them (strata.ops.estimates_watch, plan_accuracy and plan_duration; ticket 44). A median is kept only from

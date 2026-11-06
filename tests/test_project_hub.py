@@ -375,7 +375,7 @@ def test_the_server_sends_the_built_app_compressed_so_the_summary_keeps_its_cold
     # Fast 3G against its 5 s budget; vite preview, which the screen test uses, compresses it.
     web = tmp_path / "web"
     (web / "assets").mkdir(parents=True)
-    (web / "index.html").write_text("<!doctype html><title>Strata</title>")
+    (web / "index.html").write_text("<!doctype html><title>Prism</title>")
     (web / "assets" / "index.js").write_text("export const strata = 1;\n" * 400)
     app = create_app(web_dist=web)
 

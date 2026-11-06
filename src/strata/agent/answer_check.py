@@ -1,4 +1,4 @@
-"""The six checks on everything Strata writes for a person to read (CLAUDE.md rule 1; ticket 24): one
+"""The six checks on everything Prism writes for a person to read (CLAUDE.md rule 1; ticket 24): one
 implementation, shared by the answer stream (POST /api/ask, src/strata/server/app.py), the draft runtime
 (src/strata/drafts/runtime.py), the check-your-criteria section (src/strata/criteria/workflow.py), the risk table
 (src/strata/packages/risks.py) and the lesson review writer (src/strata/knowledge/lessons/writer.py), so no path can

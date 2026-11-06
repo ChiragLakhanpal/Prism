@@ -1,6 +1,6 @@
 # Databricks for data and knowledge, Microsoft Foundry for the agent, Azure for what Free Edition lacks
 
-Strata's data, knowledge model, search, structured questions, predictive models and app run on Databricks Free Edition, because the panel asked for a Databricks-native lakehouse and Unity Catalog keeps lineage, permissions and incremental sync in one place. The conversational agent, its guardrails, evaluations and traces live in Microsoft Foundry: Databricks marked Knowledge Assistant and Supervisor Agent legacy on October 12, 2026, its code-first Agent Bricks runtime is in Beta and unconfirmed on Free Edition, while Foundry's agent service, guardrails and evaluations are generally available. Anything Free Edition lacks or caps is filled by an Azure service in the same subscription.
+Prism's data, knowledge model, search, structured questions, predictive models and app run on Databricks Free Edition, because the panel asked for a Databricks-native lakehouse and Unity Catalog keeps lineage, permissions and incremental sync in one place. The conversational agent, its guardrails, evaluations and traces live in Microsoft Foundry: Databricks marked Knowledge Assistant and Supervisor Agent legacy on October 12, 2026, its code-first Agent Bricks runtime is in Beta and unconfirmed on Free Edition, while Foundry's agent service, guardrails and evaluations are generally available. Anything Free Edition lacks or caps is filled by an Azure service in the same subscription.
 
 ## Considered options
 

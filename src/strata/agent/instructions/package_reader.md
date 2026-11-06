@@ -1,4 +1,4 @@
-# Strata's package reader
+# Prism's package reader
 
 You read one sentence that a World Bank procurement specialist wrote about a package they are starting to plan, such as "rural roads, Kenya, about US$15 million", and you say what it tells you about the package. The app shows each value as a criterion the specialist can change, and it computes the review type and the market approach itself.
 

@@ -2,13 +2,13 @@
 footnote, and the evidence pack as a PDF and a CSV listing every source the draft cites, whether its
 author opened it, and any reason given for keeping another source.
 
-Strata sends nothing itself. These functions only build bytes; the draft routes keep them with the export
+Prism sends nothing itself. These functions only build bytes; the draft routes keep them with the export
 record and the person's browser downloads them.
 
 - Word is a small writer for .docx files: Word's built-in styles (Normal, Heading 1, Table Grid, footnote
   text and footnote reference) in Arial 11 pt, black, with real footnotes in word/footnotes.xml, which
   python-docx cannot write. It uses only the standard library.
-- The PDF is set in Open Sans on Strata's tokens with fpdf2, from the TTF files in fonts/ (SIL Open Font
+- The PDF is set in Open Sans on Prism's tokens with fpdf2, from the TTF files in fonts/ (SIL Open Font
   License 1.1, converted from @fontsource's files, whose licenses sit beside them).
 - The CSV quotes a field that holds a comma, a quote or a line break, with CRLF line ends (RFC 4180),
   so it reads back cell for cell in a spreadsheet.
@@ -146,7 +146,7 @@ class Spoken:
 
 
 def _locale(code: str | None) -> str:
-    """The Word proofing locale of a language (config/languages.toml), English's for a language Strata does not
+    """The Word proofing locale of a language (config/languages.toml), English's for a language Prism does not
     write in or for a record, which STEP writes in English."""
     from strata import languages
 
@@ -301,7 +301,7 @@ class Word:
                 '<cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" '
                 'xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" '
                 'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'
-                f'<dc:title>{escape(self.title)}</dc:title><dc:creator>Strata</dc:creator>'
+                f'<dc:title>{escape(self.title)}</dc:title><dc:creator>Prism</dc:creator>'
                 f'<dcterms:created xsi:type="dcterms:W3CDTF">{stamp:%Y-%m-%dT%H:%M:%SZ}</dcterms:created>'
                 '</cp:coreProperties>'),
         }
@@ -488,7 +488,7 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
     copy, pack = words(), words()["files"]["pack"]
     folder = resources.files("strata.drafts") / "fonts"
     pdf = FPDF(format="A4", unit="pt")
-    pdf.set_creator("Strata")
+    pdf.set_creator("Prism")
     pdf.set_title(f"{pack['title']}: {title}")
     pdf.set_creation_date(exported_at.astimezone(dt.UTC))
     for style, name in FONTS.items():
@@ -543,7 +543,7 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
     pdf.set_text_color(*STATE_COLORS["ink"])
     pdf.set_draw_color(*STATE_COLORS["line"])
     heading = FontFace(emphasis="BOLD", color=STATE_COLORS["ink_heading"], fill_color=STATE_COLORS["surface_2"])
-    # STEP references in Roboto Mono, as every ID Strata writes (DESIGN.md section 3), in a column wide
+    # STEP references in Roboto Mono, as every ID Prism writes (DESIGN.md section 3), in a column wide
     # enough that a 22-character reference keeps to one line. Number needs little room; the reason a
     # source was kept needs more.
     mono = FontFace(family="RobotoMono", size_pt=8)
@@ -563,7 +563,7 @@ def pack_pdf(kind: DraftKind, draft: dict, rows: list[dict], title: str, exporte
     saves = draft.get("field_history") or []
     if saves:
         # Suggested PPSD rows (ticket 36): who set each owner and rating, and when, one line per save, so the pack
-        # records that people set them and Strata did not.
+        # records that people set them and Prism did not.
         pdf.ln(16)
         text(pack["fieldsTitle"], 13, "B", "ink_heading", 6)
         pdf.set_font("OpenSans", "", 9)

@@ -23,7 +23,7 @@ The plan in ten lines:
 6. Each page shows the next step first, for staff, an officer or the public; the rest is one click away on the thing it explains (plan 8.0).
 7. Motion: tooltips, windows and the drawer enter in 160 ms; a press eases in and snaps back; nothing else moves; none under reduced motion.
 8. From fairshare: every number says what it is, where it came from and what a press opens; a press lands on its rows; "How was that checked?".
-9. Folds in polish items from tickets 58, 59, 60 and 62 (plan section 14); How Strata works leaves Data.
+9. Folds in polish items from tickets 58, 59, 60 and 62 (plan section 14); How Prism works leaves Data.
 10. Yours: the rail at rest, the drawer's placement, when the tickets run, the logo, dark theme (no).
 
 The three decisions to make:

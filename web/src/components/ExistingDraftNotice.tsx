@@ -1,7 +1,7 @@
 // The package workspace's notices about suggested PPSD rows (ticket 36; the 36 brief, section 5.1), in brief 06's
 // alert slot above the h1: "I stopped writing ..." once after Stop writing, and the open draft your team already
 // started for this package, newest first, with a link to it, or, for rows the seed command set up for you (ticket 41),
-// the Example tag and Strata's sentence. The action still offers a new draft.
+// the Example tag and Prism's sentence. The action still offers a new draft.
 import { useEffect, useState, type ReactNode } from "react";
 import { copy } from "../copy";
 import { getJson } from "../lib/api";

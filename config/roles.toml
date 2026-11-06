@@ -1,4 +1,4 @@
-# The roles file: who sees what Strata keeps for a team, and who reviews lessons (spec, "Ten single
+# The roles file: who sees what Prism keeps for a team, and who reviews lessons (spec, "Ten single
 # places": the roles file sits beside the registries). strata.config.load_roles() reads it. One server
 # helper, src/strata/server/access.py, applies its teams to every read of a draft (and later of an upload
 # or a package made from one), so there is one access rule (the 38 design brief, section 11). The lesson
@@ -69,7 +69,7 @@
 # lists the made-up reviewers the offline tests use.
 
 # [staff], the World Bank staff role (ticket 37):
-#   groups   the workspace groups whose members are World Bank staff in Strata. Only they may open Following
+#   groups   the workspace groups whose members are World Bank staff in Prism. Only they may open Following
 #            and follow projects; the server refuses everyone else (403 not_staff). A viewer whose groups
 #            could not be read is in none, so they see less, never more.
 #

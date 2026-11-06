@@ -90,7 +90,7 @@ def passage_source(found: dict) -> dict:
         "version": _int(found["version"]),
         "section_path": found["section_path"],
         "paragraph": found["paragraph"],
-        # False when the report numbers no paragraphs, as an ISR does: paragraph is then Strata's own
+        # False when the report numbers no paragraphs, as an ISR does: paragraph is then Prism's own
         # count (s4), so a citation names the section and the page instead.
         "paragraph_numbered": _boolean(found["paragraph_numbered"]),
         "pdf_page": _int(found["pdf_page"]),

@@ -17,7 +17,7 @@
 --                       before the latest, or the first version to list an activity; empty when
 --                       only its text is read
 -- text_url, pdf_url     where its published text and its PDF are
--- public_from           its disclosure date, or the day Strata first fetched it where that is
+-- public_from           its disclosure date, or the day Prism first fetched it where that is
 --                       missing or later (ADR 0002)
 CREATE TABLE IF NOT EXISTS strata.silver.plan_versions (
   document_id STRING NOT NULL,

@@ -13,7 +13,7 @@ resources:
   catalogs:
     strata:
       name: strata
-      comment: Strata, procurement intelligence on World Bank open data. Every row keeps the date it became public.
+      comment: Prism, procurement intelligence on World Bank open data. Every row keeps the date it became public.
       grants:
         - principal: ${var.readers}
           privileges: [USE_CATALOG]

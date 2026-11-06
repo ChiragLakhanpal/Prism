@@ -5,7 +5,7 @@
   the model's judgement when it gave one, and the latest decision a person made on it, without who made it.
 - labeling_list(engine, limit, labeled_pairs_target) reads the labeling tool's next pairs as the
   viewer: candidate pairs of the latest run with no label yet on their two names, most likely first,
-  without where Strata sent them, and how many pairs are labeled of how many found, beside
+  without where Prism sent them, and how many pairs are labeled of how many found, beside
   docs/PLAN.md section 5's aim of 1,000.
 - SupplierLog writes a person's decision (merge or no merge, with the reason) to
   strata.ops.supplier_review_decisions, and a label to strata.ops.supplier_pair_labels, as the app's

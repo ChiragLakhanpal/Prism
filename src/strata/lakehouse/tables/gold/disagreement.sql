@@ -8,7 +8,7 @@
 -- first_assertion_id   the side written first (made_at, then public_from)
 -- second_assertion_id  the side written second
 -- period_event, period_start, period_end   the period both describe: where the two periods overlap
--- lean_assertion_id    the side Strata leans on; empty when the ladder ranks both the same
+-- lean_assertion_id    the side Prism leans on; empty when the ladder ranks both the same
 -- rule_id              the ladder's rule that decided: outcome, moment, tieSpecific or tieRecent
 -- replaced_on          the earlier day a later version replaced one of its sides; from then on it is not
 --                      a current disagreement

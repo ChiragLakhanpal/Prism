@@ -302,7 +302,7 @@
    "d": 6,
    "run_id": "gate-2",
    "measured_on": "2026-10-20",
-   "name": "Must-refuse questions that Strata turned down, in the latest full gate",
+   "name": "Must-refuse questions that Prism turned down, in the latest full gate",
    "kind": "Benchmark run",
    "noun": "must-refuse questions",
    "table": "strata.ops.evaluation_result",
@@ -315,7 +315,7 @@
    "in_ten": 5,
    "run_id": "hindsight-1",
    "measured_on": "2026-10-15",
-   "name": "Risks completion reports later blamed that Strata's risk tables showed at approval",
+   "name": "Risks completion reports later blamed that Prism's risk tables showed at approval",
    "kind": "Hindsight test",
    "noun": "blamed risks",
    "table": "strata.ops.evaluation_result",
@@ -338,7 +338,7 @@
    "measured": false,
    "run_id": "hindsight-1",
    "measured_on": "2026-10-15",
-   "name": "The interval around the share of blamed risks Strata's tables showed",
+   "name": "The interval around the share of blamed risks Prism's tables showed",
    "kind": "Hindsight test",
    "noun": "percent",
    "table": "strata.ops.evaluation_result",
@@ -448,9 +448,9 @@
  "urls": {
   "app": "https://strata-7405609289499029.9.azure.databricksapps.com",
   "dashboard": null,
-  "repo": null,
+  "repo": "https://github.com/ChiragLakhanpal/Prism",
   "deck": "https://strata-7405609289499029.9.azure.databricksapps.com/present",
-  "proposal": null
+  "proposal": "https://github.com/ChiragLakhanpal/Prism/blob/main/docs/proposal.md"
  },
  "presenter": {
   "name": "Chirag Lakhanpal",
