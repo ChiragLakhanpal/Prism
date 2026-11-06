@@ -8,15 +8,16 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
 
-- [ ] `web/figures/merge-timeline.html`, `two-apps.html`, `five-ways.html` and `brief-sections.html` and their exports exist, each export equal to its source's export with system fonts, each passing the skill's self check offline, each in its slot's viewBox and the strata-wb palette and fonts, with sentence-case labels and no counts.
-- [ ] Each figure's steps are contiguous from 1, match the brief's step texts in order and count (6, 5, 6, 3), and keep the motion budget (at most 8 steps, 12 items, 2 items a step).
-- [ ] Rendered at 2x whole and at each step, each figure reads well: no overlaps, no label outside its box, the focal item as the brief names it.
+- [x] `web/figures/merge-timeline.html`, `two-apps.html`, `five-ways.html` and `brief-sections.html` and their exports exist, each export equal to its source's export with system fonts, each passing the skill's self check offline, each in its slot's viewBox and the strata-wb palette and fonts, with sentence-case labels and no counts.
+- [x] Each figure's steps are contiguous from 1, match the brief's step texts in order and count (6, 5, 6, 3), and keep the motion budget (at most 8 steps, 12 items, 2 items a step).
+- [x] Rendered at 2x whole and at each step, each figure reads well: no overlaps, no label outside its box, the focal item as the brief names it.
 
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 13:45 PST, in parallel with tickets 162, 164 and 165.
+- November 6, 2026, orchestrator: the four figures landed through ticket 162's branch (merge 072204d4), copied from this ticket's worktree `agent-ab5ad6a83882bae3c`, where the eight files stayed staged because the deck test wants a figure copy key per SVG and the guard forbids skipping the gate. Steps 6, 5, 6, 3; the builder changed four titles to keep number words out ("Strata and ProcIntel, then one conversation", "Prism and ProcIntel on one brief", "The ways forward, judged by one test", "The sections of the brief") and ticket 162's copy matches them. The worktree can be removed; its branch holds nothing.

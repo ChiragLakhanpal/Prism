@@ -15,16 +15,17 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 
 **Blocked by:** None (can start immediately; merges tickets 163, 164 and 165 when they land)
 
-**Status:** ready
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
 
-- [ ] `/present/research` shows the research talk's 25 slides on the deck's engine, press by press, with its openers, its notes window and its reading view; `/present` shows the Strata talk unchanged (the deck tests, both talks).
-- [ ] The disclaimer sentence appears on the research talk's title slide and on no other slide; DESIGN.md section 8 says so (the footer test).
-- [ ] Every number on the research talk's slides, notes and reading view is bound to a recorded result or a setting, and the number check passes (the number check test; `docs/proposal/recorded.toml`).
-- [ ] The gate passes under 180 seconds on the worktree with `build/strata` merged in.
+- [x] `/present/research` shows the research talk's 25 slides on the deck's engine, press by press, with its openers, its notes window and its reading view; `/present` shows the Strata talk unchanged (the deck tests, both talks).
+- [x] The disclaimer sentence appears on the research talk's title slide and on no other slide; DESIGN.md section 8 says so (the footer test).
+- [x] Every number on the research talk's slides, notes and reading view is bound to a recorded result or a setting, and the number check passes (the number check test; `docs/proposal/recorded.toml`).
+- [x] The gate passes under 180 seconds on the worktree with `build/strata` merged in.
 
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 13:45 PST. The figure tickets 163 and 164 and the hairline ticket 165 run in parallel; their keys land in the registry, the order file, the figure copy and `tests/test_deck_figures.py` through this ticket once they have merged.
+- November 6, 2026, orchestrator: merged into `build/strata` as 072204d4 at 16:05 PST (branch `worktree-agent-acc98ae87ece8abe9`, talk ec410d8b, backups fixed in 269d8123 after the user's local review; the gate on the merge passed in 167.1 seconds). The builder's evidence: deck.spec.ts 21 of 21 in 19.9 s with four research tests (a walk through every slide with the footer on slide 1 only, axe and the tracker; the demo; the notes window; the phone-width reading view); the number check passes on the slides, the reading view and the notes, every `rec:` key and new setting resolves; test_deck_data, test_deck_door and test_deck_figures pass. Departures: the recorded numbers sit in their own `data.recorded` table bound as `rec:`; the 163 and 164 files were copied in rather than pulled with git, which the guard refused; a backup press covers the demo box so the slide's zoom and title hold at every press. The user reviewed the talk on a local preview (port 57880) and approved it with one change, slide 14's backup presses (true image ratios, the Ask bar cropped, two run states then four brief pages). The App redeploy follows as the eighth deploy of the Prism night.

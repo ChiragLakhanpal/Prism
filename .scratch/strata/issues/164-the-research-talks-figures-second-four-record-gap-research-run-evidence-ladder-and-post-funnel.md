@@ -8,15 +8,16 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
 
-- [ ] `web/figures/record-gap.html`, `research-run.html`, `evidence-ladder.html` and `post-funnel.html` and their exports exist, each export equal to its source's export with system fonts, each passing the skill's self check offline, each in its slot's viewBox (the ladder in the half slot) and the strata-wb palette and fonts, with sentence-case labels and no counts.
-- [ ] Each figure's steps are contiguous from 1, match the brief's step texts in order and count (4, 6, 5, 6), and keep the motion budget (at most 8 steps, 12 items, 2 items a step).
-- [ ] Rendered at 2x whole and at each step, each figure reads well: no overlaps, no label outside its box, the focal item as the brief names it.
+- [x] `web/figures/record-gap.html`, `research-run.html`, `evidence-ladder.html` and `post-funnel.html` and their exports exist, each export equal to its source's export with system fonts, each passing the skill's self check offline, each in its slot's viewBox (the ladder in the half slot) and the strata-wb palette and fonts, with sentence-case labels and no counts.
+- [x] Each figure's steps are contiguous from 1, match the brief's step texts in order and count (4, 6, 5, 6), and keep the motion budget (at most 8 steps, 12 items, 2 items a step).
+- [x] Rendered at 2x whole and at each step, each figure reads well: no overlaps, no label outside its box, the focal item as the brief names it.
 
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 13:45 PST, in parallel with tickets 162, 163 and 165.
+- November 6, 2026, orchestrator: the four figures landed through ticket 162's branch (merge 072204d4), copied from this ticket's worktree `agent-a27084f94ca5fcbe8` (sources committed there as f7d2efee, exports untracked and byte-equal). Steps 4, 6, 5, 6; the builder wrote "the World Bank's" never "the Bank", "over a year old", "A second independent account, or a higher rung", "Rungs from the floor up" and "Sentinel mosaics", and ticket 162's copy matches. The branch is not merged on its own and need not be; the worktree can be removed.
