@@ -5179,3 +5179,15 @@ The merger parked this on November 6, 2026. Nothing ran tonight. Run it from a s
   2. If it cannot read the log, check by timing. Wait a minute after the deploy finishes, then open a project's Deep research tab in the browser (or GET one of its tile addresses with an OAuth token). It worked if the first tile request of a project answers in well under a second, not the 1.5 seconds a tile took before.
 
   Record here under ticket 160, with the time: the two lines' counts and seconds, or the first tile request's time.
+
+## Ticket 161, the seventh deploy of the Prism night
+
+The merger parked this on November 6, 2026. Nothing ran tonight. Run it from a snapshot at or after e6b3afc9, with the main checkout's `web/node_modules` linked into the snapshot and `--env-file` pointed at the main checkout's env file.
+
+- Ticket 161 (merge commit e6b3afc9, branch `worktree-agent-a9232aba7bce41bdf` at ab687a0e) needs only the App redeploy: no seed, no new secret, no threshold, and no brief needs writing again, because the stored briefs do not change. It ships the Deep research tab's new progress rail: four phase cards on one rule, and the live card's plain-words "now" line and fixed window that blurs its older lines. From the snapshot's root:
+
+      uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+  It worked if the deploy exits 0 and prints the App's address. Record the deployment id and the time here.
+
+- If "Tickets 159 and 160, the sixth deploy of the Prism night" has not run yet, this one redeploy from a snapshot at or after e6b3afc9 ships tickets 159, 160 and 161 together. Run it once, then ticket 160's check from that block.

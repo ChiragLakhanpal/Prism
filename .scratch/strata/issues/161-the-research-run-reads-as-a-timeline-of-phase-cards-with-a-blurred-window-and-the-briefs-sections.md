@@ -16,7 +16,7 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (5650
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
@@ -28,3 +28,11 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (5650
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 00:49 PST for direction A, rewritten at 01:15 for direction B after the user's choice; ships in the sixth deploy of the Prism night with tickets 159 and 160 if it lands in time, else in a seventh.
+- November 6, 2026, merger: merged into `build/strata` as e6b3afc9 at 01:28 PST (two parents: fc2c3c82 and the branch `worktree-agent-a9232aba7bce41bdf` at ab687a0e: commit 85b6e71e, branched from 52144fb5, then a merge of `build/strata` with ticket 160's startup cache; `build/strata` had gained only this ticket's own note, fc2c3c82, since). It was built in the worktree `.claude/worktrees/agent-a9232aba7bce41bdf`, now removed; the branch stays. Tonight's rule was essentials only, so there were no review or verify rounds, and the gate on merge was the only check. The history scan found no keys on the branch. The merge commit's gate passed on the first run in 155.2 seconds. Run by hand on `build/strata` after the merge, it failed three times under the load of the runs before it (load averages of 33 to 42), each time in one test this ticket does not touch: once `tests/test_page_speed.py`'s read-ahead test (ticket 160's 10-second startup wait; it passed alone), then twice `web/tests/drafts.spec.ts:588` (the known tabbing flake from tickets 135, 139 and 141; it passed 4 of 4 alone). The fourth run passed in 149.3 seconds, from 01:38:36 to 01:41:06 PST, and its secret scan found no keys in the merged history. On the worktree the gate passed in 151.0 seconds. The evidence is the implementer's report:
+  - `web/src/components/ResearchProgress.tsx` is rebuilt: the head line with the clock and the usual time at its right; four phase cards on one rule, each dot placed from its card's header row; the live card with a "now" line and a seven-line window under a four-layer progressive blur and a fade. At a phase boundary the window moves to the next card with the 300 ms `--motion-meter` transition. The foot and the disclosure are as in ticket 159.
+  - `web/src/pages/project/ResearchTab.tsx` keeps the `sentence` and `removed` events in order and passes the country; `web/src/lib/research.ts` gains `checkedLine`; `web/src/copy.ts` has a new `research.progress` block with the `doing` map; `DESIGN.md` has a new Motion row and an extended Progress meter row.
+  - `web/tests/research.spec.ts`: 24 of 24 pass. The layout test checked 31 parts after each of 126 events: 0 moved outside the 3 phase boundaries, and 0 dots sat off the rule or their header rows, also with a long sub-line. Other tests cover the now line's words for a source, the writer and a named section; the now line's box never changing size; the window's height; the newest line at the window's bottom; one kept and one removed line; the blur layers' computed styles; the narrow layout; and axe.
+  - Screenshots: `.notes/prism-sample/research-progress-161.png` (the sources card live) and `.notes/prism-sample/research-progress-161-checking.png` (the checking window with the blur).
+- Departures, as the implementer reported: "the Bank" became "World Bank" in the copy, for the copy lint. The checking window is always blurred; the sources window is blurred only when its lines scroll (under 36rem).
+- Not done, as the implementer reported: the page's floating Ask bar covers part of the foot in the screenshots. The first gate run after the implementer's merge of `build/strata` failed once in the ops lane and passed on the rerun.
+- Workspace: nothing ran tonight. Ticket 161 needs only the App redeploy, parked in `docs/workspace-catchup.md` under "Ticket 161, the seventh deploy of the Prism night", from a snapshot at or after e6b3afc9. If the sixth deploy has not run by then, one redeploy from that snapshot ships tickets 159, 160 and 161 together.
