@@ -1,0 +1,30 @@
+# 162: The deck holds a second talk: Prism deep research at /present/research, on the same engine
+
+**What to build:** The user's request of November 6, 2026: the deep research story as a proper presentation on the deck's own engine, with its storytelling, its press-by-press figures and animations, its openers, its notes window and its reading view, "like we made with the /present route". The brief is `.notes/deck3/brief.md` in the main checkout (`./.notes/deck3/brief.md`); read it whole, then the first deck's brief it builds on (`.claude/worktrees/deck-second-draft/.notes/deck2/brief.md`), `web/src/deck/`, `web/tests/deck.spec.ts`, `tests/test_deck_data.py` and `tests/test_deck_figures.py`. This ticket is the engine, the data and the talk's slides, copy and notes (brief sections 2, 4, 8, 9 and 10). The figures are tickets 163 and 164 and the hairline figures ticket 165, built at the same time in their own worktrees; until they land, a figure key with no export draws as its text version, which the engine already does, and the hairline keys that are missing show no figure. Merge `build/strata` into your branch when they have landed (the orchestrator will tell you), add their keys everywhere the brief says, and run the gate with everything in.
+
+In order:
+
+1. **The engine takes a `Talk`** (brief section 2): key, topics (order, names, agenda lines), the slide builder, the talk's copy, and `footerOnEverySlide`. `web/src/deck/talks/strata.ts` holds the first talk with no change in what `/present` shows; `web/src/deck/talks/research.ts` holds this one. `talk.ts`, `Frame.tsx`, `view.ts`, `main.tsx`, `Deck.tsx` and the notes window read the talk; the BroadcastChannel is per talk. The routes are `/present/research`, `/present/research/{n}`, `/present/research/page` and `/present/research/notes`, behind the same door (`src/strata/server/deck_door.py` guards them too; `tests/test_deck_door.py` says so).
+2. **The footer once.** The research talk shows DESIGN.md section 8's sentence on its title slide only (the user: "just saying it once is enough, they know"). Add the line to DESIGN.md section 8 beside the second draft's paragraph, and keep the Strata talk as it is.
+3. **The data** (brief section 8): `docs/proposal/recorded.toml` with the ten entries, `strata.proposal.register.load_recorded()`, the deck data's `recorded` results with `measured_on`, `how` and the source kind "Recorded" (the number's window prints them, as a result's does), the new settings (`late-award-days`, `research-source-count`, `isr-reports`) with their reads, the allow-list entries with reasons, and `config/deck.toml` `[research]` with the presenters and the date. `uv run python -m strata.proposal deck` writes it all into `web/public/deck/data.json`; `tests/fixtures/api/deck-data.json` is rebuilt the way `tests/record_deck_api.py` builds it.
+4. **The slides** (brief section 4, all 25), in `web/src/deck/talks/research.ts` on the layouts the engine has (`Points`, `Tiles`, `Demo`, `Step`, figures, openers), with the words in `web/src/deck/research/copy.ts` (added to `COPY_FILES` in `web/lint/run.ts`): `topics`, `slides`, `speaker` and this talk's figure copy (the step texts from brief section 6, which are each figure's text version; `checks` is reused from the first talk). The demo slide opens `{app}/projects/{demo project}/research` in a new tab and its two backup presses show the images named in the brief (put them under `web/public/deck/research/`). Every number on a slide is bound; the number check passes on every slide, the reading view and the notes.
+5. **The notes** (brief section 9) for every slide: `notes`, `cue` with the suggested speaker, `adds`, `asked`.
+6. **The tests** (brief section 10): `deck.spec.ts` parameterized over the two talks where the test is about the engine; the research talk's own tests; `test_deck_data.py` for the recorded register and the new settings; `test_deck_figures.py` listing the eight new figures once they have landed. Keep the gate under 180 seconds.
+
+Essentials only, no review rounds. Commit with plain-English messages and no trailers. Do not change ticket files, docs/STATUS.md or anything under .scratch. Report within three hours with whatever is done and a plain list of what is not: branch and worktree, each change with its evidence, the number check's and the gate's results, the figure and hairline keys still missing when you report, and the workspace step (a redeploy of the App).
+
+**Blocked by:** None (can start immediately; merges tickets 163, 164 and 165 when they land)
+
+**Status:** ready
+**Area:** app
+**Phase:** P5
+**Design review:** no
+
+- [ ] `/present/research` shows the research talk's 25 slides on the deck's engine, press by press, with its openers, its notes window and its reading view; `/present` shows the Strata talk unchanged (the deck tests, both talks).
+- [ ] The disclaimer sentence appears on the research talk's title slide and on no other slide; DESIGN.md section 8 says so (the footer test).
+- [ ] Every number on the research talk's slides, notes and reading view is bound to a recorded result or a setting, and the number check passes (the number check test; `docs/proposal/recorded.toml`).
+- [ ] The gate passes under 180 seconds on the worktree with `build/strata` merged in.
+
+## Comments
+
+- November 6, 2026, orchestrator: opened at 13:45 PST. The figure tickets 163 and 164 and the hairline ticket 165 run in parallel; their keys land in the registry, the order file, the figure copy and `tests/test_deck_figures.py` through this ticket once they have merged.
