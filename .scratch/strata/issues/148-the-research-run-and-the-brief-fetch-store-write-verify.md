@@ -21,7 +21,7 @@ Read first: the sample brief and `build5.py`; `src/strata/server/app.py` (the as
 
 **Blocked by:** None (can start immediately; merges after 147)
 
-**Status:** in-progress
+**Status:** done
 **Area:** agent
 **Phase:** P5
 **Design review:** no
@@ -36,3 +36,6 @@ Read first: the sample brief and `build5.py`; `src/strata/server/app.py` (the as
 ## Comments
 
 - November 5, 2026, orchestrator: opened at 17:58 PST from the brief's shape the user settled on the sample (v5).
+- November 5, 2026, merger: merged the integrated deep research branch `worktree-agent-aacc2578b4ac469d5` (head ed391195, where an integrator joined tickets 147, 148 and 149 and merged build/strata b56c2aa2) into build/strata as merge commit 0c6b2211, with history, because the history scan found no keys in the branch's commits. The merge changes 58 files (7,168 lines in, 39 out) with no conflict. The gate on the merge commit passed in 150.9 seconds, under tonight's 180-second limit. The hand run of `.githooks/pre-commit` on build/strata right after the merge passed in 151.9 seconds and found no keys in the merged history. The worktree that built it, `.claude/worktrees/agent-aacc2578b4ac469d5`, is removed after this commit. The branch stays.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the integrator's report is the evidence. One store, ticket 147's `ResearchStore`, with 148's `save_brief` and `latest_brief`; one seed, `ops/research/seed.py`; 147's item ids. The seeded run `seed:P156634:2026-11-05` with 29 items gives a brief with headline 1, picture 6, bottom line 3, developments 19, by site 4, voices 5, questions 7 and could not see 3, citing 26 sources. The verifier kept 70 of 70 sentences (numbers 51 of 51, dates 49 of 49, quotes 11 of 11, 22 judged). The API fixtures are recorded from the routes by `tests/record_research_api.py`. The full gate passed in 139.7 seconds on the branch.
+  - Workspace results: none run tonight. The block "Tickets 148 and 149, the deploy of the Prism night" in `docs/workspace-catchup.md` holds five steps for ticket 151's agent: the bundle deploy that makes the four research tables, the App deploy that grants three of them, the agent sync that adds `research_evidence`, the workspace seed, and the reuse POST on P156634 that writes the brief.

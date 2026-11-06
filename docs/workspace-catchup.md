@@ -4979,3 +4979,49 @@ What ticket 147 changes on the workspace: three new tables in `strata.ops`, `res
    It worked if the seed exits 0 and `SELECT run_id, count(*) AS items FROM strata.ops.research_items WHERE project_id = 'P156634' GROUP BY run_id` returns the run `seed:P156634:2026-11-05` with 29 items (7 ISR passages, 7 notices, 14 outlet articles, 1 Sentinel-2 item). A second seed changes nothing.
 
 Record here under ticket 147, with the time: each step's exit code, the tables the deploy made, the two grants, and the seed's run id and item count.
+
+## Tickets 148 and 149, the deploy of the Prism night
+
+The merger parked this on November 5, 2026, after merge commit 0c6b2211 (branch `worktree-agent-aacc2578b4ac469d5` at ed391195, where an integrator joined tickets 147, 148 and 149). Nothing ran tonight. Ticket 151's agent runs these five steps, in order, from a snapshot at or after 0c6b2211. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, and point `--env-file` at the main checkout's `.env`. These steps take the place of the three in "Ticket 147, after the integration merge" above, and the bundle deploy in step 1 also serves ticket 146's block.
+
+What tickets 148 and 149 change on the workspace: a fourth research table, `strata.ops.research_briefs`, beside ticket 147's `research_runs`, `research_items` and `research_cache`; the App's grants on `research_runs`, `research_items` and `research_briefs`; a new agent tool, `research_evidence`, on the orchestrator; and the project's Deep research tab, which reads the brief kept for the latest run.
+
+1. Make the research tables with the bundle deploy:
+
+       uv run --script ops/bundle/deploy.py --env-file .env
+
+   It worked if the deploy exits 0 and `SHOW TABLES IN strata.ops LIKE 'research*'` lists `research_briefs`, `research_cache`, `research_items` and `research_runs`.
+
+2. Grant the App the research tables with the App deploy:
+
+       uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+   It worked if the deploy exits 0, prints the App's address, and `SHOW GRANTS ON TABLE` for each of `strata.ops.research_runs`, `strata.ops.research_items` and `strata.ops.research_briefs` shows SELECT and MODIFY for the App's service principal. `research_cache` gets no grant, and nothing uses it.
+
+3. Sync the agent, then check it:
+
+       uv run --script ops/agent/sync.py --env-file .env
+       uv run --script ops/agent/sync.py --env-file .env --check
+
+   It worked if the sync exits 0 and the check exits 0 with no difference. The orchestrator gains `research_evidence`.
+
+4. Build the fixture database, then seed P156634's research run on the workspace as the App:
+
+       uv run --frozen python gates/build_fixture.py
+       uv run python ops/research/seed.py --project P156634 --env-file .env
+
+   It worked if the seed exits 0 and `SELECT run_id, count(*) AS items FROM strata.ops.research_items WHERE project_id = 'P156634' GROUP BY run_id` returns the run `seed:P156634:2026-11-05` with 29 items.
+
+5. Write the brief from the seeded run: as a staff viewer, `POST /api/projects/P156634/research` with the body
+
+       {"view":"staff","asof":"2026-11-05","reuse":true}
+
+   The live writer and judge answer it. With `reuse`, the run writes the brief from the latest run kept and reads no sources. It worked if the stream ends in done, and `GET /api/projects/P156634/research` then returns the brief, not `{"status":"none"}`.
+
+Follow-ups the integrator named, for a later ticket:
+
+- `research_runs.viewer` is readable unmasked by anyone with SELECT on the table.
+- Site groups carry no location, so the printed brief's site sheets are headed "By site".
+- `scripts/install` sets `core.hooksPath` to the relative `.githooks`.
+
+Record here under tickets 148 and 149, with the time: each step's exit code, the four tables, the three grants, the sync check's result, the seed's run id and item count, and the brief's section counts from the GET.

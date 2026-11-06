@@ -14,7 +14,7 @@ Read first: the sample brief and `build5.py` (and `report5.html` beside it, for 
 
 **Blocked by:** None (can start immediately; merges after 148)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
@@ -29,3 +29,6 @@ Read first: the sample brief and `build5.py` (and `report5.html` beside it, for 
 ## Comments
 
 - November 5, 2026, orchestrator: opened at 18:00 PST. No design review, by the user's instruction of tonight.
+- November 5, 2026, merger: merged with tickets 147 and 148 on the integrated branch `worktree-agent-aacc2578b4ac469d5` (head ed391195) into build/strata as merge commit 0c6b2211, with history, because the history scan found no keys in the branch's commits. The gate on the merge commit passed in 150.9 seconds, under tonight's 180-second limit, and the hand run on build/strata after it passed in 151.9 seconds. The worktree that built it, `.claude/worktrees/agent-aacc2578b4ac469d5`, is removed after this commit. The branch stays.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the integrator's report is the evidence. `web/tests/research.spec.ts` runs 11 tests, and they pass against the API fixtures that `tests/record_research_api.py` records from the research routes on the seeded run `seed:P156634:2026-11-05`. The tab shows the brief with headline 1, picture 6, bottom line 3, developments 19, by site 4, voices 5, questions 7 and could not see 3, citing 26 sources. The printed brief is 12 Letter sheets. The full gate passed in 139.7 seconds on the branch.
+  - Workspace results: none run tonight. The tab shows a brief on the workspace once ticket 151's agent runs the five steps under "Tickets 148 and 149, the deploy of the Prism night" in `docs/workspace-catchup.md`. Site groups carry no location, so the printed site sheets are headed "By site"; that and the other follow-ups are listed there.
