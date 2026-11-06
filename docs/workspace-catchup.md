@@ -5168,4 +5168,14 @@ The merger parked this on November 6, 2026. Nothing ran tonight. Run it from a s
 
   It worked if the deploy exits 0 and prints the App's address. Record the deployment id and the time here.
 
-- Ticket 160 (the App loads its cached tiles and photos into memory at startup) is building in parallel and will add its line here. If it merges before the deploy runs, one redeploy from a snapshot at or after its merge ships both tickets.
+- Ticket 160 (merge commit f8dd7b3a, branch `worktree-agent-a040a9d3db19b24c5` at e70acfd2) merged after 159, so the one redeploy above, from a snapshot at or after f8dd7b3a, ships both tickets. It needs no seed and no new secret. When the App starts, a background thread loads every cached satellite tile (within `research.tile_memory_bytes`, 64 MB) and every team's field photos (within `research.photo_memory_bytes`, 64 MB) into memory, so the first view of a project's Deep research tab is as fast as the second. After the redeploy, check it one of two ways:
+
+  1. If the ops agent can read the App's log (it could not with a personal access token on November 6), find these two lines from the new deployment's start:
+
+         The tile route loaded N cached tiles, X MB, into memory in S seconds.
+         The photo route loaded N field photos, X MB, into memory in S seconds.
+
+     It worked if both lines are there and N is above 0 (about 162 tiles and 12 photos on November 6). A line that ends "and stopped at the memory budget of 64 MB" means the budget was reached; record it. A warning that the research cache or the photo store "did not answer the load" means the load failed, and each tile or photo is read on its first request as before; record it. The tile load is one query with no paging. If the cached tiles grow past the warehouse's inline result limit (about 25 MB; about 5 MB on November 6), the tile warning appears and tiles load on first request.
+  2. If it cannot read the log, check by timing. Wait a minute after the deploy finishes, then open a project's Deep research tab in the browser (or GET one of its tile addresses with an OAuth token). It worked if the first tile request of a project answers in well under a second, not the 1.5 seconds a tile took before.
+
+  Record here under ticket 160, with the time: the two lines' counts and seconds, or the first tile request's time.

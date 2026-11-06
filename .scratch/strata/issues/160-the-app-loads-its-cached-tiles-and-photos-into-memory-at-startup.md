@@ -11,7 +11,7 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (929a
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
@@ -22,4 +22,12 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (929a
 
 ## Comments
 
-- November 6, 2026, orchestrator: opened at 00:42 PST from the fifth deploy's warm-up report; ships in the sixth deploy of the Prism night with ticket 159.
+- November 6, 2026, orchestrator: opened at 00:38 PST from the fifth deploy's warm-up report; ships in the sixth deploy of the Prism night with ticket 159.
+- November 6, 2026, merger: merged into `build/strata` as f8dd7b3a at 00:57 PST (two parents: 52144fb5 and the branch `worktree-agent-a040a9d3db19b24c5` at e70acfd2: commit f3488c58, branched from ceb22858, then a merge of `build/strata` with ticket 159's rail; `build/strata` had gained only ticket 161's file since). It was built in the worktree `.claude/worktrees/agent-a040a9d3db19b24c5`, now removed; the branch stays. Tonight's rule was essentials only, so there were no review or verify rounds, and the gate on merge was the only check. The merge commit's gate passed on the first run in 156.7 seconds, rebuilding the fixture database because `config/thresholds.toml` changed. Run again by hand on `build/strata` after the merge, it passed in 152.5 seconds, and its secret scan found no keys in the merged history. On the worktree it passed in 154.7 seconds. The evidence is the implementer's report:
+  - Tiles: `Tiles.load(budget)` in `src/strata/server/research_tiles.py` reads every cached tile in one query (`TableCache.every()` in `src/strata/research/fetching.py`), newest first, within `research.tile_memory_bytes`, once per process or on the first tile request, and logs "The tile route loaded N cached tiles, X MB, into memory in S seconds". Tests: the table is read once and the route then makes no reads and never asks EOX; a budget of two keeps the two newest; the first request loads when startup did not.
+  - Photos: `PhotoMemory` in `src/strata/server/field_photos.py` keeps each photo's row and file by id within `research.photo_memory_bytes`, oldest out. `access.may_read` still runs on every request, and `Cache-Control: private, no-store` is unchanged. It loads at startup through a new `store.every()` (`src/strata/research/sql/every_field_photo.sql`), and the store's `create` calls the new `on_forget`/`forget(photo_id)` hooks. Tests: the second read makes no store call; Carl, outside the team, gets 403 on a cached photo; a forgotten photo is read again; the eviction order.
+  - Startup: `create_app(preload=...)` starts a daemon thread from the lifespan and sets `app.state.preloaded`, and `app_from_env` passes `preload=read_ahead`. A test shows `/api/health` answers while the load is held, and `tests/test_page_speed.py` records the read-ahead's reads.
+  - Both thresholds are 67108864 (64 MB), with comments citing the fifth deploy.
+- Departures, as the implementer reported: a tile request during the startup load reads from the table rather than waiting for the load. The load is one query with no paging, because the SQL lint refuses LIMIT and OFFSET built in code. Above the warehouse's inline result limit (about 25 MB; about 5 MB tonight) it logs a warning, and tiles load on their first request.
+- Not done, as the implementer reported: the store has no delete path, so there is no delete to hook `forget` into; only `create` calls it.
+- Workspace: nothing ran tonight. Ticket 160 rides the same App redeploy as ticket 159, parked in `docs/workspace-catchup.md` under "Tickets 159 and 160, the sixth deploy of the Prism night", from a snapshot at or after f8dd7b3a. After it, the check is the App log's two lines ("The tile route loaded N cached tiles…" and "The photo route loaded N field photos…") if the ops agent can read logs, or else timing: the first tile request of a project answers in well under a second.
