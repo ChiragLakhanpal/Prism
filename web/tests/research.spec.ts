@@ -245,17 +245,35 @@ async function heldStream(page: Page) {
 }
 
 const rail = (page: Page) => tab(page).locator("[data-research-progress]");
-const row = (page: Page, id: string) => rail(page).locator(`[data-progress-id="${id}"]`);
+const card = (page: Page, phase: string) => rail(page).locator(`[data-progress-phase="${phase}"]`);
+const sourceLine = (page: Page, id: string) => rail(page).locator(`[data-progress-source="${id}"]`);
+const nowLine = (page: Page) => rail(page).locator("[data-progress-now]");
+const progress = words.progress;
+const PHASES = ["facts", "sources", "writing", "checking"];
 
-// The present-tense sentence the live region says when a step starts, in the ask box's words.
-function runningSentence(step: { id: string; kind: string; label: string }): string {
-  if (step.kind === "facts") return words.steps.facts.running;
-  if (step.kind === "writing") return words.steps.write.running;
-  if (step.kind === "checking") return words.steps.check.running;
-  return words.steps.source.running(words.source[step.id.replace(/^source-/, "")] ?? step.label);
-}
+// Ticket 161: what the now line says while each source is read, in the ticket's everyday words.
+const DOING: Record<string, string> = {
+  isr_narrative: "reading the World Bank's own reports on the project",
+  procurement_notices: "reading the project's procurement notices",
+  gdelt_news: "checking the world news index",
+  outlet_feeds: "reading the local news",
+  inspection_panel: "checking the complaints register",
+  sentinel2_mosaic: "looking at the satellite pictures of each site",
+  mastodon: "reading what people posted in public",
+  site_conditions: "checking for floods and other disaster alerts",
+  agency_statements: "reading the agencies' own news pages",
+  sanctions: "checking the list of banned firms",
+};
+const doingSource = (id: string) => `I'm ${DOING[id.replace(/^source-/, "")]}.`;
 
-test("a run lists every planned step at once, fills its meter step by step, counts the checked sentences and says each step once", async ({ page }) => {
+// A sentence the checks removed, as the stream's removed event sends it with its section (ticket 148).
+const REMOVED_REASON = 'The date "June 22, 2026" is not in the records the sentence cites.';
+const removedBlock = (index: number): Block => {
+  const data = { index, sentence: "The Vindo works were awarded on June 22, 2026.", reason: REMOVED_REASON, reasons: [], section: "developments" };
+  return { text: `event: removed\ndata: ${JSON.stringify(data)}\n\n`, type: "removed", data };
+};
+
+test("a run shows its four phases as cards on one rule, fills its meter step by step, and the live card's now line says what Prism is doing in everyday words, once per change", async ({ page }) => {
   const blocks = blocksOf(await recorded("research-p156634.sse"));
   const plan = planOf(blocks);
   const stream = await heldStream(page);
@@ -266,212 +284,432 @@ test("a run lists every planned step at once, fills its meter step by step, coun
   await expect(tab(page)).toHaveAttribute("data-research", "running");
 
   const steps = (id: string, status?: string) => blocks.filter((block) => block.type === "step" && block.data.id === id && (!status || block.data.status === status));
-  // The facts, then the plan: every planned row is on screen at once, the ones to come marked "to do".
   await stream.send(steps("facts", "running"));
-  await expect(row(page, "facts")).toHaveAttribute("data-progress-step", "running");
-  await stream.send(steps("facts", "done"));
-  await stream.send(blocks.filter((block) => block.type === "plan"));
-  const rows = rail(page).locator("[data-progress-id]");
-  await expect(rows).toHaveCount(plan.steps.length);
-  await expect(rows.locator("[data-progress-title]")).toHaveText(plan.steps.map((step) => new RegExp(`^${escaped(words.progress.label[step.kind] ?? step.label)}`)));
-  await expect(row(page, "facts")).toHaveAttribute("data-progress-step", "done");
-  for (const step of plan.steps.slice(1)) {
-    await expect(row(page, step.id)).toHaveAttribute("data-progress-step", "todo");
-    await expect(row(page, step.id)).toContainText(words.progress.state.todo);
-  }
-  const meter = rail(page).getByRole("progressbar", { name: words.progress.meter });
+  await expect(card(page, "facts")).toHaveAttribute("data-progress-state", "live");
+  await expect(nowLine(page)).toHaveText("I'm reading the project's facts.");
+  // The facts, then the plan: four cards, the sources card live with every source to do.
+  await stream.send([...steps("facts", "done"), ...blocks.filter((block) => block.type === "plan")]);
+  const sources = plan.steps.filter((step) => step.kind === "source");
+  await expect(rail(page).locator("[data-progress-name]")).toHaveText([/^Project facts/, new RegExp(`^Reading ${sources.length} sources`), /^Writing the brief/, /^Checking every sentence/]);
+  await expect(card(page, "facts")).toHaveAttribute("data-progress-state", "done");
+  await expect(card(page, "facts").locator("[data-progress-pill]")).toHaveText("done");
+  await expect(card(page, "facts").locator("[data-progress-sub]")).toHaveText("Water and Sanitation Development Project, Kenya, closing October 31, 2026");
+  await expect(card(page, "sources")).toHaveAttribute("data-progress-state", "live");
+  await expect(card(page, "sources").locator("[data-progress-pill]")).toHaveText(`0 of ${sources.length}`);
+  for (const phase of ["writing", "checking"]) await expect(card(page, phase).locator("[data-progress-pill]")).toHaveText("to do");
+  await expect(card(page, "sources").locator("[data-progress-source]")).toHaveCount(sources.length);
+  await expect(card(page, "sources").locator("[data-progress-source][data-progress-step=todo]")).toHaveCount(sources.length);
+  // Two columns of sources on a wide column, five rows for ten.
+  const lefts = await card(page, "sources").locator("[data-progress-source]").evaluateAll((lines) => lines.map((line) => Math.round(line.getBoundingClientRect().left)));
+  expect(new Set(lefts).size).toBe(2);
+  const meter = rail(page).getByRole("progressbar", { name: progress.meter });
   await expect(meter).toHaveAttribute("aria-valuemin", "0");
   await expect(meter).toHaveAttribute("aria-valuemax", String(plan.steps.length));
   await expect(meter).toHaveAttribute("aria-valuenow", "1");
-  // The step count, the elapsed clock and the usual range, in whole minutes.
+  // The elapsed clock and the usual range, in whole minutes.
   const [low, high] = plan.usual_seconds.map((seconds) => String(Math.round(seconds / 60)));
   await page.clock.runFor(27_000);
-  await expect(rail(page).locator("[data-progress-line]")).toHaveText(
-    `${fill(words.progress.step, { n: "2", total: String(plan.steps.length) })} · ${fill(words.progress.elapsed, { clock: "0:27" })} · ${words.progress.usual(low, high)}`,
-  );
+  await expect(rail(page).locator("[data-progress-line]")).toHaveText(`${fill(progress.elapsed, { clock: "0:27" })} · ${progress.usual(low, high)}`, { useInnerText: true });
 
-  // The sources one by one: the meter rises with each, and a source not reached says so with its note.
-  const sources = plan.steps.filter((step) => step.kind === "source");
+  // The sources one by one: the now line names each in everyday words, and the meter and the pill rise with each.
   let done = 1;
-  for (const source of sources) {
+  for (const [at, source] of sources.entries()) {
     await stream.send(steps(source.id, "running"));
-    await expect(row(page, source.id)).toHaveAttribute("data-progress-step", "running");
-    await expect(row(page, source.id)).toContainText(words.progress.state.running);
+    await expect(sourceLine(page, source.id)).toHaveAttribute("data-progress-step", "running");
+    await expect(sourceLine(page, source.id)).toContainText(`${source.label} · reading`);
+    await expect(nowLine(page)).toHaveText(doingSource(source.id));
+    if (at === sources.length - 1) break;
     await stream.send(blocks.filter((block) => block.type === "step" && block.data.id === source.id && block.data.status !== "running"));
     done += 1;
     await expect(meter).toHaveAttribute("aria-valuenow", String(done));
-  }
-  const missed = blocks.filter((block) => block.type === "step" && block.data.status === "not_reached");
-  expect(missed.length, "the recording has a source not reached").toBeGreaterThan(0);
-  for (const block of missed) {
-    await expect(row(page, String(block.data.id))).toHaveAttribute("data-progress-step", "not_reached");
-    await expect(row(page, String(block.data.id)).locator("[data-progress-result]")).toHaveText(words.progress.result.notReached);
-    await expect(rail(page).locator(`[data-progress-note="${String(block.data.id)}"]`)).toContainText(String(block.data.note));
+    await expect(card(page, "sources").locator("[data-progress-pill]")).toHaveText(`${at + 1} of ${sources.length}`);
   }
   const reached = blocks.find((block) => block.type === "step" && block.data.kind === "source" && block.data.status === "done" && Number(block.data.items) > 1)!;
-  await expect(row(page, String(reached.data.id)).locator("[data-progress-result]")).toHaveText(words.progress.kept.several(String(reached.data.items)));
+  await expect(sourceLine(page, String(reached.data.id))).toHaveText(new RegExp(` · ${String(reached.data.items)}, done$`));
+  const missed = blocks.filter((block) => block.type === "step" && block.data.status === "not_reached" && block.data.id !== sources[sources.length - 1].id);
+  expect(missed.length, "the recording has a source not reached").toBeGreaterThan(0);
+  for (const block of missed) {
+    await expect(sourceLine(page, String(block.data.id))).toHaveAttribute("data-progress-step", "not_reached");
+    await expect(sourceLine(page, String(block.data.id))).toContainText(" · not reached");
+    await expect(rail(page).locator(`[data-progress-note="${String(block.data.id)}"]`)).toContainText(String(block.data.note));
+  }
+  // The last source ends the phase: the sources card says what they gave, and the writing card opens.
+  await stream.send(blocks.filter((block) => block.type === "step" && block.data.id === sources[sources.length - 1].id && block.data.status !== "running"));
+  await expect(card(page, "sources").locator("[data-progress-sub]")).toHaveText("8 read on November 5, 2026 · 2 not reached · 60 items kept");
+  await expect(card(page, "writing")).toHaveAttribute("data-progress-state", "live");
 
-  // Writing, then checking: three sentences checked of those the writer wrote.
+  // Writing, then checking: three sentences checked of those the writer wrote, the now line naming their section.
   await stream.send(steps("writing", "running"));
-  await expect(row(page, "writing").locator("[data-progress-result]")).toHaveText(words.progress.writing.running);
+  await expect(nowLine(page)).toHaveText("I'm writing the brief.");
+  await expect(card(page, "writing").locator("[data-progress-window]")).toHaveText("Writing. This is the longest step.");
+  await expect(card(page, "writing").locator("[data-progress-pill]")).toHaveText("writing");
   await stream.send(steps("writing", "done"));
-  const written = String(steps("writing", "done")[0].data.sentences);
-  await expect(row(page, "writing").locator("[data-progress-result]")).toHaveText(words.progress.writing.several(written));
+  await expect(card(page, "writing").locator("[data-progress-sub]")).toHaveText("70 sentences");
   await stream.send(steps("checking", "running"));
+  await expect(nowLine(page)).toHaveText("I'm checking every sentence against what I read.");
   await stream.send(blocks.filter((block) => block.type === "sentence").slice(0, 3));
-  await expect(row(page, "checking").locator("[data-progress-result]")).toHaveText(words.progress.checked("3", written));
+  await expect(card(page, "checking").locator("[data-progress-pill]")).toHaveText("3 of 70");
+  await expect(card(page, "checking").locator("[data-progress-check]")).toHaveCount(3);
+  await expect(nowLine(page)).toHaveText('I\'m checking the sentences of "The picture on the ground".');
   await expect(meter).toHaveAttribute("aria-valuenow", String(plan.steps.length - 1));
-  await expect(rail(page)).toContainText(words.progress.keepOpen);
+  await expect(rail(page)).toContainText("Keep this tab open; if you leave, the research stops and the last brief stays.");
 
-  // Past the usual high end the line says so; with no event for 30 seconds, the running step says it is still working.
-  await expect(row(page, "checking")).not.toContainText(copy.steps.stillWorking);
+  // Past the usual high end the line says so; with no event for 30 seconds, the now line says Prism is still working.
+  await expect(nowLine(page)).not.toContainText(copy.steps.stillWorking);
   await page.clock.runFor(plan.usual_seconds[1] * 1000);
-  await expect(rail(page).locator("[data-progress-line]")).toContainText(`elapsed · ${words.progress.longer}`);
-  await expect(rail(page).locator("[data-progress-line]")).not.toContainText(words.progress.usual(low, high));
-  await expect(row(page, "checking")).toContainText(copy.steps.stillWorking);
+  await expect(rail(page).locator("[data-progress-usual]")).toHaveText(progress.longer);
+  await expect(nowLine(page)).toHaveText(copy.steps.stillWorking);
 
-  // One sentence per step, in the plan's order, said once each.
-  expect(await stream.said()).toEqual(plan.steps.map(runningSentence));
+  // The live region says the now line, one sentence per change, in order.
+  const said = (await stream.said()).filter((line) => line !== "I'm getting the sources ready.");
+  expect(said).toEqual([
+    "I'm reading the project's facts.",
+    ...sources.map((source) => doingSource(source.id)),
+    "I'm writing the brief.",
+    "I'm checking every sentence against what I read.",
+    'I\'m checking the sentences of "The picture on the ground".',
+    copy.steps.stillWorking,
+  ]);
   await scan(page, "[data-research-progress]");
   await stream.end();
 });
 
-// Ticket 159: every part of the rail a person reads, measured as the stream goes on. The meter's fill and the running
-// icon change inside their own boxes, so they are not measured; the boxes are.
-const RAIL_PARTS = [
-  "[data-progress-heading]",
-  "[data-progress-line]",
-  "[data-progress-read]",
-  "[data-research-progress] [role=progressbar]",
-  "[data-progress-id]",
-  "[data-progress-id] [data-progress-icon]",
-  "[data-progress-keep]",
-  "[data-research-progress] [data-disclosure]",
-].join(", ");
-type Box = { part: string; top: number; left: number; height: number };
+// Ticket 161: every part of the rail a person reads, measured after each event. The meter's fill, the spinner and the
+// lines inside the window change inside their own boxes, so the boxes are measured. A pill is measured by its right
+// edge, since its words change inside the card's header row.
+type Part = { key: string; top: number; left: number; right: number; width: number; height: number };
+type Snap = { open: string; live: number; parts: Part[]; dots: { phase: string; x: number; y: number; header: number }[]; rule: { x: number; top: number; bottom: number }[] };
 
-// Sends one block of the stream, waits two frames so React has drawn it, and returns where each part of the rail sits.
-async function sendAndMeasure(page: Page, text: string): Promise<Box[]> {
-  return page.evaluate(
-    async ({ text, parts }) => {
-      if (text) (window as unknown as { research: { send: (text: string) => void } }).research.send(text);
-      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      return [...document.querySelectorAll<HTMLElement>(parts)].map((element, index) => {
-        const box = element.getBoundingClientRect();
-        const part = element.dataset.progressId ?? Object.keys(element.dataset)[0] ?? element.getAttribute("role") ?? String(index);
-        return { part: `${index} ${part}`, top: box.top + window.scrollY, left: box.left, height: box.height };
-      });
-    },
-    { text, parts: RAIL_PARTS },
-  );
+async function snap(page: Page): Promise<Snap> {
+  return page.evaluate(async () => {
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const root = document.querySelector<HTMLElement>("[data-research-progress]")!;
+    const box = (element: Element) => element.getBoundingClientRect();
+    const part = (key: string, element: Element | null): Part[] => {
+      if (!element) return [];
+      const at = box(element);
+      return [{ key, top: at.top + window.scrollY, left: at.left, right: at.right, width: at.width, height: at.height }];
+    };
+    const parts: Part[] = [
+      ...part("heading", root.querySelector("[data-progress-heading]")),
+      ...part("line", root.querySelector("[data-progress-line]")),
+      ...part("meter", root.querySelector("[role=progressbar], [aria-hidden=true].h-2")),
+      ...part("now", root.querySelector("[data-progress-now]")),
+      ...part("window", root.querySelector("[data-progress-window]")),
+      ...part("keep", root.querySelector("[data-progress-keep]")),
+      ...part("disclosure", root.querySelector("[data-disclosure]")),
+    ];
+    const dots: Snap["dots"] = [];
+    for (const card of root.querySelectorAll<HTMLElement>("[data-progress-phase]")) {
+      const phase = card.dataset.progressPhase!;
+      parts.push(...part(`card ${phase}`, card));
+      for (const name of ["dot", "header", "name", "pill", "sub"]) parts.push(...part(`${name} ${phase}`, card.querySelector(`[data-progress-${name}]`)));
+      const dot = box(card.querySelector("[data-progress-dot]")!);
+      const header = box(card.querySelector("[data-progress-header]")!);
+      dots.push({ phase, x: dot.left + dot.width / 2, y: dot.top + dot.height / 2, header: header.top + header.height / 2 });
+    }
+    const rule = [...root.querySelectorAll("[data-progress-rule]")].map((segment) => {
+      const at = box(segment);
+      return { x: at.left + at.width / 2, top: at.top, bottom: at.bottom };
+    });
+    const open = root.querySelector<HTMLElement>("[data-progress-open]");
+    return { open: open?.dataset.progressPhase ?? "", live: open ? box(open.querySelector("[data-progress-live]")!).height : 0, parts, dots, rule };
+  });
 }
 
-test("from the plan to the last check nothing in the rail moves: each row is one line with its result, the read date is said once, and the notes wait behind a disclosure", async ({ page }) => {
-  const blocks = blocksOf(await recorded("research-p156634.sse"));
+// Each dot's centre on the rule's centre line and on its header row's centre, within a pixel; the rule from the first
+// dot's centre to the last's and no further.
+function misaligned(at: Snap): string[] {
+  const found: string[] = [];
+  const x = at.rule[0]?.x ?? NaN;
+  for (const segment of at.rule) if (Math.abs(segment.x - x) > 0.5) found.push(`a rule segment off the line: ${segment.x} vs ${x}`);
+  for (const dot of at.dots) {
+    if (!(Math.abs(dot.x - x) <= 1)) found.push(`${dot.phase}'s dot x ${dot.x}, rule ${x}`);
+    if (!(Math.abs(dot.y - dot.header) <= 1)) found.push(`${dot.phase}'s dot y ${dot.y}, header ${dot.header}`);
+  }
+  const top = Math.min(...at.rule.map((segment) => segment.top));
+  const bottom = Math.max(...at.rule.map((segment) => segment.bottom));
+  if (Math.abs(top - at.dots[0].y) > 1) found.push(`the rule starts at ${top}, the first dot at ${at.dots[0].y}`);
+  if (Math.abs(bottom - at.dots[at.dots.length - 1].y) > 1) found.push(`the rule ends at ${bottom}, the last dot at ${at.dots[at.dots.length - 1].y}`);
+  return found;
+}
+
+// What moved between two measures. At a phase boundary the window leaves card a for the next card b: b moves up by the
+// window's height and grows by it, a shrinks by it, and nothing else moves.
+function movedBetween(was: Snap, now: Snap, live: number): string[] {
+  const found: string[] = [];
+  const boundary = was.open !== now.open;
+  const shift = (key: string): { top: number; height: number } => {
+    if (!boundary) return { top: 0, height: 0 };
+    const [name, phase] = key.split(" ");
+    if (phase === now.open && name === "card") return { top: -live, height: live };
+    if (phase === now.open) return { top: -live, height: 0 };
+    if (phase === was.open && name === "card") return { top: 0, height: -live };
+    return { top: 0, height: 0 };
+  };
+  if (was.parts.length !== now.parts.length) found.push(`${was.parts.length} parts became ${now.parts.length}`);
+  for (const part of now.parts) {
+    const before = was.parts.find((one) => one.key === part.key);
+    if (!before) continue;
+    const { top, height } = shift(part.key);
+    // The now line and the window move with the live card at a boundary; they keep their size.
+    const free = boundary && (part.key === "now" || part.key === "window");
+    const edge = part.key.startsWith("pill") ? Math.abs(part.right - before.right) : Math.abs(part.left - before.left);
+    if ((!free && Math.abs(part.top - before.top - top) > 0.5) || edge > 0.5 || Math.abs(part.height - before.height - height) > 0.5) {
+      found.push(`${part.key}: ${JSON.stringify(before)} -> ${JSON.stringify(part)}`);
+    }
+    if (["now", "window", "keep", "disclosure", "line"].includes(part.key) && Math.abs(part.width - before.width) > 0.5) found.push(`${part.key} width ${before.width} -> ${part.width}`);
+  }
+  if (boundary && PHASES.indexOf(now.open) !== PHASES.indexOf(was.open) + 1) found.push(`the window went from ${was.open} to ${now.open}`);
+  return found;
+}
+
+const sendText = (page: Page, text: string) => page.evaluate((text) => (window as unknown as { research: { send: (text: string) => void } }).research.send(text), text);
+
+test("from the first step to the last check nothing in the rail moves but the next card at each phase boundary, the dots stay on the rule and their header rows, and the read date is said once", async ({ page }) => {
+  const recording = blocksOf(await recorded("research-p156634.sse"));
+  // One sentence the checks removed, among the kept ones.
+  const at12 = recording.findIndex((block) => block.type === "sentence" && block.data.index === 12);
+  const blocks = [...recording.slice(0, at12 + 1), removedBlock(200), ...recording.slice(at12 + 1)];
   const plan = planOf(blocks);
   const stream = await heldStream(page);
   await page.clock.install({ time: new Date("2026-11-05T10:30:00Z") });
   // The App's setting: the run writes from the sources read ahead of time (ticket 152).
   await open(page, { research: { body: demoSetting(await recorded("research-p156634-none.json")) } });
   await tab(page).getByRole("button", { name: words.run }).click();
-  const planAt = blocks.findIndex((block) => block.type === "plan");
-  await stream.send(blocks.slice(0, planAt + 1));
-  const rows = rail(page).locator("[data-progress-id]");
-  await expect(rows).toHaveCount(plan.steps.length);
+  await stream.send(blocks.slice(0, 1));
+  await expect(card(page, "facts")).toHaveAttribute("data-progress-state", "live");
 
-  // Where each part sits once the plan has come; every later event, one at a time, must leave it there. The clock
-  // passes 0:59 halfway, so "0:59" and "1:00" are measured too.
-  const before = await sendAndMeasure(page, "");
-  expect(before.length, "six parts, and each row with its icon box").toBe(6 + 2 * plan.steps.length);
-  const later = blocks.slice(planAt + 1).filter((block) => block.type !== "done");
+  let was = await snap(page);
+  expect(was.parts.length, "seven parts, and each card with its dot, header, name, pill and sub-line").toBe(7 + 6 * 4);
+  const live = was.live;
+  expect(live, "the live part of a card: the now line and the window").toBeGreaterThan(160);
+  const later = blocks.slice(1).filter((block) => block.type !== "done");
   const moved: string[] = [];
+  const crooked: string[] = [...misaligned(was)];
+  const boundaries: string[] = [];
+  const windows = new Set<number>();
   const sources = plan.steps.filter((step) => step.kind === "source");
-  let measured = 0;
   for (const [index, block] of later.entries()) {
     if (index === Math.floor(later.length / 4)) {
       await page.clock.runFor(59_000);
       await expect(rail(page).locator("[data-progress-clock]")).toHaveText(/^0:59|^1:0\d/);
     }
-    const now = await sendAndMeasure(page, block.text);
-    measured += 1;
-    for (const [at, box] of now.entries()) {
-      const was = before[at];
-      if (!was || was.part !== box.part || was.top !== box.top || was.left !== box.left || was.height !== box.height) {
-        moved.push(`${block.type} ${String(block.data.id ?? "")}: ${JSON.stringify(was)} -> ${JSON.stringify(box)}`);
-      }
+    await sendText(page, block.text);
+    let now = await snap(page);
+    if (now.open !== was.open) {
+      // A phase boundary: the window's one 300 ms transition, measured once it has run.
+      await page.waitForTimeout(450);
+      now = await snap(page);
+      boundaries.push(`${was.open} -> ${now.open}`);
     }
-    if (now.length !== before.length) moved.push(`${block.type}: ${before.length} parts became ${now.length}`);
-    // Mid-run, as a person sees it on the App: saved for the ticket's report when asked.
-    if (block.type === "step" && block.data.id === sources[5].id && block.data.status === "running" && process.env.RESEARCH_PROGRESS_SHOT) {
+    moved.push(...movedBetween(was, now, live).map((line) => `${block.type} ${String(block.data.id ?? block.data.index ?? "")}: ${line}`));
+    crooked.push(...misaligned(now));
+    const window = now.parts.find((part) => part.key === "window");
+    if (window) windows.add(window.height);
+    was = now;
+    // Mid-run and during the checks, as a person sees it on the App: saved for the ticket's report when asked.
+    if (block.type === "step" && block.data.id === sources[7].id && block.data.status === "running" && process.env.RESEARCH_PROGRESS_SHOT) {
       await tab(page).screenshot({ path: process.env.RESEARCH_PROGRESS_SHOT });
     }
+    if (block.type === "sentence" && block.data.index === 24 && process.env.RESEARCH_PROGRESS_SHOT_CHECKING) {
+      await page.waitForTimeout(400);
+      await tab(page).screenshot({ path: process.env.RESEARCH_PROGRESS_SHOT_CHECKING });
+    }
   }
-  console.log(`Rail layout: ${before.length} parts measured after each of ${measured} events; ${moved.length} moved.`);
+  console.log(`Rail layout: ${was.parts.length} parts measured after each of ${later.length} events; ${moved.length} moved outside the ${boundaries.length} phase boundaries; ${crooked.length} dots off the rule or their header rows.`);
+  expect(boundaries).toEqual(["facts -> sources", "sources -> writing", "writing -> checking"]);
   expect(moved).toEqual([]);
+  expect(crooked).toEqual([]);
+  expect([...windows]).toEqual([7 * 24]);
   await expect(rail(page).locator("[data-progress-clock]")).toHaveText(/^1:\d\d$/);
 
-  // Each row is one line: its label, then only its result. The label never wraps, and carries its full text in title.
-  const lines = await rows.evaluateAll((items) =>
-    items.map((item) => {
-      const label = item.querySelector<HTMLElement>("[data-progress-title]")!;
-      return { wraps: item.scrollHeight > item.clientHeight || label.scrollHeight > label.clientHeight, height: item.getBoundingClientRect().height, title: label.title };
-    }),
+  // Each card's name and sub-line is one line, with its full text in title.
+  const lines = await rail(page).locator("[data-progress-name], [data-progress-sub]").evaluateAll((items) =>
+    items.map((item) => ({ wraps: item.scrollHeight > item.clientHeight + 1, title: (item as HTMLElement).title })),
   );
   expect(lines.filter((line) => line.wraps)).toEqual([]);
-  expect(new Set(lines.map((line) => line.height)).size, "every row has the same height").toBe(1);
-  expect(lines.map((line) => line.title)).toEqual(plan.steps.map((step) => words.progress.label[step.kind] ?? step.label));
-  const result = (id: string) => row(page, id).locator("[data-progress-result]");
-  await expect(result("facts")).toHaveText(words.progress.result.facts);
-  const done = (id: string) => blocks.find((block) => block.type === "step" && block.data.id === id && block.data.status !== "running")!.data;
-  for (const source of sources) {
-    const sent = done(source.id);
-    const items = Number(sent.items ?? 0);
-    await expect(result(source.id)).toHaveText(
-      sent.status === "not_reached" ? words.progress.result.notReached : items === 0 ? words.progress.kept.none : items === 1 ? words.progress.kept.one : words.progress.kept.several(String(items)),
-    );
-  }
-  await expect(result("writing")).toHaveText(words.progress.writing.several(String(done("writing").sentences)));
-  await expect(result("checking")).toHaveText(words.progress.removed.none);
+  expect(lines.every((line) => line.title.length > 0)).toBe(true);
+  // With a long sub-line the dots stay where they are: the sub-line is clipped, never wrapped.
+  const sub = rail(page).locator("[data-progress-phase=writing] [data-progress-sub]");
+  const kept = await sub.textContent();
+  await sub.evaluate((element) => (element.textContent = "A sub-line far longer than its card, ".repeat(8)));
+  const long = await snap(page);
+  expect(misaligned(long)).toEqual([]);
+  expect(movedBetween(was, long, live)).toEqual([]);
+  await sub.evaluate((element, text) => (element.textContent = text), kept);
+  // The checking card's window keeps its lines; the read date is on the sources card, once on screen.
+  await expect(card(page, "checking").locator("[data-progress-check]")).toHaveCount(71);
+  await expect(card(page, "checking").locator("[data-progress-pill]")).toHaveText("done");
+  await expect(card(page, "checking").locator("[data-progress-sub]")).toHaveText("kept 70, removed 0");
 
-  // No row carries a date; the sentence under the step count says the day the sources were read, once on screen.
-  for (const text of await rows.allInnerTexts()) expect(text).not.toMatch(/November|2026/);
-  await expect(rail(page).locator("[data-progress-read]")).toHaveText(words.readOnStored("November 5, 2026"));
+  // The notes wait behind one disclosure, closed, named for the source not reached; opened, it lists each source's
+  // note and moves nothing above it.
+  await expect(card(page, "sources").locator("[data-progress-sub]")).toHaveText("8 read on November 5, 2026 · 2 not reached · 60 items kept");
   expect((await rail(page).innerText()).split("November 5, 2026").length - 1).toBe(1);
-
-  // The notes wait behind one disclosure, closed, named for the source not reached; opened, it lists each source's note
-  // and moves nothing above it.
   const notes = rail(page).locator("[data-disclosure]");
   await expect(notes).toHaveAttribute("data-disclosure", "closed");
-  const button = notes.getByRole("button", { name: words.progress.notes.missed });
+  const button = notes.getByRole("button", { name: progress.notes.missed });
   await expect(button).toHaveAttribute("aria-expanded", "false");
+  const closed = await snap(page);
   await button.click();
   await expect(notes).toHaveAttribute("data-disclosure", "open");
   for (const source of sources) {
-    const sent = done(source.id);
+    const sent = blocks.find((block) => block.type === "step" && block.data.id === source.id && block.data.status !== "running")!.data;
     await expect(notes.locator(`[data-progress-note="${source.id}"]`)).toContainText(String(sent.note));
   }
-  const opened = await sendAndMeasure(page, "");
-  expect(opened.map(({ part, top, left }) => ({ part, top, left }))).toEqual(before.map(({ part, top, left }) => ({ part, top, left })));
+  const opened = await snap(page);
+  expect(opened.parts.filter((part) => part.key !== "disclosure").map(({ key, top, left }) => ({ key, top, left }))).toEqual(
+    closed.parts.filter((part) => part.key !== "disclosure").map(({ key, top, left }) => ({ key, top, left })),
+  );
   await scan(page, "[data-research-progress]");
   await stream.end();
 });
 
-test("a rail with every source reached names its notes About these sources, and under reduced motion only the words change", async ({ page }) => {
+test("the checking window holds its height, keeps the newest sentence at its bottom under the blur's four layers, says each sentence's section, and under reduced motion only the words change", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
+  // Every source reached, so the notes are About these sources.
   const blocks = blocksOf(await recorded("research-p156634.sse")).filter((block) => block.data.status !== "not_reached");
   const stream = await heldStream(page);
   await open(page, { research: { body: demoSetting(await recorded("research-p156634-none.json")) } });
   await tab(page).getByRole("button", { name: words.run }).click();
-  const at = blocks.findIndex((block) => block.type === "step" && block.data.id === "source-outlet_feeds" && block.data.status === "running");
-  await stream.send(blocks.slice(0, at + 1));
-  await expect(row(page, "source-outlet_feeds")).toHaveAttribute("data-progress-step", "running");
-  await expect(rail(page).getByRole("button", { name: words.progress.notes.all })).toBeVisible();
-  // The spinner stands still and the meter's fill does not ease.
+  const outlets = blocks.findIndex((block) => block.type === "step" && block.data.id === "source-outlet_feeds" && block.data.status === "running");
+  await stream.send(blocks.slice(0, outlets + 1));
+  await expect(sourceLine(page, "source-outlet_feeds")).toHaveAttribute("data-progress-step", "running");
+  await expect(nowLine(page)).toHaveText("I'm reading the local news.");
+  await expect(rail(page).getByRole("button", { name: progress.notes.all })).toBeVisible();
+  // The spinner stands still, the meter's fill does not ease, and the window opens and scrolls at once.
   const motion = await rail(page).evaluate((element) => ({
     spin: getComputedStyle(element.querySelector("[data-progress-step=running] [data-progress-icon] svg")!).animationName,
     meter: getComputedStyle(element.querySelector("[role=progressbar] > div")!).transitionDuration,
+    window: getComputedStyle(element.querySelector("[data-progress-live]")!).transitionDuration,
+    scroll: getComputedStyle(element.querySelector("[data-progress-scroll]")!).scrollBehavior,
   }));
-  expect(motion).toEqual({ spin: "none", meter: "0s" });
+  expect(motion).toEqual({ spin: "none", meter: "0s", window: "0s", scroll: "auto" });
+
+  // Through the writer to the checks, then each sentence one at a time.
+  const checkingAt = blocks.findIndex((block) => block.type === "step" && block.data.id === "checking" && block.data.status === "running");
+  await stream.send(blocks.slice(outlets + 1, checkingAt + 1));
+  await expect(card(page, "checking")).toHaveAttribute("data-progress-state", "live");
+  const sentences = blocks.filter((block) => block.type === "sentence");
+  const sequence = [...sentences.slice(0, 22), removedBlock(200), ...sentences.slice(22, 26)];
+  const checks = card(page, "checking").locator("[data-progress-check]");
+  const nowBoxes = new Set<string>();
+  for (const [at, block] of sequence.entries()) {
+    await stream.send([block]);
+    await expect(checks).toHaveCount(at + 1);
+    const view = await card(page, "checking").evaluate((element) => {
+      const window = element.querySelector("[data-progress-window]")!.getBoundingClientRect();
+      const lines = element.querySelectorAll("[data-progress-check]");
+      const newest = lines[lines.length - 1].getBoundingClientRect();
+      const now = element.querySelector("[data-progress-now]")!.getBoundingClientRect();
+      return { height: window.height, gap: window.bottom - newest.bottom, inside: newest.top >= window.top - 0.5, now: `${now.width}x${now.height}` };
+    });
+    expect(view.height, "the window keeps its height").toBe(7 * 24);
+    expect(Math.abs(view.gap), `sentence ${at}: the newest line sits at the window's bottom`).toBeLessThanOrEqual(1);
+    expect(view.inside).toBe(true);
+    nowBoxes.add(view.now);
+  }
+  expect(nowBoxes.size, "the now line's box never changes size").toBe(1);
+
+  // A kept sentence says its section and its first 70 characters; a removed one its section and its reason, muted.
+  const first = sentences[1].data as { text: string };
+  await expect(checks.nth(1)).toHaveAttribute("data-progress-check", "kept");
+  await expect(checks.nth(1)).toContainText(`The picture on the ground · ${first.text.slice(0, 70).trimEnd()}…`);
+  const removed = checks.nth(22);
+  await expect(removed).toHaveAttribute("data-progress-check", "removed");
+  await expect(removed).toContainText(`Developments, newest first · ${REMOVED_REASON}`);
+  const colours = await card(page, "checking").evaluate((element) => {
+    const color = (selector: string) => getComputedStyle(element.querySelector(selector)!).color;
+    const root = getComputedStyle(document.documentElement);
+    const rgb = (token: string) => {
+      const probe = document.createElement("span");
+      probe.style.color = root.getPropertyValue(token).trim();
+      document.body.append(probe);
+      const value = getComputedStyle(probe).color;
+      probe.remove();
+      return value;
+    };
+    return { kept: color("[data-progress-check=kept]"), removed: color("[data-progress-check=removed]"), ink: rgb("--color-ink"), muted: rgb("--color-ink-muted") };
+  });
+  expect(colours.kept).toBe(colours.ink);
+  expect(colours.removed).toBe(colours.muted);
+  // The now line names the section of the latest checked sentence, in the brief's own words.
+  expect(String(sequence[sequence.length - 1].data.section)).toBe("developments");
+  await expect(nowLine(page)).toHaveText('I\'m checking the sentences of "Developments, newest first".');
+  const site = sentences.find((block) => block.data.section === "by_site")!;
+  await stream.send([site]);
+  await expect(nowLine(page)).toHaveText('I\'m checking the sentences of "By site".');
+
+  // The blur: four stacked layers that take no pointer, each a backdrop blur masked by a gradient, and a fade to the
+  // card's white, over the window's top 55 percent.
+  const blur = await card(page, "checking").evaluate((element) => {
+    const overlay = element.querySelector<HTMLElement>("[data-progress-blur]")!;
+    const window = element.querySelector("[data-progress-window]")!.getBoundingClientRect();
+    const layers = [...overlay.querySelectorAll<HTMLElement>("[data-blur-layer]")].map((layer) => {
+      const style = getComputedStyle(layer);
+      return { filter: style.backdropFilter || style.getPropertyValue("-webkit-backdrop-filter"), mask: (style.maskImage || style.getPropertyValue("-webkit-mask-image")).startsWith("linear-gradient"), pointer: style.pointerEvents };
+    });
+    const fade = getComputedStyle(overlay.querySelector("[data-blur-fade]")!);
+    return { layers, fade: fade.backgroundImage.startsWith("linear-gradient"), pointer: getComputedStyle(overlay).pointerEvents, share: overlay.getBoundingClientRect().height / window.height, top: overlay.getBoundingClientRect().top - window.top };
+  });
+  expect(blur.layers).toEqual([1, 2, 4, 8].map((px) => ({ filter: `blur(${px}px)`, mask: true, pointer: "none" })));
+  expect(blur.fade).toBe(true);
+  expect(blur.pointer).toBe("none");
+  expect(blur.share).toBeCloseTo(0.55, 2);
+  expect(blur.top).toBe(0);
+
+  // Scrolled up, the window stays where the person put it; back at the bottom, it follows again.
+  const scroller = card(page, "checking").locator("[data-progress-scroll]");
+  await scroller.evaluate((element) => element.scrollTo({ top: 0 }));
+  expect(await scroller.evaluate((element) => element.scrollTop)).toBe(0);
+  await stream.send([sentences[26]]);
+  await expect(checks).toHaveCount(sequence.length + 2);
+  expect(await scroller.evaluate((element) => element.scrollTop)).toBe(0);
+  await scroller.evaluate((element) => element.scrollTo({ top: element.scrollHeight }));
+  await stream.send([sentences[27]]);
+  await expect(checks).toHaveCount(sequence.length + 3);
+  await expect.poll(() => scroller.evaluate((element) => Math.round(element.scrollHeight - element.clientHeight - element.scrollTop))).toBe(0);
+  await scan(page, "[data-research-progress]");
+  await stream.end();
+});
+
+test("under 36rem the head stacks, the sources take one column and scroll inside the window, and the rail passes axe", async ({ page }) => {
+  const blocks = blocksOf(await recorded("research-p156634.sse"));
+  const stream = await heldStream(page);
+  await open(page, { width: 375, research: { body: demoSetting(await recorded("research-p156634-none.json")) } });
+  await tab(page).getByRole("button", { name: words.run }).click();
+  const at = blocks.findIndex((block) => block.type === "step" && block.data.id === "source-site_conditions" && block.data.status === "running");
+  await stream.send(blocks.slice(0, at + 1));
+  await expect(sourceLine(page, "source-site_conditions")).toHaveAttribute("data-progress-step", "running");
+  const layout = await rail(page).evaluate((element) => {
+    const lines = [...element.querySelectorAll("[data-progress-source]")].map((line) => line.getBoundingClientRect());
+    const scroller = element.querySelector<HTMLElement>("[data-progress-scroll]")!;
+    const window = scroller.getBoundingClientRect();
+    const running = element.querySelector("[data-progress-source][data-progress-step=running]")!.getBoundingClientRect();
+    const heading = element.querySelector("[data-progress-heading]")!.getBoundingClientRect();
+    const time = element.querySelector("[data-progress-line]")!.getBoundingClientRect();
+    return {
+      stacked: time.top >= heading.bottom - 0.5,
+      columns: new Set(lines.map((line) => Math.round(line.left))).size,
+      scrolls: scroller.scrollHeight > scroller.clientHeight,
+      inView: running.top >= window.top - 0.5 && running.bottom <= window.bottom + 0.5,
+      blur: element.querySelectorAll("[data-progress-blur] [data-blur-layer]").length,
+      sideways: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  expect({ ...layout, inView: true }).toEqual({ stacked: true, columns: 1, scrolls: true, inView: true, blur: 4, sideways: false });
+  // The source being read is in view at the window's bottom once the smooth scroll has run.
+  await expect
+    .poll(() =>
+      rail(page).evaluate((element) => {
+        const window = element.querySelector("[data-progress-scroll]")!.getBoundingClientRect();
+        const running = element.querySelector("[data-progress-source][data-progress-step=running]")!.getBoundingClientRect();
+        return running.top >= window.top - 0.5 && Math.abs(running.bottom - window.bottom) <= 1;
+      }),
+    )
+    .toBe(true);
+  await scan(page, "[data-research-progress]");
   await stream.end();
 });
 
@@ -495,20 +733,17 @@ test("Research this project streams the run's steps; a source not reached is one
   await tab(page).getByRole("button", { name: words.run }).click();
   await expect(tab(page)).toHaveAttribute("data-research", "running");
 
-  // Every planned step, done, in its order; a source not reached is its own row with its note.
+  // Every phase done; the sources card counts the sources not reached, and each one's note waits behind the disclosure.
   const steps = streamSteps(sse);
   const plan = planOf(blocksOf(sse));
-  const rows = rail(page).locator("[data-progress-id]");
-  await expect(rows).toHaveCount(plan.steps.length);
-  await expect(rows.first()).toHaveAttribute("data-progress-step", "done");
+  await expect(rail(page).locator("[data-progress-phase]")).toHaveCount(4);
+  for (const phase of PHASES) await expect(card(page, phase)).toHaveAttribute("data-progress-state", "done");
   const missed = steps.filter((step) => step.status === "not_reached");
   expect(missed.length, "the recording has a source not reached").toBeGreaterThan(0);
-  for (const step of missed) {
-    await expect(row(page, step.id)).toHaveAttribute("data-progress-step", "not_reached");
-    await expect(rail(page).locator(`[data-progress-note="${step.id}"]`)).toContainText(step.note!);
-  }
-  const removed = steps.find((step) => step.kind === "checking")!.removed ?? 0;
-  await expect(rows.last().locator("[data-progress-result]")).toHaveText(removed === 0 ? words.progress.removed.none : removed === 1 ? words.progress.removed.one : words.progress.removed.several(String(removed)));
+  await expect(card(page, "sources").locator("[data-progress-sub]")).toContainText(`${missed.length} not reached`);
+  for (const step of missed) await expect(rail(page).locator(`[data-progress-note="${step.id}"]`)).toContainText(step.note!);
+  const checking = steps.find((step) => step.kind === "checking")! as StreamStep & { kept?: number };
+  await expect(card(page, "checking").locator("[data-progress-sub]")).toHaveText(`kept ${checking.kept}, removed ${checking.removed ?? 0}`);
   await expect(rail(page).getByRole("progressbar")).toHaveAttribute("aria-valuenow", String(plan.steps.length));
   await expect(tab(page).locator("[data-alert=error]")).toHaveCount(0);
 
@@ -546,13 +781,11 @@ test("with the demo's setting, the tab says no brief has been prepared, the rail
   });
   await tab(page).getByRole("button", { name: words.run }).click();
 
-  // The rail says once the day the stored run read the sources; each source it reached says what it kept, with no date.
+  // The sources card says once the day the stored run read the sources, with how many it read; no other card has a date.
   const reached = streamSteps(sse).filter((step) => step.kind === "source" && step.status === "done");
   expect(reached.length, "the recording has sources from the stored run").toBeGreaterThan(0);
-  await expect(rail(page).locator("[data-progress-read]")).toHaveText(words.readOnStored("November 5, 2026"));
-  const results = rail(page).locator("[data-progress-id] [data-progress-result]");
-  await expect(results.filter({ hasText: /^kept / })).toHaveCount(reached.length);
-  await expect(results.filter({ hasText: /2026/ })).toHaveCount(0);
+  await expect(card(page, "sources").locator("[data-progress-sub]")).toContainText(`${reached.length} read on November 5, 2026`);
+  for (const phase of ["facts", "writing", "checking"]) await expect(card(page, phase)).not.toContainText("November 5, 2026");
 
   release();
   await expect(tab(page)).toHaveAttribute("data-research", "ready");
@@ -572,7 +805,8 @@ test("with the demo's setting, a writer that fails keeps the stored brief with o
     return route.fulfill({ status: 200, contentType: "application/json", body: stored });
   });
   await tab(page).getByRole("button", { name: words.again }).click();
-  await expect(rail(page).locator("[data-progress-id]").last().locator("[data-progress-result]")).toHaveText(words.progress.result.keptBrief);
+  await expect(card(page, "writing").locator("[data-progress-sub]")).toHaveText("I kept the last brief");
+  await expect(card(page, "writing")).toHaveAttribute("data-progress-open", "");
   release();
   await expect(tab(page)).toHaveAttribute("data-research", "ready");
   await expect(tab(page).locator("[data-alert=error]")).toHaveCount(0);

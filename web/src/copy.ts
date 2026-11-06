@@ -9757,43 +9757,93 @@ export const copy = {
         several: (count: string) => `I checked every sentence and removed ${count}.`,
       },
     },
-    // The run while it goes (ticket 157, components/ResearchProgress.tsx): every step of the run's plan at once, a meter
-    // of the steps done, the step count, the elapsed clock and the usual time, and each step's result after its label on
-    // the same line. Ticket 159: no dates on the rows; the read date is said once under the step count
-    // (research.readOnStored), and each source's note waits behind one disclosure under the rail.
+    // The run while it goes (tickets 157, 159 and 161, components/ResearchProgress.tsx): the title with the elapsed clock
+    // and the usual time, a meter of the steps done, and a timeline of four cards, one per phase of the run. The live
+    // card holds one line that says what I'm doing now and a window of the phase's lines. The read date of a stored run
+    // is said once, on the sources card; each source's note waits behind one disclosure under the cards.
     progress: {
       title: (name: string) => `I'm researching ${name}.`,
-      // Templates, so the step's number and the clock sit in boxes of their own width and the words after them stay put.
-      step: "Step {n} of {total}",
+      // A template, so the clock sits in a box of its own width and the words after it stay put.
       elapsed: "{clock} elapsed",
       // Past the usual high end, in place of the usual time.
       longer: "longer than usual",
       usual: (low: string, high: string) => (low === high ? `usually about ${low} minutes` : `usually ${low} to ${high} minutes`),
       meter: "Research progress",
       meterText: (done: string, total: string) => `${done} of ${total} steps done`,
-      // The steps every run takes; a source's row takes the registry's label from the plan.
-      label: { facts: "Project facts", writing: "Writing the brief", checking: "Checking every sentence against its sources" } as Record<string, string>,
-      // Each row's state, for a screen reader; the icon shows it.
-      state: { done: "done", running: "in progress", todo: "to do", not_reached: "not reached" },
-      kept: { none: "kept no items", one: "kept one item", several: (count: string) => `kept ${count} items` },
-      // The results a row says after its label: every row has one once its step is done, so every row is one line.
-      result: { facts: "read", notReached: "not reached", keptBrief: "kept the last brief" },
-      writing: {
-        running: "the longest step, usually about a minute",
-        one: "one sentence",
-        several: (count: string) => `${count} sentences`,
+      // The four cards' names; the sources card counts the plan's sources once the plan has come.
+      phase: {
+        facts: "Project facts",
+        sources: "Reading the sources",
+        sourcesCount: (count: string) => `Reading ${count} sources`,
+        writing: "Writing the brief",
+        checking: "Checking every sentence",
       },
-      checked: (count: string, total: string) => `checked ${count} of ${total} sentences`,
-      removed: { none: "removed no sentences", one: "removed one sentence", several: (count: string) => `removed ${count} sentences` },
-      // The disclosure under the rail: one line per source, its name and its note ("read on November 5, 2026", or why it
+      // Each card's pill: done, to do, or the live card's count or verb.
+      pill: {
+        done: "done",
+        todo: "to do",
+        reading: "reading",
+        writing: "writing",
+        checking: "checking",
+        count: (done: string, total: string) => `${done} of ${total}`,
+      },
+      // Each card's one line under its name, before and after its phase.
+      sub: {
+        closing: (date: string) => `closing ${date}`,
+        sources: "Public pages outside the World Bank's records",
+        sourcesStored: (date: string) => `Public pages outside the World Bank's records, read on ${date}`,
+        // Once the sources are done: how many were read, how many were not reached, and the items kept.
+        read: (count: string) => `${count} read`,
+        readStored: (count: string, date: string) => `${count} read on ${date}`,
+        notReached: (count: string) => `${count} not reached`,
+        items: (count: string) => (count === "1" ? "1 item kept" : `${count} items kept`),
+        writing: "The longest step, about a minute",
+        sentences: (count: string) => (count === "1" ? "1 sentence" : `${count} sentences`),
+        keptBrief: "I kept the last brief",
+        checking: "Each sentence against its sources; what fails is removed and shown",
+        checked: (kept: string, removed: string) => `kept ${kept}, removed ${removed}`,
+      },
+      // The live card's line: what I'm doing right now, in everyday words, one sentence. A source's words are keyed by the
+      // source's key in config/research.toml; a source with no words here reads "reading <its label>".
+      now: (doing: string) => `I'm ${doing}.`,
+      doing: {
+        isr_narrative: "reading the World Bank's own reports on the project",
+        procurement_notices: "reading the project's procurement notices",
+        gdelt_news: "checking the world news index",
+        outlet_feeds: "reading the local news",
+        inspection_panel: "checking the complaints register",
+        sentinel2_mosaic: "looking at the satellite pictures of each site",
+        mastodon: "reading what people posted in public",
+        field_photos: "looking at your team's field photos",
+        site_conditions: "checking for floods and other disaster alerts",
+        agency_statements: "reading the agencies' own news pages",
+        sanctions: "checking the list of banned firms",
+      } as Record<string, string>,
+      doingSource: (label: string) => `reading ${label}`,
+      doingFacts: "reading the project's facts",
+      doingSources: "getting the sources ready",
+      doingWriting: "writing the brief",
+      doingChecking: "checking every sentence against what I read",
+      doingSection: (section: string) => `checking the sentences of "${section}"`,
+      // The window's lines: one line while the facts are read or the brief is written, and each source's state.
+      window: {
+        facts: "Looking up the project in the World Bank's data.",
+        writing: "Writing. This is the longest step.",
+        notReached: "not reached",
+        reading: "reading",
+      },
+      // Each line's state, for a screen reader; the icon shows it.
+      state: { done: "done", running: "in progress", todo: "to do", not_reached: "not reached", kept: "kept", removed: "removed" } as Record<string, string>,
+      // The disclosure under the cards: one line per source, its name and its note ("read on November 5, 2026", or why it
       // was not reached), or its state while it waits or runs.
       notes: {
         missed: "Why a source was not reached",
         all: "About these sources",
         notReached: (note: string | null | undefined) => (note ? `not reached. ${note}` : "not reached."),
+        kept: { none: "kept no items", one: "kept one item", several: (count: string) => `kept ${count} items` },
       },
       // A client that leaves ends the stream, which stops the run before it keeps a brief (src/strata/server/research.py).
-      keepOpen: "Keep this tab open. If you leave, the research stops and the last brief stays.",
+      keepOpen: "Keep this tab open; if you leave, the research stops and the last brief stays.",
     },
     // A source's line in the Sources list, and its marker's name: "The Star, January 14, 2026".
     sourceName: "{author}, {date}",

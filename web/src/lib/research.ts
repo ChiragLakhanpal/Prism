@@ -396,7 +396,20 @@ export type ResearchStep = Omit<StepEvent, "kind" | "status"> & {
   sentences?: number;
   kept?: number;
   removed?: number;
+  // The facts step, done: the project's name and closing date (src/strata/research/run.py).
+  project_name?: string | null;
+  closing_date?: string | null;
 };
+
+// One sentence the checks passed or removed, as the stream's sentence and removed events send it while checking runs
+// (ticket 161): the section of the brief it sits in, and its words, or the reason it was removed.
+export type CheckedLine = { index: number; kept: boolean; section: string | null; text: string };
+
+export function checkedLine(type: "sentence" | "removed", data: unknown): CheckedLine {
+  const event = (data ?? {}) as { index?: number; section?: string | null; text?: string; reason?: string; sentence?: string };
+  const kept = type === "sentence";
+  return { index: Number(event.index ?? 0), kept, section: event.section ?? null, text: String((kept ? event.text : event.reason || event.sentence) ?? "") };
+}
 
 // The run's plan, sent once after the facts step (ticket 157, src/strata/research/run.py): every step the run will take,
 // in order, and how long a run usually takes, low and high, in seconds. The tab lists these steps and no others.

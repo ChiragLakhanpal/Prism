@@ -37,6 +37,7 @@ import { useLoad } from "../../lib/load";
 import {
   briefFrom,
   briefNumbers,
+  checkedLine,
   itemFor,
   sourceName,
   sourceWords,
@@ -48,6 +49,7 @@ import {
   tileYear,
   withStep,
   type Brief,
+  type CheckedLine,
   type ResearchItem,
   type ResearchPlan,
   type ResearchSentence,
@@ -324,7 +326,7 @@ export function BriefView({ brief }: { brief: Brief }) {
 // reading: the run is done and its brief is being read, so the steps stay until the brief replaces them. code is the
 // error event's (ticket 148's run.ERRORS), which picks the alert's sentence.
 // plan is the run's plan event (ticket 157); started and lastEventAt are from Date.now(), for the elapsed clock and the
-// still-working line; checked counts the sentence and removed events while the checks run.
+// still-working line; checks keeps the sentence and removed events while the checks run, in order (ticket 161).
 type RunState = {
   phase: "idle" | "running" | "reading" | "failed" | "dropped";
   steps: ResearchStep[];
@@ -333,9 +335,9 @@ type RunState = {
   plan: ResearchPlan | null;
   started: number;
   lastEventAt: number;
-  checked: number;
+  checks: CheckedLine[];
 };
-const IDLE: RunState = { phase: "idle", steps: [], status: null, plan: null, started: 0, lastEventAt: 0, checked: 0 };
+const IDLE: RunState = { phase: "idle", steps: [], status: null, plan: null, started: 0, lastEventAt: 0, checks: [] };
 
 // The run's steps in the ask box's words: present tense while running, past once done; a source not reached says so.
 function stepLines(steps: ResearchStep[]): Step[] {
@@ -419,7 +421,10 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
         const at = Date.now();
         if (event.type === "step") setRun((now) => ({ ...now, lastEventAt: at, steps: withStep(now.steps, event.data as ResearchStep) }));
         if (event.type === "plan") setRun((now) => ({ ...now, lastEventAt: at, plan: planFrom(event.data) }));
-        if (event.type === "sentence" || event.type === "removed") setRun((now) => ({ ...now, lastEventAt: at, checked: now.checked + 1 }));
+        if (event.type === "sentence" || event.type === "removed") {
+          const line = checkedLine(event.type, event.data);
+          setRun((now) => ({ ...now, lastEventAt: at, checks: [...now.checks, line] }));
+        }
         if (event.type === "evidence") remember(event.data as EvidenceEvent);
         if (event.type === "error") {
           const code = (event.data as { code?: string }).code ?? null;
@@ -453,7 +458,16 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
           <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
         ) : running ? (
           <div data-research-run className="max-w-prose">
-            <ResearchProgress name={name} plan={run.plan} steps={run.steps} checked={run.checked} started={run.started} lastEventAt={run.lastEventAt} stored={storedOnly} />
+            <ResearchProgress
+              name={name}
+              country={project?.country ?? brief?.project?.country_name ?? null}
+              plan={run.plan}
+              steps={run.steps}
+              checks={run.checks}
+              started={run.started}
+              lastEventAt={run.lastEventAt}
+              stored={storedOnly}
+            />
           </div>
         ) : load.status === "loading" ? (
           <div aria-busy="true">
