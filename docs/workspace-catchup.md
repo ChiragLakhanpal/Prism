@@ -4952,3 +4952,30 @@ It worked if all of these hold:
 - The App's title, sidebar and Home say Prism.
 
 Record here under ticket 146, with the time: the deploy's exit code, the two dashboards' names and ids, and the commit the App runs.
+
+## Ticket 147, after the integration merge
+
+The merger parked this on November 5, 2026, after merge commit b668ddc7 (branch `strata/147-research-sources` at 68e78092). Nothing ran tonight. Ticket 151's agent runs these three steps, in order, after tickets 148 and 149 land, from a snapshot at or after that merge. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, and point `--env-file` at the main checkout's `.env`. Ticket 146's bundle deploy above runs the same script, so one bundle deploy from a snapshot at or after b668ddc7 serves both blocks.
+
+What ticket 147 changes on the workspace: three new tables in `strata.ops`, `research_runs`, `research_items` and `research_cache` (`src/strata/lakehouse/tables/ops/`), which Prism's deep research writes as the App's service principal. The App deploy grants the App SELECT and MODIFY on `research_runs` and `research_items` (`grants` in `ops/app/deploy_app.py`). `research_cache` still has no grant, so on the workspace the research fetch cannot keep answers in it until a later change grants it.
+
+1. Make the research tables with the bundle deploy:
+
+       uv run --script ops/bundle/deploy.py --env-file .env
+
+   It worked if the deploy exits 0 and `SHOW TABLES IN strata.ops LIKE 'research*'` lists `research_cache`, `research_items` and `research_runs`.
+
+2. Grant the App the research tables with the App deploy:
+
+       uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+   It worked if the deploy exits 0, prints the App's address, and `SHOW GRANTS ON TABLE strata.ops.research_runs` and `SHOW GRANTS ON TABLE strata.ops.research_items` each show SELECT and MODIFY for the App's service principal. `research_cache` gets no grant from this deploy.
+
+3. Build the fixture database, then seed P156634's research run on the workspace as the App:
+
+       uv run --frozen python gates/build_fixture.py
+       uv run python ops/research/seed.py --project P156634 --env-file .env
+
+   It worked if the seed exits 0 and `SELECT run_id, count(*) AS items FROM strata.ops.research_items WHERE project_id = 'P156634' GROUP BY run_id` returns the run `seed:P156634:2026-11-05` with 29 items (7 ISR passages, 7 notices, 14 outlet articles, 1 Sentinel-2 item). A second seed changes nothing.
+
+Record here under ticket 147, with the time: each step's exit code, the tables the deploy made, the two grants, and the seed's run id and item count.

@@ -50,7 +50,7 @@ Read first: the sample brief and `build5.py`; `config/sources.toml` and `src/str
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** knowledge
 **Phase:** P5
 **Design review:** no
@@ -65,3 +65,6 @@ Read first: the sample brief and `build5.py`; `config/sources.toml` and `src/str
 ## Comments
 
 - November 5, 2026, orchestrator: rewritten at 17:55 PST after the user settled the brief's shape on the sample (v5). Probes from this computer today: the Inspection Panel register answered 200 with its cases in `drupalSettings.extractCases`; EOX Sentinel-2 cloudless answered tiles for 2018 to 2025; the Star, the Standard, KBC, Big3Africa, Dawan Africa and the notices API answered the named client; Nation, People Daily and Eastleigh Voice answered 403 or a bot check; GDELT answered 429 all afternoon; Reddit and Bluesky refused.
+- November 5, 2026, merger: merged `strata/147-research-sources` (head 68e78092: the build in 4ece116b, then one merge of an older build/strata) into build/strata as merge commit b668ddc7, with history, because the history scan found no keys in the branch's commits. The merge changes 98 files (3,903 lines in, 8 out). Git merged `ops/app/deploy_app.py`, `src/strata/config.py` and their tests with no conflict. The gate on the merge commit passed in 150.1 seconds, under tonight's 180-second limit. The hand run of `.githooks/pre-commit` on build/strata right after the merge passed every lane in 143.8 seconds (147 seconds by the clock) and found no keys in the merged history. The worktree that built it, `.claude/worktrees/agent-ad4cefc0dc23579cb`, is removed after this commit. The branch stays.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the implementer's report is the evidence. `config/research.toml` defines the seven sources and the five not connected. 55 recorded files under `data/fixture/recorded/research/` are dated November 5, 2026. The seed run `seed:P156634:2026-11-05` holds 29 items for P156634: 7 ISR passages, 7 notices, 14 outlet articles and 1 Sentinel-2 item. A second seed changes nothing. The tests `test_research_registry.py`, `test_research_project.py`, `test_research_fetching.py`, `test_research_lakehouse_readers.py`, `test_research_web_readers.py` and `test_research_store.py` under `tests/` pass offline. The gate passed in 145.6 seconds on the branch, under load.
+  - Workspace results: none run tonight. The block "Ticket 147, after the integration merge" in `docs/workspace-catchup.md` holds three steps for ticket 151's agent, to run after tickets 148 and 149 land: the bundle deploy that makes the research tables, the App deploy that grants two of them, and the workspace seed. `strata.ops.research_cache` still has no grant for the App.
