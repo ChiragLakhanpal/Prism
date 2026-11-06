@@ -171,6 +171,7 @@ from strata.server import risks as risk_routes
 from strata.server import views as view_routes
 from strata.server import uploads as upload_routes
 from strata.server import field_photos as photo_routes
+from strata.server import research_tiles as tile_routes
 from strata.research.photos import PhotoStore
 from strata.uploads.store import UploadStore
 from strata.server import estimates as estimate_routes
@@ -349,7 +350,8 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                research_writer: Callable[[], object | None] | None = None,
                field_photos: PhotoStore | None = None,
                new_photo_id: Callable[[], str] = photo_routes.new_photo_id,
-               photo_places: Callable | None = None) -> FastAPI:
+               photo_places: Callable | None = None,
+               research_tiles: tile_routes.Tiles | None = None) -> FastAPI:
     """The app.
 
     environ is the settings every tool the app runs itself reads its services' addresses and keys from
@@ -1004,6 +1006,14 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                                writer=research_writer or (lambda: None), today=today, now=now, new_run_id=new_run_id,
                                reference=request_reference, heartbeat_seconds=heartbeat_seconds, six_checks=six_checks,
                                environ=environ, access=access, photos=field_photos)
+
+    # The Sentinel-2 tiles of a brief's grids (ticket 158), served by Prism from memory, then strata.ops.research_cache,
+    # then EOX with the named client, so a page or a PDF never waits on EOX answering the browser. research_tiles
+    # stands in for the registry's source and the live fetch in a test.
+    from strata.research import fetching as research_fetching
+
+    tile_routes.add_routes(app, tiles=research_tiles or (lambda: tile_routes.Tiles.from_registry(
+        cache=research_fetching.TableCache(research.engine) if research is not None else None)))
 
     # Field photos (ticket 150): a World Bank staff viewer's photos from a mission, which only their team sees, through
     # the one access rule. photo_places stands in for the project's locations in a test.

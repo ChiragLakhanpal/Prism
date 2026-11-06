@@ -25,6 +25,7 @@ import { EightColumns } from "../../components/EightColumns";
 import { ExternalLink } from "../../components/ExternalLink";
 import { Fill } from "../../components/Fill";
 import { LoadError } from "../../components/LoadError";
+import { Tile, tileSentences, useTileFailures } from "../../components/ResearchImages";
 import { linkProjectIds } from "../../components/ProjectId";
 import { SkeletonLine, SkeletonText } from "../../components/Skeleton";
 import { Steps, type Step } from "../../components/Steps";
@@ -59,6 +60,7 @@ import { StreamError, streamEvents } from "../../lib/sse";
 import { useStore } from "../../lib/store";
 import { asOfOf, viewOf, withReadParams } from "../../lib/view";
 import { FieldPhotos } from "./FieldPhotos";
+import { PdfButton } from "./ResearchPdf";
 import { ResearchPrint } from "./ResearchPrint";
 
 const words = copy.research;
@@ -152,6 +154,9 @@ function NotReached({ brief, sectionKey }: { brief: Brief; sectionKey: keyof Sec
 export function SatelliteFigure({ item, mark }: { item: ResearchItem; mark: ReactNode }) {
   const [first, last] = [item.image_urls[0], item.image_urls[item.image_urls.length - 1]];
   const years = [tileYear(first) ?? "", tileYear(last) ?? ""];
+  // Each tile through Prism's route; one that fails leaves its cell in surface-2 and a sentence in the caption (ticket 158).
+  const [failures, fail] = useTileFailures();
+  const failed = tileSentences([first, last], years, failures);
   return (
     <figure data-s2-figure className="mt-4 max-w-xl">
       <div className="grid grid-cols-2 gap-4">
@@ -160,7 +165,7 @@ export function SatelliteFigure({ item, mark }: { item: ResearchItem; mark: Reac
             <p className="mb-1 text-small font-semibold text-ink-heading">{years[index]}</p>
             <div className="grid grid-cols-3 border border-line">
               {tiles.slice(0, 9).map((url) => (
-                <img key={url} src={url} alt="" width={256} height={256} className="block aspect-square h-auto w-full bg-surface-2" />
+                <Tile key={url} url={url} failed={failures[url]} onFail={fail} className="block aspect-square h-auto w-full bg-surface-2" />
               ))}
             </div>
           </div>
@@ -168,6 +173,12 @@ export function SatelliteFigure({ item, mark }: { item: ResearchItem; mark: Reac
       </div>
       <figcaption className="mt-2 text-caption text-ink-muted">
         <Fill template={words.satellite} slots={{ place: item.location?.name ?? item.title, first: years[0], last: years[1] }} />
+        {failed.map((sentence) => (
+          <span key={sentence} data-tiles-failed>
+            {" "}
+            {sentence}
+          </span>
+        ))}
         {mark}
       </figcaption>
     </figure>
@@ -484,9 +495,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
             {brief ? (
               <>
                 <div className="flex flex-wrap items-center gap-3" data-research-actions>
-                  <Button variant="primary" onClick={() => window.print()}>
-                    {words.print}
-                  </Button>
+                  <PdfButton />
                   <Button variant="secondary" onClick={() => void start()}>
                     {words.again}
                   </Button>

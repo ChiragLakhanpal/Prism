@@ -3,9 +3,15 @@
 // 148's routes' own, recorded in tests/fixtures/api (research-p156634.json, research-p156634-none.json,
 // research-p156634.sse and evidence-research-item-p156634-star.json) by tests/record_research_api.py from the run
 // ticket 147's seed keeps. Every count below is read from the recording, through the tab's own reader (briefFrom).
+// Ticket 158 adds the pictures: the tiles through Prism's route, the PDF that waits for them, a frame that fails saying
+// why, and P161305's print (research-p161305.json, the App's answer of November 6, 2026 at 07:25 UTC, and
+// field-photos-p161305.json, the seed's photos through the route's own listing).
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
 import type { Page, Route } from "@playwright/test";
 import { copy } from "../src/copy";
-import { briefFrom, itemFor, type Brief } from "../src/lib/research";
+import { fill } from "../src/routes";
+import { briefFrom, briefNumbers, developmentSheets, itemFor, notReachedIn, satelliteFor, sourceSheets, tileYear, type Brief } from "../src/lib/research";
 import { scan } from "./axe";
 import { expect, mockApi, recorded, test, viewAnswers } from "./mocked";
 
@@ -30,12 +36,22 @@ async function brief(): Promise<Brief> {
   return read;
 }
 
-// The Sentinel-2 tiles are the one thing the brief loads from outside the app: each answers with a 1 px image here, so
-// no test reaches the network. A page route wins over the context's route that refuses outside requests.
+// The Sentinel-2 tiles come through Prism's own route (ticket 158; src/strata/server/research_tiles.py): each answers
+// with a 1 px image here, so no test reaches the network, and every address the page asks is kept, EOX's included.
+// A page route wins over the context's route that refuses outside requests, and over mockApi's, registered before it.
 const PIXEL = Buffer.from("R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", "base64");
+const TILES = "**/api/research/tiles/**";
+type Tiles = (route: Route) => Promise<void> | void;
+const pixel: Tiles = (route) => route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL });
 
-async function open(page: Page, { width = 1440, research, extra = {} }: { width?: number; research?: Answer; extra?: Record<string, Answer> } = {}) {
+async function open(
+  page: Page,
+  { width = 1440, research, extra = {}, tiles = pixel, asked = [] }: { width?: number; research?: Answer; extra?: Record<string, Answer>; tiles?: Tiles; asked?: string[] } = {},
+) {
   await page.setViewportSize({ width, height: 900 });
+  page.on("request", (request) => {
+    if (/tiles\.maps\.eox\.at|\/api\/research\/tiles\//.test(request.url())) asked.push(request.url());
+  });
   await page.route("https://tiles.maps.eox.at/**", (route) => route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL }));
   const unrecorded = await mockApi(page, {
     ...(await viewAnswers()),
@@ -49,6 +65,7 @@ async function open(page: Page, { width = 1440, research, extra = {} }: { width?
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
     ...extra,
   });
+  await page.route(TILES, tiles);
   await page.goto(PATH);
   await expect(page.locator("main h1")).toBeVisible();
   return unrecorded;
@@ -477,7 +494,7 @@ test("Download as PDF prints the brief: the cover, then one Letter sheet per sec
     };
   });
   await tab(page).getByRole("button", { name: words.print }).click();
-  expect(await page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(1);
+  await expect.poll(() => page.evaluate(() => (window as unknown as { printed: number }).printed)).toBe(1);
 
   // On screen the print view is never shown.
   await expect(page.locator("[data-research-print]")).toBeHidden();
@@ -489,15 +506,15 @@ test("Download as PDF prints the brief: the cover, then one Letter sheet per sec
   await expect(page.getByRole("navigation", { name: "Project sections" })).toBeHidden();
 
   // The sections in the sample's order, the developments eleven to a sheet and each site on its own.
-  const developmentSheets = Math.ceil(data.sections.developments.length / 11);
+  const devSheets = developmentSheets(data.sections.developments, notReachedIn(data, "developments").length).length;
   const labels = [
     words.section.picture,
-    ...Array.from({ length: developmentSheets }, (_, index) => (index === 0 ? words.section.developments : words.section.developmentsMore)),
+    ...Array.from({ length: devSheets }, (_, index) => (index === 0 ? words.section.developments : words.section.developmentsMore)),
     ...data.sections.by_site.map((site) => (site as { location?: { name: string } }).location?.name ?? words.section.bySite),
     words.section.voices,
     words.section.questions,
     words.section.couldNotSee,
-    ...Array.from({ length: Math.ceil(citedCount(data) / 18) }, (_, index) => (index === 0 ? words.section.sources : words.section.sourcesMore)),
+    ...Array.from({ length: sourceSheets(data, [...briefNumbers(data.sections).keys()]).length }, (_, index) => (index === 0 ? words.section.sources : words.section.sourcesMore)),
   ];
   const sheets = view.locator(".research-sheet");
   await expect(sheets).toHaveCount(labels.length + 1);
@@ -570,6 +587,143 @@ test("the print shows each of the team's field photos under the site whose words
   await expect(photo).toHaveCount(1);
   await expect(photo).toContainText("The new intake pipe");
   await expect(view.locator(".research-sheet", { has: page.locator(`[data-print-photo="fph-000000000001"]`) }).locator("h2")).toContainText("Baricho");
+});
+
+// ── The pictures (ticket 158): served by Prism, waited for, and explained when they fail ──────────
+
+const JPEG = (name: string) => readFile(fileURLToPath(new URL(`../../data/fixture/field_photos/${name}`, import.meta.url)));
+const print = (page: Page) => page.locator("[data-research-print]");
+
+async function countPrints(page: Page) {
+  await page.evaluate(() => {
+    const counted = window as unknown as { printed: number };
+    counted.printed = 0;
+    window.print = () => {
+      counted.printed += 1;
+    };
+  });
+}
+const printed = (page: Page) => page.evaluate(() => (window as unknown as { printed: number }).printed);
+
+test("the grids ask Prism's tile route, never EOX, on the tab and in the print view", async ({ page }) => {
+  const asked: string[] = [];
+  await open(page, { asked });
+  const tiles = tab(page).locator("[data-s2-grid] img");
+  await expect(tiles).toHaveCount(18);
+  for (const src of await tiles.evaluateAll((all) => all.map((img) => img.getAttribute("src")))) expect(src).toMatch(/^\/api\/research\/tiles\/\d{4}\/15\/\d+\/\d+\.jpg$/);
+  await expect(print(page).locator(".tiles img")).toHaveCount(18);
+  await expect.poll(() => asked.length).toBeGreaterThanOrEqual(18);
+  expect(asked.filter((url) => url.includes("tiles.maps.eox.at"))).toEqual([]);
+});
+
+test("a tile that fails leaves its cell in surface-2 and the caption says how many did not load, in the tab and on paper", async ({ page }) => {
+  // The tile server answers none of the first year's tiles and one of the last year's, once.
+  const data = await brief();
+  const item = data.sections.by_site.flatMap((site) => satelliteFor(data, site))[0];
+  const [first, last] = [tileYear(item.image_urls[0])!, tileYear(item.image_urls[item.image_urls.length - 1])!];
+  let one = true;
+  await open(page, {
+    tiles: (route) => {
+      const year = /tiles\/(\d{4})\//.exec(route.request().url())![1];
+      if (year === first || (year === last && one)) {
+        if (year === last) one = false;
+        return route.fulfill({ status: 502, contentType: "application/json", body: '{"code":"tile_server"}' });
+      }
+      return route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL });
+    },
+  });
+  const caption = tab(page).locator("[data-s2-figure] figcaption");
+  await expect(caption).toContainText(words.tilesNone("9", first));
+  await expect(caption).toContainText(new RegExp(`\\d of the 9 tiles for ${last} did not load from the tile server\\.`));
+  await expect(tab(page).locator("[data-s2-grid] [data-tile-failed]").first()).toBeVisible();
+  await page.emulateMedia({ media: "print" });
+  const paper = print(page).locator("[data-print-satellite] .caption");
+  await expect(paper).toContainText(words.tilesNone("9", first));
+  expect(await print(page).locator("[data-tile-failed]").first().evaluate((cell) => getComputedStyle(cell).backgroundColor)).toBe("rgb(231, 237, 243)");
+});
+
+test("a photo that fails says so in its frame, on the tab and on paper, in a 4:3 frame", async ({ page }) => {
+  await open(page, {
+    extra: {
+      "/api/projects/P156634/field-photos": { body: await recorded("field-photos-p156634.json") },
+      "/api/projects/P156634/field-photos/fph-000000000001": { status: 503, body: '{"code":"photo_store"}' },
+    },
+  });
+  await expect(page.locator('[data-field-photo="fph-000000000001"]')).toContainText(copy.research.photos.notLoaded);
+  await page.emulateMedia({ media: "print" });
+  const figure = print(page).locator('[data-print-photo="fph-000000000001"]');
+  await expect(figure.locator("[data-photo-frame=failed]")).toHaveText(copy.research.photos.notLoaded);
+  await expect(figure).toContainText("The new intake pipe");
+  const box = await figure.locator("[data-photo-frame]").boundingBox();
+  expect(Math.abs(box!.width / box!.height - 4 / 3)).toBeLessThan(0.02);
+});
+
+test("Download as PDF waits for every image with a visible count, then prints", async ({ page }) => {
+  const held: Route[] = [];
+  await open(page, { tiles: (route) => void held.push(route) });
+  await countPrints(page);
+  await tab(page).getByRole("button", { name: words.print }).click();
+  const button = tab(page).locator("[data-research-pdf]");
+  await expect(button).toHaveText(words.pdf.preparing);
+  const total = await print(page).locator("img").count();
+  expect(total).toBeGreaterThan(18);
+  await expect(tab(page).locator("[data-research-pdf-count]")).toHaveText(new RegExp(`^\\d+ of ${total} images loaded$`));
+  expect(await printed(page)).toBe(0);
+  for (const route of held.splice(0)) await route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL });
+  await expect.poll(() => printed(page)).toBe(1);
+  await expect(button).toHaveText(words.print);
+  await expect(tab(page).locator("[data-research-pdf-count]")).toHaveText("");
+});
+
+test("every image in the print view carries its width and height, and every figure keeps together on its page", async ({ page }) => {
+  await open(page, { extra: { "/api/projects/P156634/field-photos": { body: await recorded("field-photos-p156634.json") } } });
+  await page.emulateMedia({ media: "print" });
+  await expect(print(page).locator("[data-print-photo]")).toHaveCount(1);
+  const sizes = await print(page).locator("img").evaluateAll((all) => all.map((img) => [img.getAttribute("width"), img.getAttribute("height")]));
+  expect(sizes.length).toBeGreaterThan(18);
+  for (const [width, height] of sizes) {
+    expect(Number(width)).toBeGreaterThan(0);
+    expect(Number(height)).toBeGreaterThan(0);
+  }
+  const breaks = await print(page).locator(".figure, .photo").evaluateAll((all) => all.map((figure) => getComputedStyle(figure).breakInside));
+  expect(new Set(breaks)).toEqual(new Set(["avoid"]));
+});
+
+test("P161305's print puts a site's photos on a sheet of their own after the site's satellite pair", async ({ page }) => {
+  const project = JSON.parse(await recorded("project-p156634.json"));
+  // P161305's header: the fixture's P156634 header with P161305's subject, as the brief names it.
+  const subject = JSON.parse(await recorded("research-p161305.json")).subject;
+  project.project = { ...project.project, project_id: "P161305", project_name: subject.project_name, display_name: subject.project_name, implementing_agencies: [] };
+  project.agencies = [];
+  const photos = JSON.parse(await recorded("field-photos-p161305.json"));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route("https://tiles.maps.eox.at/**", (route) => route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL }));
+  await mockApi(page, {
+    ...(await viewAnswers()),
+    "/api/me": { body: await recorded("me.json") },
+    "/api/freshness": { body: await recorded("freshness.json") },
+    "/api/projects/P161305": { body: JSON.stringify(project) },
+    "/api/projects/P161305/research": { body: await recorded("research-p161305.json") },
+    "/api/projects/P161305/field-photos": { body: JSON.stringify(photos) },
+  });
+  await page.route(TILES, pixel);
+  for (const [index, photo] of (photos.photos as { url: string }[]).entries()) {
+    const body = await JPEG(`P161305-${index + 1}.jpg`);
+    await page.route(`**${photo.url}`, (route) => route.fulfill({ status: 200, contentType: "image/jpeg", body }));
+  }
+  await page.goto("/projects/P161305/research");
+  await expect(tab(page)).toHaveAttribute("data-research", "ready");
+  await page.emulateMedia({ media: "print" });
+  const near = fill(words.photosNear, { site: "Wajir" });
+  const wajir = print(page).locator(".research-sheet", { has: page.locator(`[data-print-photo="${photos.photos[0].photo_id}"]`) });
+  await expect(wajir).toHaveCount(1);
+  await expect(wajir.locator("h2")).toHaveText(near);
+  await expect(wajir.locator("[data-sheet-label]")).toHaveText(near);
+  await expect(wajir.locator("h1.section")).toHaveText(words.section.bySiteMore);
+  // No sheet holds both a satellite pair and a photo, and every photo frame shows its picture.
+  const mixed = await print(page).locator(".research-sheet").evaluateAll((all) => all.filter((sheet) => sheet.querySelector("[data-print-satellite]") && sheet.querySelector("[data-print-photo]")).length);
+  expect(mixed).toBe(0);
+  await expect(print(page).locator("[data-photo-frame=shown] img")).toHaveCount(photos.photos.length);
 });
 
 // ── Accessibility, keyboard and reflow ─────────────────────────────────

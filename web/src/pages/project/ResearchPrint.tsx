@@ -10,15 +10,22 @@
 // The developments run on as many sheets as they need, eleven to a sheet as the sample's first held, and each site
 // takes its own sheet with its Sentinel-2 grids side by side. Markers are the sample's small numbered pills, each the
 // number of its source on the last sheet.
+//
+// Ticket 158: no blank frame and no figure split across a page. Every picture carries its width and height, so the
+// page breaks are laid out before the pixels arrive; the tiles come through Prism's route, and a tile or a photo that
+// fails says why (components/ResearchImages.tsx). A site's sheet holds its title, its bullets and at most one
+// satellite pair; its photos go on their own sheet after it, four to a sheet and two to a row, whenever the site has a
+// pair or more than one photo. "Download as PDF" waits for the pictures before it prints (ResearchPdf.tsx).
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import logo from "../../assets/world-bank-logo.svg";
 import { Fill } from "../../components/Fill";
+import { PhotoFrame, Tile, tileSentences, useTileFailures } from "../../components/ResearchImages";
 import { copy } from "../../copy";
 import { fieldPhotosPath, type FieldPhoto, type FieldPhotoList } from "../../lib/fieldPhotos";
 import { formatDate } from "../../lib/format";
 import { useLoad } from "../../lib/load";
-import { briefNumbers, developmentSheets, itemFor, itemName, notReachedIn, paragraphsOf, satelliteFor, sourceName, sourceWords, tileYear, voiceTemplate, type Brief, type ResearchSentence, type Sections } from "../../lib/research";
+import { briefNumbers, developmentSheets, itemFor, itemName, notReachedIn, PAIR_HEIGHT, paragraphsOf, PRINT_BUDGET, satelliteFor, siteHeight, sourceName, sourceSheets, sourceWords, tileYear, voiceTemplate, type Brief, type ResearchItem, type ResearchSentence, type Sections } from "../../lib/research";
 import { address } from "../../lib/router";
 import { useStore } from "../../lib/store";
 import { withReadParams } from "../../lib/view";
@@ -88,11 +95,12 @@ function photoLine(photo: FieldPhoto): string {
   return fill(words.photoLine, { when, where });
 }
 
-// A field photo with its caption, the day its camera recorded and its place (ticket 156).
+// A field photo with its caption, the day its camera recorded and its place (ticket 156), in a 4:3 frame that shows the
+// whole picture or says why it did not load (ticket 158).
 function PhotoFigure({ photo }: { photo: FieldPhoto }) {
   return (
     <figure className="photo" data-print-photo={photo.photo_id}>
-      <img src={photo.url} alt="" />
+      <PhotoFrame src={photo.url} />
       <figcaption>
         {photo.caption} {photoLine(photo)}
       </figcaption>
@@ -102,8 +110,44 @@ function PhotoFigure({ photo }: { photo: FieldPhoto }) {
 
 type Sheet = { label: string; body: ReactNode };
 
-// The sources on one printed sheet (ticket 156): about as many as a Letter page holds with their addresses.
-const SOURCES_PER_SHEET = 18;
+// A site's two Sentinel-2 grids side by side, with the caption and a sentence for any tile that did not load.
+function SatellitePair({ item, numbers }: { item: ResearchItem; numbers: Map<string, number> }) {
+  const [first, last] = [item.image_urls[0], item.image_urls[item.image_urls.length - 1]];
+  const years = [tileYear(first) ?? "", tileYear(last) ?? ""];
+  const [failures, fail] = useTileFailures();
+  const failed = tileSentences([first, last], years, failures);
+  return (
+    <div className="figure" data-print-satellite>
+      <div className="pairs">
+        {[first, last].map((tiles, index) => (
+          <div key={index} className="s2">
+            <div className="when">{years[index]}</div>
+            <div className="tiles">
+              {tiles.slice(0, 9).map((url) => (
+                <Tile key={url} url={url} failed={failures[url]} onFail={fail} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="caption">
+        <Fill template={words.satellite} slots={{ place: item.location?.name ?? item.title, first: years[0], last: years[1] }} />
+        {failed.map((sentence) => (
+          <span key={sentence} data-tiles-failed>
+            {" "}
+            {sentence}
+          </span>
+        ))}
+        <Cites ids={[item.evidence_id]} numbers={numbers} />
+      </p>
+    </div>
+  );
+}
+
+// Photos on a sheet of their own: four to a sheet, two to a row, so a figure never runs past its page.
+const PHOTOS_PER_SHEET = 4;
+const inFours = <T,>(all: T[]): T[][] => Array.from({ length: Math.ceil(all.length / PHOTOS_PER_SHEET) }, (_, at) => all.slice(at * PHOTOS_PER_SHEET, (at + 1) * PHOTOS_PER_SHEET));
+
 
 // The sources not reached under the section they feed, one line each, as on screen.
 function NotReachedNote({ brief, sectionKey }: { brief: Brief; sectionKey: keyof Sections }) {
@@ -163,7 +207,7 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
       </>
     ),
   });
-  const devSheets = developmentSheets(sections.developments);
+  const devSheets = developmentSheets(sections.developments, notReachedIn(brief, "developments").length);
   devSheets.forEach((rows, index) => {
     const title = index === 0 ? words.section.developments : words.section.developmentsMore;
     sheets.push({
@@ -195,8 +239,13 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
   sections.by_site.forEach((site, index) => {
     const satellites = satelliteFor(brief, site);
     const here = photos.filter((photo) => siteOf(photo) === index);
+    const name = site.location?.name ?? words.section.bySite;
+    // The site's own sheet keeps one photo only when it has no satellite pair; otherwise its photos get their own sheet.
+    const keepHere = satellites.length === 0 && here.length === 1;
+    // A site whose words leave no room for its pair on the page puts the pair on the next sheet (ticket 158).
+    const pairHere = siteHeight(site) + PAIR_HEIGHT <= PRINT_BUDGET;
     sheets.push({
-      label: site.location?.name ?? words.section.bySite,
+      label: name,
       body: (
         <>
           <Title>{index === 0 ? words.section.bySite : words.section.bySiteMore}</Title>
@@ -204,58 +253,83 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
             <Said sentence={site.title} numbers={numbers} />
           </h2>
           <Bullets sentences={site.sentences} numbers={numbers} />
-          {satellites.map((item) => {
-            const [first, last] = [item.image_urls[0], item.image_urls[item.image_urls.length - 1]];
-            const years = [tileYear(first) ?? "", tileYear(last) ?? ""];
-            return (
-              <div key={item.evidence_id} className="figure">
-                <div className="pairs">
-                  {[first, last].map((tiles, index) => (
-                    <div key={index} className="s2">
-                      <div className="when">{years[index]}</div>
-                      <div className="tiles">
-                        {tiles.slice(0, 9).map((url) => (
-                          <img key={url} src={url} alt="" />
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className="caption">
-                  <Fill template={words.satellite} slots={{ place: item.location?.name ?? item.title, first: years[0], last: years[1] }} />
-                  <Cites ids={[item.evidence_id]} numbers={numbers} />
-                </p>
-              </div>
-            );
-          })}
-          {here.length > 0 && (
+          {pairHere &&
+            satellites.slice(0, 1).map((item) => (
+              <SatellitePair key={item.evidence_id} item={item} numbers={numbers} />
+            ))}
+          {keepHere && (
             <div className="photos near">
               {here.map((photo) => (
                 <PhotoFigure key={photo.photo_id} photo={photo} />
               ))}
             </div>
           )}
-          {index === sections.by_site.length - 1 && <NotReachedNote brief={brief} sectionKey="by_site" />}
         </>
       ),
     });
+    // A second pair for the same site, rare, takes a sheet of its own, as does a pair with no room beside its words.
+    satellites.slice(pairHere ? 1 : 0).forEach((item) => {
+      sheets.push({
+        label: name,
+        body: (
+          <>
+            <Title>{words.section.bySiteMore}</Title>
+            <h2>{name}</h2>
+            <SatellitePair item={item} numbers={numbers} />
+          </>
+        ),
+      });
+    });
+    if (!keepHere) {
+      const groups = inFours(here);
+      groups.forEach((group) => {
+        const title = fill(words.photosNear, { site: site.location?.name ?? here[0].place ?? words.section.bySite });
+        sheets.push({
+          label: title,
+          body: (
+            <>
+              <Title>{words.section.bySiteMore}</Title>
+              <h2>{title}</h2>
+              <div className="photos" data-print-photo-sheet>
+                {group.map((photo) => (
+                  <PhotoFigure key={photo.photo_id} photo={photo} />
+                ))}
+              </div>
+            </>
+          ),
+        });
+      });
+    }
   });
-  if (unplaced.length > 0) {
+  // The sites' sources not reached, under the last of the sites' sheets.
+  if (sections.by_site.length > 0) {
+    const end = sheets[sheets.length - 1];
+    sheets[sheets.length - 1] = {
+      ...end,
+      body: (
+        <>
+          {end.body}
+          <NotReachedNote brief={brief} sectionKey="by_site" />
+        </>
+      ),
+    };
+  }
+  inFours(unplaced).forEach((group, at) => {
     sheets.push({
       label: words.photosSheet,
       body: (
         <>
           <Title>{words.photosSheet}</Title>
-          <p className="note">{words.photosSheetAbout}</p>
-          <div className="photos">
-            {unplaced.map((photo) => (
+          {at === 0 && <p className="note">{words.photosSheetAbout}</p>}
+          <div className="photos" data-print-photo-sheet>
+            {group.map((photo) => (
               <PhotoFigure key={photo.photo_id} photo={photo} />
             ))}
           </div>
         </>
       ),
     });
-  }
+  });
   sheets.push({
     label: words.section.voices,
     body: (
@@ -306,12 +380,11 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
       </>
     ),
   });
-  // The sources, SOURCES_PER_SHEET to a sheet, so a long list never runs past its sheet's page.
-  const cited = [...numbers.keys()];
-  const sourceSheets = Array.from({ length: Math.max(1, Math.ceil(cited.length / SOURCES_PER_SHEET)) }, (_, at) => cited.slice(at * SOURCES_PER_SHEET, (at + 1) * SOURCES_PER_SHEET));
-  sourceSheets.forEach((ids, at) => {
+  // The sources, as many to a sheet as fit its page (ticket 158), so a long list never runs past its sheet's page.
+  const sheetsOfSources = sourceSheets(brief, [...numbers.keys()]);
+  sheetsOfSources.forEach((ids, at) => {
     const title = at === 0 ? words.section.sources : words.section.sourcesMore;
-    const last = at === sourceSheets.length - 1;
+    const last = at === sheetsOfSources.length - 1;
     sheets.push({
       label: title,
       body: (
@@ -357,7 +430,7 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
       <div className="research-sheet navy" data-sheet="cover">
         <div className="body">
           <div className="cover-top">
-            <img src={logo} alt={words.cover.logo} />
+            <img src={logo} alt={words.cover.logo} width={140} height={28} />
             <div className="brand">
               <div>
                 <div className="word">{words.cover.word}</div>

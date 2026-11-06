@@ -1,0 +1,49 @@
+{
+  "project_id": "P161305",
+  "photos": [
+    {
+      "photo_id": "fph-ce2007e980bd",
+      "project_id": "P161305",
+      "file_name": "P161305-1.jpg",
+      "caption": "Sample photo standing in for a staff photo: Wikimedia Commons, by Ahmed Abdi Muhumed, CC BY-SA 4.0, taken January 24, 2020. Tarmac in Wajir!.",
+      "taken_on": "2020-01-24",
+      "place": "Wajir",
+      "latitude": 1.747369,
+      "longitude": 40.068644,
+      "uploaded_at": "2026-11-05T12:00:00Z",
+      "uploader": {
+        "name": "Prism demo seed",
+        "you": false
+      },
+      "url": "/api/projects/P161305/field-photos/fph-ce2007e980bd"
+    },
+    {
+      "photo_id": "fph-73c72c2bd8fb",
+      "project_id": "P161305",
+      "file_name": "P161305-2.jpg",
+      "caption": "Sample photo standing in for a staff photo: Wikimedia Commons, by Urbane82, CC BY-SA 4.0, taken March 26, 2022. Samburu Kenya.",
+      "taken_on": "2022-03-26",
+      "place": "Garissa town",
+      "latitude": -0.443889,
+      "longitude": 39.646169,
+      "uploaded_at": "2026-11-05T12:00:00Z",
+      "uploader": {
+        "name": "Prism demo seed",
+        "you": false
+      },
+      "url": "/api/projects/P161305/field-photos/fph-73c72c2bd8fb"
+    }
+  ],
+  "may_add": true,
+  "preview": false,
+  "limits": {
+    "accept": [
+      ".jpg",
+      ".jpeg",
+      ".png"
+    ],
+    "max_size_bytes": 10485760,
+    "max_per_project": 20,
+    "max_caption": 500
+  }
+}

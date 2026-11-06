@@ -9799,6 +9799,15 @@ export const copy = {
     },
     // The Sentinel-2 figure's caption, after the site's two grids.
     satellite: "{place} in the {first} and {last} cloud-free Sentinel-2 mosaics, 3 by 3 tiles at zoom 15. Prism reads no pixels, so the change is for you to judge.",
+    // A grid's tiles that did not load, one sentence after the caption, so no grid is blank without a reason (ticket 158).
+    tilesFailed: (count: string, total: string, year: string) => `${count} of the ${total} tiles for ${year} did not load from the tile server.`,
+    tilesNone: (total: string, year: string) => `The tile server answered none of the ${total} tiles for ${year}.`,
+    tilesLate: (count: string, total: string, year: string) => `${count} of the ${total} tiles for ${year} did not load in time.`,
+    // "Download as PDF" waits for every picture before it prints (ticket 158).
+    pdf: {
+      preparing: "Preparing the PDF",
+      loaded: (count: string, total: string) => `${count} of ${total} images loaded`,
+    },
     // The print view: the cover sheet, and the running header of every other sheet (the sample's). The cover keeps the
     // project line and the closing date, and no sentence about the run or the sample (ticket 156).
     cover: {
@@ -9831,6 +9840,9 @@ export const copy = {
       addedBy: (name: string) => `Added by ${name}`,
       addedByYou: "Added by you",
       open: "Open the photo",
+      // A photo frame whose picture did not come, in place of a blank frame (ticket 158).
+      notLoaded: "Photo not loaded: the photo store did not answer.",
+      notLoadedLate: "Photo not loaded: it did not load in time.",
       loadError: "I couldn't load your team's field photos because the data service didn't answer.",
       errors: {
         size: (megabytes: string) => `I couldn't keep this photo because it is larger than ${megabytes} MB.`,
@@ -9847,6 +9859,8 @@ export const copy = {
     disclaimer: "Prism is an independent demo built on World Bank open data. It is not a World Bank product.",
     // The team's field photos on their own sheet, each with its caption, the day its camera recorded and its place.
     photosSheet: "Field photos from your team",
+    // A site's photos on their own sheet after the site's, four to a sheet (ticket 158).
+    photosNear: "Field photos near {site}",
     photoLine: "{when}. {where}.",
     photosSheetAbout: "Photos your team added for this project. A brief cites a photo by its caption and its date, never by what the picture shows.",
     printNote: "Every item was read on {date}. Dates are the outlets' own, and amounts are as each source prints them.",

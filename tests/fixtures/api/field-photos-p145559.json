@@ -1,0 +1,49 @@
+{
+  "project_id": "P145559",
+  "photos": [
+    {
+      "photo_id": "fph-a2945f8d1835",
+      "project_id": "P145559",
+      "file_name": "P145559-1.jpg",
+      "caption": "Sample photo standing in for a staff photo: Wikimedia Commons, by Steve Ogut Opiyo, CC BY-SA 4.0, taken October 13, 2017. DSCN2045-1.",
+      "taken_on": "2017-10-13",
+      "place": "Mombasa District",
+      "latitude": -4.006729,
+      "longitude": 39.684791,
+      "uploaded_at": "2026-11-05T12:00:00Z",
+      "uploader": {
+        "name": "Prism demo seed",
+        "you": false
+      },
+      "url": "/api/projects/P145559/field-photos/fph-a2945f8d1835"
+    },
+    {
+      "photo_id": "fph-77ac0f87a48a",
+      "project_id": "P145559",
+      "file_name": "P145559-2.jpg",
+      "caption": "Sample photo standing in for a staff photo: Wikimedia Commons, by 75ciunek, CC BY-SA 4.0, taken February 23, 2025. Matatu20250223.",
+      "taken_on": "2025-02-23",
+      "place": "Ukunda",
+      "latitude": -4.280517,
+      "longitude": 39.566875,
+      "uploaded_at": "2026-11-05T12:00:00Z",
+      "uploader": {
+        "name": "Prism demo seed",
+        "you": false
+      },
+      "url": "/api/projects/P145559/field-photos/fph-77ac0f87a48a"
+    }
+  ],
+  "may_add": true,
+  "preview": false,
+  "limits": {
+    "accept": [
+      ".jpg",
+      ".jpeg",
+      ".png"
+    ],
+    "max_size_bytes": 10485760,
+    "max_per_project": 20,
+    "max_caption": 500
+  }
+}

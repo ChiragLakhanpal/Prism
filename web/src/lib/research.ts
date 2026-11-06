@@ -297,11 +297,86 @@ export function tileYear(urls: string[]): string | null {
   return found ? found[1] : null;
 }
 
-// The developments in sheets of DEVELOPMENTS_PER_SHEET, for the print view.
-export function developmentSheets(rows: Development[]): Development[][] {
-  const sheets: Development[][] = [];
-  for (let at = 0; at < rows.length; at += DEVELOPMENTS_PER_SHEET) sheets.push(rows.slice(at, at + DEVELOPMENTS_PER_SHEET));
+// Prism's own address for an EOX tile (ticket 158; src/strata/server/research_tiles.py), read from the item's EOX
+// address: the browser asks Prism, which answers from its cache, so a page or its PDF never waits on EOX. An address
+// that is not an EOX tile is kept as it is.
+export function tileRoute(url: string): string {
+  const found = /s2cloudless-(\d{4})_3857\/default\/g\/(\d+)\/(\d+)\/(\d+)\.jpg$/.exec(url);
+  return found ? `/api/research/tiles/${found[1]}/${found[2]}/${found[3]}/${found[4]}.jpg` : url;
+}
+
+// What a printed sheet holds (ticket 158): no more than its cap, and no more than fits a Letter page under the sheet's
+// title, so no sheet runs onto a second page with no header and a page number alone. Each row's height is estimated
+// from its words as styles/research.css lays them out, in CSS pixels; the estimate was measured on the printed briefs
+// of P161305 and P145559 on November 6, 2026, and errs tall, so a sheet may end early but does not run over. The page
+// under a sheet's title holds about 819 pixels; PRINT_BUDGET keeps a margin for the estimate's error.
+export const PRINT_BUDGET = 760;
+// One of the lines a source not reached leaves under its section, or the closing notes of the last sources sheet.
+export const PRINT_NOTE = 50;
+const lines = (characters: number, perLine: number) => Math.max(1, Math.ceil(characters / perLine));
+// A sentence's markers print as small numbered pills, about three characters each.
+const said = (sentence: ResearchSentence) => sentence.text.length + 3 * sentence.evidence_ids.length;
+
+export function sheetsBy<T>(rows: T[], height: (row: T) => number, cap: number, lastReserve = 0, budget = PRINT_BUDGET): T[][] {
+  const sheets: T[][] = [];
+  let sheet: T[] = [];
+  let used = 0;
+  for (const row of rows) {
+    const tall = height(row);
+    if (sheet.length > 0 && (sheet.length >= cap || used + tall > budget)) {
+      sheets.push(sheet);
+      sheet = [];
+      used = 0;
+    }
+    sheet.push(row);
+    used += tall;
+  }
+  if (sheet.length > 0) sheets.push(sheet);
+  // The last sheet also holds its notes: when they do not fit, its last rows start a sheet of their own.
+  const last = sheets[sheets.length - 1];
+  if (last && lastReserve > 0) {
+    let total = last.reduce((sum, row) => sum + height(row), 0);
+    const moved: T[] = [];
+    while (last.length > 1 && total + lastReserve > budget) {
+      const row = last.pop()!;
+      total -= height(row);
+      moved.unshift(row);
+    }
+    if (moved.length > 0) sheets.push(moved);
+  }
   return sheets;
+}
+
+// A development's row: its padding and rule, and each sentence's bullet at 9.3 pt, about 80 characters a line.
+export function developmentHeight(row: Development): number {
+  return 15 + row.sentences.reduce((sum, sentence) => sum + lines(said(sentence), 80) * 20 + 4, 0);
+}
+
+// The developments in sheets of at most DEVELOPMENTS_PER_SHEET that fit a page, for the print view; notes is how many
+// sources not reached leave a line under the last sheet.
+export function developmentSheets(rows: Development[], notes = 0): Development[][] {
+  return sheetsBy(rows, developmentHeight, DEVELOPMENTS_PER_SHEET, notes * PRINT_NOTE);
+}
+
+// A site's title and bullets at 9.6 pt, and its satellite pair: two grids about 276 pixels square with the year and
+// the caption. A site whose words and pair do not fit one page puts the pair on a sheet of its own.
+export const PAIR_HEIGHT = 380;
+export function siteHeight(site: Site): number {
+  return lines(said(site.title), 70) * 21 + 22 + site.sentences.reduce((sum, sentence) => sum + lines(said(sentence), 95) * 21 + 4, 0);
+}
+
+// The cited sources in sheets of at most SOURCES_PER_SHEET that fit a page: each its name and title at 8.3 pt, about
+// 100 characters a line, and its address at 7.4 pt, about 115; the last sheet keeps room for its two closing notes.
+export const SOURCES_PER_SHEET = 18;
+export function sourceSheets(brief: Brief, ids: string[]): string[][] {
+  const height = (id: string) => {
+    const item = itemFor(brief, id);
+    if (!item) return lines(sourceName(brief, id).length, 100) * 16 + 5;
+    const name = `${itemName(item)}. ${item.title}. `.length;
+    return lines(name, 100) * 16 + lines(item.url.replace(/^https?:\/\//, "").length, 115) * 14.3 + 5;
+  };
+  const sheets = sheetsBy(ids, height, SOURCES_PER_SHEET, 2 * PRINT_NOTE);
+  return sheets.length > 0 ? sheets : [[]];
 }
 
 // A run's step, as the stream sends it (ticket 148): facts; source-<key>, done with its items or not_reached with its

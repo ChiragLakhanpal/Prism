@@ -151,23 +151,32 @@
   gap: 14px 16px;
   margin-top: 8px;
 }
+/* Ticket 158: a photo sits in a fixed 4:3 frame on surface-2 and is shown whole, never cropped; a photo that did not
+   load says so inside the frame (components/ResearchImages.tsx). No figure breaks across a page. */
 .research-sheet .photo {
   margin: 0;
   break-inside: avoid;
 }
-.research-sheet .photo img {
+.research-sheet .photo .photo-frame {
   width: 100%;
-  height: 62mm;
-  object-fit: cover;
-  display: block;
+  aspect-ratio: 4 / 3;
+  background: var(--color-surface-2);
   border: 1px solid var(--color-line);
   border-radius: 3px;
 }
+.research-sheet .photo .photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.research-sheet .photo .photo-frame p {
+  font-size: 8.6pt;
+  line-height: 1.45;
+  margin: 0;
+}
 .research-sheet .photos.near {
   margin-top: 14px;
-}
-.research-sheet .photos.near .photo img {
-  height: 48mm;
 }
 .research-sheet .photo figcaption {
   font-size: 8.2pt;
@@ -234,6 +243,7 @@
 }
 .research-sheet .figure {
   margin: 10px 0 4px;
+  break-inside: avoid;
 }
 .research-sheet .pairs {
   display: grid;
@@ -254,11 +264,13 @@
   border: 1px solid var(--color-line);
   line-height: 0;
 }
-.research-sheet .s2 .tiles img {
+.research-sheet .s2 .tiles img,
+.research-sheet .s2 .tiles [data-tile-failed] {
   width: 100%;
   height: auto;
   aspect-ratio: 1;
   display: block;
+  background: var(--color-surface-2);
 }
 .research-sheet .caption {
   font-size: 8.4pt;
