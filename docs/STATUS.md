@@ -15,6 +15,16 @@ Tickets: 146 (rename), 147 (research sources, item store, demo seed), 148 (run, 
 3. Push the night (only after this file says `publish/github` carries it): `! git push https://github.com/ChiragLakhanpal/Prism.git publish/github:main`
 4. The frozen Strata, from the history before the rename (e61cecc6): `! git clone --branch publish/github --single-branch "." "../frozen/strata" && cd "../frozen/strata" && git checkout -B main e61cecc6 && gh repo create ChiragLakhanpal/Strata --public --source . --push --description "Procurement intelligence on World Bank open data, with every claim cited. The original build, October 22 to November 5, 2026."`
 5. Send Surya `.notes/surya-kit.zip` (its README says what he does); merge his pull request when it comes.
+6. Housekeeping, not urgent: six Vite dev servers from ticket 147's removed worktree are still running (the merger's kill was denied): `! kill 92018 92022 93219 93244 93918 93946`
+
+### Progress through the night (Pacific time)
+
+- 19:05: 146 merged (0f69aa6a) and done (04a6f605); the gate's limit set to 180 s (f0f79f06).
+- 19:25: 147 merged (b668ddc7) and done (b56c2aa2).
+- 19:45: 148 and 149 merged together after an integrator joined them to 147's names (0c6b2211) and done (0d4d5903). The seeded P156634 run gives a brief of 70 sentences, all kept by the verifier, citing 26 sources; the tab prints 12 Letter sheets.
+- 19:50: 150 (field photos) building with a hard stop at 23:00; 151's deploy chain started from 0d4d5903 (tables, grants, agent sync, the P156634 seed, the pre-written brief, then live runs for P130164 and P127203).
+
+What the demo shows, honestly: P156634's brief is written live by the model from 29 items gathered by hand on November 5 and loaded as a saved run, because the product has no web search of its own and GDELT refused this computer's network all afternoon. Any other project's brief runs live on the product's sources: the Bank's ISR narrative and the project's notices (always there), the outlets' feeds, the Inspection Panel register, Sentinel-2 tiles, Mastodon, and GDELT if it answers from Azure; it will have fewer outside voices and says what it could not see. Demo on P156634.
 
 Decision taken for you at 19:10 PST (the orchestrator, while you sleep): the gate's limit in `gates/steps.toml` is 180 seconds for the night, up from 150, because the rename's merge passed with 1 second to spare (149.0 s) and tickets 147 to 149 add tests; the trim that earns the limit back is ticket 124. Put it back to 150 when 124 lands, or tell me to.
 
