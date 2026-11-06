@@ -5191,3 +5191,7 @@ The merger parked this on November 6, 2026. Nothing ran tonight. Run it from a s
   It worked if the deploy exits 0 and prints the App's address. Record the deployment id and the time here.
 
 - If "Tickets 159 and 160, the sixth deploy of the Prism night" has not run yet, this one redeploy from a snapshot at or after e6b3afc9 ships tickets 159, 160 and 161 together. Run it once, then ticket 160's check from that block.
+
+## Tickets 162 to 165, the eighth deploy of the Prism night
+
+Run by the orchestrator on November 6, 2026 from a snapshot of 072204d4 (`git archive` into the session scratchpad, the main checkout's `web/node_modules` linked in, `ops/app/deploy_app.py --keep-secrets` with `--env-file` pointed at the main checkout's env file through a wrapper that builds the path inside Python). Deployment 01f1da36d78e19a787934b5da00efd3b, made at 23:07:30 UTC (15:07 PST), succeeded; the deploy exited 0 at 15:14 PST and printed the App's address. It ships the research talk at `/present/research` (tickets 162 to 165), behind the deck's password (`config/deck.toml` `[gate]`; the server guards the new addresses as it guards `/present`). No seed, no secret, no threshold changed, and no brief needs writing again. Check: signed in, open https://strata-7405609289499029.9.azure.databricksapps.com/present/research, give the deck's password, press through slide 4 and see the timeline figure draw in a step at a time; open `/present/research/notes` in a second window and see it follow.
