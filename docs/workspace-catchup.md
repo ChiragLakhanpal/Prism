@@ -5157,3 +5157,15 @@ The merger parked this on November 5, 2026. Nothing ran tonight. Run it from a s
   4. No brief needs writing again: ticket 158 changes how the tab and the print show the stored briefs, not the briefs.
 
   Record here under ticket 158, with the time: the deployment id, each project's three counts from step 2 and the rerun's 0, and how many tile GETs answered 200 and how many 502.
+
+## Tickets 159 and 160, the sixth deploy of the Prism night
+
+The merger parked this on November 6, 2026. Nothing ran tonight. Run it from a snapshot at or after the later of the two merges, with the main checkout's `web/node_modules` linked into the snapshot and `--env-file` pointed at the main checkout's env file.
+
+- Ticket 159 (merge commit 2a41a07c, branch `worktree-agent-a497265aee0c9f3a2` at feec1ab8) needs only the App redeploy: no seed, and no brief needs writing again, because the stored briefs do not change. It ships the shorter progress rail on the Deep research tab: one line per step with only its result, the read date once under the step count, the sources' notes behind a closed disclosure, and a rail that does not move as the run streams. From the snapshot's root:
+
+      uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+  It worked if the deploy exits 0 and prints the App's address. Record the deployment id and the time here.
+
+- Ticket 160 (the App loads its cached tiles and photos into memory at startup) is building in parallel and will add its line here. If it merges before the deploy runs, one redeploy from a snapshot at or after its merge ships both tickets.
