@@ -461,11 +461,15 @@ def test_the_server_reads_the_demo_s_pages_ahead_as_the_app_itself_and_a_command
         async def run():
             async with app.router.lifespan_context(app):
                 await asyncio.to_thread(app.state.warm.ran.wait, 10)
+                # The cached tiles and every team's field photos load into memory too, as the App (ticket 160).
+                assert await asyncio.to_thread(app.state.preloaded.wait, 10)
         asyncio.run(run())
 
     read = [(auth, text) for kind, auth, text in calls if kind == "statement"]
     assert any("strata.gold.project" in text for _, text in read)
     assert any("strata.ops.pipeline_runs" in text for _, text in read)
+    assert any("strata.ops.research_cache WHERE source_key" in text for _, text in read)
+    assert any("FROM strata.ops.field_photos\nORDER BY" in text for _, text in read)
     assert {auth for auth, _ in read} == {"Bearer app-not-real"}
 
 

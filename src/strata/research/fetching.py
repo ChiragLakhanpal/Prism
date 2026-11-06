@@ -255,6 +255,17 @@ class TableCache:
         status, headers, body = result.rows[0]
         return int(status), json.loads(headers), base64.b64decode(body)
 
+    EVERY = ("SELECT url, status, headers, body FROM strata.ops.research_cache WHERE source_key = :source_key "
+             "ORDER BY fetched_at DESC, url")
+
+    def every(self, source_key: str) -> Iterator[tuple[str, Answer]]:
+        """Every answer kept for a source, newest first, as (address, answer), in one query: the 162 tiles of
+        November 6, 2026 were about 5 MB, well inside the warehouse's inline answer (ticket 160)."""
+        with opened(self.engine) as engine:
+            result = engine.run(self.EVERY, {"source_key": source_key})
+        for url, status, headers, body in result.rows:
+            yield url, (int(status), json.loads(headers), base64.b64decode(body))
+
     def put(self, source_key: str, url: str, answer: Answer, at: dt.datetime) -> None:
         status, headers, body = answer
         at = at.astimezone(dt.UTC)

@@ -248,7 +248,8 @@ def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.E
     that drives the app's routes as the app itself, such as the seed command (ticket 41). Such a command also gives
     the_app, the engine it opened with _the_app_s_engine(), so the whole run shares one token (ticket 129).
     read_ahead reads the demo's pages into the pages the app keeps when it starts and every hour after
-    (src/strata/server/warm.py), as the server does; a command or a test that drives the routes leaves it off."""
+    (src/strata/server/warm.py), and the cached tiles and the field photos into the routes' memory when it starts
+    (ticket 160), as the server does; a command or a test that drives the routes leaves it off."""
     environ = os.environ if environ is None else environ
     thresholds = load_thresholds()
     timeout = thresholds.value("app.stamp_timeout_seconds")
@@ -291,4 +292,5 @@ def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.E
                       warm=_warm(environ, thresholds) if read_ahead else None,
                       research=ResearchStore(state) if state else None,
                       field_photos=PhotoStore(state, photo_files) if state and photo_files else None,
-                      research_writer=lambda: research_writer.from_environment(environ))
+                      research_writer=lambda: research_writer.from_environment(environ),
+                      preload=read_ahead)

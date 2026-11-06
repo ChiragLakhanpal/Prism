@@ -351,7 +351,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                field_photos: PhotoStore | None = None,
                new_photo_id: Callable[[], str] = photo_routes.new_photo_id,
                photo_places: Callable | None = None,
-               research_tiles: tile_routes.Tiles | None = None) -> FastAPI:
+               research_tiles: tile_routes.Tiles | None = None, preload: bool = False) -> FastAPI:
     """The app.
 
     environ is the settings every tool the app runs itself reads its services' addresses and keys from
@@ -422,6 +422,11 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     its as-of day and the viewer's role (src/strata/server/page_cache.py, ticket 125), so its second view reads nothing;
     without it, every view reads the warehouse. warm reads the demo's pages into it when the App starts and every hour
     after, as the App itself (src/strata/server/warm.py); without it, nothing is read ahead.
+
+    preload loads the cached Sentinel-2 tiles and every team's field photos into the routes' memory when the App starts,
+    in one pass on a thread of its own, as the App itself, so the health check and the first page never wait on it
+    (ticket 160); app.state.preloaded is set when the pass ends. Without it, the first tile request loads the tiles,
+    and each photo is kept after its first read.
     """
     engine_for = engine_for or engines.from_environment()
     runner = runner or no_agent
@@ -441,12 +446,28 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
         except (OSError, ValueError):  # an address no file can have: a NUL byte, or a name over 255 bytes
             return None
 
+    # The loads into memory the routes give (ticket 160), run in order on one thread when the App starts.
+    preloads: list[Callable[[], None]] = []
+    preloaded = threading.Event()
+
+    def run_preloads() -> None:
+        try:
+            for load in preloads:
+                try:
+                    load()
+                except Exception:  # a load that fails leaves its route reading as before
+                    log.exception("A load into memory when the App started failed; its route reads as before.")
+        finally:
+            preloaded.set()
+
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
         if usage is not None:
             usage.start()
         if warm is not None:  # the demo's pages, read ahead on a thread of the warm's own (ticket 125)
             warm.start()
+        if preload:  # the cached tiles and the field photos, on a thread of their own (ticket 160)
+            threading.Thread(target=run_preloads, name="strata-preload", daemon=True).start()
         try:
             yield
         finally:
@@ -464,6 +485,7 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
 
     app = FastAPI(title="Prism", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan,
                   dependencies=[Depends(view_routes.make_guard(lambda: view_rules, officer))])
+    app.state.preloaded = preloaded
     app.add_exception_handler(view_routes.ViewRefused, lambda _request, refusal: JSONResponse(
         refusal.body, status_code=refusal.status, headers={"Cache-Control": "no-store"}))
     app.add_middleware(view_routes.ViewParams, officer=officer, views=lambda: view_rules, today=today)
@@ -1012,13 +1034,17 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
     # stands in for the registry's source and the live fetch in a test.
     from strata.research import fetching as research_fetching
 
-    tile_routes.add_routes(app, tiles=research_tiles or (lambda: tile_routes.Tiles.from_registry(
-        cache=research_fetching.TableCache(research.engine) if research is not None else None)))
+    preloads.append(tile_routes.add_routes(app, tiles=research_tiles or (lambda: tile_routes.Tiles.from_registry(
+        cache=research_fetching.TableCache(research.engine) if research is not None else None)),
+        memory_bytes=int(thresholds.value("research.tile_memory_bytes"))))
 
     # Field photos (ticket 150): a World Bank staff viewer's photos from a mission, which only their team sees, through
     # the one access rule. photo_places stands in for the project's locations in a test.
-    photo_routes.add_routes(app, engine_for=engine_for, store=field_photos, access=access, now=now,
-                            new_photo_id=new_photo_id, reference=request_reference, places=photo_places)
+    # Each photo it served is kept in memory, and every team's photos load at startup (ticket 160).
+    preloads.append(photo_routes.add_routes(
+        app, engine_for=engine_for, store=field_photos, access=access, now=now, new_photo_id=new_photo_id,
+        reference=request_reference, places=photo_places,
+        memory_bytes=int(thresholds.value("research.photo_memory_bytes"))))
 
     # An implementing agency's private uploads of its plan (ticket 38), through the one access rule.
     upload_routes.add_routes(app, engine_for=engine_for, store=uploads, access=access, today=today, now=now,

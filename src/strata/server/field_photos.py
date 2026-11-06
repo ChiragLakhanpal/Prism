@@ -21,7 +21,10 @@ from __future__ import annotations
 
 import datetime as dt
 import logging
+import threading
+import time
 import uuid
+from collections import OrderedDict
 from collections.abc import Callable
 from urllib.parse import unquote
 
@@ -46,6 +49,47 @@ PHOTO = r"^fph-[0-9a-f]{12}$"
 
 def new_photo_id() -> str:
     return f"{field_photos.PREFIX}{uuid.uuid4().hex[:12]}"
+
+
+class PhotoMemory:
+    """Each photo's row and file after its first read, by photo id, in this process, within budget_bytes
+    (research.photo_memory_bytes), the oldest kept going first (ticket 160). It holds no access rule: the route asks
+    the one rule on every request before it serves a kept photo, exactly as for one it reads."""
+
+    def __init__(self, budget_bytes: int):
+        self.budget = budget_bytes
+        self.held: OrderedDict[str, tuple[Photo, bytes]] = OrderedDict()
+        self.size = 0
+        self.lock = threading.Lock()
+
+    def get(self, photo_id: str) -> tuple[Photo, bytes] | None:
+        with self.lock:
+            return self.held.get(photo_id)
+
+    def has_room(self, size: int) -> bool:
+        with self.lock:
+            return self.size + size <= self.budget
+
+    def put(self, photo: Photo, data: bytes) -> bool:
+        """Keep the photo, letting the oldest go until it fits. False for a photo larger than the whole budget."""
+        if len(data) > self.budget:
+            return False
+        with self.lock:
+            self._drop(photo.photo_id)
+            while self.held and self.size + len(data) > self.budget:
+                self._drop(next(iter(self.held)))
+            self.held[photo.photo_id] = (photo, data)
+            self.size += len(data)
+        return True
+
+    def forget(self, photo_id: str) -> None:
+        with self.lock:
+            self._drop(photo_id)
+
+    def _drop(self, photo_id: str) -> None:
+        found = self.held.pop(photo_id, None)
+        if found is not None:
+            self.size -= len(found[1])
 
 
 def refused(status: int, code: str, **details) -> JSONResponse:
@@ -95,9 +139,39 @@ def read_item(store: PhotoStore | None, access: Access, viewer: Viewer, evidence
 
 def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PhotoStore | None, access: Access,
                now: Callable[[], dt.datetime], new_photo_id: Callable[[], str] = new_photo_id,
-               reference: Callable[[], str], places: Callable | None = None) -> None:
+               reference: Callable[[], str], places: Callable | None = None,
+               memory_bytes: int = 0) -> Callable[[], None]:
     """places(engine, project_id) gives the project's locations, for the place a photo's position is nearest; by
-    default, the project's record as the deep research readers read it (src/strata/research/project.py)."""
+    default, the project's record as the deep research readers read it (src/strata/research/project.py).
+
+    The photo route keeps each photo it served in memory, within memory_bytes (research.photo_memory_bytes); the store
+    forgets one it keeps again or removes. Returns the load of every team's photos into that memory, which the App runs
+    when it starts on a thread of its own (ticket 160)."""
+    memory = PhotoMemory(memory_bytes)
+    if store is not None:
+        store.on_forget(memory.forget)
+
+    def load() -> None:
+        """Every team's photos into memory, newest first, as the App itself, until the next would pass the budget."""
+        if store is None:
+            return
+        started, count, size, stopped = time.monotonic(), 0, 0, False
+        try:
+            for photo in store.every():
+                if memory.get(photo.photo_id) is not None:
+                    continue
+                data = store.file(photo)
+                if not memory.has_room(len(data)):
+                    stopped = True
+                    break
+                memory.put(photo, data)
+                count, size = count + 1, size + len(data)
+        except (EngineError, OSError):
+            log.warning("The photo store did not answer the load of the field photos; each photo is read on its "
+                        "first request.", exc_info=True)
+        log.info("The photo route loaded %d field photos, %.1f MB, into memory in %.1f seconds%s.", count,
+                 size / 1_048_576, time.monotonic() - started,
+                 f", and stopped at the memory budget of {memory_bytes / 1_048_576:.0f} MB" if stopped else "")
 
     def current_viewer(request: Request) -> Viewer:
         return viewer_from_headers(request.headers)
@@ -192,13 +266,19 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: PhotoStore 
             return refused(401, "no_identity")
         if store is None:
             return refused(404, "unknown_photo")
+        # A photo kept in memory skips the store, never the access rule, which runs on every request (ticket 160).
+        kept = memory.get(photo_id)
         try:
-            photo = store.get(photo_id)
+            photo = kept[0] if kept else store.get(photo_id)
             if photo is None or photo.project_id != project_id:
                 return refused(404, "unknown_photo")
             if view != STAFF or not access.may_read(viewer, photo.team_key, photo.uploader_id):
                 return refused(403, "not_your_team")
-            data = store.file(photo)
+            data = kept[1] if kept else store.file(photo)
         except (EngineError, OSError) as error:
             return failed(f"field photo {photo_id}", error)
+        if not kept:
+            memory.put(photo, data)
         return Response(data, media_type=photo.media_type, headers={"Cache-Control": "private, no-store"})
+
+    return load

@@ -14,6 +14,7 @@ import copy
 import datetime as dt
 import json
 import subprocess
+import threading
 from contextlib import contextmanager
 from io import BytesIO
 from pathlib import Path
@@ -88,7 +89,7 @@ class World:
     """The app on one DuckDB file that holds the fixture, the seeded research run and the app's own tables, the photo
     files in a folder beside it, and the recorded writer and judge."""
 
-    def __init__(self, folder: Path, fixture_db: Path, writer: RecordedWriter | None = None):
+    def __init__(self, folder: Path, fixture_db: Path, writer: RecordedWriter | None = None, preload: bool = False):
         database = seeded_copy(fixture_db, folder)
         self.database = DuckDBEngine.open(database)
         self.database.run(TABLE.read_text())
@@ -108,7 +109,7 @@ class World:
                               judge=RecordedJudge(RECORDED / "P156634.judged.json"), access=self.access,
                               field_photos=self.photos, today=lambda: TODAY, now=lambda: NOW,
                               new_run_id=lambda: f"research-{next(numbers):04d}",
-                              new_photo_id=lambda: f"fph-{next(numbers):012x}")
+                              new_photo_id=lambda: f"fph-{next(numbers):012x}", preload=preload)
 
     def add(self, headers=ANA, data: bytes | None = None, caption: str = CAPTION, name: str = "intake.jpg"):
         return call(self.app, "POST", ROUTE,
@@ -269,3 +270,118 @@ def test_the_tab_s_recorded_photo_answers_are_what_the_routes_answer(fixture_db,
 
     for name, text in answers(tmp_path, fixture_db).items():
         assert text == (OUT / name).read_text(), f"Record {name} again: uv run --frozen python tests/record_field_photos_api.py"
+
+
+# ── Ticket 160: the photos in memory ──
+
+def store_reads(world) -> list[str]:
+    """The photo store's reads of a photo's row (get) and its file (file), kept in order as the routes make them."""
+    reads: list[str] = []
+    for name in ("get", "file"):
+        real = getattr(world.photos, name)
+
+        def counted(*args, _real=real, _name=name, **kwargs):
+            reads.append(_name)
+            return _real(*args, **kwargs)
+
+        setattr(world.photos, name, counted)
+    return reads
+
+
+def rule_asked(world) -> list[str]:
+    """Each viewer the one access rule was asked about whether they may read a photo."""
+    asked: list[str] = []
+    real = world.access.may_read
+
+    def may_read(viewer, team_key, uploader_id):
+        asked.append(viewer.name)
+        return real(viewer, team_key, uploader_id)
+
+    world.access.may_read = may_read
+    return asked
+
+
+def test_a_photo_s_second_read_comes_from_memory_and_the_access_rule_still_runs_on_every_request(world):
+    url = world.add().json()["photo"]["url"]
+    reads, asked = store_reads(world), rule_asked(world)
+
+    first = call(world.app, "GET", url, BEN)
+    assert first.status_code == 200 and reads == ["get", "file"]
+    second = call(world.app, "GET", url, ANA)
+    assert second.status_code == 200 and second.content == first.content == photo()
+    assert second.headers["cache-control"] == "private, no-store"
+    # The photo is kept in memory: no read of the table or the files.
+    assert reads == ["get", "file"]
+    # Carl is on no team of Ana's: the rule still answers no on the kept photo, before any bytes are served.
+    outsider = call(world.app, "GET", url, CARL)
+    assert outsider.status_code == 403 and outsider.json()["code"] == "not_your_team"
+    assert photo() not in outsider.content
+    assert asked == ["Ben Example", "Ana Example", "Carl Example"]
+    # The kept photo is still only this project's.
+    assert call(world.app, "GET", url.replace("P156634", "P000001"), ANA).status_code == 404
+    assert reads == ["get", "file"]
+
+
+def test_a_photo_the_store_forgets_is_read_again_and_a_new_photo_is_forgotten_as_it_is_kept(world):
+    added = world.add().json()["photo"]
+    call(world.app, "GET", added["url"], ANA)
+    reads = store_reads(world)
+    forgotten: list[str] = []
+    world.photos.on_forget(forgotten.append)
+
+    world.photos.forget(added["photo_id"])
+    answer = call(world.app, "GET", added["url"], ANA)
+
+    assert answer.status_code == 200 and answer.content == photo()
+    assert reads == ["get", "file"]
+    assert forgotten == [added["photo_id"]]
+    newer = world.add().json()["photo"]
+    assert forgotten == [added["photo_id"], newer["photo_id"]]
+
+
+def test_the_memory_keeps_photos_within_its_budget_and_lets_the_oldest_go():
+    from strata.research.photos import Photo
+
+    def kept(number: int) -> Photo:
+        return Photo(f"fph-{number:012x}", "P156634", "team:kenya-water", "6041@1984", "Ana", "a.jpg", "A caption.",
+                     None, None, None, None, None, f"fph-{number:012x}.jpg", "image/jpeg", NOW)
+
+    memory = photo_routes.PhotoMemory(budget_bytes=10)
+    for number in (1, 2, 3):
+        memory.put(kept(number), b"1234")
+    assert memory.get("fph-000000000001") is None
+    assert memory.get("fph-000000000003")[1] == b"1234" and memory.get("fph-000000000002") is not None
+    assert memory.put(kept(4), b"x" * 11) is False and memory.get("fph-000000000004") is None
+
+
+def test_the_app_loads_every_team_s_photos_when_it_starts_and_answers_its_health_check_at_once(fixture_db, tmp_path,
+                                                                                               caplog):
+    world = World(tmp_path, fixture_db, preload=True)
+    ours = world.add().json()["photo"]["url"]
+    carls = world.add(headers=CARL).json()["photo"]["url"]
+    held = threading.Event()
+    every = world.photos.every
+    world.photos.every = lambda: held.wait(10) and every()
+
+    async def start():
+        async with world.app.router.lifespan_context(world.app):
+            transport = httpx.ASGITransport(app=world.app)
+            async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
+                health = await client.get("/api/health")
+            # The health check answered while the load was still waiting on the store.
+            assert not world.app.state.preloaded.is_set()
+            held.set()
+            assert await asyncio.to_thread(world.app.state.preloaded.wait, 10)
+            return health
+
+    with caplog.at_level("INFO"):
+        assert asyncio.run(start()).status_code == 200
+    assert "The photo route loaded 2 field photos" in caplog.text and " seconds." in caplog.text
+    assert "The tile route loaded" in caplog.text
+
+    reads, asked = store_reads(world), rule_asked(world)
+    assert call(world.app, "GET", ours, BEN).content == photo()
+    assert call(world.app, "GET", carls, CARL).content == photo()
+    assert call(world.app, "GET", carls, ANA).status_code == 403
+    assert reads == []
+    assert asked == ["Ben Example", "Carl Example", "Ana Example"]

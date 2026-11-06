@@ -35,6 +35,17 @@ stored_step_seconds = 1.0
 # apart.
 usual_seconds_low = 90
 usual_seconds_high = 180
+# The most bytes of Sentinel-2 tiles the App loads into memory when it starts, from strata.ops.research_cache under
+# source_key sentinel2_mosaic, newest first, in a background thread, so the first person to open a project's Deep
+# research tab never waits on the cache table (src/strata/server/research_tiles.py, ticket 160). Source: the fifth
+# deploy of November 6, 2026 (.notes/151-ops.md): the seed kept 162 tiles, about 5 MB, and each tile read from the
+# table took about 1.5 seconds, 36 to 54 of them for a tab and its panel. 64 MB holds every tile with room to spare.
+tile_memory_bytes = 67108864
+# The most bytes of field photos the App keeps in memory after a photo's first read and loads when it starts, every
+# team's, oldest out (src/strata/server/field_photos.py, ticket 160). The access rule still runs on every request
+# before a photo's bytes are served. Source: the fifth deploy of November 6, 2026 (.notes/151-ops.md): each photo read
+# was one warehouse query and one Files API read, 2.4 to 3 seconds, 10 seconds cold, and 12 photos were kept.
+photo_memory_bytes = 67108864
 
 # These are the ingestion caps. The layout parser (Route B) tries at most this many PDF pages a
 # day, counted in UTC across every project, whether it reads the page or fails on it. A run that

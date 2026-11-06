@@ -226,6 +226,16 @@ class PhotoStore:
 
     def __init__(self, engine: Callable[[], Engine], files: PhotoFiles):
         self.engine, self.files = engine, files
+        self.forgets: list[Callable[[str], None]] = []
+
+    def on_forget(self, forget: Callable[[str], None]) -> None:
+        """forget(photo_id) is called each time the store keeps, replaces or removes a photo, so a copy kept elsewhere
+        (the photo route's memory, ticket 160) goes. A path that removes a photo must call forget() too."""
+        self.forgets.append(forget)
+
+    def forget(self, photo_id: str) -> None:
+        for forget in self.forgets:
+            forget(photo_id)
 
     @contextmanager
     def _open(self):
@@ -250,14 +260,22 @@ class PhotoStore:
         return [dict(zip(result.columns, row)) for row in result.rows]
 
     def create(self, photo: Photo, data: bytes) -> None:
-        """Keep a photo: its file first, then its row, which makes it readable."""
-        self.files.put(photo.stored_as, data)
-        with self._open() as engine:
-            engine.insert_rows("strata.ops.field_photos", PHOTO_COLUMNS, [(
-                photo.photo_id, photo.project_id, photo.team_key, photo.uploader_id, photo.uploader_name,
-                photo.file_name, photo.caption, photo.taken_on, photo.latitude, photo.longitude, photo.place,
-                photo.geo_loc_id, photo.stored_as, photo.media_type,
-                photo.uploaded_at.astimezone(dt.UTC).replace(tzinfo=None), photo.uploaded_on)])
+        """Keep a photo: its file first, then its row, which makes it readable. Any copy of a photo with its id goes."""
+        try:
+            self.files.put(photo.stored_as, data)
+            with self._open() as engine:
+                engine.insert_rows("strata.ops.field_photos", PHOTO_COLUMNS, [(
+                    photo.photo_id, photo.project_id, photo.team_key, photo.uploader_id, photo.uploader_name,
+                    photo.file_name, photo.caption, photo.taken_on, photo.latitude, photo.longitude, photo.place,
+                    photo.geo_loc_id, photo.stored_as, photo.media_type,
+                    photo.uploaded_at.astimezone(dt.UTC).replace(tzinfo=None), photo.uploaded_on)])
+        finally:
+            self.forget(photo.photo_id)
+
+    def every(self) -> list[Photo]:
+        """Every team's photos, newest first: for the load into the photo route's memory, which asks the access rule
+        on every request before it serves one."""
+        return [self._photo(row) for row in self._rows("every_field_photo")]
 
     def get(self, photo_id: str) -> Photo | None:
         """One photo by its id, whatever its team: the caller asks the access rule."""

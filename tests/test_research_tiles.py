@@ -7,6 +7,7 @@ Every fetch here is a fake that counts its calls; no test reaches EOX. The tile 
 """
 
 import asyncio
+import datetime as dt
 import sys
 from pathlib import Path
 
@@ -184,3 +185,79 @@ def test_the_seed_on_a_state_file_reads_the_stored_runs(fixture_db, tmp_path, ca
     out = capsys.readouterr().out
     assert len(fetch.calls) > 0
     assert f"Tiles kept now: {len(fetch.calls)}; kept already: 0; refused: 0." in out
+
+
+# ── Ticket 160: the App loads its cached tiles into memory at startup ──
+
+EOX_2018 = EOX.replace("s2cloudless-2025_3857", "s2cloudless-2018_3857")
+EOX_WEST = EOX.replace("/20005.jpg", "/20004.jpg")
+MB = 1_048_576
+
+
+def counted(engine):
+    """The engine factory a TableCache opens, keeping a count of each time it is opened."""
+    opened: list[int] = []
+
+    def factory():
+        opened.append(1)
+        return engine.cursor()
+
+    factory.opened = opened
+    return factory
+
+
+def kept_in_table(engine, url: str, body: bytes = TILE, hour: int = 1) -> None:
+    fetching.TableCache(lambda: engine.cursor()).put(
+        "sentinel2_mosaic", url, (200, {"content-type": "image/jpeg"}, body),
+        dt.datetime(2026, 11, 6, hour, tzinfo=dt.UTC))
+
+
+def test_the_load_fills_memory_from_the_cache_table_in_one_query_and_the_route_then_reads_nothing(caplog):
+    engine = research_tables()
+    kept_in_table(engine, EOX)
+    kept_in_table(engine, EOX_2018)
+    opened = counted(engine)
+    fetch = eox(status=500)
+    source = research_tiles.Tiles.from_registry(fetch=fetch, cache=fetching.TableCache(opened))
+
+    with caplog.at_level("INFO", logger="strata.server.research_tiles"):
+        assert source.load(64 * MB) == 2
+    assert len(opened.opened) == 1
+    assert "The tile route loaded 2 cached tiles" in caplog.text and " seconds." in caplog.text
+
+    app = create_app(research_tiles=source)
+    for path in (ROUTE, "/api/research/tiles/2018/15/16666/20005.jpg"):
+        answer = call(app, path)
+        assert answer.status_code == 200 and answer.content == TILE
+    # Served from memory: no read of the cache table, and EOX is not asked.
+    assert len(opened.opened) == 1
+    assert fetch.calls == []
+    # The load runs once per process: asking again reads nothing.
+    assert source.load(64 * MB) is None
+    assert len(opened.opened) == 1
+
+
+def test_the_byte_budget_stops_the_load_with_the_newest_tiles_kept(caplog):
+    engine = research_tables()
+    kept_in_table(engine, EOX_2018, hour=1)
+    kept_in_table(engine, EOX_WEST, hour=2)
+    kept_in_table(engine, EOX, hour=3)
+    source = tiles(eox(status=500), engine)
+
+    with caplog.at_level("INFO", logger="strata.server.research_tiles"):
+        assert source.load(2 * len(TILE)) == 2
+    assert set(source.held) == {EOX, EOX_WEST}
+    assert "stopped at the memory budget" in caplog.text
+
+
+def test_the_first_tile_request_loads_the_cached_tiles_when_startup_did_not():
+    engine = research_tables()
+    kept_in_table(engine, EOX)
+    kept_in_table(engine, EOX_2018)
+    opened = counted(engine)
+    source = research_tiles.Tiles.from_registry(fetch=eox(status=500), cache=fetching.TableCache(opened))
+    app = create_app(research_tiles=source)
+
+    assert call(app, ROUTE).content == TILE
+    assert call(app, "/api/research/tiles/2018/15/16666/20005.jpg").content == TILE
+    assert len(opened.opened) == 1

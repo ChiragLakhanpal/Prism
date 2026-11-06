@@ -20,6 +20,7 @@ from __future__ import annotations
 import datetime as dt
 import logging
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
@@ -58,6 +59,7 @@ class Tiles:
     pacer: fetching.Pacer = field(default_factory=fetching.Pacer)
     held: dict[str, bytes] = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock)
+    load_started: bool = False
 
     @classmethod
     def from_registry(cls, *, fetch: fetching.Fetch | None = None, cache=None,
@@ -74,6 +76,37 @@ class Tiles:
         if year not in self.years or zoom != self.zoom or not (0 <= row < 2 ** zoom and 0 <= col < 2 ** zoom):
             return None
         return self.endpoint.format(year=year, zoom=zoom, row=row, col=col)
+
+    def load(self, budget_bytes: int) -> int | None:
+        """Every tile the cache table keeps, newest first, into memory, until the next would pass budget_bytes; once
+        per process (ticket 160). Returns how many it loaded, or None when a load already started. A tile it leaves
+        out still comes from the table, then EOX."""
+        with self.lock:
+            if self.load_started:
+                return None
+            self.load_started = True
+        every = getattr(self.cache, "every", None)
+        started, count, size, stopped = time.monotonic(), 0, 0, False
+        if callable(every):
+            try:
+                for url, answer in every(SOURCE_KEY):
+                    if not is_image(answer):
+                        continue
+                    with self.lock:
+                        if url in self.held:
+                            continue
+                        if size + len(answer[2]) > budget_bytes:
+                            stopped = True
+                            break
+                        self.held[url] = answer[2]
+                    count, size = count + 1, size + len(answer[2])
+            except EngineError:
+                log.warning("The research cache did not answer the load of the cached tiles; each tile is read on its "
+                            "first request.", exc_info=True)
+        log.info("The tile route loaded %d cached tiles, %.1f MB, into memory in %.1f seconds%s.", count,
+                 size / 1_048_576, time.monotonic() - started,
+                 f", and stopped at the memory budget of {budget_bytes / 1_048_576:.0f} MB" if stopped else "")
+        return count
 
     def kept(self, url: str) -> bytes | None:
         """The tile from memory or the cache table, without asking EOX."""
@@ -126,16 +159,23 @@ class Tiles:
         return "fetched", answer[2]
 
 
-def add_routes(app: FastAPI, *, tiles: Tiles | Callable[[], Tiles]) -> None:
-    """tiles is the Tiles the route answers from, or a function that makes it on the first request."""
+def add_routes(app: FastAPI, *, tiles: Tiles | Callable[[], Tiles], memory_bytes: int) -> Callable[[], None]:
+    """tiles is the Tiles the route answers from, or a function that makes it on the first use. Returns the load of
+    the cached tiles into memory, within memory_bytes (research.tile_memory_bytes), which the App runs when it starts
+    on a thread of its own (ticket 160); when it has not, the first tile request runs it."""
     made: dict[str, Tiles] = {}
+    making = threading.Lock()
 
     def current() -> Tiles:
         if isinstance(tiles, Tiles):
             return tiles
-        if "tiles" not in made:
-            made["tiles"] = tiles()
-        return made["tiles"]
+        with making:
+            if "tiles" not in made:
+                made["tiles"] = tiles()
+            return made["tiles"]
+
+    def load() -> None:
+        current().load(memory_bytes)
 
     @app.get("/api/research/tiles/{year}/{zoom}/{row}/{col}.jpg")
     def tile(year: int = Path(ge=1900, le=2999), zoom: int = Path(ge=0, le=24), row: int = Path(ge=0),
@@ -144,7 +184,10 @@ def add_routes(app: FastAPI, *, tiles: Tiles | Callable[[], Tiles]) -> None:
         url = source.address(year, zoom, row, col)
         if url is None:
             return JSONResponse({"code": "unknown_tile"}, status_code=404, headers={"Cache-Control": "no-store"})
+        source.load(memory_bytes)  # nothing once the startup load (or an earlier request) began it
         status, body = source.get(url)
         if body is None:
             return JSONResponse({"code": "tile_server"}, status_code=502, headers={"Cache-Control": "no-store"})
         return Response(body, media_type="image/jpeg", headers=HEADERS)
+
+    return load
