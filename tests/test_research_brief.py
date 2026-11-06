@@ -141,7 +141,11 @@ def test_the_brief_has_every_section_in_order_and_every_sentence_cites_an_item(f
 
     assert [key for key in brief if key in SECTIONS] == SECTIONS
     assert brief["headline"]["text"].startswith("In the last months before its closing date")
-    assert 4 <= len(brief["picture"]) <= 6 and 2 <= len(brief["bottom_line"]) <= 4
+    assert 4 <= len(brief["picture"]) <= 15 and 2 <= len(brief["bottom_line"]) <= 4
+    # The picture as short paragraphs of three to five sentences, each sentence keeping its paragraph (ticket 156).
+    paragraphs = [[said for said in brief["picture"] if said["paragraph"] == number]
+                  for number in sorted({said["paragraph"] for said in brief["picture"]})]
+    assert len(paragraphs) >= 2 and all(3 <= len(paragraph) <= 5 for paragraph in paragraphs)
     assert 5 <= len(brief["questions"]) <= 7 and 1 <= len(brief["could_not_see"]) <= 3
     developments = brief["developments"]
     assert [entry["date"] for entry in developments[:3]] == ["2026-10-13", "2026-10-12", "2026-10-08"]

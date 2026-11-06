@@ -1,7 +1,9 @@
 // The Deep research brief as the browser prints it (ticket 149): the sample's sheets
 // (.notes/prism-sample/template/build5.py and its report5.html), one Letter sheet per section with the running header
-// (the project and the section) and the footer (Prism, the read date, the one-line disclaimer and the sheet's number),
-// the navy cover first. It sits outside the app's frame, under the body, so the print stylesheet
+// (the project and the section) and a footer that is the sheet's number alone, the navy cover first (ticket 156). Each
+// sheet opens with its section's title over a navy rule, so every main heading starts a page; the picture reads as short
+// paragraphs, and developments, sites and questions as one-sentence bullets. The one-line disclaimer sits once, on the
+// last sheet. It sits outside the app's frame, under the body, so the print stylesheet
 // (styles/research.css) can hide the app's chrome and show only these sheets; on screen it is never shown.
 // "Download as PDF" calls window.print(), so the browser's own print writes the PDF and no server renders it.
 //
@@ -13,8 +15,13 @@ import type { ReactNode } from "react";
 import logo from "../../assets/world-bank-logo.svg";
 import { Fill } from "../../components/Fill";
 import { copy } from "../../copy";
+import { fieldPhotosPath, type FieldPhoto, type FieldPhotoList } from "../../lib/fieldPhotos";
 import { formatDate } from "../../lib/format";
-import { briefNumbers, developmentSheets, itemFor, itemName, notReachedIn, satelliteFor, sourceName, sourceWords, tileYear, voiceTemplate, type Brief, type ResearchSentence, type Sections } from "../../lib/research";
+import { useLoad } from "../../lib/load";
+import { briefNumbers, developmentSheets, itemFor, itemName, notReachedIn, paragraphsOf, satelliteFor, sourceName, sourceWords, tileYear, voiceTemplate, type Brief, type ResearchSentence, type Sections } from "../../lib/research";
+import { address } from "../../lib/router";
+import { useStore } from "../../lib/store";
+import { withReadParams } from "../../lib/view";
 import { fill } from "../../routes";
 
 const words = copy.research;
@@ -55,7 +62,48 @@ function Sentences({ sentences, numbers }: { sentences: ResearchSentence[]; numb
   );
 }
 
+// One sentence to a bullet (ticket 156).
+function Bullets({ sentences, numbers }: { sentences: ResearchSentence[]; numbers: Map<string, number> }) {
+  return (
+    <ul className="bullets">
+      {sentences.map((sentence, index) => (
+        <li key={index}>
+          <Said sentence={sentence} numbers={numbers} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// A sheet's section title over the navy rule that opens the section (ticket 156).
+function Title({ children }: { children: ReactNode }) {
+  return <h1 className="section">{children}</h1>;
+}
+
+const photoWords = copy.research.photos;
+
+function photoLine(photo: FieldPhoto): string {
+  const when = photo.taken_on ? photoWords.taken(formatDate(photo.taken_on)) : photoWords.noDate;
+  const where = photo.place ? photoWords.near(photo.place) : photoWords.noPlace;
+  return fill(words.photoLine, { when, where });
+}
+
+// A field photo with its caption, the day its camera recorded and its place (ticket 156).
+function PhotoFigure({ photo }: { photo: FieldPhoto }) {
+  return (
+    <figure className="photo" data-print-photo={photo.photo_id}>
+      <img src={photo.url} alt="" />
+      <figcaption>
+        {photo.caption} {photoLine(photo)}
+      </figcaption>
+    </figure>
+  );
+}
+
 type Sheet = { label: string; body: ReactNode };
+
+// The sources on one printed sheet (ticket 156): about as many as a Letter page holds with their addresses.
+const SOURCES_PER_SHEET = 18;
 
 // The sources not reached under the section they feed, one line each, as on screen.
 function NotReachedNote({ brief, sectionKey }: { brief: Brief; sectionKey: keyof Sections }) {
@@ -76,6 +124,10 @@ const capitalFirst = (text: string) => text.charAt(0).toUpperCase() + text.slice
 
 export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: Brief; pid: string; name: string; country: string | null; agencies: string[] }) {
   const { sections } = brief;
+  // The team's field photos (ticket 150), which only the team reads: their own sheet, after the sites.
+  const search = useStore(address).search;
+  const [photoLoad] = useLoad<FieldPhotoList>(withReadParams(fieldPhotosPath(pid), search));
+  const photos = photoLoad.status === "ready" && !photoLoad.data.preview ? photoLoad.data.photos : [];
   const numbers = briefNumbers(sections);
   const read = brief.read_on ? formatDate(brief.read_on) : "";
   const closing = brief.project?.closing_date ? fill(words.cover.closing, { date: formatDate(brief.project.closing_date) }) : null;
@@ -86,15 +138,16 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
     label: words.section.picture,
     body: (
       <>
+        <Title>{words.section.picture}</Title>
         {sections.headline && (
-          <h1>
+          <p className="lead">
             <Said sentence={sections.headline} numbers={numbers} />
-          </h1>
+          </p>
         )}
         <div className="brief">
-          {sections.picture.map((sentence, index) => (
-            <p key={index}>
-              <Said sentence={sentence} numbers={numbers} />
+          {paragraphsOf(sections.picture).map((paragraph, index) => (
+            <p key={index} data-picture-paragraph>
+              <Sentences sentences={paragraph} numbers={numbers} />
             </p>
           ))}
         </div>
@@ -117,14 +170,14 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
       label: title,
       body: (
         <>
-          <h1>{title}</h1>
+          <Title>{title}</Title>
           <table className="dev">
             <tbody>
               {rows.map((row, at) => (
                 <tr key={at}>
                   <td className="d">{row.date_known && row.date ? formatDate(row.date, { style: "table" }) : words.undated}</td>
                   <td>
-                    <Sentences sentences={row.sentences} numbers={numbers} />
+                    <Bullets sentences={row.sentences} numbers={numbers} />
                   </td>
                 </tr>
               ))}
@@ -135,18 +188,22 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
       ),
     });
   });
+  // Each photo sits under the site whose words name its place; the rest get their own sheet after the sites.
+  const siteOf = (photo: FieldPhoto) =>
+    photo.place ? sections.by_site.findIndex((site) => [site.title, ...site.sentences].some((said) => said.text.includes(photo.place!))) : -1;
+  const unplaced = photos.filter((photo) => siteOf(photo) < 0);
   sections.by_site.forEach((site, index) => {
     const satellites = satelliteFor(brief, site);
+    const here = photos.filter((photo) => siteOf(photo) === index);
     sheets.push({
       label: site.location?.name ?? words.section.bySite,
       body: (
         <>
-          <h1>
+          <Title>{index === 0 ? words.section.bySite : words.section.bySiteMore}</Title>
+          <h2>
             <Said sentence={site.title} numbers={numbers} />
-          </h1>
-          <p>
-            <Sentences sentences={site.sentences} numbers={numbers} />
-          </p>
+          </h2>
+          <Bullets sentences={site.sentences} numbers={numbers} />
           {satellites.map((item) => {
             const [first, last] = [item.image_urls[0], item.image_urls[item.image_urls.length - 1]];
             const years = [tileYear(first) ?? "", tileYear(last) ?? ""];
@@ -171,16 +228,39 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
               </div>
             );
           })}
+          {here.length > 0 && (
+            <div className="photos near">
+              {here.map((photo) => (
+                <PhotoFigure key={photo.photo_id} photo={photo} />
+              ))}
+            </div>
+          )}
           {index === sections.by_site.length - 1 && <NotReachedNote brief={brief} sectionKey="by_site" />}
         </>
       ),
     });
   });
+  if (unplaced.length > 0) {
+    sheets.push({
+      label: words.photosSheet,
+      body: (
+        <>
+          <Title>{words.photosSheet}</Title>
+          <p className="note">{words.photosSheetAbout}</p>
+          <div className="photos">
+            {unplaced.map((photo) => (
+              <PhotoFigure key={photo.photo_id} photo={photo} />
+            ))}
+          </div>
+        </>
+      ),
+    });
+  }
   sheets.push({
     label: words.section.voices,
     body: (
       <>
-        <h1>{words.section.voices}</h1>
+        <Title>{words.section.voices}</Title>
         <div className="quotes">
           {sections.voices.map((voice, index) => (
             <blockquote key={index}>
@@ -203,29 +283,42 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
     label: words.section.questions,
     body: (
       <>
-        <h1>{words.section.questions}</h1>
+        <Title>{words.section.questions}</Title>
         <ol className="questions">
           {sections.questions.map((question, index) => (
             <li key={index}>
-              <b>{question.lead}</b> <Sentences sentences={question.sentences} numbers={numbers} />
+              <b>{question.lead}</b>
+              <Bullets sentences={question.sentences} numbers={numbers} />
             </li>
           ))}
         </ol>
         <NotReachedNote brief={brief} sectionKey="questions" />
-        <h2>{words.section.couldNotSee}</h2>
-        <p className="note">
-          <Sentences sentences={sections.could_not_see} numbers={numbers} />
-        </p>
       </>
     ),
   });
+  // What the run could not see on its own sheet, so the questions keep theirs (ticket 156).
   sheets.push({
-    label: words.section.sources,
+    label: words.section.couldNotSee,
     body: (
       <>
-        <h1>{words.section.sources}</h1>
+        <Title>{words.section.couldNotSee}</Title>
+        <Bullets sentences={sections.could_not_see} numbers={numbers} />
+      </>
+    ),
+  });
+  // The sources, SOURCES_PER_SHEET to a sheet, so a long list never runs past its sheet's page.
+  const cited = [...numbers.keys()];
+  const sourceSheets = Array.from({ length: Math.max(1, Math.ceil(cited.length / SOURCES_PER_SHEET)) }, (_, at) => cited.slice(at * SOURCES_PER_SHEET, (at + 1) * SOURCES_PER_SHEET));
+  sourceSheets.forEach((ids, at) => {
+    const title = at === 0 ? words.section.sources : words.section.sourcesMore;
+    const last = at === sourceSheets.length - 1;
+    sheets.push({
+      label: title,
+      body: (
+        <>
+        <Title>{title}</Title>
         <ol className="sources">
-          {[...numbers.keys()].map((id) => {
+          {ids.map((id) => {
             const item = itemFor(brief, id);
             return (
               <li key={id}>
@@ -247,13 +340,18 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
             );
           })}
         </ol>
-        {read && <p className="note">{fill(words.printNote, { date: read })}</p>}
-      </>
-    ),
+        {last && read && <p className="note">{fill(words.printNote, { date: read })}</p>}
+        {last && (
+          <p className="note" data-disclaimer>
+            {words.disclaimer}
+          </p>
+        )}
+        </>
+      ),
+    });
   });
 
   const header = fill(words.header, { name, pid });
-  const footer = fill(words.footer, { date: read });
   return createPortal(
     <div data-research-print lang="en">
       <div className="research-sheet navy" data-sheet="cover">
@@ -272,11 +370,9 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
             <h1 className="cover-title">{fill(words.cover.title, { name })}</h1>
             <p className="cover-sub">{sub.join(" · ")}</p>
             <div className="rule" />
-            <p className="cover-meta">{fill(words.cover.meta, { date: read })}</p>
           </div>
           <div className="cover-bottom">
             <p>{words.cover.about}</p>
-            <p className="cover-small">{words.cover.small}</p>
           </div>
         </div>
       </div>
@@ -288,7 +384,6 @@ export function ResearchPrint({ brief, pid, name, country, agencies }: { brief: 
           </div>
           <div className="body">{sheet.body}</div>
           <div className="ftr" data-sheet-footer>
-            <span>{footer}</span>
             <span data-sheet-number>{index + 1}</span>
           </div>
         </div>

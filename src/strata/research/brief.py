@@ -4,7 +4,8 @@ against the items it cites, and the brief that the verifier's kept sentences mak
 The brief has eight sections, in this order (the sample of November 5, 2026, .notes/prism-sample):
 
   headline       one sentence
-  picture        four to six sentences: what is happening on the ground
+  picture        two or three short paragraphs of three to five sentences each: what is happening on the ground
+                 (ticket 156); an answer may also give it as one list of sentences, which reads as one paragraph
   bottom_line    two to four sentences: what it means for contracts
   developments   dated groups, newest first, each with sentences; an undated item's group is "undated"
   by_site        groups, each with a title sentence and sentences
@@ -34,7 +35,7 @@ from strata.agent.verifier import mentions
 TOOL = "research_evidence"
 SECTIONS = ("headline", "picture", "bottom_line", "developments", "by_site", "voices", "questions", "could_not_see")
 # How many sentences, or groups, each counted section holds (the ticket; the sample brief).
-SIZES = {"headline": (1, 1), "picture": (4, 6), "bottom_line": (2, 4), "questions": (5, 7), "could_not_see": (1, 3)}
+SIZES = {"headline": (1, 1), "picture": (4, 15), "bottom_line": (2, 4), "questions": (5, 7), "could_not_see": (1, 3)}
 UNDATED = "undated"
 # The sections whose advice is Prism's own: a question to take to the agencies, a bottom-line item (the sample brief's
 # pages 1 and 8). Check 4 judges only the facts inside their advice sentences, never the asking (ticket 155).
@@ -156,10 +157,16 @@ def parse(text: str) -> tuple[list[tuple[Place, Claim]], dict]:
     placed += [(Place("headline"), claim) for claim in _claims([headline] if isinstance(headline, dict) else headline,
                                                                  "headline")]
     _sized("headline", [claim for place, claim in placed])
-    for section in ("picture", "bottom_line"):
-        found = _claims(_list(answer, section), section)
-        _sized(section, found)
-        placed += [(Place(section), claim) for claim in found]
+    # The picture's paragraphs (ticket 156): each a list of sentences, or the sentences on their own as one paragraph.
+    picture = _list(answer, "picture")
+    paragraphs = picture if picture and all(isinstance(part, list) for part in picture) else [picture]
+    found = [(Place("picture", index), claim) for index, part in enumerate(paragraphs)
+             for claim in _claims(part, "picture")]
+    _sized("picture", found)
+    placed += found
+    found = _claims(_list(answer, "bottom_line"), "bottom_line")
+    _sized("bottom_line", found)
+    placed += [(Place("bottom_line"), claim) for claim in found]
     for index, group in enumerate(_list(answer, "developments")):
         if not isinstance(group, dict):
             raise BriefError("Each development must be an object.")
@@ -243,8 +250,11 @@ def compose(placed: list[tuple[Place, Claim]], groups: dict, kept: Mapping[int, 
         return [kept[index] for index, (place, _) in enumerate(placed)
                 if index in kept and place == Place(section, group, part)]
 
+    # The picture keeps each sentence's paragraph, so the page shows the writer's short paragraphs (ticket 156).
+    picture = [{**kept[index], "paragraph": place.group} for index, (place, _) in enumerate(placed)
+               if index in kept and place.section == "picture"]
     brief: dict = {"subject": subject, "headline": (sentences("headline") or [None])[0],
-                   "picture": sentences("picture"), "bottom_line": sentences("bottom_line")}
+                   "picture": picture, "bottom_line": sentences("bottom_line")}
     developments = []
     for index, group in enumerate(groups.get("developments", [])):
         said = sentences("developments", index)

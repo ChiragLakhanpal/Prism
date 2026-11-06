@@ -9699,10 +9699,12 @@ export const copy = {
       developments: "Developments, newest first",
       developmentsMore: "Developments, continued",
       bySite: "By site",
+      bySiteMore: "By site, continued",
       voices: "What people are saying",
       questions: "What this means for procurement",
       couldNotSee: "What I could not see",
       sources: "Sources",
+      sourcesMore: "Sources, continued",
     },
     // A date the outlet does not print.
     undated: "Undated",
@@ -9771,14 +9773,13 @@ export const copy = {
     },
     // The Sentinel-2 figure's caption, after the site's two grids.
     satellite: "{place} in the {first} and {last} cloud-free Sentinel-2 mosaics, 3 by 3 tiles at zoom 15. Prism reads no pixels, so the change is for you to judge.",
-    // The print view: the cover sheet, and the running header and footer of every other sheet (the sample's).
+    // The print view: the cover sheet, and the running header of every other sheet (the sample's). The cover keeps the
+    // project line and the closing date, and no sentence about the run or the sample (ticket 156).
     cover: {
       kicker: "Deep research",
       title: "What is happening on the ground: {name}",
       closing: "closing date {date}",
-      meta: "Read on {date} from public sources outside the World Bank's records, set against the World Bank's own status reports, for World Bank staff",
       about: "Works, contracts, disputes and the state of service at the project's sites, as public sources report them. Each number after a sentence opens its source on the last sheet.",
-      small: "Prism is an independent demo built on World Bank open data. It is not a World Bank product.",
       word: "Prism",
       tagline: "Procurement intelligence on World Bank open data",
       logo: "World Bank Group logo",
@@ -9816,7 +9817,12 @@ export const copy = {
       },
     },
     header: "Deep research · {name} ({pid})",
-    footer: "Prism · read on {date} · an independent demo built on World Bank open data, not a World Bank product",
+    // The one-line disclaimer, once, on the last sheet; every sheet's footer is its page number alone (ticket 156).
+    disclaimer: "Prism is an independent demo built on World Bank open data. It is not a World Bank product.",
+    // The team's field photos on their own sheet, each with its caption, the day its camera recorded and its place.
+    photosSheet: "Field photos from your team",
+    photoLine: "{when}. {where}.",
+    photosSheetAbout: "Photos your team added for this project. A brief cites a photo by its caption and its date, never by what the picture shows.",
     printNote: "Every item was read on {date}. Dates are the outlets' own, and amounts are as each source prints them.",
   },
   // The deck's password, asked before the deck loads (web/src/deck/door.tsx). The words live here, not in the deck's

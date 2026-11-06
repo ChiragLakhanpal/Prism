@@ -39,6 +39,7 @@ import {
   sourceWords,
   voiceTemplate,
   notReachedIn,
+  paragraphsOf,
   satelliteFor,
   tileYear,
   withStep,
@@ -112,6 +113,20 @@ function Paragraph({ sentences, brief, numbers, className }: { sentences: Resear
   );
 }
 
+// One sentence to a bullet, each with its markers (ticket 156).
+function Bullets({ sentences, brief, numbers, className }: { sentences: ResearchSentence[]; brief: Brief; numbers: Map<string, number>; className?: string }) {
+  if (sentences.length === 0) return null;
+  return (
+    <ul data-bullets className={className ?? "mt-2 flex max-w-prose list-disc flex-col gap-1 pl-6 text-body text-ink marker:text-primary"}>
+      {sentences.map((sentence, index) => (
+        <li key={index}>
+          <Said sentence={sentence} brief={brief} numbers={numbers} />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // The one line a source not reached leaves under the section it feeds, with the reader's own note.
 function NotReached({ brief, sectionKey }: { brief: Brief; sectionKey: keyof Sections }) {
   const missed = notReachedIn(brief, sectionKey);
@@ -162,7 +177,7 @@ function SiteGroup({ site, brief, numbers }: { site: Site; brief: Brief; numbers
       <h3 className="max-w-prose text-h3 text-ink-heading">
         <Said sentence={site.title} brief={brief} numbers={numbers} />
       </h3>
-      <Paragraph sentences={site.sentences} brief={brief} numbers={numbers} className="mt-2 max-w-prose text-body text-ink" />
+      <Bullets sentences={site.sentences} brief={brief} numbers={numbers} />
       {satellites.map((item) => (
         <SatelliteFigure key={item.evidence_id} item={item} mark={<Marks ids={[item.evidence_id]} brief={brief} numbers={numbers} />} />
       ))}
@@ -172,8 +187,9 @@ function SiteGroup({ site, brief, numbers }: { site: Site; brief: Brief; numbers
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section data-research-section={id} aria-labelledby={`research-${id}`} className="mt-10 first:mt-0">
-      <h2 id={`research-${id}`} className="text-h2 text-ink-heading">
+    <section data-research-section={id} aria-labelledby={`research-${id}`} className="mt-12 first:mt-0">
+      {/* The navy rule under each section's title, the band that sets one section off from the next (ticket 156). */}
+      <h2 id={`research-${id}`} className="border-b-2 border-navy pb-2 text-h2 text-ink-heading">
         {title}
       </h2>
       {children}
@@ -194,10 +210,8 @@ export function BriefView({ brief }: { brief: Brief }) {
             <Said sentence={sections.headline} brief={brief} numbers={numbers} />
           </p>
         )}
-        {sections.picture.map((sentence, index) => (
-          <p key={index} className="mt-3 max-w-prose text-body text-ink">
-            <Said sentence={sentence} brief={brief} numbers={numbers} />
-          </p>
+        {paragraphsOf(sections.picture).map((paragraph, index) => (
+          <Paragraph key={index} sentences={paragraph} brief={brief} numbers={numbers} className="mt-3 max-w-prose text-body text-ink" />
         ))}
         <NotReached brief={brief} sectionKey="picture" />
         <h3 className="mt-6 text-h3 text-ink-heading">{words.section.bottomLine}</h3>
@@ -216,7 +230,7 @@ export function BriefView({ brief }: { brief: Brief }) {
               <span data-development-date className="shrink-0 text-small font-semibold text-ink-heading @md/page:w-36">
                 {row.date_known && row.date ? formatDate(row.date, { style: "table" }) : words.undated}
               </span>
-              <Paragraph sentences={row.sentences} brief={brief} numbers={numbers} className="text-body text-ink" />
+              <Bullets sentences={row.sentences} brief={brief} numbers={numbers} className="flex list-disc flex-col gap-1 pl-6 text-body text-ink marker:text-primary" />
             </li>
           ))}
         </ol>
@@ -250,19 +264,14 @@ export function BriefView({ brief }: { brief: Brief }) {
         <ol className="mt-2 flex max-w-prose list-decimal flex-col gap-3 pl-6 text-body text-ink marker:font-bold marker:text-primary">
           {sections.questions.map((question, index) => (
             <li key={index} data-question>
-              <b className="font-semibold text-ink-heading">{question.lead}</b>{" "}
-              {question.sentences.map((sentence, at) => (
-                <span key={at}>
-                  {at > 0 && " "}
-                  <Said sentence={sentence} brief={brief} numbers={numbers} />
-                </span>
-              ))}
+              <b className="font-semibold text-ink-heading">{question.lead}</b>
+              <Bullets sentences={question.sentences} brief={brief} numbers={numbers} className="mt-1 flex list-disc flex-col gap-1 pl-6 marker:font-normal marker:text-primary" />
             </li>
           ))}
         </ol>
         <NotReached brief={brief} sectionKey="questions" />
         <h3 className="mt-6 text-h3 text-ink-heading">{words.section.couldNotSee}</h3>
-        <Paragraph sentences={sections.could_not_see} brief={brief} numbers={numbers} className="mt-2 max-w-prose text-body text-ink" />
+        <Bullets sentences={sections.could_not_see} brief={brief} numbers={numbers} />
       </Section>
       <Section id="sources" title={words.section.sources}>
         <ol data-research-sources className="mt-2 flex max-w-prose flex-col gap-3">

@@ -14,6 +14,8 @@ export type ResearchSentence = {
   // record, quote or summary; advice in the questions.
   kind: string;
   quote: { text: string; evidence_id: string } | null;
+  // The picture's paragraph the sentence sits in, from 0 (ticket 156); absent elsewhere.
+  paragraph?: number | null;
 };
 
 export type ResearchLocation = { geo_loc_id: string; name: string; latitude: number | null; longitude: number | null };
@@ -113,7 +115,21 @@ function sentence(value: unknown): ResearchSentence | null {
     evidence_ids: list<string>(found.evidence_ids),
     kind: typeof found.kind === "string" ? found.kind : "record",
     quote: (found.quote as ResearchSentence["quote"]) ?? null,
+    paragraph: typeof found.paragraph === "number" ? found.paragraph : null,
   };
+}
+
+// The picture as the writer's short paragraphs (ticket 156): sentences with the same paragraph number stay together, in
+// order; a brief written before paragraphs reads as one.
+export function paragraphsOf(sentences: ResearchSentence[]): ResearchSentence[][] {
+  const groups: ResearchSentence[][] = [];
+  let last: number | null | undefined;
+  for (const said of sentences) {
+    if (groups.length === 0 || said.paragraph !== last) groups.push([]);
+    groups[groups.length - 1].push(said);
+    last = said.paragraph;
+  }
+  return groups;
 }
 
 const sentences = (value: unknown): ResearchSentence[] => list(value).map(sentence).filter((one): one is ResearchSentence => one !== null);

@@ -68,8 +68,9 @@
       ],
       "quote": null,
       "section": "picture",
-      "group": null,
-      "part": "sentence"
+      "group": 0,
+      "part": "sentence",
+      "paragraph": 0
     },
     {
       "index": 2,
@@ -87,8 +88,9 @@
       "dates": [],
       "quote": null,
       "section": "picture",
-      "group": null,
-      "part": "sentence"
+      "group": 0,
+      "part": "sentence",
+      "paragraph": 0
     },
     {
       "index": 3,
@@ -111,8 +113,9 @@
       ],
       "quote": null,
       "section": "picture",
-      "group": null,
-      "part": "sentence"
+      "group": 0,
+      "part": "sentence",
+      "paragraph": 0
     },
     {
       "index": 4,
@@ -153,8 +156,9 @@
       ],
       "quote": null,
       "section": "picture",
-      "group": null,
-      "part": "sentence"
+      "group": 1,
+      "part": "sentence",
+      "paragraph": 1
     },
     {
       "index": 5,
@@ -173,8 +177,9 @@
       ],
       "quote": null,
       "section": "picture",
-      "group": null,
-      "part": "sentence"
+      "group": 1,
+      "part": "sentence",
+      "paragraph": 1
     },
     {
       "index": 6,
@@ -202,8 +207,9 @@
       ],
       "quote": null,
       "section": "picture",
-      "group": null,
-      "part": "sentence"
+      "group": 1,
+      "part": "sentence",
+      "paragraph": 1
     }
   ],
   "bottom_line": [

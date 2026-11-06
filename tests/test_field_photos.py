@@ -207,7 +207,7 @@ def with_photo_sentence(answer: dict, evidence_id: str) -> dict:
     """The recorded writer answer with one more development: the photo, described by its caption and its date."""
     brief = json.loads(answer["response"]["choices"][0]["message"]["content"])
     brief["developments"].insert(0, {"date": "2026-10-14", "date_known": True, "sentences": [{
-        "sentence": f'A photo taken at Baricho on October 14, 2026 by a World Bank staff member shows that "{CAPTION}"',
+        "sentence": f'A field photo taken at Baricho on October 14, 2026 carries the caption "{CAPTION}"',
         "kind": "quote", "evidence_ids": [evidence_id], "numbers": [], "dates": ["October 14, 2026"],
         "quote": {"passage_id": evidence_id, "text": CAPTION}}]})
     changed = copy.deepcopy(answer)

@@ -15,6 +15,15 @@ const PATH = "/projects/P156634/research";
 const ROUTE = "/api/projects/P156634/research";
 const words = copy.research;
 
+// How many items the brief cites, each once: the sources sheets list them eighteen to a sheet.
+function citedCount(data: Brief): number {
+  const { sections } = data;
+  const all = [sections.headline!, ...sections.picture, ...sections.bottom_line, ...sections.developments.flatMap((row) => row.sentences),
+    ...sections.by_site.flatMap((group) => [group.title, ...group.sentences]), ...sections.voices,
+    ...sections.questions.flatMap((question) => question.sentences), ...sections.could_not_see];
+  return new Set(all.flatMap((sentence) => sentence.evidence_ids)).size;
+}
+
 async function brief(): Promise<Brief> {
   const read = briefFrom(JSON.parse(await recorded("research-p156634.json")));
   if (read.status !== "ready") throw new Error("research-p156634.json holds no brief.");
@@ -315,7 +324,7 @@ test("a read the service didn't answer offers Try again, and an account that can
 
 // ── The PDF ─────────────────────────────────────────────────────────────
 
-test("Download as PDF prints the brief: the cover, then one Letter sheet per section with the sample's header and footer", async ({ page }) => {
+test("Download as PDF prints the brief: the cover, then one Letter sheet per section with its header, a navy rule under its title and its page number", async ({ page }) => {
   await open(page);
   const data = await brief();
   await page.evaluate(() => {
@@ -345,7 +354,8 @@ test("Download as PDF prints the brief: the cover, then one Letter sheet per sec
     ...data.sections.by_site.map((site) => (site as { location?: { name: string } }).location?.name ?? words.section.bySite),
     words.section.voices,
     words.section.questions,
-    words.section.sources,
+    words.section.couldNotSee,
+    ...Array.from({ length: Math.ceil(citedCount(data) / 18) }, (_, index) => (index === 0 ? words.section.sources : words.section.sourcesMore)),
   ];
   const sheets = view.locator(".research-sheet");
   await expect(sheets).toHaveCount(labels.length + 1);
@@ -353,18 +363,38 @@ test("Download as PDF prints the brief: the cover, then one Letter sheet per sec
   const cover = sheets.first();
   await expect(cover).toHaveAttribute("data-sheet", "cover");
   await expect(cover).toContainText("What is happening on the ground: Water and Sanitation Development Project");
+  // The cover keeps the project line and the closing date, and says nothing about the run or the sample (ticket 156).
+  await expect(cover).toContainText("closing date October 31, 2026");
+  await expect(cover).not.toContainText("Read on");
+  await expect(cover).not.toContainText(words.disclaimer);
   await expect(cover.locator("[data-sheet-header], [data-sheet-footer]")).toHaveCount(0);
+  // The Prism wordmark is no taller than the World Bank logo beside it.
+  const [logoHeight, brandHeight] = await cover.evaluate((el) => [el.querySelector(".cover-top img")!.getBoundingClientRect().height, el.querySelector(".brand > div")!.getBoundingClientRect().height]);
+  expect(brandHeight).toBeLessThanOrEqual(logoHeight);
   expect(await cover.evaluate((el) => getComputedStyle(el).backgroundColor)).toBe("rgb(0, 34, 68)");
 
-  // Every other sheet: the running header (the project and the section), the footer (Prism, the read date, the one-line
-  // disclaimer and the number), US Letter wide, and a page break after it.
+  // Every other sheet: the running header (the project and the section), its section's title over a navy rule, a footer
+  // that is its page number alone, US Letter wide, and a page break after it. The disclaimer sits once, on the last.
   const rest = view.locator(".research-sheet:not([data-sheet=cover])");
   await expect(rest.locator("[data-sheet-label]")).toHaveText(labels);
   await expect(rest.locator("[data-sheet-header] > span:first-child")).toHaveText(labels.map(() => "Deep research · Water and Sanitation Development Project (P156634)"));
-  await expect(rest.locator("[data-sheet-footer] > span:first-child")).toHaveText(
-    labels.map(() => "Prism · read on November 5, 2026 · an independent demo built on World Bank open data, not a World Bank product"),
-  );
+  await expect(rest.locator("[data-sheet-footer]")).toHaveText(labels.map((_, index) => String(index + 1)));
   await expect(rest.locator("[data-sheet-number]")).toHaveText(labels.map((_, index) => String(index + 1)));
+  await expect(view.locator("[data-disclaimer]")).toHaveCount(1);
+  await expect(sheets.last().locator("[data-disclaimer]")).toHaveText(words.disclaimer);
+  const rules = await rest.evaluateAll((all) =>
+    all.map((sheet) => {
+      const titles = sheet.querySelectorAll(".body > h1.section");
+      return titles.length === 1 ? getComputedStyle(titles[0]).borderBottomColor : `${titles.length} titles`;
+    }),
+  );
+  expect(rules).toEqual(labels.map(() => "rgb(0, 34, 68)"));
+  // The picture as short paragraphs, as the writer grouped it; developments, sites and questions one sentence a bullet.
+  const paragraphs = new Set(data.sections.picture.map((sentence) => sentence.paragraph)).size;
+  await expect(view.locator("[data-picture-paragraph]")).toHaveCount(paragraphs);
+  expect(paragraphs).toBeGreaterThan(1);
+  await expect(view.locator("table.dev ul.bullets > li")).toHaveCount(data.sections.developments.flatMap((row) => row.sentences).length);
+  await expect(view.locator("ol.questions ul.bullets > li")).toHaveCount(data.sections.questions.flatMap((question) => question.sentences).length);
   const shapes = await sheets.evaluateAll((all) =>
     all.map((sheet) => {
       const style = getComputedStyle(sheet);
@@ -376,17 +406,28 @@ test("Download as PDF prints the brief: the cover, then one Letter sheet per sec
   expect(shapes.slice(0, -1).map((shape) => shape.breakAfter)).toEqual(shapes.slice(0, -1).map(() => "page"));
   expect(shapes.map((shape) => shape.page)).toEqual(shapes.map(() => "research"));
   // Each sheet carries its markers as the sample's small numbered pills, and the sources sheet lists every cited item.
-  await expect(sheets.nth(1).locator("h1 .cite").first()).toHaveText("1");
+  await expect(sheets.nth(1).locator(".lead .cite").first()).toHaveText("1");
   const cited = new Set(
     [data.sections.headline!, ...data.sections.picture, ...data.sections.bottom_line, ...data.sections.developments.flatMap((row) => row.sentences),
       ...data.sections.by_site.flatMap((group) => [group.title, ...group.sentences]), ...data.sections.voices,
       ...data.sections.questions.flatMap((question) => question.sentences), ...data.sections.could_not_see].flatMap((sentence) => sentence.evidence_ids),
   );
-  await expect(sheets.last().locator("ol.sources li")).toHaveCount(cited.size);
+  await expect(view.locator("ol.sources li")).toHaveCount(cited.size);
+  expect(citedCount(data)).toBe(cited.size);
   // A source not reached keeps its one line on paper too.
   for (const entry of data.coverage.filter((one) => !one.reached)) {
     await expect(rest.locator(`[data-not-reached="${entry.source}"]`)).toContainText(entry.note!);
   }
+});
+
+test("the print shows each of the team's field photos under the site whose words name its place, with its caption", async ({ page }) => {
+  await open(page, { extra: { "/api/projects/P156634/field-photos": { body: await recorded("field-photos-p156634.json") } } });
+  await page.emulateMedia({ media: "print" });
+  const view = page.locator("[data-research-print]");
+  const photo = view.locator('[data-print-photo="fph-000000000001"]');
+  await expect(photo).toHaveCount(1);
+  await expect(photo).toContainText("The new intake pipe");
+  await expect(view.locator(".research-sheet", { has: page.locator(`[data-print-photo="fph-000000000001"]`) }).locator("h2")).toContainText("Baricho");
 });
 
 // ── Accessibility, keyboard and reflow ─────────────────────────────────

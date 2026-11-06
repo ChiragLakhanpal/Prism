@@ -77,6 +77,7 @@
   padding-top: 8px;
   border-top: 1px solid var(--color-line);
   margin-top: auto;
+  justify-content: flex-end;
 }
 .research-sheet .ftr span:last-child {
   font-weight: 600;
@@ -99,8 +100,80 @@
   margin: 16px 0 6px;
 }
 .research-sheet .brief p {
+  font-size: 9.8pt;
+  line-height: 1.65;
+  margin: 0 0 12px;
+}
+/* Ticket 156: each sheet opens with its section's title over a navy rule, the sample's band between sections. */
+.research-sheet h1.section {
+  font-size: 16pt;
+  padding-bottom: 8px;
+  border-bottom: 2.5px solid var(--color-navy);
+  margin: 0 0 16px;
+}
+.research-sheet p.lead {
+  font-size: 12pt;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--color-ink-heading);
+  margin: 0 0 14px;
+}
+.research-sheet ul.bullets {
+  margin: 0;
+  padding-left: 16px;
+  list-style: disc;
+}
+.research-sheet ul.bullets li {
+  margin: 0 0 4px;
+  padding-left: 2px;
+}
+.research-sheet ul.bullets li::marker {
+  color: var(--color-primary);
+}
+.research-sheet ol.questions > li {
+  margin: 0 0 8px;
+}
+.research-sheet ol.questions ul.bullets {
+  margin-top: 2px;
+}
+.research-sheet ol.questions ul.bullets li {
+  margin: 0 0 1px;
+  padding-left: 2px;
+  font-size: 9.4pt;
+  line-height: 1.5;
+}
+.research-sheet h2 + ul.bullets {
   font-size: 9.6pt;
-  margin: 0 0 7px;
+}
+.research-sheet .photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+  margin-top: 8px;
+}
+.research-sheet .photo {
+  margin: 0;
+  break-inside: avoid;
+}
+.research-sheet .photo img {
+  width: 100%;
+  height: 62mm;
+  object-fit: cover;
+  display: block;
+  border: 1px solid var(--color-line);
+  border-radius: 3px;
+}
+.research-sheet .photos.near {
+  margin-top: 14px;
+}
+.research-sheet .photos.near .photo img {
+  height: 48mm;
+}
+.research-sheet .photo figcaption {
+  font-size: 8.2pt;
+  line-height: 1.45;
+  color: var(--color-ink-muted);
+  margin-top: 5px;
 }
 .research-sheet .cite {
   display: inline-block;
@@ -278,13 +351,17 @@
 }
 .research-sheet .brand .word {
   font-weight: 700;
-  font-size: 18pt;
+  font-size: 12pt;
   line-height: 1;
 }
 .research-sheet .brand .tag {
-  font-size: 8.4pt;
+  font-size: 6.6pt;
+  line-height: 1;
   opacity: 0.8;
-  margin-top: 4px;
+  margin-top: 3px;
+}
+.research-sheet .brand > div {
+  max-height: 28px;
 }
 .research-sheet .cover-mid {
   margin-top: 58mm;

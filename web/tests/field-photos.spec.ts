@@ -12,6 +12,7 @@ import { expect, mockApi, recorded, test, viewAnswers } from "./mocked";
 const PATH = "/projects/P156634/research";
 const PHOTOS = "/api/projects/P156634/field-photos";
 const words = copy.research.photos;
+const PIXEL = Buffer.from("R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==", "base64");
 
 async function open(page: Page, list: string) {
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -23,6 +24,8 @@ async function open(page: Page, list: string) {
     "/api/projects/P156634/research": { body: await recorded("research-p156634-none.json") },
     [PHOTOS]: { body: await recorded(list) },
   });
+  // Each listed photo shows the photo itself (ticket 156), which the photo route answers with a 1 px image here.
+  await page.route(/\/api\/projects\/P156634\/field-photos\/fph-[0-9a-f]{12}$/, (route) => route.fulfill({ status: 200, contentType: "image/gif", body: PIXEL }));
   await page.goto(PATH);
   await expect(page.locator("main h1")).toBeVisible();
   return unrecorded;

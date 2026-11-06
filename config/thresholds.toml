@@ -13,8 +13,9 @@
 late_award_days = 110
 # The longest the brief's writer may take to answer, in seconds, before the run gives up and says so
 # (src/strata/research/writer.py). A brief is one chat completion over every item, about 15,000 words in and 2,000
-# out. Source: a starting value for the owner to confirm, five times the judge's judge_timeout_seconds.
-writer_timeout_seconds = 300
+# out. Source: 300 was the starting value; raised to 600 after P130164's brief timed out on Azure OpenAI in the
+# workspace runs of November 6, 2026 (the writer at its 300-second limit on the first try).
+writer_timeout_seconds = 600
 # Whether a deep research run reads the sources live (true, the product's default) or writes the brief only from the
 # items the store already holds for the project (false, the demo's): with false, POST /api/projects/{pid}/research
 # acts as {"reuse": true} whatever its body says, reads no source, shows each source's step from the stored run with
@@ -680,10 +681,12 @@ what_lane_group_above = 12
 # judge_source_chars characters of each source a sentence cites, a passage's header and words or a record's
 # fields, and the call gives up after judge_timeout_seconds, when every sentence it had to judge is removed.
 # Source: starting values for the owner to confirm. A passage is one numbered paragraph, which rarely runs past
-# 6,000 characters, and a chat completion over a few sentences answers well inside a minute.
+# 6,000 characters, and a chat completion over a few sentences answers well inside a minute. judge_timeout_seconds
+# was 60 and is 180 after P130164's deep research brief timed out on Azure OpenAI in the workspace runs of November 6,
+# 2026 (the judge at its 60-second limit, with 47 sentences written).
 [verifier]
 judge_source_chars = 6000
-judge_timeout_seconds = 60
+judge_timeout_seconds = 180
 
 # Lesson review (ticket 29; docs/PLAN.md section 11, "Lesson governance"). strata.knowledge.lessons reads
 # them, and the review routes return the ones a screen states, so no number is typed in code.

@@ -290,7 +290,7 @@ def title_of(photo: Photo) -> str:
     where = f"at {photo.place}" if photo.place else "at a position its data did not record" if photo.latitude is None \
         else f"at {photo.latitude:.4f}, {photo.longitude:.4f}"
     when = f"on {_when(photo.taken_on)}" if photo.taken_on else "on a day its data did not record"
-    return f"Field photo taken {where} {when} by a World Bank staff member"
+    return f"Field photo taken {where} {when}, added by a World Bank staff member"
 
 
 def item_of(photo: Photo, config: FieldPhotos) -> dict:

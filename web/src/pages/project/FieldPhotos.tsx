@@ -84,6 +84,8 @@ export function FieldPhotos({ pid }: { pid: string }) {
         <ul className="mt-3 flex flex-col gap-3 border-t border-line">
           {list.photos.map((photo) => (
             <li key={photo.photo_id} data-field-photo={photo.photo_id} className="flex flex-col gap-1 border-b border-line py-3">
+              {/* The photo itself, which the photo route gives the team alone (ticket 156: a picture in every section). */}
+              <img src={photo.url} alt="" className="mb-2 block aspect-[4/3] w-full max-w-sm rounded-sm border border-line bg-surface-2 object-cover" />
               <p className="text-body text-ink">{photo.caption}</p>
               <p className="text-small text-ink-muted">
                 <span data-field-photo-date>{photo.taken_on ? words.taken(formatDate(photo.taken_on)) : words.noDate}</span>
