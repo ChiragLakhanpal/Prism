@@ -16,7 +16,7 @@ import { copy } from "../copy";
 import { cx } from "../lib/cx";
 import { deckCopy } from "./copy";
 import { FOOTER, TRACKER } from "./ramp";
-import { TOPIC_ORDER, type Segment, type TopicKey } from "./talk";
+import { type Segment, type TopicKey } from "./talk";
 
 export type Theme = "light" | "navy";
 
@@ -38,16 +38,25 @@ export function SlideFrame({
   tracker,
   segments,
   topic,
+  order,
+  names,
   counter,
+  footer = true,
   children,
 }: {
   theme: Theme;
   // Whether the strip shows the tracker; the logo always shows.
   tracker: boolean;
-  segments: Record<TopicKey, Segment[]>;
+  segments: Record<string, Segment[]>;
   topic: TopicKey | null;
+  // The talk's topics in order, and each one's name in the tracker.
+  order: readonly TopicKey[];
+  names: Record<string, string>;
   // The counter's words, or none on the title slide and the close.
   counter: string | null;
+  // Whether DESIGN.md section 8's sentence runs along this slide's foot: every slide of Prism's own talk, and only the
+  // title slide of the research talk.
+  footer?: boolean;
   children: ReactNode;
 }) {
   const navy = theme === "navy";
@@ -63,7 +72,7 @@ export function SlideFrame({
         {tracker && (
           <>
             <span aria-hidden="true" className={cx("absolute w-px", navy ? "bg-surface/30" : "bg-line")} style={{ left: 193, top: 12, height: 24 }} />
-            <Tracker theme={theme} segments={segments} topic={topic} />
+            <Tracker theme={theme} segments={segments} topic={topic} order={order} names={names} />
           </>
         )}
         {counter && (
@@ -77,19 +86,21 @@ export function SlideFrame({
         )}
       </div>
       {children}
-      <p
-        data-slide-footer
-        className={cx("absolute whitespace-nowrap", navy ? "text-surface/75" : "text-ink-muted")}
-        style={{ ...FOOTER, left: 48, bottom: 9 }}
-      >
-        {copy.footer}
-      </p>
+      {footer && (
+        <p
+          data-slide-footer
+          className={cx("absolute whitespace-nowrap", navy ? "text-surface/75" : "text-ink-muted")}
+          style={{ ...FOOTER, left: 48, bottom: 9 }}
+        >
+          {copy.footer}
+        </p>
+      )}
     </>
   );
 }
 
 // The five topics in order: the lit one ink-heading and heavier, each with a segment per slide.
-function Tracker({ theme, segments, topic }: { theme: Theme; segments: Record<TopicKey, Segment[]>; topic: TopicKey | null }) {
+function Tracker({ theme, segments, topic, order, names }: { theme: Theme; segments: Record<string, Segment[]>; topic: TopicKey | null; order: readonly TopicKey[]; names: Record<string, string> }) {
   const navy = theme === "navy";
   return (
     <ol
@@ -98,7 +109,7 @@ function Tracker({ theme, segments, topic }: { theme: Theme; segments: Record<To
       className="absolute grid grid-cols-5 gap-x-3"
       style={{ left: 217, top: 0, width: 635, height: 48 }}
     >
-      {TOPIC_ORDER.map((key) => {
+      {order.map((key) => {
         const lit = topic === key;
         return (
           <li key={key} data-topic={key} className="relative">
@@ -111,7 +122,7 @@ function Tracker({ theme, segments, topic }: { theme: Theme; segments: Record<To
               )}
               style={{ ...TRACKER, top: 15 }}
             >
-              {deckCopy.topics[key].name}
+              {names[key]}
             </span>
             <span aria-hidden="true" className="absolute inset-x-0 flex gap-0.5" style={{ top: 32, height: 3 }}>
               {segments[key].map((state, index) => (

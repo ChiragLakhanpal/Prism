@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How a run works</title>
+  <!-- Prism deck figure, research talk: diagram-design, strata-wb profile, standard ramp, drawn 1:1 in its slot.
+       F6, a flowchart left to right (type-flowchart.md): facts, the readers, one item shape, the writer, the checks and the brief.
+       Font source: system. The app self-hosts Open Sans and Roboto Mono, so this file loads no web font.
+       Each group marked data-motion-item is one press on the deck; everything else is structure. -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Open Sans', system-ui, sans-serif; background: #f5f7f9; color: #181f25; min-height: 100vh; display: flex;
+           align-items: center; justify-content: center; padding: 3rem 2rem; }
+    .frame { max-width: 1200px; width: 100%; }
+    .diagram-container { width: 100%; overflow-x: auto; }
+    h1 { font-family: 'Open Sans', system-ui, sans-serif; font-size: 1.75rem; font-weight: 700; margin-bottom: 1.5rem; }
+    svg { width: 100%; min-width: 864px; max-width: 864px; display: block; }
+    @media print {
+      .diagram-container { overflow-x: visible; }
+      svg { min-width: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <h1>How a run works</h1>
+    <div class="diagram-container">
+      <svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="research-run-title research-run-desc" data-motion-root="" data-motion-mode="none" data-step-count="6">
+        <title id="research-run-title">How a run works</title>
+        <desc id="research-run-desc">A run reads the project's facts, then every source at once into one item shape, hands every item to one writer call with no tools, checks every sentence, and keeps the brief with its run.</desc>
+        <defs>
+<marker id="arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<rect x="132" y="36" width="224" height="240" rx="6" fill="#ffffff"/>
+<path d="M 132 68 V 42 Q 132 36 138 36 H 350 Q 356 36 356 42 V 68 Z" fill="rgba(24,31,37,0.05)"/>
+<line x1="132" y1="68" x2="356" y2="68" stroke="rgba(24,31,37,0.16)" stroke-width="0.8"/>
+<rect x="132" y="36" width="224" height="240" rx="6" fill="none" stroke="#4b5e71" stroke-width="1"/>
+<text x="244" y="57" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Reading the sources at once</text>
+<g data-motion-item="" data-step="1" aria-label="Project facts: name, status, closing date and sites">
+<rect x="24" y="120" width="88" height="72" rx="6" fill="#f5f7f9"/>
+<rect x="24" y="120" width="88" height="72" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="68" y="142.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Project facts</text>
+<text x="68" y="156.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">name, status,</text>
+<text x="68" y="167.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">closing date,</text>
+<text x="68" y="178.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">sites</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="Every source at once, each through its own reader, plus field photos seen by the uploader's team only">
+<line x1="112" y1="156" x2="131" y2="156" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="140" y="76" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="190" y="95.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">ISR narrative</text>
+<rect x="140" y="116" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="190" y="130" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Procurement</text>
+<text x="190" y="142" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">notices</text>
+<rect x="140" y="156" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="190" y="175.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">GDELT news index</text>
+<rect x="140" y="196" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="190" y="215.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Outlets' feeds</text>
+<rect x="140" y="236" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="190" y="250" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Inspection Panel</text>
+<text x="190" y="262" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">register</text>
+<rect x="248" y="76" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="298" y="95.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Sentinel mosaics</text>
+<rect x="248" y="116" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="298" y="135.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Mastodon posts</text>
+<rect x="248" y="156" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="298" y="175.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">GDACS alerts</text>
+<rect x="248" y="196" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="298" y="215.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Agencies' pages</text>
+<rect x="248" y="236" width="100" height="32" rx="4" fill="rgba(24,31,37,0.03)" stroke="rgba(24,31,37,0.3)" stroke-width="0.8"/>
+<text x="298" y="255.5" fill="#181f25" font-size="10" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Sanctions list</text>
+<text x="244" y="294" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">plus field photos, seen by</text>
+<text x="244" y="305" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">the uploader's team only</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="One item shape: the source's words, the day it became public, a link and the place, stored before a word is written">
+<line x1="356" y1="156" x2="375" y2="156" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="376" y="112" width="120" height="88" rx="6" fill="#f5f7f9"/>
+<rect x="376" y="112" width="120" height="88" rx="6" fill="rgba(0,113,188,0.08)" stroke="#0071bc" stroke-width="1.2"/>
+<text x="436" y="137" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">One item shape</text>
+<text x="436" y="151" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">the source's words,</text>
+<text x="436" y="162" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">the day it became</text>
+<text x="436" y="173" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">public, a link,</text>
+<text x="436" y="184" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">the place</text>
+<text x="436" y="222" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">stored before</text>
+<text x="436" y="233" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a word is written</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="Writer: one call, no tools, items as data; every count from one tool, research_evidence">
+<line x1="496" y1="156" x2="515" y2="156" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="516" y="120" width="84" height="72" rx="6" fill="#f5f7f9"/>
+<rect x="516" y="120" width="84" height="72" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="558" y="142.5" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Writer</text>
+<text x="558" y="156.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">one call,</text>
+<text x="558" y="167.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">no tools,</text>
+<text x="558" y="178.5" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">items as data</text>
+<text x="558" y="222" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">every count from</text>
+<text x="558" y="233" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">one tool,</text>
+<text x="558" y="244" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">research_evidence</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Checks on every sentence, against its items; a failed sentence is removed and shown">
+<line x1="600" y1="156" x2="619" y2="156" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="620" y="120" width="112" height="72" rx="6" fill="#f5f7f9"/>
+<rect x="620" y="120" width="112" height="72" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="676" y="148" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">Checks</text>
+<text x="676" y="162" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">on every sentence,</text>
+<text x="676" y="173" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">against its items</text>
+<text x="676" y="222" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a failed sentence</text>
+<text x="676" y="233" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">is removed</text>
+<text x="676" y="244" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">and shown</text>
+</g>
+<g data-motion-item="" data-step="6" aria-label="The brief, in the tab and as a PDF; a second visit calls no model">
+<line x1="732" y1="156" x2="751" y2="156" stroke="#4b5e71" stroke-width="1.2" marker-end="url(#arrow)"/>
+<rect x="752" y="120" width="88" height="72" rx="6" fill="#f5f7f9"/>
+<rect x="752" y="120" width="88" height="72" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="796" y="148" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="middle">The brief</text>
+<text x="796" y="162" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">in the tab and</text>
+<text x="796" y="173" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">as a PDF</text>
+<text x="796" y="222" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">a second visit</text>
+<text x="796" y="233" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="middle">calls no model</text>
+</g>
+      </svg>
+    </div>
+  </div>
+</body>
+</html>

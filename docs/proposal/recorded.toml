@@ -1,0 +1,96 @@
+# The recorded register (ticket 162; .notes/deck3/brief.md, section 8): numbers the deep research talk at
+# /present/research states that no query on the lakehouse measures, each counted by hand on a named day. It sits
+# beside the results register on the model of rehearsals.toml, and its source kind is "Recorded".
+# strata.proposal.register.load_recorded() reads it; `uv run python -m strata.proposal deck` writes each entry into the
+# deck's data, and the number's window prints its day and how. Count again and change the day when a number moves.
+#
+# [recorded.<key>]
+#   name         what it is, in plain words: the window's heading
+#   noun         what it counts
+#   form         count, ratio (n of d) or percent
+#   value        the number, for a count or a percent
+#   n, d         the parts, for a ratio
+#   measured_on  the day it was recorded, as "2026-11-05", or the month, as "2026-03", when its source gives only that
+#   how          how it was counted, in one sentence the window prints
+
+[recorded.lines-prism]
+name = "Python source lines in Prism"
+noun = "lines"
+form = "count"
+value = 61653
+measured_on = "2026-11-05"
+how = "Python source lines under src, counted in the Strata repository."
+
+[recorded.tests-prism]
+name = "Tests in Prism"
+noun = "tests"
+form = "count"
+value = 2198
+measured_on = "2026-11-05"
+how = "test_ functions under tests, counted in the Strata repository."
+
+[recorded.lines-procintel]
+name = "Python source lines in ProcIntel"
+noun = "lines"
+form = "count"
+value = 17766
+measured_on = "2026-11-05"
+how = "Python source lines under src, counted the same way in wcares/procurement-intelligence."
+
+[recorded.tests-procintel]
+name = "Tests in ProcIntel"
+noun = "tests"
+form = "count"
+value = 351
+measured_on = "2026-11-05"
+how = "test_ functions under tests, counted the same way in wcares/procurement-intelligence."
+
+[recorded.isr-progress]
+name = "Physical progress in the March status report"
+noun = "percent"
+form = "percent"
+value = 85
+measured_on = "2026-03"
+how = "P156634's ISR 19, March 2026, physical progress, as the sample brief cites it."
+
+[recorded.wajir-progress]
+name = "Progress at the Wajir sludge plant in June"
+noun = "percent"
+form = "percent"
+value = 64
+measured_on = "2026-06-04"
+how = "Dawan Africa, June 4, 2026, as the sample brief cites it."
+
+[recorded.late-awards]
+name = "Awards in the late-award window"
+noun = "awards"
+form = "count"
+value = 7
+measured_on = "2026-11-05"
+how = "research_evidence's summary for P156634's stored run: the awards in the late-award window before closing."
+
+[recorded.kept-low]
+name = "Sentences kept, the fewest of a prepared brief"
+noun = "sentences"
+form = "ratio"
+n = 65
+d = 71
+measured_on = "2026-11-06"
+how = "The fewest sentences kept of a prepared brief on the App, P130164's."
+
+[recorded.kept-high]
+name = "Sentences kept, the most of a prepared brief"
+noun = "sentences"
+form = "ratio"
+n = 83
+d = 88
+measured_on = "2026-11-06"
+how = "The most sentences kept of a prepared brief on the App, P156634's."
+
+[recorded.tile-metres]
+name = "Metres per pixel of the free satellite mosaics"
+noun = "metres per pixel"
+form = "count"
+value = 10
+measured_on = "2026-11-05"
+how = "The Sentinel cloudless mosaics' resolution, as config/research.toml's limitations state it."

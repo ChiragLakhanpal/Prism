@@ -55,6 +55,46 @@ export function ResultNum({ result, resultKey, value, tooltipValue }: { result: 
   );
 }
 
+// A recorded number's day: a day as a table writes it, or a month and its year when the source gives only the month.
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+function recordedDay(iso: string): string {
+  const month = /^(\d{4})-(\d{2})$/.exec(iso);
+  return month ? `${MONTHS[Number(month[2]) - 1]} ${month[1]}` : day(iso);
+}
+
+// A number from the recorded register (docs/proposal/recorded.toml): a count, a ratio or a percent, with what it
+// counts, its source kind, the day it was recorded and how it was counted, which its window prints.
+export function RecordedNum({ data, recordedKey }: { data: DeckData; recordedKey: string }) {
+  const found = data.recorded[recordedKey];
+  const on = recordedDay(found.measured_on);
+  const ratio = found.form === "ratio";
+  const amount = found.form === "percent" ? deckCopy.percent(whole(found.value ?? 0)) : whole(found.value ?? 0);
+  const value: NumValue = ratio ? { part: found.n ?? 0, whole: found.d ?? 0, show: "count" } : { value: found.value ?? 0, options: { compact: false } };
+  const tooltip = ratio ? words.ratio(whole(found.n ?? 0), whole(found.d ?? 0), found.noun, found.kind, on) : words.count(amount, found.noun, found.kind, on);
+  const rows = ratio
+    ? [
+        { label: words.rows.counted, value: whole(found.n ?? 0) },
+        { label: words.rows.outOf, value: whole(found.d ?? 0) },
+      ]
+    : [{ label: words.rows.counted, value: amount }];
+  return (
+    <Bound sourceKey={`rec:${recordedKey}`}>
+      <MeasureNum
+        value={value}
+        tooltip={tooltip}
+        measure={{ title: found.name, definition: found.how, rows: [...rows, { label: words.rows.kind, value: found.kind }, { label: words.rows.measured, value: on }] }}
+      />
+    </Bound>
+  );
+}
+
+// A recorded number in the speaker notes: plain text, bound to its entry.
+export function RecordedNote({ data, recordedKey }: { data: DeckData; recordedKey: string }) {
+  const found = data.recorded[recordedKey];
+  const text = found.form === "ratio" ? numText({ part: found.n ?? 0, whole: found.d ?? 0, show: "count" }) : whole(found.value ?? 0);
+  return <Bound sourceKey={`rec:${recordedKey}`}>{text}</Bound>;
+}
+
 // A design count or a planning choice, written as a word ("six checks", "two countries") from its setting.
 export function SettingWord({ data, settingKey, capital = false }: { data: DeckData; settingKey: string; capital?: boolean }) {
   const setting = data.settings[settingKey];

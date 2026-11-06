@@ -11,6 +11,10 @@ record (ticket 49).
   it was rehearsed. A rehearsal is measured on a branch, not queried from a table, so it has a file of its own
   beside the results register, and its source kind is "Rehearsal". The build writes each time into the change
   drill's table and its row into Annex 1.
+- The recorded register, docs/proposal/recorded.toml (ticket 162): numbers the deep research talk states that no query
+  on the lakehouse measures, such as a repository's lines or a figure a sample brief cites, each with the day it was
+  recorded and how it was counted. Its source kind is "Recorded"; the deck's data carries each entry, and the
+  number's window prints its day and how.
 """
 
 from __future__ import annotations
@@ -27,6 +31,10 @@ FOLDER = ROOT / "docs" / "proposal"
 RESULTS_FILE = FOLDER / "results.toml"
 SETTINGS_FILE = FOLDER / "settings.toml"
 REHEARSALS_FILE = FOLDER / "rehearsals.toml"
+RECORDED_FILE = FOLDER / "recorded.toml"
+# The source kind of a recorded entry: counted by hand on a named day, the way its how sentence says.
+RECORDED_KIND = "Recorded"
+RECORDED_FORMS = ("count", "ratio", "percent")
 # The source kind of a rehearsal time, beside the 46 brief's six (section 9.2): a drill timed on its own branch.
 REHEARSAL_KIND = "Rehearsal"
 # A drill's throwaway branch: drill/<nn>-<change>. Ticket 49's own rehearsal ran on drill-49/<nn>-<change>, which
@@ -39,10 +47,10 @@ DAY_ONE_CONFIG = ROOT / "ops" / "dayone" / "dayone.toml"
 KINDS = ("Evaluation result", "Data readiness measure", "Benchmark run", "Backtest", "Hindsight test", "Query")
 FORMS = ("ratio", "count", "money", "score", "days", "rate", "interval", "series", "fact", "text")
 SETTING_FORMS = ("word", "number", "percent_band", "money", "tokens", "gigabytes")
-READS = ("count", "threshold", "model", "cap", "plan")
+READS = ("count", "threshold", "model", "cap", "plan", "research")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August", "September", "October",
           "November", "December")
-COUNTS = ("sources", "checks", "refusals", "ladder", "shelf", "drills", "loops")
+COUNTS = ("sources", "checks", "refusals", "ladder", "shelf", "drills", "loops", "research_sources")
 
 
 class RegisterError(ValueError):
@@ -230,6 +238,51 @@ def load_rehearsals(path: Path = REHEARSALS_FILE) -> dict[str, Rehearsal]:
     return found
 
 
+# ── The recorded register ────────────────────────────────────────────────
+
+@dataclass(frozen=True)
+class Recorded:
+    """One number recorded by hand: what it counts, its form, its value (or its n of d for a ratio), the day it was
+    recorded (or the month, as "2026-03", when its source gives only the month), and how it was counted."""
+
+    key: str
+    name: str
+    noun: str
+    form: str
+    measured_on: str
+    how: str
+    value: float | int | None = None
+    n: int | None = None
+    d: int | None = None
+
+
+def load_recorded(path: Path = RECORDED_FILE) -> dict[str, Recorded]:
+    """Every recorded entry, by key, in the file's order."""
+    found = {}
+    allowed = set(Recorded.__dataclass_fields__) - {"key"}
+    for key, entry in _table(path, "recorded").items():
+        where = f"In {path.name}, recorded.{key}"
+        unknown = sorted(set(entry) - allowed)
+        if unknown:
+            raise RegisterError(f"{where} has keys I do not know: {', '.join(unknown)}.")
+        missing = [name for name in ("name", "noun", "form", "measured_on", "how") if not entry.get(name)]
+        if missing:
+            raise RegisterError(f"{where} needs {', '.join(missing)}.")
+        if entry["form"] not in RECORDED_FORMS:
+            raise RegisterError(f"{where}.form must be one of: {', '.join(RECORDED_FORMS)}.")
+        if entry["form"] == "ratio":
+            if not (isinstance(entry.get("n"), int) and isinstance(entry.get("d"), int)) or "value" in entry:
+                raise RegisterError(f"{where} is a ratio, so it needs n and d as whole numbers, and no value.")
+        elif not isinstance(entry.get("value"), int | float) or "n" in entry or "d" in entry:
+            raise RegisterError(f"{where} needs its value as a number, and no n or d.")
+        day = entry["measured_on"]
+        if not isinstance(day, str) or not re.fullmatch(r"\d{4}-\d{2}(?:-\d{2})?", day):
+            raise RegisterError(f"{where}.measured_on must be a day such as \"2026-11-05\" in quotes, or a month such "
+                                "as \"2026-03\" when its source gives only the month.")
+        found[key] = Recorded(key=key, **entry)
+    return found
+
+
 # ── Setting values ───────────────────────────────────────────────────────
 
 @dataclass(frozen=True)
@@ -264,6 +317,8 @@ def _count(name: str) -> int:
         return len(config.load_change_drills())
     if name == "loops":
         return len({kpi.loop for kpi in config.load_kpis().values() if kpi.loop})
+    if name == "research_sources":
+        return sum(1 for source in config.load_research().values() if source.enabled)
     raise RegisterError(f"count:{name} is not a registry I can count: use one of {', '.join(COUNTS)}.")
 
 
@@ -332,4 +387,13 @@ def value(setting: Setting, day_one: Path = DAY_ONE_FILE) -> Value:
         return _cap(what, day_one)
     if kind == "plan":
         return Value(int(what) if what.isdigit() else float(what))
+    if kind == "research":
+        from strata.config import load_research
+
+        source, _, name = what.partition(".")
+        found = load_research().get(source)
+        if found is None or name not in found.settings:
+            raise RegisterError(f"settings.{setting.key}.read is {setting.read}, but config/research.toml has no "
+                                f"[sources.{source}.settings] {name}.")
+        return Value(found.settings[name])
     raise RegisterError(f"settings.{setting.key}.read is {setting.read}, which I can't read.")

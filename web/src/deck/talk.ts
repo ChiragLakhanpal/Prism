@@ -1,15 +1,48 @@
-// The talk's shape (the second draft's brief, section 3): five topics between the bookends, and how the deck moves
-// through slides and the presses inside them. Nothing here draws; Deck.tsx and the notes window share it, and the
-// screen tests read it.
+// The talks' shape (the second draft's brief, section 3; the research talk's brief, section 2): each talk has five
+// topics between its bookends, and the deck moves through its slides and the presses inside them the same way.
+// Nothing here draws; Deck.tsx and the notes window share it, and the screen tests read it.
 //
 // A slide takes `steps` presses before the deck moves on: each press brings in one point, tile or figure step. A
 // slide arrives at step 0 when the talk moves forward onto it, showing its title and the structure of its figure,
 // and whole when the talk moves back onto it or the page loads on it. A press after the last step moves to the next
 // slide.
+import type { ReactNode } from "react";
+import type { DeckData } from "./data";
+import type { Slide } from "./slides";
 
-export const TOPIC_ORDER = ["strata", "work", "built", "answers", "grows"] as const;
-export type TopicKey = (typeof TOPIC_ORDER)[number];
+// The deck holds two talks on one engine: Prism's own at /present, and deep research at /present/research.
+export type TalkKey = "strata" | "research";
+
+// Each talk's topics in order, by key: the tracker shows them, and the agenda lists them.
+export const TOPICS = {
+  strata: ["strata", "work", "built", "answers", "grows"],
+  research: ["here", "brief", "works", "decisions", "next"],
+} as const satisfies Record<TalkKey, readonly string[]>;
+
+// The first talk's topics, as the first draft named them.
+export const TOPIC_ORDER = TOPICS.strata;
+export type TopicKey = (typeof TOPICS)[TalkKey][number];
 export type Part = "open" | TopicKey | "close";
+
+// Where each talk lives: its address and the channel its notes window listens on, so a notes window follows its own
+// deck.
+export const PLACES: Record<TalkKey, { base: string; channel: string }> = {
+  strata: { base: "/present", channel: "strata-deck" },
+  research: { base: "/present/research", channel: "strata-deck-research" },
+};
+
+// A talk, as the engine takes it: its key and address, its topics in order with their names and agenda lines, the
+// builder that makes its slides from the deck's data, and whether DESIGN.md section 8's sentence runs along every
+// slide's foot or only along the title slide's (the user, November 6, 2026: "just saying it once is enough").
+export type Talk = {
+  key: TalkKey;
+  base: string;
+  channel: string;
+  order: readonly TopicKey[];
+  topics: (data: DeckData) => Record<string, { name: string; line: ReactNode }>;
+  build: (data: DeckData) => Slide[];
+  footerOnEverySlide: boolean;
+};
 
 // Where the talk is: the slide (1-based) and how many of its presses have been made.
 export type Place = { n: number; step: number };
@@ -76,10 +109,10 @@ export function moved(at: Place, move: Move, stops: Stop[]): Place {
 // What the header's tracker shows for one topic: a segment per slide of the topic, each passed, current or later.
 export type Segment = "passed" | "current" | "later";
 
-export function segments(parts: Part[], n: number): Record<TopicKey, Segment[]> {
-  const found = Object.fromEntries(TOPIC_ORDER.map((topic) => [topic, [] as Segment[]])) as Record<TopicKey, Segment[]>;
+export function segments(parts: Part[], n: number, order: readonly TopicKey[] = TOPIC_ORDER): Record<string, Segment[]> {
+  const found: Record<string, Segment[]> = Object.fromEntries(order.map((topic) => [topic, [] as Segment[]]));
   parts.forEach((part, index) => {
-    if (part === "open" || part === "close") return;
+    if (part === "open" || part === "close" || !(part in found)) return;
     const at = index + 1;
     found[part].push(at < n ? "passed" : at === n ? "current" : "later");
   });

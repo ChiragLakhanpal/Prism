@@ -15,7 +15,9 @@ import { copyChecker } from "../lint/copy";
 import { copy } from "../src/copy";
 import { deckCopy, figureCopy } from "../src/deck/copy";
 import type { DeckData } from "../src/deck/data";
-import { TOPIC_ORDER } from "../src/deck/talk";
+import { researchCopy } from "../src/deck/research/copy";
+import { PLACES, TOPICS, TOPIC_ORDER, type TalkKey } from "../src/deck/talk";
+import { FIGURE_WORDS, type FigureWordsId } from "../src/figures/words";
 import { formatDate } from "../src/lib/format";
 import { scan } from "./axe";
 import { footerSentence } from "./design-md";
@@ -296,9 +298,9 @@ test("the speaker notes open in their own window, follow the deck press by press
   await expect(notes.locator("[data-notes-preview]").nth(1)).toHaveAttribute("data-notes-preview", String(next + 1));
 });
 
-// Every slide whole, its reading view and its notes, as /present/page and presentation mode draw them.
-async function allPieces(page: Page): Promise<Record<string, string>> {
-  await page.goto("/present/page");
+// Every slide whole, its reading view and its notes, as a talk's reading view and presentation mode draw them.
+async function allPieces(page: Page, base = "/present"): Promise<Record<string, string>> {
+  await page.goto(`${base}/page`);
   // count() does not wait, and the loading frame shows until the deck's data arrive, so wait for the reading view first.
   await expect(page.locator("[data-reading-slide]").first()).toBeVisible();
   const count = await page.locator("[data-reading-slide]").count();
@@ -313,7 +315,7 @@ async function allPieces(page: Page): Promise<Record<string, string>> {
     });
     pieces[`Slide ${n}, notes`] = await section.locator("[data-notes]").evaluate((element) => element.outerHTML);
   }
-  await page.goto("/present/1");
+  await page.goto(`${base}/1`);
   for (let n = 1; n <= count; n += 1) {
     pieces[`Slide ${n}`] = await page.locator(`section[data-slide='${n}']`).evaluate((element) => element.outerHTML);
   }
@@ -325,14 +327,15 @@ const sourceKeys = (pieces: Record<string, string>) => [
   ...new Set(Object.values(pieces).flatMap((html) => [...html.matchAll(/data-source-key="([^"]*)"/g)].flatMap((found) => found[1].split(/\s+/)))),
 ];
 
-// The keys the deck's data does not hold: a result the snapshot does not carry, a setting, a dimension of the rubric
-// or a tool that is not one of the demo package's two recorded answers.
+// The keys the deck's data does not hold: a result the snapshot does not carry, a setting, an entry of the recorded
+// register, a dimension of the rubric or a tool that is not one of the demo package's two recorded answers.
 function unknownKeys(keys: string[], data: DeckData): string[] {
   const dimensions = new Set(data.rubric.dimensions.map((dimension) => dimension.key));
   const known = (key: string) => {
     const [kind, name] = [key.slice(0, key.indexOf(":")), key.slice(key.indexOf(":") + 1)];
     if (kind === "r") return name in data.results;
     if (kind === "s") return name in data.settings;
+    if (kind === "rec") return name in data.recorded;
     if (kind === "rubric") return dimensions.has(name);
     return key === "tool:find_comparables" || key === "tool:estimate_time";
   };
@@ -349,9 +352,23 @@ test("the number check passes on every slide whole, its reading view and its spe
   const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
   expect(keys).toEqual(expect.arrayContaining(["r:benchmark-passed", "s:check-count", "s:fewest-comparables", "r:linked-notice"]));
   expect(unknownKeys(keys, data)).toEqual([]);
-  expect(unknownKeys(["r:not-a-result", "s:check-count", "tool:find_everything"], data)).toEqual(["r:not-a-result", "tool:find_everything"]);
+  expect(unknownKeys(["r:not-a-result", "s:check-count", "rec:not-recorded", "tool:find_everything"], data)).toEqual(["r:not-a-result", "rec:not-recorded", "tool:find_everything"]);
   const planted = { ...pieces, "Slide 4": pieces["Slide 4"].replace("</h1>", " across 12 countries</h1>") };
   expect(numberCheck(planted).map((found) => [found.where, found.number])).toEqual([["Slide 4", "12"]]);
+});
+
+test("the number check passes on every slide of the research talk, its reading view and its notes, and every recorded number and research setting it binds is in the deck's data", async ({ page }) => {
+  test.setTimeout(90_000);
+  await serveDeck(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const pieces = await allPieces(page, PLACES.research.base);
+  expect(numberCheck(pieces)).toEqual([]);
+  const keys = sourceKeys(pieces);
+  const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
+  // Every entry of the recorded register is stated somewhere, and so is each setting the talk added.
+  const expected = [...Object.keys(data.recorded).map((key) => `rec:${key}`), "s:late-award-days", "s:research-source-count", "s:isr-reports", "s:check-count"];
+  expect(keys).toEqual(expect.arrayContaining(expected));
+  expect(unknownKeys(keys, data)).toEqual([]);
 });
 
 test("the deck the App serves says on each slide what is not measured yet, and passes the number check", async ({ page }) => {
@@ -540,14 +557,23 @@ test("the deck asks for its password first: a wrong one is refused, the right on
   await expect(page.locator("[data-deck=present]")).toBeVisible();
   await page.reload();
   await expect(page.locator("[data-deck=present]")).toBeVisible();
+  // The research talk sits behind the same door, and the password given once opens both.
+  await page.goto(`${PLACES.research.base}/1`);
+  await expect(page.locator("section[data-slide-id=welcome]")).toBeVisible();
+  await page.context().clearCookies();
+  open = false;
+  await page.goto(`${PLACES.research.base}/notes`);
+  await expect(page.locator("[data-door-password]")).toBeVisible();
 });
 
-test("a deck that cannot load says so on the stage with a way to try again", async ({ page }) => {
+test("a deck that cannot load says so on the stage with a way to try again, in both talks", async ({ page }) => {
   await page.route("**/deck/data.json", (route) => route.fulfill({ status: 502, body: "" }));
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto("/present");
-  await expect(page.getByRole("alert")).toContainText(deckCopy.states.loadError);
-  await expect(page.getByRole("button", { name: deckCopy.states.reload })).toBeVisible();
+  for (const base of [PLACES.strata.base, PLACES.research.base]) {
+    await page.goto(base);
+    await expect(page.getByRole("alert"), base).toContainText(deckCopy.states.loadError);
+    await expect(page.getByRole("button", { name: deckCopy.states.reload })).toBeVisible();
+  }
 });
 
 test("each figure's steps are its text version's, in order, its words pass the copy lint and the number check, and each hairline figure's meaning passes the copy lint", () => {
@@ -556,14 +582,17 @@ test("each figure's steps are its text version's, in order, its words pass the c
   const problems: string[] = [];
   const pieces: Record<string, string> = {};
   const svgs = readdirSync(folder).filter((name) => name.endsWith(".svg"));
-  expect(svgs.length).toBe(Object.keys(figureCopy).length - 1);
+  // Every drawing of both talks is exported, and every export has its words: the core sample is a hairline figure.
+  expect(svgs.map((name) => name.replace(/\.svg$/, "")).sort()).toEqual(Object.keys(FIGURE_WORDS).filter((id) => id !== "core-sample").sort());
   for (const name of svgs) {
     const svg = readFileSync(folder + name, "utf8").replace(/<style>[\s\S]*?<\/style>/g, "");
-    const id = name.replace(/\.svg$/, "") as keyof typeof figureCopy;
+    const id = name.replace(/\.svg$/, "") as FigureWordsId;
     const words = [...svg.matchAll(/<(title|desc|text|tspan)\b[^>]*>([^<]*)<\/\1>/g)].map((found) => found[2].replace(/&#x27;/g, "'").replace(/&amp;/g, "&"));
-    expect(words[0], `${name}'s title is the copy file's`).toBe(figureCopy[id].title);
+    expect(words[0], `${name}'s title is the copy file's`).toBe(FIGURE_WORDS[id].title);
     const steps = Math.max(...[...svg.matchAll(/data-step="(\d+)"/g)].map((found) => Number(found[1])));
-    expect(steps, `${name}'s presses match its text version`).toBe(figureCopy[id].steps.length);
+    expect(steps, `${name}'s presses match its text version`).toBe(FIGURE_WORDS[id].steps.length);
+    for (const text of FIGURE_WORDS[id].steps) for (const problem of check(text)) problems.push(`${name}'s text version: "${text}" ${problem}`);
+    pieces[`${name}'s text version`] = `<p>${FIGURE_WORDS[id].steps.join("</p><p>")}</p>`;
     for (const text of words) for (const problem of check(text)) problems.push(`${name}: "${text}" ${problem}`);
     pieces[name] = `<p>${words.join("</p><p>")}</p>`;
   }
@@ -576,4 +605,200 @@ test("each figure's steps are its text version's, in order, its words pass the c
     for (const problem of check(means)) problems.push(`${file}: "${means}" ${problem}`);
   }
   expect(problems).toEqual([]);
+});
+
+// ── The research talk at /present/research (ticket 162; .notes/deck3/brief.md) ──
+
+const RESEARCH = PLACES.research.base;
+const RESEARCH_IDS = [
+  "welcome", "agenda",
+  "here", "timeline", "two-apps", "why-prism", "five-ways", "set-aside",
+  "brief", "what-it-is", "gap", "considered",
+  "works", "demo-research", "pipeline", "checks", "honest",
+  "decisions", "ladder", "posts", "other-decisions",
+  "next", "next-steps", "built-designed",
+  "thanks",
+];
+const talkOf = (key: TalkKey) => ({ key, base: PLACES[key].base, order: TOPICS[key] });
+
+test("the research talk walks end to end: its bookends and five topics each opened by its navy opener, one logo a slide, the footer sentence on the title slide only, every press in order, the tracker and axe", async ({ page }) => {
+  test.setTimeout(150_000);
+  const talk = talkOf("research");
+  await serveDeck(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // A number out of range goes to the last slide.
+  await page.goto(`${talk.base}/999`);
+  await expect(page.locator(`section[data-slide='${RESEARCH_IDS.length}']`)).toBeVisible();
+  expect(new URL(page.url()).pathname).toBe(`${talk.base}/${RESEARCH_IDS.length}`);
+  const ids = await page.locator("section[data-slide]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-slide-id")));
+  expect(ids).toEqual(RESEARCH_IDS);
+  const footer = await footerSentence();
+  const status = page.locator("[data-deck-status]");
+  await page.keyboard.press("Home");
+  for (let n = 1; n <= RESEARCH_IDS.length; n += 1) {
+    const id = RESEARCH_IDS[n - 1];
+    const slide = page.locator(`section[data-slide='${n}']`);
+    await expect(slide, id).toBeVisible();
+    expect(new URL(page.url()).pathname).toBe(`${talk.base}/${n}`);
+    await expect(slide.getByRole("img", { name: deckCopy.logo }), id).toHaveCount(1);
+    // The sentence that the content is not World Bank policy shows once, on the title slide (DESIGN.md section 8).
+    await expect(slide.locator("[data-slide-footer]"), id).toHaveCount(n === 1 ? 1 : 0);
+    if (n === 1) await expect(slide.locator("[data-slide-footer]")).toHaveText(footer);
+    // An opener names its topic and numbers it; a topic's slide lights its topic in the tracker.
+    if ((talk.order as readonly string[]).includes(id)) {
+      await expect(slide.getByRole("heading", { level: 1 })).toHaveText(researchCopy.topics[id as keyof typeof researchCopy.topics].name);
+      await expect(slide.locator("[data-topic-number]")).toHaveText(String(talk.order.indexOf(id as never) + 1));
+    }
+    const steps = Number(await slide.getAttribute("data-step-count"));
+    for (let step = 1; step <= steps; step += 1) {
+      await page.keyboard.press("ArrowRight");
+      await expect(slide, `${id}, press ${step}`).toHaveAttribute("data-step-current", String(step));
+      await expect(status).not.toHaveText("");
+    }
+    // axe reads the slide once its last press has finished drawing in, as the room sees it.
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+          .map((animation) => animation.finished.catch(() => undefined)),
+      ),
+    );
+    expect((await scan(page)).violations.map((found) => `${id}: ${found.id}`)).toEqual([]);
+    if (n < RESEARCH_IDS.length) await page.keyboard.press("ArrowRight");
+  }
+  const tracker = page.locator("section[data-slide-id=gap] [data-tracker]");
+  await expect(tracker.locator("[data-topic=brief] [data-topic-name]")).toHaveAttribute("aria-current", "step");
+  for (const topic of talk.order) await expect(tracker.locator(`[data-topic=${topic}] [data-segment]`), topic).toHaveCount(ids.filter((_, k) => k > 1 && k < ids.length - 1 && topicOf(ids, k) === topic).length);
+  for (const id of ["welcome", "agenda", "thanks"]) await expect(slideById(page, id).locator("[data-tracker]"), id).toHaveCount(0);
+  // The title slide and the close name both presenters.
+  for (const id of ["welcome", "thanks"]) for (const name of ["Chirag Lakhanpal", "Surya Yadav"]) await expect(slideById(page, id), id).toContainText(name);
+});
+
+// A research slide's topic: the opener at or before it. The close, the last slide, has none.
+function topicOf(ids: (string | null)[], index: number): string | undefined {
+  const order = TOPICS.research as readonly string[];
+  if (index >= ids.length - 1) return undefined;
+  for (let k = index; k >= 0; k -= 1) if (order.includes(ids[k] ?? "")) return ids[k] ?? undefined;
+  return undefined;
+}
+
+test("the research demo slide opens the demo project's Deep research tab in a new tab, and its two backup presses show the recorded run, then the printed brief", async ({ page }) => {
+  const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
+  await serveDeck(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const n = RESEARCH_IDS.indexOf("demo-research") + 1;
+  await page.goto(`${RESEARCH}/${n - 1}`);
+  await expect(page.locator(`section[data-slide='${n - 1}']`)).toBeVisible();
+  await page.keyboard.press("ArrowRight");
+  const slide = slideById(page, "demo-research");
+  await expect(slide).toHaveAttribute("data-step-current", "0");
+  const link = slide.locator("[data-demo-link]");
+  await expect(link).toHaveAttribute("href", `/projects/${data.research.demo.project_id}/research`);
+  await expect(link).toHaveAttribute("target", "_blank");
+  await expect(link).toContainText(deckCopy.demo.opens);
+  await expect(slide.locator("[data-demo-box]")).toContainText(data.research.demo.project_id);
+  const lines = researchCopy.slides.demo.lines.length;
+  expect(Number(await slide.getAttribute("data-step-count"))).toBe(lines + 2);
+  for (let step = 1; step <= lines; step += 1) await page.keyboard.press("ArrowRight");
+  await expect(slide.locator("[data-research-backup]")).toHaveCount(0);
+  const image = (name: string) => slide.locator(`[data-research-backup] img[src='/deck/research/${name}']`);
+  // Every image keeps its own shape: its box has the image's ratio, so contained in it, it fills it.
+  const keepsItsShape = async (name: string) => {
+    const [box, natural] = await image(name).evaluate((img: HTMLImageElement) => [img.clientWidth / img.clientHeight, img.naturalWidth / img.naturalHeight]);
+    expect(Math.abs(box / natural - 1), name).toBeLessThan(0.02);
+  };
+  // The first backup press: the run's two screenshots, side by side at one height, in the box's place.
+  await page.keyboard.press("ArrowRight");
+  for (const name of RUN_SHOTS) await expect(image(name), name).toBeVisible();
+  // The box keeps its place under the backup, unseen and out of reach, so the slide keeps its size.
+  await expect(slide.locator("[data-research-demo] > [aria-hidden=true][inert] [data-demo-box]")).toHaveCount(1);
+  await expect(slide.locator("[data-research-demo] > [aria-hidden=true]")).toHaveCSS("opacity", "0");
+  const heights = await slide.locator("[data-research-shot]").evaluateAll((boxes) => boxes.map((box) => Math.round(box.getBoundingClientRect().height)));
+  expect(new Set(heights).size).toBe(1);
+  for (const name of RUN_SHOTS) await keepsItsShape(name);
+  // The second: four pages of the printed brief in a row across the stage.
+  await page.keyboard.press("ArrowRight");
+  for (const name of PAGES) await expect(image(name), name).toBeVisible();
+  await expect(image("run.png")).toHaveCount(0);
+  for (const name of PAGES) await keepsItsShape(name);
+  const row = await slide.locator("[data-research-shot]").evaluateAll((boxes) => {
+    const edges = boxes.map((box) => box.getBoundingClientRect());
+    return [edges[0].top === edges[3].top, edges[3].right - edges[0].left];
+  });
+  const stage = (await page.locator("[data-stage]").boundingBox())!;
+  expect(row[0]).toBe(true);
+  // The pages fill the stage's width between its margins, at least three quarters of it.
+  expect(row[1] as number).toBeGreaterThan(stage.width * 0.75);
+  for (const name of [...RUN_SHOTS, ...PAGES]) expect((await page.request.get(`/deck/research/${name}`)).status(), name).toBe(200);
+  // The buttons in the box jump to either backup without walking the lines.
+  await page.keyboard.press("ArrowLeft");
+  await page.keyboard.press("ArrowLeft");
+  await expect(slide.locator("[data-research-backup]")).toHaveCount(0);
+  await expect(slide.locator("[data-research-demo] > [aria-hidden=true]")).toHaveCount(0);
+  await expect(slide.locator("[data-demo-box]")).toBeVisible();
+  await slide.locator("[data-research-backup-button='7']").click();
+  await expect(slide).toHaveAttribute("data-step-current", "7");
+  await expect(image("cover.png")).toBeVisible();
+  // The reading view shows the box and both backups under the lines.
+  await page.goto(`${RESEARCH}/page`);
+  const reading = page.locator(`[data-reading-slide='${n}']`);
+  for (const name of [...RUN_SHOTS, ...PAGES]) await expect(reading.locator(`img[src='/deck/research/${name}']`), name).toBeVisible();
+});
+
+// The demo's backups: the run's two screenshots, then four pages of the printed brief.
+const RUN_SHOTS = ["run.png", "checking.png"];
+const PAGES = ["cover.png", "ground.png", "by-site.png", "by-site-photos.png"];
+
+test("the research talk's notes window follows its own deck press by press with each cue's speaker, and the first talk's presses do not move it", async ({ page, context }) => {
+  await serveDeck(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const timeline = RESEARCH_IDS.indexOf("timeline") + 1;
+  await page.goto(`${RESEARCH}/${timeline - 1}`);
+  await expect(page.locator(`section[data-slide='${timeline - 1}']`)).toBeVisible();
+  await context.route("**/deck/data.json", async (route) => route.fulfill({ contentType: "application/json", body: await recorded("deck-data.json") }));
+  const notes = await context.newPage();
+  await notes.goto(`${RESEARCH}/notes`);
+  await expect(notes.locator(`[data-notes-view='${timeline - 1}']`)).toBeVisible();
+  await page.bringToFront();
+  await page.keyboard.press("ArrowRight");
+  await expect(notes.locator(`[data-notes-view='${timeline}']`)).toBeVisible();
+  await expect(notes.locator("[data-notes-cue]")).toHaveText(researchCopy.speaker.timeline.cue!);
+  await page.keyboard.press("ArrowRight");
+  const steps = FIGURE_WORDS["merge-timeline"].steps;
+  await expect(notes.locator("[data-notes-press]")).toHaveText(deckCopy.pressOf("1", String(steps.length)));
+  await expect(notes.locator("[data-notes-step]")).toHaveText(steps[0]);
+  expect((await scan(notes)).violations.map((found) => found.id)).toEqual([]);
+  // The first talk has a channel of its own: a press there leaves the research notes where they are.
+  const first = await context.newPage();
+  await first.goto("/present/3");
+  await expect(first.locator("section[data-slide='3']")).toBeVisible();
+  await first.keyboard.press("ArrowRight");
+  await expect(first.locator("section[data-slide='4']")).toBeVisible();
+  await expect(notes.locator(`[data-notes-view='${timeline}']`)).toBeVisible();
+  // Every cue names the slide's suggested speaker: Surya for topics 1 and 5, Chirag for the open, topics 2 to 4 and
+  // the close.
+  for (const [k, id] of RESEARCH_IDS.entries()) {
+    const topic = topicOf(RESEARCH_IDS, k);
+    const speaker = (researchCopy.speaker as Record<string, { cue?: string }>)[id]?.cue ?? "";
+    expect(speaker, id).toMatch(topic === "here" || topic === "next" ? /^Surya/ : /^Chirag/);
+  }
+});
+
+test("below the size of the canvas the research talk is a page with every slide whole, each figure's text version, its notes, and the footer once", async ({ page }) => {
+  await serveDeck(page);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${RESEARCH}/4`);
+  await expect(page.locator("[data-deck=read]")).toBeVisible();
+  await expect(page.locator("[data-reading-slide]")).toHaveCount(RESEARCH_IDS.length);
+  await expect(page.getByRole("contentinfo")).toHaveText(await footerSentence());
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(researchCopy.slides.welcome.statement);
+  for (const id of ["merge-timeline", "two-apps", "five-ways", "brief-sections", "record-gap", "research-run", "evidence-ladder", "post-funnel"] as const) {
+    await expect(page.locator(`[data-figure-text=${id}]`), id).toContainText(FIGURE_WORDS[id].steps[0]);
+  }
+  await expect(page.locator("[data-reading-slide] [data-step][aria-hidden=true]")).toHaveCount(0);
+  const close = page.locator("[data-reading-slide]").last();
+  await expect(close.getByRole("link", { name: researchCopy.slides.thanks.links.tab })).toHaveAttribute("href", "/projects/P156634/research");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  expect((await scan(page)).violations.map((found) => found.id)).toEqual([]);
 });

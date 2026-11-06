@@ -62,3 +62,51 @@ reason = "The name of the retrieval loop's leading indicator, as ticket 32 named
 [[allow]]
 phrase = "about US$15 million"
 reason = "The words a person types to plan a package from a sentence, the examples registry's sentence (config/examples.toml, packages.rural_roads_kenya), which the deck's package demo shows in its box: an input, not a number Prism measured. A new sentence there means a new line here, and the number check says so."
+
+# The deep research talk at /present/research (ticket 162; .notes/deck3/brief.md, section 8): its fixed names. Its
+# counts of what Prism keeps in a registry are bound to settings instead: the research sources, the checks, the reports
+# the ISR reader takes and the late-award window.
+
+[[allow]]
+phrase = "two apps"
+reason = "The round's premise: its brief of November 4, 2026 paired Strata and ProcIntel, built apart on the same brief. A fact of the round, not a count Prism measured."
+
+[[allow]]
+phrase = "Five ways forward"
+reason = "The name of the research talk's options: the four ProcIntel designs Prism lacked and deep research, which the conversation of November 5, 2026 produced."
+
+[[allow]]
+phrase = "the four ProcIntel designs"
+reason = "The designs the round brought from ProcIntel to Prism, each a written proposal in docs/proposals/: the MCP server, the timeline across packages, goal seeking and the editable pipeline."
+
+[[allow]]
+phrase = "the four designs"
+reason = "The same ProcIntel designs, each a written proposal in docs/proposals/."
+
+[[allow]]
+phrase = "four places"
+reason = "The same four designs, named as the places where ProcIntel's design was the sharper one."
+
+[[allow]]
+phrase = "Twelve ideas"
+reason = "The ideas the research talk lists as considered for deep research and set aside or kept for later: a fixed list in its own copy, web/src/deck/research/copy.ts."
+
+[[allow]]
+phrase = "Four rungs"
+reason = "The evidence ladder for deep research as the talk draws it: field photos, complaints, satellite and posts, the order in the writer's instruction, src/strata/agent/instructions/research_brief_writer.md."
+
+[[allow]]
+phrase = "Five next steps"
+reason = "The research talk's next steps, each a reader, a rule or a registry entry: a fixed list in its own copy."
+
+[[allow]]
+phrase = "the five prepared projects"
+reason = "The projects whose deep research runs were gathered on November 5, 2026 and stored for the demo: a fixed set the talk names."
+
+[[allow]]
+phrase = "two By site pages"
+reason = "The research demo slide's caption names which pages of the printed brief its backup shows: a description of the images on the slide, not a count Prism measured."
+
+[[allow]]
+phrase = "three views"
+reason = "The app's views are a registry, config/roles.toml [views]: World Bank staff, a borrower's team and the public."

@@ -10,7 +10,8 @@ import { Fill } from "../components/Fill";
 import { numText } from "../components/Num";
 import { FIGURES, type FigureId } from "../figures/registry";
 import { formatDate, formatNumber } from "../lib/format";
-import { deckCopy, figureCopy } from "./copy";
+import { FIGURE_WORDS } from "../figures/words";
+import { deckCopy } from "./copy";
 import { measured, type DeckData, type DeckResult } from "./data";
 import { Demo, NewTabLink, NotMeasured, Phases, Points, Step, Tiles } from "./layouts";
 import { NoteNum, ResultNum, RubricPoints, SettingWord } from "./nums";
@@ -44,6 +45,11 @@ export type Slide = {
   topic?: TopicKey;
   hairline?: string;
   hairlineLabel?: string;
+  // The line under a bookend's statement or an opener's topic name, the presenters a bookend names, and the links the
+  // close offers, each opening in a new tab.
+  lead?: ReactNode;
+  presenters?: { names: string[]; date: string | null };
+  links?: { href: string; label: string }[];
   // A chart drawn from the snapshot, with its table twin and the keys of the numbers it draws.
   chart?: { drawing: (mode: Mode, labelledById: string) => ReactNode; table: ReactNode; source: string };
   // A demo's recorded answer, which a press on the slide swaps in on the canvas (ticket 116; Recorded.tsx).
@@ -126,18 +132,24 @@ export function buildSlides(data: DeckData): Slide[] {
     return { figure: { id, steps, wide }, steps: steps + extra };
   };
 
-  const opener = (id: string, topic: TopicKey, hairline: string, label: string, notes: string): Draft => ({
+  const opener = (id: string, topic: keyof typeof deckCopy.topics, hairline: string, label: string, notes: string): Draft => ({
     id,
     part: topic,
     theme: "navy",
     kind: "opener",
     title: deckCopy.topics[topic].name,
+    lead: deckCopy.topics[topic].line,
     steps: 0,
     topic,
     hairline,
     hairlineLabel: label,
     notes,
   });
+  const presenters = { names: data.presenter.name ? [data.presenter.name] : [], date: data.presenter.date };
+  const closeLinks = [
+    { href: "/", label: s.thanks.links.app },
+    ...(["proposal", "dashboard", "repo"] as const).flatMap((key) => (data.urls[key] ? [{ href: data.urls[key]!, label: s.thanks.links[key] }] : [])),
+  ];
 
   // ── Measured results the slides read ──
   const passages = r("passages");
@@ -167,6 +179,8 @@ export function buildSlides(data: DeckData): Slide[] {
       theme: "navy",
       kind: "title",
       title: s.welcome.statement,
+      lead: s.welcome.line,
+      presenters,
       steps: 0,
       hairline: "core-sample",
       hairlineLabel: s.welcome.figure,
@@ -575,6 +589,9 @@ export function buildSlides(data: DeckData): Slide[] {
       theme: "navy",
       kind: "close",
       title: s.thanks.title,
+      lead: s.thanks.ask,
+      presenters,
+      links: closeLinks,
       steps: 0,
       hairline: "sediment",
       hairlineLabel: s.thanks.figure,
@@ -597,5 +614,5 @@ export function buildSlides(data: DeckData): Slide[] {
 
 // The step texts a figure's presses bring in, for the live region and the speaker notes.
 export function figureStepText(id: FigureId, step: number): string {
-  return (figureCopy[id].steps as readonly string[])[step - 1] ?? "";
+  return FIGURE_WORDS[id].steps[step - 1] ?? "";
 }

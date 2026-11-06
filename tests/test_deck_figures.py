@@ -24,7 +24,10 @@ EXPORTS = ROOT / "web" / "src" / "figures"
 SLOTS = {"stage": (864, 352), "half": (420, 352)}
 FIGURES = {"strata": "stage", "one-answer": "stage", "layers": "stage", "architecture": "stage", "pipeline": "stage", "reading": "stage",
            "knowledge-model": "stage", "retrieval": "stage", "languages": "stage", "estimate": "stage", "checks": "stage", "ladder": "half",
-           "loops": "stage"}
+           "loops": "stage",
+           # The research talk's eight (ticket 162; .notes/deck3/brief.md, section 6), drawn by tickets 163 and 164.
+           "merge-timeline": "stage", "two-apps": "stage", "five-ways": "stage", "brief-sections": "stage",
+           "record-gap": "stage", "research-run": "stage", "evidence-ladder": "half", "post-funnel": "stage"}
 # The skill's motion budget (references/animation.md): at most eight steps, twelve marked parts and two a step.
 MOST_STEPS, MOST_ITEMS, MOST_A_STEP = 8, 12, 2
 HAIRLINES = sorted(path.stem for path in (EXPORTS / "hairline").glob("*.js") if path.stem != "kernel")

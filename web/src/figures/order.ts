@@ -1,8 +1,9 @@
 // The figures' order on How Prism works and each slot's size (the second draft's brief, sections 4 and 5), apart
 // from the registry's drawings, so a screen test can read them without loading an SVG.
-import type { FigureCopyId } from "../deck/copy";
+import type { FigureWordsId } from "./words";
 
-export type FigureId = FigureCopyId;
+// Every figure of both talks, by key: Prism's own talk's and the deep research talk's (ticket 162).
+export type FigureId = FigureWordsId;
 export type Slot = "stage" | "half" | "hairline";
 
 // Each slot's drawing size in logical px, which is also its viewBox: a figure is drawn 1:1. The stage fills a slide's
@@ -29,4 +30,13 @@ export const PAGE_ORDER: FigureId[] = [
   "checks",
   "ladder",
   "loops",
+  // The deep research talk's figures (ticket 162; .notes/deck3/brief.md, section 6), in the order it reaches them.
+  "merge-timeline",
+  "two-apps",
+  "five-ways",
+  "brief-sections",
+  "record-gap",
+  "research-run",
+  "evidence-ladder",
+  "post-funnel",
 ];

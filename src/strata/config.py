@@ -3342,7 +3342,7 @@ class Deck:
 def load_deck(path: Path = CONFIG_DIR / "deck.toml") -> Deck:
     """The title slide's presenter and date."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"presenter_name", "presentation_date", "gate"})
+    _Entry(path, "the file", data).only({"presenter_name", "presentation_date", "gate", "research"})
     name, day = data.get("presenter_name", ""), data.get("presentation_date", "")
     if not isinstance(name, str):
         raise ConfigError(f"In {path.name}, presenter_name must be text, or \"\" until it is known.")
@@ -3355,6 +3355,33 @@ def load_deck(path: Path = CONFIG_DIR / "deck.toml") -> Deck:
         raise ConfigError(f"In {path.name}, presentation_date must be a date such as \"2026-10-30\", "
                           f"not {day!r}.") from error
     return Deck(name.strip() or None, date)
+
+
+@dataclass(frozen=True)
+class DeckResearch:
+    """The deep research talk at /present/research (ticket 162; config/deck.toml [research]): who presents it, and on
+    what day, for its title slide and its close. The date is None until it is known."""
+
+    presenters: tuple[str, ...]
+    presentation_date: dt.date | None
+
+
+def load_deck_research(path: Path = CONFIG_DIR / "deck.toml") -> DeckResearch:
+    """The research talk's presenters and date."""
+    table = _read(path).get("research", {})
+    _Entry(path, "[research]", table).only({"presenters", "presentation_date"})
+    names, day = table.get("presenters", []), table.get("presentation_date", "")
+    if not isinstance(names, list) or not all(isinstance(name, str) and name.strip() for name in names):
+        raise ConfigError(f"In {path.name}, [research] presenters must be a list of names in quotes.")
+    if not isinstance(day, str):
+        raise ConfigError(f"In {path.name}, [research] presentation_date must be a date in quotes, or \"\" until it is "
+                          "known.")
+    try:
+        date = dt.date.fromisoformat(day.strip()) if day.strip() else None
+    except ValueError as error:
+        raise ConfigError(f"In {path.name}, [research] presentation_date must be a date such as \"2026-11-07\", "
+                          f"not {day!r}.") from error
+    return DeckResearch(tuple(name.strip() for name in names), date)
 
 
 @dataclass(frozen=True)

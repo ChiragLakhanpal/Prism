@@ -153,6 +153,56 @@ def test_the_addresses_and_the_presenter_come_from_their_config_files():
     assert set(data["presenter"]) == {"name", "date"}
 
 
+def test_the_research_talks_recorded_numbers_carry_their_day_how_and_kind():
+    # Ticket 162 (.notes/deck3/brief.md, section 8): the ten numbers the research talk states that no query measures.
+    recorded = deck.build(None, None)["recorded"]
+    assert list(recorded) == ["lines-prism", "tests-prism", "lines-procintel", "tests-procintel", "isr-progress",
+                              "wajir-progress", "late-awards", "kept-low", "kept-high", "tile-metres"]
+    assert {found["kind"] for found in recorded.values()} == {"Recorded"}
+    assert all(found["how"] and found["measured_on"] for found in recorded.values())
+    # Both repositories counted the same way on November 5, 2026; P156634's ISR 19 gives only its month.
+    assert (recorded["lines-prism"]["value"], recorded["tests-procintel"]["value"]) == (61653, 351)
+    assert (recorded["isr-progress"]["form"], recorded["isr-progress"]["value"],
+            recorded["isr-progress"]["measured_on"]) == ("percent", 85, "2026-03")
+    # A ratio carries its parts and no value.
+    assert {key: recorded["kept-high"].get(key) for key in ("n", "d", "value")} == {"n": 83, "d": 88, "value": None}
+
+
+@pytest.mark.parametrize("old, new, says", [
+    ('form = "ratio"\nn = 65', 'form = "share"\nn = 65', "form must be one of"),
+    ("n = 65\nd = 71", "value = 65", "needs n and d"),
+    ('measured_on = "2026-03"', 'measured_on = "March 2026"', "measured_on must be a day"),
+    ('how = "P156634', 'note = "P156634', "keys I do not know"),
+])
+def test_a_recorded_entry_out_of_shape_stops_with_a_sentence(tmp_path, old, new, says):
+    text = register.RECORDED_FILE.read_text()
+    assert old in text
+    edited = tmp_path / "recorded.toml"
+    edited.write_text(text.replace(old, new, 1))
+    with pytest.raises(register.RegisterError, match=says):
+        register.load_recorded(edited)
+
+
+def test_the_research_talks_settings_are_read_from_the_files_that_set_them():
+    settings = deck.build(None, None)["settings"]
+    with open(ROOT / "config" / "thresholds.toml", "rb") as handle:
+        late = tomllib.load(handle)["research"]["late_award_days"]
+    with open(ROOT / "config" / "research.toml", "rb") as handle:
+        sources = tomllib.load(handle)["sources"]
+    assert settings["late-award-days"]["value"] == late
+    assert (settings["research-source-count"]["value"], settings["research-source-count"]["kind"]) == (
+        sum(1 for source in sources.values() if source["enabled"]), "Count")
+    assert settings["isr-reports"]["value"] == sources["isr_narrative"]["settings"]["reports"]
+
+
+def test_the_research_talk_names_its_presenters_and_opens_the_demo_projects_research_tab():
+    research = deck.build(None, None)["research"]
+    # config/deck.toml [research]: both presenters, the day not set yet; config/slice.toml [demo_plan]: P156634.
+    assert research == {"presenters": ["Chirag Lakhanpal", "Surya Yadav"], "date": None,
+                        "demo": {"project_id": "P156634", "project_name": "Kenya Water and Sanitation Development Project",
+                                 "href": "/projects/P156634/research"}}
+
+
 def test_the_live_recording_asks_the_apps_own_routes_for_the_demo_package(fixture_db):
     import importlib.util
     from contextlib import contextmanager

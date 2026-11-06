@@ -7,8 +7,10 @@
 #   name         what it is, in plain words: Annex 2's Setting column
 #   read         where the value comes from:
 #                  count:<registry>   the number of entries in a registry: sources, checks (the verifier's), refusals,
-#                                     ladder (the evidence ladder's rules), shelf (the hardest documents), drills or loops
+#                                     ladder (the evidence ladder's rules), shelf (the hardest documents), drills, loops
+#                                     or research_sources (the research registry's enabled sources)
 #                  threshold:<key>    config/thresholds.toml, through load_thresholds().value()
+#                  research:<source>.<name>  a setting one research reader reads, from config/research.toml
 #                  model:<role>       the embedding size of a role in config/models.toml
 #                  cap:<role>         a cap read back from Azure into docs/day-one-results.md (ops/dayone/probe_caps.py):
 #                                     agent, draft, batch or embed for a deployment's cap, budget for the monthly budget,
@@ -228,3 +230,28 @@ name = "Replicas anything hosted may run, at most"
 read = "plan:2"
 form = "word"
 where = "docs/PLAN.md section 2, Azure billing"
+
+# The deep research talk's settings (ticket 162), which /present/research states.
+[settings.late-award-days]
+name = "Days before a project's closing date in which deep research counts an award as late"
+read = "threshold:research.late_award_days"
+form = "number"
+where = "config/thresholds.toml, research.late_award_days"
+enforced_by = "tests/test_research_evidence.py"
+enforces = "The summary counts the awards in the window before closing"
+
+[settings.research-source-count]
+name = "Sources deep research reads: the enabled entries in its registry"
+read = "count:research_sources"
+form = "word"
+where = "config/research.toml, each source with enabled = true"
+enforced_by = "tests/test_research_registry.py"
+enforces = "The registry defines each source, and the ones not connected with their reasons"
+
+[settings.isr-reports]
+name = "Newest Implementation Status and Results Reports the ISR narrative reader takes"
+read = "research:isr_narrative.reports"
+form = "word"
+where = "config/research.toml, sources.isr_narrative.settings.reports"
+enforced_by = "tests/test_research_lakehouse_readers.py"
+enforces = "The ISR reader keeps the newest reports' status passages and comments"

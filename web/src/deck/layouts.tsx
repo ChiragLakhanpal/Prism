@@ -14,6 +14,10 @@ import { RecordedAnswer, RecordedButton, RecordedFigure, type Recording } from "
 const Whole = createContext(false);
 export const WholeSlides = Whole.Provider;
 
+// On the canvas, a slide's own control can move the talk to one of the slide's presses, as a demo's backup buttons
+// do; elsewhere there is none.
+export const PressTo = createContext<((step: number) => void) | null>(null);
+
 // An item a press brings in, the n-th of its slide (from 1). It is drawn all along, so it holds its place while it
 // waits, hidden from the eye and from assistive tech; it is current on its step and recedes after it.
 export function Step({
@@ -152,6 +156,7 @@ export function Demo({
   lines,
   at,
   mode,
+  extra,
 }: {
   box: ReactNode;
   action: ReactNode;
@@ -161,6 +166,8 @@ export function Demo({
   lines: ReactNode[];
   at: number;
   mode: Mode;
+  // More controls in the box, before its link, such as a demo's backup buttons.
+  extra?: ReactNode;
 }) {
   const deck = useContext(RecordedAnswer);
   const canvas = mode === "present" ? deck : null;
@@ -183,6 +190,7 @@ export function Demo({
           ) : (
             <RecordedButton open={open} controls={answerId} onClick={() => setOpen((now) => !now)} />
           ))}
+        {extra}
         <a
           href={href}
           target="_blank"

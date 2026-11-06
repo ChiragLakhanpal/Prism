@@ -31,6 +31,29 @@ export type DeckResult = {
 
 export type DeckSetting = { value: number; name: string; where: string; kind: "Count" | "Setting" };
 
+// A number recorded by hand with its day and how it was counted (docs/proposal/recorded.toml, ticket 162): a count no
+// query on the lakehouse measures, such as a repository's lines or a figure a sample brief cites. Its source kind is
+// "Recorded". measured_on is a day, or a month ("2026-03") when the source gives only its month.
+export type DeckRecorded = {
+  name: string;
+  noun: string;
+  kind: "Recorded";
+  form: "count" | "ratio" | "percent";
+  value?: number;
+  n?: number;
+  d?: number;
+  measured_on: string;
+  how: string;
+};
+
+// The deep research talk's own data (config/deck.toml [research]): its presenters and day, and the demo project whose
+// Deep research tab the demo slide opens.
+export type DeckResearch = {
+  presenters: string[];
+  date: string | null;
+  demo: { project_id: string; project_name: string; href: string };
+};
+
 export type DeckData = {
   pulled_on: string | null;
   results: Record<string, DeckResult>;
@@ -59,6 +82,8 @@ export type DeckData = {
   // The showcase project (config/slice.toml [showcase]), whose disagreement the ladder slide quotes.
   showcase: { project_id: string };
   award_gap: { start: number; end: number } | null;
+  recorded: Record<string, DeckRecorded>;
+  research: DeckResearch;
 };
 
 export const DECK_DATA = "/deck/data.json";

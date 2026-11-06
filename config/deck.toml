@@ -11,6 +11,13 @@
 presenter_name = "Chirag Lakhanpal"
 presentation_date = "2026-11-01"
 
+# The deep research talk at /present/research (ticket 162): its presenters, in the order its title slide names them,
+# and the day it is given, as "2026-11-07" in quotes, or "" until it is known. strata.config.load_deck_research()
+# reads it; rebuild the deck's data after a change.
+[research]
+presenters = ["Chirag Lakhanpal", "Surya Yadav"]
+presentation_date = ""
+
 # The deck's password (the user's request of October 31, 2026). The App's server hands the deck's code, its data and
 # the study guide's diagrams only to a browser that has given it, so the slides and the speaker notes stay with the
 # presenter, even for people signed into the App. Only the password's PBKDF2-SHA256 digest and its salt are here,

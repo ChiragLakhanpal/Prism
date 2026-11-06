@@ -10,7 +10,11 @@
 // - /present/notes: the speaker notes, in their own window, kept in step with the deck through a BroadcastChannel.
 //
 // The deck reads its numbers from /deck/data.json (web/src/deck/data.ts), the measures snapshot the proposal cites.
-import { useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
+//
+// The deep research talk (ticket 162) runs on the same engine at /present/research, /present/research/{n},
+// /present/research/page and /present/research/notes. The view names the talk; the talk (talks/) gives the topics,
+// the slides, the address and the notes window's channel.
+import { createContext, useCallback, useContext, useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type Ref } from "react";
 import { ChevronDown, ChevronLeft, ChevronUp, Table2 } from "lucide-react";
 import { Alert } from "../components/Alert";
 import { Button } from "../components/Button";
@@ -22,16 +26,23 @@ import { cx } from "../lib/cx";
 import { formatDate } from "../lib/format";
 import { Diagram, FigureFailed, FigureText, Hairline, hasHairline, registerHairlines, useOverflow } from "../figures/Figure";
 import { FIGURES, SLOTS } from "../figures/registry";
-import { deckCopy, figureCopy } from "./copy";
+import { FIGURE_WORDS } from "../figures/words";
+import { deckCopy } from "./copy";
 import { loadDeck, type DeckData } from "./data";
 import { Logo, SlideFrame, type Theme } from "./Frame";
-import { NewTabLink, SourceLine, Step, WholeSlides } from "./layouts";
+import { NewTabLink, PressTo, SourceLine, Step, WholeSlides } from "./layouts";
 import { CHART_WIDTH, FOOTER, type, type Mode } from "./ramp";
 import { RecordedAnswer, RecordedSlide } from "./Recorded";
-import { buildSlides, figureStepText, TITLE_ID, type Slide } from "./slides";
-import { arrive, fullScreenKey, moved, moveFor, segments, TOPIC_ORDER, type Move, type Place } from "./talk";
+import { figureStepText, TITLE_ID, type Slide } from "./slides";
+import { arrive, fullScreenKey, moved, moveFor, segments, type Move, type Place, type Talk } from "./talk";
+import { TALKS } from "./talks";
 import { slideInAddress, type DeckView } from "./view";
 import "./deck.css";
+
+// The talk on screen, and its topics' names and lines as its data fill them.
+type OnStage = { talk: Talk; topics: Record<string, { name: string; line: ReactNode }> };
+const TalkOnStage = createContext<OnStage>(null as unknown as OnStage);
+const useTalk = () => useContext(TalkOnStage);
 
 // The openers' and the close's hairline figures, which only the deck draws, so they load with the deck.
 registerHairlines(
@@ -44,7 +55,6 @@ registerHairlines(
 
 const CANVAS = { width: 960, height: 540 };
 const PRESENT = "(min-width: 63rem) and (min-height: 40.25rem)";
-const CHANNEL = "strata-deck";
 // How long the control bar stays after the pointer last moved, in full screen.
 const BAR_REST_MS = 2500;
 const GHOST =
@@ -73,7 +83,9 @@ export function DeckApp({ view }: { view: DeckView }) {
   }, []);
   useEffect(load, [load]);
   const big = useMatch(PRESENT);
-  const slides = useMemo(() => (data ? buildSlides(data) : null), [data]);
+  const talk = TALKS[view.talk];
+  const slides = useMemo(() => (data ? talk.build(data) : null), [data, talk]);
+  const stage = useMemo(() => (data ? { talk, topics: talk.topics(data) } : null), [data, talk]);
   if (failed) {
     return (
       <main className="flex min-h-dvh items-center justify-center bg-surface-2 p-6" data-deck="error">
@@ -93,12 +105,20 @@ export function DeckApp({ view }: { view: DeckView }) {
       </main>
     );
   }
-  if (!data || !slides) return view.kind === "slides" && big ? <Loading /> : <PageLoading />;
-  if (view.kind === "notes") return <NotesView slides={slides} data={data} />;
-  if (view.kind === "page" || !big) return <ReadingView slides={slides} data={data} page={view.kind === "page"} big={big} />;
-  // The slide the address shows now, which presentation mode keeps current, so a window that shrinks to the reading
-  // view and grows again comes back to the same slide.
-  return <Presentation slides={slides} data={data} start={slideInAddress() ?? 1} />;
+  if (!data || !slides || !stage) return view.kind === "slides" && big ? <Loading /> : <PageLoading />;
+  return (
+    <TalkOnStage.Provider value={stage}>
+      {view.kind === "notes" ? (
+        <NotesView slides={slides} data={data} />
+      ) : view.kind === "page" || !big ? (
+        <ReadingView slides={slides} data={data} page={view.kind === "page"} big={big} />
+      ) : (
+        // The slide the address shows now, which presentation mode keeps current, so a window that shrinks to the
+        // reading view and grows again comes back to the same slide.
+        <Presentation slides={slides} data={data} start={slideInAddress() ?? 1} />
+      )}
+    </TalkOnStage.Provider>
+  );
 }
 
 // While the deck's data arrive: the stage at the size it will have, as a light slide draws it, with the header strip
@@ -150,18 +170,19 @@ function PageLoading() {
 
 // ── One slide on the canvas ─────────────────────────────────────────────
 
-function Presenter({ data, mode, navy }: { data: DeckData; mode: Mode; navy: boolean }) {
-  if (!data.presenter.name && !data.presenter.date) return null;
+// The presenters a bookend names, each on a line, and the day of the talk.
+function Presenter({ presenters, mode, navy }: { presenters?: Slide["presenters"]; mode: Mode; navy: boolean }) {
+  if (!presenters || (presenters.names.length === 0 && !presenters.date)) return null;
   return (
     <div className={mode === "present" ? "mt-8" : "mt-4"} data-presenter>
-      {data.presenter.name && (
-        <p className={navy ? "font-semibold text-surface" : "font-semibold text-ink"} {...type("note", mode)}>
-          {data.presenter.name}
+      {presenters.names.map((name) => (
+        <p key={name} className={navy ? "font-semibold text-surface" : "font-semibold text-ink"} {...type("note", mode)}>
+          {name}
         </p>
-      )}
-      {data.presenter.date && (
+      ))}
+      {presenters.date && (
         <p className={navy ? "text-surface/75" : "text-ink-muted"} {...type("note", mode)}>
-          {formatDate(data.presenter.date)}
+          {formatDate(presenters.date)}
         </p>
       )}
     </div>
@@ -169,23 +190,28 @@ function Presenter({ data, mode, navy }: { data: DeckData; mode: Mode; navy: boo
 }
 
 // A hairline figure in its box, mounted only while its slide is on screen, so it plays from its rest pose on arrival.
-// A figure the deck lacks gives way to the core sample, the deck's first figure.
+// A figure the deck lacks leaves its box empty, so the slide still reads.
 function HairlineBox({ figureKey, label, live, style }: { figureKey: string; label: string; live: boolean; style: React.CSSProperties }) {
   const [broken, setBroken] = useState(false);
   const onFail = useCallback(() => setBroken(true), []);
-  const drawn = hasHairline(figureKey) ? figureKey : "core-sample";
+  const there = hasHairline(figureKey);
   return (
-    <div className="absolute" style={style} data-deck-hairline={drawn}>
-      {live && !broken && <Hairline figureKey={drawn} paletteKey="navy" play label={label} onFail={onFail} />}
+    <div className="absolute" style={style} data-deck-hairline={figureKey} data-deck-hairline-missing={there ? undefined : ""}>
+      {live && there && !broken && <Hairline figureKey={figureKey} paletteKey="navy" play label={label} onFail={onFail} />}
     </div>
   );
 }
 
 // The drawing of a figure slide, scaled to its box, at the step the deck hands it (whole when it hands none). A figure
-// whose drawing is missing shows its text version instead.
+// whose drawing is missing shows its text version instead, in the drawing's place.
 function FigureBox({ slide, step, className, style }: { slide: Slide; step?: number; className?: string; style?: React.CSSProperties }) {
   const id = slide.figure!.id;
-  if (!FIGURES[id].svg) return <FigureFailed id={id} />;
+  if (!FIGURES[id].svg)
+    return (
+      <div className={cx("overflow-hidden text-ink", className)} style={style}>
+        <FigureFailed id={id} />
+      </div>
+    );
   return (
     <div className={cx("relative", className)} style={style} data-deck-figure={id} data-figure-frame={FIGURES[id].slot}>
       <Diagram id={id} step={step} />
@@ -218,6 +244,7 @@ function SlideCanvas({
   recorded: boolean;
 }) {
   const showRecorded = useContext(RecordedAnswer);
+  const { talk, topics } = useTalk();
   const titleId = TITLE_ID(slide.n);
   const navy = slide.theme === "navy";
   const figureSteps = slide.figure?.steps ?? 0;
@@ -226,6 +253,7 @@ function SlideCanvas({
   const topic = slide.part === "open" || slide.part === "close" ? null : slide.part;
   const parts = slides.map((one) => one.part);
   const bare = slide.kind === "title" || slide.kind === "close";
+  const names = useMemo(() => Object.fromEntries(Object.entries(topics).map(([key, words]) => [key, words.name])), [topics]);
   return (
     <section
       aria-roledescription={deckCopy.roleSlide}
@@ -240,12 +268,15 @@ function SlideCanvas({
       <SlideFrame
         theme={slide.theme}
         tracker={!bare && slide.kind !== "agenda"}
-        segments={segments(parts, slide.n)}
+        segments={segments(parts, slide.n, talk.order)}
         topic={topic}
+        order={talk.order}
+        names={names}
         counter={bare ? null : deckCopy.counter(String(slide.n), String(total))}
+        footer={talk.footerOnEverySlide || slide.kind === "title"}
       >
-        {slide.kind === "title" && <TitleSlide slide={slide} data={data} current={current} />}
-        {slide.kind === "close" && <CloseSlide slide={slide} data={data} current={current} />}
+        {slide.kind === "title" && <TitleSlide slide={slide} current={current} />}
+        {slide.kind === "close" && <CloseSlide slide={slide} current={current} />}
         {slide.kind === "opener" && <OpenerSlide slide={slide} current={current} />}
         {slide.kind === "agenda" && <AgendaSlide slide={slide} step={step} />}
         {slide.kind === "figure" && (
@@ -353,7 +384,7 @@ function Fit({ live, className, children }: { live: boolean; className: string; 
   );
 }
 
-function TitleSlide({ slide, data, current }: { slide: Slide; data: DeckData; current: boolean }) {
+function TitleSlide({ slide, current }: { slide: Slide; current: boolean }) {
   return (
     <>
       <div className="absolute flex flex-col justify-center" style={{ left: 48, top: 72, width: 500, bottom: 56 }}>
@@ -363,10 +394,12 @@ function TitleSlide({ slide, data, current }: { slide: Slide; data: DeckData; cu
         <h1 id={TITLE_ID(slide.n)} tabIndex={-1} className="mt-4 text-balance text-surface outline-none" {...type("statement", "present")}>
           {slide.title}
         </h1>
-        <p className="mt-6 text-surface/75" {...type("note", "present")}>
-          {deckCopy.slides.welcome.line}
-        </p>
-        <Presenter data={data} mode="present" navy />
+        {slide.lead && (
+          <p className="mt-6 text-surface/75" {...type("note", "present")}>
+            {slide.lead}
+          </p>
+        )}
+        <Presenter presenters={slide.presenters} mode="present" navy />
       </div>
       <HairlineBox figureKey={slide.hairline ?? "core-sample"} label={slide.hairlineLabel ?? ""} live={current} style={{ left: 572, top: 112, width: 360, height: 288 }} />
     </>
@@ -375,18 +408,19 @@ function TitleSlide({ slide, data, current }: { slide: Slide; data: DeckData; cu
 
 function OpenerSlide({ slide, current }: { slide: Slide; current: boolean }) {
   const topic = slide.topic!;
+  const { talk, topics } = useTalk();
   return (
     <>
       <HairlineBox figureKey={slide.hairline!} label={slide.hairlineLabel ?? ""} live={current} style={{ left: 300, top: 60, width: 360, height: 288 }} />
       <div className="absolute flex flex-col items-center text-center" style={{ left: 48, top: 364, width: 864 }}>
         <p data-chrome data-topic-number className="text-surface/60 tabular-nums" style={{ fontSize: 14, lineHeight: 1, fontWeight: 600 }}>
-          {TOPIC_ORDER.indexOf(topic) + 1}
+          {talk.order.indexOf(topic) + 1}
         </p>
         <h1 id={TITLE_ID(slide.n)} tabIndex={-1} className="mt-3 text-surface outline-none" {...type("topic", "present")}>
           {slide.title}
         </h1>
         <p className="mt-4 text-balance text-surface/75" style={{ ...type("note", "present").style, maxWidth: 620 }}>
-          {deckCopy.topics[topic].line}
+          {slide.lead ?? topics[topic].line}
         </p>
       </div>
     </>
@@ -406,19 +440,20 @@ function AgendaSlide({ slide, step }: { slide: Slide; step: number }) {
 
 // The five topics, a press each: the topic's number, its name and its line.
 function Agenda({ step, mode }: { step: number; mode: Mode }) {
+  const { talk, topics } = useTalk();
   return (
     <ol className={cx("flex flex-col", mode === "present" ? "gap-4" : "gap-3")}>
-      {TOPIC_ORDER.map((key, index) => (
+      {talk.order.map((key, index) => (
         <Step key={key} n={index + 1} at={step} as="li" className="flex gap-6">
           <span data-chrome aria-hidden="true" className="w-6 shrink-0 text-info-icon tabular-nums" {...type("head", mode)}>
             {index + 1}
           </span>
           <div className="min-w-0">
             <p className="text-ink-heading" {...type("head", mode)}>
-              {deckCopy.topics[key].name}
+              {topics[key].name}
             </p>
             <p className="text-ink-muted" {...type("note", mode)}>
-              {deckCopy.topics[key].line}
+              {topics[key].line}
             </p>
           </div>
         </Step>
@@ -427,37 +462,31 @@ function Agenda({ step, mode }: { step: number; mode: Mode }) {
   );
 }
 
-function CloseSlide({ slide, data, current }: { slide: Slide; data: DeckData; current: boolean }) {
-  const w = deckCopy.slides.thanks;
-  const urls = data.urls;
+function CloseSlide({ slide, current }: { slide: Slide; current: boolean }) {
   return (
     <>
       <div className="absolute flex flex-col justify-center" style={{ left: 48, top: 72, width: 456, bottom: 56 }}>
-        <h1 id={TITLE_ID(slide.n)} tabIndex={-1} className="text-surface outline-none" {...type("topic", "present")}>
+        <h1 id={TITLE_ID(slide.n)} tabIndex={-1} className="text-balance text-surface outline-none" {...type("topic", "present")}>
           {slide.title}
         </h1>
-        <Presenter data={data} mode="present" navy />
-        <p className="mt-6 text-surface" {...type("body", "present")}>
-          {w.ask}
-        </p>
-        <ul className="mt-8 flex flex-col gap-2" {...type("note", "present")} data-close-links>
-          <li>
-            <a href="/" target="_blank" rel="noreferrer" className="text-surface underline underline-offset-3 focus-visible:outline-focus-on-dark">
-              {w.links.app}{" "}
-              <span className="sr-only">{deckCopy.demo.opens}</span>
-            </a>
-          </li>
-          {(["proposal", "dashboard", "repo"] as const).map((key) =>
-            urls[key] ? (
-              <li key={key}>
-                <a href={urls[key]!} target="_blank" rel="noreferrer" className="text-surface underline underline-offset-3 focus-visible:outline-focus-on-dark">
-                  {w.links[key]}{" "}
+        <Presenter presenters={slide.presenters} mode="present" navy />
+        {slide.lead && (
+          <p className="mt-6 text-surface" {...type("body", "present")}>
+            {slide.lead}
+          </p>
+        )}
+        {slide.links && slide.links.length > 0 && (
+          <ul className="mt-8 flex flex-col gap-2" {...type("note", "present")} data-close-links>
+            {slide.links.map((link) => (
+              <li key={link.href}>
+                <a href={link.href} target="_blank" rel="noreferrer" className="text-surface underline underline-offset-3 focus-visible:outline-focus-on-dark">
+                  {link.label}{" "}
                   <span className="sr-only">{deckCopy.demo.opens}</span>
                 </a>
               </li>
-            ) : null,
-          )}
-        </ul>
+            ))}
+          </ul>
+        )}
       </div>
       <HairlineBox figureKey={slide.hairline ?? "core-sample"} label={slide.hairlineLabel ?? ""} live={current} style={{ left: 520, top: 104, width: 400, height: 320 }} />
     </>
@@ -566,6 +595,7 @@ function pressWords(slide: Slide, step: number): string {
 }
 
 function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData; start: number }) {
+  const { talk } = useTalk();
   const total = slides.length;
   const [place, setPlace] = useState<Place>(() => arrive(start, null, slides));
   const [twin, setTwin] = useState(false);
@@ -616,11 +646,14 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
     [slides],
   );
 
+  // A slide's own control that moves the talk to one of its presses, such as a demo's backup (layouts.tsx, PressTo).
+  const pressTo = useCallback((step: number) => go({ n: at.current.n, step: Math.min(Math.max(step, 0), slides[at.current.n - 1].steps) }), [go, slides]);
+
   // The address and the tab's title follow the slide; Back leaves the deck instead of walking through slides.
   useLayoutEffect(() => {
-    window.history.replaceState(window.history.state, "", `/present/${place.n}`);
+    window.history.replaceState(window.history.state, "", `${talk.base}/${place.n}`);
     document.title = deckCopy.title(String(place.n), String(total));
-  }, [place.n, total]);
+  }, [place.n, total, talk.base]);
 
   // The live region: the slide and its title on arrival, then each press's new words.
   const shown = useRef(place);
@@ -643,7 +676,7 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
 
   useEffect(() => {
     if (typeof BroadcastChannel === "undefined") return;
-    const open = new BroadcastChannel(CHANNEL);
+    const open = new BroadcastChannel(talk.channel);
     channel.current = open;
     open.onmessage = (event: MessageEvent<Message>) => {
       const message = event.data;
@@ -656,7 +689,7 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
       if (channel.current === open) channel.current = null;
       open.close();
     };
-  }, [go, slides]);
+  }, [go, slides, talk.channel]);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -689,19 +722,21 @@ function Presentation({ slides, data, start }: { slides: Slide[]; data: DeckData
       <div ref={stage} className={cx("relative shrink-0 overflow-hidden", !full.on && "border border-line")} style={{ width, height }} data-stage>
         <div style={{ width: CANVAS.width, height: CANVAS.height, transform: `scale(${scale})`, transformOrigin: "0 0" }} data-canvas>
           <RecordedAnswer.Provider value={showRecorded}>
-            {slides.map((one) => (
-              <SlideCanvas
-                key={one.n}
-                slide={one}
-                data={data}
-                slides={slides}
-                total={total}
-                current={one.n === place.n}
-                step={one.n === place.n ? place.step : one.steps}
-                twin={one.n === place.n && twin}
-                recorded={one.n === place.n && recorded}
-              />
-            ))}
+            <PressTo.Provider value={pressTo}>
+              {slides.map((one) => (
+                <SlideCanvas
+                  key={one.n}
+                  slide={one}
+                  data={data}
+                  slides={slides}
+                  total={total}
+                  current={one.n === place.n}
+                  step={one.n === place.n ? place.step : one.steps}
+                  twin={one.n === place.n && twin}
+                  recorded={one.n === place.n && recorded}
+                />
+              ))}
+            </PressTo.Provider>
           </RecordedAnswer.Provider>
         </div>
       </div>
@@ -823,25 +858,20 @@ function ReadingChart({ chart, headingId }: { chart: NonNullable<Slide["chart"]>
 
 // The close's ways in, in the reading view: Prism itself, then the proposal, the dashboard and the code once their
 // addresses are set, each in a new tab, as the navy close lists them.
-function ReadingCloseLinks({ data }: { data: DeckData }) {
-  const w = deckCopy.slides.thanks;
+function ReadingCloseLinks({ links }: { links: NonNullable<Slide["links"]> }) {
   return (
     <ul className="flex flex-col gap-1 text-body" data-close-links>
-      <li>
-        <NewTabLink href="/">{w.links.app}</NewTabLink>
-      </li>
-      {(["proposal", "dashboard", "repo"] as const).map((key) =>
-        data.urls[key] ? (
-          <li key={key}>
-            <NewTabLink href={data.urls[key]!}>{w.links[key]}</NewTabLink>
-          </li>
-        ) : null,
-      )}
+      {links.map((link) => (
+        <li key={link.href}>
+          <NewTabLink href={link.href}>{link.label}</NewTabLink>
+        </li>
+      ))}
     </ul>
   );
 }
 
-function ReadingSlide({ slide, data, total }: { slide: Slide; data: DeckData; total: number }) {
+function ReadingSlide({ slide, total }: { slide: Slide; total: number }) {
+  const { talk, topics } = useTalk();
   const headingId = TITLE_ID(slide.n);
   const figure = slide.figure ? FIGURES[slide.figure.id] : null;
   const wide = figure && figure.slot !== "hairline" ? SLOTS[figure.slot].width : 0;
@@ -859,8 +889,8 @@ function ReadingSlide({ slide, data, total }: { slide: Slide; data: DeckData; to
           <h1 id={headingId} className="mt-2 text-display text-ink-heading">
             {slide.title}
           </h1>
-          <p className="mt-4 text-body text-ink-muted">{deckCopy.slides.welcome.line}</p>
-          <Presenter data={data} mode="read" navy={false} />
+          {slide.lead && <p className="mt-4 text-body text-ink-muted">{slide.lead}</p>}
+          <Presenter presenters={slide.presenters} mode="read" navy={false} />
         </>
       ) : (
         <h2 id={headingId} className="mt-2 text-h1 text-ink-heading">
@@ -868,19 +898,19 @@ function ReadingSlide({ slide, data, total }: { slide: Slide; data: DeckData; to
         </h2>
       )}
       <div className="mt-6 flex max-w-full flex-col gap-6">
-        {topic && <p className="max-w-prose text-body text-ink-muted">{deckCopy.topics[topic].line}</p>}
-        {slide.kind === "agenda" && <Agenda step={TOPIC_ORDER.length} mode="read" />}
+        {topic && <p className="max-w-prose text-body text-ink-muted">{slide.lead ?? topics[topic].line}</p>}
+        {slide.kind === "agenda" && <Agenda step={talk.order.length} mode="read" />}
         {slide.kind === "close" && (
           <>
-            <Presenter data={data} mode="read" navy={false} />
-            <p className="text-body text-ink">{deckCopy.slides.thanks.ask}</p>
-            <ReadingCloseLinks data={data} />
+            <Presenter presenters={slide.presenters} mode="read" navy={false} />
+            {slide.lead && <p className="text-body text-ink">{slide.lead}</p>}
+            {slide.links && <ReadingCloseLinks links={slide.links} />}
           </>
         )}
         {figure && (
           <div ref={frameRef}>
             {figure.svg ? (
-              <ScrollFrame width={wide} label={deckCopy.reading.scrolls(figureCopy[figure.id].title)}>
+              <ScrollFrame width={wide} label={deckCopy.reading.scrolls(FIGURE_WORDS[figure.id].title)}>
                 <Diagram id={figure.id} />
               </ScrollFrame>
             ) : (
@@ -913,6 +943,7 @@ function ReadingSlide({ slide, data, total }: { slide: Slide; data: DeckData; to
 }
 
 function ReadingView({ slides, data, page, big }: { slides: Slide[]; data: DeckData; page: boolean; big: boolean }) {
+  const { talk } = useTalk();
   const total = slides.length;
   useEffect(() => {
     document.title = deckCopy.readingTitle;
@@ -927,7 +958,7 @@ function ReadingView({ slides, data, page, big }: { slides: Slide[]; data: DeckD
       <main className="layout flex-1 py-8">
         {page && big && (
           <p className="mb-8">
-            <TextLink href="/present/1" data-present>
+            <TextLink href={`${talk.base}/1`} data-present>
               {deckCopy.reading.present}
             </TextLink>
           </p>
@@ -936,7 +967,7 @@ function ReadingView({ slides, data, page, big }: { slides: Slide[]; data: DeckD
           <div className="flex max-w-[65rem] flex-col gap-12 divide-y divide-line">
             {slides.map((slide) => (
               <div key={slide.n} className="pt-12 first:pt-0">
-                <ReadingSlide slide={slide} data={data} total={total} />
+                <ReadingSlide slide={slide} total={total} />
               </div>
             ))}
           </div>
@@ -956,6 +987,7 @@ function minutes(seconds: number): string {
 }
 
 function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
+  const { talk } = useTalk();
   const total = slides.length;
   const [place, setPlace] = useState<Place>({ n: 1, step: 0 });
   const [alone, setAlone] = useState(false);
@@ -978,7 +1010,7 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
       setAlone(true);
       return;
     }
-    const open = new BroadcastChannel(CHANNEL);
+    const open = new BroadcastChannel(talk.channel);
     channel.current = open;
     open.onmessage = (event: MessageEvent<Message>) => {
       const message = event.data;
@@ -1079,7 +1111,7 @@ function NotesView({ slides, data }: { slides: Slide[]; data: DeckData }) {
               <Alert
                 state="info"
                 action={
-                  <a href="/present/1" className="text-body text-primary underline underline-offset-3">
+                  <a href={`${talk.base}/1`} className="text-body text-primary underline underline-offset-3">
                     {deckCopy.notesView.openDeck}
                   </a>
                 }
@@ -1257,11 +1289,12 @@ function SpeakerNotes({ slide, glance = false, step = 0, screen = [] }: { slide:
 }
 
 function NextTitle({ slide }: { slide: Slide }) {
+  const { topics } = useTalk();
   const parts = deckCopy.notesView.next.split("{title}");
   return (
     <>
       {parts[0]}
-      <span data-next={slide.n}>{slide.kind === "opener" ? deckCopy.topics[slide.topic!].name : slide.title}</span>
+      <span data-next={slide.n}>{slide.kind === "opener" ? topics[slide.topic!].name : slide.title}</span>
       {parts[1]}
     </>
   );

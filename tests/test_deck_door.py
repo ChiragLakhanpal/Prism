@@ -21,30 +21,35 @@ def test_the_server_keeps_the_deck_until_the_password_and_serves_the_rest_of_the
     (tmp_path / "assets" / "Deck-b2.js").write_text("deck")
     (tmp_path / "deck" / "data.json").write_text("{}")
     (tmp_path / "deck" / "notes" / "medallion.svg").write_text("<svg/>")
+    # The research talk's backup images (ticket 162) sit under deck/ too, so the door keeps them.
+    (tmp_path / "deck" / "research").mkdir()
+    (tmp_path / "deck" / "research" / "run.png").write_bytes(b"png")
     app = create_app(web_dist=tmp_path, deck_gate=GATE, environ={"DATABRICKS_CLIENT_SECRET": "s"})
+    deck_files = ("/api/deck/open", "/deck/data.json", "/deck/notes/medallion.svg", "/assets/Deck-b2.js",
+                  "/deck/research/run.png")
 
     async def go():
         transport = httpx.ASGITransport(app=app)
         async with httpx.AsyncClient(transport=transport, base_url="http://strata.test") as client:
-            closed = [(await client.get(path)).status_code for path in
-                      ("/api/deck/open", "/deck/data.json", "/deck/notes/medallion.svg", "/assets/Deck-b2.js")]
-            app_files = [(await client.get(path)).status_code for path in ("/assets/index-a1.js", "/present/notes")]
+            closed = [(await client.get(path)).status_code for path in deck_files]
+            # The talks' pages are the app's shell, which asks for the password before it loads the deck.
+            app_files = [(await client.get(path)).status_code for path in
+                         ("/assets/index-a1.js", "/present/notes", "/present/research/3", "/present/research/notes")]
             wrong = await client.post("/api/deck/open", json={"password": "not-it"})
             right = await client.post("/api/deck/open", json={"password": "the right one"})
             cookie = right.cookies.get(deck_door.COOKIE)
             header = {"cookie": f"{deck_door.COOKIE}={cookie}"}
-            opened = [(await client.get(path, headers=header)).status_code for path in
-                      ("/api/deck/open", "/deck/data.json", "/deck/notes/medallion.svg", "/assets/Deck-b2.js")]
+            opened = [(await client.get(path, headers=header)).status_code for path in deck_files]
             forged = (await client.get("/deck/data.json", headers={"cookie": f"{deck_door.COOKIE}=forged"})).status_code
             return closed, app_files, wrong, right, cookie, opened, forged
 
     closed, app_files, wrong, right, cookie, opened, forged = asyncio.run(go())
-    assert closed == [401, 401, 401, 401]
-    assert app_files == [200, 200]
+    assert closed == [401, 401, 401, 401, 401]
+    assert app_files == [200, 200, 200, 200]
     assert (wrong.status_code, wrong.json()) == (403, {"error": "wrong_password"})
     assert right.status_code == 204 and cookie
     assert "HttpOnly" in right.headers["set-cookie"] and "Secure" in right.headers["set-cookie"]
-    assert opened == [204, 200, 200, 200]
+    assert opened == [204, 200, 200, 200, 200]
     assert forged == 401
     # The deck's own gate is a digest in config/deck.toml, never the password.
     real = load_deck_gate()

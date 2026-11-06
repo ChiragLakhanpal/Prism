@@ -409,6 +409,118 @@
    "name": "Fewest comparable packages for a past range",
    "where": "config/thresholds.toml, past_range.min_comparables",
    "kind": "Setting"
+  },
+  "late-award-days": {
+   "value": 110,
+   "name": "Days before a project's closing date in which deep research counts an award as late",
+   "where": "config/thresholds.toml, research.late_award_days",
+   "kind": "Setting"
+  },
+  "research-source-count": {
+   "value": 10,
+   "name": "Sources deep research reads: the enabled entries in its registry",
+   "where": "config/research.toml, each source with enabled = true",
+   "kind": "Count"
+  },
+  "isr-reports": {
+   "value": 2,
+   "name": "Newest Implementation Status and Results Reports the ISR narrative reader takes",
+   "where": "config/research.toml, sources.isr_narrative.settings.reports",
+   "kind": "Setting"
+  }
+ },
+ "recorded": {
+  "lines-prism": {
+   "name": "Python source lines in Prism",
+   "noun": "lines",
+   "kind": "Recorded",
+   "form": "count",
+   "value": 61653,
+   "measured_on": "2026-11-05",
+   "how": "Python source lines under src, counted in the Strata repository."
+  },
+  "tests-prism": {
+   "name": "Tests in Prism",
+   "noun": "tests",
+   "kind": "Recorded",
+   "form": "count",
+   "value": 2198,
+   "measured_on": "2026-11-05",
+   "how": "test_ functions under tests, counted in the Strata repository."
+  },
+  "lines-procintel": {
+   "name": "Python source lines in ProcIntel",
+   "noun": "lines",
+   "kind": "Recorded",
+   "form": "count",
+   "value": 17766,
+   "measured_on": "2026-11-05",
+   "how": "Python source lines under src, counted the same way in wcares/procurement-intelligence."
+  },
+  "tests-procintel": {
+   "name": "Tests in ProcIntel",
+   "noun": "tests",
+   "kind": "Recorded",
+   "form": "count",
+   "value": 351,
+   "measured_on": "2026-11-05",
+   "how": "test_ functions under tests, counted the same way in wcares/procurement-intelligence."
+  },
+  "isr-progress": {
+   "name": "Physical progress in the March status report",
+   "noun": "percent",
+   "kind": "Recorded",
+   "form": "percent",
+   "value": 85,
+   "measured_on": "2026-03",
+   "how": "P156634's ISR 19, March 2026, physical progress, as the sample brief cites it."
+  },
+  "wajir-progress": {
+   "name": "Progress at the Wajir sludge plant in June",
+   "noun": "percent",
+   "kind": "Recorded",
+   "form": "percent",
+   "value": 64,
+   "measured_on": "2026-06-04",
+   "how": "Dawan Africa, June 4, 2026, as the sample brief cites it."
+  },
+  "late-awards": {
+   "name": "Awards in the late-award window",
+   "noun": "awards",
+   "kind": "Recorded",
+   "form": "count",
+   "value": 7,
+   "measured_on": "2026-11-05",
+   "how": "research_evidence's summary for P156634's stored run: the awards in the late-award window before closing."
+  },
+  "kept-low": {
+   "name": "Sentences kept, the fewest of a prepared brief",
+   "noun": "sentences",
+   "kind": "Recorded",
+   "form": "ratio",
+   "n": 65,
+   "d": 71,
+   "measured_on": "2026-11-06",
+   "how": "The fewest sentences kept of a prepared brief on the App, P130164's."
+  },
+  "kept-high": {
+   "name": "Sentences kept, the most of a prepared brief",
+   "noun": "sentences",
+   "kind": "Recorded",
+   "form": "ratio",
+   "n": 83,
+   "d": 88,
+   "measured_on": "2026-11-06",
+   "how": "The most sentences kept of a prepared brief on the App, P156634's."
+  },
+  "tile-metres": {
+   "name": "Metres per pixel of the free satellite mosaics",
+   "noun": "metres per pixel",
+   "kind": "Recorded",
+   "form": "count",
+   "value": 10,
+   "measured_on": "2026-11-05",
+   "how": "The Sentinel cloudless mosaics' resolution, as config/research.toml's limitations state it."
   }
  },
  "checks": [
@@ -2896,6 +3008,18 @@
  },
  "showcase": {
   "project_id": "P130164"
+ },
+ "research": {
+  "presenters": [
+   "Chirag Lakhanpal",
+   "Surya Yadav"
+  ],
+  "date": null,
+  "demo": {
+   "project_id": "P156634",
+   "project_name": "Kenya Water and Sanitation Development Project",
+   "href": "/projects/P156634/research"
+  }
  },
  "award_gap": {
   "start": 2017,

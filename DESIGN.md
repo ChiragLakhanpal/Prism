@@ -610,6 +610,8 @@ On the deck (Prism, ticket 47), every slide carries the footer sentence in prese
 
 In the deck's second draft (Prism, October 26, 2026) the sentence sits on one line along each slide's foot, 11 canvas px, `ink-muted` on light slides and `surface` at 75 percent on navy ones, and the slide counter moves to the header. The topic numbers on the agenda and the openers, and the press counters under the stage and in the notes window, are chrome too (`data-chrome`).
 
+The deck's research talk at `/present/research` (Prism, ticket 162, November 6, 2026) shows the sentence once, along its title slide's foot, as the first talk sets it; its other slides carry no footer (the user: "just saying it once is enough, they know"). Its reading view keeps the sentence once, at the end of the page, and the first talk keeps it on every slide.
+
 In the proposal (Prism, ticket 46), the footer sentence follows the title and ends the document on GitHub; a printed copy puts it on every page beside "Page {n} of {m}". Annex 3 writes every dataset's line and the fixed lines from the same words the Sources and licenses page uses (`src/strata/proposal/copy.json`, written from the copy file).
 
 Word runs of the writer's text in another language carry the draft's proofing locale from the language registry (fr-FR, es-ES, pt-PT), and the words they quote carry their source's; headings and the origin paragraph stay in the Normal style's English (Prism, ticket 42).

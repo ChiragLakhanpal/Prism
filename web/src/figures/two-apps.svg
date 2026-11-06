@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 864 352" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="two-apps-title two-apps-desc" data-motion-root="" data-motion-mode="none" data-step-count="5" id="two-apps-root">
+        <title id="two-apps-title">Prism and ProcIntel on one brief</title>
+        <desc id="two-apps-desc">Prism and ProcIntel side by side: where each runs, its data, how it checks answers, its tools, and its distinct strengths.</desc>
+        <defs>
+      <style>#two-apps-root { font-family: 'Open Sans', system-ui, sans-serif; color: #181f25; }
+      #two-apps-root .diagram-container { width: 100%; overflow-x: auto; }
+      @media print {
+#two-apps-root .diagram-container { overflow-x: visible; }
+}</style>
+<marker id="two-apps-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#4b5e71"/></marker>
+<marker id="two-apps-arrow-accent" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#0071bc"/></marker>
+<marker id="two-apps-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#01707e"/></marker>
+        </defs>
+        <rect width="100%" height="100%" fill="#f5f7f9"/>
+<text x="104" y="40" fill="#181f25" font-size="14" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Prism, then called Strata</text>
+<text x="480" y="40" fill="#181f25" font-size="14" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">ProcIntel</text>
+<text x="24" y="84" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Runs on</text>
+<text x="24" y="140" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Data</text>
+<text x="24" y="196" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Checking</text>
+<text x="24" y="252" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Tools</text>
+<text x="24" y="308" fill="#586e84" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">Strengths</text>
+<g data-motion-item="" data-step="1" aria-label="Where each runs, Prism: A Databricks lakehouse and Lakebase, a Databricks App with sign-in, a view per role, Azure OpenAI">
+<rect x="104" y="56" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="104" y="56" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="116" y="77" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">A Databricks lakehouse and Lakebase</text>
+<text x="116" y="91" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a Databricks App with sign-in, a view per role, Azure OpenAI</text>
+</g>
+<g data-motion-item="" data-step="1" aria-label="Where each runs, ProcIntel: FastAPI and DuckDB on one machine, local llama.cpp models, a hosted front end">
+<rect x="480" y="56" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="480" y="56" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="492" y="77" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">FastAPI and DuckDB on one machine</text>
+<text x="492" y="91" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">local llama.cpp models, a hosted front end</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="Data, Prism: Every award, notice, project, rating and loan record, the World Bank publishes, and the documents of a pilot slice">
+<rect x="104" y="112" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="104" y="112" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="116" y="133" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Every award, notice, project, rating and loan record</text>
+<text x="116" y="147" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">the World Bank publishes, and the documents of a pilot slice</text>
+</g>
+<g data-motion-item="" data-step="2" aria-label="Data, ProcIntel: A sample of projects across many countries, and their reports">
+<rect x="480" y="112" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="480" y="112" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="492" y="133" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">A sample of projects across many countries</text>
+<text x="492" y="147" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">and their reports</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="Checking, Prism: A verifier runs the checks on every sentence, and shows what it removed">
+<rect x="104" y="168" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="104" y="168" width="360" height="48" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1.2" fill-opacity="0.08"/>
+<text x="116" y="189" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">A verifier runs the checks on every sentence</text>
+<text x="116" y="203" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">and shows what it removed</text>
+</g>
+<g data-motion-item="" data-step="3" aria-label="Checking, ProcIntel: Citations checked against the passage each cites, a refusal when the reports do not cover it">
+<rect x="480" y="168" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="480" y="168" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="492" y="189" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Citations checked against the passage each cites</text>
+<text x="492" y="203" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">a refusal when the reports do not cover it</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="Tools, Prism: A registry of tools, each with a verifier contract and a benchmark question">
+<rect x="104" y="224" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="104" y="224" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="116" y="245" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">A registry of tools</text>
+<text x="116" y="259" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">each with a verifier contract and a benchmark question</text>
+</g>
+<g data-motion-item="" data-step="4" aria-label="Tools, ProcIntel: Assess a package, ask the evidence, get a passage, list the options; served over MCP">
+<rect x="480" y="224" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="480" y="224" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="492" y="245" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">Assess a package, ask the evidence, get a passage</text>
+<text x="492" y="259" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">list the options; served over MCP</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Strengths, Prism: A long feature list, private uploads kept to a team, every number from a tool">
+<rect x="104" y="280" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="104" y="280" width="360" height="48" rx="6" fill="#ffffff" stroke="#586e84" stroke-width="1"/>
+<text x="116" y="301" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">A long feature list</text>
+<text x="116" y="315" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">private uploads kept to a team, every number from a tool</text>
+</g>
+<g data-motion-item="" data-step="5" aria-label="Strengths, ProcIntel: An MCP server, a timeline across packages, goal seeking, an editable pipeline, all running">
+<rect x="480" y="280" width="360" height="48" rx="6" fill="#f5f7f9"/>
+<rect x="480" y="280" width="360" height="48" rx="6" fill="#0071bc" stroke="#0071bc" stroke-width="1.2" fill-opacity="0.08"/>
+<text x="492" y="301" fill="#181f25" font-size="12" font-weight="600" font-family="'Open Sans', system-ui, sans-serif" text-anchor="start">An MCP server, a timeline across packages</text>
+<text x="492" y="315" fill="#4b5e71" font-size="9" font-family="'Roboto Mono', ui-monospace, monospace" text-anchor="start">goal seeking, an editable pipeline, all running</text>
+</g>
+      </svg>

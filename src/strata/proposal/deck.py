@@ -22,6 +22,9 @@ the panel. build() gathers everything the slides read into one JSON object:
 - showcase   the showcase project (config/slice.toml [showcase]), whose disagreement the ladder slide quotes
 - award_gap  the fiscal years no contract awards dataset publishes, from config/sources.toml's known gap, which the
              Data readiness page's Gap row shows; the rows-by-year series must agree with it
+- recorded   the recorded register (docs/proposal/recorded.toml, ticket 162): the numbers the research talk at
+             /present/research states that no query measures, each with its day and how it was counted
+- research   the research talk's presenters and day (config/deck.toml [research]) and its demo project's research tab
 
 `uv run python -m strata.proposal deck` writes web/public/deck/data.json, which the built app serves and the deck
 fetches. A result the snapshot has not measured is kept with "measured": false, and its slide says so.
@@ -46,7 +49,7 @@ RESULTS = ("passages", "documents-read", "pages-read-well", "award-rows-by-year"
            "benchmark-passed", "must-refuse", "hindsight-caught", "hindsight-checklist", "hindsight-interval",
            "azure-spend")
 SETTINGS = ("check-count", "loop-count", "pilot-countries", "rollout-phases", "risks-per-package", "checklist-size",
-            "hindsight-coders", "fewest-comparables")
+            "hindsight-coders", "fewest-comparables", "late-award-days", "research-source-count", "isr-reports")
 DEMO_ANSWERS = ("comparables", "estimate")
 # The known gap in config/sources.toml that the gap slide states: the fiscal years no contract awards dataset publishes.
 AWARD_GAP = ("awards", "fy2017_2019")
@@ -73,6 +76,25 @@ def _settings() -> dict[str, dict]:
     return {key: {"value": register.value(defined[key]).number, "name": defined[key].name,
                   "where": defined[key].where, "kind": "Count" if defined[key].read.startswith("count:") else "Setting"}
             for key in SETTINGS}
+
+
+def _recorded() -> dict[str, dict]:
+    """Every entry of the recorded register, with its source kind, for the research talk's numbers."""
+    return {key: {"name": entry.name, "noun": entry.noun, "kind": register.RECORDED_KIND, "form": entry.form,
+                  **({"n": entry.n, "d": entry.d} if entry.form == "ratio" else {"value": entry.value}),
+                  "measured_on": entry.measured_on, "how": entry.how}
+            for key, entry in register.load_recorded().items()}
+
+
+def _research() -> dict:
+    """The research talk's presenters and day (config/deck.toml [research]), and its demo: the demo plan's project
+    (config/slice.toml [demo_plan]) and its Deep research tab."""
+    talk = config.load_deck_research()
+    plan = config.load_slice().demo_plan
+    return {"presenters": list(talk.presenters),
+            "date": talk.presentation_date.isoformat() if talk.presentation_date else None,
+            "demo": {"project_id": plan.project_id, "project_name": plan.project_name,
+                     "href": f"/projects/{plan.project_id}/research"}}
 
 
 def _series_gap(series: list[dict]) -> dict | None:
@@ -160,6 +182,7 @@ def build(snapshot: dict | None, demo: dict | None, results: tuple[str, ...] = R
         "pulled_on": (snapshot or {}).get("pulled_on"),
         "results": found,
         "settings": _settings(),
+        "recorded": _recorded(),
         "checks": list(ALL_CHECKS),
         "rubric": {"source": rubric.source, "anchor": rubric.anchor,
                    "dimensions": [{"key": row.key, "name": row.name, "points": row.points}
@@ -172,5 +195,6 @@ def build(snapshot: dict | None, demo: dict | None, results: tuple[str, ...] = R
                                for item in config.load_designed_not_built()],
         "demo": _demo(demo),
         "showcase": {"project_id": config.load_slice().showcase.project_id},
+        "research": _research(),
         "award_gap": _award_gap(found["award-rows-by-year"]) if "award-rows-by-year" in found else None,
     }

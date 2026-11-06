@@ -8,6 +8,7 @@
 // is given gets data-unreached, which the deck's stylesheet hides (styles/deck.css). With no step, it draws whole.
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { figureCopy, figureStates } from "../deck/copy";
+import { FIGURE_WORDS } from "./words";
 import { FIGURES, inline, type FigureId } from "./registry";
 import kernelSource from "./hairline/kernel.js?raw";
 import coreSampleSource from "./hairline/core-sample.js?raw";
@@ -244,7 +245,7 @@ export function Diagram({ id, step }: { id: FigureId; step?: number }) {
 
 // A figure's text version: its steps as an ordered list, in small, up to a step when one is given.
 export function FigureText({ id, listId, upTo }: { id: FigureId; listId?: string; upTo?: number }) {
-  const steps = figureCopy[id].steps as readonly string[];
+  const steps = FIGURE_WORDS[id].steps;
   return (
     <ol id={listId} className="list-decimal space-y-1 pl-6 text-small text-ink" data-figure-text={id}>
       {steps.slice(0, upTo ?? steps.length).map((step) => (
