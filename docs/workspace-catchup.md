@@ -4928,3 +4928,27 @@ Read-only checks of the App's routes at about 17:10 UTC. P161305's Timeline titl
 ## The deck: the App runs cdde3aa8
 
 **Ran on October 30, 2026 (the demo-readiness session), from a snapshot of cdde3aa8,** on the user's approval of one deploy after the deck's control bar change. 570bec06 merged the deck session's deck/walkthrough-polish (six deck commits on aa45aaa6), and cdde3aa8 applied its patch that drops Previous and Next from the control bar and adds Space and Enter as forward keys. `ops/app/deploy_app.py --keep-secrets` exited 0 at 19:36 UTC: deployment 01f1d497f7dc1bb2bbe3f67964a2105d, made at 19:27:38 UTC, succeeded. At 1440 px, signed in with the strata profile's token, `/present/1` loaded, `/present/notes` showed the press-by-press script, `/present/9` showed "Show the recorded answer", and no Previous or Next button was in the deck. Two slide facts disagree with the App and were sent to the deck session: the title slide prints October 28, 2026 (`presentation_date` in `config/deck.toml`), and slide 9 says the plan check marks KE-NWWDA-541055-CW-RFB "needs a look", where the live plan check marks it Watch.
+
+## Ticket 146, for the next deploy
+
+The merger parked this on November 5, 2026, after merge commit 0f69aa6a (branch `worktree-agent-a6f13337d9fc15853` at 52b284ad). Nothing ran tonight. Ticket 151's agent runs it as part of that ticket's bundle deploy and App redeploy, so it needs no deploy of its own.
+
+What ticket 146 changes on the workspace: the next bundle deploy renames the AI/BI dashboard `Strata operations` to `Prism operations`, and its test copy `Strata operations (test)` to `Prism operations (test)` (`display_name` in `bundle/dashboard.yml`). These are the same resources, `strata_dashboard` and `strata_dashboard_test`, so the deploy renames them in place and makes no second copy. The rename also changed older blocks in this file, so they now call the dashboard "Prism operations". The live dashboard keeps the name `Strata operations` until this deploy.
+
+Two names keep the old brand on purpose, as ADR 0006 records:
+
+- The App's description (`DESCRIPTION` in `ops/app/deploy_app.py`, "Strata, procurement intelligence on World Bank open data"). It is how a deploy knows the live App `strata` is this repo's. A new description would make the deploy leave the live App alone.
+- The Genie space's title (`title` in `config/genie.toml`, "Strata: World Bank procurement records"). It is how the Genie deploy finds the live space. A new title would make a second space.
+
+Both change only in the workspace migration that ADR 0006 lists as a follow-up. Run from a snapshot at or after 0f69aa6a:
+
+    uv run --script ops/bundle/deploy.py --env-file "<main checkout>/.env" --fairshare-catalog workspace
+
+It worked if all of these hold:
+
+- The deploy exits 0 and shows the dashboard and its test copy renamed, not new.
+- `databricks lakeview list` shows "Prism operations" under the old id 01f1cfd370f01f6ab7aafcb4fffadd48, and "Prism operations (test)" under 01f1d10708201fddad8610f06e6b4071.
+- The App redeploy (`ops/app/deploy_app.py --keep-secrets`) updates the existing App `strata` rather than stopping on its description.
+- The App's title, sidebar and Home say Prism.
+
+Record here under ticket 146, with the time: the deploy's exit code, the two dashboards' names and ids, and the commit the App runs.

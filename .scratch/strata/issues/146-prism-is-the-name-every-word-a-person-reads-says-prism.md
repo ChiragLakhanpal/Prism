@@ -14,7 +14,7 @@ Read first: CLAUDE.md, DESIGN.md section 7 (the copy rules the new sentences fol
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** docs
 **Phase:** P5
 **Design review:** no
@@ -28,3 +28,6 @@ Read first: CLAUDE.md, DESIGN.md section 7 (the copy rules the new sentences fol
 ## Comments
 
 - November 5, 2026, orchestrator: opened at 15:50 PST from the user's decision of today (brand only; GitHub rename and collaborator invite are the user's lines in the morning).
+- November 5, 2026, merger: merged `worktree-agent-a6f13337d9fc15853` (head 52b284ad: the rename in e9b5314c, then one merge of build/strata at 3eb0a059) into build/strata as merge commit 0f69aa6a, with history, because the history scan found no keys in the branch's commits. The merge changes 516 files (2,367 lines in, 2,339 out). The worktree that built it, `.claude/worktrees/agent-a6f13337d9fc15853`, is removed after this commit. The gate on the merge commit passed in 149.0 seconds, on the second try. The first try, at 18:30 PST, stopped at the 150-second limit in the two Python lanes while other worktrees' tests ran beside it. I aborted that merge and ran it again at 18:50 PST, once no other test was running. The hand run of `.githooks/pre-commit` on build/strata right after the merge scanned the merged history and found no keys (3.9 seconds). It first waited 137.4 seconds for another worktree's gate lock, and then its python-2 lane hit the limit at 144.5 seconds, again with other worktrees' tests running. This Markdown commit's own gate is the last green run on build/strata.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the implementer's report is the evidence. The gate passed in 141.3 seconds on the branch with build/strata merged in. `import strata` works. `strata.gold` is kept. `STRATA_GATE_LOCK` is kept in `gates/offline.py`. The README's two new sentences and the `.github/README.md` line are in. ADR 0006 is written. `config/urls.toml` sets the repo to https://github.com/ChiragLakhanpal/Prism, and the README's "For the panel" block was regenerated. Four `tests/fixtures/api` files were recorded again, and nothing under `data/fixture` was reverted. The implementer left `.scratch` (the spec and the ticket files) and `docs/STATUS.md` alone on purpose: those files belong to the orchestrator and the merger, so their rename is the orchestrator's.
+  - Workspace results: none run tonight. The block "Ticket 146, for the next deploy" in `docs/workspace-catchup.md` is for ticket 151's agent. The next bundle deploy renames the dashboard to "Prism operations", and the App's `DESCRIPTION` and the Genie space's title keep the old name on purpose (ADR 0006).
