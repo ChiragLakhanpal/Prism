@@ -5086,3 +5086,29 @@ Ran by the ops agent of ticket 151, as the owner's token through a wrapper that 
 - Second deploy, from a snapshot of 2339511d: at 05:21 to 05:22 UTC the photo table `strata.ops.field_photos`, the column `team_key` on research_briefs, and the volume `strata.ops.field_photos`; deployment 01f1d9a30adf1122bedb4d0aeb274dea at 05:29:31, SUCCEEDED, with the photo grants (SELECT, MODIFY; READ VOLUME, WRITE VOLUME); agent sync made version 16; `seed.py --all` at 05:24 to 05:26 kept P130164 31 items, P145559 35, P161305 39, P167814 35, and left P156634 at 29 (a stored run is kept); the brief POSTs in-process, no source read: P156634 61 written and 53 kept, P145559 69 and 61, P161305 67 and 56, P167814 78 and 69; P130164 timed out twice (the writer at 300 s, then the judge at 60 s) and wrote on the third try at 05:54 to 05:55 in 84 s, 51 written and 40 kept.
 - P156634 re-seeded at 05:54:48 UTC: three DELETE statements with `WHERE run_id = 'seed:P156634:2026-11-05' AND project_id = 'P156634'` removed 2 briefs, 29 items and 1 run; the new seed kept 60 items (28 agency statements, 3 GDACS alerts); the brief POST at 05:56 to 05:58 wrote 69, kept 64, removed 5.
 - Every GET answers status written, live_sources false, run_id seed:<pid>:2026-11-05. The jobs stay PAUSED. The agency pages (NWWDA, CWWDA, Kwale Water) matched only P156634; the other four records name agencies the registry lists no page for.
+
+## Ticket 156, the third deploy of the Prism night
+
+The merger parked this on November 5, 2026, after merge commit 2f0d675b (branch `worktree-agent-ab81a42aa7d383a87` at 7e726b77). Nothing ran tonight. Ticket 151's agent runs these three steps, in order, from a snapshot at or after 2f0d675b, after the second deploy above. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, and point `--env-file` at the main checkout's env file.
+
+What this ticket changes on the workspace: the writer's new instruction (short paragraphs and one-sentence bullets); the tab's and the print's new layout; twelve sample field photos from Wikimedia Commons in `data/fixture/field_photos/` (P130164 3, P145559 2, P156634 2, P161305 2, P167814 3), kept under the team `team:kenya-water`; and `config/thresholds.toml`, which raises `research.writer_timeout_seconds` to 600 and `verifier.judge_timeout_seconds` to 180 after P130164's timeouts.
+
+1. Seed the sample photos, from the snapshot's root:
+
+       uv run python ops/research/seed_photos.py --all --env-file .env
+
+   It writes as the App's own service principal, from the client credentials the env file names: the files into `/Volumes/strata/ops/field_photos`, the rows into `strata.ops.field_photos`. If those credentials still do not sign in (ticket 151's log), run it through the same wrapper ticket 151 used. A photo already kept is left as it is. It worked if the script exits 0, `LIST '/Volumes/strata/ops/field_photos'` shows the twelve files, and `SELECT project_id, team_key, count(*) FROM strata.ops.field_photos WHERE uploader_id = 'prism-demo-seed' GROUP BY project_id, team_key` returns `team:kenya-water` with P130164 3, P145559 2, P156634 2, P161305 2 and P167814 3.
+
+2. Redeploy the App:
+
+       uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+   It ships the new instruction, the layout and the two longer timeouts. It worked if the deploy exits 0 and prints the App's address.
+
+3. Write the five briefs again: as a staff viewer of the team kenya-water (a member of the group `strata-team-kenya-water`), since only that team's runs read the photos, `POST /api/projects/<pid>/research` with the body
+
+       {"view":"staff","asof":"2026-11-05"}
+
+   one project at a time, P156634 first, then P130164, P145559, P161305 and P167814. It worked if each stream ends in done. Then `GET /api/projects/<pid>/research` for each of the five: it worked if each answer has status `written`, `live_sources` false, `run.run_id` `seed:<pid>:2026-11-05`, and the brief's field-photo lines cite the sample captions.
+
+Record here under ticket 156, with the time: each step's exit code, the photo counts per project, the deployment id, and each brief's written and kept counts and its status from the GET.

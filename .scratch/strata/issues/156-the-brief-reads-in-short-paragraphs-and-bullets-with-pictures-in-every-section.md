@@ -12,7 +12,7 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (caa3
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
@@ -25,3 +25,11 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (caa3
 ## Comments
 
 - November 5, 2026, orchestrator: opened at about 22:00 PST from the user's feedback on the sample PDF; the format ships in the third deploy of the night.
+- November 5, 2026, merger: merged into `build/strata` as 2f0d675b (two parents: 2110edfa and the branch `worktree-agent-ab81a42aa7d383a87` at 7e726b77), built in the worktree `.claude/worktrees/agent-ab81a42aa7d383a87`, now removed; the branch stays. Tonight's rule was essentials only, so there were no review or verify rounds, and the gate on merge was the only check. The first merge commit's gate went red on one timing test outside this ticket (`tests/test_estimate_time.py`, the what-if grid read in 254 ms against 100 ms, with the machine's load near 26). That test passed on its own, and the second run passed in 150.5 seconds. Run by hand on `build/strata` after the merge, the gate passed in 151.2 seconds. On the worktree it passed in 159.2 seconds. The evidence is the implementer's report:
+  - Readable: the writer's instruction asks for paragraphs of three to five sentences at a 10th-grade level and one-sentence bullets. The recorded P156634 answer is rewritten into paragraphs with no sentence changed, and the replay keeps 70 of 70. Developments, sites, questions and "What I could not see" are bullets on screen and in print.
+  - Pictures: sample field photos from Wikimedia Commons are in `data/fixture/field_photos/` with `commons.json`, seeded by the new `ops/research/seed_photos.py` under `team:kenya-water` (P156634 2, P161305 2, P145559 2, P167814 3, P130164 3; `tests/test_seed_photos.py`). Each caption reads "Sample photo standing in for a staff photo: Wikimedia Commons, by <author>, <license>, taken <date>."
+  - Layout: each section sheet opens with its title over a navy rule and starts a page. The footer is the page number only, and the disclaimer appears once, on the last sheet. The Prism wordmark is no taller than the World Bank logo. The two cover sentences are removed, and `web/tests/research.spec.ts` is updated.
+  - Timeouts: `config/thresholds.toml` raises `research.writer_timeout_seconds` to 600 and `verifier.judge_timeout_seconds` to 180 (commit 285a35bc), after P130164's timeouts on the workspace.
+  - The printed PDF is `.notes/prism-sample/prism-deep-research-P156634-v6.pdf` (13 pages).
+- Not done, as the implementer reported: the complaints section does not list the register's other cases for the country when none names the project; the social line is an instruction to the writer only; only Baricho had satellite grids in the recorded brief; and the app bar's wordmark is unchanged.
+- Workspace: nothing ran tonight. The three steps (seed the photos as the App, redeploy the App, then write the five briefs again as a staff viewer of kenya-water, P156634 first, with a GET per project) are parked for ticket 151's agent in `docs/workspace-catchup.md` under "Ticket 156, the third deploy of the Prism night".
