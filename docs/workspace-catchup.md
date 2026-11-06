@@ -5123,3 +5123,13 @@ Ran by ticket 151's ops agent from a snapshot of 9a12dae1, as the owner's token 
 - Failures along the way: P156634's first team try came back without voices, questions and could_not_see, so the run kept the stored brief and the rerun wrote it; P161305's second team pass hit the judge's 180-second limit and the rerun wrote it.
 - The group `strata-team-kenya-water` does not exist on the workspace, so no real viewer is on the team and everyone signed in sees the no-team brief; creating a group is a grant the session could not make (denied as a permission grant), so the user's morning line makes it with the owner (id 146827166867001) as a direct member, through `.notes/151-ops/dbx.py`. The App reads a viewer's groups through SCIM `/Me`, which lists direct memberships only.
 - P167814's last team try (07:15:53 to 07:17:33 UTC, 99 seconds) was not written: the writer gave seven could_not_see entries where the shape allows one to three, so the run kept the stored brief; a kenya-water viewer reads the team brief of 07:07:32 UTC (63 kept, 16 removed), whose one by_site entry cites no photo. The jobs were PAUSED at 07:17:40 UTC.
+
+## Tickets 157 and 158, the fourth deploy of the Prism night
+
+The merger parked this on November 5, 2026. Nothing ran tonight. Run it from a snapshot at or after the later of the two merges, with the main checkout's `web/node_modules` linked into the snapshot and `--env-file` pointed at the main checkout's env file.
+
+- Ticket 157 (merge commit d3efcd93, branch `worktree-agent-a67d40f6c67f021d1` at 181bbf2f) needs only the App redeploy: no seed, and no brief needs writing again, because the stored briefs do not change. It ships the run's `plan` event, the two new keys `research.usual_seconds_low` and `research.usual_seconds_high` in `config/thresholds.toml`, and the Deep research tab's progress rail. From the snapshot's root:
+
+      uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+  It worked if the deploy exits 0 and prints the App's address. Record the deployment id and the time here.
