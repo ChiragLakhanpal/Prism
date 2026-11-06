@@ -1,0 +1,67 @@
+# 147: The deep research sources: a registry, a reader for each source, and a dated run seeded for the demo
+
+**What to build:** Prism's deep research (the user's ask of November 5, 2026) tells a World Bank procurement specialist what is happening on the ground at a project, from sources outside the World Bank's records and from the Bank's own narrative that the project page does not show: works finishing or stalling, contracts awarded late, disputes with residents, the state of service in the project's towns, what the ministry and the auditor say. The sample brief that fixes the shape is `.notes/prism-sample/prism-deep-research-P156634-sample-v5.pdf` in the main checkout, built by `.notes/prism-sample/template/build5.py` from real items read on November 5, 2026; read both before writing a line. This ticket builds the sources and the item store. Ticket 148 runs them and writes the brief, ticket 149 shows it and prints it, ticket 150 adds field photos.
+
+One registry, `config/research.toml` (CLAUDE.md rule 9; the one place a research source is defined, beside `config/sources.toml`, which stays the registry of the lakehouse's datasets). One `[sources.<key>]` table per source with: `label`, `kind` (`bank_report`, `procurement`, `news`, `complaint`, `social`, `satellite`, `field_photo`), `endpoint`, `license` (the attribution line, from the source's own terms), `pace_seconds` (the least time between two calls to it), `cache_hours` (how long a fetched answer is reused), `reader` (`module:function`), `limitations` (full sentences) and `enabled`. `strata.config.load_research()` reads it and stops with a sentence when a key is missing or unknown, as `load_sources()` does. Words for the screens live in `web/src/copy.ts` (ticket 149), never here.
+
+The readers live in `src/strata/research/sources/`, one module per source, behind one interface in `src/strata/research/sources/__init__.py`:
+
+    read(source: ResearchSource, project: ProjectFacts, fetch: Fetch, engine: Engine | None, now: dt.datetime) -> SourceResult
+
+`ProjectFacts` (`src/strata/research/project.py`) holds `project_id`, `project_name`, `country_code`, `country_name`, `implementing_agencies` (names and the short names the press uses, such as CWWDA, NWWDA, MOWASSCO, read from the record's names), `sector_name`, `closing_date`, `status`, and `locations`, each `{geo_loc_id, name, latitude, longitude}` from the projects API's `geo_locations` (`data/fixture/recorded/api/projects/P156634.json` shows the shape). It is built from the recorded or bronze page of the project, else from the live projects API through the same `fetch`, never from memory. `Fetch` is one function, `fetch(url, *, headers) -> (status, headers, body_bytes)`: the live one is `urllib` with the User-Agent `prism-research/0.1 (+https://github.com/ChiragLakhanpal/Prism)` and a timeout, with pacing and caching around it (`src/strata/research/fetching.py`: one call per source per `pace_seconds`; answers kept by URL for `cache_hours` in the research cache table, or locally in the DuckDB file the drafts use); the offline one replays recorded answers from `data/fixture/recorded/research/<source>/` and refuses any URL it has no file for. Never pretend to be a browser: send the named agent, and when a source answers 403 or 429 or a bot check, the result says so and holds no item from it.
+
+`SourceResult` is `{source, items, reached, status, note}`. Every item has the one shape every later ticket reads:
+
+    evidence_id   "strata.research.item:<project_id>/<source key>/<item key>", the key stable for the source (a notice id, a document id and page, an article URL's hash, a case slug, a post id, a tile set's location id and year)
+    public_from   the date the item became public (ADR 0002): the notice date, the ISR's date, the article's date, the case's date, the mosaic's year end
+    source        {key, label, kind, license, url_of_source}
+    kind          the registry's kind
+    title         one line
+    text          the source's own words, up to 4,000 characters (an article's paragraphs, a notice's description, an ISR passage), contact details stripped by the stripper the notices use; never a summary Prism wrote
+    url           the page a person opens to see the item itself (clickable, and the whole point)
+    published     ISO date or null; date_known false when the outlet prints none
+    observed      ISO date the item is about when that differs, else null
+    location      {geo_loc_id, name, latitude, longitude} or null
+    image_urls    for a satellite item, the tile addresses of two years as two lists of nine, else empty
+    author        the outlet, agency or account as the source prints it; never an email or a phone number
+    read_on       ISO date of the fetch
+
+The sources for this ticket, with what each gives the brief:
+
+1. `isr_narrative`, kind `bank_report`, no network: the passages of the project's ISRs whose section is "Implementation Status and Key Decisions" and the results indicators' "Comments on achieving targets", from `strata.gold.passage` (document type ISR, newest two documents), each passage one item cited to its document and page. In the fixture, ISR 19 (40114539) page 2 says the Baricho solarisation is complete and ISR 18 (40091292) page 2 puts works contracts at 85 percent; the brief leans on both.
+2. `procurement_notices`, kind `procurement`, no network: the project's notices from `strata.gold.notice` newer than 180 days before `now`, each a `Contract Award` or `Invitation for Bids` item with its STEP reference, method and date, so the brief can say what was awarded and when against the closing date. The fixture's notices for P156634 must include the seven awards of July 15 to October 13, 2026 the sample cites (OP00456907, OP00457686, OP00466974, OP00471125, OP00474696, OP00474946) and the invitation OP00474700; record them from the notices API (`search.worldbank.org/api/v2/procnotices?project_id=P156634&srt=noticedate&order=desc`) with `ops/research/record.py` if the fixture lacks them.
+3. `gdelt_news`, kind `news`: the GDELT DOC 2.0 API, `https://api.gdeltproject.org/api/v2/doc/doc?query=...&mode=artlist&format=json&maxrecords=50&timespan=24months&sort=datedesc`, the query built from the agencies' short names, the project's name and the location names with the sector's words, in quoted phrases joined with OR; `pace_seconds = 5`. On November 5 GDELT answered 429 to every call from this network; `reached = false` with the note "GDELT limited calls from this network", never a retry in disguise.
+4. `outlet_feeds`, kind `news`: the public RSS feeds of the outlets that cover the project's region (the registry lists each feed's address under `[[sources.outlet_feeds.feeds]]` with the outlet's name: The Star, The Standard, Kenya News Agency, Capital FM, KBC, People Daily, Dawan Africa to start; a feed is one line to add), filtered to entries whose title or summary names an agency short name, a location name or the project's name. For a kept entry the reader fetches the article page with the named client and keeps its paragraphs as `text`; an outlet that answers 403 or a bot check keeps the feed's own summary as `text` and `note` says the page could not be read.
+5. `inspection_panel`, kind `complaint`: `https://www.inspectionpanel.org/panel-cases/data`, whose embedded JSON (`drupalSettings.extractCases`, a map of node ids to case titles that hold project ids as `P\d{6}`) lists every case; keep the cases that name the project, with the register's address as `url` when the case's own page is not found. No case gives an empty `items` with `reached` true.
+6. `sentinel2_mosaic`, kind `satellite`: the Sentinel-2 cloudless yearly mosaics by EOX (`https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-<year>_3857/default/g/<z>/<row>/<col>.jpg`, CC BY-NC-SA 4.0, attribution "Sentinel-2 cloudless by EOX IT Services GmbH, contains modified Copernicus Sentinel data"): for each location, the 3 by 3 tiles at zoom 15 around it for the oldest year after approval and the newest year (2018 and 2025 on November 5, 2026; probe which years answer), as `image_urls`; the reader builds addresses and fetches nothing. The page shows the two grids side by side, as the sample's page 4 does. Prism reads no pixels; the item's `text` says what the grids are and nothing about what they show.
+7. `mastodon`, kind `social`: Mastodon's public tag timelines for the country's name and the sector's word; a post is kept only when its text names a project location or an agency short name together with a sector word, so a tag alone never brings a post in. The three posts about drought in Turkana the earlier probe found are the fixture's recording; the brief says when no post is about the works.
+
+Not sources, listed in the registry as `enabled = false` with the reason in `limitations`: Reddit and Bluesky (refuse clients that are not browsers, probed November 5), X (paid key), Google News RSS (terms allow personal feed readers only), Wikimedia Commons geosearch (the photos near the sites do not show the works).
+
+The item store: `strata.ops.research_runs` (run id, project id, started, finished, as_of, viewer, sources asked, reached, note) and `strata.ops.research_items` (one row per item of the shape above, keyed by evidence id, with the run id and `read_on`), written like the drafts and uploads (`src/strata/appstate`, `src/strata/uploads/store.py`: written as the app's service principal on the workspace, in the local DuckDB file on this computer). An item read again in a later run keeps its first `read_on`.
+
+The fixture and the demo seed: `ops/research/record.py --project P156634 --out data/fixture/recorded/research/` records each source's live answer with the URL, the status and the date, so the recording is honest about what was public when. `ops/research/seed.py --project P156634` loads the items the sample brief cites, from the recordings, as one run dated November 5, 2026, into the item store, so the demo brief stands on the App even when GDELT refuses that network; the run's note says the items were read on November 5, 2026. The items to seed are the 18 sources of the sample's last page (`.notes/prism-sample/template/build5.py`, `SOURCES`), with the article text the kit folder holds for the ones that answered (`.notes/prism-sample/news/a*.html`).
+
+Tests run with the network off (`conftest.py`), so every test reads the recordings through the offline fetch: the registry loads and refuses a bad key; each reader turns its recording into items of the one shape with a stable evidence id, a `public_from`, a clickable `url` and stripped contact details; 403, 429 and a bot-check page give `reached = false` and no items; the pacing waits between two calls and the cache answers within `cache_hours` (injected clock); the ISR and notice readers work on the fixture database; the seed writes the run and its items and a second seed changes nothing. Keep the gate under 150 seconds; no test sleeps.
+
+Build this in the ticket's worktree on a branch from `build/strata`'s HEAD. Write every new sentence with the name Prism. Report with the recorded files' names and dates, the item counts per source for P156634, and the gate's time.
+
+Read first: the sample brief and `build5.py`; `config/sources.toml` and `src/strata/config.py`; `src/strata/tools/project_records.py`; `src/strata/knowledge/http.py`; the contact stripper the notices use (grep `strip` under `src/strata/lakehouse`); `src/strata/uploads/store.py`; `data/fixture/README.md`; `docs/agents/areas/knowledge.md`; `docs/agents/unslop.md`.
+
+**Blocked by:** None (can start immediately)
+
+**Status:** in-progress
+**Area:** knowledge
+**Phase:** P5
+**Design review:** no
+
+- [ ] `config/research.toml` defines the seven sources and the five not connected, `load_research()` reads it, and a bad key stops it with a sentence (tests).
+- [ ] Each reader turns its recording into items of the one shape, every item with a stable evidence id, a `public_from`, a clickable `url` and contact details stripped; the ISR and notice readers read the fixture database (tests for P156634).
+- [ ] A refusal (403, 429, a bot-check page) or an unreachable host gives `reached = false`, the status and a one-sentence note, and never an item (tests).
+- [ ] The pacing and the cache hold (tests with an injected clock).
+- [ ] The item store writes a run and its items locally and on the workspace through the same code path as uploads, and `ops/research/seed.py` loads the sample's items for P156634 as a run dated November 5, 2026 (tests; the workspace seed is a step for the merger).
+- [ ] The gate passes under 150 seconds on the worktree.
+
+## Comments
+
+- November 5, 2026, orchestrator: rewritten at 17:55 PST after the user settled the brief's shape on the sample (v5). Probes from this computer today: the Inspection Panel register answered 200 with its cases in `drupalSettings.extractCases`; EOX Sentinel-2 cloudless answered tiles for 2018 to 2025; the Star, the Standard, KBC, Big3Africa, Dawan Africa and the notices API answered the named client; Nation, People Daily and Eastleigh Voice answered 403 or a bot check; GDELT answered 429 all afternoon; Reddit and Bluesky refused.

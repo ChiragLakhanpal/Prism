@@ -1,6 +1,6 @@
 # Good morning: the shell redesign, round 3
 
-Written October 27, 2026 at 2:02 AM PDT, after the second critic's review. Open these in order. All are in `/tmp/scratchpad/redesign/design/`.
+Written October 27, 2026 at 2:02 AM PDT, after the second critic's review. Open these in order. All are in `<scratchpad>/redesign/design/`.
 
 1. `prototype.html` in a browser. Press "Prototype controls" at the bottom right. Its eight page links walk the demo: Home, Packages, the plan check, the package, All projects, Lessons, Drafts, a draft. Four switches:
    - **Rail at rest**: By width (the plan: labels from 1440 px, icons below), Labels (always open), Icons (always a rail). Try it at your laptop's width.

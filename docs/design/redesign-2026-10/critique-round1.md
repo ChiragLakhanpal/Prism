@@ -4,7 +4,7 @@ Written October 26, 2026 by the independent design critic. I share no context wi
 
 ## What I looked at
 
-My own captures, all in `/tmp/scratchpad/redesign/critique/`:
+My own captures, all in `<scratchpad>/redesign/critique/`:
 
 - `proto-1440.png`, `proto-1024.png`, `proto-390.png` (first screens, as asked)
 - `proto-1440-full.png`, `proto-1280-full.png`, `proto-390-full.png` (whole page)
@@ -13,7 +13,7 @@ My own captures, all in `/tmp/scratchpad/redesign/critique/`:
 - `zoom-dot-opened.png`, `zoom-1280-chart.png`, `zoom-current-1024-chart.png` (close-ups)
 - `measure.cjs` and `axe-check.cjs`, the two probes I ran with the repo's Playwright
 
-For comparison, I used the current app's screenshots in `/tmp/scratchpad/redesign/current/`.
+For comparison, I used the current app's screenshots in `<scratchpad>/redesign/current/`.
 
 Measurements from `measure.cjs` (the top of the finding and the chart's width):
 

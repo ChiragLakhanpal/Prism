@@ -6,13 +6,13 @@ Checklists, in the order read: the frontend-design skill's calibration list (`fr
 
 ## What I looked at
 
-The CLI shots the orchestrator asked for, all in `/tmp/scratchpad/redesign/critique/`:
+The CLI shots the orchestrator asked for, all in `<scratchpad>/redesign/critique/`:
 
 - `r3-1440.png`, `r3-1024.png`, `r3-390.png` (the package page, the prototype's default)
 - `r3-1440-long.png`, `r3-390-long.png` (`?data=long`, the worst-case switch)
 - `r3-1440-switches.png` (`?rail=icons&pane=over&drawer=dot&page=package`, the comparison switches on)
 
-My own captures, 117 files in `/tmp/scratchpad/redesign/critique/r3/`, taken by the scripts beside this file (`r3-shoot.cjs`, `r3-probe.cjs`, `r3-zoom.cjs`, `r3-words.cjs`, `r3-sheet.cjs`):
+My own captures, 117 files in `<scratchpad>/redesign/critique/r3/`, taken by the scripts beside this file (`r3-shoot.cjs`, `r3-probe.cjs`, `r3-zoom.cjs`, `r3-words.cjs`, `r3-sheet.cjs`):
 
 - Every page (home, packages, plancheck, package, projects, lessons, drafts, draft) at 1440, 1024, 390 and 320 px, each with `data=long` and `data=empty` at 1440 and 390 px: `r3/<page>-<width>[-long|-empty].png`
 - Whole pages: `r3/package-1440-full.png`, `r3/plancheck-1440-full.png`, `r3/home-1440-full.png`, `r3/draft-1440-full.png`, `r3/package-390-full.png`
@@ -20,7 +20,7 @@ My own captures, 117 files in `/tmp/scratchpad/redesign/critique/r3/`, taken by 
 - Close-ups and sheets: `r3/zoom-plancheck-1024-table.png`, `r3/zoom-plancheck-1440-long.png`, `r3/sheet-390.png`, `r3/sheet-1024.png`, `r3/sheet-long.png`, `r3/sheet-long-390.png`, `r3/sheet-shell.png`, `r3/sheet-current.png`
 - Numbers: `r3/measure.tsv` (finding top, sideways scroll and axe per state), `r3/words.txt` (words broken inside themselves)
 
-For comparison I used the current app's screenshots in `/tmp/scratchpad/redesign/current/`.
+For comparison I used the current app's screenshots in `<scratchpad>/redesign/current/`.
 
 ## Scores
 

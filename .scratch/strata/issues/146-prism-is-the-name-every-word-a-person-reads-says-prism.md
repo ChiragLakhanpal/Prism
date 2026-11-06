@@ -1,0 +1,30 @@
+# 146: Prism is the name: every word a person reads says Prism, and the code keeps its identifiers
+
+**What to build:** On November 5, 2026 the user renamed the product. Strata is now Prism, and Surya Yadav joins as a contributor. Change every place a person reads the name: the web copy (`web/src/copy.ts`, the gallery copy, the deck under `web/src/deck`, the figures), the HTML title (`web/index.html`), the README and `.github/README.md`, CLAUDE.md, GLOSSARY.md, DESIGN.md, `docs/` (PLAN, STATUS, the ADRs, the agents' docs, the blueprint HTML, the proposal source), `config/*.toml` comments and text values, the agent instructions under `src/strata/agent/instructions/`, docstrings, comments and messages in `src/`, `tests/`, `ops/`, `gates/`, `scripts/`, `evals/`, `bundle/`, `.claude/agents/*.md`, `.claude/hooks/guard.py` messages, `.scratch/strata/spec.md` and the ticket files, and the recorded fixtures under `data/fixture` where a sentence says the name.
+
+The rule, chosen by the user on November 5 (brand only): the word `Strata` becomes `Prism` and the word `STRATA` becomes `PRISM` wherever a person reads them. Every identifier stays: the Python package `strata` and its module paths (`strata.tools.*`, `python -m strata.*`), the Databricks catalog and its tables (`strata.gold.*`, `strata.ops.*`), the bundle name, the App's name and address, the secret scope, the Foundry agent's name `strata-orchestrator`, every environment variable (`STRATA_*`), the gate's lock file, browser storage keys (`strata.sidebar`), file and folder names (`src/strata`, `.scratch/strata`, `docs/blueprint/strata-blueprint.html`, `docs/readme/strata-*.webp`, `docs/presentation/strata-presentation.pdf`) and the lowercase `strata` everywhere. So a sed over `\bStrata\b` and over `STRATA` not joined to `_` or a letter, and nothing over lowercase `strata`. Check with `grep -rhoE '\bStrata[A-Za-z0-9_]+'`, which found no identifier shaped like the brand on November 5. One ADR, `docs/adr/0006-prism-is-the-name-the-workspace-keeps-the-strata-identifiers.md`, records the decision, what stays and why (a rename of the catalog, the App and the package is a workspace migration and a package rename, listed as follow-ups), and the date.
+
+Three sentences are new, not renamed. The README's first paragraph says once "Prism was called Strata until November 5, 2026." so the panel that saw the Strata demo knows. The README gets a short "Who builds Prism" section: "Prism is built by Chirag Lakhanpal and Surya Yadav." and nothing more about who did what (the user decides that wording later; leave a comment line in the README source marking it). `.github/README.md` gets one honest line under its film: "The film and the screens below were captured before the rename, so they still show the old name on screen." Set `repo = "https://github.com/ChiragLakhanpal/Prism"` in `config/urls.toml` (the user renames the GitHub repo in the morning) and regenerate the README's "For the panel" block with the command the README names (`python -m strata.proposal readme --write`), so `tests/test_proposal_readme.py` keeps passing.
+
+The copy lint's fixed disclaimer sentence (`web/lint/rules.ts` line 22) and its copy in `web/src/copy.ts` change together, so the lint keeps passing. A test that asserts the name in a sentence (such as the demo-ready command's last line, "Strata is ready for the demo.") changes with the code it tests, in the same commit. The Foundry agent's instructions (`orchestrator.md`) change too; the sync's tests compare the definition built from the repo, so they follow. Do not rebuild images, PDFs or the film; do not rename files or folders; do not touch `uv.lock`, `package-lock.json` or `node_modules`.
+
+Build this in the ticket's worktree on a branch from `build/strata`'s HEAD, run `scripts/install` first, then the gate (`python3 gates/offline.py`, with the Bash timeout at 600000), and report: how many files changed, how many occurrences of `Strata` and `STRATA` remain outside identifiers (the target is zero outside file paths, URLs and identifiers), the gate's time, and the exact lines that are new rather than renamed. The commit message names the rename and the ADR. Only the user's own word changes `main` or pushes.
+
+Read first: CLAUDE.md, DESIGN.md section 7 (the copy rules the new sentences follow), `docs/agents/unslop.md`, `web/lint/rules.ts`, `tests/test_proposal_readme.py`, `config/urls.toml`.
+
+**Blocked by:** None (can start immediately)
+
+**Status:** in-progress
+**Area:** docs
+**Phase:** P5
+**Design review:** no
+
+- [ ] `grep -rE '\bStrata\b|(^|[^A-Z_])STRATA([^A-Z_]|$)'` over the tracked files, excluding file paths, URLs and identifiers, finds nothing, and the web app's title, sidebar, Home, Ask, deck and every page say Prism (the gate's web tests pass; one screenshot of Home at 1440 px in the notes).
+- [ ] The README says once that Prism was called Strata until November 5, 2026, names both builders, and its "For the panel" block links the repo at `https://github.com/ChiragLakhanpal/Prism`; `.github/README.md` carries the one line about the film and screens.
+- [ ] ADR 0006 records the brand-only decision, the identifiers that stay with the reason for each group, and the follow-ups.
+- [ ] Every identifier named above is unchanged (`grep -c 'strata\.gold' src/strata/lakehouse/gold/project.sql` is still 1; `python -m strata.server --help` or the import `import strata` still works; `STRATA_GATE_LOCK` still appears in `gates/offline.py`).
+- [ ] The gate passes under 150 seconds on the worktree, after `scripts/install`.
+
+## Comments
+
+- November 5, 2026, orchestrator: opened at 15:50 PST from the user's decision of today (brand only; GitHub rename and collaborator invite are the user's lines in the morning).
