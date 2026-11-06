@@ -4,6 +4,10 @@ and check every sentence of it, as one stream of /api/ask's events.
 The stream's steps, in order:
 
   facts            the project's record: its name, status and closing date
+  plan             one event, not a step, right after facts is done (ticket 157): every step the run will take, in
+                   order, each {id, kind, label}, and usual_seconds, [low, high] from research.usual_seconds_low and
+                   _high in config/thresholds.toml, so the tab lists every step at once and says how long a run
+                   usually takes. It is the one definition of the step list: the tab never invents a step.
   source-<key>     one step per source, done with how many items it gave, or not_reached with its note. A source
                    that refuses or fails is a step that says so, never a failed run.
   writing          the writer writes the brief from the run's items (src/strata/research/writer.py)
@@ -53,6 +57,10 @@ log = logging.getLogger(__name__)
 TOOL = briefs.TOOL
 # The codes an error event may carry; web/src/copy.ts has a sentence for each (ticket 149).
 ERRORS = ("unknown_project", "not_fetched", "no_sources", "writer_unavailable", "writer_shape", "internal")
+# The plan's labels for the steps every run takes (ticket 157); a source's label is the registry's
+# (config/research.toml).
+FIXED_LABELS = {"facts": "Project facts", "writing": "Writing the brief",
+                "checking": "Checking every sentence against its sources"}
 
 
 class ResearchError(RuntimeError):
@@ -161,13 +169,18 @@ class Run:
             result = await asyncio.to_thread(self._evidence, request)
             if result["abstention"]:
                 raise ResearchError("not_fetched")
+            yield self._plan([(key, source["label"]) for key, source in self._kept_order(result)])
             pause = float(self.six_checks.thresholds.value("research.stored_step_seconds")) if request.stored_only else 0
             for event in self._kept_steps(result):
                 if pause and event.data["status"] != "running":  # the source's running line shows for the pause
                     await asyncio.sleep(pause)
                 yield event
         else:
-            async for event in self._read(request, project):
+            if self.kit is None:
+                raise ResearchError("no_sources")
+            sources = list(self.kit.sources())
+            yield self._plan([(_key(source), _label(source)) for source in sources])
+            async for event in self._read(request, project, sources):
                 yield event
             result = await asyncio.to_thread(self._evidence, request)
         try:
@@ -195,21 +208,37 @@ class Run:
         with self.engine_for(request.viewer) as engine:
             return registry.call(TOOL, {"project_id": request.project_id}, self._context(engine, request))
 
+    def _plan(self, sources: list[tuple[str, str]]) -> Event:
+        """The plan event: the facts, each source by its key and label in the order the run takes them, writing and
+        checking, with the usual time from the thresholds."""
+        thresholds = self.six_checks.thresholds
+        steps = [{"id": "facts", "kind": "facts", "label": FIXED_LABELS["facts"]},
+                 *({"id": f"source-{key}", "kind": "source", "label": label} for key, label in sources),
+                 *({"id": kind, "kind": kind, "label": FIXED_LABELS[kind]} for kind in ("writing", "checking"))]
+        return Event("plan", {"steps": steps, "usual_seconds": [thresholds.value("research.usual_seconds_low"),
+                                                                thresholds.value("research.usual_seconds_high")]})
+
     @staticmethod
-    def _kept_steps(result: Mapping) -> list[Event]:
-        """The source steps of a run already kept, in the order a live run reads the sources (the registry's): what
-        each source gave, done with its items and "read on <day>", or why it was not reached, each with stored_on, the
-        day the stored run read the sources."""
+    def _kept_order(result: Mapping) -> list[tuple[str, Mapping]]:
+        """The sources a run already kept reached and did not reach, each with its summary entry, in the order a live
+        run reads the sources (the registry's), then any the registry no longer names."""
         from strata.config import load_research
 
-        summary, steps = result["summary"], []
-        day = (result.get("run") or {}).get("as_of")
+        summary = result["summary"]
         reached = {source["key"]: source for source in summary["sources_reached"]}
         missed = {source["key"]: source for source in summary["sources_not_reached"]}
         order = [key for key in load_research() if key in reached or key in missed]
         order += [key for key in [*reached, *missed] if key not in order]
-        for key in order:
-            source = reached.get(key) or missed[key]
+        return [(key, reached.get(key) or missed[key]) for key in order]
+
+    @staticmethod
+    def _kept_steps(result: Mapping) -> list[Event]:
+        """The source steps of a run already kept, in _kept_order: what each source gave, done with its items and
+        "read on <day>", or why it was not reached, each with stored_on, the day the stored run read the sources."""
+        reached = {source["key"] for source in result["summary"]["sources_reached"]}
+        steps = []
+        day = (result.get("run") or {}).get("as_of")
+        for key, source in Run._kept_order(result):
             named = {"source": key, "label": source["label"], "stored_on": day}
             steps.append(_step(f"source-{key}", "source", "running", **named))
             if key in reached:
@@ -219,15 +248,13 @@ class Run:
                 steps.append(_step(f"source-{key}", "source", "not_reached", note=source.get("note"), **named))
         return steps
 
-    async def _read(self, request: Request, project: dict) -> AsyncIterator[Event]:
-        """Each enabled source in turn, then the run and its items kept."""
-        if self.kit is None:
-            raise ResearchError("no_sources")
+    async def _read(self, request: Request, project: dict, sources: list) -> AsyncIterator[Event]:
+        """Each enabled source in turn, in the plan's order, then the run and its items kept."""
         started = self.now()
         with self.engine_for(request.viewer) as engine:
             facts = await asyncio.to_thread(self.kit.facts, engine, request.project_id, request.as_of)
             results = []
-            for source in self.kit.sources():
+            for source in sources:
                 key, label = _key(source), _label(source)
                 yield _step(f"source-{key}", "source", "running", source=key, label=label)
                 try:

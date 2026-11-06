@@ -10,7 +10,8 @@
 // under the section it feeds, from the run's coverage. Removed sentences show under the brief with their reasons, as
 // answers do.
 //
-// States: loading, no brief yet (the button and one sentence on what the run reads), running (the steps), the brief,
+// States: loading, no brief yet (the button and one sentence on what the run reads), running (the run's plan as a
+// progress rail, components/ResearchProgress.tsx, ticket 157; a failed or dropped run keeps the ask box's steps), the brief,
 // a source not reached, the service that didn't answer (the read or the run), and an account that can't read
 // Prism's tables.
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -18,6 +19,7 @@ import { Alert } from "../../components/Alert";
 import { DRAWER_ID } from "../../components/AnswerPanel";
 import { Button } from "../../components/Button";
 import { RemovedBox, removedFrom } from "../../components/Checks";
+import { ResearchProgress } from "../../components/ResearchProgress";
 import { CitationMarker } from "../../components/CitationMarker";
 import { EightColumns } from "../../components/EightColumns";
 import { ExternalLink } from "../../components/ExternalLink";
@@ -40,11 +42,13 @@ import {
   voiceTemplate,
   notReachedIn,
   paragraphsOf,
+  planFrom,
   satelliteFor,
   tileYear,
   withStep,
   type Brief,
   type ResearchItem,
+  type ResearchPlan,
   type ResearchSentence,
   type ResearchStep,
   type Sections,
@@ -308,7 +312,19 @@ export function BriefView({ brief }: { brief: Brief }) {
 
 // reading: the run is done and its brief is being read, so the steps stay until the brief replaces them. code is the
 // error event's (ticket 148's run.ERRORS), which picks the alert's sentence.
-type RunState = { phase: "idle" | "running" | "reading" | "failed" | "dropped"; steps: ResearchStep[]; status: number | null; code?: string | null };
+// plan is the run's plan event (ticket 157); started and lastEventAt are from Date.now(), for the elapsed clock and the
+// still-working line; checked counts the sentence and removed events while the checks run.
+type RunState = {
+  phase: "idle" | "running" | "reading" | "failed" | "dropped";
+  steps: ResearchStep[];
+  status: number | null;
+  code?: string | null;
+  plan: ResearchPlan | null;
+  started: number;
+  lastEventAt: number;
+  checked: number;
+};
+const IDLE: RunState = { phase: "idle", steps: [], status: null, plan: null, started: 0, lastEventAt: 0, checked: 0 };
 
 // The run's steps in the ask box's words: present tense while running, past once done; a source not reached says so.
 function stepLines(steps: ResearchStep[]): Step[] {
@@ -357,7 +373,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
   const search = useStore(address).search;
   const [reads, setReads] = useState(0);
   const [load, retry] = useLoad<unknown>(withReadParams(`/api/projects/${encodeURIComponent(pid)}/research`, search), String(reads));
-  const [run, setRun] = useState<RunState>({ phase: "idle", steps: [], status: null });
+  const [run, setRun] = useState<RunState>(IDLE);
   const stopping = useRef<AbortController | null>(null);
   // The read on screen when the run finished, so the steps give way only to the brief the run stored.
   const latest = useRef(load);
@@ -370,7 +386,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
 
   useEffect(() => {
     if (run.phase !== "reading") return;
-    if ((load.status === "ready" && load.data !== before.current) || load.status === "error") setRun({ phase: "idle", steps: [], status: null });
+    if ((load.status === "ready" && load.data !== before.current) || load.status === "error") setRun(IDLE);
   }, [run.phase, load]);
 
   // Each item the brief cites is known to the evidence drawer at once, so a marker opens it with no request.
@@ -383,12 +399,16 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
     stopping.current?.abort();
     const controller = new AbortController();
     stopping.current = controller;
-    setRun({ phase: "running", steps: [], status: null });
+    const started = Date.now();
+    setRun({ ...IDLE, phase: "running", started, lastEventAt: started });
     try {
       // The run reads as of the page's date in the page's view, as the brief's GET does (ticket 148 takes them in the body).
       const body = { view: viewOf(search), asof: asOfOf(search) };
       for await (const event of streamEvents(`/api/projects/${encodeURIComponent(pid)}/research`, body, { signal: controller.signal })) {
-        if (event.type === "step") setRun((now) => ({ ...now, steps: withStep(now.steps, event.data as ResearchStep) }));
+        const at = Date.now();
+        if (event.type === "step") setRun((now) => ({ ...now, lastEventAt: at, steps: withStep(now.steps, event.data as ResearchStep) }));
+        if (event.type === "plan") setRun((now) => ({ ...now, lastEventAt: at, plan: planFrom(event.data) }));
+        if (event.type === "sentence" || event.type === "removed") setRun((now) => ({ ...now, lastEventAt: at, checked: now.checked + 1 }));
         if (event.type === "evidence") remember(event.data as EvidenceEvent);
         if (event.type === "error") {
           const code = (event.data as { code?: string }).code ?? null;
@@ -422,10 +442,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
           <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
         ) : running ? (
           <div data-research-run className="max-w-prose">
-            <p className="text-body text-ink">{words.running}</p>
-            <div className="mt-4">
-              <Steps steps={stepLines(run.steps)} reserveLines={4} />
-            </div>
+            <ResearchProgress name={name} plan={run.plan} steps={run.steps} checked={run.checked} started={run.started} lastEventAt={run.lastEventAt} />
           </div>
         ) : load.status === "loading" ? (
           <div aria-busy="true">

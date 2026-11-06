@@ -4,6 +4,9 @@ data: {"id": "facts", "kind": "facts", "status": "running"}
 event: step
 data: {"id": "facts", "kind": "facts", "status": "done", "project_id": "P156634", "project_name": "Water and Sanitation Development Project", "closing_date": "2026-10-31"}
 
+event: plan
+data: {"steps": [{"id": "facts", "kind": "facts", "label": "Project facts"}, {"id": "source-isr_narrative", "kind": "source", "label": "World Bank project reports"}, {"id": "source-procurement_notices", "kind": "source", "label": "World Bank procurement notices"}, {"id": "source-gdelt_news", "kind": "source", "label": "GDELT"}, {"id": "source-outlet_feeds", "kind": "source", "label": "News outlets' feeds"}, {"id": "source-inspection_panel", "kind": "source", "label": "World Bank Inspection Panel"}, {"id": "source-sentinel2_mosaic", "kind": "source", "label": "Sentinel-2 cloudless mosaics"}, {"id": "source-mastodon", "kind": "source", "label": "Mastodon"}, {"id": "source-site_conditions", "kind": "source", "label": "GDACS disaster alerts"}, {"id": "source-agency_statements", "kind": "source", "label": "The implementing agencies' own news pages"}, {"id": "source-sanctions", "kind": "source", "label": "World Bank listing of ineligible firms and individuals"}, {"id": "writing", "kind": "writing", "label": "Writing the brief"}, {"id": "checking", "kind": "checking", "label": "Checking every sentence against its sources"}], "usual_seconds": [90, 180]}
+
 event: step
 data: {"id": "source-isr_narrative", "kind": "source", "status": "running", "source": "isr_narrative", "label": "World Bank project reports", "stored_on": "2026-11-05"}
 

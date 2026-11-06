@@ -9757,6 +9757,32 @@ export const copy = {
         several: (count: string) => `I checked every sentence and removed ${count}.`,
       },
     },
+    // The run while it goes (ticket 157, components/ResearchProgress.tsx): every step of the run's plan at once, a meter
+    // of the steps done, the step count, the elapsed clock and the usual time, and one result line under each step.
+    progress: {
+      title: (name: string) => `I'm researching ${name}.`,
+      step: (n: string, total: string) => `Step ${n} of ${total}`,
+      elapsed: (clock: string) => `${clock} elapsed`,
+      longer: "longer than usual",
+      usual: (low: string, high: string) => (low === high ? `usually about ${low} minutes` : `usually ${low} to ${high} minutes`),
+      meter: "Research progress",
+      meterText: (done: string, total: string) => `${done} of ${total} steps done`,
+      // The steps every run takes; a source's row takes the registry's label from the plan.
+      label: { facts: "Project facts", writing: "Writing the brief", checking: "Checking every sentence against its sources" } as Record<string, string>,
+      // Each row's state, for a screen reader; the icon shows it.
+      state: { done: "done", running: "in progress", todo: "to do", not_reached: "not reached" },
+      kept: { none: "kept no items", one: "kept one item", several: (count: string) => `kept ${count} items` },
+      readOn: (date: string, kept: string) => `read on ${date} · ${kept}`,
+      notReached: (note: string | null | undefined) => (note ? `not reached · ${note}` : "not reached"),
+      writing: {
+        running: "the longest step, usually about a minute",
+        one: "one sentence",
+        several: (count: string) => `${count} sentences`,
+      },
+      checked: (count: string, total: string) => `checked ${count} of ${total} sentences`,
+      // A client that leaves ends the stream, which stops the run before it keeps a brief (src/strata/server/research.py).
+      keepOpen: "Keep this tab open. If you leave, the research stops and the last brief stays.",
+    },
     // A source's line in the Sources list, and its marker's name: "The Star, January 14, 2026".
     sourceName: "{author}, {date}",
     sourceNameUndated: "{author}, undated",

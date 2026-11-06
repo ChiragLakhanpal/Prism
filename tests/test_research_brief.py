@@ -349,6 +349,55 @@ def test_the_shipped_setting_is_the_demo_s_stored_runs_only():
     assert load_thresholds().value("research.stored_step_seconds") == 1.0
 
 
+# ── Ticket 157: the plan comes first ─────────────────────────────────────
+
+def plans(sent) -> list[dict]:
+    return [data for kind, data in sent if kind == "plan"]
+
+
+def test_a_stored_run_sends_one_plan_after_the_facts_in_the_kept_run_s_order_with_the_usual_time(seeded):
+    kit, _ = no_reading_kit()
+    world = World(seeded, kit, live_sources=False)
+
+    sent = world.research()
+
+    [plan] = plans(sent)
+    kinds = [(kind, data.get("id"), data.get("status")) for kind, data in sent]
+    assert kinds.index(("plan", None, None)) == kinds.index(("step", "facts", "done")) + 1
+    # Every step the run then takes is in the plan, in the plan's order, and the plan names no other.
+    taken = list(dict.fromkeys(data["id"] for kind, data in sent if kind == "step" and data["kind"] not in ("judge", "disagreement")))
+    assert [step["id"] for step in plan["steps"]] == taken
+    assert plan["steps"][0] == {"id": "facts", "kind": "facts", "label": "Project facts"}
+    assert plan["steps"][-2:] == [{"id": "writing", "kind": "writing", "label": "Writing the brief"},
+                                  {"id": "checking", "kind": "checking", "label": "Checking every sentence against its sources"}]
+    # The sources the stored run reached and did not reach, in the registry's order, with the registry's labels.
+    sources = [step for step in plan["steps"] if step["kind"] == "source"]
+    enabled = {key: source for key, source in load_research().items() if source.enabled}
+    assert [step["id"] for step in sources] == [f"source-{key}" for key in enabled]
+    assert {"id": "source-gdelt_news", "kind": "source", "label": "GDELT"} in sources
+    assert all(step["label"] == enabled[step["id"].removeprefix("source-")].label for step in sources)
+    assert plan["usual_seconds"] == [90, 180]
+
+
+def test_a_live_run_s_plan_lists_the_kit_s_sources(fresh, kit):
+    sent = World(fresh, kit).research()
+
+    [plan] = plans(sent)
+    enabled = [f"source-{key}" for key, source in load_research().items() if source.enabled]
+    assert [step["id"] for step in plan["steps"]] == ["facts", *enabled, "writing", "checking"]
+
+
+def test_a_run_that_stops_before_its_plan_sends_none(fresh, kit):
+    sent = World(fresh, kit).research(reuse=True)
+
+    assert plans(sent) == [] and ("error", {"code": "not_fetched"}) in sent
+
+
+def test_the_usual_time_is_90_to_180_seconds():
+    assert (load_thresholds().value("research.usual_seconds_low"),
+            load_thresholds().value("research.usual_seconds_high")) == (90, 180)
+
+
 def test_the_evidence_drawer_opens_a_research_item_with_its_source_link(seeded, kit):
     world = World(seeded, kit)
     item = "strata.research.item:P156634/outlet_feeds/24d1ca8a593f492b"

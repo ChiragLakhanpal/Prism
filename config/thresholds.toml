@@ -28,6 +28,13 @@ live_sources = false
 # sources one by one as a live run does (ticket 152). Source: the owner's instruction of November 5, 2026, "about a
 # second each".
 stored_step_seconds = 1.0
+# How long a run usually takes, in seconds, low and high: the run's plan event sends them, and the Deep research tab
+# says "usually 2 to 3 minutes" beside its elapsed clock, and "longer than usual" past the high end (ticket 157).
+# Source: the workspace runs of November 6, 2026: a written brief took 82 to 125 seconds when the writer and the judge
+# answered promptly, and up to 285 seconds when the judge was slow; the stored sources replay stored_step_seconds
+# apart.
+usual_seconds_low = 90
+usual_seconds_high = 180
 
 # These are the ingestion caps. The layout parser (Route B) tries at most this many PDF pages a
 # day, counted in UTC across every project, whether it reads the page or fails on it. A run that

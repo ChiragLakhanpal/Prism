@@ -317,9 +317,22 @@ export type ResearchStep = Omit<StepEvent, "kind" | "status"> & {
   stored_on?: string | null;
   // The day of the brief kept when the writer or the judge failed in the demo's setting (ticket 152).
   kept_from?: string | null;
+  // The sentences the writer wrote: on writing done and on checking running (ticket 157).
+  sentences?: number;
   kept?: number;
   removed?: number;
 };
+
+// The run's plan, sent once after the facts step (ticket 157, src/strata/research/run.py): every step the run will take,
+// in order, and how long a run usually takes, low and high, in seconds. The tab lists these steps and no others.
+export type PlannedStep = { id: string; kind: string; label: string };
+export type ResearchPlan = { steps: PlannedStep[]; usual_seconds: [number, number] };
+
+export function planFrom(data: unknown): ResearchPlan | null {
+  const plan = data as Partial<ResearchPlan> | null;
+  if (!plan || !Array.isArray(plan.steps) || !Array.isArray(plan.usual_seconds) || plan.usual_seconds.length !== 2) return null;
+  return { steps: plan.steps, usual_seconds: [Number(plan.usual_seconds[0]), Number(plan.usual_seconds[1])] };
+}
 
 // The checks' own steps (check 4's judge, check 6's disagreements) run inside checking, whose line says when it is done.
 const INSIDE_CHECKING = new Set(["judge", "disagreement"]);
