@@ -118,6 +118,9 @@
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --motion-press: 120ms;  --motion-color: 120ms;  --motion-popover: 160ms;  --motion-pane: 160ms;
   --motion-sheet: 200ms;  --motion-exit: 120ms;  --motion-reveal: 200ms;
+  /* The research rail's meter (ticket 159): its fill eases to the next step over 300 ms, the one time past 200 ms, so a
+     step's end reads as one move and not a jump. */
+  --motion-meter: 300ms;
   --default-transition-duration: var(--motion-color);
   --default-transition-timing-function: ease;
   /* The number tooltip's width, as Data readiness's tooltips are today. */

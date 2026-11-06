@@ -287,35 +287,29 @@ test("a run lists every planned step at once, fills its meter step by step, coun
   const [low, high] = plan.usual_seconds.map((seconds) => String(Math.round(seconds / 60)));
   await page.clock.runFor(27_000);
   await expect(rail(page).locator("[data-progress-line]")).toHaveText(
-    `${words.progress.step("2", String(plan.steps.length))} · ${words.progress.elapsed("0:27")} · ${words.progress.usual(low, high)}`,
+    `${fill(words.progress.step, { n: "2", total: String(plan.steps.length) })} · ${fill(words.progress.elapsed, { clock: "0:27" })} · ${words.progress.usual(low, high)}`,
   );
 
   // The sources one by one: the meter rises with each, and a source not reached says so with its note.
   const sources = plan.steps.filter((step) => step.kind === "source");
   let done = 1;
-  for (const [index, source] of sources.entries()) {
+  for (const source of sources) {
     await stream.send(steps(source.id, "running"));
     await expect(row(page, source.id)).toHaveAttribute("data-progress-step", "running");
     await expect(row(page, source.id)).toContainText(words.progress.state.running);
     await stream.send(blocks.filter((block) => block.type === "step" && block.data.id === source.id && block.data.status !== "running"));
     done += 1;
     await expect(meter).toHaveAttribute("aria-valuenow", String(done));
-    if (index === 3) {
-      // Mid-run: the rail as a person sees it, saved for the ticket's report when asked.
-      await stream.send(steps(sources[4].id, "running"));
-      if (process.env.RESEARCH_PROGRESS_SHOT) await tab(page).screenshot({ path: process.env.RESEARCH_PROGRESS_SHOT });
-    }
   }
   const missed = blocks.filter((block) => block.type === "step" && block.data.status === "not_reached");
   expect(missed.length, "the recording has a source not reached").toBeGreaterThan(0);
   for (const block of missed) {
     await expect(row(page, String(block.data.id))).toHaveAttribute("data-progress-step", "not_reached");
-    await expect(row(page, String(block.data.id)).locator("[data-progress-result]")).toHaveText(words.progress.notReached(String(block.data.note)));
+    await expect(row(page, String(block.data.id)).locator("[data-progress-result]")).toHaveText(words.progress.result.notReached);
+    await expect(rail(page).locator(`[data-progress-note="${String(block.data.id)}"]`)).toContainText(String(block.data.note));
   }
   const reached = blocks.find((block) => block.type === "step" && block.data.kind === "source" && block.data.status === "done" && Number(block.data.items) > 1)!;
-  await expect(row(page, String(reached.data.id)).locator("[data-progress-result]")).toHaveText(
-    words.progress.readOn("November 5, 2026", words.progress.kept.several(String(reached.data.items))),
-  );
+  await expect(row(page, String(reached.data.id)).locator("[data-progress-result]")).toHaveText(words.progress.kept.several(String(reached.data.items)));
 
   // Writing, then checking: three sentences checked of those the writer wrote.
   await stream.send(steps("writing", "running"));
@@ -332,12 +326,152 @@ test("a run lists every planned step at once, fills its meter step by step, coun
   // Past the usual high end the line says so; with no event for 30 seconds, the running step says it is still working.
   await expect(row(page, "checking")).not.toContainText(copy.steps.stillWorking);
   await page.clock.runFor(plan.usual_seconds[1] * 1000);
-  await expect(rail(page).locator("[data-progress-line]")).toContainText(`elapsed, ${words.progress.longer} · `);
+  await expect(rail(page).locator("[data-progress-line]")).toContainText(`elapsed · ${words.progress.longer}`);
+  await expect(rail(page).locator("[data-progress-line]")).not.toContainText(words.progress.usual(low, high));
   await expect(row(page, "checking")).toContainText(copy.steps.stillWorking);
 
   // One sentence per step, in the plan's order, said once each.
   expect(await stream.said()).toEqual(plan.steps.map(runningSentence));
   await scan(page, "[data-research-progress]");
+  await stream.end();
+});
+
+// Ticket 159: every part of the rail a person reads, measured as the stream goes on. The meter's fill and the running
+// icon change inside their own boxes, so they are not measured; the boxes are.
+const RAIL_PARTS = [
+  "[data-progress-heading]",
+  "[data-progress-line]",
+  "[data-progress-read]",
+  "[data-research-progress] [role=progressbar]",
+  "[data-progress-id]",
+  "[data-progress-id] [data-progress-icon]",
+  "[data-progress-keep]",
+  "[data-research-progress] [data-disclosure]",
+].join(", ");
+type Box = { part: string; top: number; left: number; height: number };
+
+// Sends one block of the stream, waits two frames so React has drawn it, and returns where each part of the rail sits.
+async function sendAndMeasure(page: Page, text: string): Promise<Box[]> {
+  return page.evaluate(
+    async ({ text, parts }) => {
+      if (text) (window as unknown as { research: { send: (text: string) => void } }).research.send(text);
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      return [...document.querySelectorAll<HTMLElement>(parts)].map((element, index) => {
+        const box = element.getBoundingClientRect();
+        const part = element.dataset.progressId ?? Object.keys(element.dataset)[0] ?? element.getAttribute("role") ?? String(index);
+        return { part: `${index} ${part}`, top: box.top + window.scrollY, left: box.left, height: box.height };
+      });
+    },
+    { text, parts: RAIL_PARTS },
+  );
+}
+
+test("from the plan to the last check nothing in the rail moves: each row is one line with its result, the read date is said once, and the notes wait behind a disclosure", async ({ page }) => {
+  const blocks = blocksOf(await recorded("research-p156634.sse"));
+  const plan = planOf(blocks);
+  const stream = await heldStream(page);
+  await page.clock.install({ time: new Date("2026-11-05T10:30:00Z") });
+  // The App's setting: the run writes from the sources read ahead of time (ticket 152).
+  await open(page, { research: { body: demoSetting(await recorded("research-p156634-none.json")) } });
+  await tab(page).getByRole("button", { name: words.run }).click();
+  const planAt = blocks.findIndex((block) => block.type === "plan");
+  await stream.send(blocks.slice(0, planAt + 1));
+  const rows = rail(page).locator("[data-progress-id]");
+  await expect(rows).toHaveCount(plan.steps.length);
+
+  // Where each part sits once the plan has come; every later event, one at a time, must leave it there. The clock
+  // passes 0:59 halfway, so "0:59" and "1:00" are measured too.
+  const before = await sendAndMeasure(page, "");
+  expect(before.length, "six parts, and each row with its icon box").toBe(6 + 2 * plan.steps.length);
+  const later = blocks.slice(planAt + 1).filter((block) => block.type !== "done");
+  const moved: string[] = [];
+  const sources = plan.steps.filter((step) => step.kind === "source");
+  let measured = 0;
+  for (const [index, block] of later.entries()) {
+    if (index === Math.floor(later.length / 4)) {
+      await page.clock.runFor(59_000);
+      await expect(rail(page).locator("[data-progress-clock]")).toHaveText(/^0:59|^1:0\d/);
+    }
+    const now = await sendAndMeasure(page, block.text);
+    measured += 1;
+    for (const [at, box] of now.entries()) {
+      const was = before[at];
+      if (!was || was.part !== box.part || was.top !== box.top || was.left !== box.left || was.height !== box.height) {
+        moved.push(`${block.type} ${String(block.data.id ?? "")}: ${JSON.stringify(was)} -> ${JSON.stringify(box)}`);
+      }
+    }
+    if (now.length !== before.length) moved.push(`${block.type}: ${before.length} parts became ${now.length}`);
+    // Mid-run, as a person sees it on the App: saved for the ticket's report when asked.
+    if (block.type === "step" && block.data.id === sources[5].id && block.data.status === "running" && process.env.RESEARCH_PROGRESS_SHOT) {
+      await tab(page).screenshot({ path: process.env.RESEARCH_PROGRESS_SHOT });
+    }
+  }
+  console.log(`Rail layout: ${before.length} parts measured after each of ${measured} events; ${moved.length} moved.`);
+  expect(moved).toEqual([]);
+  await expect(rail(page).locator("[data-progress-clock]")).toHaveText(/^1:\d\d$/);
+
+  // Each row is one line: its label, then only its result. The label never wraps, and carries its full text in title.
+  const lines = await rows.evaluateAll((items) =>
+    items.map((item) => {
+      const label = item.querySelector<HTMLElement>("[data-progress-title]")!;
+      return { wraps: item.scrollHeight > item.clientHeight || label.scrollHeight > label.clientHeight, height: item.getBoundingClientRect().height, title: label.title };
+    }),
+  );
+  expect(lines.filter((line) => line.wraps)).toEqual([]);
+  expect(new Set(lines.map((line) => line.height)).size, "every row has the same height").toBe(1);
+  expect(lines.map((line) => line.title)).toEqual(plan.steps.map((step) => words.progress.label[step.kind] ?? step.label));
+  const result = (id: string) => row(page, id).locator("[data-progress-result]");
+  await expect(result("facts")).toHaveText(words.progress.result.facts);
+  const done = (id: string) => blocks.find((block) => block.type === "step" && block.data.id === id && block.data.status !== "running")!.data;
+  for (const source of sources) {
+    const sent = done(source.id);
+    const items = Number(sent.items ?? 0);
+    await expect(result(source.id)).toHaveText(
+      sent.status === "not_reached" ? words.progress.result.notReached : items === 0 ? words.progress.kept.none : items === 1 ? words.progress.kept.one : words.progress.kept.several(String(items)),
+    );
+  }
+  await expect(result("writing")).toHaveText(words.progress.writing.several(String(done("writing").sentences)));
+  await expect(result("checking")).toHaveText(words.progress.removed.none);
+
+  // No row carries a date; the sentence under the step count says the day the sources were read, once on screen.
+  for (const text of await rows.allInnerTexts()) expect(text).not.toMatch(/November|2026/);
+  await expect(rail(page).locator("[data-progress-read]")).toHaveText(words.readOnStored("November 5, 2026"));
+  expect((await rail(page).innerText()).split("November 5, 2026").length - 1).toBe(1);
+
+  // The notes wait behind one disclosure, closed, named for the source not reached; opened, it lists each source's note
+  // and moves nothing above it.
+  const notes = rail(page).locator("[data-disclosure]");
+  await expect(notes).toHaveAttribute("data-disclosure", "closed");
+  const button = notes.getByRole("button", { name: words.progress.notes.missed });
+  await expect(button).toHaveAttribute("aria-expanded", "false");
+  await button.click();
+  await expect(notes).toHaveAttribute("data-disclosure", "open");
+  for (const source of sources) {
+    const sent = done(source.id);
+    await expect(notes.locator(`[data-progress-note="${source.id}"]`)).toContainText(String(sent.note));
+  }
+  const opened = await sendAndMeasure(page, "");
+  expect(opened.map(({ part, top, left }) => ({ part, top, left }))).toEqual(before.map(({ part, top, left }) => ({ part, top, left })));
+  await scan(page, "[data-research-progress]");
+  await stream.end();
+});
+
+test("a rail with every source reached names its notes About these sources, and under reduced motion only the words change", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  const blocks = blocksOf(await recorded("research-p156634.sse")).filter((block) => block.data.status !== "not_reached");
+  const stream = await heldStream(page);
+  await open(page, { research: { body: demoSetting(await recorded("research-p156634-none.json")) } });
+  await tab(page).getByRole("button", { name: words.run }).click();
+  const at = blocks.findIndex((block) => block.type === "step" && block.data.id === "source-outlet_feeds" && block.data.status === "running");
+  await stream.send(blocks.slice(0, at + 1));
+  await expect(row(page, "source-outlet_feeds")).toHaveAttribute("data-progress-step", "running");
+  await expect(rail(page).getByRole("button", { name: words.progress.notes.all })).toBeVisible();
+  // The spinner stands still and the meter's fill does not ease.
+  const motion = await rail(page).evaluate((element) => ({
+    spin: getComputedStyle(element.querySelector("[data-progress-step=running] [data-progress-icon] svg")!).animationName,
+    meter: getComputedStyle(element.querySelector("[role=progressbar] > div")!).transitionDuration,
+  }));
+  expect(motion).toEqual({ spin: "none", meter: "0s" });
   await stream.end();
 });
 
@@ -370,11 +504,11 @@ test("Research this project streams the run's steps; a source not reached is one
   const missed = steps.filter((step) => step.status === "not_reached");
   expect(missed.length, "the recording has a source not reached").toBeGreaterThan(0);
   for (const step of missed) {
-    await expect(rows.filter({ hasText: step.note! })).toHaveCount(1);
-    await expect(rows.filter({ hasText: step.note! })).toHaveAttribute("data-progress-step", "not_reached");
+    await expect(row(page, step.id)).toHaveAttribute("data-progress-step", "not_reached");
+    await expect(rail(page).locator(`[data-progress-note="${step.id}"]`)).toContainText(step.note!);
   }
   const removed = steps.find((step) => step.kind === "checking")!.removed ?? 0;
-  await expect(rows.last().locator("[data-progress-result]")).toHaveText(removed === 0 ? words.steps.check.none : removed === 1 ? words.steps.check.one : words.steps.check.several(String(removed)));
+  await expect(rows.last().locator("[data-progress-result]")).toHaveText(removed === 0 ? words.progress.removed.none : removed === 1 ? words.progress.removed.one : words.progress.removed.several(String(removed)));
   await expect(rail(page).getByRole("progressbar")).toHaveAttribute("aria-valuenow", String(plan.steps.length));
   await expect(tab(page).locator("[data-alert=error]")).toHaveCount(0);
 
@@ -396,7 +530,7 @@ test("Research this project streams the run's steps; a source not reached is one
 
 const demoSetting = (body: string) => JSON.stringify({ ...JSON.parse(body), live_sources: false });
 
-test("with the demo's setting, the tab says no brief has been prepared, each source's step says the day it was read, and the buttons keep their live names", async ({ page }) => {
+test("with the demo's setting, the tab says no brief has been prepared, the rail says once the day the sources were read, and the buttons keep their live names", async ({ page }) => {
   const sse = await recorded("research-p156634.sse");
   const stored = demoSetting(await recorded("research-p156634.json"));
   let release = () => {};
@@ -412,11 +546,13 @@ test("with the demo's setting, the tab says no brief has been prepared, each sou
   });
   await tab(page).getByRole("button", { name: words.run }).click();
 
-  // Each source the stored run reached says the day it was read.
+  // The rail says once the day the stored run read the sources; each source it reached says what it kept, with no date.
   const reached = streamSteps(sse).filter((step) => step.kind === "source" && step.status === "done");
   expect(reached.length, "the recording has sources from the stored run").toBeGreaterThan(0);
-  const rows = rail(page).locator("[data-progress-id]");
-  await expect(rows.filter({ hasText: "read on November 5, 2026 · kept" })).toHaveCount(reached.length);
+  await expect(rail(page).locator("[data-progress-read]")).toHaveText(words.readOnStored("November 5, 2026"));
+  const results = rail(page).locator("[data-progress-id] [data-progress-result]");
+  await expect(results.filter({ hasText: /^kept / })).toHaveCount(reached.length);
+  await expect(results.filter({ hasText: /2026/ })).toHaveCount(0);
 
   release();
   await expect(tab(page)).toHaveAttribute("data-research", "ready");
@@ -436,7 +572,7 @@ test("with the demo's setting, a writer that fails keeps the stored brief with o
     return route.fulfill({ status: 200, contentType: "application/json", body: stored });
   });
   await tab(page).getByRole("button", { name: words.again }).click();
-  await expect(rail(page).locator("[data-progress-id]").last().locator("[data-progress-result]")).toHaveText(words.steps.kept("November 5, 2026"));
+  await expect(rail(page).locator("[data-progress-id]").last().locator("[data-progress-result]")).toHaveText(words.progress.result.keptBrief);
   release();
   await expect(tab(page)).toHaveAttribute("data-research", "ready");
   await expect(tab(page).locator("[data-alert=error]")).toHaveCount(0);

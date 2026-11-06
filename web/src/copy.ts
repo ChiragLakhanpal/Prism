@@ -9758,11 +9758,15 @@ export const copy = {
       },
     },
     // The run while it goes (ticket 157, components/ResearchProgress.tsx): every step of the run's plan at once, a meter
-    // of the steps done, the step count, the elapsed clock and the usual time, and one result line under each step.
+    // of the steps done, the step count, the elapsed clock and the usual time, and each step's result after its label on
+    // the same line. Ticket 159: no dates on the rows; the read date is said once under the step count
+    // (research.readOnStored), and each source's note waits behind one disclosure under the rail.
     progress: {
       title: (name: string) => `I'm researching ${name}.`,
-      step: (n: string, total: string) => `Step ${n} of ${total}`,
-      elapsed: (clock: string) => `${clock} elapsed`,
+      // Templates, so the step's number and the clock sit in boxes of their own width and the words after them stay put.
+      step: "Step {n} of {total}",
+      elapsed: "{clock} elapsed",
+      // Past the usual high end, in place of the usual time.
       longer: "longer than usual",
       usual: (low: string, high: string) => (low === high ? `usually about ${low} minutes` : `usually ${low} to ${high} minutes`),
       meter: "Research progress",
@@ -9772,14 +9776,22 @@ export const copy = {
       // Each row's state, for a screen reader; the icon shows it.
       state: { done: "done", running: "in progress", todo: "to do", not_reached: "not reached" },
       kept: { none: "kept no items", one: "kept one item", several: (count: string) => `kept ${count} items` },
-      readOn: (date: string, kept: string) => `read on ${date} · ${kept}`,
-      notReached: (note: string | null | undefined) => (note ? `not reached · ${note}` : "not reached"),
+      // The results a row says after its label: every row has one once its step is done, so every row is one line.
+      result: { facts: "read", notReached: "not reached", keptBrief: "kept the last brief" },
       writing: {
         running: "the longest step, usually about a minute",
         one: "one sentence",
         several: (count: string) => `${count} sentences`,
       },
       checked: (count: string, total: string) => `checked ${count} of ${total} sentences`,
+      removed: { none: "removed no sentences", one: "removed one sentence", several: (count: string) => `removed ${count} sentences` },
+      // The disclosure under the rail: one line per source, its name and its note ("read on November 5, 2026", or why it
+      // was not reached), or its state while it waits or runs.
+      notes: {
+        missed: "Why a source was not reached",
+        all: "About these sources",
+        notReached: (note: string | null | undefined) => (note ? `not reached. ${note}` : "not reached."),
+      },
       // A client that leaves ends the stream, which stops the run before it keeps a brief (src/strata/server/research.py).
       keepOpen: "Keep this tab open. If you leave, the research stops and the last brief stays.",
     },

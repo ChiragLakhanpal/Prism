@@ -453,7 +453,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
           <LoadError error={load.error} message={words.error} permission={words.permission} onRetry={retry} retrying={load.retrying} attempt={load.attempt} />
         ) : running ? (
           <div data-research-run className="max-w-prose">
-            <ResearchProgress name={name} plan={run.plan} steps={run.steps} checked={run.checked} started={run.started} lastEventAt={run.lastEventAt} />
+            <ResearchProgress name={name} plan={run.plan} steps={run.steps} checked={run.checked} started={run.started} lastEventAt={run.lastEventAt} stored={storedOnly} />
           </div>
         ) : load.status === "loading" ? (
           <div aria-busy="true">
