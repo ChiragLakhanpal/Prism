@@ -5133,3 +5133,27 @@ The merger parked this on November 5, 2026. Nothing ran tonight. Run it from a s
       uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
 
   It worked if the deploy exits 0 and prints the App's address. Record the deployment id and the time here.
+
+- Ticket 158 (merge commit c8dc79d4, branch `worktree-agent-a7240aa2a2d99074c` at 3cb399f5), parked by the merger on November 6, 2026. It ships the tile route `GET /api/research/tiles/{year}/{zoom}/{row}/{col}.jpg` (`src/strata/server/research_tiles.py`), which answers from the App's memory, then `strata.ops.research_cache`, then EOX; the tile seed `ops/research/seed_tiles.py`; the PDF button that waits for its images; the failure sentences; and the print's page budget. Ticket 151's agent runs these four steps, in order, from a snapshot at or after c8dc79d4, from the snapshot's root:
+
+  1. Redeploy the App from the merge. One redeploy from a snapshot at or after c8dc79d4 also ships ticket 157, so run it once for both:
+
+         uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+     It worked if the deploy exits 0 and prints the App's address.
+
+  2. Fill the tile cache, through the same wrapper ticket 151 used for `seed.py` and `seed_photos.py` (the App's own client secret does not sign in):
+
+         uv run python ops/research/seed_tiles.py --all --env-file .env
+
+     It reads each stored run's `sentinel2_mosaic` items and fetches from EOX every tile the cache does not keep yet, paced, with the named client `prism-research/0.1`. It worked if it exits 0 and each project's line gives kept now, kept already and refused, and a second run keeps 0.
+
+  3. Warm the App's memory: as a signed-in viewer, one `GET /api/projects/<pid>/research` for each of the five projects (P156634, P130164, P145559, P161305 and P167814), then one GET on the App's address for each tile path that this prints, one a line:
+
+         uv run python ops/research/seed_tiles.py --all --env-file .env --routes
+
+     It worked if each brief GET answers status `written`, and each tile GET answers 200 with `Content-Type: image/jpeg`. A tile that answers 502 with `{"code": "tile_server"}` was refused by EOX in step 2; record it.
+
+  4. No brief needs writing again: ticket 158 changes how the tab and the print show the stored briefs, not the briefs.
+
+  Record here under ticket 158, with the time: the deployment id, each project's three counts from step 2 and the rerun's 0, and how many tile GETs answered 200 and how many 502.

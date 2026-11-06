@@ -16,7 +16,7 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (c95f
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
@@ -28,4 +28,12 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD (c95f
 
 ## Comments
 
-- November 5, 2026, orchestrator: opened at 23:55 PST from the user's two findings on the printed briefs of P145559 and P161305; ships in the fourth deploy of the Prism night with ticket 157.
+- November 5, 2026, orchestrator: opened at 23:50 PST from the user's two findings on the printed briefs of P145559 and P161305; ships in the fourth deploy of the Prism night with ticket 157.
+- November 6, 2026, merger: merged into `build/strata` as c8dc79d4 (two parents: f96ad97d and the branch `worktree-agent-a7240aa2a2d99074c` at 3cb399f5, which has `build/strata` f96ad97d merged in as e1c339a3), built in the worktree `.claude/worktrees/agent-a7240aa2a2d99074c`, now removed; the branch stays. Tonight's rule was essentials only, so there were no review or verify rounds, and the gate on merge was the only check. The merge commit's gate passed in 160.4 seconds; run again by hand on `build/strata` after the merge, it passed in 160.7 seconds, and its secret scan found no keys in the merged history. On the worktree it passed in 154.2 seconds. The evidence is the implementer's report:
+  - Prism serves the tiles: the new route `GET /api/research/tiles/{year}/{zoom}/{row}/{col}.jpg` (`src/strata/server/research_tiles.py`, registered in `app.py`) answers from memory, then `strata.ops.research_cache`, then EOX with the named client, paced, and only for a year and zoom the registry lists. The web maps EOX addresses with `tileRoute()`. `ops/research/seed_tiles.py` (`--all`, `--project`, `--env-file`, `--state-file`, `--routes`) fills the cache 20 rows at a time. `tests/test_research_tiles.py` has 8 tests: a cached tile is served with no EOX call; a miss asks EOX once with prism-research/0.1 and keeps the row; a 429, a 404 or a bot page answers 502 `tile_server` and keeps nothing; the seed's counts; a second seed keeps 0. A Playwright test shows the page asks Prism's route, never EOX.
+  - The PDF waits: the button in `ResearchPdf.tsx` reads "Preparing the PDF" with "n of N images loaded", and prints when every image has loaded or after 25 seconds. Playwright holds the tiles and checks that it has not printed, then releases them and checks for one print.
+  - Failures are explained (`web/src/components/ResearchImages.tsx`): a failed tile leaves its cell in surface-2 and the caption gains the tile sentence; a failed photo shows "Photo not loaded: the photo store did not answer."; an image still loading at the cap says "did not load in time". Tests cover the tab and the print.
+  - No figure breaks: every image carries width and height; every figure is `break-inside: avoid`; photos sit in a 4:3 contain frame; a site's photos get a "Field photos near <site>" sheet, four to a sheet. Ticket 156's fixed counts (11 developments, 18 sources) became upper limits under a measured height budget (`sheetsBy` in `lib/research.ts`), and a site whose bullets leave no room moves its satellite pair to the next sheet.
+  - The PDFs: `.notes/prism-sample/prism-deep-research-P161305-v7.pdf` (16 pages, 57 images, none broken or failed) and `.notes/prism-sample/prism-deep-research-P145559-v7.pdf` (16 pages, 39 images, none broken, no blank pages).
+- Not done, as the implementer reported: the offline fixture holds no real P156634 tiles (the tests use a 1 px image, and the PDFs used tiles fetched once into the scratchpad, not committed); the optional one-query warm-up per project; the budget errs safe, so some sheets end early (a developments sheet with one row, a sources sheet with four entries, the Mombasa photo sheet mostly empty); the PDFs and the P161305 test use P156634's header as a stand-in, so the cover lists no agencies.
+- Workspace: nothing ran tonight. Ticket 158's four steps (the App redeploy, `seed_tiles.py --all` through the wrapper, the warm-up GETs, and no brief rewrite) are parked in `docs/workspace-catchup.md` under "Tickets 157 and 158, the fourth deploy of the Prism night", for ticket 151's agent. The first criterion's workspace part, the seed's counts, waits on that run.
