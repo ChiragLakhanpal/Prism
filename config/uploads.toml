@@ -53,6 +53,17 @@
 # [aliases], more header names for a column, by its key or by activity_reference_no and description (the two
 # halves). A header matches a name or an alias whatever its case, spaces and line breaks.
 
+# [field_photos] (ticket 150), the photos a World Bank staff member adds to a project's Deep research tab, which only
+# the uploader's team sees. strata.config.load_field_photos() reads it.
+#   accept            the file name endings a person may choose; Prism keeps a JPEG or a PNG, whatever the name says
+#   max_size_bytes    the largest photo Prism keeps
+#   max_per_project   the most photos one team keeps for one project
+#   max_caption       the longest caption, in characters
+#   nearest_place_km  how far a photo's position may be from a project location and still be named after it
+#   volume            where the files are kept on the workspace: a Unity Catalog volume, written as the app
+#   folder            where they are kept on this computer: a folder beside the app state's DuckDB file
+#   label, license    the source line a field photo carries in the brief
+
 [uploads]
 accept = [".xlsx", ".csv"]
 max_size_bytes = 5_242_880
@@ -113,3 +124,14 @@ actual = "left"
 one_row = "{step} ({head})"
 
 [aliases]
+
+[field_photos]
+accept = [".jpg", ".jpeg", ".png"]
+max_size_bytes = 10_485_760
+max_per_project = 20
+max_caption = 500
+nearest_place_km = 25
+volume = "/Volumes/strata/ops/field_photos"
+folder = "field_photos"
+label = "Field photos from World Bank staff"
+license = "Official Use Only: taken by World Bank staff and visible to the uploader's team."

@@ -726,11 +726,15 @@ def test_no_tool_in_the_registry_returns_a_supplier_profile():
     from strata.tools.registry import agent_tools
 
     tools = load_tools()
+    # research_evidence's sanctions check states two counts over all of a project's suppliers (ticket 154), which say
+    # nothing about any one supplier.
+    counts = {"suppliers_checked", "suppliers_sanctioned"}
 
     for tool in tools.values():
         assert not [p.name for p in tool.parameters if "supplier" in f"{p.name} {p.description}".lower()], tool.name
         assert "supplier" not in tool.result.row.lower(), tool.name
-        assert not [f for f in tool.result.row_fields + tool.result.fields if "supplier" in f], tool.name
+        assert not [f for f in tool.result.row_fields + tool.result.fields if "supplier" in f and f not in counts], \
+            tool.name
     assert [tool["name"] for tool in agent_tools(tools)] == list(tools)
 
 

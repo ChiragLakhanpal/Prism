@@ -16,12 +16,14 @@ from pathlib import Path
 
 import httpx
 import pytest
-from research_world import SEED_RUN_ID, seed_kit, seeded_copy
+from research_world import SEED_RUN_ID, seed_kit, seeded_copy, with_live_sources
 
+from strata.agent import judge as judges
+from strata.agent.judge import Judgement, Question, Source
 from strata.agent.verifier import find_quote
+from strata.config import load_research, load_thresholds
 from strata.lakehouse.engine import DuckDBEngine
 from strata.research import run as research_run
-from strata.config import load_research
 from strata.research.store import ResearchStore
 from strata.research.writer import RecordedJudge, RecordedWriter
 from strata.server.app import create_app
@@ -53,12 +55,13 @@ def events(text: str) -> list[tuple[str, dict]]:
 
 
 class World:
-    """The app on one DuckDB file that holds the fixture and the app's own tables, with the recorded writer and judge."""
+    """The app on one DuckDB file that holds the fixture and the app's own tables, with the recorded writer and judge.
+    It reads the sources live unless live_sources is False."""
 
-    def __init__(self, database: Path, kit, writer=None):
+    def __init__(self, database: Path, kit, writer=None, live_sources: bool = True, judge=None):
         self.database = DuckDBEngine.open(database)
         self.writer = writer or RecordedWriter(ANSWER)
-        self.judge = RecordedJudge(JUDGED)
+        self.judge = judge or RecordedJudge(JUDGED)
         numbers = iter(range(1, 100))
 
         @contextmanager
@@ -67,7 +70,7 @@ class World:
 
         self.app = create_app(engine_for=reading, research=ResearchStore(self.database.cursor),
                               research_kit=lambda: kit, research_writer=lambda: self.writer,
-                              judge=self.judge, today=lambda: TODAY,
+                              judge=self.judge, today=lambda: TODAY, thresholds=with_live_sources(live_sources),
                               now=lambda: dt.datetime(2026, 11, 5, 10, 30, tzinfo=dt.UTC),
                               new_run_id=lambda: f"research-{next(numbers):04d}")
 
@@ -213,7 +216,7 @@ def test_the_verifier_removes_a_planted_number_and_a_misquote_with_their_reasons
 def test_get_returns_none_before_a_brief_and_the_kept_brief_after_without_a_model_call(fresh, kit):
     world = World(fresh, kit)
 
-    assert call(world.app, "GET", ROUTE).json() == {"status": "none", "project_id": "P156634"}
+    assert call(world.app, "GET", ROUTE).json() == {"status": "none", "project_id": "P156634", "live_sources": True}
     written = world.research()[-1][1]["brief"]
     first, second = call(world.app, "GET", ROUTE).json(), call(world.app, "GET", ROUTE).json()
 
@@ -240,6 +243,108 @@ def test_reuse_with_no_run_kept_says_not_fetched(fresh, kit):
     assert sent[-1][1]["status"] == "stopped"
 
 
+def no_reading_kit():
+    """A kit whose facts and readers fail the test if a run calls them, counting the calls."""
+    calls = []
+
+    def refuse(*arguments):
+        calls.append(arguments)
+        raise AssertionError("With live_sources false, a run reads no source.")
+
+    sources = [source for source in load_research().values() if source.enabled]
+    kit = research_run.Kit(facts=refuse, sources=lambda: sources, read=refuse, fetch=None)
+    return kit, calls
+
+
+def test_with_live_sources_off_a_post_reads_no_source_and_writes_the_brief_from_the_stored_run(seeded):
+    kit, calls = no_reading_kit()
+    world = World(seeded, kit, live_sources=False)
+
+    sent = world.research(reuse=False)
+
+    assert calls == []
+    # The same source steps as a live run, in its order, each done with its count and the day the stored run read it.
+    enabled = [key for key, source in load_research().items() if source.enabled]
+    done = [data for kind, data in sent if kind == "step" and data["kind"] == "source" and data["status"] != "running"]
+    assert [step["source"] for step in done] == enabled
+    isr = next(step for step in done if step["source"] == "isr_narrative")
+    assert (isr["status"], isr["items"], isr["note"], isr["stored_on"]) == ("done", 7, "read on November 5, 2026",
+                                                                           "2026-11-05")
+    assert ("source-gdelt_news", "not_reached") in steps(sent)
+    # The writer and the checks run live on the stored items, and their brief is the one GET returns.
+    assert ("writing", "done") in steps(sent) and ("checking", "done") in steps(sent)
+    assert sent[-1][1]["status"] == "written" and len(world.writer.calls) == 1
+    kept = call(world.app, "GET", ROUTE).json()
+    assert kept["run_id"] == SEED_RUN_ID and kept["live_sources"] is False
+
+
+def test_with_live_sources_off_and_no_stored_run_the_run_ends_not_fetched_and_get_stays_none(fresh):
+    kit, calls = no_reading_kit()
+    world = World(fresh, kit, live_sources=False)
+
+    sent = world.research(reuse=False)
+
+    assert calls == []
+    assert ("error", {"code": "not_fetched"}) in sent and sent[-1][1]["status"] == "stopped"
+    assert call(world.app, "GET", ROUTE).json() == {"status": "none", "project_id": "P156634", "live_sources": False}
+
+
+class FailingWriter:
+    name = "a writer that fails"
+
+    def write(self, *arguments):
+        from strata.research.writer import WriterError
+
+        raise WriterError("The model did not answer.")
+
+
+class JudgeThatStops(RecordedJudge):
+    """The recorded judge, until stopped is set: then it does not answer."""
+
+    stopped = False
+
+    def judge(self, questions):
+        from strata.agent.judge import JudgeError
+
+        if self.stopped:
+            raise JudgeError("The judge did not answer.")
+        return super().judge(questions)
+
+
+def test_with_live_sources_off_a_writer_that_fails_keeps_the_stored_brief_and_ends_done_with_no_error(seeded):
+    kit, _ = no_reading_kit()
+    world = World(seeded, kit, live_sources=False)
+    stored = world.research()[-1][1]["brief"]
+    world.writer = FailingWriter()
+
+    sent = world.research()
+
+    assert not [data for kind, data in sent if kind == "error"]
+    writing = [data for kind, data in sent if kind == "step" and data["id"] == "writing"][-1]
+    assert (writing["status"], writing["kept_from"]) == ("done", "2026-11-05")
+    assert writing["label"] == "Writing: kept the brief of November 5, 2026"
+    assert sent[-1][0] == "done" and sent[-1][1]["status"] == "kept"
+    assert sent[-1][1]["brief"]["headline"] == stored["headline"]
+
+
+def test_with_live_sources_off_a_judge_that_fails_keeps_the_stored_brief(seeded):
+    kit, _ = no_reading_kit()
+    world = World(seeded, kit, live_sources=False, judge=JudgeThatStops(JUDGED))
+    world.research()
+    world.judge.stopped = True
+
+    sent = world.research()
+
+    assert not [data for kind, data in sent if kind == "error"]
+    assert sent[-1][1]["status"] == "kept"
+    assert call(world.app, "GET", ROUTE).json()["checks"]["sentences"]["removed"] == 0
+
+
+def test_the_shipped_setting_is_the_demo_s_stored_runs_only():
+    assert load_thresholds().value("research.live_sources") is False
+    assert load_thresholds().value("research.stored_step_seconds") == 1.0
+
+
 def test_the_evidence_drawer_opens_a_research_item_with_its_source_link(seeded, kit):
     world = World(seeded, kit)
     item = "strata.research.item:P156634/outlet_feeds/24d1ca8a593f492b"
@@ -258,3 +363,143 @@ def test_the_tab_s_recorded_answers_are_what_the_routes_answer(fixture_db, tmp_p
 
     for name, text in answers(tmp_path, fixture_db).items():
         assert text == (OUT / name).read_text(), f"Record {name} again: uv run --frozen python tests/record_research_api.py"
+
+
+# ── Ticket 155: the first live brief's 18 removals ─────────────────────────
+
+UKUNDA = "strata.research.item:P156634/procurement_notices/OP00471125"
+
+
+class FactsJudge:
+    """Check 4's judge as the planted sentences need it: a sentence holding words it was told are wrong does not follow,
+    with the reason it was given; every other sentence follows. It keeps every question it was asked."""
+
+    name = "facts judge"
+
+    def __init__(self, wrong: dict[str, str] | None = None):
+        self.wrong, self.calls = wrong or {}, []
+
+    def judge(self, questions):
+        self.calls.append(list(questions))
+        found = []
+        for question in questions:
+            reason = next((why for words, why in self.wrong.items() if words in question.sentence), None)
+            found.append(Judgement(question.index, reason is None, reason or "Its facts follow from its items."))
+        return found
+
+
+def recorded_brief() -> dict:
+    return json.loads(json.loads(ANSWER.read_text())["response"]["choices"][0]["message"]["content"])
+
+
+def recording_of(brief: dict, folder: Path) -> RecordedWriter:
+    answer = json.loads(ANSWER.read_text())
+    answer["response"]["choices"][0]["message"]["content"] = json.dumps(brief)
+    path = folder / "planted.json"
+    path.write_text(json.dumps(answer))
+    return RecordedWriter(path)
+
+
+def claim(sentence: str, kind: str, evidence_ids: list[str], numbers=(), dates=()) -> dict:
+    return {"sentence": sentence, "kind": kind, "evidence_ids": evidence_ids, "numbers": list(numbers),
+            "dates": list(dates), "quote": None}
+
+
+def test_the_judge_is_told_a_question_s_facts_are_judged_and_the_question_itself_is_prism_s():
+    source = (Source(UKUNDA, "Direct Selection"),)
+    body = judges.request_body("draft", [Question(0, "Why was it awarded by direct selection?", source, facts_only=True),
+                                         Question(1, "It was awarded by direct selection.", source)])
+
+    system, sent = body["messages"][0]["content"], json.loads(body["messages"][1]["content"])
+    assert "facts_only" in system and "Prism's own" in system and "not judged" in system
+    assert sent["sentences"][0]["facts_only"] is True and "facts_only" not in sent["sentences"][1]
+
+
+def test_a_question_is_kept_when_its_facts_hold_and_removed_with_the_judge_s_reason_when_one_is_wrong(fresh, kit,
+                                                                                                      tmp_path):
+    brief = recorded_brief()
+    holds = "Ask why the Ukunda solar system contract, awarded by direct selection, runs for 425 Day(s)."
+    wrong = "Ask why the Northern Water Works Development Agency awarded the Ukunda solar system by direct selection."
+    brief["questions"][1]["sentences"] += [claim(holds, "advice", [UKUNDA], ["425"]), claim(wrong, "advice", [UKUNDA])]
+    reason = "The Ukunda notice is the Coast Water Works' contract, not the Northern Water Works Development Agency's."
+    judge = FactsJudge({"Northern Water Works Development Agency awarded the Ukunda": reason})
+    world = World(fresh, kit, writer=recording_of(brief, tmp_path), judge=judge)
+
+    sent = world.research()
+
+    removed = {data["sentence"]: data for kind, data in sent if kind == "removed"}
+    assert list(removed) == [wrong]
+    assert removed[wrong]["reasons"] == [{"check": 4, "code": "not_supported", "text": reason}]
+    question = sent[-1][1]["brief"]["questions"][1]
+    assert holds in [sentence["text"] for sentence in question["sentences"]]
+    asked = {question.sentence: question for question in judge.calls[0]}
+    advice = [recorded_brief()["bottom_line"][0]["sentence"], holds, wrong]
+    assert all(asked[sentence].facts_only for sentence in advice)
+    assert not asked[recorded_brief()["headline"]["sentence"]].facts_only
+
+
+SARMAN = "strata.research.item:P156634/procurement_notices/OP00474946"
+BIG3 = "strata.research.item:P156634/outlet_feeds/595f89b9956ceda3"
+
+
+def test_a_development_stating_a_notice_s_award_date_is_kept_because_the_date_is_a_field(fresh, kit, tmp_path):
+    brief = recorded_brief()
+    # Two of the first live brief's sentences removed by check 1, word for word: a date the notice prints only as
+    # "2026/06/22", and the 3 of the outlet's name, Big3Africa.
+    award = ("A World Bank procurement notice published on October 13, 2026 showed an RFB award for equipping "
+             "exploratory boreholes at Sarman - Tarbaj Water Supply Project in Wajir County, with award notification "
+             "issued on June 22, 2026, a 90 Day(s) contract duration, and a signed contract price of KES 166668894.48.")
+    big3 = ("Big3Africa reported on January 20, 2026 that the Baricho Water Solarisation Plant financed under the project "
+            "was a Sh670 million installation that started in October 2025 and was scheduled for completion by March "
+            "31, 2026, with phase one reported at 60 percent complete.")
+    quoted = 'The Sarman - Tarbaj award notice reads "Date Notification of Award Issued (YYYY/MM/DD) 2026/06/22".'
+    brief["developments"][0]["sentences"] += [claim(award, "record", [SARMAN], ["90", "166668894.48"],
+                                                    ["October 13, 2026", "June 22, 2026"]),
+                                              claim(quoted, "record", [SARMAN])]
+    brief["developments"].append({"date": "2026-01-20", "date_known": True,
+                                  "sentences": [claim(big3, "record", [BIG3], ["670", "60"])]})
+    world = World(fresh, kit, writer=recording_of(brief, tmp_path), judge=FactsJudge())
+
+    sent = world.research()
+
+    assert [data["sentence"] for kind, data in sent if kind == "removed"] == []
+    kept = {data["text"]: data for kind, data in sent if kind == "sentence"}
+    assert {"text": "June 22, 2026", "evidence_id": SARMAN} in kept[award]["dates"]
+    assert kept[award]["kind"] == "record" and quoted in kept and big3 in kept
+    items = {item["evidence_id"]: item for item in json.loads(world.writer.calls[0])["items"]}
+    assert items[SARMAN]["notice"]["award_notification_date"] == "2026-06-22"
+
+
+def test_the_writer_is_told_to_quote_a_date_or_number_found_only_in_an_item_s_words_or_leave_it_out():
+    from strata.research.writer import instructions
+
+    told = " ".join(instructions().split())
+    assert "notice: the notice's own dates as fields" in told
+    assert ("A date or number found only in an item's words, not in its fields or the summary, must be quoted word for "
+            "word in the sentence") in told
+    assert "or left out" in told
+
+
+def test_a_could_not_see_sentence_citing_the_run_s_coverage_record_is_kept(fresh, kit, tmp_path):
+    brief = recorded_brief()
+    gdelt = "strata.research.coverage:research-0001/gdelt_news"
+    said = "GDELT limited calls from this network, so the run read no GDELT news."
+    brief["could_not_see"] = [claim(said, "record", [gdelt]), *brief["could_not_see"][1:]]
+    judge = FactsJudge()
+    world = World(fresh, kit, writer=recording_of(brief, tmp_path), judge=judge)
+
+    sent = world.research()
+
+    assert [data["sentence"] for kind, data in sent if kind == "removed"] == []
+    assert said in [sentence["text"] for sentence in sent[-1][1]["brief"]["could_not_see"]]
+    [asked] = [question for question in judge.calls[0] if question.sentence == said]
+    record = json.loads(asked.sources[0].text)
+    assert (asked.sources[0].evidence_id, record["reached"], record["note"]) == (
+        gdelt, False, "GDELT limited calls from this network.")
+    evidence = {data["id"]: data for kind, data in sent if kind == "evidence"}
+    assert evidence[gdelt]["row"]["source_key"] == "gdelt_news"
+    written = json.loads(world.writer.calls[0])
+    assert gdelt in [record["evidence_id"] for record in written["coverage_records"]]
+    from strata.research.writer import instructions
+
+    assert "could_not_see sentence cites the coverage record" in " ".join(instructions().split())

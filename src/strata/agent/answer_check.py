@@ -108,9 +108,12 @@ class SixChecks:
         """Checks 1 to 3 and 5 on an answer's claims, written in language, against one turn's evidence."""
         return AnswerCheck(claims, facts, self.backs_advice, source_chars=self.source_chars, language=language)
 
-    def checked(self, sentences: Iterable[Checked], facts: Facts) -> AnswerCheck:
-        """Check 5 on sentences checks 1 to 3 already saw, each against its own evidence, as a draft's notes are."""
-        return AnswerCheck.from_checked(sentences, facts, self.backs_advice, source_chars=self.source_chars)
+    def checked(self, sentences: Iterable[Checked], facts: Facts, facts_only: Iterable[int] = ()) -> AnswerCheck:
+        """Check 5 on sentences checks 1 to 3 already saw, each against its own evidence, as a draft's notes are.
+        facts_only names the sentences whose question or recommendation is Prism's own, as a research brief's bottom
+        line and questions are: check 4 judges only the facts inside them (ticket 155)."""
+        return AnswerCheck.from_checked(sentences, facts, self.backs_advice, source_chars=self.source_chars,
+                                        facts_only=facts_only)
 
     async def finish(self, check: AnswerCheck, facts: Facts, asker: Asker) -> AsyncIterator[Event | Verdict]:
         """Checks 6 and 4 on what checks 1 to 3 and 5 left standing, then the verdict."""

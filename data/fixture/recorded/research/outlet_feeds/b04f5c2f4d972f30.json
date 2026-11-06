@@ -1,0 +1,12 @@
+{
+ "url": "https://www.business-standard.com/economy/news/rajasthan-sanctions-2-101-crore-for-non-patchable-missing-link-roads-126080601254_1.html",
+ "source": "outlet_feeds",
+ "license": "Each article belongs to its outlet; Prism keeps its words with a link to the article, for reference.",
+ "recorded": "2026-11-05",
+ "read_with": "prism-research/0.1 (+https://github.com/ChiragLakhanpal/Prism)",
+ "status": 403,
+ "headers": {
+  "content-type": "text/html"
+ },
+ "body": "<HTML><HEAD>\n<TITLE>Access Denied</TITLE>\n</HEAD><BODY>\n<H1>Access Denied</H1>\n \nYou don't have permission to access \"http&#58;&#47;&#47;www&#46;business&#45;standard&#46;com&#47;economy&#47;news&#47;rajasthan&#45;sanctions&#45;2&#45;101&#45;crore&#45;for&#45;non&#45;patchable&#45;missing&#45;link&#45;roads&#45;126080601254&#95;1&#46;html\" on this server.<P>\nReference&#32;&#35;18&#46;ce951eb8&#46;1793938035&#46;3864b1c2\n<P>https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18&#46;ce951eb8&#46;1793938035&#46;3864b1c2</P>\n</BODY>\n</HTML>\n"
+}

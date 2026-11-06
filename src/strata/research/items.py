@@ -15,6 +15,8 @@ items, 149 shows and prints them, 150 adds field photos).
     image_urls    for a satellite item, the tile addresses of two years as two lists of nine, else empty
     author        the outlet, agency or account as the source prints it; never an email or a phone number
     read_on       ISO date of the fetch
+    team          the team that may read the item (ticket 150): set only on a field photo, which only its uploader's
+                  team sees; None on every public item
 
 make_item() builds one and is the only way a reader makes one, so every item's text goes through the stripper the
 notices use (strata.lakehouse.contacts.strip_again) and is cut to 4,000 characters, and every evidence id has the
@@ -33,7 +35,7 @@ from strata.lakehouse.contacts import REMOVED, strip_again
 
 PREFIX = "strata.research.item:"
 ITEM_KEYS = ("evidence_id", "public_from", "source", "kind", "title", "text", "url", "published", "date_known",
-             "observed", "location", "image_urls", "author", "read_on")
+             "observed", "location", "image_urls", "author", "read_on", "team")
 TEXT_LIMIT = 4000
 TITLE_LIMIT = 300
 SPACES = re.compile(r"[ \t ]+")
@@ -110,6 +112,7 @@ def make_item(*, project, source: ResearchSource, item_key: str, public_from, ti
         "image_urls": [list(urls) for urls in image_urls],
         "author": _author(author),
         "read_on": read_on,
+        "team": None,
     }
 
 

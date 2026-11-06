@@ -70,6 +70,7 @@ from strata.config import load_deck_gate, load_demo, load_roles, load_thresholds
 from strata.dbx import Viewer
 from strata.drafts.store import DraftStore
 from strata.research import writer as research_writer
+from strata.research.photos import PhotoFiles, PhotoStore
 from strata.research.store import ResearchStore
 from strata.server.following import FollowStore
 from strata.server.home import HomeStore
@@ -205,6 +206,25 @@ def app_state_file(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
     return open_state
 
 
+def _photo_files(environ: Mapping[str, str]) -> PhotoFiles | None:
+    """Where the field photos' files are kept (ticket 150): in the volume config/uploads.toml names, written as the
+    app's own service principal, when the app keeps its rows on the workspace; on this computer, in a folder beside
+    STRATA_APP_STATE_FILE, never in the repo. None without either, and then the app keeps no photo."""
+    from strata.config import load_field_photos
+    from strata.research.photos import LocalFiles, VolumeFiles
+
+    config = load_field_photos()
+    host, warehouse = environ.get("DATABRICKS_HOST", "").strip(), environ.get("DATABRICKS_WAREHOUSE_ID", "").strip()
+    client_id, secret = environ.get("DATABRICKS_CLIENT_ID", ""), environ.get("DATABRICKS_CLIENT_SECRET", "")
+    state_file = environ.get("STRATA_APP_STATE_FILE", "").strip()
+    if host and warehouse and client_id and secret:  # the rows go to the app's own engine, so the files to the volume
+        owner = "" if environ.get("DATABRICKS_APP_PORT", "").strip() else environ.get("DATABRICKS_TOKEN", "").strip()
+        return VolumeFiles(host, app_token(host, client_id, secret, owner_token=owner), config.volume)
+    if state_file:
+        return LocalFiles(Path(state_file).resolve().parent / config.folder)
+    return None
+
+
 def _app_state(environ: Mapping[str, str]) -> Callable[[], Engine] | None:
     """Lakebase, as the app's database resource names it, signed in with the app's own token (ADR 0005)."""
     host = environ.get("DATABRICKS_HOST", "").strip()
@@ -239,6 +259,7 @@ def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.E
     state = the_app or state_file
     app_state = _app_state(environ) or state_file
     host = environ.get("DATABRICKS_HOST", "").strip()
+    photo_files = _photo_files(environ)
     return create_app(engine_for=engine_for, runner=agent_runner.from_environment(environ, engine_for),
                       stamp_timeout_seconds=timeout,
                       usage=UsageLog(the_app, thresholds.value("app.usage_flush_seconds")) if the_app else None,
@@ -269,4 +290,5 @@ def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.E
                       page_cache=PageCache.from_thresholds(thresholds),
                       warm=_warm(environ, thresholds) if read_ahead else None,
                       research=ResearchStore(state) if state else None,
+                      field_photos=PhotoStore(state, photo_files) if state and photo_files else None,
                       research_writer=lambda: research_writer.from_environment(environ))

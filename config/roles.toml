@@ -240,6 +240,8 @@ export_draft = { kind = "export", staff = true, piu = true, public = false, reas
 # Removing Home's Start here strip, or showing it again (ticket 41): a choice about the signed-in reviewer's own examples,
 # which no preview shows.
 start_here = { kind = "record", staff = true, piu = false, public = false, reason = "home.start.preview" }
+# Adding a field photo to a project's Deep research tab (ticket 150): World Bank staff only, in their own view.
+add_field_photo = { kind = "record", staff = true, piu = false, public = false, reason = "view.actPreview" }
 
 [views.routes]
 "POST /api/ask" = "ask"
@@ -271,6 +273,7 @@ start_here = { kind = "record", staff = true, piu = false, public = false, reaso
 "POST /api/packages/{key}/criteria/run" = "packages"
 "POST /api/planned-packages/{key}/criteria/run" = "packages"
 "POST /api/uploads" = "upload_and_check"
+"POST /api/projects/{project_id}/field-photos" = "add_field_photo"
 "POST /api/drafts" = "start_draft"
 "PUT /api/drafts/{draft_id}/fields" = "fill_draft"
 "PUT /api/drafts/{draft_id}/form" = "fill_draft"

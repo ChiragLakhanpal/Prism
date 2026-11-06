@@ -55,6 +55,10 @@ MASKED: dict[str, tuple[str, ...]] = {
     "strata.ops.draft_exports": ("snapshot",),
     "strata.ops.draft_files": ("content",),
     "strata.ops.draft_lesson_choices": ("reason", "rewrite"),
+    # Ticket 150: a field photo is Official Use Only, seen only by its uploader's team through the app, so a SQL editor
+    # reads none of the staff member's words: the caption, the file's name, their name and the place. The app reads
+    # them as itself (src/strata/research/photos.py), and the files sit in a volume the readers group cannot read.
+    "strata.ops.field_photos": ("uploader_name", "file_name", "caption", "place"),
 }
 
 

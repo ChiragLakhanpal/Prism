@@ -1,0 +1,131 @@
+# The sources a deep research brief for P130164, the Rajasthan Road Sector Modernization Project (closed December 31,
+# 2018), cites, as the demo seed loads them (ops/research/seed.py, tickets 147 and 153). Researched by hand on
+# November 5, 2026: every article below is a page ops/research/record.py recorded that day with Prism's named client.
+#
+# The shape is sample_P156634.toml's. Each [[cited]] is one numbered source, with the items that stand for it. An item
+# names its registry source (config/research.toml) and either the key a reader gives it (key, for the readers the seed
+# runs: the ISR passages, the Inspection Panel, the Sentinel-2 grids) or an article's address (url). For an article,
+# outlet, title and published are what the outlet prints; published is empty when the outlet prints no date, or when
+# its page refused the named client so the date could not be read.
+#
+# The project is closed, so the outside items are the ground record since closing: the state of the rural roads and
+# their upkeep (the Public Works Department's renewal and repair programmes), the road safety record (the CAG of India's
+# performance audit of 2026, the High Court's road safety case, State Highway 14 between Alwar and Behror, the section
+# the project chose for its Safe Corridor Demonstration and never procured, ICR Review 34056616, page 6), and the
+# follow-on World Bank highway projects. The project had no PPP concession: its three components were rural
+# connectivity, road sector modernization and road safety management (ISR 29794672, page 1), so no concession item is
+# cited. No court judgment or Inspection Panel case names the project.
+#
+# Refusals and gaps on November 5, 2026, from this network with the named client:
+# - Business Standard answered 403, so its item keeps only its outlet, headline and address, with no date.
+# - NewsDrum answered a bot check page (its story is not cited).
+# - Rajasthan Patrika's English page on SH-14 answered 200 on the first read and a bot check on the two reads after it;
+#   the recording kept is the first read's page, made by the same recorder with the named client that evening.
+# - The agency's own sites, pwd.rajasthan.gov.in, dipr.rajasthan.gov.in (the state's press releases) and
+#   rsha.rajasthan.gov.in, did not answer within 30 seconds, so the agency's side comes from the outlets that carry
+#   its statements (Construction World, Lokmat Times, ThePrint).
+# - The CAG's report page (cag.gov.in/en/audit-report/details/126097) answered 404, so the report's executive summary
+#   PDF stands for it; the PDF prints no date, and the seed keeps its title as its text.
+# - NBM&CW's story on the CAG report gave only its sidebar's paragraphs, and the World Bank's own news pages print a
+#   site-wide datePublished of 2026-03-26, so neither is cited: the seed would keep the wrong text or the wrong date.
+# - The procurement notices reader reads the 180 days before the run, and the project's last notice is from 2018, so no
+#   notice is cited by key.
+#
+# sites: the places the Sentinel-2 grids should centre on. The project record's only geo_location is the State of
+# Rajasthan (26.58333, 73.833328), the state's centre, which the seed's grid uses today (item 1258899-2018-2025).
+# Coordinates from OpenStreetMap's Nominatim gazetteer, read November 5, 2026:
+# - Deeg, OSM node 1929484600: one end of the Deeg-Alwar-Behror section of State Highway 14 (ICR Review 34056616, p. 6).
+# - Alwar, OSM way 22826580: the section's middle town.
+# - Chittorgarh, OSM node 245727339: the district with the most project rural roads, 175 (ICR 31525018, Table 4.4, p. 42).
+
+project = "P130164"
+as_of = 2026-11-05
+note = "The items were read on November 5, 2026, from the recordings of that day. The project closed on December 31, 2018, so the outside items say what the ground record holds since closing; the Rajasthan government's own sites did not answer this network."
+sites = [
+  { name = "Deeg", latitude = 27.4773321, longitude = 77.3257027 },
+  { name = "Alwar", latitude = 27.5645949, longitude = 76.6132248 },
+  { name = "Chittorgarh", latitude = 24.8837157, longitude = 74.6244155 },
+]
+
+# The World Bank's last two ISRs: Implementation Status and Key Decisions.
+[[cited]]
+number = 1
+items = [{ source = "isr_narrative", key = "30730274-p1-s4" }]
+
+[[cited]]
+number = 2
+items = [{ source = "isr_narrative", key = "29794672-p2-s5" }]
+
+# The rural roads and their upkeep, newest first.
+[[cited]]
+number = 3
+items = [{ source = "outlet_feeds", url = "https://www.constructionworld.in/transport-infrastructure/highways-and-roads-infrastructure/rajasthan-reports-major-expansion-in-road-connectivity/99709", outlet = "Construction World", title = "Rajasthan Reports Major Expansion in Road Connectivity", published = "2026-11-02" }]
+
+[[cited]]
+number = 4
+items = [{ source = "outlet_feeds", url = "https://www.newkerala.com/news/a/rajasthan-cm-orders-strict-action-over-poor-construction-544.htm", outlet = "NewKerala", title = "Rajasthan CM orders strict action over poor construction, service lapses", published = "2026-08-18" }]
+
+[[cited]]
+number = 5
+items = [{ source = "outlet_feeds", url = "https://www.constructionworld.in/transport-infrastructure/highways-and-roads-infrastructure/rajasthan-allocates-rs680-million-for-rural-roads/93079", outlet = "Construction World", title = "Rajasthan Allocates Rs680 Million For Rural Roads", published = "2026-06-12" }]
+
+[[cited]]
+number = 6
+items = [{ source = "outlet_feeds", url = "https://swarajyamag.com/amp/story/news-brief/rajasthan-cm-bhajan-lal-sharma-reviews-progress-on-nearly-49000-km-of-road-works-emphasises-quality-and-timely-completion", outlet = "Swarajya", title = "Rajasthan: CM Bhajan Lal Sharma Reviews Progress On Nearly 49,000 Km Of Road Works, Emphasises Quality And Timely Completion", published = "2026-06-07" }]
+
+# State Highway 14, Alwar to Behror: the section the project chose for its Safe Corridor Demonstration.
+[[cited]]
+number = 7
+items = [
+  { source = "outlet_feeds", url = "https://www.patrika.com/en/alwar-news/alwar-behror-sh14-four-laning-cancelled-repair-budget-20596070", outlet = "Rajasthan Patrika", title = "No Four-Laning for Alwar-Behror SH-14: ₹53 Crore Sanctioned for Repairs Instead", published = "2026-05-21" },
+  { source = "outlet_feeds", url = "https://www.patrika.com/alwar-news/alwar-behror-four-lane-will-be-built-at-a-cost-of-rs-400-crore-19980997", outlet = "Rajasthan Patrika", title = "राजस्थान में यहां हाईवे होगा फोरलेन, खर्च होंगे 400 करोड़; दोपहिया वाहनों के लिए तैयार होगी खास लेन", published = "2025-09-28" },
+  { source = "outlet_feeds", url = "https://www.patrika.com/en/special-news/rajasthan-this-highway-set-for-a-major-upgrade-19395421", outlet = "Rajasthan Patrika", title = "Rajasthan: This highway set for a major upgrade", published = "2025-02-13" },
+]
+
+[[cited]]
+number = 8
+items = [{ source = "outlet_feeds", url = "https://www.lokmattimes.com/national/rajasthan-secures-second-spot-in-pmgsy-road-length-quality-performance/amp/", outlet = "Lokmat Times", title = "Rajasthan secures second spot in PMGSY road length, quality performance", published = "2026-05-12" }]
+
+# The follow-on World Bank highway projects: the news of RHMP's approval and the two project records.
+[[cited]]
+number = 9
+items = [
+  { source = "outlet_feeds", url = "https://udaipurtimes.com/travel-and-tourism/world-bank-approves-rs-2000-cr-loan/cid18522910.htm", outlet = "Udaipur Times", title = "World Bank Approves $225 Million Loan for Rajasthan Highway Upgrade", published = "2026-04-16" },
+  { source = "isr_narrative", record = "P501071", url = "https://projects.worldbank.org/en/projects-operations/project-detail/P501071" },
+  { source = "isr_narrative", record = "P157141", url = "https://projects.worldbank.org/en/projects-operations/project-detail/P157141" },
+]
+
+[[cited]]
+number = 10
+items = [{ source = "outlet_feeds", url = "https://theprint.in/india/rajasthan-govt-begins-repairing-rural-roads-damaged-by-utility-works-cm-sharma/2891325", outlet = "ThePrint", title = "Rajasthan govt begins repairing rural roads damaged by utility works: CM Sharma", published = "2026-03-28" }]
+
+[[cited]]
+number = 11
+items = [{ source = "outlet_feeds", url = "https://theprint.in/india/rajasthan-newly-built-road-washed-away-by-rain-locals-flag-corruption/2684773", outlet = "ThePrint", title = "Rajasthan: Newly-built road washed away by rain; locals flag corruption", published = "2025-07-09" }]
+
+# Road safety: the state's black spot campaign, the High Court's road safety case and the CAG's audit.
+[[cited]]
+number = 12
+items = [{ source = "outlet_feeds", url = "https://www.lokmattimes.com/national/rajasthan-cm-announces-special-campaign-to-curb-road-accidents/amp", outlet = "Lokmat Times", title = "Rajasthan CM announces special campaign to curb road accidents", published = "2024-12-21" }]
+
+[[cited]]
+number = 13
+items = [{ source = "outlet_feeds", url = "https://www.livelaw.in/amp/high-court/rajasthan-high-court/rajasthan-high-court-pil-road-safety-audits-rajasthan-road-safety-policy-implementation-240854", outlet = "LiveLaw", title = "Rajasthan High Court Disposes Plea For Road Safety Audits Based On Steps Taken By Jaipur Development Authority", published = "2023-10-24" }]
+
+[[cited]]
+number = 14
+items = [{ source = "outlet_feeds", url = "https://cag.gov.in/uploads/download_audit_report/2026/Executive-Summary-06a87dbd0c3b088.87414921.pdf", outlet = "Comptroller and Auditor General of India", title = "Report No. 1 of 2026 (Road Safety System in Rajasthan): Executive Summary", published = "" }]
+
+# Business Standard answered 403, so its headline stands in for the article.
+[[cited]]
+number = 15
+items = [{ source = "outlet_feeds", url = "https://www.business-standard.com/economy/news/rajasthan-sanctions-2-101-crore-for-non-patchable-missing-link-roads-126080601254_1.html", outlet = "Business Standard", title = "Rajasthan sanctions ₹2,101 crore for non-patchable, missing-link roads", published = "" }]
+
+# The register names no case for P130164, so the source stands with no item: the run's note for it says so.
+[[cited]]
+number = 16
+items = [{ source = "inspection_panel" }]
+
+[[cited]]
+number = 17
+items = [{ source = "sentinel2_mosaic", key = "1258899-2018-2025" }]

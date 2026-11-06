@@ -4,12 +4,19 @@ POST /api/projects/{project_id}/research runs the research and streams it as /ap
 run.py): a step for the project's facts, one for each source, one for writing and one for checking, then the kept
 sentences, the evidence they cite, the check counts, each removed sentence, and done. An error event names a code of
 run.ERRORS. With {"reuse": true} it writes the brief from the latest run already kept, without reading the sources.
+With research.live_sources false in config/thresholds.toml (the demo's setting, ticket 152), every POST is a reuse:
+no source is read, whatever the body says; each source's step comes from the stored run with its read date, one by
+one; the writer and the checks run live; a writer or judge that fails keeps the stored brief instead of an error; and
+a project with no stored run ends with not_fetched.
 
 GET /api/projects/{project_id}/research returns the latest brief kept for the project, which calls no model, or
-{"status": "none"} when none was written.
+{"status": "none"} when none was written, each with live_sources, so the tab names its button for the setting.
 
-The brief rests on public items, so every view may read and start one. The run, its items and the brief are written as
-the app's own service principal, as drafts are.
+A brief on public items alone may be read and started by every view. A run in the staff view also reads the field
+photos the viewer's team kept for the project (ticket 150; src/strata/server/field_photos.py), through the one access
+rule, and the brief written from such a run is kept for that team: GET gives it only to that team, and everyone else
+the latest brief on public items. The run, its items and the brief are written as the app's own service principal, as
+drafts are.
 """
 
 from __future__ import annotations
@@ -28,7 +35,10 @@ from strata.harness.aio import HEARTBEAT, with_heartbeats
 from strata.harness.turn import Event
 from strata.lakehouse.engine import EngineError, PermissionDenied
 from strata.research import run as research_run
+from strata.research.photos import PhotoStore
 from strata.research.store import ResearchStore
+from strata.server import field_photos as photo_routes
+from strata.server.access import Access
 from strata.server.criteria import KEEP_ALIVE, STREAM_HEADERS, VIEWS, frame, refused
 from strata.server.engines import EngineFor
 from strata.server.tags import MODEL
@@ -47,8 +57,16 @@ class ResearchRequest(BaseModel):
 def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: ResearchStore | None,
                kit: Callable[[], research_run.Kit | None], writer: Callable[[], object | None], today: Callable[[], dt.date],
                now: Callable[[], dt.datetime], new_run_id: Callable[[], str], reference: Callable[[], str],
-               heartbeat_seconds: float, six_checks: SixChecks, environ=None) -> None:
-    """kit gives ticket 147's readers, and writer the brief's writer, each when a run starts, so a test gives its own."""
+               heartbeat_seconds: float, six_checks: SixChecks, environ=None, access: Access | None = None,
+               photos: PhotoStore | None = None) -> None:
+    """kit gives ticket 147's readers, and writer the brief's writer, each when a run starts, so a test gives its own.
+    access is the one access rule and photos the field photo store (ticket 150)."""
+
+    def team_of(viewer: Viewer) -> str | None:
+        return access.team(viewer).key if access is not None and viewer.user_id else None
+
+    def live_sources() -> bool:
+        return bool(six_checks.thresholds.value("research.live_sources"))
 
     def current_viewer(request: Request) -> Viewer:
         return viewer_from_headers(request.headers)
@@ -80,19 +98,28 @@ def add_routes(app: FastAPI, *, engine_for: EngineFor | None, store: ResearchSto
                        viewer: Viewer = Depends(current_viewer)):
         if engine_for is None or store is None:
             return refused(503, "no_data_service")
-        run = research_run.Run(engine_for, kit(), store, writer(), six_checks, now, environ)
-        request = research_run.Request(viewer, body.view, project_id, as_of_for(body.asof), new_run_id(), body.reuse)
+        live = live_sources()
+        run = research_run.Run(engine_for, kit() if live else None, store, writer(), six_checks, now, environ)
+        # Only a run in the staff view reads the team's field photos: a preview of another view reads none.
+        read_photos = (photo_routes.reader(photos, access, viewer)
+                       if access is not None and photos is not None and body.view == "staff" else None)
+        request = research_run.Request(viewer, body.view, project_id, as_of_for(body.asof), new_run_id(),
+                                       body.reuse or not live, stored_only=not live, team_key=team_of(viewer),
+                                       field_photos=read_photos)
         return StreamingResponse(stream(run, request), media_type="text/event-stream", headers=STREAM_HEADERS)
 
     @app.get("/api/projects/{project_id}/research")
-    def read_research(project_id: str = Path(pattern=PROJECT), asof: dt.date | None = None,
+    def read_research(project_id: str = Path(pattern=PROJECT), asof: dt.date | None = None, view: str = "staff",
                       viewer: Viewer = Depends(current_viewer)):
         if store is None:
             return refused(503, "no_data_service")
         try:
-            found = store.latest_brief(project_id, as_of_for(asof))
+            # A preview of another view never reads a team's brief (a preview only takes things away).
+            found = store.latest_brief(project_id, as_of_for(asof), team_of(viewer) if view == "staff" else None)
         except (PermissionDenied, EngineError):
             ref = reference()
             log.exception("The research brief of %s could not be read, reference %s.", project_id, ref)
             return JSONResponse({"code": "data_service", "trace_id": ref}, status_code=503)
-        return {"status": "none", "project_id": project_id} if found is None else {"status": "written", **found}
+        live = live_sources()
+        return ({"status": "none", "project_id": project_id, "live_sources": live} if found is None
+                else {"status": "written", **found, "live_sources": live})

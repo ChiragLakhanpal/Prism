@@ -1768,7 +1768,9 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -1789,12 +1791,14 @@
             "projects"
           ]
         },
-        "items_total": 29,
+        "items_total": 60,
         "counts_by_kind": {
+          "agency_statement": 28,
           "bank_report": 7,
           "news": 14,
           "procurement": 7,
-          "satellite": 1
+          "satellite": 1,
+          "site_condition": 3
         },
         "closing_date": "2026-10-31",
         "late_award_days": 110,
@@ -1802,11 +1806,14 @@
         "direct_awards_in_window": 2,
         "last_award_date": "2026-10-13",
         "days_from_last_award_to_closing": 18,
+        "suppliers_checked": null,
+        "suppliers_sanctioned": null,
         "sources_reached": [
           {
             "key": "isr_narrative",
             "label": "World Bank project reports",
             "kind": "bank_report",
+            "status": "read",
             "note": "Prism read 10 passages of the 2 newest ISRs, of June 30, 2026 and March 12, 2026.",
             "items": 7
           },
@@ -1814,6 +1821,7 @@
             "key": "procurement_notices",
             "label": "World Bank procurement notices",
             "kind": "procurement",
+            "status": "read",
             "note": "Prism read 7 contract awards and invitations for bids published from May 9, 2026 to November 5, 2026.",
             "items": 7
           },
@@ -1821,6 +1829,7 @@
             "key": "outlet_feeds",
             "label": "News outlets' feeds",
             "kind": "news",
+            "status": "200",
             "note": "Prism read 7 of 8 feeds and kept 0 entries that name the project, its agencies or its places. The Star's feed address answered a web page, not a feed. Of the pages the sample cites, Eastleigh Voice's page answered a bot check page, so the headline stands in for the article.",
             "items": 14
           },
@@ -1828,6 +1837,7 @@
             "key": "inspection_panel",
             "label": "World Bank Inspection Panel",
             "kind": "complaint",
+            "status": "200",
             "note": "The Inspection Panel's register lists 197 cases, 0 of them naming P156634.",
             "items": 0
           },
@@ -1835,6 +1845,7 @@
             "key": "sentinel2_mosaic",
             "label": "Sentinel-2 cloudless mosaics",
             "kind": "satellite",
+            "status": "read",
             "note": "Prism built the tile addresses of the 2018 and 2025 mosaics for 18 locations and fetched no tile.",
             "items": 1
           },
@@ -1842,8 +1853,25 @@
             "key": "mastodon",
             "label": "Mastodon",
             "kind": "social",
+            "status": "200",
             "note": "Prism read 19 tag timelines and kept 5 posts that name a project place or agency together with a sector word.",
             "items": 0
+          },
+          {
+            "key": "site_conditions",
+            "label": "GDACS disaster alerts",
+            "kind": "site_condition",
+            "status": "200",
+            "note": "GDACS lists 3 events for Kenya in the window, 3 of them naming it.",
+            "items": 3
+          },
+          {
+            "key": "agency_statements",
+            "label": "The implementing agencies' own news pages",
+            "kind": "agency_statement",
+            "status": "200",
+            "note": "Prism read the news pages of NWWDA, CWWDA, KWAWASCO and kept 28 entries.",
+            "items": 28
           }
         ],
         "sources_not_reached": [
@@ -1851,7 +1879,15 @@
             "key": "gdelt_news",
             "label": "GDELT",
             "kind": "news",
+            "status": "429",
             "note": "GDELT limited calls from this network."
+          },
+          {
+            "key": "sanctions",
+            "label": "World Bank listing of ineligible firms and individuals",
+            "kind": "sanctions",
+            "status": "no list",
+            "note": "The sanctions check did not run: the list needs a download from the page."
           }
         ]
       },
@@ -1888,7 +1924,9 @@
         },
         "image_urls": [],
         "author": "The Star",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -1923,7 +1961,9 @@
         },
         "image_urls": [],
         "author": "Eastleigh Voice",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -1958,7 +1998,9 @@
         },
         "image_urls": [],
         "author": "Big3Africa",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -1993,7 +2035,9 @@
         },
         "image_urls": [],
         "author": "The Star",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2028,7 +2072,9 @@
         },
         "image_urls": [],
         "author": "The Standard",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2063,7 +2109,9 @@
         },
         "image_urls": [],
         "author": "Dawan Africa",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2093,7 +2141,12 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank procurement notices (STEP)",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": {
+          "notice_date": "2026-07-15",
+          "award_notification_date": "2026-05-04"
+        }
       },
       "highlights": []
     },
@@ -2123,7 +2176,12 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank procurement notices (STEP)",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": {
+          "notice_date": "2026-10-13",
+          "award_notification_date": "2026-06-22"
+        }
       },
       "highlights": []
     },
@@ -2158,7 +2216,9 @@
         },
         "image_urls": [],
         "author": "The Star",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2188,7 +2248,9 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2218,7 +2280,12 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank procurement notices (STEP)",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": {
+          "notice_date": "2026-10-12",
+          "submission_date": "2026-10-12"
+        }
       },
       "highlights": []
     },
@@ -2248,7 +2315,12 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank procurement notices (STEP)",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": {
+          "notice_date": "2026-10-12",
+          "award_notification_date": "2026-05-04"
+        }
       },
       "highlights": []
     },
@@ -2283,7 +2355,9 @@
         },
         "image_urls": [],
         "author": "Kenya News Agency",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2313,7 +2387,12 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank procurement notices (STEP)",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": {
+          "notice_date": "2026-09-25",
+          "award_notification_date": "2026-08-28"
+        }
       },
       "highlights": []
     },
@@ -2343,7 +2422,12 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank procurement notices (STEP)",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": {
+          "notice_date": "2026-09-04",
+          "award_notification_date": "2026-08-31"
+        }
       },
       "highlights": []
     },
@@ -2373,7 +2457,12 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank procurement notices (STEP)",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": {
+          "notice_date": "2026-07-20",
+          "award_notification_date": "2026-04-10"
+        }
       },
       "highlights": []
     },
@@ -2403,7 +2492,9 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2433,7 +2524,9 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2468,7 +2561,9 @@
         },
         "image_urls": [],
         "author": "Kenya News Agency",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2503,7 +2598,9 @@
         },
         "image_urls": [],
         "author": "The Standard",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2538,7 +2635,9 @@
         },
         "image_urls": [],
         "author": "People Daily",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2573,7 +2672,9 @@
         },
         "image_urls": [],
         "author": "The Star",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2631,7 +2732,9 @@
           ]
         ],
         "author": "EOX IT Services GmbH",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     },
@@ -2661,7 +2764,9 @@
         "location": null,
         "image_urls": [],
         "author": "World Bank",
-        "read_on": "2026-11-05"
+        "read_on": "2026-11-05",
+        "team": null,
+        "notice": null
       },
       "highlights": []
     }
@@ -2747,14 +2852,15 @@
   },
   "removed": [],
   "coverage": {
-    "matched": 29,
-    "used": 29,
+    "matched": 60,
+    "used": 60,
     "not_used": [
       {
         "reason": "not_reached",
-        "count": 1,
+        "count": 2,
         "sources": [
-          "gdelt_news"
+          "gdelt_news",
+          "sanctions"
         ]
       }
     ]
@@ -2776,12 +2882,14 @@
         "projects"
       ]
     },
-    "items_total": 29,
+    "items_total": 60,
     "counts_by_kind": {
+      "agency_statement": 28,
       "bank_report": 7,
       "news": 14,
       "procurement": 7,
-      "satellite": 1
+      "satellite": 1,
+      "site_condition": 3
     },
     "closing_date": "2026-10-31",
     "late_award_days": 110,
@@ -2789,11 +2897,14 @@
     "direct_awards_in_window": 2,
     "last_award_date": "2026-10-13",
     "days_from_last_award_to_closing": 18,
+    "suppliers_checked": null,
+    "suppliers_sanctioned": null,
     "sources_reached": [
       {
         "key": "isr_narrative",
         "label": "World Bank project reports",
         "kind": "bank_report",
+        "status": "read",
         "note": "Prism read 10 passages of the 2 newest ISRs, of June 30, 2026 and March 12, 2026.",
         "items": 7
       },
@@ -2801,6 +2912,7 @@
         "key": "procurement_notices",
         "label": "World Bank procurement notices",
         "kind": "procurement",
+        "status": "read",
         "note": "Prism read 7 contract awards and invitations for bids published from May 9, 2026 to November 5, 2026.",
         "items": 7
       },
@@ -2808,6 +2920,7 @@
         "key": "outlet_feeds",
         "label": "News outlets' feeds",
         "kind": "news",
+        "status": "200",
         "note": "Prism read 7 of 8 feeds and kept 0 entries that name the project, its agencies or its places. The Star's feed address answered a web page, not a feed. Of the pages the sample cites, Eastleigh Voice's page answered a bot check page, so the headline stands in for the article.",
         "items": 14
       },
@@ -2815,6 +2928,7 @@
         "key": "inspection_panel",
         "label": "World Bank Inspection Panel",
         "kind": "complaint",
+        "status": "200",
         "note": "The Inspection Panel's register lists 197 cases, 0 of them naming P156634.",
         "items": 0
       },
@@ -2822,6 +2936,7 @@
         "key": "sentinel2_mosaic",
         "label": "Sentinel-2 cloudless mosaics",
         "kind": "satellite",
+        "status": "read",
         "note": "Prism built the tile addresses of the 2018 and 2025 mosaics for 18 locations and fetched no tile.",
         "items": 1
       },
@@ -2829,8 +2944,25 @@
         "key": "mastodon",
         "label": "Mastodon",
         "kind": "social",
+        "status": "200",
         "note": "Prism read 19 tag timelines and kept 5 posts that name a project place or agency together with a sector word.",
         "items": 0
+      },
+      {
+        "key": "site_conditions",
+        "label": "GDACS disaster alerts",
+        "kind": "site_condition",
+        "status": "200",
+        "note": "GDACS lists 3 events for Kenya in the window, 3 of them naming it.",
+        "items": 3
+      },
+      {
+        "key": "agency_statements",
+        "label": "The implementing agencies' own news pages",
+        "kind": "agency_statement",
+        "status": "200",
+        "note": "Prism read the news pages of NWWDA, CWWDA, KWAWASCO and kept 28 entries.",
+        "items": 28
       }
     ],
     "sources_not_reached": [
@@ -2838,11 +2970,20 @@
         "key": "gdelt_news",
         "label": "GDELT",
         "kind": "news",
+        "status": "429",
         "note": "GDELT limited calls from this network."
+      },
+      {
+        "key": "sanctions",
+        "label": "World Bank listing of ineligible firms and individuals",
+        "kind": "sanctions",
+        "status": "no list",
+        "note": "The sanctions check did not run: the list needs a download from the page."
       }
     ]
   },
   "writer": "recorded research writer",
   "run_id": "seed:P156634:2026-11-05",
-  "written_at": "2026-11-05T10:30:00+00:00"
+  "written_at": "2026-11-05T10:30:00+00:00",
+  "live_sources": true
 }

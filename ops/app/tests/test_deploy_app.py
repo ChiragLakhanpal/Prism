@@ -314,6 +314,9 @@ def test_the_app_s_own_principal_may_write_only_what_the_server_records(tmp_path
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.research_runs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.research_items TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.research_briefs TO `{PRINCIPAL}`",
+        # Ticket 150: the field photos World Bank staff add, and the volume that keeps their files.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.field_photos TO `{PRINCIPAL}`",
+        f"GRANT READ VOLUME, WRITE VOLUME ON VOLUME strata.ops.field_photos TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",
@@ -370,6 +373,11 @@ def test_after_its_grants_the_deploy_masks_who_sent_each_report_and_who_asked_ea
         # Ticket 39: a draft's lesson choices keep the author's reason and the rewritten row, the draft's words too.
         "ALTER TABLE strata.ops.draft_lesson_choices ALTER COLUMN reason SET MASK strata.ops.mask_viewer",
         "ALTER TABLE strata.ops.draft_lesson_choices ALTER COLUMN rewrite SET MASK strata.ops.mask_viewer",
+        # Ticket 150: a field photo's caption, file name, uploader's name and place are the staff member's words.
+        "ALTER TABLE strata.ops.field_photos ALTER COLUMN uploader_name SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.field_photos ALTER COLUMN file_name SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.field_photos ALTER COLUMN caption SET MASK strata.ops.mask_viewer",
+        "ALTER TABLE strata.ops.field_photos ALTER COLUMN place SET MASK strata.ops.mask_viewer",
     ]
 
 

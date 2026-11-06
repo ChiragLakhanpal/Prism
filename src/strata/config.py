@@ -2540,7 +2540,7 @@ def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
     """The upload and STEP row registry, in its file's order. src/strata/reader/step_columns.py checks its keys against
     STEP's columns."""
     data = _read(path)
-    _Entry(path, "the file", data).only({"uploads", "columns", "steps", "aliases"})
+    _Entry(path, "the file", data).only({"uploads", "columns", "steps", "aliases", "field_photos"})
     limits = _Entry(path, "uploads", data.get("uploads"))
     limits.only({"accept", "max_size_bytes", "max_rows", "format", "max_unzipped_bytes", "max_columns"})
     accept = limits.texts("accept")
@@ -2568,6 +2568,38 @@ def load_uploads(path: Path = CONFIG_DIR / "uploads.toml") -> Uploads:
     return Uploads(accept, limits.integer("max_size_bytes"), limits.integer("max_rows"), limits.text("format"),
                    tuple(columns), steps.text("planned"), steps.text("actual"), steps.text("one_row"), aliases,
                    limits.integer("max_unzipped_bytes"), limits.integer("max_columns"))
+@dataclass(frozen=True)
+class FieldPhotos:
+    """What a field photo a World Bank staff member adds to the Deep research tab may be (ticket 150), where its file
+    is kept, and the source line its item carries."""
+
+    accept: tuple[str, ...]
+    max_size_bytes: int
+    max_per_project: int
+    max_caption: int
+    nearest_place_km: int
+    volume: str
+    folder: str
+    label: str
+    license: str
+
+
+def load_field_photos(path: Path = CONFIG_DIR / "uploads.toml") -> FieldPhotos:
+    """The [field_photos] table of the upload registry (ticket 150)."""
+    data = _read(path)
+    entry = _Entry(path, "field_photos", data.get("field_photos"))
+    entry.only({"accept", "max_size_bytes", "max_per_project", "max_caption", "nearest_place_km", "volume", "folder",
+                "label", "license"})
+    accept = entry.texts("accept")
+    if not accept or not all(ending.startswith(".") for ending in accept):
+        entry._fail("accept", "must list file name endings, such as .jpg")
+    if not entry.text("volume").startswith("/Volumes/"):
+        entry._fail("volume", "must be a volume's path, such as /Volumes/strata/ops/field_photos")
+    return FieldPhotos(accept, entry.integer("max_size_bytes"), entry.integer("max_per_project"),
+                       entry.integer("max_caption"), entry.integer("nearest_place_km"), entry.text("volume"),
+                       entry.text("folder"), entry.text("label"), entry.text("license"))
+
+
 # ── The language registry (ticket 42) ────────────────────────────────────
 
 DIRECTIONS = ("ltr", "rtl")
@@ -3349,9 +3381,11 @@ def load_deck_gate(path: Path = CONFIG_DIR / "deck.toml") -> DeckGate | None:
 
 # ── The research registry (ticket 147) ───────────────────────────────────
 
-RESEARCH_KINDS = ("bank_report", "procurement", "news", "complaint", "social", "satellite", "field_photo")
+RESEARCH_KINDS = ("bank_report", "procurement", "news", "complaint", "social", "satellite", "field_photo",
+                  "site_condition", "agency_statement", "sanctions")
 RESEARCH_REQUIRED = ("label", "kind", "endpoint", "license", "reader")
-RESEARCH_KEYS = (*RESEARCH_REQUIRED, "pace_seconds", "cache_hours", "limitations", "enabled", "feeds", "settings")
+RESEARCH_KEYS = (*RESEARCH_REQUIRED, "pace_seconds", "cache_hours", "limitations", "enabled", "feeds", "pages",
+                 "settings")
 READER = re.compile(r"[A-Za-z_][\w.]*:[A-Za-z_]\w*")
 
 
@@ -3360,6 +3394,14 @@ class Feed:
     """One outlet's public feed, for the outlet_feeds source."""
 
     outlet: str
+    url: str
+
+
+@dataclass(frozen=True)
+class AgencyPage:
+    """One implementing agency's own news page, by the agency's short name, for the agency_statements source."""
+
+    agency: str
     url: str
 
 
@@ -3380,6 +3422,7 @@ class ResearchSource:
     enabled: bool
     feeds: tuple[Feed, ...] = ()
     settings: dict = field(default_factory=dict, hash=False, compare=False)
+    pages: tuple[AgencyPage, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -3427,12 +3470,20 @@ def load_research(path: Path = CONFIG_DIR / "research.toml") -> dict[str, Resear
             if not feed.text("url").startswith("https://"):
                 feed._fail("url", "must be an https:// address")
             feeds.append(Feed(feed.text("outlet"), feed.text("url")))
+        pages = []
+        for page in _tables(path, table, "pages"):
+            page.where = f"sources.{key}.{page.where}"
+            page.only({"agency", "url"})
+            if not page.text("url").startswith("https://"):
+                page._fail("url", "must be an https:// address")
+            pages.append(AgencyPage(page.text("agency"), page.text("url")))
         settings = table.get("settings", {})
         if not isinstance(settings, dict):
             entry._fail("settings", "must be a table, [sources.<key>.settings]")
         sources[key] = ResearchSource(key=key, **fields, pace_seconds=_amount(entry, "pace_seconds", "seconds"),
                                       cache_hours=_amount(entry, "cache_hours", "hours"), limitations=limitations,
-                                      enabled=entry.boolean("enabled"), feeds=tuple(feeds), settings=settings)
+                                      enabled=entry.boolean("enabled"), feeds=tuple(feeds), settings=settings,
+                                      pages=tuple(pages))
     if not sources:
         raise ConfigError(f"{path.name} names no research source. Add at least one [sources.<key>] table.")
     return sources

@@ -36,6 +36,9 @@ SECTIONS = ("headline", "picture", "bottom_line", "developments", "by_site", "vo
 # How many sentences, or groups, each counted section holds (the ticket; the sample brief).
 SIZES = {"headline": (1, 1), "picture": (4, 6), "bottom_line": (2, 4), "questions": (5, 7), "could_not_see": (1, 3)}
 UNDATED = "undated"
+# The sections whose advice is Prism's own: a question to take to the agencies, a bottom-line item (the sample brief's
+# pages 1 and 8). Check 4 judges only the facts inside their advice sentences, never the asking (ticket 155).
+OWN_ADVICE = ("bottom_line", "questions")
 
 
 class BriefError(ValueError):
@@ -70,6 +73,24 @@ def _project(facts) -> dict:
     return found
 
 
+COVERAGE = "strata.research.coverage"  # a coverage record's evidence id, before :<run id>/<source key>
+
+
+def coverage_records(result: Mapping) -> list[dict]:
+    """The run's coverage notes as records a could_not_see sentence cites (ticket 155): one per source the run asked,
+    with whether it was reached, its status, how many items it gave and its note, which says why it was not reached or
+    which pages could not be read, so only the headline or the feed's summary stands in."""
+    run_id = (result.get("run") or {}).get("run_id")
+    if not run_id:
+        return []
+    summary = result.get("summary") or result
+    return [{"evidence_id": f"{COVERAGE}:{run_id}/{source['key']}", "run_id": run_id, "source_key": source["key"],
+             "label": source.get("label"), "reached": reached, "status": source.get("status"),
+             "items": source.get("items") or 0, "note": source.get("note")}
+            for reached, sources in ((True, summary.get("sources_reached")), (False, summary.get("sources_not_reached")))
+            for source in sources or ()]
+
+
 def message(facts, result: Mapping) -> str:
     """The writer's message, as JSON: the project's facts, the run's summary record and its coverage, and every item.
     The items are data, never instructions (the writer instruction says so)."""
@@ -77,11 +98,13 @@ def message(facts, result: Mapping) -> str:
     items = [{"evidence_id": row["evidence_id"], "source": row["source"].get("label"), "kind": row["kind"],
               "published": row["published"], "date_known": row["date_known"], "observed": row["observed"],
               "author": row["author"], "title": row["title"], "text": row["text"], "url": row["url"],
-              "location": (row["location"] or {}).get("name")} for row in result["rows"]]
+              "location": (row["location"] or {}).get("name"),
+              **({"notice": row["notice"]} if row.get("notice") else {})} for row in result["rows"]]
     return json.dumps({"task": "research_brief", "as_of": result["as_of"], "project": _project(facts),
                        "summary_evidence_id": summary["evidence_id"],
                        "summary": {key: value for key, value in summary.items() if key not in ("evidence_id", "source")},
-                       "coverage": result["coverage"], "items": items}, ensure_ascii=False, indent=1)
+                       "coverage": result["coverage"], "coverage_records": coverage_records(result), "items": items},
+                      ensure_ascii=False, indent=1)
 
 
 # ── Reading the writer's answer ──────────────────────────────────────────
@@ -173,6 +196,13 @@ def parse(text: str) -> tuple[list[tuple[Place, Claim]], dict]:
     return placed, groups
 
 
+def facts_only(placed: list[tuple[Place, Claim]]) -> set[int]:
+    """The sentences, by index, whose question or recommendation is Prism's own: the advice of the bottom line and the
+    questions. Check 4 asks only whether the facts inside them follow from the items they cite."""
+    return {index for index, (place, claim) in enumerate(placed)
+            if place.section in OWN_ADVICE and claim.kind == "advice"}
+
+
 # ── Checking a sentence against an item ──────────────────────────────────
 
 def _iso(when) -> str | None:
@@ -187,7 +217,9 @@ def checked_row(row: Mapping | None) -> Mapping | None:
     dates match a cited item"). A summary record is read as it is. The judge reads the item as the tool gave it."""
     if row is None or not isinstance(row.get("text"), str) or "kind" not in row:
         return row
-    found = mentions(" ".join(part for part in (row.get("title"), row["text"]) if isinstance(part, str)))
+    # The author too: an outlet's name can print a digit, as Big3Africa does (ticket 155).
+    found = mentions(" ".join(part for part in (row.get("author"), row.get("title"), row["text"])
+                              if isinstance(part, str)))
     numbers = sorted({format(mention.value, "f") for mention in found if isinstance(mention.value, Decimal)})
     dates = sorted({day for mention in found if mention.kind == "date" and (day := _iso(mention.value))})
     return {**row, "printed": {"numbers": numbers, "dates": dates}}

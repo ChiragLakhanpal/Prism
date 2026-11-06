@@ -1070,8 +1070,11 @@ class AnswerCheck:
     then check 4, once the judge has answered the questions(). verdict() gives the result."""
 
     def __init__(self, claims: Iterable[Claim], facts: Facts, backs_advice: Iterable[str], *, source_chars: int,
-                 checked: Iterable[Checked] | None = None, language: str = ENGLISH):
+                 checked: Iterable[Checked] | None = None, language: str = ENGLISH, facts_only: Iterable[int] = ()):
+        """facts_only names the sentences, by index, whose question or recommendation is Prism's own, such as a
+        research brief's bottom line and questions: check 4 judges only the facts inside them (ticket 155)."""
         self.facts, self.source_chars = facts, source_chars
+        self.facts_only = frozenset(facts_only)
         # What the agent's tools could not answer, as checks 1 to 3 saw it: check 6's own question adds nothing here.
         self.abstentions = facts.abstentions()
         sentences = verify(claims, facts, language).sentences if checked is None else tuple(checked)
@@ -1098,10 +1101,10 @@ class AnswerCheck:
 
     @classmethod
     def from_checked(cls, checked: Iterable[Checked], facts: Facts, backs_advice: Iterable[str], *,
-                     source_chars: int) -> AnswerCheck:
+                     source_chars: int, facts_only: Iterable[int] = ()) -> AnswerCheck:
         """The six checks on sentences that checks 1 to 3 already saw, each against its own evidence, as a draft's
         notes are (src/strata/drafts/runtime.py): facts holds every row any of them may cite."""
-        return cls((), facts, backs_advice, source_chars=source_chars, checked=checked)
+        return cls((), facts, backs_advice, source_chars=source_chars, checked=checked, facts_only=facts_only)
 
     def _fail(self, index: int, reason: Reason) -> None:
         sentence = self.sentences[index]
@@ -1145,7 +1148,7 @@ class AnswerCheck:
             elif sentence.claim.evidence_ids:
                 asked.append(Question(sentence.index, sentence.claim.sentence, tuple(
                     Source(evidence, _source_text(self.facts.get(evidence), self.source_chars))
-                    for evidence in sentence.claim.evidence_ids)))
+                    for evidence in sentence.claim.evidence_ids), facts_only=sentence.index in self.facts_only))
             else:
                 asked.append(Question(sentence.index, sentence.claim.sentence, tuple(
                     Source(f"{tool}:{ABSTENTION}", _abstention_text(tool, abstention, self.source_chars))

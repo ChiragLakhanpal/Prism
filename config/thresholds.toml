@@ -15,6 +15,18 @@ late_award_days = 110
 # (src/strata/research/writer.py). A brief is one chat completion over every item, about 15,000 words in and 2,000
 # out. Source: a starting value for the owner to confirm, five times the judge's judge_timeout_seconds.
 writer_timeout_seconds = 300
+# Whether a deep research run reads the sources live (true, the product's default) or writes the brief only from the
+# items the store already holds for the project (false, the demo's): with false, POST /api/projects/{pid}/research
+# acts as {"reuse": true} whatever its body says, reads no source, shows each source's step from the stored run with
+# its read date, then writes and checks the brief live; a writer or judge that fails keeps the stored brief, and a
+# project with no stored run ends with not_fetched (src/strata/research/run.py; ticket 152). The runs are stored
+# ahead of the demo by ops/research/seed.py. Source: the owner's instructions of November 5, 2026, pre-seeded briefs
+# and no live lookups for the demo. The App reads it from its wheel, so a change needs a redeploy.
+live_sources = false
+# With live_sources false, the pause in seconds before each source's step from the stored run, so the tab shows the
+# sources one by one as a live run does (ticket 152). Source: the owner's instruction of November 5, 2026, "about a
+# second each".
+stored_step_seconds = 1.0
 
 # These are the ingestion caps. The layout parser (Route B) tries at most this many PDF pages a
 # day, counted in UTC across every project, whether it reads the page or fails on it. A run that

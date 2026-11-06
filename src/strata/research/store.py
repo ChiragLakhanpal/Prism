@@ -1,5 +1,6 @@
 """Where deep research runs, their items and the briefs written from them are kept: strata.ops.research_runs and
-research_items (ticket 147), and research_briefs (ticket 148).
+research_items (ticket 147), and research_briefs (ticket 148), which keeps the team of a brief written from a team's
+field photos (ticket 150).
 
 Written as the uploads are (src/strata/uploads/store.py): on the workspace as the app's own service principal, on this
 computer in the local DuckDB file the drafts use (STRATA_APP_STATE_FILE), through one engine factory. A save writes
@@ -28,7 +29,7 @@ RUN_COLUMNS = ("run_id", "project_id", "started", "finished", "as_of", "viewer",
                "source_notes", "public_from")
 ITEM_COLUMNS = ("evidence_id", "run_id", "project_id", "source_key", "kind", "source", "title", "text", "url",
                 "published", "date_known", "observed", "location", "image_urls", "author", "read_on", "public_from")
-BRIEF_COLUMNS = ("run_id", "project_id", "written_at", "as_of", "brief", "public_from")
+BRIEF_COLUMNS = ("run_id", "project_id", "written_at", "as_of", "brief", "public_from", "team_key")
 
 
 @cache
@@ -143,21 +144,25 @@ class ResearchStore:
                     "date_known": bool(row["date_known"]), "observed": iso(row["observed"]),
                     "location": json.loads(row["location"]) if row["location"] else None,
                     "image_urls": json.loads(row["image_urls"]), "author": row["author"],
-                    "read_on": iso(row["read_on"])}
+                    "read_on": iso(row["read_on"]), "team": None}
             items.append({key: item[key] for key in ITEM_KEYS})
         return items
 
-    def save_brief(self, run_id: str, project_id: str, written_at: dt.datetime, as_of: dt.date, brief: dict) -> None:
-        """A brief written from a kept run (ticket 148), as a new row."""
+    def save_brief(self, run_id: str, project_id: str, written_at: dt.datetime, as_of: dt.date, brief: dict,
+                   team_key: str | None = None) -> None:
+        """A brief written from a kept run (ticket 148), as a new row. team_key names the team whose field photos the
+        run read (ticket 150), so only that team reads the brief; None for a brief on public items alone."""
         with opened(self.engine) as engine:
             engine.insert_rows("strata.ops.research_briefs", BRIEF_COLUMNS, [(
                 run_id, project_id, _utc(written_at), as_of, json.dumps(brief, ensure_ascii=False),
-                _utc(written_at).date())])
+                _utc(written_at).date(), team_key)])
 
-    def latest_brief(self, project_id: str, as_of: dt.date) -> dict | None:
-        """The latest brief for the project as of the day, with its run and when it was written, or None."""
+    def latest_brief(self, project_id: str, as_of: dt.date, team_key: str | None = None) -> dict | None:
+        """The latest brief for the project as of the day that the viewer's team may read, with its run and when it
+        was written, or None. A brief on public items is read by everyone; one written from a team's field photos
+        only by that team (ticket 150)."""
         with opened(self.engine) as engine:
-            found = _rows(engine, "latest_brief", project_id=project_id, as_of=as_of)
+            found = _rows(engine, "latest_brief", project_id=project_id, as_of=as_of, team_key=team_key or "")
         if not found:
             return None
         row = found[0]

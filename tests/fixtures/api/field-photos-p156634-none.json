@@ -1,0 +1,16 @@
+{
+  "project_id": "P156634",
+  "photos": [],
+  "may_add": true,
+  "preview": false,
+  "limits": {
+    "accept": [
+      ".jpg",
+      ".jpeg",
+      ".png"
+    ],
+    "max_size_bytes": 10485760,
+    "max_per_project": 20,
+    "max_caption": 500
+  }
+}

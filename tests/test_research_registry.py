@@ -1,18 +1,19 @@
 """Ticket 147: the research registry, config/research.toml, read by strata.config.load_research().
 
-It defines the seven sources Prism's deep research reads and the five it does not connect, each with its reason, and
-a bad key stops it with a sentence, as load_sources() does."""
+It defines the ten sources Prism's deep research reads (ticket 154 added site conditions, the agencies' own statements
+and the sanctions check) and the seven it does not connect, each with its reason, and a bad key stops it with a
+sentence, as load_sources() does."""
 
 import pytest
 
 from strata.config import CONFIG_DIR, ConfigError, load_research, load_research_client
 
 READ = ["isr_narrative", "procurement_notices", "gdelt_news", "outlet_feeds", "inspection_panel", "sentinel2_mosaic",
-        "mastodon"]
-NOT_CONNECTED = ["reddit", "bluesky", "x", "google_news", "wikimedia_commons"]
+        "mastodon", "site_conditions", "agency_statements", "sanctions"]
+NOT_CONNECTED = ["reddit", "bluesky", "x", "google_news", "wikimedia_commons", "reliefweb", "tender_disputes"]
 
 
-def test_the_registry_defines_the_seven_sources_and_the_five_not_connected():
+def test_the_registry_defines_the_ten_sources_and_the_seven_not_connected():
     sources = load_research()
 
     assert [key for key, source in sources.items() if source.enabled] == READ
@@ -20,7 +21,12 @@ def test_the_registry_defines_the_seven_sources_and_the_five_not_connected():
     kinds = {key: source.kind for key, source in sources.items() if source.enabled}
     assert kinds == {"isr_narrative": "bank_report", "procurement_notices": "procurement", "gdelt_news": "news",
                      "outlet_feeds": "news", "inspection_panel": "complaint", "sentinel2_mosaic": "satellite",
-                     "mastodon": "social"}
+                     "mastodon": "social", "site_conditions": "site_condition",
+                     "agency_statements": "agency_statement", "sanctions": "sanctions"}
+    assert [(page.agency, page.url) for page in sources["agency_statements"].pages][:2] == [
+        ("NWWDA", "https://nwwda.go.ke/index.php/news-events"), ("CWWDA", "https://cwwda.go.ke/news")]
+    assert "approved appname" in sources["reliefweb"].limitations[0]
+    assert "did not answer Prism's named client" in sources["tender_disputes"].limitations[0]
     assert sources["gdelt_news"].pace_seconds == 5
     assert sources["sentinel2_mosaic"].license.startswith("Sentinel-2 cloudless by EOX IT Services GmbH")
     assert all(source.limitations and source.limitations[0].endswith(".") for source in sources.values())

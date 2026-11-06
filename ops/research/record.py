@@ -3,6 +3,8 @@ was public that day (ticket 147).
 
     uv run python ops/research/record.py --project P156634 --out data/fixture/recorded/research/
     uv run python ops/research/record.py --project P156634 --out data/fixture/recorded/research/ --sample
+    uv run python ops/research/record.py --project P156634 --out data/fixture/recorded/research/ \
+        --only site_conditions --country India --as-of 2026-11-05
 
 It runs each enabled source that calls the network (config/research.toml) with the live fetch, Prism's named agent
 and the source's pace, and writes every answer it got to <out>/<source>/<file>.json: the address, the status, the
@@ -11,14 +13,18 @@ recorded as unreachable, with the reason. The sentinel2_mosaic source fetches no
 tile of each year the registry lists, around the project's first location, and records the statuses without the
 images. With --sample it also records the article pages and the project record the sample brief cites
 (ops/research/sample_P156634.toml), under the source the seed gives them. It needs the network, so it is never a
-gate step.
+gate step. --as-of reads as of that day, the day the seed and the tests read (the addresses that name a date then
+match), and --country asks a source as the project would be asked in another country, with no approval date: the
+site_conditions recording for India (ticket 154).
 """
 
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import datetime as dt
 import json
+import re
 import sys
 import tomllib
 from pathlib import Path
@@ -30,7 +36,11 @@ from strata.research.sources import read
 from strata.research.sources.sentinel2_mosaic import grid
 
 HERE = Path(__file__).resolve().parent
-NETWORK_SOURCES = ("gdelt_news", "outlet_feeds", "inspection_panel", "mastodon")
+# An image a page inlines as a data: address, which no reader reads: NWWDA's article pages of November 5, 2026 inlined
+# megabytes of them, so a recording keeps "data:," in their place.
+INLINE_IMAGE = re.compile(rb"data:image/[\w.+-]+;base64,[A-Za-z0-9+/=\s]+")
+NETWORK_SOURCES = ("gdelt_news", "outlet_feeds", "inspection_panel", "mastodon", "site_conditions",
+                   "agency_statements")
 
 
 def recorder(fetch: fetching.Fetch, folder: Path, source, today: dt.date, read_with: str,
@@ -48,6 +58,7 @@ def recorder(fetch: fetching.Fetch, folder: Path, source, today: dt.date, read_w
             path.write_text(json.dumps(entry, indent=1, ensure_ascii=False) + "\n")
             print(f"  unreachable  {url}  ({unreachable.reason})")
             raise
+        answer = (answer[0], answer[1], INLINE_IMAGE.sub(b"data:,", answer[2]))
         entry = fetching.recording(url, answer, source=source.key, license=source.license, recorded=today,
                                    read_with=read_with, keep_body=keep_body)
         path.write_text(json.dumps(entry, indent=1, ensure_ascii=False) + "\n")
@@ -63,11 +74,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", required=True, type=Path)
     parser.add_argument("--only", help="the registry keys to record, comma separated")
     parser.add_argument("--sample", action="store_true", help="also record the sample brief's cited pages")
+    parser.add_argument("--as-of", type=dt.date.fromisoformat, help="the day to read as of (the default is today)")
+    parser.add_argument("--country", help="ask as the project would be asked in this country, with no approval date")
     arguments = parser.parse_args(argv)
     sources, client = load_research(), load_research_client()
     pacer, live, today = fetching.Pacer(), fetching.live(client), dt.date.today()
-    now = dt.datetime.now(dt.UTC)
+    now = dt.datetime.combine(arguments.as_of, dt.time(18), tzinfo=dt.UTC) if arguments.as_of else dt.datetime.now(dt.UTC)
     project = project_facts(arguments.project, fetch=live)
+    if arguments.country:
+        project = dataclasses.replace(project, country_name=arguments.country, approval_date=None)
     only = set(arguments.only.split(",")) if arguments.only else None
     for key in NETWORK_SOURCES:
         if only and key not in only:

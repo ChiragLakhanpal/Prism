@@ -170,6 +170,8 @@ from strata.criteria.workflow import Package as CriteriaPackage
 from strata.server import risks as risk_routes
 from strata.server import views as view_routes
 from strata.server import uploads as upload_routes
+from strata.server import field_photos as photo_routes
+from strata.research.photos import PhotoStore
 from strata.uploads.store import UploadStore
 from strata.server import estimates as estimate_routes
 from strata.server import following as following_routes
@@ -344,7 +346,10 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                thresholds: Thresholds | None = None, page_cache: PageCache | None = None,
                warm: Warm | None = None, research: ResearchStore | None = None,
                research_kit: Callable[[], object | None] | None = None,
-               research_writer: Callable[[], object | None] | None = None) -> FastAPI:
+               research_writer: Callable[[], object | None] | None = None,
+               field_photos: PhotoStore | None = None,
+               new_photo_id: Callable[[], str] = photo_routes.new_photo_id,
+               photo_places: Callable | None = None) -> FastAPI:
     """The app.
 
     environ is the settings every tool the app runs itself reads its services' addresses and keys from
@@ -903,6 +908,17 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                 return JSONResponse({"code": "unknown_evidence"}, status_code=404)
             return {"id": evidence_id, "kind": "upload_row", "tool": None, "row": row, "highlights": [],
                     "upload": upload_routes.listing(saved, viewer)}
+        # A field photo (ticket 150) is its team's alone: anyone else gets the answer for an id no source has.
+        if photo_routes.is_photo_item(evidence_id):
+            if view != STAFF or not viewer.user_id:
+                return JSONResponse({"code": "unknown_evidence"}, status_code=404)
+            try:
+                item = photo_routes.read_item(field_photos, access, viewer, evidence_id)
+            except EngineError:
+                return JSONResponse({"code": "data_service", "trace_id": request_reference()}, status_code=503)
+            if item is None:
+                return JSONResponse({"code": "unknown_evidence"}, status_code=404)
+            return {"id": evidence_id, "kind": "record", "row": item}
 
         def read(engine: Engine):
             found = evidence.read(engine, evidence_id, as_of_for(asof), step_ref, view=view,
@@ -987,7 +1003,12 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                                kit=research_kit or research_run.default_kit,
                                writer=research_writer or (lambda: None), today=today, now=now, new_run_id=new_run_id,
                                reference=request_reference, heartbeat_seconds=heartbeat_seconds, six_checks=six_checks,
-                               environ=environ)
+                               environ=environ, access=access, photos=field_photos)
+
+    # Field photos (ticket 150): a World Bank staff viewer's photos from a mission, which only their team sees, through
+    # the one access rule. photo_places stands in for the project's locations in a test.
+    photo_routes.add_routes(app, engine_for=engine_for, store=field_photos, access=access, now=now,
+                            new_photo_id=new_photo_id, reference=request_reference, places=photo_places)
 
     # An implementing agency's private uploads of its plan (ticket 38), through the one access rule.
     upload_routes.add_routes(app, engine_for=engine_for, store=uploads, access=access, today=today, now=now,

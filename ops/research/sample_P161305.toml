@@ -1,0 +1,202 @@
+# The sources a pre-seeded deep research brief for P161305, the Horn of Africa Gateway Development Project (the
+# Isiolo to Mandera road), cites, as the demo seed loads them (ops/research/seed.py, tickets 147 and 153). Researched
+# by hand on November 5, 2026: every article below is a page read that day with Prism's named client
+# (prism-research/0.1), recorded with ops/research/record.py's recorder under data/fixture/recorded/research/.
+#
+# Each [[cited]] is one numbered source with the items that stand for it, in the order a procurement specialist needs
+# them: works stalling or moving, contractors paid or not, security incidents on the works, compensation disputes,
+# procurement, the agency's own account, then the Bank's notices and records. An item names its registry source
+# (config/research.toml) and either the key a reader gives it (the notices, the Inspection Panel, the Sentinel-2 grids)
+# or an article's address (url). outlet, title and published are what the outlet prints; published is empty when the
+# outlet prints no date or its page could not be read.
+#
+# Who refused the named client on November 5, 2026: Eastleigh Voice answered every article page with a bot check (403),
+# so its two items keep only the headline, as for P156634. GDELT answered 429. transport.go.ke answered 503. KeNHA's
+# news page lists its entries by script and its project page for the road holds only an embedded X feed, so KeNHA's
+# side comes from the State Department for Roads (roads.go.ke), an implementing agency in the project record. The
+# Northern Water Works Development Agency's news page (nwwda.go.ke/index.php/news-events) answered 200 but lists no
+# entry about the road or its towns. The home pages of the Wajir and Mandera county sites list no notice about the
+# road, and Isiolo's answered a page of 4 KB with no news.
+#
+# Left out on purpose: the World Bank's press release of March 27, 2026 on the additional financing and HoAGDP II
+# (its text carries a media contact's email); the Auditor-General's report on the project for the year ended June 30,
+# 2025 (issued February 24, 2026, Parliament of Kenya library item bf3574e2-e2da-4416-a179-811ca7f5f87d), whose
+# catalog page renders by script and whose PDF is 30 MB, so the seed could read neither.
+#
+# The ISR passages: the fixture records no ISR of P161305 (only its Procurement Plan of September 24, 2026), so this
+# file cites none. On the workspace the isr_narrative reader can give them once ticket 152's seed reads gold.passage.
+#
+# The sites: the fixture's Kenya projects file holds P161305's record without geo_locations, so the seed's project
+# facts have no location there. The projects API's live record (recorded under isr_narrative) lists 35, most of them
+# in Ethiopia, Somalia and Djibouti for the regional programme. These three are on the road, with the record's own
+# geo_loc_id and coordinates (search.worldbank.org/api/v3/projects?id=P161305, read November 5, 2026): Kulamawe, on the
+# Isiolo-Kulamawe-Modogashe section, 45 percent complete in November 2025 (Kenya News Agency); Habaswein, where the
+# President promised on May 31, 2026 to revive the stalled Modogashe-Samatar section (Kenyans.co.ke); El Wak, where the Wajir-Tarbaj-Kotulo phase ends and the El Wak-Rhamu section begins, and
+# where al-Shabaab raided the camp of Chinese road builders on December 16, 2025.
+
+project = "P161305"
+as_of = 2026-11-05
+note = "The items were read on November 5, 2026, from the recordings of that day; GDELT refused calls from this network and Eastleigh Voice answered a bot check, so the press items come from the outlets' own pages."
+sites = [
+  { name = "Kulamawe", geo_loc_id = "11881599", latitude = 0.56857, longitude = 38.19934 },
+  { name = "Habaswein", geo_loc_id = "196936", latitude = 1.01659, longitude = 39.49122 },
+  { name = "El Wak", geo_loc_id = "198547", latitude = 2.80922, longitude = 40.92885 },
+]
+
+# Works stalled for three months and workers unpaid, as the former Deputy President claimed; the President's answer
+# the next day on the Kula Mawe-Modogashe section.
+[[cited]]
+number = 1
+items = [{ source = "outlet_feeds", url = "https://www.the-star.co.ke/news/2026-02-12-ruto-tours-ongoing-construction-of-750km-isiolo-wajir-mandera-road", outlet = "The Star", title = "Ruto tours ongoing construction of 750km Isiolo-Wajir-Mandera Road", published = "2026-02-12" }]
+
+# Contractors remobilised after cash-flow constraints; the stalled Modogashe-Samatar and Rhamu-Mandera sections.
+[[cited]]
+number = 2
+items = [{ source = "outlet_feeds", url = "https://peopledaily.digital/insights/inside-kenyas-ksh71-5b-isiolo-mandera-road-boost-as-gaps-security-risks-emerge", outlet = "People Daily", title = "Inside Kenya’s Ksh71.5B Isiolo–Mandera Road boost as gaps, security risks emerge", published = "2026-05-06" }]
+
+# The stalled sections refinanced: the Cabinet's approval of June 30, 2026, and the President's revival of
+# Modogashe-Samatar announced in Habaswein.
+[[cited]]
+number = 3
+items = [
+  { source = "outlet_feeds", url = "https://www.the-star.co.ke/news/2026-07-01-modogashe-mandera-road-gets-funding-boost", outlet = "The Star", title = "Modogashe–Mandera road gets funding boost in Cabinet infrastructure plan", published = "2026-07-01" },
+  { source = "outlet_feeds", url = "https://www.kenyans.co.ke/news/123892-ruto-revive-157-km-modogashe-samatar-road-project-under-world-bank-plan", outlet = "Kenyans.co.ke", title = "Ruto to Revive 157-Km Modogashe - Samatar Road Project Under World Bank Plan", published = "2026-05-31" },
+]
+
+# The agency's own account: the State Department for Roads' oversight committee (contracts for all road sections
+# and the fibre awarded; land acquisition and compensation to be expedited) and its inspection mission.
+[[cited]]
+number = 4
+items = [
+  { source = "outlet_feeds", url = "https://roads.go.ke/multi-agency-team-reviews-hoagdp-progress-charts-way-forward-faster-implementation-works-building", outlet = "State Department for Roads", title = "Multi-Agency Team Reviews HoAGDP Progress, Charts Way Forward for Faster Implementation Works Building, Nairobi", published = "" },
+  { source = "outlet_feeds", url = "https://www.dawan.africa/news/kenya-fast-tracks-740km-isiolo-mandera-road-project", outlet = "Dawan Africa", title = "Kenya Fast-Tracks 740km Isiolo–Mandera Road Project", published = "2026-07-02" },
+  { source = "outlet_feeds", url = "https://roads.go.ke/multi-agency-teams-inspect-isiolo-wajir-mandera-corridor-accelerate-delivery-transformative-project", outlet = "State Department for Roads", title = "Multi-Agency Teams Inspect Isiolo–Wajir–Mandera Corridor to Accelerate Delivery of Transformative Project", published = "" },
+]
+
+# A security incident near the works: the al-Shabaab raid on a camp in El Wak housing Chinese nationals "involved in
+# road construction projects in the area" (The Star); neither page names the contract or the corridor.
+[[cited]]
+number = 5
+items = [
+  { source = "outlet_feeds", url = "https://www.the-star.co.ke/news/2025-12-16-police-repel-al-shabaab-raid-on-chinese-camp", outlet = "The Star", title = "Police repel al-Shabaab raid on Chinese workers’ camp in Mandera", published = "2025-12-16" },
+  { source = "outlet_feeds", url = "https://capitalfm.africa/inside-the-overnight-operation-that-repulsed-an-al-shabaab-assault-on-a-chinese-workers-camp-in-elwak/", outlet = "Capital FM", title = "Inside the overnight operation that repulsed an Al-Shabaab assault on a Chinese Workers’ Camp in Elwak", published = "2025-12-17" },
+]
+
+# The security response: police and KDF deployed to the works, and more security ordered in August 2026.
+[[cited]]
+number = 6
+items = [
+  { source = "outlet_feeds", url = "https://www.standardmedia.co.ke/business/newsbeat/article/2001538957/govt-deploys-kdf-police-to-secure-isiolo-modogashe-mandera-highway-project", outlet = "The Standard", title = "Govt deploys KDF, police to secure Isiolo-Modogashe-Mandera highway project", published = "2026-01-20" },
+  { source = "outlet_feeds", url = "https://peopledaily.digital/news/govt-rolls-out-new-security-plan-to-fast-track-isiolo-mandera-road", outlet = "People Daily", title = "Govt rolls out new security plan to fast-track Isiolo–Mandera road", published = "2026-01-23" },
+  { source = "outlet_feeds", url = "https://www.dawan.africa/news/murkomen-orders-more-security-for-740km-isiolo-mandera-road-project", outlet = "Dawan Africa", title = "Murkomen Orders More Security for 740km Isiolo-Mandera Road Project", published = "2026-08-19" },
+]
+
+# Land valuation and compensation in Wajir and Kutulo by the National Land Commission and KeNHA.
+[[cited]]
+number = 7
+items = [
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/land-valuation-exercise-gains-momentum-for-wajir-road-corridor-project/", outlet = "Kenya News Agency", title = "Land valuation exercise gains momentum for Wajir road corridor project", published = "2026-05-03" },
+  { source = "outlet_feeds", url = "https://www.dawan.africa/news/northern-kenya-road-project-valuation-reaches-key-milestone-as-3000-properties-identified", outlet = "Dawan Africa", title = "Northern Kenya Road Project Valuation Reaches Key Milestone as 3,000 Properties Identified", published = "2026-04-29" },
+]
+
+# A dispute with residents in court: the freeze on compensation funds, and its lifting (Eastleigh Voice's page
+# answered a bot check, so its headline stands in).
+[[cited]]
+number = 8
+items = [
+  { source = "outlet_feeds", url = "https://www.standardmedia.co.ke/business/national/article/2001515790/court-freezes-use-of-sh7b-world-bank-loan-over-land-compensation-row", outlet = "The Standard", title = "Court freezes use of Sh7b World Bank loan over land compensation row", published = "2025-04-07" },
+  { source = "outlet_feeds", url = "https://eastleighvoice.co.ke/news/169781/court-lifts-block-on-sh98-billion-kotulo-modogashe-road-project", outlet = "Eastleigh Voice", title = "Court lifts block on Sh98 billion Kotulo-Modogashe road project", published = "" },
+]
+
+# Compensation on the Isiolo-Garbatulla-Modogashe section (Eastleigh Voice's page answered a bot check).
+[[cited]]
+number = 9
+items = [{ source = "outlet_feeds", url = "https://eastleighvoice.co.ke/news/245384/residents-to-receive-sh500-million-compensation-for-isiolo-garbatulla-modogashe-road-project", outlet = "Eastleigh Voice", title = "Residents to receive Sh500 million compensation for Isiolo-Garbatulla-Modogashe road project", published = "" }]
+
+# Procurement on the corridor: the El Wak-Gari and Gari-Rhamu invitation for bids (AfDB-financed), the Samatar-Wajir
+# expressions of interest (Arab funds), and KeNHA's updated General Procurement Notice of August 5, 2025.
+[[cited]]
+number = 10
+items = [
+  { source = "outlet_feeds", url = "https://www.kenyans.co.ke/news/123309-kenha-invites-bids-upgrading-142km-el-wak-gari-gari-rhamu-road-sections", outlet = "Kenyans.co.ke", title = "KeNHA Invites Bids for Upgrading of 142KM El Wak-Gari & Gari-Rhamu Road Sections", published = "2026-05-12" },
+  { source = "outlet_feeds", url = "https://k24.digital/411/kenha-secures-funding-for-samatar-wajir-road-and-opens-bids-for-construction", outlet = "K24 Digital", title = "KeNHA secures funding for Samatar-Wajir Road and opens bids for construction", published = "2025-07-15" },
+  { source = "outlet_feeds", url = "https://peopledaily.digital/news/kenha-unveils-major-infrastructure-push-to-open-up-northeastern", outlet = "People Daily", title = "KeNHA unveils major infrastructure push to open up Northeastern", published = "2025-08-05" },
+]
+
+# The Isiolo-Kulamawe-Modogashe section: 45 percent complete with completion due in May 2027, per its resident
+# engineer, and delays linked to the hand-packed stone sub-base.
+[[cited]]
+number = 11
+items = [
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/?p=173482", outlet = "Kenya News Agency", title = "Horn of Africa gateway project transforming northern Kenya’s landscape", published = "2025-11-13" },
+  { source = "outlet_feeds", url = "https://www.the-star.co.ke/news/2025-11-10-state-pushes-faster-completion-of-isiolo-modogashe-road", outlet = "The Star", title = "State pushes faster completion of Isiolo–Modogashe road", published = "2025-11-10" },
+]
+
+# The Wajir sections: the President's inspection of Tarbaj-Kotulo, contractors back on site.
+[[cited]]
+number = 12
+items = [
+  { source = "outlet_feeds", url = "https://www.the-star.co.ke/in-pictures/2026-06-02-photos-ruto-inspects-tarbaj-kotulo-64km-road-in-wajir", outlet = "The Star", title = "[PHOTOS] Ruto inspects Sh100bn Isiolo-Mandera road project", published = "2026-06-02" },
+  { source = "outlet_feeds", url = "https://citizen.digital/article/ruto-in-wajir-inside-ksh100b-infrastructure-push-for-northern-kenya", outlet = "Citizen Digital", title = "Ruto in Wajir: Inside Ksh.100B infrastructure push for Northern Kenya", published = "2026-06-23" },
+]
+
+# The Bank's additional financing and HoAGDP II, as the press reported it.
+[[cited]]
+number = 13
+items = [{ source = "outlet_feeds", url = "https://www.standardmedia.co.ke/business/article/2001545155/world-bank-approves-sh71-billion-for-isiolo-mandera-road-construction", outlet = "The Standard", title = "World Bank approves Sh71 billion for Isiolo-Mandera road construction", published = "2026-04-11" }]
+
+# The service side: 103 community projects (water supplies, dams, dispensaries) validated along the corridor.
+[[cited]]
+number = 14
+items = [
+  { source = "outlet_feeds", url = "https://www.dawan.africa/news/record-103-community-projects-validated-along-isiolo-mandera-road-corridor", outlet = "Dawan Africa", title = "Record 103 Community Projects Validated Along Isiolo–Mandera Road Corridor", published = "2026-07-08" },
+  { source = "outlet_feeds", url = "https://www.the-star.co.ke/counties/north-eastern/2026-07-19-northeastern-page-story-2-garissa-to-benefit-from-world-bank-essential-services-projects-1", outlet = "The Star", title = "Garissa to benefit from World Bank essential services projects", published = "2026-07-19" },
+]
+
+# The counties' side: the Frontier Counties Development Council asks residents along the road to support it.
+[[cited]]
+number = 15
+items = [{ source = "outlet_feeds", url = "https://www.standardmedia.co.ke/counties/article/2001530294/frontier-counties-call-on-residents-to-support-construction-of-isiolomandera-road", outlet = "The Standard", title = "Frontier Counties call on residents to support construction of IsioloMandera road", published = "2025-09-24" }]
+
+# Earlier disputes with residents on the Isiolo section: recruitment and compensation in Garbatulla, and plot owners
+# on Lot 2 paid for structures but not land.
+[[cited]]
+number = 16
+items = [
+  { source = "outlet_feeds", url = "https://www.kbc.co.ke/?p=74933", outlet = "KBC", title = "Isiolo residents decry neglect in multi-billion horn of Africa gateway road project", published = "2024-10-16" },
+  { source = "outlet_feeds", url = "https://citizen.digital/article/land-owners-affected-by-isiolo-mandera-road-project-decry-unfair-compensation-n352306", outlet = "Citizen Digital", title = "Land owners affected by Isiolo-Mandera road project decry 'unfair compensation'", published = "2024-11-02" },
+]
+
+# The works' four phases as KeNHA set them out when construction began in earnest.
+[[cited]]
+number = 17
+items = [{ source = "outlet_feeds", url = "https://www.kenyans.co.ke/news/112400-kenha-commences-construction-749km-el-wak-modogashe-highway-after-world-bank-funding", outlet = "Kenyans.co.ke", title = "KeNHA Commences Construction of 749KM El Wak-Modogashe Highway After World Bank Funding", published = "2025-05-24" }]
+
+# The project's notices within the reader's 180 days and types (Contract Award, Invitation for Bids), from the notices
+# API on November 5, 2026. Older ones the reader does not give: the four contract awards of February 4 and 5, 2026 for
+# the design and supervision of the socio-economic infrastructure (OP00424954, OP00424956, OP00425085, OP00425086)
+# and the General Procurement Notice OP00041017 of August 5, 2025. The fixture database holds no notice of P161305,
+# so this item loads only where gold.notice holds the project's notices (the workspace).
+[[cited]]
+number = 18
+items = [{ source = "procurement_notices", key = "OP00473660" }]
+
+# The second phase, approved with the additional financing on March 27, 2026.
+[[cited]]
+number = 19
+items = [{ source = "isr_narrative", record = "P515510", url = "https://projects.worldbank.org/en/projects-operations/project-detail/P515510" }]
+
+# The register names no case for P161305 (197 cases on November 5, 2026), so the source stands with no item.
+[[cited]]
+number = 20
+items = [{ source = "inspection_panel" }]
+
+# The 2021 and 2025 mosaics around the three sites above (the oldest listed year after the 2020 approval, and the
+# newest).
+[[cited]]
+number = 21
+items = [
+  { source = "sentinel2_mosaic", key = "11881599-2021-2025" },
+  { source = "sentinel2_mosaic", key = "196936-2021-2025" },
+  { source = "sentinel2_mosaic", key = "198547-2021-2025" },
+]

@@ -2,8 +2,9 @@
 -- the verifier kept with the evidence they cite, the sentences it removed with their reasons, and the run's
 -- coverage. GET /api/projects/{project_id}/research answers with the latest row for the project, so a second view
 -- calls no model; "Research again" starts a new run and a new row. The run writes it as the app's own service
--- principal on the workspace, and in the local DuckDB file on this computer (src/strata/research/briefs.py). The
--- brief rests on public items, so every view may read it.
+-- principal on the workspace, and in the local DuckDB file on this computer (src/strata/research/store.py). A brief
+-- that rests on public items alone has no team_key, and every view may read it. A brief written from a run that also
+-- read a team's field photos (ticket 150) keeps that team_key, and only that team reads it.
 --
 -- run_id       the run it was written from, in strata.ops.research_runs
 -- project_id   the project, such as P156634
@@ -12,11 +13,13 @@
 -- brief        the brief as JSON: its sections, the evidence its sentences cite, the verifier's counts, the removed
 --              sentences, the run's coverage and the writer
 -- public_from  the day it was written, in UTC (ADR 0002)
+-- team_key     the team whose field photos the run read, or empty for a brief on public items alone
 CREATE TABLE IF NOT EXISTS strata.ops.research_briefs (
   run_id STRING NOT NULL,
   project_id STRING NOT NULL,
   written_at TIMESTAMP NOT NULL,
   as_of DATE NOT NULL,
   brief STRING NOT NULL,
-  public_from DATE NOT NULL
+  public_from DATE NOT NULL,
+  team_key STRING
 )

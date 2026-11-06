@@ -12,7 +12,9 @@ One story makes them all, as the demo does on the workspace: ticket 147's seed k
 (research-p156634-none.json); the brief is written from the seeded run with "reuse", the recorded writer's answer
 and the recorded judge's (tests/fixtures/agent/research), and its stream kept (research-p156634.sse); she reads the
 brief (research-p156634.json); and she opens The Star's article of January 14, 2026 from a link
-(evidence-research-item-p156634-star.json). The clock and the run's id are fixed.
+(evidence-research-item-p156634-star.json). The clock and the run's id are fixed, and the app reads the sources
+live (research.live_sources true, the product's default); the screen tests set it false where they show the demo's
+setting (ticket 152).
 """
 
 import asyncio
@@ -29,7 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from research_world import seed_kit, seeded_copy  # noqa: E402
+from research_world import seed_kit, seeded_copy, with_live_sources  # noqa: E402
 from strata.lakehouse.engine import DuckDBEngine  # noqa: E402
 from strata.research.store import ResearchStore  # noqa: E402
 from strata.research.writer import RecordedJudge, RecordedWriter  # noqa: E402
@@ -57,6 +59,7 @@ def answers(folder: Path, fixture_db: Path = FIXTURE_DB) -> dict[str, str]:
                      research_kit=lambda: seed_kit(fixture_db),
                      research_writer=lambda: RecordedWriter(RECORDED / "P156634.json"),
                      judge=RecordedJudge(RECORDED / "P156634.judged.json"), today=lambda: TODAY,
+                     thresholds=with_live_sources(True),
                      now=lambda: dt.datetime(2026, 11, 5, 10, 30, tzinfo=dt.UTC),
                      new_run_id=lambda: "research-0001", heartbeat_seconds=3600)
 

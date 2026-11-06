@@ -1,0 +1,13 @@
+{
+ "url": "https://cag.gov.in/uploads/download_audit_report/2026/Executive-Summary-06a87dbd0c3b088.87414921.pdf",
+ "source": "outlet_feeds",
+ "license": "Each article belongs to its outlet; Prism keeps its words with a link to the article, for reference.",
+ "recorded": "2026-11-05",
+ "read_with": "prism-research/0.1 (+https://github.com/ChiragLakhanpal/Prism)",
+ "status": 200,
+ "headers": {
+  "content-type": "application/pdf",
+  "last-modified": "Tue, 06 Oct 2026 08:55:40 GMT"
+ },
+ "body_omitted": "3506740 bytes of application/pdf, not kept"
+}

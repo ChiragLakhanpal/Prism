@@ -88,6 +88,16 @@ def seeded_copy(fixture_db: Path, folder: Path) -> Path:
     return target
 
 
+def with_live_sources(live_sources: bool):
+    """The thresholds file with research.live_sources set: true reads the sources (the product's default), false (the
+    demo's) writes from the stored run only (ticket 152), with no pause between the stored run's steps."""
+    from strata.config import Thresholds, load_thresholds
+
+    base = load_thresholds()
+    research = {**base.values["research"], "live_sources": live_sources, "stored_step_seconds": 0}
+    return Thresholds(base.path, {**base.values, "research": research})
+
+
 def seed_kit(fixture_db: Path, fail: str | None = None):
     """A run's kit whose readers give each source's result from the seed's run, as ticket 147's read() gives a
     SourceResult; the source that fail names raises instead."""

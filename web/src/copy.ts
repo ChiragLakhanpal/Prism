@@ -9668,11 +9668,15 @@ export const copy = {
     heading: "Deep research",
     run: "Research this project",
     again: "Research again",
+    // The demo's setting (ticket 152, research.live_sources false in config/thresholds.toml): I write and check a brief
+    // now, from sources read ahead of time; a project with none read says so.
+    notPrepared: "I haven't prepared a brief for this project. In this demo I write a brief only from sources read ahead of time, and none were read for this project.",
     print: "Download as PDF",
     loading: "Loading the brief for this project.",
     // No brief yet: the button and one sentence on what the run reads.
     none: "I haven't researched this project yet. A run reads the project's status reports and notices, the press, the Inspection Panel's register, public posts and satellite mosaics, then writes a brief and checks every sentence against what it read.",
     readOn: (date: string) => `I read these sources on ${date} and checked every sentence before showing it.`,
+    readOnStored: (date: string) => `I read these sources on ${date}; the writing and the checks happen now.`,
     running: "I'm researching this project. The brief shows here when I'm done.",
     error: "I couldn't load the brief for this project because the data service didn't answer.",
     permission: "Your account can't read Prism's tables, so I can't show the brief for this project.",
@@ -9722,6 +9726,9 @@ export const copy = {
       sentinel2_mosaic: "the Sentinel-2 cloudless mosaics",
       mastodon: "public Mastodon posts",
       field_photos: "the field photos",
+      site_conditions: "the GDACS disaster alerts",
+      agency_statements: "the agencies' own news pages",
+      sanctions: "the World Bank's list of ineligible firms and individuals",
     } as Record<string, string>,
     // The steps while a run streams, as the ask box shows them: present tense while running, past once done.
     steps: {
@@ -9732,7 +9739,15 @@ export const copy = {
         one: (source: string) => `I read ${source} and kept one item.`,
         several: (source: string, count: string) => `I read ${source} and kept ${count} items.`,
       },
+      // A source's step done from a stored run (ticket 152): the day it was read, since no source is read again.
+      stored: {
+        none: (source: string, date: string) => `I read ${source} on ${date} and kept no items.`,
+        one: (source: string, date: string) => `I read ${source} on ${date} and kept one item.`,
+        several: (source: string, date: string, count: string) => `I read ${source} on ${date} and kept ${count} items.`,
+      },
       write: { running: "I'm writing the brief.", done: "I wrote the brief." },
+      // The writer or the judge failed in the demo's setting (ticket 152), so the brief already stored stays.
+      kept: (date: string) => `I kept the brief of ${date}.`,
       check: {
         running: "I'm checking every sentence against what I read.",
         none: "I checked every sentence and removed none.",
@@ -9767,6 +9782,38 @@ export const copy = {
       word: "Prism",
       tagline: "Procurement intelligence on World Bank open data",
       logo: "World Bank Group logo",
+    },
+    // Field photos (ticket 150): the photos a World Bank staff viewer's team took on a mission, which only that team sees,
+    // and which a run the team starts cites by their captions. The access label is copy.upload.access.
+    photos: {
+      heading: "Field photos",
+      about: "Photos your team took on a mission. Only your team sees them, and a run you start cites each one by its caption and the date its camera recorded.",
+      none: "Your team hasn't added a photo of this project yet.",
+      fileLabel: "Photo, a JPEG or PNG file",
+      captionLabel: "Caption",
+      captionHint: "Say what the photo shows. The brief describes the photo only in these words.",
+      add: "Add photo",
+      adding: "Adding the photo.",
+      neverSubmits: "Uploading never submits anything. Prism keeps the photo for your team.",
+      added: "I kept the photo. Research again to have the brief cite it.",
+      taken: (date: string) => `Taken on ${date}`,
+      noDate: "No date recorded",
+      near: (place: string) => `Near ${place}`,
+      position: (latitude: string, longitude: string) => `At ${latitude}, ${longitude}`,
+      noPlace: "No position recorded",
+      addedBy: (name: string) => `Added by ${name}`,
+      addedByYou: "Added by you",
+      open: "Open the photo",
+      loadError: "I couldn't load your team's field photos because the data service didn't answer.",
+      errors: {
+        size: (megabytes: string) => `I couldn't keep this photo because it is larger than ${megabytes} MB.`,
+        count: (count: string) => `I couldn't keep this photo because your team already keeps ${count} photos of this project.`,
+        format: "I couldn't keep this file because it isn't a JPEG or PNG photo I can read.",
+        caption: "Write a caption before you add the photo.",
+        not_staff: "Only World Bank staff can add field photos.",
+        service: "I couldn't keep the photo because the photo store didn't answer.",
+        choose: "Choose a photo before you add it.",
+      },
     },
     header: "Deep research · {name} ({pid})",
     footer: "Prism · read on {date} · an independent demo built on World Bank open data, not a World Bank product",

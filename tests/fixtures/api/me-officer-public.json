@@ -77,7 +77,8 @@
     "upload_and_check": "upload.holdPreview",
     "compare_criteria": "criteria.preview",
     "export_draft": "draft.bar.hold.preview",
-    "start_here": "home.start.preview"
+    "start_here": "home.start.preview",
+    "add_field_photo": "view.actPreview"
   },
   "asof": {
     "applied": null,

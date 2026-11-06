@@ -294,11 +294,14 @@ def track_answer(result, question) -> dict[str, list]:
 
 def research_answer(result, question) -> dict[str, list]:
     """research_evidence's answer: the summary's counts, as text, and the keys of the sources the run did not reach
-    (ticket 148)."""
+    (ticket 148), and each award notice's notification date, a field of its row (ticket 155)."""
     summary = result["summary"]
     counts = ("items_total", "awards_in_window", "direct_awards_in_window", "days_from_last_award_to_closing")
+    notified = sorted(f"{row['evidence_id'].rsplit('/', 1)[1]} {row['notice']['award_notification_date']}"
+                      for row in result["rows"] if (row.get("notice") or {}).get("award_notification_date"))
     return {**{key: [canonical(summary[key])] for key in counts},
-            "sources_not_reached": sorted(source["key"] for source in summary["sources_not_reached"] or ())}
+            "sources_not_reached": sorted(source["key"] for source in summary["sources_not_reached"] or ()),
+            "award_notifications": notified}
 
 
 def genie_answer(result, question) -> dict[str, list]:

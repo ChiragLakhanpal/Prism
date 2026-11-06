@@ -81,6 +81,10 @@ class Context:
     # Lineage (ticket 45): a list the call adds each table it read to, in three parts and in the order it first read
     # them, so the run log can trace an answer to the tables its tool calls read. None records nothing.
     reads: list[str] | None = None
+    # Field photos (ticket 150): the project's photos the viewer's team kept by the as-of date, as research items,
+    # through the one access rule. Only the deep research run gives it, per request; without it, research_evidence
+    # reads no photo, so no other caller, and no other team, reaches one.
+    field_photos: Callable[[str, dt.date], list[Mapping[str, Any]]] | None = None
 
 
 TABLE_READ = re.compile(r"\bstrata\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\b")
@@ -126,6 +130,7 @@ class Call:
     decided_by: dt.date | None = None  # Context.decided_by
     uploads: Callable[[str], Mapping[str, Any] | None] | None = None  # Context.uploads
     environ: Mapping[str, str] | None = field(default=None, repr=False)  # Context.environ
+    field_photos: Callable[[str, dt.date], list[Mapping[str, Any]]] | None = None  # Context.field_photos
 
 
 # ── The agent's tool list ────────────────────────────────────────────────
@@ -244,7 +249,8 @@ def call(name: str, arguments: Mapping[str, Any], context: Context, tools: dict[
     as_of = min(called, ceiling) if called else ceiling
     engine = context.engine if context.reads is None else _Reading(context.engine, context.reads)
     output = _adapter(tool)(Call(engine, context.viewer, context.view, as_of, context.thresholds,
-                                 context.decided_by, context.uploads, context.environ), **bound)
+                                 context.decided_by, context.uploads, context.environ,
+                                 field_photos=context.field_photos), **bound)
     result = {"tool": name, "as_of": as_of.isoformat(), "view": context.view, **output}
     if tool.result.summary_fields:
         result["summary"] = summary(tool, bound, result)
@@ -319,7 +325,10 @@ def check_contract(tool: Tool, result: dict) -> None:
             broken(f"a row has {sorted(row)}, not the declared {sorted(tool.result.row_fields)}")
         if not isinstance(row["evidence_id"], str) or ":" not in row["evidence_id"]:
             broken(f"the row {row['evidence_id']!r} has no evidence id naming its table and key")
-        if not row["public_from"] or row["public_from"] > result["as_of"]:
+        # A team's own row, such as a field photo (ticket 150), is never public, so its public_from is None, and it
+        # counts from the day it was kept, its read_on.
+        day = row.get("read_on") if row.get("team") and row["public_from"] is None else row["public_from"]
+        if not day or day > result["as_of"]:
             broken(f"{row['evidence_id']} is public from {row['public_from']}, after the as-of date {result['as_of']}")
         for field_name in tool.result.nested_rows:
             for record in row[field_name] or ():

@@ -14,7 +14,11 @@ then the kept sentences (sentence, with the section each sits in), the evidence 
 before done so GET /api/projects/{project_id}/research returns it without calling a model.
 
 With reuse, the run writes the brief from the latest run already kept, without reading the sources again: each source
-step then says what that run read. The demo's brief is written that way from the run ticket 147's seed keeps
+step then says what that run read, in the registry's order, done with its items and the note "read on <day>" (or
+not_reached with that run's note), and stored_on, the day it read them. With stored_only (research.live_sources false,
+ticket 152) the steps come one by one, research.stored_step_seconds apart, so the tab shows them as a live run's; and
+when the writer or the judge fails, the run keeps the stored brief: a writing step done with kept_from, then done with
+the stored brief, never an error. The demo's brief is written that way from the run ticket 147's seed keeps
 (ops/research/seed.py, seed:P156634:2026-11-05).
 
 The readers, the project facts they read and the fetch are ticket 147's (src/strata/research/sources). The Kit holds
@@ -38,6 +42,7 @@ from strata.dbx import Viewer
 from strata.harness.facts import Facts
 from strata.harness.turn import Event
 from strata.research import brief as briefs
+from strata.research.sources import long_date
 from strata.research.store import ResearchStore
 from strata.research.store import Run as KeptRun
 from strata.research.writer import Writer, WriterError
@@ -90,6 +95,15 @@ class Request:
     as_of: dt.date
     run_id: str
     reuse: bool = False
+    stored_only: bool = False  # research.live_sources false: no source is read, and a failed writer keeps the brief
+    # The viewer's team, and the reader of the field photos it kept (ticket 150; src/strata/server/field_photos.py),
+    # through the one access rule. A brief written from a run that read a team's photos is kept for that team only.
+    team_key: str | None = None
+    field_photos: Callable[[str, dt.date], list] | None = None
+
+
+class KeepStored(RuntimeError):
+    """A stored-only run's writer or judge failed, so the run keeps the stored brief."""
 
 
 def _key(source) -> str:
@@ -107,7 +121,7 @@ def _plain(result, source) -> dict:
 
     items = [dataclasses.asdict(item) if dataclasses.is_dataclass(item) else dict(item) for item in value("items", [])]
     return {"key": _key(source), "label": _label(source), "items": items, "reached": bool(value("reached")),
-            "status": value("status"), "note": value("note")}
+            "status": value("status"), "note": value("note"), "counts": dict(value("counts") or {})}
 
 
 def _step(step_id: str, kind: str, status: str, **more) -> Event:
@@ -125,7 +139,8 @@ class Run:
 
     def _context(self, engine, request: Request) -> registry.Context:
         return registry.Context(engine=engine, viewer=request.viewer, view=request.view, as_of=request.as_of,
-                                thresholds=self.six_checks.thresholds, environ=self.environ)
+                                thresholds=self.six_checks.thresholds, environ=self.environ,
+                                field_photos=request.field_photos)
 
     def project(self, request: Request) -> dict | None:
         """The project as of the day, from its record (project_signals' one reading of status and closing date)."""
@@ -146,14 +161,35 @@ class Run:
             result = await asyncio.to_thread(self._evidence, request)
             if result["abstention"]:
                 raise ResearchError("not_fetched")
+            pause = float(self.six_checks.thresholds.value("research.stored_step_seconds")) if request.stored_only else 0
             for event in self._kept_steps(result):
+                if pause and event.data["status"] != "running":  # the source's running line shows for the pause
+                    await asyncio.sleep(pause)
                 yield event
         else:
             async for event in self._read(request, project):
                 yield event
             result = await asyncio.to_thread(self._evidence, request)
-        async for event in self._write_and_check(request, project, result):
-            yield event
+        try:
+            async for event in self._write_and_check(request, project, result):
+                yield event
+        except Exception as error:
+            if not request.stored_only:
+                raise
+            try:
+                kept = await asyncio.to_thread(self.store.latest_brief, request.project_id, request.as_of,
+                                               request.team_key if request.field_photos else None)
+            except Exception:  # noqa: BLE001 - the store failed too: the run's own error is the one to report
+                kept = None
+            if kept is None:
+                if isinstance(error, KeepStored):
+                    raise ResearchError("writer_unavailable") from error
+                raise
+            log.warning("Run %s: the writer or the judge failed (%s), so the stored brief is kept.", request.run_id, error)
+            day = str(kept.get("written_at") or "")[:10] or None
+            yield _step("writing", "writing", "done", kept_from=day,
+                        label=f"Writing: kept the brief of {long_date(day)}" if day else "Writing: kept the brief")
+            yield Event("done", {"run_id": request.run_id, "status": "kept", "brief": kept})
 
     def _evidence(self, request: Request) -> dict:
         with self.engine_for(request.viewer) as engine:
@@ -161,16 +197,26 @@ class Run:
 
     @staticmethod
     def _kept_steps(result: Mapping) -> list[Event]:
-        """The source steps of a run already kept: what each source gave, or why it was not reached."""
+        """The source steps of a run already kept, in the order a live run reads the sources (the registry's): what
+        each source gave, done with its items and "read on <day>", or why it was not reached, each with stored_on, the
+        day the stored run read the sources."""
+        from strata.config import load_research
+
         summary, steps = result["summary"], []
-        for source in summary["sources_reached"]:
-            steps += [_step(f"source-{source['key']}", "source", "running", source=source["key"], label=source["label"]),
-                      _step(f"source-{source['key']}", "source", "done", source=source["key"], label=source["label"],
-                            items=source.get("items") or 0, note=source.get("note"))]
-        for source in summary["sources_not_reached"]:
-            steps += [_step(f"source-{source['key']}", "source", "running", source=source["key"], label=source["label"]),
-                      _step(f"source-{source['key']}", "source", "not_reached", source=source["key"],
-                            label=source["label"], note=source.get("note"))]
+        day = (result.get("run") or {}).get("as_of")
+        reached = {source["key"]: source for source in summary["sources_reached"]}
+        missed = {source["key"]: source for source in summary["sources_not_reached"]}
+        order = [key for key in load_research() if key in reached or key in missed]
+        order += [key for key in [*reached, *missed] if key not in order]
+        for key in order:
+            source = reached.get(key) or missed[key]
+            named = {"source": key, "label": source["label"], "stored_on": day}
+            steps.append(_step(f"source-{key}", "source", "running", **named))
+            if key in reached:
+                steps.append(_step(f"source-{key}", "source", "done", items=source.get("items") or 0,
+                                   note=f"read on {long_date(day)}" if day else None, **named))
+            else:
+                steps.append(_step(f"source-{key}", "source", "not_reached", note=source.get("note"), **named))
         return steps
 
     async def _read(self, request: Request, project: dict) -> AsyncIterator[Event]:
@@ -198,7 +244,7 @@ class Run:
                 else:
                     yield _step(f"source-{key}", "source", "not_reached", source=key, label=label, note=found["note"])
         notes = {result["key"]: {"label": result["label"], "status": result["status"], "note": result["note"],
-                                 "items": len(result["items"])} for result in results}
+                                 "items": len(result["items"]), **result.get("counts", {})} for result in results}
         run = KeptRun(run_id=request.run_id, project_id=request.project_id, started=started, as_of=request.as_of,
                       sources_asked=tuple(result["key"] for result in results),
                       reached=tuple(result["key"] for result in results if result["reached"]), finished=self.now(),
@@ -223,11 +269,11 @@ class Run:
 
         yield _step("checking", "checking", "running", sentences=len(placed))
         seen, viewed = Facts(), Facts()
-        for row in [*result["rows"], result["summary"]]:
+        for row in [*result["rows"], result["summary"], *briefs.coverage_records(result)]:
             seen.record(row["evidence_id"], row, tool=TOOL)
             viewed.record(row["evidence_id"], briefs.checked_row(row), tool=TOOL)
         sentences = [check(index, claim, viewed) for index, (_, claim) in enumerate(placed)]
-        answer = self.six_checks.checked(sentences, seen)
+        answer = self.six_checks.checked(sentences, seen, facts_only=briefs.facts_only(placed))
         verdict: Verdict | None = None
         asker = Asker(request.viewer, request.view, request.as_of, request.run_id)
         async for item in self.six_checks.finish(answer, seen, asker):
@@ -235,6 +281,8 @@ class Run:
                 verdict = item
             else:
                 yield item
+        if request.stored_only and verdict is not None and verdict.judge_called and not verdict.judge_responded:
+            raise KeepStored("The judge did not answer.")
         events = answer_events(verdict, seen, [TOOL], self.six_checks.cited_only)
         kept, evidence, checks, removed = {}, {}, None, []
         for event in events:
@@ -263,6 +311,8 @@ class Run:
         composed["summary"] = result["summary"]
         composed["writer"] = getattr(self.writer, "name", None)
         written = self.now()
+        # A brief written from a team's field photos is that team's alone (ticket 150), whether or not it cites them.
+        team = request.team_key if any(row.get("team") for row in result["rows"]) else None
         await asyncio.to_thread(self.store.save_brief, request.run_id if not request.reuse else result["run"]["run_id"],
-                                request.project_id, written, request.as_of, composed)
+                                request.project_id, written, request.as_of, composed, team)
         yield Event("done", {"run_id": request.run_id, "status": "written", "brief": composed})

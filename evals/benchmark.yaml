@@ -127,7 +127,7 @@ questions:
     tool: research_evidence
     question: >-
       As of November 5, 2026, how many contracts did P156634 award in the 110 days before its closing date, how many
-      of them by direct selection, and which source could Prism's deep research not reach?
+      of them by direct selection, and which sources could Prism's deep research not reach?
     arguments:
       project_id: P156634
       as_of: "2026-11-05"
@@ -136,11 +136,16 @@ questions:
       awards_in_window: ["6"]
       direct_awards_in_window: ["2"]
       days_from_last_award_to_closing: ["18"]
-      sources_not_reached: [gdelt_news]
+      sources_not_reached: [gdelt_news, sanctions]
+      # Ticket 155: each award notice's "Date Notification of Award Issued" line, as a field of its row.
+      award_notifications: [OP00456907 2026-05-04, OP00457686 2026-04-10, OP00466974 2026-08-31,
+                            OP00471125 2026-08-28, OP00474696 2026-05-04, OP00474946 2026-06-22]
     source: >-
       The contract award notices of P156634 in strata.gold.notice from July 13 to October 31, 2026, its closing date:
       OP00456907, OP00457686 (direct selection), OP00466974, OP00471125 (direct selection), OP00474696 and
-      OP00474946, the last on October 13; and the seeded run's note that GDELT limited calls from this network.
+      OP00474946, the last on October 13; each notice's own words for the date its award was notified; and the seeded
+      run's notes that GDELT limited calls from this network and that the sanctions check did not run, since the list
+      needs a download from the page (ticket 154).
 
   # Ticket 36: the implementing agency's track record against its plans, which the Project Paper summary states in
   # counts.

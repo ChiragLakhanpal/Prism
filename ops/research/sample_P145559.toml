@@ -1,0 +1,163 @@
+# The outside items the pre-seeded deep research brief for P145559 cites (ticket 153), researched by hand on
+# November 5, 2026, in the shape of sample_P156634.toml. The seed (ops/research/seed.py) builds each item from its
+# recording under data/fixture/recorded/research/<source>/, made with ops/research/record.py's own recorder and the
+# named client, prism-research/0.1, never a browser's agent.
+#
+# The project: Coastal Region Water Security and Climate Resilience Project (P145559), Kenya, active, approved
+# December 16, 2014, closing November 30, 2028, with its additional financing P176704 (approved December 7, 2021).
+# Its works here are the Mwache multipurpose dam at Fulugani, Kasemeni ward, Kinango, Kwale County (contractor
+# Sinohydro), the resettlement and compensation of the households in the dam area (the National Land Commission
+# pays), and the livelihood restoration plan. The Mwache treatment plant and pipelines, financed by AFD and the EIB,
+# are a related project, not this one.
+#
+# Outlets that refused the named client on November 5, 2026: Nation (nation.africa) and Eastleigh Voice answered 403
+# with a bot check page, so their items keep the outlet's headline, URL and outlet only, and published is empty
+# because the page could not be read. The Standard's page for "Sh25.5b Mwache dam hits 83pc completion amid
+# funding, compensation concerns" (May 6, 2026) answered 200 with a subscription wall and no article text, so it is
+# left out; KBC and the Kenya News Agency report the same committee visit.
+#
+# The agencies' own statements: the Coast Water Works Development Agency's news page (cwwda.go.ke/news) holds no
+# entry on the Mwache dam (its newest entries are from early 2025); the Ministry of Water's site (water.go.ke) could
+# not be reached by the named client (its certificate chain failed to verify); Kwale County's site (kwalecountygov.com)
+# answered a search for Mwache with no results. The agency's side comes from the project's own site, kwscrp.org,
+# whose posts the Mwache Dam Project Management Unit writes; those items name it as the outlet.
+#
+# Not cited: the Inspection Panel register names no case for P145559 or P176704 (read November 5, 2026). The
+# lakehouse fixture holds no ISR passage of P145559, so there is no isr_narrative block of passages; on the workspace
+# the brief reads them from strata.gold.passage (ticket 152). No post on Mastodon was recorded for this project.
+#
+# sites: the places whose Sentinel-2 grids matter, for the reader that takes sites (the seed today builds grids for
+# the project record's own locations only, which are the two last entries here).
+#   - Mwache dam area: no public gazetteer holds the dam axis (OpenStreetMap's Nominatim, Wikidata and the World
+#     Bank's Resettlement Action Plan of 2019 give no coordinates for it). The RAP (documents1.worldbank.org,
+#     527531559886407975, section 1) places the main dam at Fulugani village, Kasemeni Ward, Kinango Sub-County, so
+#     the point is the centre of Kasemeni ward in OpenStreetMap (relation 16243525, read through Nominatim on
+#     November 5, 2026). The ward spans about 30 km east to west, so check the grid shows the reservoir before
+#     relying on it.
+#   - Kwale and Mombasa: the project record's geo_locations 190106 and 186298 (projects API, read November 5, 2026).
+
+project = "P145559"
+as_of = 2026-11-05
+note = "The items were read on November 5, 2026, from the recordings of that day; Nation and Eastleigh Voice refused the named client, so their headlines stand in for their articles."
+sites = [
+  { name = "Mwache dam area, Kasemeni ward (Fulugani village)", latitude = -3.9991569, longitude = 39.4384059 },
+  { name = "Kwale District", latitude = -4.1333299, longitude = 39.200001 },
+  { name = "Mombasa District", latitude = -4.02, longitude = 39.666672 },
+]
+
+# Works stalling: the contractor's unpaid certificates and the PAPs' claims, as the National Assembly's water
+# committee found them on its visit.
+[[cited]]
+number = 1
+items = [
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/mwache-dam-nears-completion-despite-funding-delays/", outlet = "Kenya News Agency", title = "Mwache Dam nears completion despite funding delays", published = "2026-05-07" },
+  { source = "outlet_feeds", url = "https://www.kbc.co.ke/ksh-26b-mwache-dam-nears-completion-despite-funding-gaps/", outlet = "KBC", title = "Ksh 26B Mwache Dam nears completion despite funding gaps", published = "2026-05-06" },
+]
+
+# A dispute with a consultant: the High Court's order to pay the dam's design consultant.
+[[cited]]
+number = 2
+items = [{ source = "outlet_feeds", url = "https://www.businessdailyafrica.com/bd/economy/state-ordered-to-pay-indian-firm-sh390m-in-mwache-dam-dispute-5466094", outlet = "Business Daily", title = "State ordered to pay Indian firm Sh390m in Mwache dam dispute", published = "2026-05-19" }]
+
+# The irrigation component: the headline alone (Nation refused the named client).
+[[cited]]
+number = 3
+items = [{ source = "outlet_feeds", url = "https://nation.africa/kenya/counties/kwale/world-bank-cancels-major-mwache-dam-irrigation-project--5069830", outlet = "Nation", title = "World Bank cancels major Mwache Dam irrigation project over high operational costs", published = "" }]
+
+# Works finishing: the main structure and the impoundment date.
+[[cited]]
+number = 4
+items = [
+  { source = "outlet_feeds", url = "https://citizen.digital/article/mwache-dam-enters-final-construction-phase-as-main-structure-completed-n389602", outlet = "Citizen Digital", title = "Mwache Dam enters final construction phase as main structure completed", published = "2026-09-04" },
+  { source = "outlet_feeds", url = "https://www.kwscrp.org/post/1f0494be", outlet = "KWSCRP (Mwache Dam Project Management Unit)", title = "MWACHE DAM PROJECT SET FOR 1ST OCTOBER 2026 IMPOUNDMENT", published = "2026-08-06" },
+]
+
+# Compensation, the agency's side, and the resettled families' own account on the project's site.
+[[cited]]
+number = 5
+items = [
+  { source = "outlet_feeds", url = "https://www.kwscrp.org/post/over-ksh-3-4b-paid-so-far-to-compensate-project-affected-personsin-the-mwache-dam-project", outlet = "KWSCRP (Mwache Dam Project Management Unit)", title = "Over Ksh 3.4B Paid So Far to Compensate Project Affected Persons in the Mwache Dam Project", published = "2026-04-02" },
+  { source = "outlet_feeds", url = "https://www.kwscrp.org/post/a-new-home-a-lost-heritage-our-experiences-with-resettlement-at-the-mwache-dam-project", outlet = "KWSCRP (Mwache Dam Project Management Unit)", title = "A New Home, a Lost Heritage: Our Experiences with Resettlement at the Mwache Dam Project", published = "2026-10-26" },
+]
+
+# The livelihood restoration plan's inputs and their procurement, at the World Bank's support mission.
+[[cited]]
+number = 6
+items = [{ source = "outlet_feeds", url = "https://www.kwscrp.org/post/c9a1c3b0", outlet = "KWSCRP (Mwache Dam Project Management Unit)", title = "Mwache Dam Project: World Bank Mission day 3 – LRP Discussions", published = "2026-08-28" }]
+
+# The 90 percent mark, as the Cabinet Secretary and the Principal Secretary gave it.
+[[cited]]
+number = 7
+items = [
+  { source = "outlet_feeds", url = "https://peopledaily.digital/news/cs-eric-mugaa-says-mwache-dam-is-now-90-complete", outlet = "People Daily", title = "CS Eric Mugaa says Mwache Dam is now 90% complete", published = "2026-08-14" },
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/sh20b-mwache-multipurpose-dam-project-at-90pc-completion/", outlet = "Kenya News Agency", title = "Sh20B Mwache multipurpose dam project at 90pc completion", published = "2026-08-19" },
+]
+
+# Works restarting at pace once the money was aligned.
+[[cited]]
+number = 8
+items = [{ source = "outlet_feeds", url = "https://www.kenyanews.go.ke/govt-fast-tracks-mwache-dam-construction-targets-october-for-water-damming/", outlet = "Kenya News Agency", title = "Govt fast-tracks Mwache dam construction, targets October for water damming", published = "2026-06-15" }]
+
+# The state of service: water reaches homes only once the treatment works and pipes are built.
+[[cited]]
+number = 9
+items = [
+  { source = "outlet_feeds", url = "https://www.kenyaengineer.co.ke/mwache-dam-enters-a-new-phase-in-kenyas-coast-water-security-plan/", outlet = "Kenya Engineer", title = "Mwache Dam enters a new phase in Kenya’s Coast water-security plan", published = "2026-09-11" },
+  { source = "outlet_feeds", url = "https://eastleighvoice.co.ke/news/390059/mwache-dam-set-to-transform-water-supply-in-mombasa-and-kwale-as-works-near-completion", outlet = "Eastleigh Voice", title = "Mwache Dam set to transform water supply in Mombasa and Kwale as works near completion", published = "" },
+]
+
+# Residents next to the works, and the dam's place among the stalled national dams, in 2025.
+[[cited]]
+number = 10
+items = [
+  { source = "outlet_feeds", url = "https://peopledaily.digital/news/residents-cry-foul-over-dam-activities-urge-speedy-completion", outlet = "People Daily", title = "Residents cry foul over dam activities, urge speedy completion", published = "2025-05-06" },
+  { source = "outlet_feeds", url = "https://www.standardmedia.co.ke/business/national/article/2001524463/no-major-dams-completed-cs-muuga-reveals", outlet = "The Standard", title = "No major dams completed, CS Muuga reveals", published = "2025-07-16" },
+]
+
+# Progress in 2025: concreting starts, the catchment land.
+[[cited]]
+number = 11
+items = [
+  { source = "outlet_feeds", url = "https://www.the-star.co.ke/counties/coast/2025-03-27-mwache-mega-dam-to-end-coast-water-woes-in-2027", outlet = "The Star", title = "Mwache mega dam to end Coast water woes in 2027", published = "2025-03-27" },
+  { source = "outlet_feeds", url = "https://www.standardmedia.co.ke/business/coast/article/2001521104/state-acquires-more-land-for-sh20-billion-mwache-dam-for-planting-trees", outlet = "The Standard", title = "State acquires more land for Sh20 billion Mwache dam for planting trees", published = "2025-06-07" },
+]
+
+# The project's notices of the last 180 days, by key (contract awards and invitations for bids), the most telling
+# first: the irrigation feasibility study, the livelihood restoration consultancy and inputs, a collapsed house
+# rebuilt, the environmental and social panel of experts. Read from search.worldbank.org's procnotices on November
+# 5, 2026; P176704 lists no notice of its own. The reader takes them from strata.gold.notice.
+[[cited]]
+number = 12
+items = [
+  { source = "procurement_notices", key = "OP00466898" },
+  { source = "procurement_notices", key = "OP00466908" },
+  { source = "procurement_notices", key = "OP00466467" },
+  { source = "procurement_notices", key = "OP00466913" },
+  { source = "procurement_notices", key = "OP00467083" },
+  { source = "procurement_notices", key = "OP00466489" },
+  { source = "procurement_notices", key = "OP00466486" },
+  { source = "procurement_notices", key = "OP00448728" },
+  { source = "procurement_notices", key = "OP00456239" },
+  { source = "procurement_notices", key = "OP00450937" },
+]
+
+# The related project records: the additional financing, and P513697.
+[[cited]]
+number = 13
+items = [
+  { source = "isr_narrative", record = "P176704", url = "https://projects.worldbank.org/en/projects-operations/project-detail/P176704" },
+  { source = "isr_narrative", record = "P513697", url = "https://projects.worldbank.org/en/projects-operations/project-detail/P513697" },
+]
+
+# The register names no case for P145559 or P176704, so the source stands with no item: the run's note says so.
+[[cited]]
+number = 14
+items = [{ source = "inspection_panel" }]
+
+# The Sentinel-2 grids of 2018 and 2025 around the project record's two locations.
+[[cited]]
+number = 15
+items = [
+  { source = "sentinel2_mosaic", key = "190106-2018-2025" },
+  { source = "sentinel2_mosaic", key = "186298-2018-2025" },
+]

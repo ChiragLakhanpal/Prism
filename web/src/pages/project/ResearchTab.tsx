@@ -53,6 +53,7 @@ import { address } from "../../lib/router";
 import { StreamError, streamEvents } from "../../lib/sse";
 import { useStore } from "../../lib/store";
 import { asOfOf, viewOf, withReadParams } from "../../lib/view";
+import { FieldPhotos } from "./FieldPhotos";
 import { ResearchPrint } from "./ResearchPrint";
 
 const words = copy.research;
@@ -307,6 +308,12 @@ function stepLines(steps: ResearchStep[]): Step[] {
     if (step.kind === "source") {
       const name = sourceWords(step.source, step.label);
       const count = step.items ?? 0;
+      if (step.stored_on && step.status === "done") {
+        const date = formatDate(step.stored_on);
+        const lines = words.steps.stored;
+        const done = count === 0 ? lines.none(name, date) : count === 1 ? lines.one(name, date) : lines.several(name, date, formatCount(count));
+        return { key: step.id, running: words.steps.source.running(name), done, state };
+      }
       const done =
         step.status === "not_reached" ? (
           <>
@@ -328,6 +335,10 @@ function stepLines(steps: ResearchStep[]): Step[] {
       const done = removed === 0 ? words.steps.check.none : removed === 1 ? words.steps.check.one : words.steps.check.several(formatCount(removed));
       return { key: step.id, running: words.steps.check.running, done, state };
     }
+    if (step.kind === "writing" && step.kept_from) {
+      const kept = words.steps.kept(formatDate(step.kept_from));
+      return { key: step.id, running: kept, done: kept, state };
+    }
     const line = step.kind === "facts" ? words.steps.facts : step.kind === "writing" ? words.steps.write : null;
     return { key: step.id, running: line?.running ?? step.label ?? step.id, done: line?.done ?? step.label ?? step.id, state };
   });
@@ -345,6 +356,8 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
   const before = useRef<unknown>(null);
   const answer = load.status === "ready" ? briefFrom(load.data) : null;
   const brief = answer?.status === "ready" ? answer : null;
+  // The demo's setting (ticket 152): the server writes briefs only from sources read ahead of time.
+  const storedOnly = load.status === "ready" && (load.data as { live_sources?: unknown } | null)?.live_sources === false;
 
   useEffect(() => {
     if (run.phase !== "reading") return;
@@ -452,7 +465,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
                     {words.again}
                   </Button>
                 </div>
-                {brief.read_on && <p className="mt-2 max-w-prose text-caption text-ink-muted">{words.readOn(formatDate(brief.read_on))}</p>}
+                {brief.read_on && <p className="mt-2 max-w-prose text-caption text-ink-muted">{(storedOnly ? words.readOnStored : words.readOn)(formatDate(brief.read_on))}</p>}
                 <div className="mt-8">
                   <BriefView brief={brief} />
                 </div>
@@ -465,7 +478,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
               </>
             ) : (
               <div data-research-none className="max-w-prose">
-                <p className="text-body text-ink">{words.none}</p>
+                <p className="text-body text-ink">{storedOnly ? words.notPrepared : words.none}</p>
                 <div className="mt-4">
                   <Button variant="primary" onClick={() => void start()}>
                     {words.run}
@@ -473,6 +486,7 @@ export function ResearchTab({ pid, project }: { pid: string; project?: { name: s
                 </div>
               </div>
             )}
+            <FieldPhotos pid={pid} />
           </>
         )}
       </EightColumns>

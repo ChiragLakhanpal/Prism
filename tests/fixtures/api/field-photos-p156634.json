@@ -1,0 +1,33 @@
+{
+  "project_id": "P156634",
+  "photos": [
+    {
+      "photo_id": "fph-000000000001",
+      "project_id": "P156634",
+      "file_name": "intake.jpg",
+      "caption": "The new intake pipe is laid along the river bank, and the trench beside it is still open.",
+      "taken_on": "2026-10-14",
+      "place": "Baricho Sub-Location",
+      "latitude": -3.1,
+      "longitude": 39.783333,
+      "uploaded_at": "2026-11-05T10:30:00Z",
+      "uploader": {
+        "name": "Ana Example",
+        "you": true
+      },
+      "url": "/api/projects/P156634/field-photos/fph-000000000001"
+    }
+  ],
+  "may_add": true,
+  "preview": false,
+  "limits": {
+    "accept": [
+      ".jpg",
+      ".jpeg",
+      ".png"
+    ],
+    "max_size_bytes": 10485760,
+    "max_per_project": 20,
+    "max_caption": 500
+  }
+}

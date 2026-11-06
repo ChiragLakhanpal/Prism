@@ -34,6 +34,8 @@ async function open(page: Page, { width = 1440, research, extra = {} }: { width?
     "/api/freshness": { body: await recorded("freshness.json") },
     "/api/projects/P156634": { body: await recorded("project-p156634.json") },
     [ROUTE]: research ?? { body: await recorded("research-p156634.json") },
+    // The team's field photos under the brief (ticket 150; web/tests/field-photos.spec.ts): none yet.
+    "/api/projects/P156634/field-photos": { body: await recorded("field-photos-p156634-none.json") },
     "/api/evidence": { body: await recorded("evidence-research-item-p156634-star.json") },
     "/api/evidence/opened": { body: '{"opened":[],"recorded":true}' },
     ...extra,
@@ -220,6 +222,56 @@ test("Research this project streams the run's steps; a source not reached is one
   await expect(tab(page).locator("[data-alert=error]")).toHaveCount(0);
   expect(asked).toEqual(["POST", "GET"]);
   expect(unrecorded).toEqual([]);
+});
+
+// ── The demo's setting (ticket 152): research.live_sources false, briefs written only from stored runs ──────────
+
+const demoSetting = (body: string) => JSON.stringify({ ...JSON.parse(body), live_sources: false });
+
+test("with the demo's setting, the tab says no brief has been prepared, each source's step says the day it was read, and the buttons keep their live names", async ({ page }) => {
+  const sse = await recorded("research-p156634.sse");
+  const stored = demoSetting(await recorded("research-p156634.json"));
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await open(page, { research: { body: demoSetting(await recorded("research-p156634-none.json")) } });
+  await expect(tab(page)).toHaveAttribute("data-research", "none");
+  await expect(tab(page)).toContainText(words.notPrepared);
+  await expect(tab(page)).not.toContainText(words.none);
+  await page.route(`**${ROUTE}`, async (route: Route) => {
+    if (route.request().method() === "POST") return route.fulfill({ status: 200, contentType: "text/event-stream", body: sse });
+    await held;
+    return route.fulfill({ status: 200, contentType: "application/json", body: stored });
+  });
+  await tab(page).getByRole("button", { name: words.run }).click();
+
+  // Each source the stored run reached says the day it was read.
+  const reached = streamSteps(sse).filter((step) => step.kind === "source" && step.status === "done");
+  expect(reached.length, "the recording has sources from the stored run").toBeGreaterThan(0);
+  const lines = tab(page).locator("[data-steps] li[data-step]");
+  await expect(lines.filter({ hasText: "on November 5, 2026 and kept" })).toHaveCount(reached.length);
+
+  release();
+  await expect(tab(page)).toHaveAttribute("data-research", "ready");
+  await expect(tab(page).getByRole("button", { name: words.again })).toBeVisible();
+  await expect(tab(page)).toContainText(words.readOnStored("November 5, 2026"));
+});
+
+test("with the demo's setting, a writer that fails keeps the stored brief with one line, and no error", async ({ page }) => {
+  const stored = demoSetting(await recorded("research-p156634.json"));
+  await open(page, { research: { body: stored } });
+  const kept = 'event: step\ndata: {"id": "facts", "kind": "facts", "status": "done"}\n\nevent: step\ndata: {"id": "writing", "kind": "writing", "status": "running"}\n\nevent: step\ndata: {"id": "writing", "kind": "writing", "status": "done", "kept_from": "2026-11-05", "label": "Writing: kept the brief of November 5, 2026"}\n\nevent: done\ndata: {"run_id": "research-0002", "status": "kept"}\n\n';
+  let release = () => {};
+  const held = new Promise<void>((resolve) => (release = resolve));
+  await page.route(`**${ROUTE}`, async (route: Route) => {
+    if (route.request().method() === "POST") return route.fulfill({ status: 200, contentType: "text/event-stream", body: kept });
+    await held;
+    return route.fulfill({ status: 200, contentType: "application/json", body: stored });
+  });
+  await tab(page).getByRole("button", { name: words.again }).click();
+  await expect(tab(page).locator("[data-steps] li[data-step]").last()).toHaveText(words.steps.kept("November 5, 2026"));
+  release();
+  await expect(tab(page)).toHaveAttribute("data-research", "ready");
+  await expect(tab(page).locator("[data-alert=error]")).toHaveCount(0);
 });
 
 test("a run that stops with an error code says why in the code's words, with Try again", async ({ page }) => {

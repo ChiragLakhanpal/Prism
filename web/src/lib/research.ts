@@ -91,6 +91,9 @@ export const FEEDS: Record<string, keyof Sections> = {
   social: "voices",
   satellite: "by_site",
   field_photo: "by_site",
+  site_condition: "by_site",
+  agency_statement: "developments",
+  sanctions: "questions",
 };
 
 // The developments on one printed sheet: the sample's first sheet held eleven (build5.py).
@@ -294,6 +297,10 @@ export type ResearchStep = Omit<StepEvent, "kind" | "status"> & {
   label?: string;
   items?: number;
   note?: string | null;
+  // The day the stored run read the sources, when the brief is written from it (ticket 152).
+  stored_on?: string | null;
+  // The day of the brief kept when the writer or the judge failed in the demo's setting (ticket 152).
+  kept_from?: string | null;
   kept?: number;
   removed?: number;
 };

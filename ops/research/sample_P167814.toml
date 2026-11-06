@@ -1,0 +1,156 @@
+# The sources a pre-seeded deep research brief for P167814, the Second Kenya Informal Settlements Improvement Project
+# (KISIP 2), cites, as the demo seed loads them (ops/research/seed.py, tickets 147 and 153). Researched by hand on
+# November 5, 2026, in the shape of sample_P156634.toml.
+#
+# Each [[cited]] is one numbered source, with the items that stand for it, the most useful to a procurement specialist
+# first. An item names its registry source (config/research.toml) and either the key a reader gives it (key, for the
+# readers the seed runs: the notices, the Inspection Panel, the Sentinel-2 grids) or an article's address (url), whose
+# page was recorded on November 5, 2026 with the named client (prism-research/0.1) under
+# data/fixture/recorded/research/<source>/, in ops/research/record.py's naming and body. For an article, outlet, title
+# and published are what the outlet prints; published is empty when the outlet prints no date. A county's own news
+# page is an item under outlet_feeds with the county government as its outlet, so the brief can give the agency's side.
+#
+# What answered the named client that day: every page cited here answered 200 with its article. None answered 403 or
+# a bot check. Left out, so no item stands on a page Prism could not read: Nairobi City County's own notice of its
+# warnings to the KISIP contractors (nairobi.go.ke answered 500); The Brief's story on Bungoma (thebrief.co.ke could
+# not be reached: its certificate names another host); The Star's story of December 3, 2025 on the Housing PS asking
+# the EACC to investigate Nyamira and Kajiado, and The Standard's of May 21, 2026 on the Sh27.8 billion programme (both
+# answered 200, but their pages hold no article text a reader can take, only other headlines); Meru County's page on
+# the facilitation of people affected by road works (its paragraphs carry the county's contact details); and the State
+# Department for Housing and Urban Development's site, which answered with its home page and no KISIP news.
+#
+# The fixture database holds no ISR passage for P167814, so this file cites none; on the workspace, ticket 152's seed
+# reads the project's ISR passages and notices from the warehouse. The fixture holds no notice for P167814 either, so
+# the notices cited by key below load only where the engine holds them.
+#
+# The project record (search.worldbank.org/api/v3/projects, fl=*, recorded under research/isr_narrative/) lists ten
+# geo_locations, Kayole among them, so the Sentinel-2 grids below use its locations and this file needs no sites list.
+
+project = "P167814"
+as_of = 2026-11-05
+note = "The items were read on November 5, 2026, from the recordings of that day; GDELT refused calls from this network, so the press items come from the outlets' and the counties' own pages."
+
+# Nairobi, Lot 1 (Kayole Soweto, Kahawa Soweto, Embakasi, Matopeni) at 27.3 per cent against 98, a non-performance
+# notice, a termination notice for the Majengo, Huruma and Mathare works, and five months of workers' wage arrears.
+[[cited]]
+number = 1
+items = [
+  { source = "outlet_feeds", url = "https://capitalfm.africa/city-hall-issues-ultimatum-to-underperforming-kisip-contractors/", outlet = "Capital FM", title = "City Hall Issues Ultimatum to Underperforming KISIP Contractors", published = "2026-01-29" },
+  { source = "outlet_feeds", url = "https://radiogeneration.co.ke/news/69137/nairobi-city-county-issues-ultimatum-to-non-performing-kisip-contractors", outlet = "Radio Generation", title = "Nairobi City County issues ultimatum to non-performing KISIP contractors", published = "2026-01-29" },
+]
+
+# Nyamira: the Treasury suspended the county's KISIP and NAVCDP grants over about Sh22 million, after the Housing PS
+# asked the EACC to investigate Nyamira and Kajiado; the governor's reply; residents protest.
+[[cited]]
+number = 2
+items = [
+  { source = "outlet_feeds", url = "https://www.standardmedia.co.ke/counties/article/2001539052/nyamira-kajiado-counties-risk-losing-donor-funding-over-questionable-expenditure", outlet = "The Standard", title = "Nyamira, Kajiado counties risk losing donor funding over questionable expenditure", published = "2026-01-21" },
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/nyamira-residents-protest-over-withdrawal-of-world-bank-funds/", outlet = "Kenya News Agency", title = "Nyamira residents protest over withdrawal of world bank funds", published = "2026-01-28" },
+]
+
+# The State Department orders a value-for-money assessment, a beneficiary assessment and an end-of-programme evaluation.
+[[cited]]
+number = 3
+items = [{ source = "outlet_feeds", url = "https://www.dawan.africa/news/housing-ministry-orders-review-of-ksh21-billion-world-bank-backed-kisip2-project", outlet = "Dawan Africa", title = "Housing Ministry Orders Review of KSh21 Billion World Bank-Backed KISIP2 Project", published = "2026-08-18" }]
+
+# Nairobi's nine settlements: the county targets the end of 2026 for its key works.
+[[cited]]
+number = 4
+items = [{ source = "outlet_feeds", url = "https://capitalfm.africa/nairobi-county-speeds-up-slum-upgrading-ahead-of-dec-kisip-2-deadline/", outlet = "Capital FM", title = "Nairobi County Speeds Up Slum Upgrading Ahead of Dec KISIP 2 Deadline", published = "2026-10-10" }]
+
+# Kisumu's eleven settlements: what is built, encroachment on roads and drainage in Kibuye, and Lot 2 in Muhoroni.
+[[cited]]
+number = 5
+items = [
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/residents-urged-to-safeguard-kisip-ii-development-projects/", outlet = "Kenya News Agency", title = "Residents urged to safeguard KISIP II development projects", published = "2026-07-29" },
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/kisip-road-projects-progress-well-in-kisumu-county/", outlet = "Kenya News Agency", title = "KISIP Road projects progress well in Kisumu County", published = "2026-01-31" },
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/project-transforms-kisumus-slum/", outlet = "Kenya News Agency", title = "Project Transforms Kisumu’s slum", published = "2026-08-03" },
+]
+
+# Kisumu County's own pages: the Bandani roads and the wayleave agreement for the Pundo-NITA road, the World Bank and
+# AFD mission on safeguards, and the Kibuye market works.
+[[cited]]
+number = 6
+items = [
+  { source = "outlet_feeds", url = "https://www.kisumu.go.ke/kisumu-bandani-breakthrough-long-awaited-roads-set-to-open-up-the-settlement-to-the-city/", outlet = "County Government of Kisumu", title = "Kisumu Bandani Breakthrough: Long- Awaited Roads Set to Open Up the Settlement to The City", published = "2025-11-03" },
+  { source = "outlet_feeds", url = "https://www.kisumu.go.ke/kisumu-governor-nyongo-meets-with-world-bank-and-afd-teams-on-kisip-2-project/", outlet = "County Government of Kisumu", title = "Governor Nyong'o Meets with World Bank and AfD Teams on KISIP 2 Project", published = "2025-09-24" },
+  { source = "outlet_feeds", url = "https://www.kisumu.go.ke/kisumu-governor-commends-progress-on-kisip-2-project/", outlet = "County Government of Kisumu", title = "Kisumu Governor Commends Progress on KISIP 2 Project", published = "2025-09-29" },
+]
+
+# Misri, Limuru (Kiambu): residents ask, through the grievance committee, for damaged water pipes to be reconnected and
+# lateral sewer connections made.
+[[cited]]
+number = 7
+items = [{ source = "outlet_feeds", url = "https://www.kenyanews.go.ke/misri-settlement-roads-take-shape-as-kisip-project-advances/", outlet = "Kenya News Agency", title = "Misri settlement roads take shape as KISIP project advances", published = "2025-11-10" }]
+
+# Uasin Gishu County's own page: the assembly committee's inspection in Kapsaos, Huruma and Kiplombe, and two months
+# of water disconnections during the works. The page prints no date.
+[[cited]]
+number = 8
+items = [{ source = "outlet_feeds", url = "https://uasingishu.go.ke/index.php/chief-officer-urban-development-and-county-assembly-committee-inspect-kisip-2-projects", outlet = "County Government of Uasin Gishu", title = "CHIEF OFFICER URBAN DEVELOPMENT AND COUNTY ASSEMBLY COMMITTEE INSPECT KISIP 2 PROJECTS", published = "" }]
+
+# Trans Nzoia County's own page: properties affected in Shantii, and support promised to the people the works affect.
+# The page prints December 19, 2024 under its headline.
+[[cited]]
+number = 9
+items = [{ source = "outlet_feeds", url = "https://transnzoia.go.ke/residents-of-shantii-informal-settlement-assured-of-support-amid-kisip-2-project-disruptions/", outlet = "County Government of Trans Nzoia", title = "Residents of Shantii Informal Settlement Assured of Support Amid KISIP 2 Project Disruptions", published = "2024-12-19" }]
+
+# A World Bank delegation reviews KISIP 2 and KUSP 2 works with Kiambu's governor.
+[[cited]]
+number = 10
+items = [{ source = "outlet_feeds", url = "https://www.kenyanews.go.ke/bank-reviews-urban-infrastructure-projects-in-kiambu/", outlet = "Kenya News Agency", title = "Bank reviews urban infrastructure projects in Kiambu", published = "2026-10-16" }]
+
+# The state of service after the works: roads, lights and titles in Kiambu, Embu, Kirinyaga and Nyeri, and land values.
+[[cited]]
+number = 11
+items = [
+  { source = "outlet_feeds", url = "https://www.the-star.co.ke/news/2026-05-17-why-land-prices-are-rising-in-informal-settlements", outlet = "The Star", title = "Why land prices are rising in informal settlements", published = "2026-05-17" },
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/government-steps-up-informal-settlements-upgrade-with-title-deeds-plan/", outlet = "Kenya News Agency", title = "Government steps up informal settlements upgrade with Title Deeds Plan", published = "2026-04-28" },
+]
+
+# Other counties' works: Nyeri, Homa Bay, Mombasa and Nairobi's public spaces.
+[[cited]]
+number = 12
+items = [
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/kahiga-hails-kisip-as-game-changer-in-transformative-development/", outlet = "Kenya News Agency", title = "Kahiga hails KISIP as game changer in transformative development", published = "2026-01-21" },
+  { source = "outlet_feeds", url = "https://www.kenyanews.go.ke/mega-project-transforms-homa-bay/", outlet = "Kenya News Agency", title = "Mega project transforms Homa Bay", published = "2025-09-06" },
+  { source = "outlet_feeds", url = "https://www.standardmedia.co.ke/real-estate/article/2001543854/mombasa-slums-get-facelift-in-new-world-bank-deal", outlet = "The Standard", title = "Mombasa slums get facelift in new World Bank deal", published = "2026-03-26" },
+  { source = "outlet_feeds", url = "https://www.tv47.digital/kahawa-and-kayole-rise-new-public-spaces-bring-dignity-to-nairobis-informal-settlements-111815", outlet = "TV47", title = "Sakaja champions urban renewal: Public spaces bring new life to Nairobi’s informal settlements", published = "2025-07-26" },
+]
+
+# The project's contract awards of the last 180 days, from the notices API (search.worldbank.org/api/v2/procnotices,
+# read on November 5, 2026): the safeguards, procurement and land surveying consultants, the community development
+# plans' materials and equipment in Kilifi North and Malindi, the study of KISIP 1's impact, and the mapping of
+# settlements in eleven counties. The request for expressions of interest for the value-for-money assessment
+# (OP00462807, August 17, 2026) is not a type the reader keeps, so source 3 stands for it.
+[[cited]]
+number = 13
+items = [
+  { source = "procurement_notices", key = "OP00477953" },
+  { source = "procurement_notices", key = "OP00475239" },
+  { source = "procurement_notices", key = "OP00475167" },
+  { source = "procurement_notices", key = "OP00468846" },
+  { source = "procurement_notices", key = "OP00468118" },
+  { source = "procurement_notices", key = "OP00466855" },
+  { source = "procurement_notices", key = "OP00462654" },
+  { source = "procurement_notices", key = "OP00458390" },
+]
+
+# The first phase, KISIP 1, whose impact the study of OP00466855 measures.
+[[cited]]
+number = 14
+items = [{ source = "isr_narrative", record = "P113542", url = "https://projects.worldbank.org/en/projects-operations/project-detail/P113542" }]
+
+# The register names no case for P167814, so the source stands with no item: the run's note for it says so.
+[[cited]]
+number = 15
+items = [{ source = "inspection_panel" }]
+
+# The 2021 and 2025 mosaics around two of the record's locations where the sources above report works: Kayole (Lot 1
+# in Kayole Soweto, source 1) and Eldoret (Kapsaos, Huruma and Kiplombe, source 8).
+[[cited]]
+number = 16
+items = [
+  { source = "sentinel2_mosaic", key = "8477663-2021-2025" },
+  { source = "sentinel2_mosaic", key = "198629-2021-2025" },
+]

@@ -111,7 +111,7 @@ import dayone  # noqa: E402
 import workspace_state  # noqa: E402  (ops/bundle/workspace_state.py, ticket 81)
 from workspace_env import WorkspaceEnvError, load_workspace_env  # noqa: E402
 
-from strata.config import Roles, load_roles  # noqa: E402
+from strata.config import Roles, load_field_photos, load_roles  # noqa: E402
 from strata.lakehouse.masks import FILTERED, MASK, MASKED, row_filter  # noqa: E402
 
 # The live App's description is how a deploy knows the app is this repo's, so it keeps the old name (ADR 0006).
@@ -248,16 +248,21 @@ def grants(principal: str) -> list[str]:
     # src/strata/agent/runs.py writes beside the run row. viewer_settings (ticket 42): the language of answers and
     # drafts each viewer chose, kept as the app. research_runs, research_items and research_briefs (tickets 147 and 148):
     # each deep research run, the items it read and the brief written from it, which the run and ops/research/seed.py
-    # write as the app. ops/app/tests/test_app_grants.py reads every table the app writes as itself from the code and
-    # fails when one is missing here.
+    # write as the app. field_photos (ticket 150): each field photo a World Bank staff viewer added, kept as the app and
+    # read only through its team rule, with its file in the volume config/uploads.toml names, which the app reads and
+    # writes. ops/app/tests/test_app_grants.py reads every table the app writes as itself from the code and fails when
+    # one is missing here.
     tables = ("usage_events", "agent_runs", "tool_calls", "tool_call_reads", "answer_removals", "evidence_opened",
               "drafts", "draft_states", "draft_exports",
               "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "uploads",
               "upload_rows", "lesson_visits", "draft_lesson_choices", "start_here_choices", "seeded_examples",
-              "example_lesson_versions", "viewer_settings", "research_runs", "research_items", "research_briefs")
+              "example_lesson_versions", "viewer_settings", "research_runs", "research_items", "research_briefs",
+              "field_photos")
+    volume = ".".join(load_field_photos().volume.removeprefix("/Volumes/").split("/")[:3])
     return [*[f"GRANT {privilege.replace('_', ' ')} ON {kind.upper()} {name} TO `{principal}`"
               for kind, name, privilege in ACCESS],
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
+            f"GRANT READ VOLUME, WRITE VOLUME ON VOLUME {volume} TO `{principal}`",
             f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{principal}`",
             f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{principal}`",
             f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{principal}`",

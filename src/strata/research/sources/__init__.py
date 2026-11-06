@@ -8,8 +8,10 @@ takes the same arguments. A source the registry lists as not enabled gives no it
 429, a bot check page, another status on the call that decides the result) or a host Prism cannot reach gives
 reached False, the status and a one-sentence note, and never an item: read() drops whatever the reader held.
 
-SourceResult is {source, items, reached, status, note}: status is the decisive answer's HTTP status as text ("200",
-"429"), "bot check", "unreachable", or "read" for a source read from the lakehouse; note is one sentence.
+SourceResult is {source, items, reached, status, note, counts}: status is the decisive answer's HTTP status as text
+("200", "429"), "bot check", "unreachable", or "read" for a source read from the lakehouse; note is one sentence;
+counts holds the numbers a reader counted that its items alone do not give (the sanctions reader's suppliers_checked
+and suppliers_sanctioned, ticket 154), which the run keeps in the source's note.
 """
 
 from __future__ import annotations
@@ -38,10 +40,11 @@ class SourceResult:
     reached: bool = True
     status: str = READ
     note: str = ""
+    counts: dict = field(default_factory=dict)
 
     def as_dict(self) -> dict:
         return {"source": self.source, "items": self.items, "reached": self.reached, "status": self.status,
-                "note": self.note}
+                "note": self.note, "counts": self.counts}
 
 
 Reader = Callable[[ResearchSource, ProjectFacts, Fetch, Engine | None, dt.datetime], SourceResult]
@@ -96,7 +99,7 @@ def read(source: ResearchSource, project: ProjectFacts, fetch: Fetch, engine: En
         return SourceResult(source.key, [], False, "unreadable",
                             f"Prism could not read {source.label} from the lakehouse ({str(error)[:160]}).")
     if not result.reached:
-        result.items = []
+        result.items, result.counts = [], {}
     for item in result.items:
         missing = [key for key in ITEM_KEYS if key not in item]
         if missing:

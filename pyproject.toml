@@ -19,6 +19,7 @@ dependencies = [
     "xgboost-cpu==3.4.1; sys_platform == 'linux'",
     "numpy>=2.3",
     "py3langid==0.3.0",
+    "pillow==13.0.0",
 ]
 
 [dependency-groups]

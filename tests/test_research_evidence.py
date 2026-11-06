@@ -33,7 +33,7 @@ def test_a_run_s_items_come_back_as_rows_in_the_one_item_shape(seeded, fixture_d
     result = call(seeded)
 
     assert result["abstention"] is None
-    assert len(result["rows"]) == len(seed_run(fixture_db)[1]) == 29
+    assert len(result["rows"]) == len(seed_run(fixture_db)[1]) == 60
     kipevu = next(row for row in result["rows"] if row["title"].startswith("Sh280m Kipevu"))
     assert kipevu["evidence_id"].startswith("strata.research.item:P156634/outlet_feeds/")
     assert kipevu["url"].startswith("https://www.the-star.co.ke/")
@@ -49,8 +49,9 @@ def test_the_summary_counts_the_items_and_the_awards_before_closing(seeded):
     summary = call(seeded)["summary"]
 
     assert summary["evidence_id"] == "strata.tools.research_evidence:P156634@2026-11-05"
-    assert summary["items_total"] == 29
-    assert summary["counts_by_kind"] == {"bank_report": 7, "news": 14, "procurement": 7, "satellite": 1}
+    assert summary["items_total"] == 60
+    assert summary["counts_by_kind"] == {"agency_statement": 28, "bank_report": 7, "news": 14, "procurement": 7,
+                                         "satellite": 1, "site_condition": 3}
     # P156634 closes on October 31, 2026. Its contract awards from July 13 (110 days before) to closing: July 15 and
     # 20, September 4 and 25, October 12 and 13. Two were by direct selection, July 20 and September 25.
     assert summary["closing_date"] == "2026-10-31"
@@ -59,19 +60,37 @@ def test_the_summary_counts_the_items_and_the_awards_before_closing(seeded):
     assert summary["direct_awards_in_window"] == 2
     assert summary["last_award_date"] == "2026-10-13"
     assert summary["days_from_last_award_to_closing"] == 18
-    assert [source["key"] for source in summary["sources_not_reached"]] == ["gdelt_news"]
+    assert [source["key"] for source in summary["sources_not_reached"]] == ["gdelt_news", "sanctions"]
     assert summary["sources_not_reached"][0]["note"] == "GDELT limited calls from this network."
     # Each source's label and kind come from the registry (config/research.toml), so the tab says where each fed.
     assert (summary["sources_not_reached"][0]["label"], summary["sources_not_reached"][0]["kind"]) == ("GDELT", "news")
     assert {source["key"] for source in summary["sources_reached"]} == {
-        "isr_narrative", "procurement_notices", "outlet_feeds", "inspection_panel", "sentinel2_mosaic", "mastodon"}
+        "isr_narrative", "procurement_notices", "outlet_feeds", "inspection_panel", "sentinel2_mosaic", "mastodon",
+        "site_conditions", "agency_statements"}
+    # The seed found no copy of the sanctions list, so the check did not run and states no count (ticket 154).
+    assert (summary["suppliers_checked"], summary["suppliers_sanctioned"]) == (None, None)
+    assert summary["sources_not_reached"][1]["note"] == ("The sanctions check did not run: the list needs a download "
+                                                         "from the page.")
+
+
+def test_a_notice_s_own_dates_come_back_as_fields_of_its_row(seeded):
+    """Ticket 155: the first live brief lost six developments whose award dates lived only in a notice's words."""
+    rows = {row["evidence_id"].rsplit("/", 1)[1]: row for row in call(seeded)["rows"]}
+
+    # The Sarman - Tarbaj award: published October 13, 2026; its words say "Date Notification of Award Issued
+    # (YYYY/MM/DD) 2026/06/22"; strata.gold.notice holds no signing date for it.
+    assert rows["OP00474946"]["notice"] == {"notice_date": "2026-10-13", "award_notification_date": "2026-06-22"}
+    # The invitation for bids for the same works carries its submission date.
+    assert rows["OP00474700"]["notice"] == {"notice_date": "2026-10-12", "submission_date": "2026-10-12"}
+    kipevu = next(row for row in rows.values() if row["title"].startswith("Sh280m Kipevu"))
+    assert kipevu["notice"] is None
 
 
 def test_the_coverage_line_says_which_source_was_not_reached(seeded):
     coverage = call(seeded)["coverage"]
 
-    assert coverage["matched"] == coverage["used"] == 29
-    assert coverage["not_used"] == [{"reason": "not_reached", "count": 1, "sources": ["gdelt_news"]}]
+    assert coverage["matched"] == coverage["used"] == 60
+    assert coverage["not_used"] == [{"reason": "not_reached", "count": 2, "sources": ["gdelt_news", "sanctions"]}]
 
 
 def test_an_item_made_public_after_the_date_is_left_out_and_counted(seeded):

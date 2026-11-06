@@ -5,7 +5,8 @@
 #
 # Each [sources.<key>] has:
 #   label         the source's name, as a person reads it
-#   kind          bank_report, procurement, news, complaint, social, satellite or field_photo
+#   kind          bank_report, procurement, news, complaint, social, satellite, field_photo, site_condition,
+#                 agency_statement or sanctions
 #   endpoint      where the reader asks: an address, or the table a reader with no network reads
 #   license       the attribution line, from the source's own terms
 #   pace_seconds  the least time between two calls to the source
@@ -15,6 +16,7 @@
 #   enabled       false for a source Prism does not read, with the reason in limitations
 # and may have:
 #   [[sources.<key>.feeds]]   for outlet_feeds: each outlet's name and its feed's address. A feed is one entry.
+#   [[sources.<key>.pages]]   for agency_statements: each agency's short name and its news page's address.
 #   [sources.<key>.settings]  what the reader alone reads, such as a window in days or a tile zoom
 #
 # The [client] table names the agent every call sends and the signs of a bot check page. [press_names] lists the
@@ -187,6 +189,77 @@ zoom = 15
 years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 viewer = "https://s2maps.eu"
 
+[sources.site_conditions]
+label = "GDACS disaster alerts"
+kind = "site_condition"
+endpoint = "https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH?country={country}&fromDate={from_date}&toDate={to_date}"
+license = "GDACS, the Global Disaster Alert and Coordination System of the European Commission and the United Nations (gdacs.org), read for reference."
+pace_seconds = 2
+cache_hours = 24
+reader = "strata.research.sources.site_conditions:read"
+limitations = [
+  "GDACS alerts on a disaster across a country or a region, so an alert says the country was affected, not that a site was.",
+  "GDACS lists floods, droughts, cyclones, earthquakes, volcanoes and wildfires, not a local road closure or a strike.",
+]
+enabled = true
+
+[sources.site_conditions.settings]
+# The window asked starts at the project's approval date, or this many years before the run when that is later.
+years_back = 2
+
+[sources.agency_statements]
+label = "The implementing agencies' own news pages"
+kind = "agency_statement"
+endpoint = "the pages listed below"
+license = "Each statement belongs to its agency; Prism keeps its words with a link to the page, for reference."
+pace_seconds = 2
+cache_hours = 12
+reader = "strata.research.sources.agency_statements:read"
+limitations = [
+  "An agency's page says what the agency chose to publish: its side, not a check of the works.",
+  "Prism reads only the agencies listed here; an agency whose page did not answer Prism's named client is not read.",
+]
+enabled = true
+
+[sources.agency_statements.settings]
+# The most entries one run opens from their own pages.
+max_entries = 12
+
+# Probed on November 5, 2026 with Prism's named client: NWWDA, CWWDA and the Kwale water company answered; KeNHA's
+# news page answered but lists no entry outside its scripts; the Mombasa water company's site could not be reached.
+[[sources.agency_statements.pages]]
+agency = "NWWDA"
+url = "https://nwwda.go.ke/index.php/news-events"
+
+[[sources.agency_statements.pages]]
+agency = "CWWDA"
+url = "https://cwwda.go.ke/news"
+
+[[sources.agency_statements.pages]]
+agency = "KWAWASCO"
+url = "https://kwalewater.co.ke/"
+
+[sources.sanctions]
+label = "World Bank listing of ineligible firms and individuals"
+kind = "sanctions"
+endpoint = "https://www.worldbank.org/en/projects-operations/procurement/debarred-firms"
+license = "The World Bank: Listing of Ineligible Firms and Individuals (worldbank.org), public, read for reference."
+pace_seconds = 0
+cache_hours = 0
+reader = "strata.research.sources.sanctions:read"
+limitations = [
+  "The list's API needs a subscription key, so Prism reads a copy downloaded from the page's export, as of the copy's date.",
+  "A name on the list matches a supplier only by its exact name or its name without case, punctuation and legal endings, so a firm that trades under another name is not found.",
+]
+enabled = true
+
+[sources.sanctions.settings]
+# Where the downloaded copies are kept, as <yyyy-mm-dd>.xlsx or .csv; the newest on or before the run's day is read.
+folder = "data/research/sanctions"
+# The endings a normalised name leaves out.
+legal_endings = ["limited", "ltd", "co", "company", "corp", "corporation", "inc", "incorporated", "llc", "plc", "sa",
+                 "s a", "srl", "s r l", "gmbh", "ag", "bv", "nv", "pvt", "private", "pty", "sarl", "spa", "jv"]
+
 [sources.reddit]
 label = "Reddit"
 kind = "social"
@@ -240,4 +313,26 @@ pace_seconds = 2
 cache_hours = 24
 reader = "strata.research.sources:not_connected"
 limitations = ["The photos Commons holds near the project's sites do not show the works, so Prism does not read them."]
+enabled = false
+
+[sources.reliefweb]
+label = "ReliefWeb"
+kind = "site_condition"
+endpoint = "https://api.reliefweb.int/v2/reports"
+license = "ReliefWeb's terms."
+pace_seconds = 2
+cache_hours = 24
+reader = "strata.research.sources:not_connected"
+limitations = ["ReliefWeb's API answered 403 on November 5, 2026, because it needs an approved appname, which Prism does not hold."]
+enabled = false
+
+[sources.tender_disputes]
+label = "Public Procurement Administrative Review Board decisions"
+kind = "procurement"
+endpoint = "https://ppra.go.ke/review-board-decisions/"
+license = "Kenya Law's and PPRA's terms."
+pace_seconds = 2
+cache_hours = 24
+reader = "strata.research.sources:not_connected"
+limitations = ["Kenya Law's and PPRA's pages did not answer Prism's named client on November 5, 2026, so Prism does not read the Review Board's decisions."]
 enabled = false
