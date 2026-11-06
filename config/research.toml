@@ -169,6 +169,22 @@ url = "https://www.dawan.africa/rss.xml"
 outlet = "Big3Africa"
 url = "https://big3africa.org/feed/"
 
+[sources.inspection_panel]
+label = "World Bank Inspection Panel"
+kind = "complaint"
+endpoint = "https://www.inspectionpanel.org/panel-cases/data"
+license = "World Bank Inspection Panel, case register (inspectionpanel.org), read for reference."
+pace_seconds = 2
+cache_hours = 24
+reader = "strata.research.sources.inspection_panel:read"
+limitations = [
+  "The register lists the cases the Panel registered, so a complaint made only to the project's own grievance mechanism is not in it.",
+]
+enabled = true
+
+[sources.inspection_panel.settings]
+case_page = "https://www.inspectionpanel.org/node/{node}"
+
 [sources.sentinel2_mosaic]
 label = "Sentinel-2 cloudless mosaics"
 kind = "satellite"
@@ -188,6 +204,27 @@ zoom = 15
 # The years whose mosaics answered on November 5, 2026 (ops/research/record.py probes them again).
 years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 viewer = "https://s2maps.eu"
+
+[sources.mastodon]
+label = "Mastodon"
+kind = "social"
+endpoint = "https://mastodon.social/api/v1/timelines/tag/{tag}?limit=40"
+license = "Each post belongs to its author; Prism keeps its words with a link to the post, for reference."
+pace_seconds = 1
+cache_hours = 6
+reader = "strata.research.sources.mastodon:read"
+limitations = [
+  "A tag timeline holds the newest 40 posts with the tag that reached mastodon.social, not every post.",
+  "A post is kept only when it names a project location or an agency together with a sector word, so a tag alone never brings a post in.",
+]
+enabled = true
+
+[sources.mastodon.settings]
+# The tags asked: the country's name, the sector's first word and each location's name.
+tags = ["country", "sector", "locations"]
+
+# Ticket 154: three sources a procurement specialist reaches for beyond the news: the conditions at the project's
+# sites, the agencies' own statements, and the sanctions check.
 
 [sources.site_conditions]
 label = "GDACS disaster alerts"
