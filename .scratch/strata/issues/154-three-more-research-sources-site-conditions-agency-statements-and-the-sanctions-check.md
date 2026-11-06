@@ -14,7 +14,7 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD. Esse
 
 **Blocked by:** None (can start immediately; merges after 152)
 
-**Status:** in-progress
+**Status:** done
 **Area:** knowledge
 **Phase:** P5
 **Design review:** no
@@ -28,3 +28,6 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD. Esse
 ## Comments
 
 - November 5, 2026, orchestrator: opened at 20:30 PST from the user's instruction of 20:15; probes of the same hour: GDACS 200, ReliefWeb 403 (appname), the sanctions API 401 (key), PPRA 000, Kenya Law 202 empty, NWWDA 200, CWWDA 200.
+- November 5, 2026, merger: merged on the integrated branch `worktree-agent-adfa26ba0a813e559` (head c492ce9d, where an integrator joined tickets 152, 155, 150, 154 and the four research branches of ticket 153, each gated on commit) into build/strata as merge commit 01f76c67, with history, because the history scan found no keys in the branch's commits. The gate on the merge commit passed in 168.3 seconds, under tonight's 180-second limit; the integrator's final gate on the branch passed in 154.5 seconds. The secret scan on build/strata after the merge found no keys. The worktree that built it, `.claude/worktrees/agent-adfa26ba0a813e559`, is removed after this commit. The branch stays.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the integrator's report is the evidence. `site_conditions`, `agency_statements` and `sanctions` are connected, and `reliefweb` and `tender_disputes` are listed as not connected. The recorded P156634 writer answer replays with 70 kept and 0 removed. `web/tests/research.spec.ts` and `web/tests/field-photos.spec.ts` ran 15 tests and passed; the brief, photo, tools and benchmark tests ran 106 and passed. Follow-up: GDACS and agency items appear only for projects whose country or agencies the registry lists.
+  - Workspace results: none run tonight. Ticket 151's agent runs the six steps under "Tickets 150, 152, 153, 154 and 155, the second deploy of the Prism night" in `docs/workspace-catchup.md`, steps 2 to 4 for the writer's rules, the agent sync (`research_evidence`'s contract changed) and the seed.

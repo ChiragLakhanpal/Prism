@@ -5025,3 +5025,51 @@ Follow-ups the integrator named, for a later ticket:
 - `scripts/install` sets `core.hooksPath` to the relative `.githooks`.
 
 Record here under tickets 148 and 149, with the time: each step's exit code, the four tables, the three grants, the sync check's result, the seed's run id and item count, and the brief's section counts from the GET.
+
+## Tickets 150, 152, 153, 154 and 155, the second deploy of the Prism night
+
+The merger parked this on November 5, 2026, after merge commit 01f76c67 (branch `worktree-agent-adfa26ba0a813e559` at c492ce9d, where an integrator joined tickets 152, 155, 150, 154 and the four research branches of ticket 153). Nothing ran tonight. Ticket 151's agent runs these six steps, in order, from a snapshot at or after 01f76c67, once the research tables of "Tickets 148 and 149, the deploy of the Prism night" exist on the workspace. Link the main checkout's `web/node_modules` into the snapshot before the App deploy, and point `--env-file` at the main checkout's env file.
+
+What these tickets change on the workspace: a field photo table, `strata.ops.field_photos`, and a volume of the same name for the files (ticket 150); a `team_key` column on `strata.ops.research_briefs` (ticket 150); the demo setting `research.live_sources = false` in `config/thresholds.toml`, so a brief POST reads no source and writes from the stored run (ticket 152); the writer's and the judge's new rules (tickets 154 and 155); three more research sources, `site_conditions`, `agency_statements` and `sanctions` (ticket 154); seeded runs for five projects (ticket 153); and Pillow in the App's packages.
+
+1. Before the deploy, make the photo table, add the team column to the brief table, and make the photo volume:
+
+       -- the CREATE TABLE in src/strata/lakehouse/tables/ops/field_photos.sql
+       ALTER TABLE strata.ops.research_briefs ADD COLUMN team_key STRING
+       CREATE VOLUME IF NOT EXISTS strata.ops.field_photos
+
+   The ALTER is needed because `research_briefs` predates ticket 150, so its `CREATE TABLE IF NOT EXISTS` adds no column. It worked if `DESCRIBE TABLE strata.ops.field_photos` and `DESCRIBE TABLE strata.ops.research_briefs` each list `team_key`, and `SHOW VOLUMES IN strata.ops` lists `field_photos`.
+
+2. Redeploy the App:
+
+       uv run --script ops/app/deploy_app.py --env-file .env --keep-secrets
+
+   It grants the App SELECT and MODIFY on the photo table and READ VOLUME and WRITE VOLUME on the volume, masks the photo table's `uploader_name`, `file_name`, `caption` and `place`, and ships `live_sources = false`, the writer's and the judge's changes, and Pillow. It worked if the deploy exits 0, prints the App's address, and `SHOW GRANTS ON TABLE strata.ops.field_photos` and `SHOW GRANTS ON VOLUME strata.ops.field_photos` show the App's service principal.
+
+3. Sync the agent, then check it, because `research_evidence`'s contract changed:
+
+       uv run --script ops/agent/sync.py --env-file .env
+       uv run --script ops/agent/sync.py --env-file .env --check
+
+   It worked if the sync exits 0 and the check exits 0 with no difference.
+
+4. Seed every project with a sample file, as the owner's token:
+
+       uv run --frozen python ops/research/seed.py --all --env-file .env
+
+   The seed writes as the principal the env file's client credentials name. It worked if the seed exits 0 and `SELECT project_id, run_id, count(*) AS items FROM strata.ops.research_items GROUP BY project_id, run_id` returns a run `seed:<pid>:2026-11-05` per project with P130164 31 items, P145559 25, P156634 60, P161305 38 and P167814 28. P156634's run already stored is kept unchanged.
+
+5. Write each project's brief: as a staff viewer, `POST /api/projects/<pid>/research` with the body
+
+       {"view":"staff","asof":"2026-11-05"}
+
+   one project at a time, P156634 first, then P130164, P145559, P161305 and P167814. With `live_sources = false`, each POST reads no source and writes the brief from the stored run. It worked if each stream ends in done.
+
+6. Check each project's brief: `GET /api/projects/<pid>/research` for each of the five projects. It worked if each answer has status `written`, `live_sources` false, and `run.run_id` `seed:<pid>:2026-11-05`.
+
+Follow-ups the integrator named, for a later ticket:
+
+- The drawer cannot open a coverage record yet.
+- GDACS and agency items appear only for projects whose country or agencies the registry lists.
+
+Record here under tickets 150, 152, 153, 154 and 155, with the time: each step's exit code, the photo table, column and volume, the two grants, the sync check's result, each project's seed run id and item count, and each brief's status from the GET.

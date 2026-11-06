@@ -11,7 +11,7 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD. Esse
 
 **Blocked by:** None (can start immediately)
 
-**Status:** in-progress
+**Status:** done
 **Area:** agent
 **Phase:** P5
 **Design review:** no
@@ -23,3 +23,6 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD. Esse
 ## Comments
 
 - November 5, 2026, orchestrator: opened at 20:05 PST from the user's instruction of 19:55 (pre-seeded briefs, no live lookups).
+- November 5, 2026, merger: merged on the integrated branch `worktree-agent-adfa26ba0a813e559` (head c492ce9d, where an integrator joined tickets 152, 155, 150, 154 and the four research branches of ticket 153, each gated on commit) into build/strata as merge commit 01f76c67, with history, because the history scan found no keys in the branch's commits. The gate on the merge commit passed in 168.3 seconds, under tonight's 180-second limit; the integrator's final gate on the branch passed in 154.5 seconds. The secret scan on build/strata after the merge found no keys. The worktree that built it, `.claude/worktrees/agent-adfa26ba0a813e559`, is removed after this commit. The branch stays.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the integrator's report is the evidence. One store and one seed. The demo setting `research.live_sources = false` replays the stored steps under the live labels; the writer has a fallback; the seed writes `sites`, keys notices without the window, and `--all` seeds every sample file. The seed on a fresh state file gives P130164 31 items, P145559 25, P156634 60, P161305 38 and P167814 28. The recorded P156634 writer answer replays with 70 kept and 0 removed. `web/tests/research.spec.ts` and `web/tests/field-photos.spec.ts` ran 15 tests and passed; the brief, photo, tools and benchmark tests ran 106 and passed.
+  - Workspace results: none run tonight. Ticket 151's agent runs the six steps under "Tickets 150, 152, 153, 154 and 155, the second deploy of the Prism night" in `docs/workspace-catchup.md`, steps 2, 4 and 6 for the setting, the seed and the check that each brief reports `live_sources` false.

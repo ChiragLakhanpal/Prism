@@ -12,7 +12,7 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD. Tick
 
 **Blocked by:** None (can start immediately; merges after 152)
 
-**Status:** in-progress
+**Status:** done
 **Area:** agent
 **Phase:** P5
 **Design review:** no
@@ -25,3 +25,6 @@ Build this in the ticket's worktree on a branch from `build/strata`'s HEAD. Tick
 ## Comments
 
 - November 5, 2026, orchestrator: opened at 21:12 PST from the first live brief on the workspace.
+- November 5, 2026, merger: merged on the integrated branch `worktree-agent-adfa26ba0a813e559` (head c492ce9d, where an integrator joined tickets 152, 155, 150, 154 and the four research branches of ticket 153, each gated on commit) into build/strata as merge commit 01f76c67, with history, because the history scan found no keys in the branch's commits. The gate on the merge commit passed in 168.3 seconds, under tonight's 180-second limit; the integrator's final gate on the branch passed in 154.5 seconds. The secret scan on build/strata after the merge found no keys. The worktree that built it, `.claude/worktrees/agent-adfa26ba0a813e559`, is removed after this commit. The branch stays.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the integrator's report is the evidence. The judge keeps a bottom-line item or a question whose facts hold; notice dates are fields; a `could_not_see` sentence may cite the run's coverage record. The recorded P156634 writer answer replays with 70 kept and 0 removed. `web/tests/research.spec.ts` and `web/tests/field-photos.spec.ts` ran 15 tests and passed; the brief, photo, tools and benchmark tests ran 106 and passed. Follow-up: the drawer cannot open a coverage record yet.
+  - Workspace results: none run tonight. Ticket 151's agent runs the six steps under "Tickets 150, 152, 153, 154 and 155, the second deploy of the Prism night" in `docs/workspace-catchup.md`, steps 2 and 5 for the judge's rule on the workspace and the briefs it writes.

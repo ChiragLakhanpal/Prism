@@ -10,7 +10,7 @@ Read first: `src/strata/uploads/store.py`, `src/strata/server/uploads.py`, `src/
 
 **Blocked by:** 147, 149
 
-**Status:** ready-for-agent
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
@@ -23,3 +23,6 @@ Read first: `src/strata/uploads/store.py`, `src/strata/server/uploads.py`, `src/
 ## Comments
 
 - November 5, 2026, orchestrator: opened at 18:02 PST as the stretch ticket of the night; built only when 147 to 149 have merged with time to spare.
+- November 5, 2026, merger: merged on the integrated branch `worktree-agent-adfa26ba0a813e559` (head c492ce9d, where an integrator joined tickets 152, 155, 150, 154 and the four research branches of ticket 153, each gated on commit) into build/strata as merge commit 01f76c67, with history, because the history scan found no keys in the branch's commits. The gate on the merge commit passed in 168.3 seconds, under tonight's 180-second limit; the integrator's final gate on the branch passed in 154.5 seconds. The secret scan on build/strata after the merge found no keys. The worktree that built it, `.claude/worktrees/agent-adfa26ba0a813e559`, is removed after this commit. The branch stays.
+  - Evidence: tonight's rule from the user (November 5, 18:05 PST) is essentials only, with no review or verify round, so the integrator's report is the evidence. Field photos: each photo item carries its team, the brief carries `team_key`, and the photos live in the table `strata.ops.field_photos` and the volume of the same name. `web/tests/research.spec.ts` and `web/tests/field-photos.spec.ts` ran 15 tests and passed; the brief, photo, tools and benchmark tests ran 106 and passed. The gate took 168.3 seconds on the merge, over the 150 seconds the last criterion names and under tonight's 180-second limit.
+  - Workspace results: none run tonight. Ticket 151's agent runs the six steps under "Tickets 150, 152, 153, 154 and 155, the second deploy of the Prism night" in `docs/workspace-catchup.md`, steps 1 and 2 for the photo table, the brief's new column, the volume and their grants.
