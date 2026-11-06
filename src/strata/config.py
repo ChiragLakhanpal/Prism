@@ -46,6 +46,9 @@ request lands in one file (CLAUDE.md rule 9). This module reads them:
                      docs/proposal/rehearsals.toml (strata.proposal.register.load_rehearsals)
 - load_designed_not_built() config/designed_not_built.toml, what is designed but not built: the app's
                      labels and the proposal's short list both read it (ticket 46)
+- load_research()    config/research.toml, the research registry: every source Prism's deep research reads and the
+                     ones it does not connect (load_research_client() reads its [client], [press_names] and
+                     [sector_words] tables; ticket 147)
 
 Each function checks the file's shape and raises ConfigError with a sentence that names the
 file, the entry and the fix. It uses only the standard library, so the nightly job can call it.
@@ -3332,3 +3335,113 @@ def load_deck_gate(path: Path = CONFIG_DIR / "deck.toml") -> DeckGate | None:
     except (KeyError, TypeError, ValueError) as error:
         raise ConfigError(f"In {path.name}, [gate] needs salt and digest in hex, and iterations as a whole number.") \
             from error
+
+
+# ── The research registry (ticket 147) ───────────────────────────────────
+
+RESEARCH_KINDS = ("bank_report", "procurement", "news", "complaint", "social", "satellite", "field_photo")
+RESEARCH_REQUIRED = ("label", "kind", "endpoint", "license", "reader")
+RESEARCH_KEYS = (*RESEARCH_REQUIRED, "pace_seconds", "cache_hours", "limitations", "enabled", "feeds", "settings")
+READER = re.compile(r"[A-Za-z_][\w.]*:[A-Za-z_]\w*")
+
+
+@dataclass(frozen=True)
+class Feed:
+    """One outlet's public feed, for the outlet_feeds source."""
+
+    outlet: str
+    url: str
+
+
+@dataclass(frozen=True)
+class ResearchSource:
+    """One source Prism's deep research reads, or lists as not connected (enabled false, the reason in limitations).
+    settings holds what its reader alone reads, such as a window in days or a tile zoom."""
+
+    key: str
+    label: str
+    kind: str
+    endpoint: str
+    license: str
+    pace_seconds: float
+    cache_hours: float
+    reader: str  # module:function
+    limitations: tuple[str, ...]
+    enabled: bool
+    feeds: tuple[Feed, ...] = ()
+    settings: dict = field(default_factory=dict, hash=False, compare=False)
+
+
+@dataclass(frozen=True)
+class ResearchClient:
+    """What every research call sends and looks for: the named agent, the timeout, the signs of a bot check page, the
+    short names the press uses for an agency when they are not its initials, and each sector's words."""
+
+    user_agent: str
+    timeout_seconds: int
+    project_record: str  # the projects API's address for one project, with {project_id}
+    bot_check_markers: tuple[str, ...]
+    press_names: dict[str, tuple[str, ...]]
+    sector_words: dict[str, tuple[str, ...]]
+
+
+def _amount(entry: _Entry, key: str, unit: str) -> float:
+    value = entry.table.get(key)
+    if value is None:
+        entry._fail(key, "is missing")
+    if isinstance(value, bool) or not isinstance(value, int | float) or value < 0:
+        entry._fail(key, f"must be a number of {unit}, 0 or more")
+    return float(value)
+
+
+def load_research(path: Path = CONFIG_DIR / "research.toml") -> dict[str, ResearchSource]:
+    """Every research source in the registry, by its key, in file order."""
+    data = _read(path)
+    _Entry(path, "the file", data).only({"client", "press_names", "sector_words", "sources"})
+    sources = {}
+    for key, table in data.get("sources", {}).items():
+        entry = _Entry(path, f"sources.{key}", table)
+        entry.only(set(RESEARCH_KEYS))
+        fields = {name: entry.text(name) for name in RESEARCH_REQUIRED}
+        if fields["kind"] not in RESEARCH_KINDS:
+            entry._fail("kind", f"must be one of {', '.join(RESEARCH_KINDS)}")
+        if not READER.fullmatch(fields["reader"]):
+            entry._fail("reader", "must name a module and a function, as module:function")
+        limitations = entry.texts("limitations")
+        if not limitations:
+            entry._fail("limitations", "must say in full sentences what the source cannot show")
+        feeds = []
+        for feed in _tables(path, table, "feeds"):
+            feed.where = f"sources.{key}.{feed.where}"
+            feed.only({"outlet", "url"})
+            if not feed.text("url").startswith("https://"):
+                feed._fail("url", "must be an https:// address")
+            feeds.append(Feed(feed.text("outlet"), feed.text("url")))
+        settings = table.get("settings", {})
+        if not isinstance(settings, dict):
+            entry._fail("settings", "must be a table, [sources.<key>.settings]")
+        sources[key] = ResearchSource(key=key, **fields, pace_seconds=_amount(entry, "pace_seconds", "seconds"),
+                                      cache_hours=_amount(entry, "cache_hours", "hours"), limitations=limitations,
+                                      enabled=entry.boolean("enabled"), feeds=tuple(feeds), settings=settings)
+    if not sources:
+        raise ConfigError(f"{path.name} names no research source. Add at least one [sources.<key>] table.")
+    return sources
+
+
+def load_research_client(path: Path = CONFIG_DIR / "research.toml") -> ResearchClient:
+    """The research registry's [client], [press_names] and [sector_words] tables."""
+    data = _read(path)
+    client = _Entry(path, "[client]", data.get("client"))
+    client.only({"user_agent", "timeout_seconds", "project_record", "bot_check_markers"})
+    if "{project_id}" not in client.text("project_record"):
+        client._fail("project_record", "must hold {project_id} where the project's ID goes")
+    names, words = data.get("press_names", {}), data.get("sector_words", {})
+    for where, table in (("[press_names]", names), ("[sector_words]", words)):
+        if not isinstance(table, dict) or not all(
+                isinstance(value, list) and value and all(isinstance(item, str) and item for item in value)
+                for value in table.values()):
+            raise ConfigError(f"In {path.name}, {where} must map each name to a list of text.")
+    return ResearchClient(client.text("user_agent"), client.integer("timeout_seconds"), client.text("project_record"),
+                          client.texts("bot_check_markers"),
+                          {name: tuple(short) for name, short in names.items()},
+                          {key: tuple(value) for key, value in words.items()})

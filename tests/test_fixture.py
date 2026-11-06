@@ -107,9 +107,14 @@ def test_the_fixture_database_holds_every_recorded_file_with_its_source_license_
     assert pages == [(1, "First page"), (2, "Second page")]
 
 
-def recorded_files(manifest):
-    return {path.relative_to(manifest.recorded).as_posix()
-            for path in manifest.recorded.rglob("*") if path.is_file()}
+def recorded_files(manifest, research: bool = False):
+    """Every recorded file, relative to the recorded folder. The deep research recordings (research/, ticket 147) are
+    another format, made by ops/research/record.py from sources with their own licenses, and are left out unless
+    research is True; tests/test_research_fetching.py checks them."""
+    from strata.fixture.recorded import RESEARCH
+
+    names = {path.relative_to(manifest.recorded).as_posix() for path in manifest.recorded.rglob("*") if path.is_file()}
+    return names if research else {name for name in names if not name.startswith(f"{RESEARCH}/")}
 
 
 def test_every_recorded_file_is_listed_and_carries_its_source_and_a_cc_by_4_license_line():
@@ -134,7 +139,8 @@ def test_the_recorded_fixture_stays_inside_its_size_limits():
 
     manifest = fmt.load_manifest()
     limits = tomllib.loads(manifest.path.read_text())["limits"]
-    sizes = {name: (manifest.recorded / name).stat().st_size / 1_000_000 for name in recorded_files(manifest)}
+    sizes = {name: (manifest.recorded / name).stat().st_size / 1_000_000
+             for name in recorded_files(manifest, research=True)}
 
     assert max(sizes.values()) <= limits["file_mb"]
     assert sum(sizes.values()) <= limits["total_mb"]

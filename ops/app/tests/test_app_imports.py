@@ -97,6 +97,8 @@ COMPUTED = {
                                            "module:function."),
     "strata.lakehouse.silver:transform": (SILVER_TRANSFORMS, "The module in src/strata/lakehouse/silver/ that "
                                           "config/sources.toml names for each source by its last part alone."),
+    "strata.research.sources:reader_of": ((), "Each deep research source's reader, which config/research.toml names "
+                                              "as module:function (ticket 147)."),
 }
 
 

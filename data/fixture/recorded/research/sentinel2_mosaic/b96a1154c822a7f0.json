@@ -1,0 +1,10 @@
+{
+ "url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-2026_3857/default/g/15/16666/20005.jpg",
+ "source": "sentinel2_mosaic",
+ "license": "Sentinel-2 cloudless by EOX IT Services GmbH, contains modified Copernicus Sentinel data, CC BY-NC-SA 4.0.",
+ "recorded": "2026-11-05",
+ "read_with": "prism-research/0.1 (+https://github.com/ChiragLakhanpal/Prism)",
+ "status": 404,
+ "headers": {},
+ "body_omitted": "1225 bytes of binary data, not kept"
+}

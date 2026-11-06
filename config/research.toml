@@ -1,0 +1,243 @@
+# The research registry: every source Prism's deep research reads (ticket 147), and the one place a research
+# source is defined (CLAUDE.md rule 9). config/sources.toml stays the registry of the lakehouse's datasets.
+# strata.config.load_research() reads this file and stops with a sentence when a key is missing or unknown.
+# Words for the screens live in web/src/copy.ts (ticket 149), never here.
+#
+# Each [sources.<key>] has:
+#   label         the source's name, as a person reads it
+#   kind          bank_report, procurement, news, complaint, social, satellite or field_photo
+#   endpoint      where the reader asks: an address, or the table a reader with no network reads
+#   license       the attribution line, from the source's own terms
+#   pace_seconds  the least time between two calls to the source
+#   cache_hours   how long a fetched answer is reused
+#   reader        the reader, as module:function
+#   limitations   full sentences on what the source cannot show
+#   enabled       false for a source Prism does not read, with the reason in limitations
+# and may have:
+#   [[sources.<key>.feeds]]   for outlet_feeds: each outlet's name and its feed's address. A feed is one entry.
+#   [sources.<key>.settings]  what the reader alone reads, such as a window in days or a tile zoom
+#
+# The [client] table names the agent every call sends and the signs of a bot check page. [press_names] lists the
+# short names the press uses for an agency when they are not its initials, by the name the project record writes.
+# [sector_words] lists, by sector key (config/sectors.toml), the words that make a post or a feed entry about the
+# sector's works.
+#
+# Probes from this computer on November 5, 2026: the Inspection Panel register answered 200 with its cases in
+# drupalSettings.extractCases; EOX answered Sentinel-2 cloudless tiles for 2018 to 2025; The Standard, KBC,
+# Capital FM, People Daily, Dawan Africa, Big3Africa and the Kenya News Agency answered with their feeds; The Star
+# gave no feed at any address tried; Nation, People Daily's and Eastleigh Voice's article pages answered 403 or a
+# bot check; GDELT answered 429 all afternoon; Reddit and Bluesky refused clients that are not browsers.
+
+[client]
+user_agent = "prism-research/0.1 (+https://github.com/ChiragLakhanpal/Prism)"
+timeout_seconds = 30
+# Where a project's record is read when neither the fixture nor bronze holds it.
+project_record = "https://search.worldbank.org/api/v3/projects?format=json&id={project_id}&fl=*"
+bot_check_markers = ["Just a moment...", "Attention Required! | Cloudflare", "cf-browser-verification",
+                     "challenge-platform", "Enable JavaScript and cookies to continue", "Checking your browser",
+                     "captcha-delivery", "px-captcha"]
+
+[press_names]
+"Mombasa Water and Sanitation Services Company" = ["MOWASSCO", "Mowasco"]
+"Kilifi - Mariakani Water and Sewerage Company Ltd" = ["KIMAWASCO"]
+"Kwale Water and Sewerage Company Ltd." = ["KWAWASCO"]
+"Malindi Water and Sewerage Company Ltd" = ["MAWASCO"]
+"Garissa Water and Saniation Company" = ["GAWASCO"]
+"Wajir Water and Sewerage Company" = ["WAWASCO"]
+"Tavevo Water and Sewerage Company Ltd" = ["Tavevo"]
+"Water Services Regulatory Board" = ["WASREB"]
+
+[sector_words]
+water = ["water", "sanitation", "sewer", "sewerage", "sewage", "borehole", "boreholes", "pipeline", "wastewater",
+         "sludge", "toilet", "toilets", "well-field", "wellfield", "dam"]
+
+[sources.isr_narrative]
+label = "World Bank project reports"
+kind = "bank_report"
+endpoint = "strata.gold.passage"
+license = "The World Bank: Documents & Reports (documents.worldbank.org). License: CC BY 4.0."
+pace_seconds = 0
+cache_hours = 0
+reader = "strata.research.sources.isr_narrative:read"
+limitations = [
+  "It reads only the two newest ISRs the lakehouse holds for the project, and only the passages on implementation status and the comments on achieving targets.",
+  "An ISR reports what the project team was told by its own date, so it can be months behind the ground.",
+]
+enabled = true
+
+[sources.isr_narrative.settings]
+reports = 2
+document_type = "Implementation Status and Results Report"
+# A numbered ISR puts Implementation Status and Key Decisions in section 4, and its results indicators in 6.1 and 6.2.
+status_paths = ["4", "4.1"]
+results_paths = ["6", "6.1", "6.2"]
+# An ISR from before 2020 names its sections instead.
+status_sections = ["Implementation Status and Key Decisions"]
+results_sections = ["Project Development Objective Indicators", "Intermediate Results Indicators", "Results"]
+# The text layer of a results table splits the column's name ("Comments on" ... "achieving targets"), so a passage of
+# the results indicators is kept when it holds these two words.
+results_phrase = "Comments on"
+documents_page = "https://documents.worldbank.org/en/publication/documents-reports/documentlist?projid={project_id}&docty_exact=Implementation+Status+and+Results+Report"
+
+[sources.procurement_notices]
+label = "World Bank procurement notices"
+kind = "procurement"
+endpoint = "strata.gold.notice"
+license = "The World Bank: Procurement Notices: Systematic Tracking of Exchanges in Procurement (STEP), from search.worldbank.org/api/v2/procnotices. License: CC BY 4.0."
+pace_seconds = 0
+cache_hours = 0
+reader = "strata.research.sources.procurement_notices:read"
+limitations = [
+  "It holds the notices the lakehouse read from the notices API, so a notice published after the last nightly run is missing.",
+  "A notice says what was published and when, not whether the works were delivered.",
+]
+enabled = true
+
+[sources.procurement_notices.settings]
+days = 180
+notice_types = ["Contract Award", "Invitation for Bids"]
+notice_page = "https://projects.worldbank.org/en/projects-operations/procurement-detail/{notice_id}"
+register_page = "https://projects.worldbank.org/en/projects-operations/procurement?projectId={project_id}"
+
+[sources.gdelt_news]
+label = "GDELT"
+kind = "news"
+endpoint = "https://api.gdeltproject.org/api/v2/doc/doc?query={query}&mode=artlist&format=json&maxrecords=50&timespan=24months&sort=datedesc"
+license = "GDELT Project: the index is free and open for any use with attribution to the GDELT Project; each article belongs to its outlet."
+pace_seconds = 5
+cache_hours = 12
+reader = "strata.research.sources.gdelt_news:read"
+limitations = [
+  "GDELT gives an article's title and the day it saw the article, not the article's text or the outlet's own date.",
+  "GDELT limits calls from a network that asks often, and then Prism reads no item from it.",
+]
+enabled = true
+
+[sources.gdelt_news.settings]
+# GDELT refuses a query that is too long, so the query holds at most this many quoted phrases.
+max_phrases = 24
+
+[sources.outlet_feeds]
+label = "News outlets' feeds"
+kind = "news"
+endpoint = "the feeds listed below"
+license = "Each article belongs to its outlet; Prism keeps its words with a link to the article, for reference."
+pace_seconds = 2
+cache_hours = 6
+reader = "strata.research.sources.outlet_feeds:read"
+limitations = [
+  "A feed holds only an outlet's newest articles, so an older article is found only through the outlet's own page.",
+  "An outlet that answers a bot check gives only its feed's summary, never the article.",
+]
+enabled = true
+
+[sources.outlet_feeds.settings]
+# The most articles one run reads from their own pages, so a busy news day stays inside the pace.
+max_articles = 20
+
+[[sources.outlet_feeds.feeds]]
+outlet = "The Star"
+url = "https://www.the-star.co.ke/rss/news"
+
+[[sources.outlet_feeds.feeds]]
+outlet = "The Standard"
+url = "https://www.standardmedia.co.ke/rss/headlines.php"
+
+[[sources.outlet_feeds.feeds]]
+outlet = "Kenya News Agency"
+url = "https://www.kenyanews.go.ke/feed/"
+
+[[sources.outlet_feeds.feeds]]
+outlet = "Capital FM"
+url = "https://www.capitalfm.co.ke/news/feed/"
+
+[[sources.outlet_feeds.feeds]]
+outlet = "KBC"
+url = "https://www.kbc.co.ke/feed/"
+
+[[sources.outlet_feeds.feeds]]
+outlet = "People Daily"
+url = "https://peopledaily.digital/feed"
+
+[[sources.outlet_feeds.feeds]]
+outlet = "Dawan Africa"
+url = "https://www.dawan.africa/rss.xml"
+
+[[sources.outlet_feeds.feeds]]
+outlet = "Big3Africa"
+url = "https://big3africa.org/feed/"
+
+[sources.sentinel2_mosaic]
+label = "Sentinel-2 cloudless mosaics"
+kind = "satellite"
+endpoint = "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless-{year}_3857/default/g/{zoom}/{row}/{col}.jpg"
+license = "Sentinel-2 cloudless by EOX IT Services GmbH, contains modified Copernicus Sentinel data, CC BY-NC-SA 4.0."
+pace_seconds = 0
+cache_hours = 0
+reader = "strata.research.sources.sentinel2_mosaic:read"
+limitations = [
+  "A yearly mosaic shows the ground at 10 m per pixel, so a pipeline or a small building does not show.",
+  "Prism reads no pixels: the two grids are for a person to compare.",
+]
+enabled = true
+
+[sources.sentinel2_mosaic.settings]
+zoom = 15
+# The years whose mosaics answered on November 5, 2026 (ops/research/record.py probes them again).
+years = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+viewer = "https://s2maps.eu"
+
+[sources.reddit]
+label = "Reddit"
+kind = "social"
+endpoint = "https://www.reddit.com/search.json"
+license = "Reddit's terms."
+pace_seconds = 2
+cache_hours = 6
+reader = "strata.research.sources:not_connected"
+limitations = ["Reddit refused clients that are not browsers when probed on November 5, 2026, so Prism does not read it."]
+enabled = false
+
+[sources.bluesky]
+label = "Bluesky"
+kind = "social"
+endpoint = "https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts"
+license = "Bluesky's terms."
+pace_seconds = 2
+cache_hours = 6
+reader = "strata.research.sources:not_connected"
+limitations = ["Bluesky's search refused clients that are not browsers when probed on November 5, 2026, so Prism does not read it."]
+enabled = false
+
+[sources.x]
+label = "X"
+kind = "social"
+endpoint = "https://api.x.com/2/tweets/search/recent"
+license = "X's developer terms."
+pace_seconds = 2
+cache_hours = 6
+reader = "strata.research.sources:not_connected"
+limitations = ["X's search needs a paid key, which Prism does not hold."]
+enabled = false
+
+[sources.google_news]
+label = "Google News"
+kind = "news"
+endpoint = "https://news.google.com/rss/search"
+license = "Google News terms."
+pace_seconds = 2
+cache_hours = 6
+reader = "strata.research.sources:not_connected"
+limitations = ["Google News's terms allow its RSS feeds in personal feed readers only, so Prism does not read them."]
+enabled = false
+
+[sources.wikimedia_commons]
+label = "Wikimedia Commons"
+kind = "field_photo"
+endpoint = "https://commons.wikimedia.org/w/api.php?action=query&list=geosearch"
+license = "Each photo carries its own Creative Commons license."
+pace_seconds = 2
+cache_hours = 24
+reader = "strata.research.sources:not_connected"
+limitations = ["The photos Commons holds near the project's sites do not show the works, so Prism does not read them."]
+enabled = false

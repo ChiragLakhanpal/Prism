@@ -32,8 +32,10 @@ sys.path.insert(0, str(REPO / "ops" / "app"))
 import deploy_app  # noqa: E402
 
 PRINCIPAL = "6f1c2d3e-4b5a-4c6d-8e7f-90a1b2c3d4e5"
-# Each function that builds the app's writers on its own engine: the server's, and the seed command's (ticket 41).
-ENTRY_POINTS = (("strata/server/settings.py", "app_from_env"), ("strata/seed_examples.py", "main"))
+# Each function that builds the app's writers on its own engine: the server's, the seed command's (ticket 41) and the
+# deep research seed's (ticket 147), which writes the demo run as the app.
+ENTRY_POINTS = (("strata/server/settings.py", "app_from_env"), ("strata/seed_examples.py", "main"),
+                ("../ops/research/seed.py", "main"))
 # The function that opens the SQL warehouse as the app's own service principal.
 THE_APP_S_ENGINE = "_the_app_s_engine"
 # The keywords of create_app() that take the app's engine itself, and the modules create_app() hands it to.

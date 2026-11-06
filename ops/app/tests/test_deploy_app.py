@@ -310,6 +310,9 @@ def test_the_app_s_own_principal_may_write_only_what_the_server_records(tmp_path
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.example_lesson_versions TO `{PRINCIPAL}`",
         # Ticket 42: the language of answers and drafts each viewer chose (found by ticket 84's test_app_grants.py).
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.viewer_settings TO `{PRINCIPAL}`",
+        # Ticket 147: the deep research runs and the items they read.
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.research_runs TO `{PRINCIPAL}`",
+        f"GRANT SELECT, MODIFY ON TABLE strata.ops.research_items TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.draft_fields_latest TO `{PRINCIPAL}`",
         f"GRANT SELECT ON TABLE strata.ops.supplier_pairs TO `{PRINCIPAL}`",
         f"GRANT SELECT, MODIFY ON TABLE strata.ops.supplier_review_decisions TO `{PRINCIPAL}`",

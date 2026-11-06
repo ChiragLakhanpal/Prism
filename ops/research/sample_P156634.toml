@@ -1,0 +1,106 @@
+# The 18 sources the sample deep research brief for P156634 cites on its last page (.notes/prism-sample/template/
+# build5.py, SOURCES; read on November 5, 2026), as the demo seed loads them (ops/research/seed.py, ticket 147).
+#
+# Each [[cited]] is one numbered source of the sample, with the items that stand for it. An item names its registry
+# source (config/research.toml) and either the key a reader gives it (key, for the readers the seed runs: the ISR
+# passages, the notices, the Inspection Panel, the Sentinel-2 grids) or an article's address (url), whose page
+# ops/research/record.py recorded with the named client. For an article, outlet, title and published are what the
+# outlet prints, used when its page could not be read (a 403 or a bot check), when the feed's summary or the headline
+# stands in for the article. published is empty when the outlet prints no date.
+
+project = "P156634"
+as_of = 2026-11-05
+note = "The items were read on November 5, 2026, from the recordings of that day; GDELT refused calls from this network, so the press items come from the outlets' own pages."
+
+[[cited]]
+number = 1
+items = [{ source = "isr_narrative", key = "40114539-p2-s4" }]
+
+[[cited]]
+number = 2
+items = [
+  { source = "isr_narrative", key = "40091292-p2-s4" },
+  { source = "isr_narrative", key = "40091292-p4-s6" },
+  { source = "isr_narrative", key = "40091292-p5-s7" },
+  { source = "isr_narrative", key = "40091292-p6-s7" },
+  { source = "isr_narrative", key = "40091292-p7-s7" },
+]
+
+[[cited]]
+number = 3
+items = [{ source = "outlet_feeds", url = "https://www.the-star.co.ke/counties/coast/2026-01-14-solar-water-project-set-to-cut-power-costs-improve-supply-in-kilifi", outlet = "The Star", title = "Solar water project set to cut power costs, improve supply in Kilifi", published = "2026-01-14" }]
+
+[[cited]]
+number = 4
+items = [{ source = "outlet_feeds", url = "https://big3africa.org/2026/01/20/kenyas-coast-water-agency-launches-4-6mw-solar-plant-to-cut-power-costs/", outlet = "Big3Africa", title = "Kenya's Coast Water Agency launches 4.6MW solar plant to cut power costs", published = "2026-01-20" }]
+
+[[cited]]
+number = 5
+items = [
+  { source = "outlet_feeds", url = "https://www.standardmedia.co.ke/coast/article/2001542940/baricho-solarisation-project-promises-cheaper-water-for-the-coast", outlet = "The Standard", title = "Baricho solarisation project promises cheaper water for the Coast", published = "2026-03-13" },
+  { source = "outlet_feeds", url = "https://www.kbc.co.ke/state-nears-completion-of-ksh-600m-solarization-of-baricho-water/", outlet = "KBC", title = "State nears completion of Ksh 600M solarization of Baricho Water", published = "2026-03-12" },
+]
+
+[[cited]]
+number = 6
+items = [{ source = "outlet_feeds", url = "https://www.the-star.co.ke/news/2024-06-15-state-completes-sh4-billion-water-works-in-kilifi", outlet = "The Star", title = "State completes Sh4 billion water works in Kilifi", published = "2024-06-14" }]
+
+[[cited]]
+number = 7
+items = [{ source = "outlet_feeds", url = "https://peopledaily.digital/news/coast-water-agency-takes-most-incompetent-institution-tag-in-sector", outlet = "People Daily", title = "Coast water agency takes most incompetent institution tag in sector", published = "2024-11-21" }]
+
+[[cited]]
+number = 8
+items = [{ source = "outlet_feeds", url = "https://eastleighvoice.co.ke/coast/196147/mombasa-water-project-sparks-outrage-in-mwembe-tayari-over-job-promises,-disruptions", outlet = "Eastleigh Voice", title = "Mombasa water project sparks outrage in Mwembe Tayari over job promises, disruptions", published = "" }]
+
+[[cited]]
+number = 9
+items = [{ source = "outlet_feeds", url = "https://www.the-star.co.ke/news/2022-10-28-mombasa-residents-protest-over-sewerage-renovation-payout-delays", outlet = "The Star", title = "Mombasa residents protest over sewerage renovation payout delays", published = "2022-10-28" }]
+
+[[cited]]
+number = 10
+items = [{ source = "outlet_feeds", url = "https://www.the-star.co.ke/counties/coast/2022-05-16-sh280m-kipevu-wastewater-treatment-plant-to-be-ready-by-october/", outlet = "The Star", title = "Sh280m Kipevu wastewater treatment plant to be ready by October", published = "2022-05-16" }]
+
+[[cited]]
+number = 11
+items = [{ source = "outlet_feeds", url = "https://www.kenyanews.go.ke/lobby-demands-solution-to-changamwe-jomvu-water-crisis/", outlet = "Kenya News Agency", title = "Lobby demands solution to Changamwe-Jomvu water crisis", published = "2026-10-08" }]
+
+[[cited]]
+number = 12
+items = [{ source = "outlet_feeds", url = "https://thestandard.ke/business/coast/article/2001510389/governor-mwadime-calls-for-winding-up-of-water-agency", outlet = "The Standard", title = "Governor Mwadime calls for winding up of water agency", published = "2025-01-25" }]
+
+[[cited]]
+number = 13
+items = [{ source = "outlet_feeds", url = "https://www.dawan.africa/news/wajir-set-for-major-sanitation-upgrade-as-historic-sludge-treatment-plant-nears-completion", outlet = "Dawan Africa", title = "Wajir set for major sanitation upgrade as historic sludge treatment plant nears completion", published = "2026-06-04" }]
+
+[[cited]]
+number = 14
+items = [{ source = "outlet_feeds", url = "https://www.kenyanews.go.ke/?p=150106", outlet = "Kenya News Agency", title = "CS Mugaa launches strategic plan to improve water access for six counties", published = "2025-05-16" }]
+
+[[cited]]
+number = 15
+items = [
+  { source = "procurement_notices", key = "OP00474946" },
+  { source = "procurement_notices", key = "OP00474700" },
+  { source = "procurement_notices", key = "OP00474696" },
+  { source = "procurement_notices", key = "OP00471125" },
+  { source = "procurement_notices", key = "OP00466974" },
+  { source = "procurement_notices", key = "OP00457686" },
+  { source = "procurement_notices", key = "OP00456907" },
+]
+
+[[cited]]
+number = 16
+items = [
+  { source = "isr_narrative", record = "P513697", url = "https://projects.worldbank.org/en/projects-operations/project-detail/P513697" },
+  { source = "outlet_feeds", url = "https://www.capitalfm.co.ke/business/2025/06/eu-bank-to-fund-mwache-water-project-in-mombasa/", outlet = "Capital FM", title = "EU bank to fund Mwache Water Project in Mombasa", published = "" },
+]
+
+# The register names no case for P156634, so the source stands with no item: the run's note for it says so.
+[[cited]]
+number = 17
+items = [{ source = "inspection_panel" }]
+
+[[cited]]
+number = 18
+items = [{ source = "sentinel2_mosaic", key = "200577-2018-2025" }]

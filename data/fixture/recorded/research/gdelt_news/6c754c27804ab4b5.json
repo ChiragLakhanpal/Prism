@@ -1,0 +1,10 @@
+{
+ "url": "https://api.gdeltproject.org/api/v2/doc/doc?query=%28%22Water%20and%20Sanitation%20Development%20Project%22%20OR%20%22CWWDA%22%20OR%20%22GAWASCO%22%20OR%20%22KIMAWASCO%22%20OR%20%22KWAWASCO%22%20OR%20%22MAWASCO%22%20OR%20%22MWSI%22%20OR%20%22MOWASSCO%22%20OR%20%22Mowasco%22%20OR%20%22NWWDA%22%20OR%20%22Tavevo%22%20OR%20%22WAWASCO%22%20OR%20%22WSTF%22%20OR%20%22WSRB%22%20OR%20%22WASREB%22%20OR%20%22Turkana%20water%22%20OR%20%22West%20Pokot%20water%22%20OR%20%22Wajir%20water%22%20OR%20%22Samburu%20water%22%20OR%20%22Mombasa%20water%22%20OR%20%22Marsabit%20water%22%20OR%20%22Mandera%20water%22%20OR%20%22Lamu%20water%22%20OR%20%22Kwale%20water%22%29&mode=artlist&format=json&maxrecords=50&timespan=24months&sort=datedesc",
+ "source": "gdelt_news",
+ "license": "GDELT Project: the index is free and open for any use with attribution to the GDELT Project; each article belongs to its outlet.",
+ "recorded": "2026-11-05",
+ "read_with": "prism-research/0.1 (+https://github.com/ChiragLakhanpal/Prism)",
+ "status": 429,
+ "headers": {},
+ "body": "Please limit requests to one every 5 seconds or contact kalev.leetaru5@gmail.com for larger queries. All high-traffic users should switch to our ngrams dataset: https://blog.gdeltproject.org/using-the-new-web-ngrams-dataset-to-find-relevant-coverage/. For trend analysis, please see our daily newsletter briefings: https://blog.gdeltproject.org/announcing-our-new-daily-todays-trends-on-capitol-hill-todays-media-trends-newsletter-briefings/.\n\n"
+}

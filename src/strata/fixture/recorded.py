@@ -26,6 +26,10 @@ MANIFEST = ROOT / "data" / "fixture" / "sources.toml"
 KINDS = ("json", "document")
 HEADER_KEYS = ("Source", "License", "Recorded", "About", "Pages")
 PAGE_BREAK = "\f"
+# The folder under recorded/ that holds the deep research recordings (ticket 147): another format, one JSON file per
+# address a research source answered, made by ops/research/record.py from sources with their own licenses. The
+# manifest does not list them and the fixture database does not load them; strata.research.fetching.offline reads them.
+RESEARCH = "research"
 
 
 @dataclass(frozen=True)

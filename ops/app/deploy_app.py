@@ -247,12 +247,13 @@ def grants(principal: str) -> list[str]:
     # ticket 84): each run's tool calls, the tables they read and the reasons its sentences were removed, which
     # src/strata/agent/runs.py writes beside the run row. viewer_settings (ticket 42): the language of answers and
     # drafts each viewer chose, kept as the app. ops/app/tests/test_app_grants.py reads every table the app writes as
-    # itself from the code and fails when one is missing here.
+    # itself from the code and fails when one is missing here. research_runs and research_items (ticket 147): Prism's
+    # deep research runs and the items they read, which ops/research/seed.py writes as the app.
     tables = ("usage_events", "agent_runs", "tool_calls", "tool_call_reads", "answer_removals", "evidence_opened",
               "drafts", "draft_states", "draft_exports",
               "draft_files", "follows", "disagreement_choices", "draft_fields", "exposures", "uploads",
               "upload_rows", "lesson_visits", "draft_lesson_choices", "start_here_choices", "seeded_examples",
-              "example_lesson_versions", "viewer_settings")
+              "example_lesson_versions", "viewer_settings", "research_runs", "research_items")
     return [*[f"GRANT {privilege.replace('_', ' ')} ON {kind.upper()} {name} TO `{principal}`"
               for kind, name, privilege in ACCESS],
             *[f"GRANT SELECT, MODIFY ON TABLE strata.ops.{table} TO `{principal}`" for table in tables],
