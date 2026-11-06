@@ -8,14 +8,15 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
 
-- [ ] `web/src/figures/hairline/ground.js`, `two-slabs.js` and `rungs.js` exist in the skill's format, each passing `build.mjs` and `validate.mjs`, with a tour of three or four stops and a `means` sentence of at most 140 characters that passes the copy lint's word rules (DESIGN.md section 7).
-- [ ] Each figure answers the pointer as the brief says (the lifted tile and its pin, the slab that slides into a stack, the rung that lights), reads in the navy palette and in the light one, and was looked at as PNGs at rest and at each stop.
+- [x] `web/src/figures/hairline/ground.js`, `two-slabs.js` and `rungs.js` exist in the skill's format, each passing `build.mjs` and `validate.mjs`, with a tour of three or four stops and a `means` sentence of at most 140 characters that passes the copy lint's word rules (DESIGN.md section 7).
+- [x] Each figure answers the pointer as the brief says (the lifted tile and its pin, the slab that slides into a stack, the rung that lights), reads in the navy palette and in the light one, and was looked at as PNGs at rest and at each stop.
 
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 13:45 PST, in parallel with tickets 162, 163 and 164.
+- November 6, 2026, orchestrator: merged into `build/strata` as 3435ac21 at 14:52 PST (three commits on `worktree-agent-a1dbbc8a2229015ca`, only the three figure files; the gate on the merge passed in 158.6 seconds). The builder's report: each figure passes the skill's build, validate and look checks in navy and light; `rungs`'s answer moves only a stroke, which look warns about and the brief asked for. Decisions within the brief: ground rests on the left-middle tile lifted, each pin with its own thread to a line on the page; two-slabs' slabs are windows with dots, the smaller stacking set back so the larger's title bar shows; rungs lights rung by rung. The sheets are in the orchestrator's scratchpad under `hl/`. Ticket 162 names the figures on its slides.
