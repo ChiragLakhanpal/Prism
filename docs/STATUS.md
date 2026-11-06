@@ -16,6 +16,8 @@ Tickets: 146 (rename), 147 (research sources, item store, demo seed), 148 (run, 
 4. The frozen Strata, from the history before the rename (e61cecc6): `! git clone --branch publish/github --single-branch "." "../frozen/strata" && cd "../frozen/strata" && git checkout -B main e61cecc6 && gh repo create ChiragLakhanpal/Strata --public --source . --push --description "Procurement intelligence on World Bank open data, with every claim cited. The original build, October 22 to November 5, 2026."`
 5. Send Surya `.notes/surya-kit.zip` (its README says what he does); merge his pull request when it comes.
 
+Decision taken for you at 19:10 PST (the orchestrator, while you sleep): the gate's limit in `gates/steps.toml` is 180 seconds for the night, up from 150, because the rename's merge passed with 1 second to spare (149.0 s) and tickets 147 to 149 add tests; the trim that earns the limit back is ticket 124. Put it back to 150 when 124 lands, or tell me to.
+
 Costs you accepted on November 5: the App about US$9 a day, Lakebase about US$4, the vector search endpoint about US$7, the warehouse per use; the jobs stay paused.
 
 ## Today
