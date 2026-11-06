@@ -25,7 +25,7 @@ from strata.agent.verifier import labels
 from strata.lakehouse.engine import Engine
 from strata.server import baseline, edges, summary, timeline, trail
 from strata.estimates.rebidding import NOTICE_TABLE, PLAN_ROW_TABLE
-from strata.tools import find_comparables, rebidding_risk, rejected_bids, search_passages
+from strata.tools import find_comparables, rebidding_risk, rejected_bids, research_evidence, search_passages
 
 log = logging.getLogger("strata.server.evidence")
 SQL = Path(__file__).resolve().parent / "sql" / "evidence"
@@ -106,6 +106,8 @@ READERS: dict[str, Callable[[Engine, str, dt.date], dict | None]] = {
     **timeline.READERS,
     # Two versions of a lesson (ticket 39).
     "versions": _versions,
+    # A deep research item (ticket 148), with its url, which the drawer's "Open the source" link opens.
+    research_evidence.TABLE: research_evidence.read_item,
 }
 
 

@@ -38,6 +38,11 @@ criteria.toml through section 5's comparison too, where the judge is asked about
 after the plain run and the --criteria run, since the judge is asked about the recorded answers.
 It also needs AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY.
 
+With --research it re-records Prism's deep research brief (ticket 148) instead: the writer of config/models.toml's
+research_writer role writes the brief for the seeded P156634 run on a copy of the fixture database
+(ops/research/seed.py's run), and the judge judges it, both on Azure OpenAI, into tests/fixtures/agent/research. It needs
+only AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY, and the fixture database the gate builds.
+
 It needs FOUNDRY_PROJECT_ENDPOINT, DATABRICKS_HOST, DATABRICKS_WAREHOUSE_ID and DATABRICKS_TOKEN in the env
 file, and the az command line signed in.
 """
@@ -45,6 +50,7 @@ file, and the az command line signed in.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -75,7 +81,19 @@ def main(argv=None) -> int:
     parser.add_argument("--judge", action="store_true",
                         help="re-record check 4's judge for the cases in tests/fixtures/agent/cases.toml, "
                              "writers.toml and criteria.toml instead")
+    parser.add_argument("--research", action="store_true",
+                        help="re-record the deep research brief's writer and judge for the seeded P156634 run instead")
     args = parser.parse_args(argv)
+    if args.research:
+        from strata.research.record import record_research
+
+        try:
+            checks = record_research(load_env(args.env_file, JUDGE_NEEDS))
+        except (LiveSetupError, judge.JudgeError, OSError) as error:
+            print(f"I could not re-record the research brief: {error}")
+            return 2
+        print(f"I recorded the research brief and its judge in tests/fixtures/agent/research: {json.dumps(checks)}")
+        return 0
     try:
         env = load_env(args.env_file, NEEDS + (JUDGE_NEEDS if args.judge else ()))
         viewer = Viewer(name="the env file's token", token=env["DATABRICKS_TOKEN"])

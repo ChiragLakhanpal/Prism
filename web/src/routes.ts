@@ -54,7 +54,8 @@ export function litSection(match: Match, sections: readonly string[] | null): Se
 export const ANSWER_IN_PAGE: ReadonlySet<PageKey> = new Set<PageKey>(["home", "package", "plannedPackage", "packageNew"]);
 
 // A project page's tabs. Their order lives in one place, the copy file (copy.projectPage.tab), which the tab row reads
-// (ticket 99); here each tab has its address. Ticket 23 added "timeline" and ticket 22 "connections".
+// (ticket 99); here each tab has its address. Ticket 23 added "timeline", ticket 22 "connections" and ticket 149
+// "research", the Deep research brief.
 export type ProjectTab = keyof typeof copy.projectPage.tab;
 export const TAB_PATH: Record<ProjectTab, string> = {
   summary: "",
@@ -62,6 +63,7 @@ export const TAB_PATH: Record<ProjectTab, string> = {
   timeline: "/timeline",
   documents: "/documents",
   connections: "/connections",
+  research: "/research",
 };
 
 const PROJECT_ID = /^[Pp]\d{6}$/;

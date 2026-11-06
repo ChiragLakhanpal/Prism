@@ -411,7 +411,8 @@
       "agency_track_record": "whether the agency's past packages are like the ones in this plan",
       "writer_project_paper": "whether this summary is what you would write in the Project Paper",
       "writer_step_rows": "whether these comparable packages fit your activities",
-      "upload_dates": "whether the dates in your plan are the ones you meant"
+      "upload_dates": "whether the dates in your plan are the ones you meant",
+      "research_evidence": "whether the items I read are all that public sources say about this project"
     },
     "how": "How was that checked?",
     "howTitle": "How I checked this answer",

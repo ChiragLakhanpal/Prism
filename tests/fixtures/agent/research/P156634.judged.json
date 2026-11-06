@@ -1,0 +1,66 @@
+{
+ "made_by": "Judged by hand on November 5, 2026, against the items of ticket 147's seed each sentence cites, until the live judge is recorded with uv run --script ops/agent/record.py --research --env-file .env. indexes gives each asked sentence's place in the brief, as the verifier numbered it.",
+ "recorded": "by hand",
+ "asked": [
+  "In the last months before its closing date, the project's Baricho works on the coast were finishing while contracts were still being awarded, and residents in Mombasa had pushed back on its works.",
+  "With six contracts awarded in the 110 days before closing, two by direct selection, check each contract's completion date against the closing date of October 31, 2026.",
+  "The Kipevu plant was still under rehabilitation in January 2026, years after it was due, so ask for its extensions of time and the date it will be taken over.",
+  "The Old Town agreements on disturbance allowances and dust control are where residents have protested before, so ask the Mombasa water company what has been paid and done.",
+  "The Governor of Taita Taveta called for the Coast Water Works Development Agency to be disbanded for failing to supply water to the region.",
+  "Mwembe Tayari residents voiced outrage over job promises and disruptions from a Mombasa water project.",
+  "On the coast, the Baricho works were finishing.",
+  "In Mombasa, residents have pushed back on the project's works.",
+  "Kwale's contracts were still to finish, and the project's two direct awards were a solar system for the Ukunda water supply and the Vindo booster station.",
+  "In the north-east, Wajir's sludge treatment plant was still being built in June 2026, and the last boreholes were awarded in October 2026.",
+  "Ask which of the six contracts awarded in the 110 days before closing can be completed by the closing date of October 31, 2026, and which will run past it.",
+  "The Ukunda solar system and the Vindo booster station works were awarded by direct selection.",
+  "Ask what justification is on file for each, and whether the Ukunda solar system repeats the Baricho solar design.",
+  "Ask whether the final account is closed and the taking-over certificate has been issued.",
+  "Ask what extensions of time were granted, and whether the plant will be taken over before closing.",
+  "With the plant at 64% in June 2026, ask whether it can be commissioned by the closing date, and if not, under which financing it finishes.",
+  "Ask whether the Old Town disturbance allowances and the water bowsers agreed against dust are in the works contracts, and what has been paid.",
+  "People Daily reported that the Auditor General named the coast agency the most incompetent agency in the water sector, and the Governor of Taita Taveta called for the agency to be disbanded.",
+  "Ask how the coast agency will finish the works contracts still under way within the remaining project period.",
+  "GDELT limited calls from this network, so the GDELT news index was not read for this brief.",
+  "Eastleigh Voice's page answered a bot check, so its item holds the headline only.",
+  "No case in the Inspection Panel's register names the project."
+ ],
+ "indexes": [
+  0,
+  7,
+  8,
+  9,
+  24,
+  29,
+  30,
+  37,
+  41,
+  45,
+  55,
+  57,
+  58,
+  60,
+  62,
+  63,
+  64,
+  65,
+  66,
+  67,
+  68,
+  69
+ ],
+ "response": {
+  "id": "hand-judged",
+  "object": "chat.completion",
+  "choices": [
+   {
+    "index": 0,
+    "message": {
+     "role": "assistant",
+     "content": "{\"judgements\": [{\"index\": 0, \"follows\": true, \"advises\": false, \"reason\": \"ISR 19 says the Baricho solarization is complete, the summary counts awards made up to the closing date, and the Star and the Eastleigh Voice report residents' protests in Mombasa.\"}, {\"index\": 7, \"follows\": true, \"advises\": true, \"reason\": \"The summary counts six awards in the 110 days before the closing date of October 31, 2026, two by direct selection; the rest is what to check.\"}, {\"index\": 8, \"follows\": true, \"advises\": true, \"reason\": \"The Star reported in May 2022 that Kipevu was expected to be done that year, and the ISR's data of January 30, 2026 say its rehabilitation is ongoing.\"}, {\"index\": 9, \"follows\": true, \"advises\": true, \"reason\": \"The Star reports the Old Town protest over disturbance allowances and the agreement on water bowsers against dust.\"}, {\"index\": 24, \"follows\": true, \"advises\": false, \"reason\": \"The Standard reports that the governor pushed for the agency's disbandment for failing to supply water to the region.\"}, {\"index\": 29, \"follows\": true, \"advises\": false, \"reason\": \"The Eastleigh Voice's headline says the project sparked outrage in Mwembe Tayari over job promises and disruptions.\"}, {\"index\": 30, \"follows\": true, \"advises\": false, \"reason\": \"ISR 19 says the solarization is complete, and the Standard says the solar project nears completion.\"}, {\"index\": 37, \"follows\": true, \"advises\": false, \"reason\": \"The Star reports the Old Town protest and the Eastleigh Voice the Mwembe Tayari outrage, both over Mombasa's water works.\"}, {\"index\": 41, \"follows\": true, \"advises\": false, \"reason\": \"The World Bank's report of March 12, 2026 expects its water delivery targets to be exceeded once Kwale contracts are complete, and the summary counts two awards by direct selection in the window, the Ukunda solar system and the Vindo booster station works.\"}, {\"index\": 45, \"follows\": true, \"advises\": false, \"reason\": \"Dawan Africa reports the Wajir plant under construction on June 4, 2026, and the Sarman - Tarbaj award was published on October 13, 2026.\"}, {\"index\": 55, \"follows\": true, \"advises\": true, \"reason\": \"The summary counts six awards in the 110 days before the closing date of October 31, 2026; the rest is what to ask.\"}, {\"index\": 57, \"follows\": true, \"advises\": false, \"reason\": \"Both notices give Direct Selection as the procurement method.\"}, {\"index\": 58, \"follows\": true, \"advises\": true, \"reason\": \"The two notices are direct selections, and the Star describes the Baricho solar plant; the sentence only asks.\"}, {\"index\": 60, \"follows\": true, \"advises\": true, \"reason\": \"The Star reports the Baricho works complete; the sentence only asks for the documents that close them.\"}, {\"index\": 62, \"follows\": true, \"advises\": true, \"reason\": \"The ISR says the Kipevu rehabilitation is ongoing and the summary gives the closing date; the sentence only asks.\"}, {\"index\": 63, \"follows\": true, \"advises\": true, \"reason\": \"Dawan Africa puts the plant at 64% on June 4, 2026, and the summary gives the closing date; the rest is a question.\"}, {\"index\": 64, \"follows\": true, \"advises\": true, \"reason\": \"The Star reports the disturbance allowances and the water bowsers agreed against dust; the sentence only asks.\"}, {\"index\": 65, \"follows\": true, \"advises\": false, \"reason\": \"People Daily reports that a report by the Auditor General named the Coast Water Works Development Agency the most incompetent agency in the water sector, and The Standard reports Governor Andrew Mwadime pushing for its disbandment.\"}, {\"index\": 66, \"follows\": true, \"advises\": true, \"reason\": \"The ISR says the remaining works contracts are expected to be completed within the remaining project period; the sentence only asks.\"}, {\"index\": 67, \"follows\": true, \"advises\": false, \"reason\": \"The summary's note says GDELT limited calls from this network.\"}, {\"index\": 68, \"follows\": true, \"advises\": false, \"reason\": \"The run's note for the outlets' feeds says Eastleigh Voice's page answered a bot check page, so the headline stands in for the article, and the item's text is its headline.\"}, {\"index\": 69, \"follows\": true, \"advises\": false, \"reason\": \"The summary's note says the register's 197 cases do not name P156634.\"}]}"
+    },
+    "finish_reason": "stop"
+   }
+  ]
+ }
+}

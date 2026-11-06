@@ -292,6 +292,15 @@ def track_answer(result, question) -> dict[str, list]:
             "cited_as": [result["summary"]["evidence_id"]]}
 
 
+def research_answer(result, question) -> dict[str, list]:
+    """research_evidence's answer: the summary's counts, as text, and the keys of the sources the run did not reach
+    (ticket 148)."""
+    summary = result["summary"]
+    counts = ("items_total", "awards_in_window", "direct_awards_in_window", "days_from_last_award_to_closing")
+    return {**{key: [canonical(summary[key])] for key in counts},
+            "sources_not_reached": sorted(source["key"] for source in summary["sources_not_reached"] or ())}
+
+
 def genie_answer(result, question) -> dict[str, list]:
     """ask_genie's answer: the rows of the query Genie wrote, by value and in a fixed order, which its ground-truth
     SQL's rows must equal (ticket 33). Column names and their order are left out: Genie names and orders its
@@ -304,7 +313,7 @@ ANSWERS = {"ask_genie": genie_answer, "check_plan": marked, "search_passages": i
            "find_comparables": past_range, "get_disagreements": disagreement_answer,
            "get_lessons": lessons_answer, "estimate_time": estimate_time_answer, "compare_cost_estimates": cost_answer,
            "rejected_bids": rejected_answer, "compare_criteria": criteria_answer, "project_signals": signals_answer,
-           "rebidding_risk": rebidding_answer,
+           "rebidding_risk": rebidding_answer, "research_evidence": research_answer,
            "project_records": lambda result, question: {
                part: sorted(row["reference"] for row in result["rows"] if row["part"] == part)
                for part in question["expected"]}}

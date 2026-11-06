@@ -119,6 +119,29 @@ questions:
       The awards dataset's contracts signed after ISR 19 of June 30, 2026 (tests/ground_truth/values.toml,
       award-567630-signed and award-565568-signed), and the two credits the loan history records for P156634.
 
+  # Ticket 148: the deep research run's items and the counts the research brief states from its summary. The
+  # offline gate asks it once ticket 147's seed (ops/research/seed.py) has kept its run of November 5, 2026 in a copy
+  # of the fixture; the live benchmark asks the run the same seed writes on the workspace.
+  - id: research-evidence-p156634
+    kind: sql
+    tool: research_evidence
+    question: >-
+      As of November 5, 2026, how many contracts did P156634 award in the 110 days before its closing date, how many
+      of them by direct selection, and which source could Prism's deep research not reach?
+    arguments:
+      project_id: P156634
+      as_of: "2026-11-05"
+    needs: research_run
+    expected:
+      awards_in_window: ["6"]
+      direct_awards_in_window: ["2"]
+      days_from_last_award_to_closing: ["18"]
+      sources_not_reached: [gdelt_news]
+    source: >-
+      The contract award notices of P156634 in strata.gold.notice from July 13 to October 31, 2026, its closing date:
+      OP00456907, OP00457686 (direct selection), OP00466974, OP00471125 (direct selection), OP00474696 and
+      OP00474946, the last on October 13; and the seeded run's note that GDELT limited calls from this network.
+
   # Ticket 36: the implementing agency's track record against its plans, which the Project Paper summary states in
   # counts.
   - id: agency-track-record-nwwda-2026-10-09

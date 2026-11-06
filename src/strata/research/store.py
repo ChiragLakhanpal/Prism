@@ -1,11 +1,13 @@
-"""Where deep research runs and their items are kept: strata.ops.research_runs and research_items (ticket 147).
+"""Where deep research runs, their items and the briefs written from them are kept: strata.ops.research_runs and
+research_items (ticket 147), and research_briefs (ticket 148).
 
 Written as the uploads are (src/strata/uploads/store.py): on the workspace as the app's own service principal, on this
 computer in the local DuckDB file the drafts use (STRATA_APP_STATE_FILE), through one engine factory. A save writes
 the run's items first and the run's own row last, and every read starts from the run's row, so a save that fails
 part way leaves nothing a reader can find; the store then removes the items it wrote with a DELETE that names the run
 (CLAUDE.md rule 5). A run already kept is not written again, so a second seed changes nothing. An item read again in
-a later run keeps the read_on of the first run that read it.
+a later run keeps the read_on of the first run that read it. A brief is a new row each time it is written, and
+latest_brief() reads the newest, so a second view of the brief calls no model.
 """
 
 from __future__ import annotations
@@ -26,6 +28,7 @@ RUN_COLUMNS = ("run_id", "project_id", "started", "finished", "as_of", "viewer",
                "source_notes", "public_from")
 ITEM_COLUMNS = ("evidence_id", "run_id", "project_id", "source_key", "kind", "source", "title", "text", "url",
                 "published", "date_known", "observed", "location", "image_urls", "author", "read_on", "public_from")
+BRIEF_COLUMNS = ("run_id", "project_id", "written_at", "as_of", "brief", "public_from")
 
 
 @cache
@@ -73,7 +76,8 @@ class Run:
 
 
 class ResearchStore:
-    """The research runs in strata.ops. engine() opens the engine that reads and writes them: the app's own."""
+    """The research runs and briefs in strata.ops. engine() opens the engine that reads and writes them: the app's
+    own."""
 
     def __init__(self, engine: Callable[[], Engine]):
         self.engine = engine
@@ -142,3 +146,21 @@ class ResearchStore:
                     "read_on": iso(row["read_on"])}
             items.append({key: item[key] for key in ITEM_KEYS})
         return items
+
+    def save_brief(self, run_id: str, project_id: str, written_at: dt.datetime, as_of: dt.date, brief: dict) -> None:
+        """A brief written from a kept run (ticket 148), as a new row."""
+        with opened(self.engine) as engine:
+            engine.insert_rows("strata.ops.research_briefs", BRIEF_COLUMNS, [(
+                run_id, project_id, _utc(written_at), as_of, json.dumps(brief, ensure_ascii=False),
+                _utc(written_at).date())])
+
+    def latest_brief(self, project_id: str, as_of: dt.date) -> dict | None:
+        """The latest brief for the project as of the day, with its run and when it was written, or None."""
+        with opened(self.engine) as engine:
+            found = _rows(engine, "latest_brief", project_id=project_id, as_of=as_of)
+        if not found:
+            return None
+        row = found[0]
+        written = row["written_at"]
+        return {**json.loads(row["brief"]), "run_id": row["run_id"],
+                "written_at": written.isoformat() if isinstance(written, dt.datetime) else str(written)}

@@ -1,8 +1,8 @@
 // A project's page, the hub (the 10 and 21 briefs), at /projects/:pid and its tabs. The header is the
 // wireframe's one line in the h1, "Rajasthan Road Sector Modernization · P130164 · India · closed", with
 // the project ID as a ProjectId link and the status lowercased from the copy file, then the implementing
-// agency line. Under it the tab row shows the five tabs in the copy file's order, which lives there alone: Summary,
-// Procurement, Timeline, Documents and Connections.
+// agency line. Under it the tab row shows the six tabs in the copy file's order, which lives there alone: Summary,
+// Procurement, Timeline, Documents, Connections and Deep research (ticket 149).
 //
 // Ticket 99 made the head shorter: the ID, country and status in the h1's line take 400, the agency line keeps one
 // line with "Show all agencies" on it, and World Bank staff's Follow control sits at the head's right from a page area
@@ -39,6 +39,7 @@ import { TAB_PATH, type ProjectTab } from "../routes";
 import { ConnectionsTab } from "./project/ConnectionsTab";
 import { DocumentsTab } from "./project/DocumentsTab";
 import { ProcurementTab } from "./project/ProcurementTab";
+import { ResearchTab } from "./project/ResearchTab";
 import { SummaryTab } from "./project/SummaryTab";
 import { TimelineTab } from "./project/TimelineTab";
 
@@ -194,6 +195,12 @@ export function ProjectPage({ pid, tab }: { pid: string; tab: ProjectTab }) {
         {tab === "timeline" && <TimelineTab pid={pid} />}
         {tab === "documents" && <DocumentsTab pid={pid} />}
         {tab === "connections" && <ConnectionsTab pid={pid} />}
+        {tab === "research" && (
+          <ResearchTab
+            pid={pid}
+            project={data ? { name: data.project.project_name, country: data.project.country, agencies: data.project.implementing_agencies } : null}
+          />
+        )}
       </div>
       <p role="status" className="sr-only">
         {showing}

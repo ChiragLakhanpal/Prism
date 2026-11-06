@@ -32,6 +32,12 @@ dimensions = 1024
 [judge]
 role = "draft"
 
+# The writer of Prism's deep research brief (ticket 148): the role whose deployment writes the brief from a run's
+# items, in one chat completion with src/strata/agent/instructions/research_brief_writer.md as its instructions. The
+# verifier then checks every sentence. No role is added for it. strata.config.load_research_writer_role() reads it.
+[research_writer]
+role = "draft"
+
 # The layout parser that reads table pages on the workspace (Route B, docs/PLAN.md section 5), such
 # as the STEP tables of a Procurement Plan. Day-one test 3 (docs/day-one-results.md) decides it:
 # ai_parse_document on the SQL warehouse when the test passes, Content Understanding's

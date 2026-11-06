@@ -69,6 +69,8 @@ from strata.appstate import lakebase
 from strata.config import load_deck_gate, load_demo, load_roles, load_thresholds
 from strata.dbx import Viewer
 from strata.drafts.store import DraftStore
+from strata.research import writer as research_writer
+from strata.research.store import ResearchStore
 from strata.server.following import FollowStore
 from strata.server.home import HomeStore
 from strata.server.viewer_settings import SettingsStore
@@ -265,4 +267,6 @@ def app_from_env(environ: Mapping[str, str] | None = None, engine_for: engines.E
                       web_dist=web if (web / "index.html").is_file() else None, environ=environ,
                       deck_gate=load_deck_gate(),
                       page_cache=PageCache.from_thresholds(thresholds),
-                      warm=_warm(environ, thresholds) if read_ahead else None)
+                      warm=_warm(environ, thresholds) if read_ahead else None,
+                      research=ResearchStore(state) if state else None,
+                      research_writer=lambda: research_writer.from_environment(environ))

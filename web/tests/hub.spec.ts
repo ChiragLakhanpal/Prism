@@ -55,9 +55,10 @@ test("P130164's header reads as the wireframe's one line with its implementing a
   expect(copy.projectPage.statusInline.Closed).toBe("closed");
 
   // The built tabs, in the copy file's order, which is the wireframe's: Summary, Procurement, Timeline,
-  // Documents, Connections. Timeline joined with ticket 23 and Connections with ticket 22.
-  expect(Object.keys(copy.projectPage.tab)).toEqual(["summary", "procurement", "timeline", "documents", "connections"]);
-  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections"]);
+  // Documents, Connections, then Deep research. Timeline joined with ticket 23, Connections with ticket 22 and Deep
+  // research with ticket 149.
+  expect(Object.keys(copy.projectPage.tab)).toEqual(["summary", "procurement", "timeline", "documents", "connections", "research"]);
+  await expect(tabs(page)).toHaveText(["Summary", "Procurement", "Timeline", "Documents", "Connections", "Deep research"]);
   await expect(tabs(page).first()).toHaveAttribute("aria-current", "page");
   await expect(page).toHaveTitle("Rajasthan Road Sector Modernization (P130164), Summary | Prism");
   // The current crumb names the project as the h1 does, with its ID in plain mono: the h1's P-code just
@@ -103,7 +104,7 @@ test("on P156634 at 1440 px the head is short: one agency line, Follow at its ri
   expect(control.x, "Follow beside the h1, not under it").toBeGreaterThanOrEqual(h1.x + h1.width);
   expect(control.y, "Follow level with the h1").toBeLessThan(h1.y + h1.height);
 
-  // The five tabs, in the copy file's order and from nowhere else.
+  // The six tabs, in the copy file's order and from nowhere else.
   await expect(tabs(page)).toHaveText(Object.values(copy.projectPage.tab));
   expect(await tabs(page).evaluateAll((links) => links.map((link) => new URL((link as HTMLAnchorElement).href).pathname))).toEqual(
     Object.keys(copy.projectPage.tab).map((key) => (key === "summary" ? "/projects/P156634" : `/projects/P156634/${key}`)),

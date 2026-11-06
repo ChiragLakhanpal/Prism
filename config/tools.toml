@@ -46,8 +46,8 @@
 #   nested_rows    the row fields that hold records of their own, each with its own evidence_id and
 #                  public_from, such as each side of a disagreement. The answer loop keeps each one as a
 #                  citable record beside its row, so a claim can cite or quote it.
-#   backs_advice   true when its rows are lessons or comparable packages, so a sentence of kind advice
-#                  may rest on them (the verifier's check 5, ticket 24).
+#   backs_advice   true when its rows are lessons or comparable packages, or a deep research run's items, so a
+#                  sentence of kind advice may rest on them (the verifier's check 5, tickets 24 and 148).
 #   not_checked_when   when the check line's "Not checked" clause for this tool applies (web/src/copy.ts,
 #                  checkLine.notCheckedClauses): "ran" (the default), or "cited" when it applies only once a
 #                  sentence on screen cites the tool's evidence, as a lesson cited is not a lesson that fits.
@@ -1194,6 +1194,51 @@ abstentions = ["unknown_package", "no_public_notice", "no_comparables", "none_me
 summary_fields = ["m", "n", "past_range_total", "groups", "model", "coverage"]
 # Each record a row rests on is cited and dated like a row, so a claim can cite it.
 nested_rows = ["evidence"]
+
+# Ticket 148: the deep research run's items, which the research brief's writer cites and the verifier checks each
+# sentence against. Its items back advice (backs_advice), so the brief's questions to take to the agencies need no
+# lesson: they rest on what the press, the Bank's reports and the notices say happened.
+[tools.research_evidence]
+description = """Returns what Prism's latest deep research run read about one project: each item from a source \
+outside the World Bank's records, or from the Bank's own narrative, as one row with its source, kind, title, the \
+source's own words (text), its address, the date the source printed (published, null when it printed none, with \
+date_known false) and the project location it names. Kinds are bank_report, procurement, news, complaint, social, \
+satellite and field_photo. The counts a sentence may state come back in the result's summary, which you cite for \
+them: how many items the run kept and of each kind, the project's closing date, how many contracts were awarded in \
+the {research.late_award_days} days before it and how many of those by direct selection, the last award's date and \
+the days from it to closing, and the sources reached and not reached with each one's note. Quote only words in an \
+item's text. When no run was made for the project it gives no rows and says so. It never rates a project, an \
+agency or a contract."""
+adapter = "strata.tools.research_evidence:research_evidence"
+benchmark = "research-evidence-p156634"
+sources = ["documents", "notices", "projects"]
+
+[[tools.research_evidence.parameters]]
+name = "project_id"
+type = "string"
+required = true
+description = "The project ID, P followed by six digits, such as P156634."
+
+[[tools.research_evidence.parameters]]
+name = "as_of"
+type = "date"
+required = false
+description = "Use only a run made, and items public, on or before this date. Leave it out for today."
+
+[tools.research_evidence.result]
+row = "One item a deep research run read: a passage of an ISR, a notice, an article, a case, a post or a pair of satellite mosaics."
+row_fields = ["evidence_id", "public_from", "source", "kind", "title", "text", "url", "published", "date_known",
+              "observed", "location", "image_urls", "author", "read_on"]
+source_fields = ["key", "label", "kind", "license", "url_of_source"]
+fields = ["run", "items_total", "counts_by_kind", "closing_date", "late_award_days", "awards_in_window",
+          "direct_awards_in_window", "last_award_date", "days_from_last_award_to_closing", "sources_reached",
+          "sources_not_reached"]
+reasons = ["not_reached", "after_as_of"]
+abstentions = ["not_fetched"]
+summary_fields = ["items_total", "counts_by_kind", "closing_date", "late_award_days", "awards_in_window",
+                  "direct_awards_in_window", "last_award_date", "days_from_last_award_to_closing", "sources_reached",
+                  "sources_not_reached"]
+backs_advice = true
 
 # Ticket 33: structured questions through Prism's Genie space (config/genie.toml), as the viewer.
 [tools.ask_genie]

@@ -12,6 +12,8 @@
 @import "@fontsource/roboto-mono/400.css";
 @import "@fontsource/roboto-mono/500.css";
 @import "tailwindcss";
+/* The Deep research brief's print view (ticket 149). */
+@import "./research.css";
 
 /* Arial, resized to Open Sans's metrics (FinancesOne's values), so text does not move when
    the web font arrives (DESIGN.md section 3). */

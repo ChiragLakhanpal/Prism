@@ -5,6 +5,17 @@
 # value with strata.config.load_thresholds().value("section.name"). A value that is missing here is
 # an error that says where to add it, never a silent default.
 
+# Deep research (ticket 148): the brief's summary record counts the contracts awarded in this many days before the
+# project's closing date, and how many of them were awarded by direct contracting (src/strata/tools/research_evidence.py).
+# Source: the sample brief of November 5, 2026 (.notes/prism-sample), "awarded in the last 110 days", which counts
+# from July 13, 2026 to P156634's closing date of October 31, 2026. A value for the owner to confirm.
+[research]
+late_award_days = 110
+# The longest the brief's writer may take to answer, in seconds, before the run gives up and says so
+# (src/strata/research/writer.py). A brief is one chat completion over every item, about 15,000 words in and 2,000
+# out. Source: a starting value for the owner to confirm, five times the judge's judge_timeout_seconds.
+writer_timeout_seconds = 300
+
 # These are the ingestion caps. The layout parser (Route B) tries at most this many PDF pages a
 # day, counted in UTC across every project, whether it reads the page or fails on it. A run that
 # reaches the cap stops and records the first page it left for the next day in

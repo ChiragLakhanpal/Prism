@@ -743,6 +743,8 @@ export const copy = {
       // Ticket 38: an implementing agency's planned dates, then what an upload adds.
       writer_step_rows: "whether these comparable packages fit your activities",
       upload_dates: "whether the dates in your plan are the ones you meant",
+      // Ticket 148: the deep research brief, written from the items one run read.
+      research_evidence: "whether the items I read are all that public sources say about this project",
     },
     // "How was that checked?" after the line, and its window (ticket 105; the redesign's plan, section 9.1, pattern 3).
     // The window counts every sentence I wrote, as the verifier's six checks do, and the line only those on screen,
@@ -2207,7 +2209,7 @@ export const copy = {
     sections: "Project sections",
     // Every tab of a project's page, in the order the row shows them (the 21 brief, section 1). This list is the one
     // place the order lives (ticket 99): routes.ts reads its keys for the addresses, and the row its order.
-    tab: { summary: "Summary", procurement: "Procurement", timeline: "Timeline", documents: "Documents", connections: "Connections" },
+    tab: { summary: "Summary", procurement: "Procurement", timeline: "Timeline", documents: "Documents", connections: "Connections", research: "Deep research" },
     loading: "Loading this project.",
     error: "I couldn't load this project's Procurement Plans because the data service didn't answer.",
     permission: "Your account can't read Prism's tables, so I can't show this project.",
@@ -9658,6 +9660,117 @@ export const copy = {
       mark: "Select to mark them below.",
       markOne: "Select to mark it below.",
     },
+  },
+  // A project's Deep research tab (ticket 149): the brief of what is happening on the ground, from public sources outside
+  // the World Bank's records, as ticket 148's run writes and checks it, shown in the page column and printed as the
+  // sample's PDF (.notes/prism-sample/template/build5.py). The brief's sentences are the writer's; these are Prism's.
+  research: {
+    heading: "Deep research",
+    run: "Research this project",
+    again: "Research again",
+    print: "Download as PDF",
+    loading: "Loading the brief for this project.",
+    // No brief yet: the button and one sentence on what the run reads.
+    none: "I haven't researched this project yet. A run reads the project's status reports and notices, the press, the Inspection Panel's register, public posts and satellite mosaics, then writes a brief and checks every sentence against what it read.",
+    readOn: (date: string) => `I read these sources on ${date} and checked every sentence before showing it.`,
+    running: "I'm researching this project. The brief shows here when I'm done.",
+    error: "I couldn't load the brief for this project because the data service didn't answer.",
+    permission: "Your account can't read Prism's tables, so I can't show the brief for this project.",
+    runError: "I couldn't research this project because the research service didn't answer. The last brief, if there is one, is unchanged.",
+    dropped: "The research stopped before it finished, so I'm showing the last brief I kept.",
+    // The run's error event, by its code (ticket 148, src/strata/research/run.py ERRORS, and the route's data_service).
+    errors: {
+      unknown_project: "I couldn't research this project because I have no record of it as of this date.",
+      not_fetched: "I couldn't write a brief because no research run has read this project's sources yet.",
+      no_sources: "I couldn't research this project because no public source is connected.",
+      writer_unavailable: "I couldn't write the brief because the model that writes it didn't answer. The last brief, if there is one, is unchanged.",
+      writer_shape: "I couldn't check the brief the model wrote, so I didn't keep it. The last brief, if there is one, is unchanged.",
+      data_service: "I couldn't research this project because the data service didn't answer. The last brief, if there is one, is unchanged.",
+      internal: "Something went wrong on my side, so I couldn't research this project. The last brief, if there is one, is unchanged.",
+    } as Record<string, string>,
+    // The section titles, in the sample's order. A site's group takes its own title sentence as its heading.
+    section: {
+      picture: "The picture on the ground",
+      bottomLine: "Bottom line for procurement",
+      developments: "Developments, newest first",
+      developmentsMore: "Developments, continued",
+      bySite: "By site",
+      voices: "What people are saying",
+      questions: "What this means for procurement",
+      couldNotSee: "What I could not see",
+      sources: "Sources",
+    },
+    // A date the outlet does not print.
+    undated: "Undated",
+    // A voice's line under its quote: who said it as the source prints it, the outlet and the date.
+    voiceLine: "{who}. {outlet}, {date}.",
+    voiceLineUndated: "{who}. {outlet}, undated.",
+    // A voice whose item doesn't name who said it: the outlet and the date only.
+    voiceLineOutlet: "{outlet}, {date}.",
+    voiceLineOutletUndated: "{outlet}, undated.",
+    // A source not reached, one line under the section it feeds, with the reader's own note after it.
+    // The source's name starts the sentence, so its first letter is a capital ("The GDELT news index was ...").
+    notReached: (source: string) => `${source} was not reached for this brief.`,
+    // Each source's name inside a sentence, by its key in config/research.toml. A source with no line here takes the
+    // registry's label.
+    source: {
+      isr_narrative: "the World Bank's status reports",
+      procurement_notices: "the project's procurement notices",
+      gdelt_news: "the GDELT news index",
+      outlet_feeds: "the outlets' feeds",
+      inspection_panel: "the Inspection Panel's case register",
+      sentinel2_mosaic: "the Sentinel-2 cloudless mosaics",
+      mastodon: "public Mastodon posts",
+      field_photos: "the field photos",
+    } as Record<string, string>,
+    // The steps while a run streams, as the ask box shows them: present tense while running, past once done.
+    steps: {
+      facts: { running: "I'm reading the project's facts.", done: "I read the project's facts." },
+      source: {
+        running: (source: string) => `I'm reading ${source}.`,
+        none: (source: string) => `I read ${source} and kept no items.`,
+        one: (source: string) => `I read ${source} and kept one item.`,
+        several: (source: string, count: string) => `I read ${source} and kept ${count} items.`,
+      },
+      write: { running: "I'm writing the brief.", done: "I wrote the brief." },
+      check: {
+        running: "I'm checking every sentence against what I read.",
+        none: "I checked every sentence and removed none.",
+        one: "I checked every sentence and removed one.",
+        several: (count: string) => `I checked every sentence and removed ${count}.`,
+      },
+    },
+    // A source's line in the Sources list, and its marker's name: "The Star, January 14, 2026".
+    sourceName: "{author}, {date}",
+    sourceNameUndated: "{author}, undated",
+    // The run's summary record, which a sentence cites for a count: the items read and the project's award notices.
+    summarySource: "Prism's counts from this run's items and the project's contract award notices",
+    openSource: "Open the source",
+    // The drawer's research item.
+    item: {
+      published: "Published",
+      readOn: "Read on",
+      place: "Place",
+      source: "Source",
+      words: "The source's own words, as Prism read them.",
+    },
+    // The Sentinel-2 figure's caption, after the site's two grids.
+    satellite: "{place} in the {first} and {last} cloud-free Sentinel-2 mosaics, 3 by 3 tiles at zoom 15. Prism reads no pixels, so the change is for you to judge.",
+    // The print view: the cover sheet, and the running header and footer of every other sheet (the sample's).
+    cover: {
+      kicker: "Deep research",
+      title: "What is happening on the ground: {name}",
+      closing: "closing date {date}",
+      meta: "Read on {date} from public sources outside the World Bank's records, set against the World Bank's own status reports, for World Bank staff",
+      about: "Works, contracts, disputes and the state of service at the project's sites, as public sources report them. Each number after a sentence opens its source on the last sheet.",
+      small: "Prism is an independent demo built on World Bank open data. It is not a World Bank product.",
+      word: "Prism",
+      tagline: "Procurement intelligence on World Bank open data",
+      logo: "World Bank Group logo",
+    },
+    header: "Deep research · {name} ({pid})",
+    footer: "Prism · read on {date} · an independent demo built on World Bank open data, not a World Bank product",
+    printNote: "Every item was read on {date}. Dates are the outlets' own, and amounts are as each source prints them.",
   },
   // The deck's password, asked before the deck loads (web/src/deck/door.tsx). The words live here, not in the deck's
   // copy file, because the server keeps the deck's copy until the password is given.

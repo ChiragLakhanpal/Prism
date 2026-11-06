@@ -1,4 +1,4 @@
-// Tabs on a light surface (DESIGN.md section 5): 16 px bold, five at most, the selected one
+// Tabs on a light surface (DESIGN.md section 5): 16 px bold, six at most (a project's six, since ticket 149), the selected one
 // with a 3 px primary underline. They are links in a nav with aria-current, because each one
 // changes the address (the briefs for tickets 10 and 16 settled this). The navy bar's tabs
 // are in TopNav, with a white underline.
@@ -21,9 +21,9 @@ import { cx } from "../lib/cx";
 
 export type TabLink = { key: string; label: ReactNode; href: string; current?: boolean };
 
-// DESIGN.md allows five tabs at most. A sixth is a mistake in the screen, so development
-// builds stop on it rather than hide a tab; production shows every tab it is given.
-export const MOST_TABS = 5;
+// DESIGN.md allows six tabs at most, a project's six since ticket 149 added Deep research. A seventh is a mistake in
+// the screen, so development builds stop on it rather than hide a tab; production shows every tab it is given.
+export const MOST_TABS = 6;
 
 export function Tabs({
   label,

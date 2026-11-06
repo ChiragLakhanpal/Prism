@@ -158,6 +158,8 @@ from strata.knowledge.retrieval.judging import Judging
 from strata.knowledge.retrieval.reports import CitationLog, PassageReports
 from strata.server import steps as step_routes
 from strata.server import drafts as draft_routes
+from strata.server import research as research_routes
+from strata.research.store import ResearchStore
 from strata.server import feedback as feedback_routes
 from strata.server import (baseline, changes, choices as choice_routes, documents, edges, engines, evidence, lookup,
                            projects, summary, suppliers, tags, timeline, tracing, trail)
@@ -340,7 +342,9 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                environ: Mapping[str, str] | None = None, deck_gate: DeckGate | None = None,
                home: HomeStore | None = None,
                thresholds: Thresholds | None = None, page_cache: PageCache | None = None,
-               warm: Warm | None = None) -> FastAPI:
+               warm: Warm | None = None, research: ResearchStore | None = None,
+               research_kit: Callable[[], object | None] | None = None,
+               research_writer: Callable[[], object | None] | None = None) -> FastAPI:
     """The app.
 
     environ is the settings every tool the app runs itself reads its services' addresses and keys from
@@ -974,6 +978,16 @@ def create_app(runner: Runner | None = None, heartbeat_seconds: float = 15.0,
                             heartbeat_seconds=heartbeat_seconds, six_checks=six_checks, packages=packages,
                             planned_view=planned_package_view, uploads=uploads, example_versions=home_versions,
                             example_drafts=home_drafts)
+
+    # Deep research (ticket 148): the run, its stream and the brief kept, written as the app's own service principal.
+    # research_kit gives ticket 147's readers and research_writer the brief's writer, each when a run starts.
+    from strata.research import run as research_run
+
+    research_routes.add_routes(app, engine_for=engine_for, store=research,
+                               kit=research_kit or research_run.default_kit,
+                               writer=research_writer or (lambda: None), today=today, now=now, new_run_id=new_run_id,
+                               reference=request_reference, heartbeat_seconds=heartbeat_seconds, six_checks=six_checks,
+                               environ=environ)
 
     # An implementing agency's private uploads of its plan (ticket 38), through the one access rule.
     upload_routes.add_routes(app, engine_for=engine_for, store=uploads, access=access, today=today, now=now,

@@ -1,0 +1,35 @@
+{
+  "id": "strata.research.item:P156634/outlet_feeds/1daaf047c22f24eb",
+  "kind": "record",
+  "tool": null,
+  "stratum": "What",
+  "short_name": null,
+  "row": {
+    "evidence_id": "strata.research.item:P156634/outlet_feeds/1daaf047c22f24eb",
+    "public_from": "2026-01-14",
+    "source": {
+      "key": "outlet_feeds",
+      "label": "News outlets' feeds",
+      "kind": "news",
+      "license": "Each article belongs to its outlet; Prism keeps its words with a link to the article, for reference.",
+      "url_of_source": "https://www.the-star.co.ke/rss/news"
+    },
+    "kind": "news",
+    "title": "Solar water project set to cut power costs, improve supply in Kilifi",
+    "text": "The first phase of Baricho solar plant is scheduled for completion by April\n\nResidents of Kilifi County are set to benefit from more reliable water supply and reduced water bills following the near completion of a major solar-powered water project at Baricho.\n\nThe project, being implemented by the Coast Water Works Development Agency (CWWDA) with support from the World Bank, is expected to significantly lower electricity costs and stabilise water supply in the region.\n\nThe Baricho water solarisation plant, whose first phase is scheduled for completion by April, will serve residents of Kilifi County before being expanded to cover Mombasa County under a second phase.\n\nOnce fully implemented, the project is expected to address long-standing challenges of power interruptions and high operational costs that have affected water supply.\n\nSpeaking to journalists, Engineer David Kanui, the water project coordinator at the Coast Water Works Development Agency, said the agency has for years struggled with high electricity bills charged by Kenya Power due to the energy-intensive nature of water pumping.\n\n“Water is pumped from the boreholes and then it is pumped again to consumers in Mombasa and Kilifi counties. Because of that, electricity bills have been very high,” Kanui stated.\n\nAccording to Kanui, the agency currently pays about Sh60 million per month in electricity costs, a burden that has often disrupted operations.\n\n“We have had problems when water supply is disrupted because of power being disconnected due to unpaid bills,” he said.\n\nTo address the challenge, Kanui said the World Bank agreed to finance the solar power plant, which has a capacity of 4.6 megawatts, to reduce electricity costs and ensure an uninterrupted water supply.\n\n“The plant will power all the 11 bores and water to Malindi in phase one. Phase two will come in the near future and will power water to Mombasa,” he explained.\n\nHe added that once the project is completed, the agency expects to save at least Sh10 million per month in power bills, savings that will benefit both the water utility and consumers.\n\n“When phase two is done, the bill will reduce by 30 per cent,” Kanui noted.\n\nHe further explained that the system will combine solar energy and grid power, with solar being used during the day and Kenya Power at night and early morning hours.\n\n“During the day, we pump using solar, and then at night and early morning hours, we run on Kenya Power—that is 16 hours with eight hours on solar. We will not stop there, so we are looking at new technologies so that we can go off-grid by installing a battery system,” he said.\n\nThe project, which started in October 2025, is expected to be completed by mid-April at a cost of Sh670 million.\n\nSolar engineer Serah Mbwaya said the project has so far achieved 60 per cent completion, with commissioning of the initial phase expected soon.\n\n“By the end of January we will commission the first phase of phase one,” she said.\n\nMbwaya noted that the primary goal is to lower operational costs and improve sustainability for the water agency.\n\n“Once the work is done, the water agency will be profitable and more sustainable. Going green will also mean we are taking care of the environment,” she said.\n\nShe added that the solar components have a lifespan of 25 years, while the lithium battery systems being installed are expected to last between 10 and 15 years.\n\n“The battery bank helps to even out and stabilise power. If there is a passing cloud, other components can continue to work. It gives a signal to the system so that during the day they are able to harvest as much energy as possible,” Mbwaya explained.\n\nThe agency is now seeking additional partners and donors to support phase two of the project, which will extend solar-powered water pumping to Mombasa County, further reducing costs and improving water reliability across the coastal region.",
+    "url": "https://www.the-star.co.ke/counties/coast/2026-01-14-solar-water-project-set-to-cut-power-costs-improve-supply-in-kilifi",
+    "published": "2026-01-14",
+    "date_known": true,
+    "observed": null,
+    "location": {
+      "geo_loc_id": "192064",
+      "name": "Kilifi",
+      "latitude": -3.563,
+      "longitude": 39.644
+    },
+    "image_urls": [],
+    "author": "The Star",
+    "read_on": "2026-11-05"
+  },
+  "highlights": []
+}

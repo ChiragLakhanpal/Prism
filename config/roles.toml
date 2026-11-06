@@ -245,6 +245,7 @@ start_here = { kind = "record", staff = true, piu = false, public = false, reaso
 "POST /api/ask" = "ask"
 # Giving the deck's password (src/strata/server/deck_door.py): anyone who may ask may try it.
 "POST /api/deck/open" = "ask"
+"POST /api/projects/{project_id}/research" = "ask"
 "PUT /api/me/working-language" = "save_language"
 "POST /api/evidence/opened" = "record_opened"
 "POST /api/disagreements/{disagreement_id}/choices" = "keep_other_report"

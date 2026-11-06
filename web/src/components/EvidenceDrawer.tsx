@@ -44,6 +44,7 @@ import { ExternalLink, pdfPageHref } from "./ExternalLink";
 import { linkProjectIds, ProjectId } from "./ProjectId";
 import { TextLink } from "./TextLink";
 import { RecordSourceLine, SourceNumber, sourceTitle } from "./EvidenceCard";
+import { isResearchItem, ResearchItemView } from "./ResearchItem";
 import { Fill } from "./Fill";
 import { Num } from "./Num";
 import { MethodText } from "./PlanCheck";
@@ -935,7 +936,8 @@ export function EvidenceDrawerView({
                 given={!claim && from?.id === id && from.highlight ? [from.highlight] : null}
               />
             )}
-            {evidence?.kind === "record" && <RecordView evidence={evidence} />}
+            {/* A deep research item (ticket 149) shows its fields, the source's own words and "Open the source". */}
+            {evidence?.kind === "record" && (isResearchItem(evidence) ? <ResearchItemView evidence={evidence} /> : <RecordView evidence={evidence} />)}
             {evidence?.kind === "versions" && <VersionsView view={evidence.row as VersionsViewData} />}
             {evidence?.kind === "plan-row-check" && <PlanRowRecords evidence={evidence} />}
             {evidence && timelineView && <TimelineView evidence={evidence} renderSide={(sideId) => <SidePassage id={sideId} asOf={asOf} />} />}

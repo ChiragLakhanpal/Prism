@@ -47,6 +47,10 @@
     {
       "method": "GET",
       "path": "/api/planned-packages/{package_id}/risks"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{project_id}/research"
     }
   ]
 }

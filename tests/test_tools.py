@@ -237,18 +237,23 @@ def test_each_tool_with_a_benchmark_question_has_a_way_to_read_its_answer():
 @pytest.fixture(scope="module")
 def library(fixture_db, tmp_path_factory):
     """The fixture with its three proposed lessons decided, for a question that needs decided lessons: the
-    library holds a lesson only after two people decide it (tests/lesson_scenario.py)."""
+    library holds a lesson only after two people decide it (tests/lesson_scenario.py). It also holds the deep
+    research run seeded for P156634 on November 5, 2026, for a question that needs a research run (ticket 148)."""
     import lesson_scenario as scenario
+    from research_world import seed_run
+    from strata.research.store import ResearchStore
 
     database = scenario.copy_of(fixture_db, tmp_path_factory.mktemp("benchmark-library"))
     for passage in (scenario.REBIDDING, scenario.PERMITS, scenario.IEG_LESSON):
         scenario.decide(database, passage, dt.date(2026, 10, 27))
+    with DuckDBEngine.open(database) as engine:
+        ResearchStore(lambda: engine.cursor()).save(*seed_run(fixture_db))
     with DuckDBEngine.open(database, read_only=True) as opened:
         yield opened
 
 
 def engine_for(question, engine, library):
-    return library if question.get("needs") == "decided_lessons" else engine
+    return library if question.get("needs") in ("decided_lessons", "research_run") else engine
 
 
 def arguments_of(question, engine, library) -> dict:

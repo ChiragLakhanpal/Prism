@@ -815,7 +815,7 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
     """The deployment each role uses, in the order of ROLES."""
     data = _read(path)
     _Entry(path, "the file", data).only({"roles", "layout", "search", "supplier_matching", "time_estimate", "what_if",
-                                         "rebidding", "judge"})
+                                         "rebidding", "judge", "research_writer"})
     roles = data.get("roles", {})
     missing = [role for role in ROLES if role not in roles]
     unknown = sorted(set(roles) - set(ROLES))
@@ -836,6 +836,16 @@ def load_models(path: Path = CONFIG_DIR / "models.toml") -> dict[str, Model]:
 def load_judge_role(path: Path = CONFIG_DIR / "models.toml") -> str:
     """The role whose deployment judges whether each sentence follows from its sources (the verifier's check 4)."""
     entry = _Entry(path, "judge", _read(path).get("judge"))
+    entry.only({"role"})
+    role = entry.text("role")
+    if role not in ROLES:
+        entry._fail("role", f"must be one of the model file's roles: {', '.join(ROLES)}")
+    return role
+
+
+def load_research_writer_role(path: Path = CONFIG_DIR / "models.toml") -> str:
+    """The role whose deployment writes the deep research brief from a run's items (ticket 148)."""
+    entry = _Entry(path, "research_writer", _read(path).get("research_writer"))
     entry.only({"role"})
     role = entry.text("role")
     if role not in ROLES:

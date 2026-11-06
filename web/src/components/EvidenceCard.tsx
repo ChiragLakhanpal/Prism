@@ -14,6 +14,7 @@ import { Fill } from "./Fill";
 import { fillText } from "./LessonParts";
 import { Num } from "./Num";
 import { ProjectId } from "./ProjectId";
+import { isResearchItem } from "./ResearchItem";
 import { Lang } from "./Lang";
 import { DocumentSource, Source } from "./Source";
 import { stepListTitle } from "./StepsDrawer";
@@ -60,6 +61,8 @@ export function sourceTitle(evidence: EvidenceEvent) {
       ? fillText(copy.ppsd.markerSection, { doc: cited.doc, section: cited.place })
       : fillText(copy.ppsd.markerParagraph, { doc: cited.doc, pcode: cited.pid, para: cited.place, page: cited.page ?? "" });
   }
+  // A deep research item is titled by its own title, as its outlet printed it (ticket 149).
+  if (isResearchItem(evidence) && typeof evidence.row.title === "string") return evidence.row.title;
   if (evidence.kind === "record") {
     const named = briefRecordTitle(evidence);
     if (named) return named;
