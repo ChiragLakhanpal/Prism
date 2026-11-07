@@ -146,11 +146,12 @@ name = "Run the Python tests for the wizard and the day-one probes"
 run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/ops", "--numprocesses", "6", "--dist", "worksteal", "ops/wizard/tests", "ops/dayone/tests"]
 lane = "ops"
 
-# The app's deploy and what it uploads (ticket 06). They read no fixture database and take a few
-# seconds in one process, so they run in a lane of their own instead of lengthening the ops lane.
+# The app's deploy and what it uploads (ticket 06), and the workspace's pause and resume (November 7, 2026).
+# They read no fixture database and take a few seconds in one process, so they run in a lane of their
+# own instead of lengthening the ops lane. tests/test_gate.py finds this step by its last argument, ops/app/tests.
 [[step]]
-name = "Run the Python tests for the app's deploy and the Lakebase probe"
-run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/app", "ops/app/tests"]
+name = "Run the Python tests for the app's deploy, the Lakebase probe, and the workspace's pause and resume"
+run = ["uv", "run", "--frozen", "pytest", "--basetemp", ".gate-tmp/app", "ops/workspace/tests", "ops/app/tests"]
 lane = "app"
 
 # The two lints read only source files, so each needs nothing from the other steps and runs

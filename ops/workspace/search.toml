@@ -1,0 +1,13 @@
+# The passage index's sync spec, for ops/workspace/resume.py to make the index again after a pause that deleted the
+# search endpoint. The index's name is [search].index in config/models.toml and its embedding size is
+# [roles.embed].dimensions there; the endpoint's name is names.ai_search_endpoint in ops/dayone/dayone.toml. This file
+# holds only what no other file defines: the endpoint's type, and the table the index syncs from with its key and its
+# embedding column. The table keeps the embeddings, so a new index costs a sync and no new embeddings.
+
+[endpoint]
+type = "STANDARD"
+
+[index]
+source_table = "strata.gold.passage"
+primary_key = "passage_id"
+embedding_column = "embedding"

@@ -39,7 +39,7 @@ build-backend = "hatchling.build"
 packages = ["src/strata"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests", "ops/dayone/tests", "ops/wizard/tests", "ops/bundle/tests", "ops/app/tests"]
+testpaths = ["tests", "ops/dayone/tests", "ops/wizard/tests", "ops/bundle/tests", "ops/app/tests", "ops/workspace/tests"]
 addopts = "-q -p no:cacheprovider"
 # A passing test's temporary folder is removed as soon as the test ends; a failed test's stays for a look. Most
 # tests copy the 38 MB fixture database into their tmp_path, so a run that kept every folder held about 7 GB, and
