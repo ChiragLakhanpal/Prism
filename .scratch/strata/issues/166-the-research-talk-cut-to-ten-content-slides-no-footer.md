@@ -87,17 +87,18 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 
 **Blocked by:** None
 
-**Status:** ready-for-agent
+**Status:** done
 **Area:** app
 **Phase:** P5
 **Design review:** no
 
-- [ ] `/present/research` shows sixteen slides in the order of section 1, ten of them content, with no agenda and an opener for each topic after the first; `/present` shows the Strata talk unchanged (the deck tests, both talks).
-- [ ] No research slide carries the footer sentence, a source line, a note line, a topic subtitle or a build date; the timeline figure carries no date labels (the walk test, the figure export test).
-- [ ] The slides' words are section 4's, every number on them bound or allowed, and the number check passes on the slides, the reading view and the notes.
-- [ ] The gate passes under 180 seconds.
+- [x] `/present/research` shows sixteen slides in the order of section 1, ten of them content, with no agenda and an opener for each topic after the first; `/present` shows the Strata talk unchanged (the deck tests, both talks).
+- [x] No research slide carries the footer sentence, a source line, a note line, a topic subtitle or a build date; the timeline figure carries no date labels (the walk test, the figure export test).
+- [x] The slides' words are section 4's, every number on them bound or allowed, and the number check passes on the slides, the reading view and the notes.
+- [x] The gate passes under 180 seconds.
 
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 17:12 PST, from the user's review of the talk the eighth deploy put on the App.
 - November 6, 2026, orchestrator: at about 17:30 PST (commit d87d25a6 at 17:33) the user kept the navy openers ("the navy slides are fine I think, or maybe reduce them, but don't remove all please"); section 1 now keeps one for each topic after the first, as the first talk does, and the talk is sixteen slides. The implementer was told mid-build.
+- November 6, 2026, orchestrator: merged into `build/strata` as 461e2a8e at 19:06 PST (branch `strata/166-research-talk-ten-slides`, worktree `t166-research-talk`: 558e06a2 the twelve-slide cut, 9d462d17 the four openers back, 32e33684 the two fixes after the orchestrator's look at the screenshots; the gate on the merge passed in 179.8 seconds on a loaded machine). The builder's evidence: the walk test saw the sixteen ids with the footer count 0 on every slide; the number check passed on the slides, the reading view and the notes with every `rec:` key and the four settings bound; copy lint and tsc clean; deck tests 21 of 21; the gate 162.9 to 177.5 seconds on the branch. Words changed from section 4 to fit the canvas at zoom 0.9: the considered slide's first point ends "Nobody can check it, so nobody will defend it." and its sixth drops "with a measured error rate"; the next steps take the orchestrator's shorter words, with the fourth tile's "with a stated error rate" and the fifth's "with real counts" dropped. Beyond the words: the timeline figure's boxes grew to fill its slot once the date labels went; a text slide's fit now measures the content's own height, so a point not yet reached no longer shrinks the slide (no Strata slide changed); the demo's backup buttons read "Recorded run" and "Printed brief" with no icon; the loading frame shows the footer only for a talk whose footer is on every slide. Still to do after the merge: the local preview for the user, the PDF and PowerPoint exports, STATUS, and the redeploy on the user's word.
