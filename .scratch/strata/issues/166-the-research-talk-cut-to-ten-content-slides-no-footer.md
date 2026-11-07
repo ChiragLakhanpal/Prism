@@ -1,0 +1,96 @@
+# 166: The research talk cut to ten content slides, with no footer, no source lines, no subtitles and no timestamps, and its words rewritten plain
+
+**What to build:** The user's request of November 6, 2026, after seeing the research talk at `/present/research` (ticket 162): "Remove all the sources and disclaimers from the slides, like the footer stuff ... 25 slides for a feature is way too much, keep it to a maximum of 10 slides for the main content and only keep pertinent information, Chirag and Surya will add verbal context ... improve the onscreen text using the humanizer skill. Remove the subtitle text like 'Two apps on one brief, then one conversation.'. Remove specific dates like 'Nov 5', we don't need timestamps." The talk stays on the deck's engine with its figures, presses and notes window; only its length, its chrome and its words change. `/present` (the Strata talk) does not change in what it shows.
+
+Read first: `web/src/deck/research/slides.tsx`, `web/src/deck/research/copy.ts`, `web/src/deck/talk.ts`, `web/src/deck/talks/*.ts`, `web/src/deck/Deck.tsx` (the frame call near line 276, `TitleSlide`, `CloseSlide`), `web/src/deck/Frame.tsx`, `web/tests/deck.spec.ts` from line 608 (the research tests) and lines 360 to 372, `tests/test_deck_data.py`, `tests/test_deck_figures.py`, `docs/agents/unslop.md`, and the humanizer skill at `~/.claude/skills/synced/f3a22e34-a2a6-48fb-b168-ec9e30205825_8d0e65c7-cf87-4245-ab64-ad634a6e46b4/humanizer/SKILL.md`. The original brief is `.notes/deck3/brief.md` in the main checkout (`./.notes/deck3/brief.md`); its rules hold where this ticket does not change them.
+
+## 1. The talk: twelve slides, ten of them content
+
+No agenda slide and no topic openers: the tracker in the header is the agenda, and the counter reads "2 of 12". The five topics and their tracker names stay (`How we got here`, `Deep research`, `How it works`, `The decisions`, `What comes next`); the topics' agenda lines go (make `line` optional on `Talk.topics`, and drop them from the research copy). The hairline figures `two-slabs` and `rungs` stay in the kernel folder, unused by this talk; `ground` stays on the title slide and the close.
+
+| n | id | part | kind | what |
+|---|---|---|---|---|
+| 1 | welcome | open | title, navy, hairline `ground` | statement, lead, the presenters' names, no date, no footer |
+| 2 | timeline | here | figure `merge-timeline` (6) | the figure with its date labels removed (section 3) |
+| 3 | two-apps | here | figure `two-apps` (5 + 1) | the figure, then one note line with the four recorded counts |
+| 4 | five-ways | here | figure `five-ways` (6) | the figure |
+| 5 | gap | brief | figure `record-gap` (4 + 2) | the figure, then two note lines: what deep research is, and the demo project's numbers |
+| 6 | considered | brief | text, `Points` (6 + 1 ask) | the ideas set aside |
+| 7 | demo-research | works | text, `Demo` (4 + 2 backups) | the box, four lines, the recorded run and the printed brief as today |
+| 8 | pipeline | works | figure `research-run` (6) | the figure |
+| 9 | ladder | decisions | half figure `evidence-ladder` (5 + 2) | the figure beside two note lines |
+| 10 | posts | decisions | figure `post-funnel` (6 + 1) | the figure, then one note line |
+| 11 | next-steps | next | text, `Tiles` (5 + 1 closing) | the five tiles, then the built and designed line |
+| 12 | thanks | close | close, navy, hairline `ground` | the title, the presenters, the links; no lead |
+
+Cut: agenda, the five openers, why-prism, set-aside, what-it-is, checks, honest, other-decisions, built-designed. Their points live on in the kept slides' speaker notes (section 5). The figures `brief-sections` and `checks` stay in the registry, the order file, the figure copy and the figure test (they are exports that other tests compare); no research slide uses `brief-sections` any more, and `checks` stays the first talk's.
+
+## 2. Chrome: no footer, no source lines, no dates
+
+- The footer sentence shows on no slide of this talk. Replace `Talk.footerOnEverySlide: boolean` with `footer: "every" | "title" | "none"`: the Strata talk `"every"`, the research talk `"none"`. `Deck.tsx` shows the footer when `talk.footer === "every"`, or when it is `"title"` and the slide's kind is `title`. The reading view keeps the app's own footer at the end of the page, as every page has it. Rewrite the paragraph in `DESIGN.md` section 8 that begins "The deck's research talk at `/present/research`" to say this (the user, November 6, 2026: no sources or disclaimers on the slides; the page keeps the app's footer; the first talk keeps the sentence on every slide).
+- No `source` on any research slide: no "Source:" and no "Note:" lines. Remove the demo slide's note line too.
+- No dates and no timestamps on any slide, in any figure, or in the figures' text versions: no "November 5", "late October", "this afternoon". The evidence's own dates inside `record-gap` (March, June, July to October, the closing date) stay, because they are the figure's data, not timestamps of the build. The title slide passes `date: null` whatever `config/deck.toml` says. The speaker notes lose the build's dates as well ("built on November 5 and 6" becomes "built in the night after the conversation", or the date is simply dropped); a recorded number's window may still print its day, since that is the number's provenance and not slide text.
+
+## 3. The timeline figure without its dates
+
+Edit `web/figures/merge-timeline.html`: remove the twelve mono `<text>` date labels above the nodes (the lines reading "October 22 to", "November 3", "November 4 and", "November 5", "November 5 and", "November 6"), and drop the date prefixes from the six `aria-label`s ("Built on one brief, Strata by Chirag and ProcIntel by Surya", "Each read the other's repository", "One conversation", "Build on Prism, the merged app's name for Strata", "The ways forward, the ProcIntel designs and deep research", "Deep research built, the designs written as proposals"). Keep every node, the rule, the dots and the callout. Export again with `python3 -I .claude/skills/diagram-design/scripts/export_svg.py web/figures/merge-timeline.html web/src/figures/merge-timeline.svg --system-fonts`, check with `python3 -I .claude/skills/diagram-design/scripts/self_check.py --offline web/figures/merge-timeline.html`, render the export once in Chromium and look at it: with the labels gone the nodes may sit low in the slot, so move the row up (the boxes' `y`, the rule and the callout) so the figure fills its 352 px height as the others do. Step count stays 6.
+
+## 4. The words on the slides
+
+Every word on a slide, in the live region and in the reading view comes from `web/src/deck/research/copy.ts`. The copy below was written with the humanizer skill and `docs/agents/unslop.md`: short sentences, plain words, no inline-header lists, no forced threes, no em dashes, no "serves as", no hyphenated pairs where plain words do. Use it as written; where the number check, the copy lint or the canvas refuses a line, change the fewest words and say so in your report. A number word on a slide must be bound (`SettingWord`, `RecordedNum`) or on the allow list (`docs/proposal/number_check.toml`: "two apps", "Five ways forward", "the four designs", "Twelve ideas", "Four rungs", "Five next steps", "two By site pages" are there, in any case). "One" is not counted. Dates inside `record-gap` are not slide text.
+
+**1. welcome.** Statement: "What is happening on the ground, with every sentence cited and checked". Lead: "Deep research in Prism, and how we decided to build it." Presenters from the data, `date: null`. Hairline `ground` with its label as today.
+
+**2. timeline.** Title: "We read each other's work before we wrote a line". Figure `merge-timeline`. Step texts (the text version, `researchFigureCopy["merge-timeline"].steps`): (1) "Strata and ProcIntel were built on one brief: Strata by Chirag, ProcIntel by Surya." (2) "Each read the other's repository: its scope, its data, how it was built and its tests." (3) "One conversation: what each app had that the other lacked." (4) "The decision to build on Prism, the merged app's name for Strata." (5) "The ways forward: the ProcIntel designs Prism lacked, and deep research." (6) "Deep research was built, and the ProcIntel designs were written up as proposals. The reading came before the talking, and the talking before any code."
+
+**3. two-apps.** Title: "We built on Prism for its data and its checks. ProcIntel brought the sharper designs." Figure `two-apps` with its step texts as today. The note line after the figure, bound to the recorded register: "Prism has {linesPrism} lines of Python and {testsPrism} tests. ProcIntel has {linesProcintel} lines and {testsProcintel} tests. Both were counted the same way."
+
+**4. five-ways.** Title: "Five ways forward, one test: what does a specialist do differently the next morning?" Figure `five-ways` with its step texts as today.
+
+**5. gap.** Title: "The World Bank's record moved once in a year. The ground kept moving." Figure `record-gap` with its step texts as today. Two note lines after it, a press each: (1) "Deep research is a tab on every project page. One click reads the public sources, the last {reports} status reports and the team's field photos, then writes a short brief, checks every sentence against its source and prints it." (`reports` bound to the setting `isr-reports`.) (2) "On the demo project the March status report put progress at {isrProgress} percent. By June the public record put the Wajir plant at {wajirProgress} percent, and {lateAwards} awards landed in the last {lateDays} days before closing." (bound as today: `rec:isr-progress`, `rec:wajir-progress`, `rec:late-awards`, `s:late-award-days`.)
+
+**6. considered.** Title: "Twelve ideas, and the question that sorted them". Points, a press each: (1) "A score per project, red to green. A number nobody can check is a number nobody will defend." (2) "A chat window over the news, or live web search by an agent. Answers that vanish, and a brief that reads differently tomorrow." (3) "A vision model on field photos, or a reader that pretends to be a browser. A guess with no source, and a lie to the site." (4) "A mood score for public posts. A mood is a number that bought posts can move." (5) "A daily feed of every mention. Noise a specialist would mute within a week." (6) "Kept for later, each waiting on one thing: a satellite change model with a measured error rate, paid sources, translation shown beside the original, and the project's own grievance log." Ask (the callout): "Would a specialist act on this sentence, and defend it to the agency?" On the canvas this slide must not zoom below 0.9; if it does, shorten the lines, never the count of ideas.
+
+**7. demo-research.** Title: "One click starts a run, and the brief that comes back can be checked line by line". The box, its action "Open the Deep research tab" and the demo project as today. Four lines, a press each: (1) "The run shows its plan first, a card for each stage, and says in plain words what it is doing now." (2) "The brief opens in the tab. A small marker after each sentence opens its source." (3) "The sentences the checks removed sit under the brief, each with its reason." (4) "Download as PDF prints a page per section, once every image has loaded." Then the two backup presses as today ("Show the recorded run", "Show the printed brief", the same images at their own shapes); their captions as today, minus any date. No note line. Update the test's backup button number (it is the lines' count plus two).
+
+**8. pipeline.** Title: "Every source is stored as an item before a word is written, and the writer has no tools". Figure `research-run` with its step texts as today.
+
+**9. ladder.** Title: "Four rungs of evidence, each harder to fake than the one below". Half figure `evidence-ladder` with its step texts as today. Beside it, two note lines, a press each: (1) "Satellite sits third because of cost. The free mosaics are yearly, at {metres} metres per pixel, and show a dam but never a pipe. Prism shows the years side by side and a person judges." (`rec:tile-metres`.) (2) "A post on its own can start a question, never a finding. A claim in the picture on the ground should rest on a higher rung, or on more than one independent source. That rule is designed, not built yet."
+
+**10. posts.** Title: "A post is the cheapest thing to fake, so we filter at the account". Figure `post-funnel` with its step texts as today. One note line after it: "Built today: a post has to name a project place or an agency with a sector word, come from a public timeline, and is quoted word for word. Designed, not yet built: the account's age and history, bursts counted once, and a burst near a bid deadline shown with its dates."
+
+**11. next-steps.** Title: "Five next steps. None is built yet, and each is one reader, one rule or one registry entry away." Tiles, a press each (head, body): "Watch a project" / "One cited line when a late award, a new case at the Panel, a news item naming a site or a field photo arrives. The run exists. The watch is a schedule and a rule."; "One page per supplier" / "Every award a firm holds across projects and countries, its share of each project, and whether it is on the debarred list. Each number from the awards tool."; "Check a bidding document" / "A team's private upload read against the numbered paragraphs of the Regulations and the plan: a missing clause, dates that do not add up, lots that differ."; "Point to where the ground changed" / "A change model shades what changed between the satellite years, with a stated error rate. Prism points, a person judges and asks for a photo."; "The live plan inside STEP" / "A read-only feed gives the live plan, the prior review queue and amendments. Amendment and rebidding risk become real signals with real counts." Closing line (one more press): "In the build today: the sources, the item store, the writer with no tools, the checks, and the brief in the tab and as a PDF. Designed and not built: the account rules for posts, and the rule that a claim needs more than one source."
+
+**12. thanks.** Title: "Two apps, one conversation, five ways forward, one choice". No lead. The presenters' names, and the links "Open the Deep research tab" and "Read the code" as today. Hairline `ground`.
+
+The figure copy for `two-apps`, `five-ways`, `record-gap`, `research-run`, `evidence-ladder` and `post-funnel` stays as it is, apart from any date. Read each step text once against the humanizer's list and fix only what it catches.
+
+## 5. The speaker notes
+
+Keep `notes`, `cue`, `adds` and `asked` for the twelve slides, in the shapes of ticket 162 (the cue names the speaker: Surya takes topic 1 and topic 5, Chirag the open, topics 2 to 4 and the close). Remove the entries of the cut slides, and fold what mattered into the kept slides, as short lines in `adds` or as `asked` pairs: why Prism (the lakehouse, the verifier on every sentence, the deployed App, the gate) into `two-apps`; what each ProcIntel design waits on into `five-ways`; the brief's sections and who can see a brief into `gap`; the demo's honesty (no live lookups, the stored run, the sample photos, GDELT not reached, no spoofed browser) into `demo-research`'s cue and asked; the checks, the kept counts and the cost of a brief into `pipeline` (bind the kept counts with `RecordedNote` and the source and check counts with `NoteNum`, so `rec:kept-low`, `rec:kept-high`, `s:research-source-count` and `s:check-count` still resolve somewhere in the talk); the other decisions (Prism's own name on every call, numbers only from a tool, items stored with their day, one registry file, photos team-only) into `ladder` and `posts`; the built and designed split into `next-steps`. Dates out of the notes as section 2 says. Run the humanizer's list over the notes once, lightly: they are spoken, so "we" and "I" stay.
+
+## 6. Tests and checks
+
+- `web/tests/deck.spec.ts`: `RESEARCH_IDS` becomes the twelve ids; the walk test asserts no footer on any slide (count 0 on every n), no topic numbers, the tracker lit on slides 2 to 11 and absent on 1 and 12; the tracker test's bookend list drops `agenda`; the demo test's backup button number; the number check test's expected keys are the ones the talk now binds (every `rec:` key, `s:isr-reports`, `s:late-award-days`, `s:research-source-count`, `s:check-count`); the notes window test's first cue; the reading view test's figure list (drop `brief-sections`). The engine tests for the Strata talk do not change.
+- `tests/test_deck_data.py` does not change unless a recorded entry does (none should).
+- `tests/test_deck_figures.py` does not change; `merge-timeline`'s export must match its edited source.
+- The copy lint (`node web/lint/run.ts`) and the number check pass; the gate (`.githooks/pre-commit`) passes under 180 seconds.
+- Build the deck and look at every slide at every press on the canvas (a screenshot per slide whole is enough, plus the considered slide for its zoom and the timeline for its figure's placement). Fix what does not fit; do not add words.
+
+Essentials only, no review rounds. Commit with plain-English messages and no trailers. Do not change ticket files, docs/STATUS.md or anything under .scratch, and do not deploy. Report with the branch and worktree, each section above with its evidence (the ids and counts the tests saw, the number check's and the gate's results and times), the words you changed from section 4 and why, and anything not done.
+
+**Blocked by:** None
+
+**Status:** ready-for-agent
+**Area:** app
+**Phase:** P5
+**Design review:** no
+
+- [ ] `/present/research` shows twelve slides in the order of section 1, ten of them content, with no agenda and no openers; `/present` shows the Strata talk unchanged (the deck tests, both talks).
+- [ ] No research slide carries the footer sentence, a source line, a note line, a topic subtitle or a build date; the timeline figure carries no date labels (the walk test, the figure export test).
+- [ ] The slides' words are section 4's, every number on them bound or allowed, and the number check passes on the slides, the reading view and the notes.
+- [ ] The gate passes under 180 seconds.
+
+## Comments
+
+- November 6, 2026, orchestrator: opened at 17:12 PST, from the user's review of the talk the eighth deploy put on the App.
