@@ -4,9 +4,11 @@
 
 Read first: `web/src/deck/research/slides.tsx`, `web/src/deck/research/copy.ts`, `web/src/deck/talk.ts`, `web/src/deck/talks/*.ts`, `web/src/deck/Deck.tsx` (the frame call near line 276, `TitleSlide`, `CloseSlide`), `web/src/deck/Frame.tsx`, `web/tests/deck.spec.ts` from line 608 (the research tests) and lines 360 to 372, `tests/test_deck_data.py`, `tests/test_deck_figures.py`, `docs/agents/unslop.md`, and the humanizer skill at `~/.claude/skills/synced/f3a22e34-a2a6-48fb-b168-ec9e30205825_8d0e65c7-cf87-4245-ab64-ad634a6e46b4/humanizer/SKILL.md`. The original brief is `.notes/deck3/brief.md` in the main checkout (`./.notes/deck3/brief.md`); its rules hold where this ticket does not change them.
 
-## 1. The talk: twelve slides, ten of them content
+## 1. The talk: sixteen slides, ten of them content
 
-No agenda slide and no topic openers: the tracker in the header is the agenda, and the counter reads "2 of 12". The five topics and their tracker names stay (`How we got here`, `Deep research`, `How it works`, `The decisions`, `What comes next`); the topics' agenda lines go (make `line` optional on `Talk.topics`, and drop them from the research copy). The hairline figures `two-slabs` and `rungs` stay in the kernel folder, unused by this talk; `ground` stays on the title slide and the close.
+(Changed at 17:40 PST, from the user's answer: "10 slide max for the main content, the navy slides are fine I think, or maybe reduce them, but don't remove all please." The openers stay for the topics after the first, as the first talk has them; topic 1 follows the title slide directly.)
+
+No agenda slide: the tracker in the header is the agenda. The five topics and their tracker names stay (`How we got here`, `Deep research`, `How it works`, `The decisions`, `What comes next`); the topics' agenda lines go (make `line` optional on `Talk.topics`, and drop them from the research copy). Four navy openers stay, one for each topic after the first, each with its hairline figure and no line under the topic name (an opener's `lead` is undefined; the subtitle is what the user asked to remove). The hairline figure `two-slabs` stays in the kernel folder, unused by this talk; `ground` stays on the title slide and the close. The counter reads "2 of 16".
 
 | n | id | part | kind | what |
 |---|---|---|---|---|
@@ -14,16 +16,20 @@ No agenda slide and no topic openers: the tracker in the header is the agenda, a
 | 2 | timeline | here | figure `merge-timeline` (6) | the figure with its date labels removed (section 3) |
 | 3 | two-apps | here | figure `two-apps` (5 + 1) | the figure, then one note line with the four recorded counts |
 | 4 | five-ways | here | figure `five-ways` (6) | the figure |
-| 5 | gap | brief | figure `record-gap` (4 + 2) | the figure, then two note lines: what deep research is, and the demo project's numbers |
-| 6 | considered | brief | text, `Points` (6 + 1 ask) | the ideas set aside |
-| 7 | demo-research | works | text, `Demo` (4 + 2 backups) | the box, four lines, the recorded run and the printed brief as today |
-| 8 | pipeline | works | figure `research-run` (6) | the figure |
-| 9 | ladder | decisions | half figure `evidence-ladder` (5 + 2) | the figure beside two note lines |
-| 10 | posts | decisions | figure `post-funnel` (6 + 1) | the figure, then one note line |
-| 11 | next-steps | next | text, `Tiles` (5 + 1 closing) | the five tiles, then the built and designed line |
-| 12 | thanks | close | close, navy, hairline `ground` | the title, the presenters, the links; no lead |
+| 5 | brief | brief | opener, navy, hairline `passages` | the topic's number and name, no line |
+| 6 | gap | brief | figure `record-gap` (4 + 2) | the figure, then two note lines: what deep research is, and the demo project's numbers |
+| 7 | considered | brief | text, `Points` (6 + 1 ask) | the ideas set aside |
+| 8 | works | works | opener, navy, hairline `filter` | the topic's number and name, no line |
+| 9 | demo-research | works | text, `Demo` (4 + 2 backups) | the box, four lines, the recorded run and the printed brief as today |
+| 10 | pipeline | works | figure `research-run` (6) | the figure |
+| 11 | decisions | decisions | opener, navy, hairline `rungs` | the topic's number and name, no line |
+| 12 | ladder | decisions | half figure `evidence-ladder` (5 + 2) | the figure beside two note lines |
+| 13 | posts | decisions | figure `post-funnel` (6 + 1) | the figure, then one note line |
+| 14 | next | next | opener, navy, hairline `sediment` | the topic's number and name, no line |
+| 15 | next-steps | next | text, `Tiles` (5 + 1 closing) | the five tiles, then the built and designed line |
+| 16 | thanks | close | close, navy, hairline `ground` | the title, the presenters, the links; no lead |
 
-Cut: agenda, the five openers, why-prism, set-aside, what-it-is, checks, honest, other-decisions, built-designed. Their points live on in the kept slides' speaker notes (section 5). The figures `brief-sections` and `checks` stay in the registry, the order file, the figure copy and the figure test (they are exports that other tests compare); no research slide uses `brief-sections` any more, and `checks` stays the first talk's.
+Cut: agenda, the first topic's opener (`here`), why-prism, set-aside, what-it-is, checks, honest, other-decisions, built-designed. Their points live on in the kept slides' speaker notes (section 5). The openers keep their `notes` and `cue` (the arrival line while the figure plays; the speaker hand-over), without dates. The figures `brief-sections` and `checks` stay in the registry, the order file, the figure copy and the figure test (they are exports that other tests compare); no research slide uses `brief-sections` any more, and `checks` stays the first talk's.
 
 ## 2. Chrome: no footer, no source lines, no dates
 
@@ -71,7 +77,7 @@ Keep `notes`, `cue`, `adds` and `asked` for the twelve slides, in the shapes of 
 
 ## 6. Tests and checks
 
-- `web/tests/deck.spec.ts`: `RESEARCH_IDS` becomes the twelve ids; the walk test asserts no footer on any slide (count 0 on every n), no topic numbers, the tracker lit on slides 2 to 11 and absent on 1 and 12; the tracker test's bookend list drops `agenda`; the demo test's backup button number; the number check test's expected keys are the ones the talk now binds (every `rec:` key, `s:isr-reports`, `s:late-award-days`, `s:research-source-count`, `s:check-count`); the notes window test's first cue; the reading view test's figure list (drop `brief-sections`). The engine tests for the Strata talk do not change.
+- `web/tests/deck.spec.ts`: `RESEARCH_IDS` becomes the sixteen ids; the walk test asserts no footer on any slide (count 0 on every n), each opener's topic number and name as today for the four openers, the tracker lit on slides 2 to 15 and absent on 1 and 16; the tracker test's bookend list drops `agenda`; the demo test's backup button number; the number check test's expected keys are the ones the talk now binds (every `rec:` key, `s:isr-reports`, `s:late-award-days`, `s:research-source-count`, `s:check-count`); the notes window test's first cue; the reading view test's figure list (drop `brief-sections`). The engine tests for the Strata talk do not change.
 - `tests/test_deck_data.py` does not change unless a recorded entry does (none should).
 - `tests/test_deck_figures.py` does not change; `merge-timeline`'s export must match its edited source.
 - The copy lint (`node web/lint/run.ts`) and the number check pass; the gate (`.githooks/pre-commit`) passes under 180 seconds.
@@ -86,7 +92,7 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 **Phase:** P5
 **Design review:** no
 
-- [ ] `/present/research` shows twelve slides in the order of section 1, ten of them content, with no agenda and no openers; `/present` shows the Strata talk unchanged (the deck tests, both talks).
+- [ ] `/present/research` shows sixteen slides in the order of section 1, ten of them content, with no agenda and an opener for each topic after the first; `/present` shows the Strata talk unchanged (the deck tests, both talks).
 - [ ] No research slide carries the footer sentence, a source line, a note line, a topic subtitle or a build date; the timeline figure carries no date labels (the walk test, the figure export test).
 - [ ] The slides' words are section 4's, every number on them bound or allowed, and the number check passes on the slides, the reading view and the notes.
 - [ ] The gate passes under 180 seconds.
@@ -94,3 +100,4 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 17:12 PST, from the user's review of the talk the eighth deploy put on the App.
+- November 6, 2026, orchestrator: at 17:40 PST the user kept the navy openers ("the navy slides are fine I think, or maybe reduce them, but don't remove all please"); section 1 now keeps one for each topic after the first, as the first talk does, and the talk is sixteen slides. The implementer was told mid-build.
