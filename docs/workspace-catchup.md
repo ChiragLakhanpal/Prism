@@ -5214,3 +5214,5 @@ The script, new in this stop: `ops/workspace/resume.py`, with its names from ops
 - `uv run --script ops/workspace/resume.py --pause --delete-search` also deletes the endpoint and its indexes (destructive, so only on your word).
 
 Check after a resume: `--status` shows the endpoint ONLINE, the index ready with its rows, Lakebase AVAILABLE and the App's compute ACTIVE with the app RUNNING; then, signed in, open the App's address, see a project's record load on Home, and ask Search a question.
+
+At about 09:22 PST you ran `uv run --script ops/workspace/resume.py --pause --delete-search` yourself: the App, Lakebase and the warehouse read already stopped, the script deleted the index workspace.strata_dayone.passages_index, then strata.gold.passage_index, then the endpoint strata-search, and listed the four jobs paused. `--status` at 09:23 reads the endpoint missing, Lakebase STOPPED, the App's compute STOPPED with the app UNAVAILABLE, the warehouse STOPPED and the four jobs PAUSED: nothing on the workspace bills while idle. The source tables keep their rows and embeddings, so the first resume makes the endpoint and the passage index again from them.
