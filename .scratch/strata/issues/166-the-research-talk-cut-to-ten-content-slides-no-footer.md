@@ -6,7 +6,7 @@ Read first: `web/src/deck/research/slides.tsx`, `web/src/deck/research/copy.ts`,
 
 ## 1. The talk: sixteen slides, ten of them content
 
-(Changed at 17:40 PST, from the user's answer: "10 slide max for the main content, the navy slides are fine I think, or maybe reduce them, but don't remove all please." The openers stay for the topics after the first, as the first talk has them; topic 1 follows the title slide directly.)
+(Changed at about 17:30 PST, from the user's answer: "10 slide max for the main content, the navy slides are fine I think, or maybe reduce them, but don't remove all please." The openers stay for the topics after the first, as the first talk has them; topic 1 follows the title slide directly.)
 
 No agenda slide: the tracker in the header is the agenda. The five topics and their tracker names stay (`How we got here`, `Deep research`, `How it works`, `The decisions`, `What comes next`); the topics' agenda lines go (make `line` optional on `Talk.topics`, and drop them from the research copy). Four navy openers stay, one for each topic after the first, each with its hairline figure and no line under the topic name (an opener's `lead` is undefined; the subtitle is what the user asked to remove). The hairline figure `two-slabs` stays in the kernel folder, unused by this talk; `ground` stays on the title slide and the close. The counter reads "2 of 16".
 
@@ -100,4 +100,4 @@ Essentials only, no review rounds. Commit with plain-English messages and no tra
 ## Comments
 
 - November 6, 2026, orchestrator: opened at 17:12 PST, from the user's review of the talk the eighth deploy put on the App.
-- November 6, 2026, orchestrator: at 17:40 PST the user kept the navy openers ("the navy slides are fine I think, or maybe reduce them, but don't remove all please"); section 1 now keeps one for each topic after the first, as the first talk does, and the talk is sixteen slides. The implementer was told mid-build.
+- November 6, 2026, orchestrator: at about 17:30 PST (commit d87d25a6 at 17:33) the user kept the navy openers ("the navy slides are fine I think, or maybe reduce them, but don't remove all please"); section 1 now keeps one for each topic after the first, as the first talk does, and the talk is sixteen slides. The implementer was told mid-build.
