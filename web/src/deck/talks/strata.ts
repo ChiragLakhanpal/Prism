@@ -10,5 +10,5 @@ export const strataTalk: Talk = {
   order: TOPICS.strata,
   topics: () => deckCopy.topics,
   build: buildSlides,
-  footerOnEverySlide: true,
+  footer: "every",
 };

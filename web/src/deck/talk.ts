@@ -13,7 +13,7 @@ import type { Slide } from "./slides";
 // The deck holds two talks on one engine: Prism's own at /present, and deep research at /present/research.
 export type TalkKey = "strata" | "research";
 
-// Each talk's topics in order, by key: the tracker shows them, and the agenda lists them.
+// Each talk's topics in order, by key: the tracker shows them, and an agenda, where a talk has one, lists them.
 export const TOPICS = {
   strata: ["strata", "work", "built", "answers", "grows"],
   research: ["here", "brief", "works", "decisions", "next"],
@@ -31,18 +31,25 @@ export const PLACES: Record<TalkKey, { base: string; channel: string }> = {
   research: { base: "/present/research", channel: "strata-deck-research" },
 };
 
-// A talk, as the engine takes it: its key and address, its topics in order with their names and agenda lines, the
-// builder that makes its slides from the deck's data, and whether DESIGN.md section 8's sentence runs along every
-// slide's foot or only along the title slide's (the user, November 6, 2026: "just saying it once is enough").
+// Where a talk shows DESIGN.md section 8's sentence: along every slide's foot, along the title slide's only, or on no
+// slide (the user, November 6, 2026, of the research talk: no sources or disclaimers on the slides). The reading view
+// keeps the app's own footer at the end of the page whichever it is.
+export type FooterOn = "every" | "title" | "none";
+
+// A talk, as the engine takes it: its key and address, its topics in order with their names and, for a talk with an
+// agenda and openers, their lines, the builder that makes its slides from the deck's data, and where its footer shows.
 export type Talk = {
   key: TalkKey;
   base: string;
   channel: string;
   order: readonly TopicKey[];
-  topics: (data: DeckData) => Record<string, { name: string; line: ReactNode }>;
+  topics: (data: DeckData) => Record<string, { name: string; line?: ReactNode }>;
   build: (data: DeckData) => Slide[];
-  footerOnEverySlide: boolean;
+  footer: FooterOn;
 };
+
+// Whether a slide of this kind carries the footer sentence in a talk.
+export const footerOn = (footer: FooterOn, kind: string) => footer === "every" || (footer === "title" && kind === "title");
 
 // Where the talk is: the slide (1-based) and how many of its presses have been made.
 export type Place = { n: number; step: number };

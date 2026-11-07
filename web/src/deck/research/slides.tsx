@@ -1,9 +1,9 @@
-// The deep research talk's slides (ticket 162; .notes/deck3/brief.md, section 4), built from the deck's data on the
-// engine's own layouts: the bookends, the agenda, the five topics with their navy openers, figure slides, points,
-// tiles and a live demo with its backup. Every number on a slide is bound to a setting or a recorded entry; every
-// word is in research/copy.ts.
+// The deep research talk's slides (ticket 162; .notes/deck3/brief.md; cut by ticket 166), built from the deck's data
+// on the engine's own layouts: the bookends, ten content slides across the five topics and a navy opener for each
+// topic after the first, with no agenda, since the tracker in the header names the topics. Figure slides, points,
+// tiles and a live demo with its backup; no source or note lines, no line under an opener's name and no dates. Every number on a slide is bound to a setting or a recorded entry;
+// every word is in research/copy.ts.
 import { useContext, type ReactNode } from "react";
-import { History } from "lucide-react";
 import { Fill } from "../../components/Fill";
 import { FIGURES, type FigureId } from "../../figures/registry";
 import { cx } from "../../lib/cx";
@@ -11,7 +11,7 @@ import { deckCopy } from "../copy";
 import type { DeckData } from "../data";
 import { Demo, PressTo, Points, Step, Tiles } from "../layouts";
 import { numText } from "../../components/Num";
-import { NoteNum, RecordedNum, SettingWord } from "../nums";
+import { NoteNum, RecordedNote, RecordedNum, SettingWord } from "../nums";
 import { type, type Mode } from "../ramp";
 import type { Slide } from "../slides";
 import { TOPICS } from "../talk";
@@ -42,26 +42,6 @@ const PAGES = [
 const RUN_HEIGHT = 410;
 // The demo's lines, then its two backup presses.
 const DEMO_LINES = s.demo.lines.length;
-
-// The topics' names and lines, with the counts in the third topic's line bound to their settings.
-export function researchTopics(data: DeckData): Record<Topic, { name: string; line: ReactNode }> {
-  const t = researchCopy.topics;
-  return {
-    ...t,
-    works: {
-      name: t.works.name,
-      line: (
-        <Fill
-          template={t.works.line}
-          slots={{
-            sources: <SettingWord data={data} settingKey="research-source-count" capital />,
-            checks: <SettingWord data={data} settingKey="check-count" />,
-          }}
-        />
-      ),
-    },
-  };
-}
 
 // A note-size line under a figure, brought in by a press.
 function NoteStep({ n, at, mode, children }: { n: number; at: number; mode: Mode; children: ReactNode }) {
@@ -120,9 +100,8 @@ function ResearchDemo({ data, at, mode }: { data: DeckData; at: number; mode: Mo
       type="button"
       onClick={() => press?.(step)}
       data-research-backup-button={step}
-      className="inline-flex h-11 shrink-0 items-center gap-2 rounded-sm border-2 border-primary px-4 text-button text-primary transition-paint duration-150 hover:bg-tint"
+      className="inline-flex h-11 shrink-0 items-center rounded-sm border-2 border-primary px-4 text-button text-primary transition-paint duration-150 hover:bg-tint"
     >
-      <History aria-hidden="true" className="size-4" />
       {label}
     </button>
   );
@@ -166,13 +145,14 @@ function ResearchDemo({ data, at, mode }: { data: DeckData; at: number; mode: Mo
 
 export function buildResearchSlides(data: DeckData): Slide[] {
   const word = (name: string, capital = false) => <SettingWord data={data} settingKey={name} capital={capital} />;
-  // A setting as plain text bound to its key, for the notes window's outline, where a title sits inside a button.
+  // A setting or a recorded number in the speaker notes: plain text bound to its key.
   const noteWord = (name: string, capital = false) => <NoteNum sourceKey={`s:${name}`} text={numText({ count: data.settings[name].value, capital })} />;
+  const noteRec = (key: string) => (data.recorded?.[key] ? <RecordedNote data={data} recordedKey={key} /> : deckCopy.states.notMeasured);
   // A recorded number, or the words for one not recorded yet.
   const rec = (key: string) => (data.recorded?.[key] ? <RecordedNum data={data} recordedKey={key} /> : deckCopy.states.notMeasured);
-  const topics = researchTopics(data);
   const research = data.research;
-  const presenters = { names: research.presenters, date: research.date };
+  // The bookends name the presenters and no day (ticket 166: no timestamps), whatever config/deck.toml says.
+  const presenters = { names: research.presenters, date: null };
 
   // A figure slide: the drawing's steps, then `extra` items of the slide's own. A drawing that has not landed takes
   // no presses, and its text version stands in its place.
@@ -180,24 +160,23 @@ export function buildResearchSlides(data: DeckData): Slide[] {
     const steps = FIGURES[id].steps;
     return { figure: { id, steps, wide }, steps: steps + extra };
   };
-  const opener = (topic: Topic, hairline: string, label: string, notes: string, lead?: string): Draft => ({
+
+  // A topic's navy opener: its number and name over its hairline figure, with no line under the name (lead undefined).
+  const opener = (topic: Topic, hairline: string, label: string, notes: string): Draft => ({
     id: topic,
     part: topic,
     theme: "navy",
     kind: "opener",
-    title: topics[topic].name,
-    lead: lead ?? topics[topic].line,
+    title: researchCopy.topics[topic].name,
     steps: 0,
     topic,
     hairline,
     hairlineLabel: label,
     notes,
   });
-  const source = (text: ReactNode) => ({ lead: deckCopy.sourceLead, text });
-  const note = (text: ReactNode) => ({ lead: deckCopy.noteLead, text });
 
   const drafts: Draft[] = [
-    // ── The welcome and the agenda ──
+    // ── The welcome ──
     {
       id: "welcome",
       part: "open",
@@ -211,10 +190,8 @@ export function buildResearchSlides(data: DeckData): Slide[] {
       hairlineLabel: s.welcome.figure,
       notes: s.welcome.notes,
     },
-    { id: "agenda", part: "open", theme: "light", kind: "agenda", title: s.agenda.title, steps: 5, notes: s.agenda.notes },
 
     // ── 1. How we got here ──
-    opener("here", "two-slabs", s.hereOpener.figure, s.hereOpener.notes, s.hereOpener.line),
     {
       id: "timeline",
       part: "here",
@@ -222,7 +199,6 @@ export function buildResearchSlides(data: DeckData): Slide[] {
       kind: "figure",
       title: s.timeline.title,
       ...figure("merge-timeline"),
-      source: source(s.timeline.source),
       notes: s.timeline.notes,
     },
     {
@@ -245,18 +221,7 @@ export function buildResearchSlides(data: DeckData): Slide[] {
           />
         </NoteStep>
       ),
-      source: source(s.twoApps.source),
       notes: s.twoApps.notes,
-    },
-    {
-      id: "why-prism",
-      part: "here",
-      theme: "light",
-      kind: "text",
-      title: s.whyPrism.title,
-      steps: s.whyPrism.lines.length + 1,
-      body: (at, mode) => <Points lines={s.whyPrism.lines} ask={s.whyPrism.ask} at={at} mode={mode} />,
-      notes: s.whyPrism.notes,
     },
     {
       id: "five-ways",
@@ -265,63 +230,36 @@ export function buildResearchSlides(data: DeckData): Slide[] {
       kind: "figure",
       title: s.fiveWays.title,
       ...figure("five-ways"),
-      source: source(s.fiveWays.source),
       notes: s.fiveWays.notes,
-    },
-    {
-      id: "set-aside",
-      part: "here",
-      theme: "light",
-      kind: "text",
-      title: s.setAside.title,
-      steps: s.setAside.tiles.length + 1,
-      body: (at, mode) => <Tiles tiles={s.setAside.tiles} closing={s.setAside.closing} at={at} mode={mode} />,
-      notes: s.setAside.notes,
     },
 
     // ── 2. Deep research ──
     opener("brief", "passages", s.briefOpener.figure, s.briefOpener.notes),
-    {
-      id: "what-it-is",
-      part: "brief",
-      theme: "light",
-      kind: "figure",
-      title: s.whatItIs.title,
-      ...figure("brief-sections", 2),
-      body: (at, mode) => (
-        <div className="flex flex-col gap-1">
-          <NoteStep n={1} at={at} mode={mode}>
-            <Fill template={s.whatItIs.lines[0]} slots={{ reports: word("isr-reports") }} />
-          </NoteStep>
-          <NoteStep n={2} at={at} mode={mode}>
-            {s.whatItIs.lines[1]}
-          </NoteStep>
-        </div>
-      ),
-      source: note(s.whatItIs.source),
-      notes: s.whatItIs.notes,
-    },
     {
       id: "gap",
       part: "brief",
       theme: "light",
       kind: "figure",
       title: s.gap.title,
-      ...figure("record-gap", 1),
+      ...figure("record-gap", 2),
       body: (at, mode) => (
-        <NoteStep n={1} at={at} mode={mode}>
-          <Fill
-            template={s.gap.counted}
-            slots={{
-              isrProgress: rec("isr-progress"),
-              wajirProgress: rec("wajir-progress"),
-              lateAwards: rec("late-awards"),
-              lateDays: word("late-award-days"),
-            }}
-          />
-        </NoteStep>
+        <div className="flex flex-col gap-1">
+          <NoteStep n={1} at={at} mode={mode}>
+            <Fill template={s.gap.lines[0]} slots={{ reports: word("isr-reports") }} />
+          </NoteStep>
+          <NoteStep n={2} at={at} mode={mode}>
+            <Fill
+              template={s.gap.lines[1]}
+              slots={{
+                isrProgress: rec("isr-progress"),
+                wajirProgress: rec("wajir-progress"),
+                lateAwards: rec("late-awards"),
+                lateDays: word("late-award-days"),
+              }}
+            />
+          </NoteStep>
+        </div>
       ),
-      source: source(s.gap.source),
       notes: s.gap.notes,
     },
     {
@@ -345,7 +283,6 @@ export function buildResearchSlides(data: DeckData): Slide[] {
       title: s.demo.title,
       steps: DEMO_LINES + 2,
       body: (at, mode) => <ResearchDemo data={data} at={at} mode={mode} />,
-      source: note(s.demo.note),
       notes: s.demo.notes,
     },
     {
@@ -353,37 +290,19 @@ export function buildResearchSlides(data: DeckData): Slide[] {
       part: "works",
       theme: "light",
       kind: "figure",
-      title: <Fill template={s.pipeline.title} slots={{ sources: word("research-source-count", true), checks: word("check-count") }} />,
-      outline: <Fill template={s.pipeline.title} slots={{ sources: noteWord("research-source-count", true), checks: noteWord("check-count") }} />,
+      title: s.pipeline.title,
       ...figure("research-run"),
-      source: source(s.pipeline.source),
-      notes: s.pipeline.notes,
-    },
-    {
-      id: "checks",
-      part: "works",
-      theme: "light",
-      kind: "figure",
-      title: <Fill template={s.checks.title} slots={{ checks: word("check-count") }} />,
-      outline: <Fill template={s.checks.title} slots={{ checks: noteWord("check-count") }} />,
-      ...figure("checks", 1),
-      body: (at, mode) => (
-        <NoteStep n={1} at={at} mode={mode}>
-          <Fill template={s.checks.kept} slots={{ keptLow: rec("kept-low"), keptHigh: rec("kept-high") }} />
-        </NoteStep>
+      notes: (
+        <Fill
+          template={s.pipeline.notes}
+          slots={{
+            sources: noteWord("research-source-count"),
+            checks: noteWord("check-count"),
+            keptLow: noteRec("kept-low"),
+            keptHigh: noteRec("kept-high"),
+          }}
+        />
       ),
-      source: source(s.checks.source),
-      notes: s.checks.notes,
-    },
-    {
-      id: "honest",
-      part: "works",
-      theme: "light",
-      kind: "text",
-      title: s.honest.title,
-      steps: s.honest.lines.length + 1,
-      body: (at, mode) => <Points lines={s.honest.lines} ask={s.honest.ask} at={at} mode={mode} />,
-      notes: s.honest.notes,
     },
 
     // ── 4. The decisions ──
@@ -405,7 +324,6 @@ export function buildResearchSlides(data: DeckData): Slide[] {
           </NoteStep>
         </div>
       ),
-      source: source(s.ladder.source),
       notes: s.ladder.notes,
     },
     {
@@ -420,18 +338,7 @@ export function buildResearchSlides(data: DeckData): Slide[] {
           {s.posts.line}
         </NoteStep>
       ),
-      source: source(s.posts.source),
       notes: s.posts.notes,
-    },
-    {
-      id: "other-decisions",
-      part: "decisions",
-      theme: "light",
-      kind: "text",
-      title: s.otherDecisions.title,
-      steps: s.otherDecisions.tiles.length,
-      body: (at, mode) => <Tiles tiles={s.otherDecisions.tiles} at={at} mode={mode} />,
-      notes: s.otherDecisions.notes,
     },
 
     // ── 5. What comes next ──
@@ -442,20 +349,9 @@ export function buildResearchSlides(data: DeckData): Slide[] {
       theme: "light",
       kind: "text",
       title: s.nextSteps.title,
-      steps: s.nextSteps.tiles.length,
-      body: (at, mode) => <Tiles tiles={s.nextSteps.tiles} at={at} mode={mode} />,
-      source: note(s.nextSteps.source),
+      steps: s.nextSteps.tiles.length + 1,
+      body: (at, mode) => <Tiles tiles={s.nextSteps.tiles} closing={s.nextSteps.closing} at={at} mode={mode} />,
       notes: s.nextSteps.notes,
-    },
-    {
-      id: "built-designed",
-      part: "next",
-      theme: "light",
-      kind: "text",
-      title: s.builtDesigned.title,
-      steps: s.builtDesigned.tiles.length + 1,
-      body: (at, mode) => <Tiles tiles={s.builtDesigned.tiles} closing={s.builtDesigned.closing} at={at} mode={mode} />,
-      notes: s.builtDesigned.notes,
     },
 
     // ── The close ──
@@ -465,7 +361,6 @@ export function buildResearchSlides(data: DeckData): Slide[] {
       theme: "navy",
       kind: "close",
       title: s.thanks.title,
-      lead: s.thanks.line,
       presenters,
       links: [
         { href: research.demo.href, label: s.thanks.links.tab },

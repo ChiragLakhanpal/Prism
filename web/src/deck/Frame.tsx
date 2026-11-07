@@ -54,8 +54,8 @@ export function SlideFrame({
   names: Record<string, string>;
   // The counter's words, or none on the title slide and the close.
   counter: string | null;
-  // Whether DESIGN.md section 8's sentence runs along this slide's foot: every slide of Prism's own talk, and only the
-  // title slide of the research talk.
+  // Whether DESIGN.md section 8's sentence runs along this slide's foot: every slide of Prism's own talk, and none of
+  // the research talk's (talk.ts, footerOn).
   footer?: boolean;
   children: ReactNode;
 }) {

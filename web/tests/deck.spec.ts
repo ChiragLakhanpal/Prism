@@ -299,12 +299,12 @@ test("the speaker notes open in their own window, follow the deck press by press
 });
 
 // Every slide whole, its reading view and its notes, as a talk's reading view and presentation mode draw them.
-async function allPieces(page: Page, base = "/present"): Promise<Record<string, string>> {
+async function allPieces(page: Page, base = "/present", least = 20): Promise<Record<string, string>> {
   await page.goto(`${base}/page`);
   // count() does not wait, and the loading frame shows until the deck's data arrive, so wait for the reading view first.
   await expect(page.locator("[data-reading-slide]").first()).toBeVisible();
   const count = await page.locator("[data-reading-slide]").count();
-  expect(count).toBeGreaterThan(20);
+  expect(count).toBeGreaterThan(least);
   const pieces: Record<string, string> = {};
   for (let n = 1; n <= count; n += 1) {
     const section = page.locator(`[data-reading-slide='${n}']`);
@@ -361,7 +361,7 @@ test("the number check passes on every slide of the research talk, its reading v
   test.setTimeout(90_000);
   await serveDeck(page);
   await page.setViewportSize({ width: 1440, height: 900 });
-  const pieces = await allPieces(page, PLACES.research.base);
+  const pieces = await allPieces(page, PLACES.research.base, 10);
   expect(numberCheck(pieces)).toEqual([]);
   const keys = sourceKeys(pieces);
   const data = JSON.parse(await recorded("deck-data.json")) as DeckData;
@@ -610,18 +610,22 @@ test("each figure's steps are its text version's, in order, its words pass the c
 // ── The research talk at /present/research (ticket 162; .notes/deck3/brief.md) ──
 
 const RESEARCH = PLACES.research.base;
-const RESEARCH_IDS = [
-  "welcome", "agenda",
-  "here", "timeline", "two-apps", "why-prism", "five-ways", "set-aside",
-  "brief", "what-it-is", "gap", "considered",
-  "works", "demo-research", "pipeline", "checks", "honest",
-  "decisions", "ladder", "posts", "other-decisions",
-  "next", "next-steps", "built-designed",
-  "thanks",
-];
+// The talk's sixteen slides (ticket 166): the bookends, ten content slides and a navy opener for each topic after the
+// first, as the first talk has them, with no agenda; the tracker in the header is the agenda. Each slide's part, the
+// topic it lights. An opener's id is its topic's key.
+const RESEARCH_PARTS = {
+  welcome: "open",
+  timeline: "here", "two-apps": "here", "five-ways": "here",
+  brief: "brief", gap: "brief", considered: "brief",
+  works: "works", "demo-research": "works", pipeline: "works",
+  decisions: "decisions", ladder: "decisions", posts: "decisions",
+  next: "next", "next-steps": "next",
+  thanks: "close",
+} as const;
+const RESEARCH_IDS = Object.keys(RESEARCH_PARTS);
 const talkOf = (key: TalkKey) => ({ key, base: PLACES[key].base, order: TOPICS[key] });
 
-test("the research talk walks end to end: its bookends and five topics each opened by its navy opener, one logo a slide, the footer sentence on the title slide only, every press in order, the tracker and axe", async ({ page }) => {
+test("the research talk walks end to end: its bookends, ten content slides and an opener for each topic after the first with no line under its name, no agenda, one logo a slide, no footer sentence on any slide, every press in order, the tracker between the bookends, and axe", async ({ page }) => {
   test.setTimeout(150_000);
   const talk = talkOf("research");
   await serveDeck(page);
@@ -632,23 +636,31 @@ test("the research talk walks end to end: its bookends and five topics each open
   expect(new URL(page.url()).pathname).toBe(`${talk.base}/${RESEARCH_IDS.length}`);
   const ids = await page.locator("section[data-slide]").evaluateAll((sections) => sections.map((section) => section.getAttribute("data-slide-id")));
   expect(ids).toEqual(RESEARCH_IDS);
-  const footer = await footerSentence();
+  expect(ids).toHaveLength(16);
   const status = page.locator("[data-deck-status]");
   await page.keyboard.press("Home");
   for (let n = 1; n <= RESEARCH_IDS.length; n += 1) {
     const id = RESEARCH_IDS[n - 1];
+    const part = RESEARCH_PARTS[id as keyof typeof RESEARCH_PARTS];
     const slide = page.locator(`section[data-slide='${n}']`);
     await expect(slide, id).toBeVisible();
     expect(new URL(page.url()).pathname).toBe(`${talk.base}/${n}`);
     await expect(slide.getByRole("img", { name: deckCopy.logo }), id).toHaveCount(1);
-    // The sentence that the content is not World Bank policy shows once, on the title slide (DESIGN.md section 8).
-    await expect(slide.locator("[data-slide-footer]"), id).toHaveCount(n === 1 ? 1 : 0);
-    if (n === 1) await expect(slide.locator("[data-slide-footer]")).toHaveText(footer);
-    // An opener names its topic and numbers it; a topic's slide lights its topic in the tracker.
+    // No sources or disclaimers on the slides (the user, November 6, 2026): no footer sentence, and no source or note
+    // line.
+    await expect(slide.locator("[data-slide-footer]"), id).toHaveCount(0);
+    await expect(slide.locator("[data-source-line]"), id).toHaveCount(0);
+    // An opener names its topic and numbers it, with no line under the name; no other slide has a topic number.
     if ((talk.order as readonly string[]).includes(id)) {
       await expect(slide.getByRole("heading", { level: 1 })).toHaveText(researchCopy.topics[id as keyof typeof researchCopy.topics].name);
       await expect(slide.locator("[data-topic-number]")).toHaveText(String(talk.order.indexOf(id as never) + 1));
-    }
+      await expect(slide.locator("h1 ~ p"), id).toHaveCount(0);
+    } else await expect(slide.locator("[data-topic-number]"), id).toHaveCount(0);
+    // The content slides light their own topic in the tracker; the bookends show none.
+    if (part === "open" || part === "close") await expect(slide.locator("[data-tracker]"), id).toHaveCount(0);
+    else await expect(slide.locator(`[data-tracker] [data-topic=${part}] [data-topic-name]`), id).toHaveAttribute("aria-current", "step");
+    // The counter in the header says where the talk is: "2 of 16".
+    if (part !== "open" && part !== "close") await expect(slide.locator("[data-frame=header] p[data-chrome]"), id).toHaveText(deckCopy.counter(String(n), "16"));
     const steps = Number(await slide.getAttribute("data-step-count"));
     for (let step = 1; step <= steps; step += 1) {
       await page.keyboard.press("ArrowRight");
@@ -665,22 +677,22 @@ test("the research talk walks end to end: its bookends and five topics each open
       ),
     );
     expect((await scan(page)).violations.map((found) => `${id}: ${found.id}`)).toEqual([]);
+    // The ideas set aside and the next steps fit the canvas at nine tenths of their size or more (ticket 166): a longer
+    // line is cut, never an idea or a step.
+    if (id === "considered" || id === "next-steps") expect(Number(await slide.locator("[data-fit-zoom]").getAttribute("data-fit-zoom")), id).toBeGreaterThanOrEqual(0.9);
     if (n < RESEARCH_IDS.length) await page.keyboard.press("ArrowRight");
   }
   const tracker = page.locator("section[data-slide-id=gap] [data-tracker]");
-  await expect(tracker.locator("[data-topic=brief] [data-topic-name]")).toHaveAttribute("aria-current", "step");
-  for (const topic of talk.order) await expect(tracker.locator(`[data-topic=${topic}] [data-segment]`), topic).toHaveCount(ids.filter((_, k) => k > 1 && k < ids.length - 1 && topicOf(ids, k) === topic).length);
-  for (const id of ["welcome", "agenda", "thanks"]) await expect(slideById(page, id).locator("[data-tracker]"), id).toHaveCount(0);
-  // The title slide and the close name both presenters.
+  for (const topic of talk.order) await expect(tracker.locator(`[data-topic=${topic}] [data-segment]`), topic).toHaveCount(RESEARCH_IDS.filter((id) => topicOf(id) === topic).length);
+  // The title slide and the close name both presenters, and no day.
   for (const id of ["welcome", "thanks"]) for (const name of ["Chirag Lakhanpal", "Surya Yadav"]) await expect(slideById(page, id), id).toContainText(name);
+  await expect(slideById(page, "welcome").locator("[data-presenter] p")).toHaveCount(2);
 });
 
-// A research slide's topic: the opener at or before it. The close, the last slide, has none.
-function topicOf(ids: (string | null)[], index: number): string | undefined {
-  const order = TOPICS.research as readonly string[];
-  if (index >= ids.length - 1) return undefined;
-  for (let k = index; k >= 0; k -= 1) if (order.includes(ids[k] ?? "")) return ids[k] ?? undefined;
-  return undefined;
+// A research slide's topic, or none for the bookends.
+function topicOf(id: string): string | undefined {
+  const part: string = RESEARCH_PARTS[id as keyof typeof RESEARCH_PARTS];
+  return part === "open" || part === "close" ? undefined : part;
 }
 
 test("the research demo slide opens the demo project's Deep research tab in a new tab, and its two backup presses show the recorded run, then the printed brief", async ({ page }) => {
@@ -737,8 +749,9 @@ test("the research demo slide opens the demo project's Deep research tab in a ne
   await expect(slide.locator("[data-research-backup]")).toHaveCount(0);
   await expect(slide.locator("[data-research-demo] > [aria-hidden=true]")).toHaveCount(0);
   await expect(slide.locator("[data-demo-box]")).toBeVisible();
-  await slide.locator("[data-research-backup-button='7']").click();
-  await expect(slide).toHaveAttribute("data-step-current", "7");
+  // The lines' count plus two: the printed brief's button.
+  await slide.locator(`[data-research-backup-button='${lines + 2}']`).click();
+  await expect(slide).toHaveAttribute("data-step-current", String(lines + 2));
   await expect(image("cover.png")).toBeVisible();
   // The reading view shows the box and both backups under the lines.
   await page.goto(`${RESEARCH}/page`);
@@ -778,14 +791,14 @@ test("the research talk's notes window follows its own deck press by press with 
   await expect(notes.locator(`[data-notes-view='${timeline}']`)).toBeVisible();
   // Every cue names the slide's suggested speaker: Surya for topics 1 and 5, Chirag for the open, topics 2 to 4 and
   // the close.
-  for (const [k, id] of RESEARCH_IDS.entries()) {
-    const topic = topicOf(RESEARCH_IDS, k);
+  for (const id of RESEARCH_IDS) {
+    const topic = topicOf(id);
     const speaker = (researchCopy.speaker as Record<string, { cue?: string }>)[id]?.cue ?? "";
     expect(speaker, id).toMatch(topic === "here" || topic === "next" ? /^Surya/ : /^Chirag/);
   }
 });
 
-test("below the size of the canvas the research talk is a page with every slide whole, each figure's text version, its notes, and the footer once", async ({ page }) => {
+test("below the size of the canvas the research talk is a page with every slide whole, each figure's text version, its notes, and the app's footer once at its end", async ({ page }) => {
   await serveDeck(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${RESEARCH}/4`);
@@ -793,7 +806,7 @@ test("below the size of the canvas the research talk is a page with every slide 
   await expect(page.locator("[data-reading-slide]")).toHaveCount(RESEARCH_IDS.length);
   await expect(page.getByRole("contentinfo")).toHaveText(await footerSentence());
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(researchCopy.slides.welcome.statement);
-  for (const id of ["merge-timeline", "two-apps", "five-ways", "brief-sections", "record-gap", "research-run", "evidence-ladder", "post-funnel"] as const) {
+  for (const id of ["merge-timeline", "two-apps", "five-ways", "record-gap", "research-run", "evidence-ladder", "post-funnel"] as const) {
     await expect(page.locator(`[data-figure-text=${id}]`), id).toContainText(FIGURE_WORDS[id].steps[0]);
   }
   await expect(page.locator("[data-reading-slide] [data-step][aria-hidden=true]")).toHaveCount(0);

@@ -34,13 +34,13 @@ import { NewTabLink, PressTo, SourceLine, Step, WholeSlides } from "./layouts";
 import { CHART_WIDTH, FOOTER, type, type Mode } from "./ramp";
 import { RecordedAnswer, RecordedSlide } from "./Recorded";
 import { figureStepText, TITLE_ID, type Slide } from "./slides";
-import { arrive, fullScreenKey, moved, moveFor, segments, type Move, type Place, type Talk } from "./talk";
+import { arrive, footerOn, fullScreenKey, moved, moveFor, segments, type Move, type Place, type Talk } from "./talk";
 import { TALKS } from "./talks";
 import { slideInAddress, type DeckView } from "./view";
 import "./deck.css";
 
 // The talk on screen, and its topics' names and lines as its data fill them.
-type OnStage = { talk: Talk; topics: Record<string, { name: string; line: ReactNode }> };
+type OnStage = { talk: Talk; topics: Record<string, { name: string; line?: ReactNode }> };
 const TalkOnStage = createContext<OnStage>(null as unknown as OnStage);
 const useTalk = () => useContext(TalkOnStage);
 
@@ -105,7 +105,7 @@ export function DeckApp({ view }: { view: DeckView }) {
       </main>
     );
   }
-  if (!data || !slides || !stage) return view.kind === "slides" && big ? <Loading /> : <PageLoading />;
+  if (!data || !slides || !stage) return view.kind === "slides" && big ? <Loading footer={talk.footer === "every"} /> : <PageLoading />;
   return (
     <TalkOnStage.Provider value={stage}>
       {view.kind === "notes" ? (
@@ -122,9 +122,10 @@ export function DeckApp({ view }: { view: DeckView }) {
 }
 
 // While the deck's data arrive: the stage at the size it will have, as a light slide draws it, with the header strip
-// and its logo, a skeleton title and points where a slide's sit, and the footer sentence along its foot, so nothing
-// jumps when the first slide comes in. Only presentation mode shows it; a page shows PageLoading.
-function Loading() {
+// and its logo, a skeleton title and points where a slide's sit, and the footer sentence along its foot where the talk
+// shows it on every slide, so nothing jumps when the first slide comes in. Only presentation mode shows it; a page
+// shows PageLoading.
+function Loading({ footer }: { footer: boolean }) {
   const scale = useScale(false);
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-surface-2 p-6" data-deck="loading" aria-busy="true">
@@ -140,9 +141,11 @@ function Loading() {
             <SkeletonText widths={["w-3/4", "w-1/2"]} style={type("title", "present").style} />
             <SkeletonText widths={["w-2/3", "w-3/5", "w-1/2"]} style={type("body", "present").style} />
           </div>
-          <p className="absolute whitespace-nowrap text-ink-muted" style={{ ...FOOTER, left: 48, bottom: 9 }}>
-            {copy.footer}
-          </p>
+          {footer && (
+            <p className="absolute whitespace-nowrap text-ink-muted" style={{ ...FOOTER, left: 48, bottom: 9 }}>
+              {copy.footer}
+            </p>
+          )}
         </div>
       </div>
       {/* The control bar's place, so the stage sits where it will once the deck is in. */}
@@ -273,7 +276,7 @@ function SlideCanvas({
         order={talk.order}
         names={names}
         counter={bare ? null : deckCopy.counter(String(slide.n), String(total))}
-        footer={talk.footerOnEverySlide || slide.kind === "title"}
+        footer={footerOn(talk.footer, slide.kind)}
       >
         {slide.kind === "title" && <TitleSlide slide={slide} current={current} />}
         {slide.kind === "close" && <CloseSlide slide={slide} current={current} />}
@@ -372,8 +375,13 @@ function Fit({ live, className, children }: { live: boolean; className: string; 
   }, []);
   useLayoutEffect(() => {
     const el = box.current;
-    if (!live || !el || zoom <= MIN_ZOOM) return;
-    if (el.scrollHeight > el.clientHeight + 1) setZoom((z) => Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 1000) / 1000));
+    const content = el?.firstElementChild;
+    if (!live || !el || !content || !el.clientHeight || zoom <= MIN_ZOOM) return;
+    // The content's own box against the space, both drawn at the canvas's scale, and not the space's overflow: an item
+    // not yet reached sits 6 px low until its press (ramp.ts), and that rise is no reason to zoom out (ticket 166).
+    const space = el.getBoundingClientRect();
+    const over = (content.getBoundingClientRect().bottom - space.bottom) / (space.height / el.clientHeight);
+    if (over > 1) setZoom((z) => Math.max(MIN_ZOOM, Math.round((z - ZOOM_STEP) * 1000) / 1000));
   }, [live, zoom, fonts]);
   return (
     <div ref={box} data-fit-zoom={zoom} className={cx(className, "overflow-hidden")}>
@@ -419,9 +427,12 @@ function OpenerSlide({ slide, current }: { slide: Slide; current: boolean }) {
         <h1 id={TITLE_ID(slide.n)} tabIndex={-1} className="mt-3 text-surface outline-none" {...type("topic", "present")}>
           {slide.title}
         </h1>
-        <p className="mt-4 text-balance text-surface/75" style={{ ...type("note", "present").style, maxWidth: 620 }}>
-          {slide.lead ?? topics[topic].line}
-        </p>
+        {/* The line under the topic's name, where the talk gives one: the research talk's openers have none. */}
+        {(slide.lead ?? topics[topic].line) && (
+          <p className="mt-4 text-balance text-surface/75" style={{ ...type("note", "present").style, maxWidth: 620 }}>
+            {slide.lead ?? topics[topic].line}
+          </p>
+        )}
       </div>
     </>
   );
@@ -898,7 +909,7 @@ function ReadingSlide({ slide, total }: { slide: Slide; total: number }) {
         </h2>
       )}
       <div className="mt-6 flex max-w-full flex-col gap-6">
-        {topic && <p className="max-w-prose text-body text-ink-muted">{slide.lead ?? topics[topic].line}</p>}
+        {topic && (slide.lead ?? topics[topic].line) && <p className="max-w-prose text-body text-ink-muted">{slide.lead ?? topics[topic].line}</p>}
         {slide.kind === "agenda" && <Agenda step={talk.order.length} mode="read" />}
         {slide.kind === "close" && (
           <>
