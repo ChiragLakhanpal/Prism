@@ -5216,3 +5216,27 @@ The script, new in this stop: `ops/workspace/resume.py`, with its names from ops
 Check after a resume: `--status` shows the endpoint ONLINE, the index ready with its rows, Lakebase AVAILABLE and the App's compute ACTIVE with the app RUNNING; then, signed in, open the App's address, see a project's record load on Home, and ask Search a question.
 
 At about 09:22 PST you ran `uv run --script ops/workspace/resume.py --pause --delete-search` yourself: the App, Lakebase and the warehouse read already stopped, the script deleted the index workspace.strata_dayone.passages_index, then strata.gold.passage_index, then the endpoint strata-search, and listed the four jobs paused. `--status` at 09:23 reads the endpoint missing, Lakebase STOPPED, the App's compute STOPPED with the app UNAVAILABLE, the warehouse STOPPED and the four jobs PAUSED: nothing on the workspace bills while idle. The source tables keep their rows and embeddings, so the first resume makes the endpoint and the passage index again from them.
+
+## The copy of November 12, 2026, before Azure is removed
+
+You asked for the whole of Prism's Azure side copied so it can be put back later, sent to GitHub, and then removed from Azure. Read first, from 12:50 PST: `uv run --script ops/workspace/resume.py --status` showed the App's compute ACTIVE and the app RUNNING (the audit log has one `startApp` under your account on November 10), Lakebase STOPPED, the warehouse STOPPED, the search endpoint missing and the four jobs PAUSED. `--pause` stopped the App at 12:54.
+
+The copy is in `.notes/archive/workspace-2026-11-12/`, which is its own git repository for the private GitHub repository `ChiragLakhanpal/Prism-data`. Its README says what each folder holds and its `REHEARSAL.md` has the checks:
+
+- `tables/` and `ddl/`: 144 tables as Parquet, 5,026,595 rows, read as your account, which the masks and the two row filters admit, so no value is masked and no row is filtered out; the `CREATE` statement of every table and of the six views.
+- `volumes/`: the 1,529 files of `strata.bronze.files`, `strata.ops.field_photos` and `workspace.strata_dayone.files`, 804,977,513 bytes. Two PDFs over GitHub's 100 MB limit are kept in parts.
+- `lakebase/`: the App state from `strata-state`, 45 rows in `plan_checks_opened`, `planned_package_saves` and `planned_packages`; the other four tables are empty. The instance was started for the copy and stopped after it.
+- `definitions/` and `azure/`: the jobs, the dashboards, the Genie spaces, the App and its deployments, grants, masks, row filters, the secret scope's key names; the resource group's template, the five Foundry deployments and the role assignments. A scan against every value in the env file found ids only (client ids, the warehouse id, the Genie space id, the endpoint's name) and no token, key or client secret.
+- `tools/`: `restore.py`, `export.py`, `export_lakebase.py` and `publish.sh`.
+
+The rehearsal, on the old workspace before any delete: `tools/restore.py --into workspace.restore_check` made all 144 tables from the saved DDL and loaded them from the Parquet files, and `--compare` found each one identical to its original by row count and a sum of row hashes. The warehouse was stopped again at 15:15.
+
+To bring Prism back on a new workspace:
+
+1. Make the Azure side again as `docs/paid-workspace.md` says (the resource group, Foundry with the five deployments listed in the copy's `azure/foundry_deployments.json`, a Premium Azure Databricks workspace), then run the wizard and the deploy chain with the jobs paused. Do not run the nightly.
+2. From a clone of `Prism-data`: `uv run --script tools/restore.py --prism <this checkout>`. It uploads the files, loads every table that is empty, makes the views and never overwrites; `--check` compares the row counts afterwards.
+3. `uv run --script ops/workspace/resume.py` makes the search endpoint and the passage index from `strata.silver.passage_embeddings` and starts the App.
+
+Not in the copy: secret values (new resources get new keys), the search index (step 3 builds it), the nine Foundry agents (`ops/agent/sync.py` makes them from the repo) and Application Insights' logs.
+
+The three lines that send the copy to GitHub, send the code and delete the resource group `WorldBank-demo` are yours to run, in `docs/STATUS.md`, item 8 of the list for the user.
